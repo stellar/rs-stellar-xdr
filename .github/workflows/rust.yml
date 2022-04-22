@@ -18,9 +18,8 @@ jobs:
   build:
     strategy:
       matrix:
-        include:
-          os: [ubuntu-latest, macos]
-          profile: [dev, release]
+        os: [ubuntu-latest, macos]
+        profile: [dev, release]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -31,9 +30,8 @@ jobs:
   test:
     strategy:
       matrix:
-        include:
-          os: [ubuntu-latest, macos]
-          profile: [dev, release]
+        os: [ubuntu-latest, macos]
+        profile: [dev, release]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3

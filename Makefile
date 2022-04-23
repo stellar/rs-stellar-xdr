@@ -1,5 +1,9 @@
+test: build
+	cargo test
+
 build: src/xdr.rs xdr
-	cargo build
+	cargo build --profile dev
+	cargo build --profile release
 
 src/xdr.rs: xdr
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\

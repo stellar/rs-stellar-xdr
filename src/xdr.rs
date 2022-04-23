@@ -303,7 +303,7 @@ mod tests {
 //
 //   typedef opaque Value<>;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Value(pub Vec<u8>);
 
 impl From<Value> for Vec<u8> {
@@ -340,7 +340,7 @@ impl WriteXDR for Value {
 //        Value value;    // x
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpBallot {
     pub counter: Uint32,
     pub value: Value,
@@ -374,7 +374,7 @@ impl WriteXDR for ScpBallot {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ScpStatementType {
     ScpStPrepare = 0,
@@ -429,7 +429,7 @@ impl WriteXDR for ScpStatementType {
 //        Value accepted<>;   // Y
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpNomination {
     pub quorum_set_hash: Hash,
     pub votes: Vec<Value>,
@@ -467,7 +467,7 @@ impl WriteXDR for ScpNomination {
 //                uint32 nH;                // h.n
 //            }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpStatementPrepare {
     pub quorum_set_hash: Hash,
     pub ballot: ScpBallot,
@@ -513,7 +513,7 @@ impl WriteXDR for ScpStatementPrepare {
 //                Hash quorumSetHash; // D
 //            }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpStatementConfirm {
     pub ballot: ScpBallot,
     pub n_prepared: Uint32,
@@ -554,7 +554,7 @@ impl WriteXDR for ScpStatementConfirm {
 //                Hash commitQuorumSetHash; // D used before EXTERNALIZE
 //            }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpStatementExternalize {
     pub commit: ScpBallot,
     pub n_h: Uint32,
@@ -615,7 +615,7 @@ impl WriteXDR for ScpStatementExternalize {
 //        }
 //
 // union with discriminant ScpStatementType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ScpStatementPledges {
     ScpStPrepare(ScpStatementPrepare),
     ScpStConfirm(ScpStatementConfirm),
@@ -711,7 +711,7 @@ impl WriteXDR for ScpStatementPledges {
 //        pledges;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpStatement {
     pub node_id: NodeId,
     pub slot_index: Uint64,
@@ -745,7 +745,7 @@ impl WriteXDR for ScpStatement {
 //        Signature signature;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpEnvelope {
     pub statement: ScpStatement,
     pub signature: Signature,
@@ -777,7 +777,7 @@ impl WriteXDR for ScpEnvelope {
 //        SCPQuorumSet innerSets<>;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpQuorumSet {
     pub threshold: Uint32,
     pub validators: Vec<NodeId>,
@@ -807,7 +807,7 @@ impl WriteXDR for ScpQuorumSet {
 //
 //   typedef PublicKey AccountID;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AccountId(pub PublicKey);
 
 impl From<AccountId> for PublicKey {
@@ -840,7 +840,7 @@ impl WriteXDR for AccountId {
 //
 //   typedef opaque Thresholds[4];
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Thresholds(pub [u8; 4]);
 
 impl From<Thresholds> for [u8; 4] {
@@ -873,7 +873,7 @@ impl WriteXDR for Thresholds {
 //
 //   typedef string string32<32>;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct String32(pub Vec<u8>);
 
 impl From<String32> for Vec<u8> {
@@ -906,7 +906,7 @@ impl WriteXDR for String32 {
 //
 //   typedef string string64<64>;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct String64(pub Vec<u8>);
 
 impl From<String64> for Vec<u8> {
@@ -939,7 +939,7 @@ impl WriteXDR for String64 {
 //
 //   typedef int64 SequenceNumber;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SequenceNumber(pub Int64);
 
 impl From<SequenceNumber> for Int64 {
@@ -972,7 +972,7 @@ impl WriteXDR for SequenceNumber {
 //
 //   typedef uint64 TimePoint;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TimePoint(pub Uint64);
 
 impl From<TimePoint> for Uint64 {
@@ -1005,7 +1005,7 @@ impl WriteXDR for TimePoint {
 //
 //   typedef uint64 Duration;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Duration(pub Uint64);
 
 impl From<Duration> for Uint64 {
@@ -1038,7 +1038,7 @@ impl WriteXDR for Duration {
 //
 //   typedef opaque DataValue<64>;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct DataValue(pub Vec<u8>);
 
 impl From<DataValue> for Vec<u8> {
@@ -1071,7 +1071,7 @@ impl WriteXDR for DataValue {
 //
 //   typedef Hash PoolID;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PoolId(pub Hash);
 
 impl From<PoolId> for Hash {
@@ -1104,7 +1104,7 @@ impl WriteXDR for PoolId {
 //
 //   typedef opaque AssetCode4[4];
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AssetCode4(pub [u8; 4]);
 
 impl From<AssetCode4> for [u8; 4] {
@@ -1137,7 +1137,7 @@ impl WriteXDR for AssetCode4 {
 //
 //   typedef opaque AssetCode12[12];
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AssetCode12(pub [u8; 12]);
 
 impl From<AssetCode12> for [u8; 12] {
@@ -1177,7 +1177,7 @@ impl WriteXDR for AssetCode12 {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum AssetType {
     AssetTypeNative = 0,
@@ -1237,7 +1237,7 @@ impl WriteXDR for AssetType {
 //    };
 //
 // union with discriminant AssetType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum AssetCode {
     AssetTypeCreditAlphanum4(AssetCode4),
     AssetTypeCreditAlphanum12(AssetCode12),
@@ -1288,7 +1288,7 @@ impl WriteXDR for AssetCode {
 //        AccountID issuer;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AlphaNum4 {
     pub asset_code: AssetCode4,
     pub issuer: AccountId,
@@ -1319,7 +1319,7 @@ impl WriteXDR for AlphaNum4 {
 //        AccountID issuer;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AlphaNum12 {
     pub asset_code: AssetCode12,
     pub issuer: AccountId,
@@ -1359,7 +1359,7 @@ impl WriteXDR for AlphaNum12 {
 //    };
 //
 // union with discriminant AssetType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum Asset {
     AssetTypeNative,
     AssetTypeCreditAlphanum4(AlphaNum4),
@@ -1414,7 +1414,7 @@ impl WriteXDR for Asset {
 //        int32 d; // denominator
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Price {
     pub n: Int32,
     pub d: Int32,
@@ -1445,7 +1445,7 @@ impl WriteXDR for Price {
 //        int64 selling;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Liabilities {
     pub buying: Int64,
     pub selling: Int64,
@@ -1479,7 +1479,7 @@ impl WriteXDR for Liabilities {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ThresholdIndexes {
     ThresholdMasterWeight = 0,
@@ -1538,7 +1538,7 @@ impl WriteXDR for ThresholdIndexes {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum LedgerEntryType {
     Account = 0,
@@ -1596,7 +1596,7 @@ impl WriteXDR for LedgerEntryType {
 //        uint32 weight; // really only need 1 byte
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Signer {
     pub key: SignerKey,
     pub weight: Uint32,
@@ -1640,7 +1640,7 @@ impl WriteXDR for Signer {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum AccountFlags {
     AuthRequiredFlag = 1,
@@ -1708,7 +1708,7 @@ pub const MAX_SIGNERS: u64 = 20;
 //
 //   typedef AccountID* SponsorshipDescriptor;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SponsorshipDescriptor(pub Option<AccountId>);
 
 impl From<SponsorshipDescriptor> for Option<AccountId> {
@@ -1752,7 +1752,7 @@ impl WriteXDR for SponsorshipDescriptor {
 //        TimePoint seqTime;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AccountEntryExtensionV3 {
     pub ext: ExtensionPoint,
     pub seq_ledger: Uint32,
@@ -1789,7 +1789,7 @@ impl WriteXDR for AccountEntryExtensionV3 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum AccountEntryExtensionV2Ext {
     V0,
     V3(AccountEntryExtensionV3),
@@ -1846,7 +1846,7 @@ impl WriteXDR for AccountEntryExtensionV2Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AccountEntryExtensionV2 {
     pub num_sponsored: Uint32,
     pub num_sponsoring: Uint32,
@@ -1886,7 +1886,7 @@ impl WriteXDR for AccountEntryExtensionV2 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum AccountEntryExtensionV1Ext {
     V0,
     V2(AccountEntryExtensionV2),
@@ -1941,7 +1941,7 @@ impl WriteXDR for AccountEntryExtensionV1Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AccountEntryExtensionV1 {
     pub liabilities: Liabilities,
     pub ext: AccountEntryExtensionV1Ext,
@@ -1975,7 +1975,7 @@ impl WriteXDR for AccountEntryExtensionV1 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum AccountEntryExt {
     V0,
     V1(AccountEntryExtensionV1),
@@ -2045,7 +2045,7 @@ impl WriteXDR for AccountEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AccountEntry {
     pub account_id: AccountId,
     pub balance: Int64,
@@ -2107,7 +2107,7 @@ impl WriteXDR for AccountEntry {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum TrustLineFlags {
     AuthorizedFlag = 1,
@@ -2177,7 +2177,7 @@ pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum LiquidityPoolType {
     LiquidityPoolConstantProduct = 0,
@@ -2237,7 +2237,7 @@ impl WriteXDR for LiquidityPoolType {
 //    };
 //
 // union with discriminant AssetType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TrustLineAsset {
     AssetTypeNative,
     AssetTypeCreditAlphanum4(AlphaNum4),
@@ -2299,7 +2299,7 @@ impl WriteXDR for TrustLineAsset {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TrustLineEntryExtensionV2Ext {
     V0,
 }
@@ -2348,7 +2348,7 @@ impl WriteXDR for TrustLineEntryExtensionV2Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TrustLineEntryExtensionV2 {
     pub liquidity_pool_use_count: Int32,
     pub ext: TrustLineEntryExtensionV2Ext,
@@ -2382,7 +2382,7 @@ impl WriteXDR for TrustLineEntryExtensionV2 {
 //                }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TrustLineEntryV1Ext {
     V0,
     V2(TrustLineEntryExtensionV2),
@@ -2437,7 +2437,7 @@ impl WriteXDR for TrustLineEntryV1Ext {
 //                ext;
 //            }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TrustLineEntryV1 {
     pub liabilities: Liabilities,
     pub ext: TrustLineEntryV1Ext,
@@ -2483,7 +2483,7 @@ impl WriteXDR for TrustLineEntryV1 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TrustLineEntryExt {
     V0,
     V1(TrustLineEntryV1),
@@ -2557,7 +2557,7 @@ impl WriteXDR for TrustLineEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TrustLineEntry {
     pub account_id: AccountId,
     pub asset: TrustLineAsset,
@@ -2602,7 +2602,7 @@ impl WriteXDR for TrustLineEntry {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum OfferEntryFlags {
     PassiveFlag = 1,
@@ -2657,7 +2657,7 @@ pub const MASK_OFFERENTRY_FLAGS: u64 = 1;
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum OfferEntryExt {
     V0,
 }
@@ -2719,7 +2719,7 @@ impl WriteXDR for OfferEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct OfferEntry {
     pub seller_id: AccountId,
     pub offer_id: Int64,
@@ -2769,7 +2769,7 @@ impl WriteXDR for OfferEntry {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum DataEntryExt {
     V0,
 }
@@ -2821,7 +2821,7 @@ impl WriteXDR for DataEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct DataEntry {
     pub account_id: AccountId,
     pub data_name: String64,
@@ -2863,7 +2863,7 @@ impl WriteXDR for DataEntry {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ClaimPredicateType {
     ClaimPredicateUnconditional = 0,
@@ -2933,7 +2933,7 @@ impl WriteXDR for ClaimPredicateType {
 //    };
 //
 // union with discriminant ClaimPredicateType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ClaimPredicate {
     ClaimPredicateUnconditional,
     ClaimPredicateAnd(Vec<ClaimPredicate>),
@@ -3010,7 +3010,7 @@ impl WriteXDR for ClaimPredicate {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ClaimantType {
     ClaimantTypeV0 = 0,
@@ -3058,7 +3058,7 @@ impl WriteXDR for ClaimantType {
 //            ClaimPredicate predicate; // Claimable if predicate is true
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClaimantV0 {
     pub destination: AccountId,
     pub predicate: ClaimPredicate,
@@ -3094,7 +3094,7 @@ impl WriteXDR for ClaimantV0 {
 //    };
 //
 // union with discriminant ClaimantType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum Claimant {
     ClaimantTypeV0(ClaimantV0),
 }
@@ -3139,7 +3139,7 @@ impl WriteXDR for Claimant {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ClaimableBalanceIdType {
     ClaimableBalanceIdTypeV0 = 0,
@@ -3188,7 +3188,7 @@ impl WriteXDR for ClaimableBalanceIdType {
 //    };
 //
 // union with discriminant ClaimableBalanceIdType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ClaimableBalanceId {
     ClaimableBalanceIdTypeV0(Hash),
 }
@@ -3235,7 +3235,7 @@ impl WriteXDR for ClaimableBalanceId {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ClaimableBalanceFlags {
     ClaimableBalanceClawbackEnabledFlag = 1,
@@ -3290,7 +3290,7 @@ pub const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ClaimableBalanceEntryExtensionV1Ext {
     V0,
 }
@@ -3339,7 +3339,7 @@ impl WriteXDR for ClaimableBalanceEntryExtensionV1Ext {
 //        uint32 flags; // see ClaimableBalanceFlags
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClaimableBalanceEntryExtensionV1 {
     pub ext: ClaimableBalanceEntryExtensionV1Ext,
     pub flags: Uint32,
@@ -3373,7 +3373,7 @@ impl WriteXDR for ClaimableBalanceEntryExtensionV1 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ClaimableBalanceEntryExt {
     V0,
     V1(ClaimableBalanceEntryExtensionV1),
@@ -3439,7 +3439,7 @@ impl WriteXDR for ClaimableBalanceEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClaimableBalanceEntry {
     pub balance_id: ClaimableBalanceId,
     pub claimants: Vec<Claimant>,
@@ -3480,7 +3480,7 @@ impl WriteXDR for ClaimableBalanceEntry {
 //        int32 fee; // Fee is in basis points, so the actual rate is (fee/100)%
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LiquidityPoolConstantProductParameters {
     pub asset_a: Asset,
     pub asset_b: Asset,
@@ -3519,7 +3519,7 @@ impl WriteXDR for LiquidityPoolConstantProductParameters {
 //                                                // associated pool shares
 //            }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LiquidityPoolEntryConstantProduct {
     pub params: LiquidityPoolConstantProductParameters,
     pub reserve_a: Int64,
@@ -3569,7 +3569,7 @@ impl WriteXDR for LiquidityPoolEntryConstantProduct {
 //        }
 //
 // union with discriminant LiquidityPoolType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LiquidityPoolEntryBody {
     LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct),
 }
@@ -3631,7 +3631,7 @@ impl WriteXDR for LiquidityPoolEntryBody {
 //        body;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LiquidityPoolEntry {
     pub liquidity_pool_id: PoolId,
     pub body: LiquidityPoolEntryBody,
@@ -3663,7 +3663,7 @@ impl WriteXDR for LiquidityPoolEntry {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LedgerEntryExtensionV1Ext {
     V0,
 }
@@ -3712,7 +3712,7 @@ impl WriteXDR for LedgerEntryExtensionV1Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerEntryExtensionV1 {
     pub sponsoring_id: SponsorshipDescriptor,
     pub ext: LedgerEntryExtensionV1Ext,
@@ -3754,7 +3754,7 @@ impl WriteXDR for LedgerEntryExtensionV1 {
 //        }
 //
 // union with discriminant LedgerEntryType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LedgerEntryData {
     Account(AccountEntry),
     Trustline(TrustLineEntry),
@@ -3826,7 +3826,7 @@ impl WriteXDR for LedgerEntryData {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LedgerEntryExt {
     V0,
     V1(LedgerEntryExtensionV1),
@@ -3899,7 +3899,7 @@ impl WriteXDR for LedgerEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerEntry {
     pub last_modified_ledger_seq: Uint32,
     pub data: LedgerEntryData,
@@ -3932,7 +3932,7 @@ impl WriteXDR for LedgerEntry {
 //            AccountID accountID;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerKeyAccount {
     pub account_id: AccountId,
 }
@@ -3960,7 +3960,7 @@ impl WriteXDR for LedgerKeyAccount {
 //            TrustLineAsset asset;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerKeyTrustLine {
     pub account_id: AccountId,
     pub asset: TrustLineAsset,
@@ -3991,7 +3991,7 @@ impl WriteXDR for LedgerKeyTrustLine {
 //            int64 offerID;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerKeyOffer {
     pub seller_id: AccountId,
     pub offer_id: Int64,
@@ -4022,7 +4022,7 @@ impl WriteXDR for LedgerKeyOffer {
 //            string64 dataName;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerKeyData {
     pub account_id: AccountId,
     pub data_name: String64,
@@ -4052,7 +4052,7 @@ impl WriteXDR for LedgerKeyData {
 //            ClaimableBalanceID balanceID;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerKeyClaimableBalance {
     pub balance_id: ClaimableBalanceId,
 }
@@ -4079,7 +4079,7 @@ impl WriteXDR for LedgerKeyClaimableBalance {
 //            PoolID liquidityPoolID;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerKeyLiquidityPool {
     pub liquidity_pool_id: PoolId,
 }
@@ -4144,7 +4144,7 @@ impl WriteXDR for LedgerKeyLiquidityPool {
 //    };
 //
 // union with discriminant LedgerEntryType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LedgerKey {
     Account(LedgerKeyAccount),
     Trustline(LedgerKeyTrustLine),
@@ -4220,7 +4220,7 @@ impl WriteXDR for LedgerKey {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum EnvelopeType {
     EnvelopeTypeTxV0 = 0,
@@ -4278,7 +4278,7 @@ impl WriteXDR for EnvelopeType {
 //
 //   typedef opaque UpgradeType<128>;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct UpgradeType(pub Vec<u8>);
 
 impl From<UpgradeType> for Vec<u8> {
@@ -4316,7 +4316,7 @@ impl WriteXDR for UpgradeType {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum StellarValueType {
     StellarValueBasic = 0,
@@ -4366,7 +4366,7 @@ impl WriteXDR for StellarValueType {
 //        Signature signature; // nodeID's signature
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerCloseValueSignature {
     pub node_id: NodeId,
     pub signature: Signature,
@@ -4400,7 +4400,7 @@ impl WriteXDR for LedgerCloseValueSignature {
 //        }
 //
 // union with discriminant StellarValueType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum StellarValueExt {
     StellarValueBasic,
     StellarValueSigned(LedgerCloseValueSignature),
@@ -4466,7 +4466,7 @@ impl WriteXDR for StellarValueExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct StellarValue {
     pub tx_set_hash: Hash,
     pub close_time: TimePoint,
@@ -4511,7 +4511,7 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum LedgerHeaderFlags {
     DisableLiquidityPoolTradingFlag = 1,
@@ -4564,7 +4564,7 @@ impl WriteXDR for LedgerHeaderFlags {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LedgerHeaderExtensionV1Ext {
     V0,
 }
@@ -4613,7 +4613,7 @@ impl WriteXDR for LedgerHeaderExtensionV1Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerHeaderExtensionV1 {
     pub flags: Uint32,
     pub ext: LedgerHeaderExtensionV1Ext,
@@ -4647,7 +4647,7 @@ impl WriteXDR for LedgerHeaderExtensionV1 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LedgerHeaderExt {
     V0,
     V1(LedgerHeaderExtensionV1),
@@ -4728,7 +4728,7 @@ impl WriteXDR for LedgerHeaderExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerHeader {
     pub ledger_version: Uint32,
     pub previous_ledger_hash: Hash,
@@ -4802,7 +4802,7 @@ impl WriteXDR for LedgerHeader {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum LedgerUpgradeType {
     LedgerUpgradeVersion = 1,
@@ -4867,7 +4867,7 @@ impl WriteXDR for LedgerUpgradeType {
 //    };
 //
 // union with discriminant LedgerUpgradeType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LedgerUpgrade {
     LedgerUpgradeVersion(Uint32),
     LedgerUpgradeBaseFee(Uint32),
@@ -4941,7 +4941,7 @@ impl WriteXDR for LedgerUpgrade {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum BucketEntryType {
     Metaentry = -1,
@@ -4996,7 +4996,7 @@ impl WriteXDR for BucketEntryType {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum BucketMetadataExt {
     V0,
 }
@@ -5047,7 +5047,7 @@ impl WriteXDR for BucketMetadataExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct BucketMetadata {
     pub ledger_version: Uint32,
     pub ext: BucketMetadataExt,
@@ -5085,7 +5085,7 @@ impl WriteXDR for BucketMetadata {
 //    };
 //
 // union with discriminant BucketEntryType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum BucketEntry {
     Liveentry(LedgerEntry),
     Initentry(LedgerEntry),
@@ -5142,7 +5142,7 @@ impl WriteXDR for BucketEntry {
 //        TransactionEnvelope txs<>;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionSet {
     pub previous_ledger_hash: Hash,
     pub txs: Vec<TransactionEnvelope>,
@@ -5173,7 +5173,7 @@ impl WriteXDR for TransactionSet {
 //        TransactionResult result; // result for the transaction
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionResultPair {
     pub transaction_hash: Hash,
     pub result: TransactionResult,
@@ -5203,7 +5203,7 @@ impl WriteXDR for TransactionResultPair {
 //        TransactionResultPair results<>;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionResultSet {
     pub results: Vec<TransactionResultPair>,
 }
@@ -5232,7 +5232,7 @@ impl WriteXDR for TransactionResultSet {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TransactionHistoryEntryExt {
     V0,
 }
@@ -5283,7 +5283,7 @@ impl WriteXDR for TransactionHistoryEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionHistoryEntry {
     pub ledger_seq: Uint32,
     pub tx_set: TransactionSet,
@@ -5318,7 +5318,7 @@ impl WriteXDR for TransactionHistoryEntry {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TransactionHistoryResultEntryExt {
     V0,
 }
@@ -5369,7 +5369,7 @@ impl WriteXDR for TransactionHistoryResultEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionHistoryResultEntry {
     pub ledger_seq: Uint32,
     pub tx_result_set: TransactionResultSet,
@@ -5404,7 +5404,7 @@ impl WriteXDR for TransactionHistoryResultEntry {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LedgerHeaderHistoryEntryExt {
     V0,
 }
@@ -5455,7 +5455,7 @@ impl WriteXDR for LedgerHeaderHistoryEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerHeaderHistoryEntry {
     pub hash: Hash,
     pub header: LedgerHeader,
@@ -5489,7 +5489,7 @@ impl WriteXDR for LedgerHeaderHistoryEntry {
 //        SCPEnvelope messages<>;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerScpMessages {
     pub ledger_seq: Uint32,
     pub messages: Vec<ScpEnvelope>,
@@ -5520,7 +5520,7 @@ impl WriteXDR for LedgerScpMessages {
 //        LedgerSCPMessages ledgerMessages;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpHistoryEntryV0 {
     pub quorum_sets: Vec<ScpQuorumSet>,
     pub ledger_messages: LedgerScpMessages,
@@ -5552,7 +5552,7 @@ impl WriteXDR for ScpHistoryEntryV0 {
 //    };
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ScpHistoryEntry {
     V0(ScpHistoryEntryV0),
 }
@@ -5598,7 +5598,7 @@ impl WriteXDR for ScpHistoryEntry {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum LedgerEntryChangeType {
     LedgerEntryCreated = 0,
@@ -5659,7 +5659,7 @@ impl WriteXDR for LedgerEntryChangeType {
 //    };
 //
 // union with discriminant LedgerEntryChangeType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LedgerEntryChange {
     LedgerEntryCreated(LedgerEntry),
     LedgerEntryUpdated(LedgerEntry),
@@ -5718,7 +5718,7 @@ impl WriteXDR for LedgerEntryChange {
 //
 //   typedef LedgerEntryChange LedgerEntryChanges<>;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerEntryChanges(pub Vec<LedgerEntryChange>);
 
 impl From<LedgerEntryChanges> for Vec<LedgerEntryChange> {
@@ -5754,7 +5754,7 @@ impl WriteXDR for LedgerEntryChanges {
 //        LedgerEntryChanges changes;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct OperationMeta {
     pub changes: LedgerEntryChanges,
 }
@@ -5782,7 +5782,7 @@ impl WriteXDR for OperationMeta {
 //        OperationMeta operations<>;   // meta for each operation
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionMetaV1 {
     pub tx_changes: LedgerEntryChanges,
     pub operations: Vec<OperationMeta>,
@@ -5816,7 +5816,7 @@ impl WriteXDR for TransactionMetaV1 {
 //                                            // applied if any
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionMetaV2 {
     pub tx_changes_before: LedgerEntryChanges,
     pub operations: Vec<OperationMeta>,
@@ -5855,7 +5855,7 @@ impl WriteXDR for TransactionMetaV2 {
 //    };
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TransactionMeta {
     V0(Vec<OperationMeta>),
     V1(TransactionMetaV1),
@@ -5907,7 +5907,7 @@ impl WriteXDR for TransactionMeta {
 //        TransactionMeta txApplyProcessing;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionResultMeta {
     pub result: TransactionResultPair,
     pub fee_processing: LedgerEntryChanges,
@@ -5941,7 +5941,7 @@ impl WriteXDR for TransactionResultMeta {
 //        LedgerEntryChanges changes;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct UpgradeEntryMeta {
     pub upgrade: LedgerUpgrade,
     pub changes: LedgerEntryChanges,
@@ -5984,7 +5984,7 @@ impl WriteXDR for UpgradeEntryMeta {
 //        SCPHistoryEntry scpInfo<>;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerCloseMetaV0 {
     pub ledger_header: LedgerHeaderHistoryEntry,
     pub tx_set: TransactionSet,
@@ -6025,7 +6025,7 @@ impl WriteXDR for LedgerCloseMetaV0 {
 //    };
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
 }
@@ -6072,7 +6072,7 @@ impl WriteXDR for LedgerCloseMeta {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ErrorCode {
     ErrMisc = 0,
@@ -6128,7 +6128,7 @@ impl WriteXDR for ErrorCode {
 //        string msg<100>;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SError {
     pub code: ErrorCode,
     pub msg: Vec<u8>,
@@ -6158,7 +6158,7 @@ impl WriteXDR for SError {
 //        uint32 numMessages;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SendMore {
     pub num_messages: Uint32,
 }
@@ -6187,7 +6187,7 @@ impl WriteXDR for SendMore {
 //        Signature sig;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AuthCert {
     pub pubkey: Curve25519Public,
     pub expiration: Uint64,
@@ -6228,7 +6228,7 @@ impl WriteXDR for AuthCert {
 //        uint256 nonce;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Hello {
     pub ledger_version: Uint32,
     pub overlay_version: Uint32,
@@ -6281,7 +6281,7 @@ impl WriteXDR for Hello {
 //        int unused;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Auth {
     pub unused: i32,
 }
@@ -6310,7 +6310,7 @@ impl WriteXDR for Auth {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum IpAddrType {
     IPv4 = 0,
@@ -6363,7 +6363,7 @@ impl WriteXDR for IpAddrType {
 //        }
 //
 // union with discriminant IpAddrType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum PeerAddressIp {
     IPv4([u8; 4]),
     IPv6([u8; 16]),
@@ -6418,7 +6418,7 @@ impl WriteXDR for PeerAddressIp {
 //        uint32 numFailures;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PeerAddress {
     pub ip: PeerAddressIp,
     pub port: Uint32,
@@ -6476,7 +6476,7 @@ impl WriteXDR for PeerAddress {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum MessageType {
     ErrorMsg = 0,
@@ -6554,7 +6554,7 @@ impl WriteXDR for MessageType {
 //        uint256 reqHash;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct DontHave {
     pub type_: MessageType,
     pub req_hash: Uint256,
@@ -6585,7 +6585,7 @@ impl WriteXDR for DontHave {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum SurveyMessageCommandType {
     SurveyTopology = 0,
@@ -6636,7 +6636,7 @@ impl WriteXDR for SurveyMessageCommandType {
 //        SurveyMessageCommandType commandType;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SurveyRequestMessage {
     pub surveyor_peer_id: NodeId,
     pub surveyed_peer_id: NodeId,
@@ -6676,7 +6676,7 @@ impl WriteXDR for SurveyRequestMessage {
 //        SurveyRequestMessage request;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SignedSurveyRequestMessage {
     pub request_signature: Signature,
     pub request: SurveyRequestMessage,
@@ -6703,7 +6703,7 @@ impl WriteXDR for SignedSurveyRequestMessage {
 //
 //   typedef opaque EncryptedBody<64000>;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct EncryptedBody(pub Vec<u8>);
 
 impl From<EncryptedBody> for Vec<u8> {
@@ -6743,7 +6743,7 @@ impl WriteXDR for EncryptedBody {
 //        EncryptedBody encryptedBody;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SurveyResponseMessage {
     pub surveyor_peer_id: NodeId,
     pub surveyed_peer_id: NodeId,
@@ -6783,7 +6783,7 @@ impl WriteXDR for SurveyResponseMessage {
 //        SurveyResponseMessage response;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SignedSurveyResponseMessage {
     pub response_signature: Signature,
     pub response: SurveyResponseMessage,
@@ -6829,7 +6829,7 @@ impl WriteXDR for SignedSurveyResponseMessage {
 //        uint64 duplicateFetchMessageRecv;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PeerStats {
     pub id: NodeId,
     pub version_str: Vec<u8>,
@@ -6895,7 +6895,7 @@ impl WriteXDR for PeerStats {
 //
 //   typedef PeerStats PeerStatList<25>;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PeerStatList(pub Vec<PeerStats>);
 
 impl From<PeerStatList> for Vec<PeerStats> {
@@ -6935,7 +6935,7 @@ impl WriteXDR for PeerStatList {
 //        uint32 totalOutboundPeerCount;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TopologyResponseBody {
     pub inbound_peers: PeerStatList,
     pub outbound_peers: PeerStatList,
@@ -6973,7 +6973,7 @@ impl WriteXDR for TopologyResponseBody {
 //    };
 //
 // union with discriminant SurveyMessageCommandType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum SurveyResponseBody {
     SurveyTopology(TopologyResponseBody),
 }
@@ -7055,7 +7055,7 @@ impl WriteXDR for SurveyResponseBody {
 //    };
 //
 // union with discriminant MessageType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum StellarMessage {
     ErrorMsg(SError),
     Hello(Hello),
@@ -7169,7 +7169,7 @@ impl WriteXDR for StellarMessage {
 //            HmacSha256Mac mac;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AuthenticatedMessageV0 {
     pub sequence: Uint64,
     pub message: StellarMessage,
@@ -7209,7 +7209,7 @@ impl WriteXDR for AuthenticatedMessageV0 {
 //    };
 //
 // union with discriminant Uint32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum AuthenticatedMessage {
     V0(AuthenticatedMessageV0),
 }
@@ -7253,7 +7253,7 @@ impl WriteXDR for AuthenticatedMessage {
 //    };
 //
 // union with discriminant LiquidityPoolType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LiquidityPoolParameters {
     LiquidityPoolConstantProduct(LiquidityPoolConstantProductParameters),
 }
@@ -7300,7 +7300,7 @@ impl WriteXDR for LiquidityPoolParameters {
 //            uint256 ed25519;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct MuxedAccountMed25519 {
     pub id: Uint64,
     pub ed25519: Uint256,
@@ -7338,7 +7338,7 @@ impl WriteXDR for MuxedAccountMed25519 {
 //    };
 //
 // union with discriminant CryptoKeyType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum MuxedAccount {
     KeyTypeEd25519(Uint256),
     KeyTypeMuxedEd25519(MuxedAccountMed25519),
@@ -7389,7 +7389,7 @@ impl WriteXDR for MuxedAccount {
 //        Signature signature; // actual signature
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct DecoratedSignature {
     pub hint: SignatureHint,
     pub signature: Signature,
@@ -7443,7 +7443,7 @@ impl WriteXDR for DecoratedSignature {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum OperationType {
     CreateAccount = 0,
@@ -7537,7 +7537,7 @@ impl WriteXDR for OperationType {
 //        int64 startingBalance; // amount they end up with
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct CreateAccountOp {
     pub destination: AccountId,
     pub starting_balance: Int64,
@@ -7569,7 +7569,7 @@ impl WriteXDR for CreateAccountOp {
 //        int64 amount;             // amount they end up with
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PaymentOp {
     pub destination: MuxedAccount,
     pub asset: Asset,
@@ -7611,7 +7611,7 @@ impl WriteXDR for PaymentOp {
 //        Asset path<5>; // additional hops it must go through to get there
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PathPaymentStrictReceiveOp {
     pub send_asset: Asset,
     pub send_max: Int64,
@@ -7662,7 +7662,7 @@ impl WriteXDR for PathPaymentStrictReceiveOp {
 //        Asset path<5>; // additional hops it must go through to get there
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PathPaymentStrictSendOp {
     pub send_asset: Asset,
     pub send_amount: Int64,
@@ -7710,7 +7710,7 @@ impl WriteXDR for PathPaymentStrictSendOp {
 //        int64 offerID;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ManageSellOfferOp {
     pub selling: Asset,
     pub buying: Asset,
@@ -7756,7 +7756,7 @@ impl WriteXDR for ManageSellOfferOp {
 //        int64 offerID;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ManageBuyOfferOp {
     pub selling: Asset,
     pub buying: Asset,
@@ -7798,7 +7798,7 @@ impl WriteXDR for ManageBuyOfferOp {
 //        Price price;   // cost of A in terms of B
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct CreatePassiveSellOfferOp {
     pub selling: Asset,
     pub buying: Asset,
@@ -7849,7 +7849,7 @@ impl WriteXDR for CreatePassiveSellOfferOp {
 //        Signer* signer;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SetOptionsOp {
     pub inflation_dest: Option<AccountId>,
     pub clear_flags: Option<Uint32>,
@@ -7913,7 +7913,7 @@ impl WriteXDR for SetOptionsOp {
 //    };
 //
 // union with discriminant AssetType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ChangeTrustAsset {
     AssetTypeNative,
     AssetTypeCreditAlphanum4(AlphaNum4),
@@ -7976,7 +7976,7 @@ impl WriteXDR for ChangeTrustAsset {
 //        int64 limit;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ChangeTrustOp {
     pub line: ChangeTrustAsset,
     pub limit: Int64,
@@ -8010,7 +8010,7 @@ impl WriteXDR for ChangeTrustOp {
 //        uint32 authorize;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AllowTrustOp {
     pub trustor: AccountId,
     pub asset: AssetCode,
@@ -8044,7 +8044,7 @@ impl WriteXDR for AllowTrustOp {
 //        DataValue* dataValue; // set to null to clear
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ManageDataOp {
     pub data_name: String64,
     pub data_value: Option<DataValue>,
@@ -8074,7 +8074,7 @@ impl WriteXDR for ManageDataOp {
 //        SequenceNumber bumpTo;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct BumpSequenceOp {
     pub bump_to: SequenceNumber,
 }
@@ -8103,7 +8103,7 @@ impl WriteXDR for BumpSequenceOp {
 //        Claimant claimants<10>;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct CreateClaimableBalanceOp {
     pub asset: Asset,
     pub amount: Int64,
@@ -8136,7 +8136,7 @@ impl WriteXDR for CreateClaimableBalanceOp {
 //        ClaimableBalanceID balanceID;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClaimClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
 }
@@ -8163,7 +8163,7 @@ impl WriteXDR for ClaimClaimableBalanceOp {
 //        AccountID sponsoredID;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct BeginSponsoringFutureReservesOp {
     pub sponsored_id: AccountId,
 }
@@ -8192,7 +8192,7 @@ impl WriteXDR for BeginSponsoringFutureReservesOp {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum RevokeSponsorshipType {
     RevokeSponsorshipLedgerEntry = 0,
@@ -8242,7 +8242,7 @@ impl WriteXDR for RevokeSponsorshipType {
 //            SignerKey signerKey;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct RevokeSponsorshipOpSigner {
     pub account_id: AccountId,
     pub signer_key: SignerKey,
@@ -8280,7 +8280,7 @@ impl WriteXDR for RevokeSponsorshipOpSigner {
 //    };
 //
 // union with discriminant RevokeSponsorshipType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum RevokeSponsorshipOp {
     RevokeSponsorshipLedgerEntry(LedgerKey),
     RevokeSponsorshipSigner(RevokeSponsorshipOpSigner),
@@ -8334,7 +8334,7 @@ impl WriteXDR for RevokeSponsorshipOp {
 //        int64 amount;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClawbackOp {
     pub asset: Asset,
     pub from: MuxedAccount,
@@ -8367,7 +8367,7 @@ impl WriteXDR for ClawbackOp {
 //        ClaimableBalanceID balanceID;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClawbackClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
 }
@@ -8398,7 +8398,7 @@ impl WriteXDR for ClawbackClaimableBalanceOp {
 //        uint32 setFlags;   // which flags to set
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SetTrustLineFlagsOp {
     pub trustor: AccountId,
     pub asset: Asset,
@@ -8444,7 +8444,7 @@ pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
 //        Price maxPrice;   // maximum depositA/depositB
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LiquidityPoolDepositOp {
     pub liquidity_pool_id: PoolId,
     pub max_amount_a: Int64,
@@ -8486,7 +8486,7 @@ impl WriteXDR for LiquidityPoolDepositOp {
 //        int64 minAmountB; // minimum amount of second asset to withdraw
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LiquidityPoolWithdrawOp {
     pub liquidity_pool_id: PoolId,
     pub amount: Int64,
@@ -8570,7 +8570,7 @@ impl WriteXDR for LiquidityPoolWithdrawOp {
 //        }
 //
 // union with discriminant OperationType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum OperationBody {
     CreateAccount(CreateAccountOp),
     Payment(PaymentOp),
@@ -8794,7 +8794,7 @@ impl WriteXDR for OperationBody {
 //        body;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Operation {
     pub source_account: Option<MuxedAccount>,
     pub body: OperationBody,
@@ -8826,7 +8826,7 @@ impl WriteXDR for Operation {
 //            uint32 opNum;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct HashIdPreimageOperationId {
     pub source_account: AccountId,
     pub seq_num: SequenceNumber,
@@ -8863,7 +8863,7 @@ impl WriteXDR for HashIdPreimageOperationId {
 //            Asset asset;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct HashIdPreimageRevokeId {
     pub source_account: AccountId,
     pub seq_num: SequenceNumber,
@@ -8918,7 +8918,7 @@ impl WriteXDR for HashIdPreimageRevokeId {
 //    };
 //
 // union with discriminant EnvelopeType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum HashIdPreimage {
     EnvelopeTypeOpId(HashIdPreimageOperationId),
     EnvelopeTypePoolRevokeOpId(HashIdPreimageRevokeId),
@@ -8973,7 +8973,7 @@ impl WriteXDR for HashIdPreimage {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum MemoType {
     MemoNone = 0,
@@ -9038,7 +9038,7 @@ impl WriteXDR for MemoType {
 //    };
 //
 // union with discriminant MemoType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum Memo {
     MemoNone,
     MemoText(Vec<u8>),
@@ -9097,7 +9097,7 @@ impl WriteXDR for Memo {
 //        TimePoint maxTime; // 0 here means no maxTime
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TimeBounds {
     pub min_time: TimePoint,
     pub max_time: TimePoint,
@@ -9128,7 +9128,7 @@ impl WriteXDR for TimeBounds {
 //        uint32 maxLedger; // 0 here means no maxLedger
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerBounds {
     pub min_ledger: Uint32,
     pub max_ledger: Uint32,
@@ -9186,7 +9186,7 @@ impl WriteXDR for LedgerBounds {
 //        SignerKey extraSigners<2>;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PreconditionsV2 {
     pub time_bounds: Option<TimeBounds>,
     pub ledger_bounds: Option<LedgerBounds>,
@@ -9231,7 +9231,7 @@ impl WriteXDR for PreconditionsV2 {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum PreconditionType {
     PrecondNone = 0,
@@ -9288,7 +9288,7 @@ impl WriteXDR for PreconditionType {
 //    };
 //
 // union with discriminant PreconditionType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum Preconditions {
     PrecondNone,
     PrecondTime(TimeBounds),
@@ -9350,7 +9350,7 @@ pub const MAX_OPS_PER_TX: u64 = 100;
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TransactionV0Ext {
     V0,
 }
@@ -9403,7 +9403,7 @@ impl WriteXDR for TransactionV0Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionV0 {
     pub source_account_ed25519: Uint256,
     pub fee: Uint32,
@@ -9451,7 +9451,7 @@ impl WriteXDR for TransactionV0 {
 //        DecoratedSignature signatures<20>;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionV0Envelope {
     pub tx: TransactionV0,
     pub signatures: Vec<DecoratedSignature>,
@@ -9483,7 +9483,7 @@ impl WriteXDR for TransactionV0Envelope {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TransactionExt {
     V0,
 }
@@ -9547,7 +9547,7 @@ impl WriteXDR for TransactionExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Transaction {
     pub source_account: MuxedAccount,
     pub fee: Uint32,
@@ -9595,7 +9595,7 @@ impl WriteXDR for Transaction {
 //        DecoratedSignature signatures<20>;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionV1Envelope {
     pub tx: Transaction,
     pub signatures: Vec<DecoratedSignature>,
@@ -9627,7 +9627,7 @@ impl WriteXDR for TransactionV1Envelope {
 //        }
 //
 // union with discriminant EnvelopeType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum FeeBumpTransactionInnerTx {
     EnvelopeTypeTx(TransactionV1Envelope),
 }
@@ -9673,7 +9673,7 @@ impl WriteXDR for FeeBumpTransactionInnerTx {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum FeeBumpTransactionExt {
     V0,
 }
@@ -9728,7 +9728,7 @@ impl WriteXDR for FeeBumpTransactionExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FeeBumpTransaction {
     pub fee_source: MuxedAccount,
     pub fee: Int64,
@@ -9767,7 +9767,7 @@ impl WriteXDR for FeeBumpTransaction {
 //        DecoratedSignature signatures<20>;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FeeBumpTransactionEnvelope {
     pub tx: FeeBumpTransaction,
     pub signatures: Vec<DecoratedSignature>,
@@ -9803,7 +9803,7 @@ impl WriteXDR for FeeBumpTransactionEnvelope {
 //    };
 //
 // union with discriminant EnvelopeType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TransactionEnvelope {
     EnvelopeTypeTxV0(TransactionV0Envelope),
     EnvelopeTypeTx(TransactionV1Envelope),
@@ -9864,7 +9864,7 @@ impl WriteXDR for TransactionEnvelope {
 //        }
 //
 // union with discriminant EnvelopeType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TransactionSignaturePayloadTaggedTransaction {
     EnvelopeTypeTx(Transaction),
     EnvelopeTypeTxFeeBump(FeeBumpTransaction),
@@ -9923,7 +9923,7 @@ impl WriteXDR for TransactionSignaturePayloadTaggedTransaction {
 //        taggedTransaction;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionSignaturePayload {
     pub network_id: Hash,
     pub tagged_transaction: TransactionSignaturePayloadTaggedTransaction,
@@ -9957,7 +9957,7 @@ impl WriteXDR for TransactionSignaturePayload {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ClaimAtomType {
     ClaimAtomTypeV0 = 0,
@@ -10018,7 +10018,7 @@ impl WriteXDR for ClaimAtomType {
 //        int64 amountBought;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClaimOfferAtomV0 {
     pub seller_ed25519: Uint256,
     pub offer_id: Int64,
@@ -10070,7 +10070,7 @@ impl WriteXDR for ClaimOfferAtomV0 {
 //        int64 amountBought;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClaimOfferAtom {
     pub seller_id: AccountId,
     pub offer_id: Int64,
@@ -10120,7 +10120,7 @@ impl WriteXDR for ClaimOfferAtom {
 //        int64 amountBought;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClaimLiquidityAtom {
     pub liquidity_pool_id: PoolId,
     pub asset_sold: Asset,
@@ -10165,7 +10165,7 @@ impl WriteXDR for ClaimLiquidityAtom {
 //    };
 //
 // union with discriminant ClaimAtomType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ClaimAtom {
     ClaimAtomTypeV0(ClaimOfferAtomV0),
     ClaimAtomTypeOrderBook(ClaimOfferAtom),
@@ -10230,7 +10230,7 @@ impl WriteXDR for ClaimAtom {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum CreateAccountResultCode {
     CreateAccountSuccess = 0,
@@ -10289,7 +10289,7 @@ impl WriteXDR for CreateAccountResultCode {
 //    };
 //
 // union with discriminant CreateAccountResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum CreateAccountResult {
     CreateAccountSuccess,
 }
@@ -10344,7 +10344,7 @@ impl WriteXDR for CreateAccountResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum PaymentResultCode {
     PaymentSuccess = 0,
@@ -10413,7 +10413,7 @@ impl WriteXDR for PaymentResultCode {
 //    };
 //
 // union with discriminant PaymentResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum PaymentResult {
     PaymentSuccess,
 }
@@ -10480,7 +10480,7 @@ impl WriteXDR for PaymentResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum PathPaymentStrictReceiveResultCode {
     PathPaymentStrictReceiveSuccess = 0,
@@ -10553,7 +10553,7 @@ impl WriteXDR for PathPaymentStrictReceiveResultCode {
 //        int64 amount;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SimplePaymentResult {
     pub destination: AccountId,
     pub asset: Asset,
@@ -10587,7 +10587,7 @@ impl WriteXDR for SimplePaymentResult {
 //            SimplePaymentResult last;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PathPaymentStrictReceiveResultSuccess {
     pub offers: Vec<ClaimAtom>,
     pub last: SimplePaymentResult,
@@ -10628,7 +10628,7 @@ impl WriteXDR for PathPaymentStrictReceiveResultSuccess {
 //    };
 //
 // union with discriminant PathPaymentStrictReceiveResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum PathPaymentStrictReceiveResult {
     PathPaymentStrictReceiveSuccess(PathPaymentStrictReceiveResultSuccess),
     PathPaymentStrictReceiveNoIssuer(Asset),
@@ -10709,7 +10709,7 @@ impl WriteXDR for PathPaymentStrictReceiveResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum PathPaymentStrictSendResultCode {
     PathPaymentStrictSendSuccess = 0,
@@ -10781,7 +10781,7 @@ impl WriteXDR for PathPaymentStrictSendResultCode {
 //            SimplePaymentResult last;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PathPaymentStrictSendResultSuccess {
     pub offers: Vec<ClaimAtom>,
     pub last: SimplePaymentResult,
@@ -10821,7 +10821,7 @@ impl WriteXDR for PathPaymentStrictSendResultSuccess {
 //    };
 //
 // union with discriminant PathPaymentStrictSendResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum PathPaymentStrictSendResult {
     PathPaymentStrictSendSuccess(PathPaymentStrictSendResultSuccess),
     PathPaymentStrictSendNoIssuer(Asset),
@@ -10901,7 +10901,7 @@ impl WriteXDR for PathPaymentStrictSendResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ManageSellOfferResultCode {
     ManageSellOfferSuccess = 0,
@@ -10975,7 +10975,7 @@ impl WriteXDR for ManageSellOfferResultCode {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ManageOfferEffect {
     ManageOfferCreated = 0,
@@ -11031,7 +11031,7 @@ impl WriteXDR for ManageOfferEffect {
 //        }
 //
 // union with discriminant ManageOfferEffect
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ManageOfferSuccessResultOffer {
     ManageOfferCreated(OfferEntry),
     ManageOfferUpdated(OfferEntry),
@@ -11092,7 +11092,7 @@ impl WriteXDR for ManageOfferSuccessResultOffer {
 //        offer;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ManageOfferSuccessResult {
     pub offers_claimed: Vec<ClaimAtom>,
     pub offer: ManageOfferSuccessResultOffer,
@@ -11126,7 +11126,7 @@ impl WriteXDR for ManageOfferSuccessResult {
 //    };
 //
 // union with discriminant ManageSellOfferResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ManageSellOfferResult {
     ManageSellOfferSuccess(ManageOfferSuccessResult),
 }
@@ -11190,7 +11190,7 @@ impl WriteXDR for ManageSellOfferResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ManageBuyOfferResultCode {
     ManageBuyOfferSuccess = 0,
@@ -11265,7 +11265,7 @@ impl WriteXDR for ManageBuyOfferResultCode {
 //    };
 //
 // union with discriminant ManageBuyOfferResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ManageBuyOfferResult {
     ManageBuyOfferSuccess(ManageOfferSuccessResult),
 }
@@ -11323,7 +11323,7 @@ impl WriteXDR for ManageBuyOfferResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum SetOptionsResultCode {
     SetOptionsSuccess = 0,
@@ -11394,7 +11394,7 @@ impl WriteXDR for SetOptionsResultCode {
 //    };
 //
 // union with discriminant SetOptionsResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum SetOptionsResult {
     SetOptionsSuccess,
 }
@@ -11451,7 +11451,7 @@ impl WriteXDR for SetOptionsResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ChangeTrustResultCode {
     ChangeTrustSuccess = 0,
@@ -11518,7 +11518,7 @@ impl WriteXDR for ChangeTrustResultCode {
 //    };
 //
 // union with discriminant ChangeTrustResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ChangeTrustResult {
     ChangeTrustSuccess,
 }
@@ -11571,7 +11571,7 @@ impl WriteXDR for ChangeTrustResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum AllowTrustResultCode {
     AllowTrustSuccess = 0,
@@ -11634,7 +11634,7 @@ impl WriteXDR for AllowTrustResultCode {
 //    };
 //
 // union with discriminant AllowTrustResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum AllowTrustResult {
     AllowTrustSuccess,
 }
@@ -11687,7 +11687,7 @@ impl WriteXDR for AllowTrustResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum AccountMergeResultCode {
     AccountMergeSuccess = 0,
@@ -11752,7 +11752,7 @@ impl WriteXDR for AccountMergeResultCode {
 //    };
 //
 // union with discriminant AccountMergeResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum AccountMergeResult {
     AccountMergeSuccess(Int64),
 }
@@ -11800,7 +11800,7 @@ impl WriteXDR for AccountMergeResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum InflationResultCode {
     InflationSuccess = 0,
@@ -11850,7 +11850,7 @@ impl WriteXDR for InflationResultCode {
 //        int64 amount;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct InflationPayout {
     pub destination: AccountId,
     pub amount: Int64,
@@ -11884,7 +11884,7 @@ impl WriteXDR for InflationPayout {
 //    };
 //
 // union with discriminant InflationResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum InflationResult {
     InflationSuccess(Vec<InflationPayout>),
 }
@@ -11937,7 +11937,7 @@ impl WriteXDR for InflationResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ManageDataResultCode {
     ManageDataSuccess = 0,
@@ -11996,7 +11996,7 @@ impl WriteXDR for ManageDataResultCode {
 //    };
 //
 // union with discriminant ManageDataResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ManageDataResult {
     ManageDataSuccess,
 }
@@ -12042,7 +12042,7 @@ impl WriteXDR for ManageDataResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum BumpSequenceResultCode {
     BumpSequenceSuccess = 0,
@@ -12095,7 +12095,7 @@ impl WriteXDR for BumpSequenceResultCode {
 //    };
 //
 // union with discriminant BumpSequenceResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum BumpSequenceResult {
     BumpSequenceSuccess,
 }
@@ -12143,7 +12143,7 @@ impl WriteXDR for BumpSequenceResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum CreateClaimableBalanceResultCode {
     CreateClaimableBalanceSuccess = 0,
@@ -12205,7 +12205,7 @@ impl WriteXDR for CreateClaimableBalanceResultCode {
 //    };
 //
 // union with discriminant CreateClaimableBalanceResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum CreateClaimableBalanceResult {
     CreateClaimableBalanceSuccess(ClaimableBalanceId),
 }
@@ -12259,7 +12259,7 @@ impl WriteXDR for CreateClaimableBalanceResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ClaimClaimableBalanceResultCode {
     ClaimClaimableBalanceSuccess = 0,
@@ -12320,7 +12320,7 @@ impl WriteXDR for ClaimClaimableBalanceResultCode {
 //    };
 //
 // union with discriminant ClaimClaimableBalanceResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ClaimClaimableBalanceResult {
     ClaimClaimableBalanceSuccess,
 }
@@ -12374,7 +12374,7 @@ impl WriteXDR for ClaimClaimableBalanceResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum BeginSponsoringFutureReservesResultCode {
     BeginSponsoringFutureReservesSuccess = 0,
@@ -12432,7 +12432,7 @@ impl WriteXDR for BeginSponsoringFutureReservesResultCode {
 //    };
 //
 // union with discriminant BeginSponsoringFutureReservesResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum BeginSponsoringFutureReservesResult {
     BeginSponsoringFutureReservesSuccess,
 }
@@ -12484,7 +12484,7 @@ impl WriteXDR for BeginSponsoringFutureReservesResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum EndSponsoringFutureReservesResultCode {
     EndSponsoringFutureReservesSuccess = 0,
@@ -12538,7 +12538,7 @@ impl WriteXDR for EndSponsoringFutureReservesResultCode {
 //    };
 //
 // union with discriminant EndSponsoringFutureReservesResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum EndSponsoringFutureReservesResult {
     EndSponsoringFutureReservesSuccess,
 }
@@ -12594,7 +12594,7 @@ impl WriteXDR for EndSponsoringFutureReservesResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum RevokeSponsorshipResultCode {
     RevokeSponsorshipSuccess = 0,
@@ -12655,7 +12655,7 @@ impl WriteXDR for RevokeSponsorshipResultCode {
 //    };
 //
 // union with discriminant RevokeSponsorshipResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum RevokeSponsorshipResult {
     RevokeSponsorshipSuccess,
 }
@@ -12706,7 +12706,7 @@ impl WriteXDR for RevokeSponsorshipResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ClawbackResultCode {
     ClawbackSuccess = 0,
@@ -12765,7 +12765,7 @@ impl WriteXDR for ClawbackResultCode {
 //    };
 //
 // union with discriminant ClawbackResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ClawbackResult {
     ClawbackSuccess,
 }
@@ -12814,7 +12814,7 @@ impl WriteXDR for ClawbackResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ClawbackClaimableBalanceResultCode {
     ClawbackClaimableBalanceSuccess = 0,
@@ -12872,7 +12872,7 @@ impl WriteXDR for ClawbackClaimableBalanceResultCode {
 //    };
 //
 // union with discriminant ClawbackClaimableBalanceResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ClawbackClaimableBalanceResult {
     ClawbackClaimableBalanceSuccess,
 }
@@ -12929,7 +12929,7 @@ impl WriteXDR for ClawbackClaimableBalanceResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum SetTrustLineFlagsResultCode {
     SetTrustLineFlagsSuccess = 0,
@@ -12990,7 +12990,7 @@ impl WriteXDR for SetTrustLineFlagsResultCode {
 //    };
 //
 // union with discriminant SetTrustLineFlagsResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum SetTrustLineFlagsResult {
     SetTrustLineFlagsSuccess,
 }
@@ -13048,7 +13048,7 @@ impl WriteXDR for SetTrustLineFlagsResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum LiquidityPoolDepositResultCode {
     LiquidityPoolDepositSuccess = 0,
@@ -13113,7 +13113,7 @@ impl WriteXDR for LiquidityPoolDepositResultCode {
 //    };
 //
 // union with discriminant LiquidityPoolDepositResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LiquidityPoolDepositResult {
     LiquidityPoolDepositSuccess,
 }
@@ -13172,7 +13172,7 @@ impl WriteXDR for LiquidityPoolDepositResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum LiquidityPoolWithdrawResultCode {
     LiquidityPoolWithdrawSuccess = 0,
@@ -13233,7 +13233,7 @@ impl WriteXDR for LiquidityPoolWithdrawResultCode {
 //    };
 //
 // union with discriminant LiquidityPoolWithdrawResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LiquidityPoolWithdrawResult {
     LiquidityPoolWithdrawSuccess,
 }
@@ -13288,7 +13288,7 @@ impl WriteXDR for LiquidityPoolWithdrawResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum OperationResultCode {
     OpInner = 0,
@@ -13395,7 +13395,7 @@ impl WriteXDR for OperationResultCode {
 //        }
 //
 // union with discriminant OperationType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum OperationResultTr {
     CreateAccount(CreateAccountResult),
     Payment(PaymentResult),
@@ -13626,7 +13626,7 @@ impl WriteXDR for OperationResultTr {
 //    };
 //
 // union with discriminant OperationResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum OperationResult {
     OpInner(OperationResultTr),
 }
@@ -13693,7 +13693,7 @@ impl WriteXDR for OperationResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum TransactionResultCode {
     TxFeeBumpInnerSuccess = 1,
@@ -13794,7 +13794,7 @@ impl WriteXDR for TransactionResultCode {
 //        }
 //
 // union with discriminant TransactionResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum InnerTransactionResultResult {
     TxSuccess(Vec<OperationResult>),
     TxFailed(Vec<OperationResult>),
@@ -13902,7 +13902,7 @@ impl WriteXDR for InnerTransactionResultResult {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum InnerTransactionResultExt {
     V0,
 }
@@ -13978,7 +13978,7 @@ impl WriteXDR for InnerTransactionResultExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct InnerTransactionResult {
     pub fee_charged: Int64,
     pub result: InnerTransactionResultResult,
@@ -14012,7 +14012,7 @@ impl WriteXDR for InnerTransactionResult {
 //        InnerTransactionResult result; // result for the inner transaction
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct InnerTransactionResultPair {
     pub transaction_hash: Hash,
     pub result: InnerTransactionResult,
@@ -14050,7 +14050,7 @@ impl WriteXDR for InnerTransactionResultPair {
 //        }
 //
 // union with discriminant TransactionResultCode
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TransactionResultResult {
     TxFeeBumpInnerSuccess(InnerTransactionResultPair),
     TxFeeBumpInnerFailed(InnerTransactionResultPair),
@@ -14114,7 +14114,7 @@ impl WriteXDR for TransactionResultResult {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum TransactionResultExt {
     V0,
 }
@@ -14177,7 +14177,7 @@ impl WriteXDR for TransactionResultExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionResult {
     pub fee_charged: Int64,
     pub result: TransactionResultResult,
@@ -14207,7 +14207,7 @@ impl WriteXDR for TransactionResult {
 //
 //   typedef opaque Hash[32];
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Hash(pub [u8; 32]);
 
 impl From<Hash> for [u8; 32] {
@@ -14240,7 +14240,7 @@ impl WriteXDR for Hash {
 //
 //   typedef opaque uint256[32];
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Uint256(pub [u8; 32]);
 
 impl From<Uint256> for [u8; 32] {
@@ -14273,7 +14273,7 @@ impl WriteXDR for Uint256 {
 //
 //   typedef unsigned int uint32;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Uint32(pub u32);
 
 impl From<Uint32> for u32 {
@@ -14306,7 +14306,7 @@ impl WriteXDR for Uint32 {
 //
 //   typedef int int32;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Int32(pub i32);
 
 impl From<Int32> for i32 {
@@ -14339,7 +14339,7 @@ impl WriteXDR for Int32 {
 //
 //   typedef unsigned hyper uint64;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Uint64(pub u64);
 
 impl From<Uint64> for u64 {
@@ -14372,7 +14372,7 @@ impl WriteXDR for Uint64 {
 //
 //   typedef hyper int64;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Int64(pub i64);
 
 impl From<Int64> for i64 {
@@ -14410,7 +14410,7 @@ impl WriteXDR for Int64 {
 //    };
 //
 // union with discriminant i32
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ExtensionPoint {
     V0,
 }
@@ -14459,7 +14459,7 @@ impl WriteXDR for ExtensionPoint {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum CryptoKeyType {
     KeyTypeEd25519 = 0,
@@ -14515,7 +14515,7 @@ impl WriteXDR for CryptoKeyType {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum PublicKeyType {
     PublicKeyTypeEd25519 = 0,
@@ -14566,7 +14566,7 @@ impl WriteXDR for PublicKeyType {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum SignerKeyType {
     SignerKeyTypeEd25519 = 0,
@@ -14621,7 +14621,7 @@ impl WriteXDR for SignerKeyType {
 //    };
 //
 // union with discriminant PublicKeyType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum PublicKey {
     PublicKeyTypeEd25519(Uint256),
 }
@@ -14668,7 +14668,7 @@ impl WriteXDR for PublicKey {
 //            opaque payload<64>;
 //        }
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
     pub payload: Vec<u8>,
@@ -14714,7 +14714,7 @@ impl WriteXDR for SignerKeyEd25519SignedPayload {
 //    };
 //
 // union with discriminant SignerKeyType
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum SignerKey {
     SignerKeyTypeEd25519(Uint256),
     SignerKeyTypePreAuthTx(Uint256),
@@ -14777,7 +14777,7 @@ impl WriteXDR for SignerKey {
 //
 //   typedef opaque Signature<64>;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Signature(pub Vec<u8>);
 
 impl From<Signature> for Vec<u8> {
@@ -14810,7 +14810,7 @@ impl WriteXDR for Signature {
 //
 //   typedef opaque SignatureHint[4];
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SignatureHint(pub [u8; 4]);
 
 impl From<SignatureHint> for [u8; 4] {
@@ -14843,7 +14843,7 @@ impl WriteXDR for SignatureHint {
 //
 //   typedef PublicKey NodeID;
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct NodeId(pub PublicKey);
 
 impl From<NodeId> for PublicKey {
@@ -14879,7 +14879,7 @@ impl WriteXDR for NodeId {
 //        opaque key[32];
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Curve25519Secret {
     pub key: [u8; 32],
 }
@@ -14906,7 +14906,7 @@ impl WriteXDR for Curve25519Secret {
 //        opaque key[32];
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Curve25519Public {
     pub key: [u8; 32],
 }
@@ -14933,7 +14933,7 @@ impl WriteXDR for Curve25519Public {
 //        opaque key[32];
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct HmacSha256Key {
     pub key: [u8; 32],
 }
@@ -14960,7 +14960,7 @@ impl WriteXDR for HmacSha256Key {
 //        opaque mac[32];
 //    };
 //
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct HmacSha256Mac {
     pub mac: [u8; 32],
 }

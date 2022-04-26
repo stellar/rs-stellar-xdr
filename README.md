@@ -1,6 +1,4 @@
 # rs-stellar-xdr
 Rust SDK for Stellar XDR.
 
-**DO NOT USE**
-
-**This crate is untested, incomplete, and not suitable for use in production.**
+**This repository contains code that is in early development, incomplete, not tested, and not recommended for use. The API is unstable, experimental, and is receiving breaking changes frequently.**

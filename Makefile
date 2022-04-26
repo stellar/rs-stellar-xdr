@@ -30,7 +30,9 @@ xdr:
 	curl -LO https://github.com/stellar/stellar-core/raw/master/src/xdr/Stellar-ledger.x && \
 	curl -LO https://github.com/stellar/stellar-core/raw/master/src/xdr/Stellar-overlay.x && \
 	curl -LO https://github.com/stellar/stellar-core/raw/master/src/xdr/Stellar-transaction.x && \
-	curl -LO https://github.com/stellar/stellar-core/raw/master/src/xdr/Stellar-types.x
+	curl -LO https://github.com/stellar/stellar-core/raw/master/src/xdr/Stellar-types.x && \
+	true
 
 clean:
-	rm -fr xdr src/xdr.rs
+	rm -fr xdr
+	rm -fr src/xdr.rs

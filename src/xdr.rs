@@ -122,6 +122,30 @@ impl WriteXDR for u64 {
     }
 }
 
+impl ReadXDR for f32 {
+    fn read_xdr(_r: &mut impl Read) -> Result<Self> {
+        todo!()
+    }
+}
+
+impl WriteXDR for f32 {
+    fn write_xdr(&self, _w: &mut impl Write) -> Result<()> {
+        todo!()
+    }
+}
+
+impl ReadXDR for f64 {
+    fn read_xdr(_r: &mut impl Read) -> Result<Self> {
+        todo!()
+    }
+}
+
+impl WriteXDR for f64 {
+    fn write_xdr(&self, _w: &mut impl Write) -> Result<()> {
+        todo!()
+    }
+}
+
 impl ReadXDR for bool {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = r.read_u32::<BigEndian>()?;
@@ -617,7 +641,7 @@ pub enum ScpStatementPledges {
 }
 
 impl ScpStatementPledges {
-    fn discriminant(&self) -> ScpStatementType {
+    pub fn discriminant(&self) -> ScpStatementType {
         match self {
             Self::ScpStPrepare(_) => ScpStatementType::ScpStPrepare,
             Self::ScpStConfirm(_) => ScpStatementType::ScpStConfirm,
@@ -1237,7 +1261,7 @@ pub enum AssetCode {
 }
 
 impl AssetCode {
-    fn discriminant(&self) -> AssetType {
+    pub fn discriminant(&self) -> AssetType {
         match self {
             Self::AssetTypeCreditAlphanum4(_) => AssetType::AssetTypeCreditAlphanum4,
             Self::AssetTypeCreditAlphanum12(_) => AssetType::AssetTypeCreditAlphanum12,
@@ -1360,7 +1384,7 @@ pub enum Asset {
 }
 
 impl Asset {
-    fn discriminant(&self) -> AssetType {
+    pub fn discriminant(&self) -> AssetType {
         match self {
             Self::AssetTypeNative => AssetType::AssetTypeNative,
             Self::AssetTypeCreditAlphanum4(_) => AssetType::AssetTypeCreditAlphanum4,
@@ -1789,7 +1813,7 @@ pub enum AccountEntryExtensionV2Ext {
 }
 
 impl AccountEntryExtensionV2Ext {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
             Self::V3(_) => 3,
@@ -1886,7 +1910,7 @@ pub enum AccountEntryExtensionV1Ext {
 }
 
 impl AccountEntryExtensionV1Ext {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
             Self::V2(_) => 2,
@@ -1975,7 +1999,7 @@ pub enum AccountEntryExt {
 }
 
 impl AccountEntryExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
@@ -2239,7 +2263,7 @@ pub enum TrustLineAsset {
 }
 
 impl TrustLineAsset {
-    fn discriminant(&self) -> AssetType {
+    pub fn discriminant(&self) -> AssetType {
         match self {
             Self::AssetTypeNative => AssetType::AssetTypeNative,
             Self::AssetTypeCreditAlphanum4(_) => AssetType::AssetTypeCreditAlphanum4,
@@ -2298,7 +2322,7 @@ pub enum TrustLineEntryExtensionV2Ext {
 }
 
 impl TrustLineEntryExtensionV2Ext {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -2382,7 +2406,7 @@ pub enum TrustLineEntryV1Ext {
 }
 
 impl TrustLineEntryV1Ext {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
             Self::V2(_) => 2,
@@ -2483,7 +2507,7 @@ pub enum TrustLineEntryExt {
 }
 
 impl TrustLineEntryExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
@@ -2656,7 +2680,7 @@ pub enum OfferEntryExt {
 }
 
 impl OfferEntryExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -2768,7 +2792,7 @@ pub enum DataEntryExt {
 }
 
 impl DataEntryExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -2937,7 +2961,7 @@ pub enum ClaimPredicate {
 }
 
 impl ClaimPredicate {
-    fn discriminant(&self) -> ClaimPredicateType {
+    pub fn discriminant(&self) -> ClaimPredicateType {
         match self {
             Self::ClaimPredicateUnconditional => ClaimPredicateType::ClaimPredicateUnconditional,
             Self::ClaimPredicateAnd(_) => ClaimPredicateType::ClaimPredicateAnd,
@@ -3093,7 +3117,7 @@ pub enum Claimant {
 }
 
 impl Claimant {
-    fn discriminant(&self) -> ClaimantType {
+    pub fn discriminant(&self) -> ClaimantType {
         match self {
             Self::ClaimantTypeV0(_) => ClaimantType::ClaimantTypeV0,
         }
@@ -3187,7 +3211,7 @@ pub enum ClaimableBalanceId {
 }
 
 impl ClaimableBalanceId {
-    fn discriminant(&self) -> ClaimableBalanceIdType {
+    pub fn discriminant(&self) -> ClaimableBalanceIdType {
         match self {
             Self::ClaimableBalanceIdTypeV0(_) => ClaimableBalanceIdType::ClaimableBalanceIdTypeV0,
         }
@@ -3289,7 +3313,7 @@ pub enum ClaimableBalanceEntryExtensionV1Ext {
 }
 
 impl ClaimableBalanceEntryExtensionV1Ext {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -3373,7 +3397,7 @@ pub enum ClaimableBalanceEntryExt {
 }
 
 impl ClaimableBalanceEntryExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
@@ -3568,7 +3592,7 @@ pub enum LiquidityPoolEntryBody {
 }
 
 impl LiquidityPoolEntryBody {
-    fn discriminant(&self) -> LiquidityPoolType {
+    pub fn discriminant(&self) -> LiquidityPoolType {
         match self {
             Self::LiquidityPoolConstantProduct(_) => {
                 LiquidityPoolType::LiquidityPoolConstantProduct
@@ -3662,7 +3686,7 @@ pub enum LedgerEntryExtensionV1Ext {
 }
 
 impl LedgerEntryExtensionV1Ext {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -3758,7 +3782,7 @@ pub enum LedgerEntryData {
 }
 
 impl LedgerEntryData {
-    fn discriminant(&self) -> LedgerEntryType {
+    pub fn discriminant(&self) -> LedgerEntryType {
         match self {
             Self::Account(_) => LedgerEntryType::Account,
             Self::Trustline(_) => LedgerEntryType::Trustline,
@@ -3826,7 +3850,7 @@ pub enum LedgerEntryExt {
 }
 
 impl LedgerEntryExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
@@ -4148,7 +4172,7 @@ pub enum LedgerKey {
 }
 
 impl LedgerKey {
-    fn discriminant(&self) -> LedgerEntryType {
+    pub fn discriminant(&self) -> LedgerEntryType {
         match self {
             Self::Account(_) => LedgerEntryType::Account,
             Self::Trustline(_) => LedgerEntryType::Trustline,
@@ -4400,7 +4424,7 @@ pub enum StellarValueExt {
 }
 
 impl StellarValueExt {
-    fn discriminant(&self) -> StellarValueType {
+    pub fn discriminant(&self) -> StellarValueType {
         match self {
             Self::StellarValueBasic => StellarValueType::StellarValueBasic,
             Self::StellarValueSigned(_) => StellarValueType::StellarValueSigned,
@@ -4563,7 +4587,7 @@ pub enum LedgerHeaderExtensionV1Ext {
 }
 
 impl LedgerHeaderExtensionV1Ext {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -4647,7 +4671,7 @@ pub enum LedgerHeaderExt {
 }
 
 impl LedgerHeaderExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
@@ -4870,7 +4894,7 @@ pub enum LedgerUpgrade {
 }
 
 impl LedgerUpgrade {
-    fn discriminant(&self) -> LedgerUpgradeType {
+    pub fn discriminant(&self) -> LedgerUpgradeType {
         match self {
             Self::LedgerUpgradeVersion(_) => LedgerUpgradeType::LedgerUpgradeVersion,
             Self::LedgerUpgradeBaseFee(_) => LedgerUpgradeType::LedgerUpgradeBaseFee,
@@ -4995,7 +5019,7 @@ pub enum BucketMetadataExt {
 }
 
 impl BucketMetadataExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -5087,7 +5111,7 @@ pub enum BucketEntry {
 }
 
 impl BucketEntry {
-    fn discriminant(&self) -> BucketEntryType {
+    pub fn discriminant(&self) -> BucketEntryType {
         match self {
             Self::Liveentry(_) => BucketEntryType::Liveentry,
             Self::Initentry(_) => BucketEntryType::Initentry,
@@ -5231,7 +5255,7 @@ pub enum TransactionHistoryEntryExt {
 }
 
 impl TransactionHistoryEntryExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -5317,7 +5341,7 @@ pub enum TransactionHistoryResultEntryExt {
 }
 
 impl TransactionHistoryResultEntryExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -5403,7 +5427,7 @@ pub enum LedgerHeaderHistoryEntryExt {
 }
 
 impl LedgerHeaderHistoryEntryExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -5551,7 +5575,7 @@ pub enum ScpHistoryEntry {
 }
 
 impl ScpHistoryEntry {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0(_) => 0,
         }
@@ -5661,7 +5685,7 @@ pub enum LedgerEntryChange {
 }
 
 impl LedgerEntryChange {
-    fn discriminant(&self) -> LedgerEntryChangeType {
+    pub fn discriminant(&self) -> LedgerEntryChangeType {
         match self {
             Self::LedgerEntryCreated(_) => LedgerEntryChangeType::LedgerEntryCreated,
             Self::LedgerEntryUpdated(_) => LedgerEntryChangeType::LedgerEntryUpdated,
@@ -5856,7 +5880,7 @@ pub enum TransactionMeta {
 }
 
 impl TransactionMeta {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
@@ -6024,7 +6048,7 @@ pub enum LedgerCloseMeta {
 }
 
 impl LedgerCloseMeta {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0(_) => 0,
         }
@@ -6363,7 +6387,7 @@ pub enum PeerAddressIp {
 }
 
 impl PeerAddressIp {
-    fn discriminant(&self) -> IpAddrType {
+    pub fn discriminant(&self) -> IpAddrType {
         match self {
             Self::IPv4(_) => IpAddrType::IPv4,
             Self::IPv6(_) => IpAddrType::IPv6,
@@ -6972,7 +6996,7 @@ pub enum SurveyResponseBody {
 }
 
 impl SurveyResponseBody {
-    fn discriminant(&self) -> SurveyMessageCommandType {
+    pub fn discriminant(&self) -> SurveyMessageCommandType {
         match self {
             Self::SurveyTopology(_) => SurveyMessageCommandType::SurveyTopology,
         }
@@ -7069,7 +7093,7 @@ pub enum StellarMessage {
 }
 
 impl StellarMessage {
-    fn discriminant(&self) -> MessageType {
+    pub fn discriminant(&self) -> MessageType {
         match self {
             Self::ErrorMsg(_) => MessageType::ErrorMsg,
             Self::Hello(_) => MessageType::Hello,
@@ -7208,7 +7232,7 @@ pub enum AuthenticatedMessage {
 }
 
 impl AuthenticatedMessage {
-    fn discriminant(&self) -> Uint32 {
+    pub fn discriminant(&self) -> Uint32 {
         match self {
             Self::V0(_) => Uint32(0),
         }
@@ -7252,7 +7276,7 @@ pub enum LiquidityPoolParameters {
 }
 
 impl LiquidityPoolParameters {
-    fn discriminant(&self) -> LiquidityPoolType {
+    pub fn discriminant(&self) -> LiquidityPoolType {
         match self {
             Self::LiquidityPoolConstantProduct(_) => {
                 LiquidityPoolType::LiquidityPoolConstantProduct
@@ -7338,7 +7362,7 @@ pub enum MuxedAccount {
 }
 
 impl MuxedAccount {
-    fn discriminant(&self) -> CryptoKeyType {
+    pub fn discriminant(&self) -> CryptoKeyType {
         match self {
             Self::KeyTypeEd25519(_) => CryptoKeyType::KeyTypeEd25519,
             Self::KeyTypeMuxedEd25519(_) => CryptoKeyType::KeyTypeMuxedEd25519,
@@ -7915,7 +7939,7 @@ pub enum ChangeTrustAsset {
 }
 
 impl ChangeTrustAsset {
-    fn discriminant(&self) -> AssetType {
+    pub fn discriminant(&self) -> AssetType {
         match self {
             Self::AssetTypeNative => AssetType::AssetTypeNative,
             Self::AssetTypeCreditAlphanum4(_) => AssetType::AssetTypeCreditAlphanum4,
@@ -8280,7 +8304,7 @@ pub enum RevokeSponsorshipOp {
 }
 
 impl RevokeSponsorshipOp {
-    fn discriminant(&self) -> RevokeSponsorshipType {
+    pub fn discriminant(&self) -> RevokeSponsorshipType {
         match self {
             Self::RevokeSponsorshipLedgerEntry(_) => {
                 RevokeSponsorshipType::RevokeSponsorshipLedgerEntry
@@ -8592,7 +8616,7 @@ pub enum OperationBody {
 }
 
 impl OperationBody {
-    fn discriminant(&self) -> OperationType {
+    pub fn discriminant(&self) -> OperationType {
         match self {
             Self::CreateAccount(_) => OperationType::CreateAccount,
             Self::Payment(_) => OperationType::Payment,
@@ -8918,7 +8942,7 @@ pub enum HashIdPreimage {
 }
 
 impl HashIdPreimage {
-    fn discriminant(&self) -> EnvelopeType {
+    pub fn discriminant(&self) -> EnvelopeType {
         match self {
             Self::EnvelopeTypeOpId(_) => EnvelopeType::EnvelopeTypeOpId,
             Self::EnvelopeTypePoolRevokeOpId(_) => EnvelopeType::EnvelopeTypePoolRevokeOpId,
@@ -9041,7 +9065,7 @@ pub enum Memo {
 }
 
 impl Memo {
-    fn discriminant(&self) -> MemoType {
+    pub fn discriminant(&self) -> MemoType {
         match self {
             Self::MemoNone => MemoType::MemoNone,
             Self::MemoText(_) => MemoType::MemoText,
@@ -9289,7 +9313,7 @@ pub enum Preconditions {
 }
 
 impl Preconditions {
-    fn discriminant(&self) -> PreconditionType {
+    pub fn discriminant(&self) -> PreconditionType {
         match self {
             Self::PrecondNone => PreconditionType::PrecondNone,
             Self::PrecondTime(_) => PreconditionType::PrecondTime,
@@ -9349,7 +9373,7 @@ pub enum TransactionV0Ext {
 }
 
 impl TransactionV0Ext {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -9482,7 +9506,7 @@ pub enum TransactionExt {
 }
 
 impl TransactionExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -9626,7 +9650,7 @@ pub enum FeeBumpTransactionInnerTx {
 }
 
 impl FeeBumpTransactionInnerTx {
-    fn discriminant(&self) -> EnvelopeType {
+    pub fn discriminant(&self) -> EnvelopeType {
         match self {
             Self::EnvelopeTypeTx(_) => EnvelopeType::EnvelopeTypeTx,
         }
@@ -9672,7 +9696,7 @@ pub enum FeeBumpTransactionExt {
 }
 
 impl FeeBumpTransactionExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -9804,7 +9828,7 @@ pub enum TransactionEnvelope {
 }
 
 impl TransactionEnvelope {
-    fn discriminant(&self) -> EnvelopeType {
+    pub fn discriminant(&self) -> EnvelopeType {
         match self {
             Self::EnvelopeTypeTxV0(_) => EnvelopeType::EnvelopeTypeTxV0,
             Self::EnvelopeTypeTx(_) => EnvelopeType::EnvelopeTypeTx,
@@ -9864,7 +9888,7 @@ pub enum TransactionSignaturePayloadTaggedTransaction {
 }
 
 impl TransactionSignaturePayloadTaggedTransaction {
-    fn discriminant(&self) -> EnvelopeType {
+    pub fn discriminant(&self) -> EnvelopeType {
         match self {
             Self::EnvelopeTypeTx(_) => EnvelopeType::EnvelopeTypeTx,
             Self::EnvelopeTypeTxFeeBump(_) => EnvelopeType::EnvelopeTypeTxFeeBump,
@@ -10166,7 +10190,7 @@ pub enum ClaimAtom {
 }
 
 impl ClaimAtom {
-    fn discriminant(&self) -> ClaimAtomType {
+    pub fn discriminant(&self) -> ClaimAtomType {
         match self {
             Self::ClaimAtomTypeV0(_) => ClaimAtomType::ClaimAtomTypeV0,
             Self::ClaimAtomTypeOrderBook(_) => ClaimAtomType::ClaimAtomTypeOrderBook,
@@ -10288,7 +10312,7 @@ pub enum CreateAccountResult {
 }
 
 impl CreateAccountResult {
-    fn discriminant(&self) -> CreateAccountResultCode {
+    pub fn discriminant(&self) -> CreateAccountResultCode {
         match self {
             Self::CreateAccountSuccess => CreateAccountResultCode::CreateAccountSuccess,
         }
@@ -10412,7 +10436,7 @@ pub enum PaymentResult {
 }
 
 impl PaymentResult {
-    fn discriminant(&self) -> PaymentResultCode {
+    pub fn discriminant(&self) -> PaymentResultCode {
         match self {
             Self::PaymentSuccess => PaymentResultCode::PaymentSuccess,
         }
@@ -10628,7 +10652,7 @@ pub enum PathPaymentStrictReceiveResult {
 }
 
 impl PathPaymentStrictReceiveResult {
-    fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
+    pub fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
         match self {
             Self::PathPaymentStrictReceiveSuccess(_) => {
                 PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSuccess
@@ -10821,7 +10845,7 @@ pub enum PathPaymentStrictSendResult {
 }
 
 impl PathPaymentStrictSendResult {
-    fn discriminant(&self) -> PathPaymentStrictSendResultCode {
+    pub fn discriminant(&self) -> PathPaymentStrictSendResultCode {
         match self {
             Self::PathPaymentStrictSendSuccess(_) => {
                 PathPaymentStrictSendResultCode::PathPaymentStrictSendSuccess
@@ -11031,7 +11055,7 @@ pub enum ManageOfferSuccessResultOffer {
 }
 
 impl ManageOfferSuccessResultOffer {
-    fn discriminant(&self) -> ManageOfferEffect {
+    pub fn discriminant(&self) -> ManageOfferEffect {
         match self {
             Self::ManageOfferCreated(_) => ManageOfferEffect::ManageOfferCreated,
             Self::ManageOfferUpdated(_) => ManageOfferEffect::ManageOfferUpdated,
@@ -11125,7 +11149,7 @@ pub enum ManageSellOfferResult {
 }
 
 impl ManageSellOfferResult {
-    fn discriminant(&self) -> ManageSellOfferResultCode {
+    pub fn discriminant(&self) -> ManageSellOfferResultCode {
         match self {
             Self::ManageSellOfferSuccess(_) => ManageSellOfferResultCode::ManageSellOfferSuccess,
         }
@@ -11264,7 +11288,7 @@ pub enum ManageBuyOfferResult {
 }
 
 impl ManageBuyOfferResult {
-    fn discriminant(&self) -> ManageBuyOfferResultCode {
+    pub fn discriminant(&self) -> ManageBuyOfferResultCode {
         match self {
             Self::ManageBuyOfferSuccess(_) => ManageBuyOfferResultCode::ManageBuyOfferSuccess,
         }
@@ -11393,7 +11417,7 @@ pub enum SetOptionsResult {
 }
 
 impl SetOptionsResult {
-    fn discriminant(&self) -> SetOptionsResultCode {
+    pub fn discriminant(&self) -> SetOptionsResultCode {
         match self {
             Self::SetOptionsSuccess => SetOptionsResultCode::SetOptionsSuccess,
         }
@@ -11517,7 +11541,7 @@ pub enum ChangeTrustResult {
 }
 
 impl ChangeTrustResult {
-    fn discriminant(&self) -> ChangeTrustResultCode {
+    pub fn discriminant(&self) -> ChangeTrustResultCode {
         match self {
             Self::ChangeTrustSuccess => ChangeTrustResultCode::ChangeTrustSuccess,
         }
@@ -11633,7 +11657,7 @@ pub enum AllowTrustResult {
 }
 
 impl AllowTrustResult {
-    fn discriminant(&self) -> AllowTrustResultCode {
+    pub fn discriminant(&self) -> AllowTrustResultCode {
         match self {
             Self::AllowTrustSuccess => AllowTrustResultCode::AllowTrustSuccess,
         }
@@ -11751,7 +11775,7 @@ pub enum AccountMergeResult {
 }
 
 impl AccountMergeResult {
-    fn discriminant(&self) -> AccountMergeResultCode {
+    pub fn discriminant(&self) -> AccountMergeResultCode {
         match self {
             Self::AccountMergeSuccess(_) => AccountMergeResultCode::AccountMergeSuccess,
         }
@@ -11883,7 +11907,7 @@ pub enum InflationResult {
 }
 
 impl InflationResult {
-    fn discriminant(&self) -> InflationResultCode {
+    pub fn discriminant(&self) -> InflationResultCode {
         match self {
             Self::InflationSuccess(_) => InflationResultCode::InflationSuccess,
         }
@@ -11995,7 +12019,7 @@ pub enum ManageDataResult {
 }
 
 impl ManageDataResult {
-    fn discriminant(&self) -> ManageDataResultCode {
+    pub fn discriminant(&self) -> ManageDataResultCode {
         match self {
             Self::ManageDataSuccess => ManageDataResultCode::ManageDataSuccess,
         }
@@ -12094,7 +12118,7 @@ pub enum BumpSequenceResult {
 }
 
 impl BumpSequenceResult {
-    fn discriminant(&self) -> BumpSequenceResultCode {
+    pub fn discriminant(&self) -> BumpSequenceResultCode {
         match self {
             Self::BumpSequenceSuccess => BumpSequenceResultCode::BumpSequenceSuccess,
         }
@@ -12204,7 +12228,7 @@ pub enum CreateClaimableBalanceResult {
 }
 
 impl CreateClaimableBalanceResult {
-    fn discriminant(&self) -> CreateClaimableBalanceResultCode {
+    pub fn discriminant(&self) -> CreateClaimableBalanceResultCode {
         match self {
             Self::CreateClaimableBalanceSuccess(_) => {
                 CreateClaimableBalanceResultCode::CreateClaimableBalanceSuccess
@@ -12319,7 +12343,7 @@ pub enum ClaimClaimableBalanceResult {
 }
 
 impl ClaimClaimableBalanceResult {
-    fn discriminant(&self) -> ClaimClaimableBalanceResultCode {
+    pub fn discriminant(&self) -> ClaimClaimableBalanceResultCode {
         match self {
             Self::ClaimClaimableBalanceSuccess => {
                 ClaimClaimableBalanceResultCode::ClaimClaimableBalanceSuccess
@@ -12431,7 +12455,7 @@ pub enum BeginSponsoringFutureReservesResult {
 }
 
 impl BeginSponsoringFutureReservesResult {
-    fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
+    pub fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
         match self {
             Self::BeginSponsoringFutureReservesSuccess => {
                 BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesSuccess
@@ -12537,7 +12561,7 @@ pub enum EndSponsoringFutureReservesResult {
 }
 
 impl EndSponsoringFutureReservesResult {
-    fn discriminant(&self) -> EndSponsoringFutureReservesResultCode {
+    pub fn discriminant(&self) -> EndSponsoringFutureReservesResultCode {
         match self {
             Self::EndSponsoringFutureReservesSuccess => {
                 EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesSuccess
@@ -12654,7 +12678,7 @@ pub enum RevokeSponsorshipResult {
 }
 
 impl RevokeSponsorshipResult {
-    fn discriminant(&self) -> RevokeSponsorshipResultCode {
+    pub fn discriminant(&self) -> RevokeSponsorshipResultCode {
         match self {
             Self::RevokeSponsorshipSuccess => RevokeSponsorshipResultCode::RevokeSponsorshipSuccess,
         }
@@ -12764,7 +12788,7 @@ pub enum ClawbackResult {
 }
 
 impl ClawbackResult {
-    fn discriminant(&self) -> ClawbackResultCode {
+    pub fn discriminant(&self) -> ClawbackResultCode {
         match self {
             Self::ClawbackSuccess => ClawbackResultCode::ClawbackSuccess,
         }
@@ -12871,7 +12895,7 @@ pub enum ClawbackClaimableBalanceResult {
 }
 
 impl ClawbackClaimableBalanceResult {
-    fn discriminant(&self) -> ClawbackClaimableBalanceResultCode {
+    pub fn discriminant(&self) -> ClawbackClaimableBalanceResultCode {
         match self {
             Self::ClawbackClaimableBalanceSuccess => {
                 ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceSuccess
@@ -12989,7 +13013,7 @@ pub enum SetTrustLineFlagsResult {
 }
 
 impl SetTrustLineFlagsResult {
-    fn discriminant(&self) -> SetTrustLineFlagsResultCode {
+    pub fn discriminant(&self) -> SetTrustLineFlagsResultCode {
         match self {
             Self::SetTrustLineFlagsSuccess => SetTrustLineFlagsResultCode::SetTrustLineFlagsSuccess,
         }
@@ -13112,7 +13136,7 @@ pub enum LiquidityPoolDepositResult {
 }
 
 impl LiquidityPoolDepositResult {
-    fn discriminant(&self) -> LiquidityPoolDepositResultCode {
+    pub fn discriminant(&self) -> LiquidityPoolDepositResultCode {
         match self {
             Self::LiquidityPoolDepositSuccess => {
                 LiquidityPoolDepositResultCode::LiquidityPoolDepositSuccess
@@ -13232,7 +13256,7 @@ pub enum LiquidityPoolWithdrawResult {
 }
 
 impl LiquidityPoolWithdrawResult {
-    fn discriminant(&self) -> LiquidityPoolWithdrawResultCode {
+    pub fn discriminant(&self) -> LiquidityPoolWithdrawResultCode {
         match self {
             Self::LiquidityPoolWithdrawSuccess => {
                 LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawSuccess
@@ -13417,7 +13441,7 @@ pub enum OperationResultTr {
 }
 
 impl OperationResultTr {
-    fn discriminant(&self) -> OperationType {
+    pub fn discriminant(&self) -> OperationType {
         match self {
             Self::CreateAccount(_) => OperationType::CreateAccount,
             Self::Payment(_) => OperationType::Payment,
@@ -13625,7 +13649,7 @@ pub enum OperationResult {
 }
 
 impl OperationResult {
-    fn discriminant(&self) -> OperationResultCode {
+    pub fn discriminant(&self) -> OperationResultCode {
         match self {
             Self::OpInner(_) => OperationResultCode::OpInner,
         }
@@ -13808,7 +13832,7 @@ pub enum InnerTransactionResultResult {
 }
 
 impl InnerTransactionResultResult {
-    fn discriminant(&self) -> TransactionResultCode {
+    pub fn discriminant(&self) -> TransactionResultCode {
         match self {
             Self::TxSuccess(_) => TransactionResultCode::TxSuccess,
             Self::TxFailed(_) => TransactionResultCode::TxFailed,
@@ -13901,7 +13925,7 @@ pub enum InnerTransactionResultExt {
 }
 
 impl InnerTransactionResultExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -14052,7 +14076,7 @@ pub enum TransactionResultResult {
 }
 
 impl TransactionResultResult {
-    fn discriminant(&self) -> TransactionResultCode {
+    pub fn discriminant(&self) -> TransactionResultCode {
         match self {
             Self::TxFeeBumpInnerSuccess(_) => TransactionResultCode::TxFeeBumpInnerSuccess,
             Self::TxFeeBumpInnerFailed(_) => TransactionResultCode::TxFeeBumpInnerFailed,
@@ -14113,7 +14137,7 @@ pub enum TransactionResultExt {
 }
 
 impl TransactionResultExt {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -14409,7 +14433,7 @@ pub enum ExtensionPoint {
 }
 
 impl ExtensionPoint {
-    fn discriminant(&self) -> i32 {
+    pub fn discriminant(&self) -> i32 {
         match self {
             Self::V0 => 0,
         }
@@ -14620,7 +14644,7 @@ pub enum PublicKey {
 }
 
 impl PublicKey {
-    fn discriminant(&self) -> PublicKeyType {
+    pub fn discriminant(&self) -> PublicKeyType {
         match self {
             Self::PublicKeyTypeEd25519(_) => PublicKeyType::PublicKeyTypeEd25519,
         }
@@ -14716,7 +14740,7 @@ pub enum SignerKey {
 }
 
 impl SignerKey {
-    fn discriminant(&self) -> SignerKeyType {
+    pub fn discriminant(&self) -> SignerKeyType {
         match self {
             Self::SignerKeyTypeEd25519(_) => SignerKeyType::SignerKeyTypeEd25519,
             Self::SignerKeyTypePreAuthTx(_) => SignerKeyType::SignerKeyTypePreAuthTx,
@@ -15199,7 +15223,7 @@ pub enum ScStatus {
 }
 
 impl ScStatus {
-    fn discriminant(&self) -> ScStatusType {
+    pub fn discriminant(&self) -> ScStatusType {
         match self {
             Self::SstOk => ScStatusType::SstOk,
             Self::SstUnknownError(_) => ScStatusType::SstUnknownError,
@@ -15269,7 +15293,7 @@ pub enum ScVal {
 }
 
 impl ScVal {
-    fn discriminant(&self) -> ScValType {
+    pub fn discriminant(&self) -> ScValType {
         match self {
             Self::ScvU63(_) => ScValType::ScvU63,
             Self::ScvU32(_) => ScValType::ScvU32,
@@ -15649,7 +15673,7 @@ pub enum ScObject {
 }
 
 impl ScObject {
-    fn discriminant(&self) -> ScObjectType {
+    pub fn discriminant(&self) -> ScObjectType {
         match self {
             Self::ScoBox(_) => ScObjectType::ScoBox,
             Self::ScoVec(_) => ScObjectType::ScoVec,

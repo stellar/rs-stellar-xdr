@@ -335,6 +335,12 @@ impl From<Vec<u8>> for Value {
     }
 }
 
+impl AsRef<Vec<u8>> for Value {
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0
+    }
+}
+
 impl ReadXDR for Value {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
@@ -839,6 +845,12 @@ impl From<PublicKey> for AccountId {
     }
 }
 
+impl AsRef<PublicKey> for AccountId {
+    fn as_ref(&self) -> &PublicKey {
+        &self.0
+    }
+}
+
 impl ReadXDR for AccountId {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <PublicKey as ReadXDR>::read_xdr(r)?;
@@ -869,6 +881,12 @@ impl From<Thresholds> for [u8; 4] {
 impl From<[u8; 4]> for Thresholds {
     fn from(x: [u8; 4]) -> Self {
         Thresholds(x)
+    }
+}
+
+impl AsRef<[u8; 4]> for Thresholds {
+    fn as_ref(&self) -> &[u8; 4] {
+        &self.0
     }
 }
 
@@ -917,6 +935,12 @@ impl From<i64> for SequenceNumber {
     }
 }
 
+impl AsRef<i64> for SequenceNumber {
+    fn as_ref(&self) -> &i64 {
+        &self.0
+    }
+}
+
 impl ReadXDR for SequenceNumber {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <i64 as ReadXDR>::read_xdr(r)?;
@@ -947,6 +971,12 @@ impl From<TimePoint> for u64 {
 impl From<u64> for TimePoint {
     fn from(x: u64) -> Self {
         TimePoint(x)
+    }
+}
+
+impl AsRef<u64> for TimePoint {
+    fn as_ref(&self) -> &u64 {
+        &self.0
     }
 }
 
@@ -983,6 +1013,12 @@ impl From<u64> for Duration {
     }
 }
 
+impl AsRef<u64> for Duration {
+    fn as_ref(&self) -> &u64 {
+        &self.0
+    }
+}
+
 impl ReadXDR for Duration {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <u64 as ReadXDR>::read_xdr(r)?;
@@ -1013,6 +1049,12 @@ impl From<DataValue> for Vec<u8> {
 impl From<Vec<u8>> for DataValue {
     fn from(x: Vec<u8>) -> Self {
         DataValue(x)
+    }
+}
+
+impl AsRef<Vec<u8>> for DataValue {
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0
     }
 }
 
@@ -1049,6 +1091,12 @@ impl From<Hash> for PoolId {
     }
 }
 
+impl AsRef<Hash> for PoolId {
+    fn as_ref(&self) -> &Hash {
+        &self.0
+    }
+}
+
 impl ReadXDR for PoolId {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <Hash as ReadXDR>::read_xdr(r)?;
@@ -1082,6 +1130,12 @@ impl From<[u8; 4]> for AssetCode4 {
     }
 }
 
+impl AsRef<[u8; 4]> for AssetCode4 {
+    fn as_ref(&self) -> &[u8; 4] {
+        &self.0
+    }
+}
+
 impl ReadXDR for AssetCode4 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <[u8; 4] as ReadXDR>::read_xdr(r)?;
@@ -1112,6 +1166,12 @@ impl From<AssetCode12> for [u8; 12] {
 impl From<[u8; 12]> for AssetCode12 {
     fn from(x: [u8; 12]) -> Self {
         AssetCode12(x)
+    }
+}
+
+impl AsRef<[u8; 12]> for AssetCode12 {
+    fn as_ref(&self) -> &[u8; 12] {
+        &self.0
     }
 }
 
@@ -1683,6 +1743,12 @@ impl From<SponsorshipDescriptor> for Option<AccountId> {
 impl From<Option<AccountId>> for SponsorshipDescriptor {
     fn from(x: Option<AccountId>) -> Self {
         SponsorshipDescriptor(x)
+    }
+}
+
+impl AsRef<Option<AccountId>> for SponsorshipDescriptor {
+    fn as_ref(&self) -> &Option<AccountId> {
+        &self.0
     }
 }
 
@@ -4256,6 +4322,12 @@ impl From<Vec<u8>> for UpgradeType {
     }
 }
 
+impl AsRef<Vec<u8>> for UpgradeType {
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0
+    }
+}
+
 impl ReadXDR for UpgradeType {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
@@ -5696,6 +5768,12 @@ impl From<Vec<LedgerEntryChange>> for LedgerEntryChanges {
     }
 }
 
+impl AsRef<Vec<LedgerEntryChange>> for LedgerEntryChanges {
+    fn as_ref(&self) -> &Vec<LedgerEntryChange> {
+        &self.0
+    }
+}
+
 impl ReadXDR for LedgerEntryChanges {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <Vec<LedgerEntryChange> as ReadXDR>::read_xdr(r)?;
@@ -6681,6 +6759,12 @@ impl From<Vec<u8>> for EncryptedBody {
     }
 }
 
+impl AsRef<Vec<u8>> for EncryptedBody {
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0
+    }
+}
+
 impl ReadXDR for EncryptedBody {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
@@ -6870,6 +6954,12 @@ impl From<PeerStatList> for Vec<PeerStats> {
 impl From<Vec<PeerStats>> for PeerStatList {
     fn from(x: Vec<PeerStats>) -> Self {
         PeerStatList(x)
+    }
+}
+
+impl AsRef<Vec<PeerStats>> for PeerStatList {
+    fn as_ref(&self) -> &Vec<PeerStats> {
+        &self.0
     }
 }
 
@@ -14185,6 +14275,12 @@ impl From<[u8; 32]> for Hash {
     }
 }
 
+impl AsRef<[u8; 32]> for Hash {
+    fn as_ref(&self) -> &[u8; 32] {
+        &self.0
+    }
+}
+
 impl ReadXDR for Hash {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <[u8; 32] as ReadXDR>::read_xdr(r)?;
@@ -14215,6 +14311,12 @@ impl From<Uint256> for [u8; 32] {
 impl From<[u8; 32]> for Uint256 {
     fn from(x: [u8; 32]) -> Self {
         Uint256(x)
+    }
+}
+
+impl AsRef<[u8; 32]> for Uint256 {
+    fn as_ref(&self) -> &[u8; 32] {
+        &self.0
     }
 }
 
@@ -14647,6 +14749,12 @@ impl From<Vec<u8>> for Signature {
     }
 }
 
+impl AsRef<Vec<u8>> for Signature {
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0
+    }
+}
+
 impl ReadXDR for Signature {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
@@ -14680,6 +14788,12 @@ impl From<[u8; 4]> for SignatureHint {
     }
 }
 
+impl AsRef<[u8; 4]> for SignatureHint {
+    fn as_ref(&self) -> &[u8; 4] {
+        &self.0
+    }
+}
+
 impl ReadXDR for SignatureHint {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <[u8; 4] as ReadXDR>::read_xdr(r)?;
@@ -14710,6 +14824,12 @@ impl From<NodeId> for PublicKey {
 impl From<PublicKey> for NodeId {
     fn from(x: PublicKey) -> Self {
         NodeId(x)
+    }
+}
+
+impl AsRef<PublicKey> for NodeId {
+    fn as_ref(&self) -> &PublicKey {
+        &self.0
     }
 }
 
@@ -15309,6 +15429,12 @@ impl From<Vec<ScVal>> for ScVec {
     }
 }
 
+impl AsRef<Vec<ScVal>> for ScVec {
+    fn as_ref(&self) -> &Vec<ScVal> {
+        &self.0
+    }
+}
+
 impl ReadXDR for ScVec {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <Vec<ScVal> as ReadXDR>::read_xdr(r)?;
@@ -15339,6 +15465,12 @@ impl From<ScMap> for Vec<ScMapEntry> {
 impl From<Vec<ScMapEntry>> for ScMap {
     fn from(x: Vec<ScMapEntry>) -> Self {
         ScMap(x)
+    }
+}
+
+impl AsRef<Vec<ScMapEntry>> for ScMap {
+    fn as_ref(&self) -> &Vec<ScMapEntry> {
+        &self.0
     }
 }
 

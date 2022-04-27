@@ -6,7 +6,7 @@ fn test_build_small_tx() {
         tx: Transaction {
             source_account: MuxedAccount::KeyTypeEd25519(Uint256([0; 32])),
             fee: 0,
-            seq_num: 1,
+            seq_num: SequenceNumber(1),
             cond: Preconditions::PrecondNone,
             memo: Memo::MemoText("Stellar".as_bytes().to_vec()),
             operations: [].to_vec(),
@@ -25,7 +25,7 @@ fn test_parse_pubnet_v18_tx() {
     println!("{:?}", te);
 
     if let TransactionEnvelope::EnvelopeTypeTx(te) = te {
-        assert_eq!(te.tx.seq_num, 2470486663495685);
+        assert_eq!(te.tx.seq_num, SequenceNumber(2470486663495685));
         if let OperationBody::CreateAccount(op) = &te.tx.operations[0].body {
             assert_eq!(op.starting_balance, 100000000000);
         } else {

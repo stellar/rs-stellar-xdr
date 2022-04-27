@@ -902,19 +902,100 @@ pub type String64 = Vec<u8>;
 //
 //   typedef int64 SequenceNumber;
 //
-pub type SequenceNumber = i64;
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct SequenceNumber(pub i64);
+
+impl From<SequenceNumber> for i64 {
+    fn from(x: SequenceNumber) -> Self {
+        x.0
+    }
+}
+
+impl From<i64> for SequenceNumber {
+    fn from(x: i64) -> Self {
+        SequenceNumber(x)
+    }
+}
+
+impl ReadXDR for SequenceNumber {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = <i64 as ReadXDR>::read_xdr(r)?;
+        let v = SequenceNumber(i);
+        Ok(v)
+    }
+}
+
+impl WriteXDR for SequenceNumber {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
 
 // TimePoint is an XDR Typedef defines as:
 //
 //   typedef uint64 TimePoint;
 //
-pub type TimePoint = u64;
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct TimePoint(pub u64);
+
+impl From<TimePoint> for u64 {
+    fn from(x: TimePoint) -> Self {
+        x.0
+    }
+}
+
+impl From<u64> for TimePoint {
+    fn from(x: u64) -> Self {
+        TimePoint(x)
+    }
+}
+
+impl ReadXDR for TimePoint {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = <u64 as ReadXDR>::read_xdr(r)?;
+        let v = TimePoint(i);
+        Ok(v)
+    }
+}
+
+impl WriteXDR for TimePoint {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
 
 // Duration is an XDR Typedef defines as:
 //
 //   typedef uint64 Duration;
 //
-pub type Duration = u64;
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct Duration(pub u64);
+
+impl From<Duration> for u64 {
+    fn from(x: Duration) -> Self {
+        x.0
+    }
+}
+
+impl From<u64> for Duration {
+    fn from(x: u64) -> Self {
+        Duration(x)
+    }
+}
+
+impl ReadXDR for Duration {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = <u64 as ReadXDR>::read_xdr(r)?;
+        let v = Duration(i);
+        Ok(v)
+    }
+}
+
+impl WriteXDR for Duration {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
 
 // DataValue is an XDR Typedef defines as:
 //
@@ -1638,7 +1719,7 @@ impl WriteXDR for SponsorshipDescriptor {
 pub struct AccountEntryExtensionV3 {
     pub ext: ExtensionPoint,
     pub seq_ledger: u32,
-    pub seq_time: u64,
+    pub seq_time: TimePoint,
 }
 
 impl ReadXDR for AccountEntryExtensionV3 {
@@ -1646,7 +1727,7 @@ impl ReadXDR for AccountEntryExtensionV3 {
         Ok(Self {
             ext: <ExtensionPoint as ReadXDR>::read_xdr(r)?,
             seq_ledger: <u32 as ReadXDR>::read_xdr(r)?,
-            seq_time: <u64 as ReadXDR>::read_xdr(r)?,
+            seq_time: <TimePoint as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -1931,7 +2012,7 @@ impl WriteXDR for AccountEntryExt {
 pub struct AccountEntry {
     pub account_id: AccountId,
     pub balance: i64,
-    pub seq_num: i64,
+    pub seq_num: SequenceNumber,
     pub num_sub_entries: u32,
     pub inflation_dest: Option<AccountId>,
     pub flags: u32,
@@ -1946,7 +2027,7 @@ impl ReadXDR for AccountEntry {
         Ok(Self {
             account_id: <AccountId as ReadXDR>::read_xdr(r)?,
             balance: <i64 as ReadXDR>::read_xdr(r)?,
-            seq_num: <i64 as ReadXDR>::read_xdr(r)?,
+            seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
             num_sub_entries: <u32 as ReadXDR>::read_xdr(r)?,
             inflation_dest: <Option<AccountId> as ReadXDR>::read_xdr(r)?,
             flags: <u32 as ReadXDR>::read_xdr(r)?,
@@ -4351,7 +4432,7 @@ impl WriteXDR for StellarValueExt {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct StellarValue {
     pub tx_set_hash: Hash,
-    pub close_time: u64,
+    pub close_time: TimePoint,
     pub upgrades: Vec<UpgradeType>,
     pub ext: StellarValueExt,
 }
@@ -4360,7 +4441,7 @@ impl ReadXDR for StellarValue {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             tx_set_hash: <Hash as ReadXDR>::read_xdr(r)?,
-            close_time: <u64 as ReadXDR>::read_xdr(r)?,
+            close_time: <TimePoint as ReadXDR>::read_xdr(r)?,
             upgrades: <Vec<UpgradeType> as ReadXDR>::read_xdr(r)?,
             ext: <StellarValueExt as ReadXDR>::read_xdr(r)?,
         })
@@ -7958,13 +8039,13 @@ impl WriteXDR for ManageDataOp {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct BumpSequenceOp {
-    pub bump_to: i64,
+    pub bump_to: SequenceNumber,
 }
 
 impl ReadXDR for BumpSequenceOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            bump_to: <i64 as ReadXDR>::read_xdr(r)?,
+            bump_to: <SequenceNumber as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -8711,7 +8792,7 @@ impl WriteXDR for Operation {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct HashIdPreimageOperationId {
     pub source_account: AccountId,
-    pub seq_num: i64,
+    pub seq_num: SequenceNumber,
     pub op_num: u32,
 }
 
@@ -8719,7 +8800,7 @@ impl ReadXDR for HashIdPreimageOperationId {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             source_account: <AccountId as ReadXDR>::read_xdr(r)?,
-            seq_num: <i64 as ReadXDR>::read_xdr(r)?,
+            seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
             op_num: <u32 as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -8748,7 +8829,7 @@ impl WriteXDR for HashIdPreimageOperationId {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct HashIdPreimageRevokeId {
     pub source_account: AccountId,
-    pub seq_num: i64,
+    pub seq_num: SequenceNumber,
     pub op_num: u32,
     pub liquidity_pool_id: PoolId,
     pub asset: Asset,
@@ -8758,7 +8839,7 @@ impl ReadXDR for HashIdPreimageRevokeId {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             source_account: <AccountId as ReadXDR>::read_xdr(r)?,
-            seq_num: <i64 as ReadXDR>::read_xdr(r)?,
+            seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
             op_num: <u32 as ReadXDR>::read_xdr(r)?,
             liquidity_pool_id: <PoolId as ReadXDR>::read_xdr(r)?,
             asset: <Asset as ReadXDR>::read_xdr(r)?,
@@ -8981,15 +9062,15 @@ impl WriteXDR for Memo {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TimeBounds {
-    pub min_time: u64,
-    pub max_time: u64,
+    pub min_time: TimePoint,
+    pub max_time: TimePoint,
 }
 
 impl ReadXDR for TimeBounds {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            min_time: <u64 as ReadXDR>::read_xdr(r)?,
-            max_time: <u64 as ReadXDR>::read_xdr(r)?,
+            min_time: <TimePoint as ReadXDR>::read_xdr(r)?,
+            max_time: <TimePoint as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -9072,8 +9153,8 @@ impl WriteXDR for LedgerBounds {
 pub struct PreconditionsV2 {
     pub time_bounds: Option<TimeBounds>,
     pub ledger_bounds: Option<LedgerBounds>,
-    pub min_seq_num: Option<i64>,
-    pub min_seq_age: u64,
+    pub min_seq_num: Option<SequenceNumber>,
+    pub min_seq_age: Duration,
     pub min_seq_ledger_gap: u32,
     pub extra_signers: Vec<SignerKey>,
 }
@@ -9083,8 +9164,8 @@ impl ReadXDR for PreconditionsV2 {
         Ok(Self {
             time_bounds: <Option<TimeBounds> as ReadXDR>::read_xdr(r)?,
             ledger_bounds: <Option<LedgerBounds> as ReadXDR>::read_xdr(r)?,
-            min_seq_num: <Option<i64> as ReadXDR>::read_xdr(r)?,
-            min_seq_age: <u64 as ReadXDR>::read_xdr(r)?,
+            min_seq_num: <Option<SequenceNumber> as ReadXDR>::read_xdr(r)?,
+            min_seq_age: <Duration as ReadXDR>::read_xdr(r)?,
             min_seq_ledger_gap: <u32 as ReadXDR>::read_xdr(r)?,
             extra_signers: <Vec<SignerKey> as ReadXDR>::read_xdr(r)?,
         })
@@ -9289,7 +9370,7 @@ impl WriteXDR for TransactionV0Ext {
 pub struct TransactionV0 {
     pub source_account_ed25519: Uint256,
     pub fee: u32,
-    pub seq_num: i64,
+    pub seq_num: SequenceNumber,
     pub time_bounds: Option<TimeBounds>,
     pub memo: Memo,
     pub operations: Vec<Operation>,
@@ -9301,7 +9382,7 @@ impl ReadXDR for TransactionV0 {
         Ok(Self {
             source_account_ed25519: <Uint256 as ReadXDR>::read_xdr(r)?,
             fee: <u32 as ReadXDR>::read_xdr(r)?,
-            seq_num: <i64 as ReadXDR>::read_xdr(r)?,
+            seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
             time_bounds: <Option<TimeBounds> as ReadXDR>::read_xdr(r)?,
             memo: <Memo as ReadXDR>::read_xdr(r)?,
             operations: <Vec<Operation> as ReadXDR>::read_xdr(r)?,
@@ -9433,7 +9514,7 @@ impl WriteXDR for TransactionExt {
 pub struct Transaction {
     pub source_account: MuxedAccount,
     pub fee: u32,
-    pub seq_num: i64,
+    pub seq_num: SequenceNumber,
     pub cond: Preconditions,
     pub memo: Memo,
     pub operations: Vec<Operation>,
@@ -9445,7 +9526,7 @@ impl ReadXDR for Transaction {
         Ok(Self {
             source_account: <MuxedAccount as ReadXDR>::read_xdr(r)?,
             fee: <u32 as ReadXDR>::read_xdr(r)?,
-            seq_num: <i64 as ReadXDR>::read_xdr(r)?,
+            seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
             cond: <Preconditions as ReadXDR>::read_xdr(r)?,
             memo: <Memo as ReadXDR>::read_xdr(r)?,
             operations: <Vec<Operation> as ReadXDR>::read_xdr(r)?,

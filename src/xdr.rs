@@ -359,14 +359,14 @@ impl WriteXDR for Value {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpBallot {
-    pub counter: Uint32,
+    pub counter: u32,
     pub value: Value,
 }
 
 impl ReadXDR for ScpBallot {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            counter: <Uint32 as ReadXDR>::read_xdr(r)?,
+            counter: <u32 as ReadXDR>::read_xdr(r)?,
             value: <Value as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -490,8 +490,8 @@ pub struct ScpStatementPrepare {
     pub ballot: ScpBallot,
     pub prepared: Option<ScpBallot>,
     pub prepared_prime: Option<ScpBallot>,
-    pub n_c: Uint32,
-    pub n_h: Uint32,
+    pub n_c: u32,
+    pub n_h: u32,
 }
 
 impl ReadXDR for ScpStatementPrepare {
@@ -501,8 +501,8 @@ impl ReadXDR for ScpStatementPrepare {
             ballot: <ScpBallot as ReadXDR>::read_xdr(r)?,
             prepared: <Option<ScpBallot> as ReadXDR>::read_xdr(r)?,
             prepared_prime: <Option<ScpBallot> as ReadXDR>::read_xdr(r)?,
-            n_c: <Uint32 as ReadXDR>::read_xdr(r)?,
-            n_h: <Uint32 as ReadXDR>::read_xdr(r)?,
+            n_c: <u32 as ReadXDR>::read_xdr(r)?,
+            n_h: <u32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -533,9 +533,9 @@ impl WriteXDR for ScpStatementPrepare {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpStatementConfirm {
     pub ballot: ScpBallot,
-    pub n_prepared: Uint32,
-    pub n_commit: Uint32,
-    pub n_h: Uint32,
+    pub n_prepared: u32,
+    pub n_commit: u32,
+    pub n_h: u32,
     pub quorum_set_hash: Hash,
 }
 
@@ -543,9 +543,9 @@ impl ReadXDR for ScpStatementConfirm {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ballot: <ScpBallot as ReadXDR>::read_xdr(r)?,
-            n_prepared: <Uint32 as ReadXDR>::read_xdr(r)?,
-            n_commit: <Uint32 as ReadXDR>::read_xdr(r)?,
-            n_h: <Uint32 as ReadXDR>::read_xdr(r)?,
+            n_prepared: <u32 as ReadXDR>::read_xdr(r)?,
+            n_commit: <u32 as ReadXDR>::read_xdr(r)?,
+            n_h: <u32 as ReadXDR>::read_xdr(r)?,
             quorum_set_hash: <Hash as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -574,7 +574,7 @@ impl WriteXDR for ScpStatementConfirm {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpStatementExternalize {
     pub commit: ScpBallot,
-    pub n_h: Uint32,
+    pub n_h: u32,
     pub commit_quorum_set_hash: Hash,
 }
 
@@ -582,7 +582,7 @@ impl ReadXDR for ScpStatementExternalize {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             commit: <ScpBallot as ReadXDR>::read_xdr(r)?,
-            n_h: <Uint32 as ReadXDR>::read_xdr(r)?,
+            n_h: <u32 as ReadXDR>::read_xdr(r)?,
             commit_quorum_set_hash: <Hash as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -654,7 +654,7 @@ impl ScpStatementPledges {
 impl ReadXDR for ScpStatementPledges {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScpStatementType = <ScpStatementType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ScpStatementType::ScpStPrepare => {
                 Self::ScpStPrepare(<ScpStatementPrepare as ReadXDR>::read_xdr(r)?)
             }
@@ -731,7 +731,7 @@ impl WriteXDR for ScpStatementPledges {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpStatement {
     pub node_id: NodeId,
-    pub slot_index: Uint64,
+    pub slot_index: u64,
     pub pledges: ScpStatementPledges,
 }
 
@@ -739,7 +739,7 @@ impl ReadXDR for ScpStatement {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             node_id: <NodeId as ReadXDR>::read_xdr(r)?,
-            slot_index: <Uint64 as ReadXDR>::read_xdr(r)?,
+            slot_index: <u64 as ReadXDR>::read_xdr(r)?,
             pledges: <ScpStatementPledges as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -796,7 +796,7 @@ impl WriteXDR for ScpEnvelope {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ScpQuorumSet {
-    pub threshold: Uint32,
+    pub threshold: u32,
     pub validators: Vec<NodeId>,
     pub inner_sets: Vec<ScpQuorumSet>,
 }
@@ -804,7 +804,7 @@ pub struct ScpQuorumSet {
 impl ReadXDR for ScpQuorumSet {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            threshold: <Uint32 as ReadXDR>::read_xdr(r)?,
+            threshold: <u32 as ReadXDR>::read_xdr(r)?,
             validators: <Vec<NodeId> as ReadXDR>::read_xdr(r)?,
             inner_sets: <Vec<ScpQuorumSet> as ReadXDR>::read_xdr(r)?,
         })
@@ -890,90 +890,36 @@ impl WriteXDR for Thresholds {
 //
 //   typedef string string32<32>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct String32(pub Vec<u8>);
-
-impl From<String32> for Vec<u8> {
-    fn from(x: String32) -> Self {
-        x.0
-    }
-}
-
-impl From<Vec<u8>> for String32 {
-    fn from(x: Vec<u8>) -> Self {
-        String32(x)
-    }
-}
-
-impl ReadXDR for String32 {
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
-        let v = String32(i);
-        Ok(v)
-    }
-}
-
-impl WriteXDR for String32 {
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
+pub type String32 = Vec<u8>;
 
 // String64 is an XDR Typedef defines as:
 //
 //   typedef string string64<64>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct String64(pub Vec<u8>);
-
-impl From<String64> for Vec<u8> {
-    fn from(x: String64) -> Self {
-        x.0
-    }
-}
-
-impl From<Vec<u8>> for String64 {
-    fn from(x: Vec<u8>) -> Self {
-        String64(x)
-    }
-}
-
-impl ReadXDR for String64 {
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
-        let v = String64(i);
-        Ok(v)
-    }
-}
-
-impl WriteXDR for String64 {
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
+pub type String64 = Vec<u8>;
 
 // SequenceNumber is an XDR Typedef defines as:
 //
 //   typedef int64 SequenceNumber;
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct SequenceNumber(pub Int64);
+pub struct SequenceNumber(pub i64);
 
-impl From<SequenceNumber> for Int64 {
+impl From<SequenceNumber> for i64 {
     fn from(x: SequenceNumber) -> Self {
         x.0
     }
 }
 
-impl From<Int64> for SequenceNumber {
-    fn from(x: Int64) -> Self {
+impl From<i64> for SequenceNumber {
+    fn from(x: i64) -> Self {
         SequenceNumber(x)
     }
 }
 
 impl ReadXDR for SequenceNumber {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Int64 as ReadXDR>::read_xdr(r)?;
+        let i = <i64 as ReadXDR>::read_xdr(r)?;
         let v = SequenceNumber(i);
         Ok(v)
     }
@@ -990,23 +936,23 @@ impl WriteXDR for SequenceNumber {
 //   typedef uint64 TimePoint;
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct TimePoint(pub Uint64);
+pub struct TimePoint(pub u64);
 
-impl From<TimePoint> for Uint64 {
+impl From<TimePoint> for u64 {
     fn from(x: TimePoint) -> Self {
         x.0
     }
 }
 
-impl From<Uint64> for TimePoint {
-    fn from(x: Uint64) -> Self {
+impl From<u64> for TimePoint {
+    fn from(x: u64) -> Self {
         TimePoint(x)
     }
 }
 
 impl ReadXDR for TimePoint {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Uint64 as ReadXDR>::read_xdr(r)?;
+        let i = <u64 as ReadXDR>::read_xdr(r)?;
         let v = TimePoint(i);
         Ok(v)
     }
@@ -1023,23 +969,23 @@ impl WriteXDR for TimePoint {
 //   typedef uint64 Duration;
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct Duration(pub Uint64);
+pub struct Duration(pub u64);
 
-impl From<Duration> for Uint64 {
+impl From<Duration> for u64 {
     fn from(x: Duration) -> Self {
         x.0
     }
 }
 
-impl From<Uint64> for Duration {
-    fn from(x: Uint64) -> Self {
+impl From<u64> for Duration {
+    fn from(x: u64) -> Self {
         Duration(x)
     }
 }
 
 impl ReadXDR for Duration {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Uint64 as ReadXDR>::read_xdr(r)?;
+        let i = <u64 as ReadXDR>::read_xdr(r)?;
         let v = Duration(i);
         Ok(v)
     }
@@ -1272,7 +1218,7 @@ impl AssetCode {
 impl ReadXDR for AssetCode {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             AssetType::AssetTypeCreditAlphanum4 => {
                 Self::AssetTypeCreditAlphanum4(<AssetCode4 as ReadXDR>::read_xdr(r)?)
             }
@@ -1396,7 +1342,7 @@ impl Asset {
 impl ReadXDR for Asset {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             AssetType::AssetTypeNative => Self::AssetTypeNative,
             AssetType::AssetTypeCreditAlphanum4 => {
                 Self::AssetTypeCreditAlphanum4(<AlphaNum4 as ReadXDR>::read_xdr(r)?)
@@ -1433,15 +1379,15 @@ impl WriteXDR for Asset {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Price {
-    pub n: Int32,
-    pub d: Int32,
+    pub n: i32,
+    pub d: i32,
 }
 
 impl ReadXDR for Price {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            n: <Int32 as ReadXDR>::read_xdr(r)?,
-            d: <Int32 as ReadXDR>::read_xdr(r)?,
+            n: <i32 as ReadXDR>::read_xdr(r)?,
+            d: <i32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -1464,15 +1410,15 @@ impl WriteXDR for Price {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Liabilities {
-    pub buying: Int64,
-    pub selling: Int64,
+    pub buying: i64,
+    pub selling: i64,
 }
 
 impl ReadXDR for Liabilities {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            buying: <Int64 as ReadXDR>::read_xdr(r)?,
-            selling: <Int64 as ReadXDR>::read_xdr(r)?,
+            buying: <i64 as ReadXDR>::read_xdr(r)?,
+            selling: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -1616,14 +1562,14 @@ impl WriteXDR for LedgerEntryType {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Signer {
     pub key: SignerKey,
-    pub weight: Uint32,
+    pub weight: u32,
 }
 
 impl ReadXDR for Signer {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             key: <SignerKey as ReadXDR>::read_xdr(r)?,
-            weight: <Uint32 as ReadXDR>::read_xdr(r)?,
+            weight: <u32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -1772,7 +1718,7 @@ impl WriteXDR for SponsorshipDescriptor {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AccountEntryExtensionV3 {
     pub ext: ExtensionPoint,
-    pub seq_ledger: Uint32,
+    pub seq_ledger: u32,
     pub seq_time: TimePoint,
 }
 
@@ -1780,7 +1726,7 @@ impl ReadXDR for AccountEntryExtensionV3 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ext: <ExtensionPoint as ReadXDR>::read_xdr(r)?,
-            seq_ledger: <Uint32 as ReadXDR>::read_xdr(r)?,
+            seq_ledger: <u32 as ReadXDR>::read_xdr(r)?,
             seq_time: <TimePoint as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -1824,7 +1770,7 @@ impl AccountEntryExtensionV2Ext {
 impl ReadXDR for AccountEntryExtensionV2Ext {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             3 => Self::V3(<AccountEntryExtensionV3 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -1865,8 +1811,8 @@ impl WriteXDR for AccountEntryExtensionV2Ext {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AccountEntryExtensionV2 {
-    pub num_sponsored: Uint32,
-    pub num_sponsoring: Uint32,
+    pub num_sponsored: u32,
+    pub num_sponsoring: u32,
     pub signer_sponsoring_i_ds: Vec<SponsorshipDescriptor>,
     pub ext: AccountEntryExtensionV2Ext,
 }
@@ -1874,8 +1820,8 @@ pub struct AccountEntryExtensionV2 {
 impl ReadXDR for AccountEntryExtensionV2 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            num_sponsored: <Uint32 as ReadXDR>::read_xdr(r)?,
-            num_sponsoring: <Uint32 as ReadXDR>::read_xdr(r)?,
+            num_sponsored: <u32 as ReadXDR>::read_xdr(r)?,
+            num_sponsoring: <u32 as ReadXDR>::read_xdr(r)?,
             signer_sponsoring_i_ds: <Vec<SponsorshipDescriptor> as ReadXDR>::read_xdr(r)?,
             ext: <AccountEntryExtensionV2Ext as ReadXDR>::read_xdr(r)?,
         })
@@ -1921,7 +1867,7 @@ impl AccountEntryExtensionV1Ext {
 impl ReadXDR for AccountEntryExtensionV1Ext {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             2 => Self::V2(<AccountEntryExtensionV2 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -2010,7 +1956,7 @@ impl AccountEntryExt {
 impl ReadXDR for AccountEntryExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             1 => Self::V1(<AccountEntryExtensionV1 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -2065,12 +2011,12 @@ impl WriteXDR for AccountEntryExt {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AccountEntry {
     pub account_id: AccountId,
-    pub balance: Int64,
+    pub balance: i64,
     pub seq_num: SequenceNumber,
-    pub num_sub_entries: Uint32,
+    pub num_sub_entries: u32,
     pub inflation_dest: Option<AccountId>,
-    pub flags: Uint32,
-    pub home_domain: String32,
+    pub flags: u32,
+    pub home_domain: Vec<u8>,
     pub thresholds: Thresholds,
     pub signers: Vec<Signer>,
     pub ext: AccountEntryExt,
@@ -2080,12 +2026,12 @@ impl ReadXDR for AccountEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: <AccountId as ReadXDR>::read_xdr(r)?,
-            balance: <Int64 as ReadXDR>::read_xdr(r)?,
+            balance: <i64 as ReadXDR>::read_xdr(r)?,
             seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
-            num_sub_entries: <Uint32 as ReadXDR>::read_xdr(r)?,
+            num_sub_entries: <u32 as ReadXDR>::read_xdr(r)?,
             inflation_dest: <Option<AccountId> as ReadXDR>::read_xdr(r)?,
-            flags: <Uint32 as ReadXDR>::read_xdr(r)?,
-            home_domain: <String32 as ReadXDR>::read_xdr(r)?,
+            flags: <u32 as ReadXDR>::read_xdr(r)?,
+            home_domain: <Vec<u8> as ReadXDR>::read_xdr(r)?,
             thresholds: <Thresholds as ReadXDR>::read_xdr(r)?,
             signers: <Vec<Signer> as ReadXDR>::read_xdr(r)?,
             ext: <AccountEntryExt as ReadXDR>::read_xdr(r)?,
@@ -2276,7 +2222,7 @@ impl TrustLineAsset {
 impl ReadXDR for TrustLineAsset {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             AssetType::AssetTypeNative => Self::AssetTypeNative,
             AssetType::AssetTypeCreditAlphanum4 => {
                 Self::AssetTypeCreditAlphanum4(<AlphaNum4 as ReadXDR>::read_xdr(r)?)
@@ -2332,7 +2278,7 @@ impl TrustLineEntryExtensionV2Ext {
 impl ReadXDR for TrustLineEntryExtensionV2Ext {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -2367,14 +2313,14 @@ impl WriteXDR for TrustLineEntryExtensionV2Ext {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TrustLineEntryExtensionV2 {
-    pub liquidity_pool_use_count: Int32,
+    pub liquidity_pool_use_count: i32,
     pub ext: TrustLineEntryExtensionV2Ext,
 }
 
 impl ReadXDR for TrustLineEntryExtensionV2 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            liquidity_pool_use_count: <Int32 as ReadXDR>::read_xdr(r)?,
+            liquidity_pool_use_count: <i32 as ReadXDR>::read_xdr(r)?,
             ext: <TrustLineEntryExtensionV2Ext as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -2417,7 +2363,7 @@ impl TrustLineEntryV1Ext {
 impl ReadXDR for TrustLineEntryV1Ext {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             2 => Self::V2(<TrustLineEntryExtensionV2 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -2518,7 +2464,7 @@ impl TrustLineEntryExt {
 impl ReadXDR for TrustLineEntryExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             1 => Self::V1(<TrustLineEntryV1 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -2578,9 +2524,9 @@ impl WriteXDR for TrustLineEntryExt {
 pub struct TrustLineEntry {
     pub account_id: AccountId,
     pub asset: TrustLineAsset,
-    pub balance: Int64,
-    pub limit: Int64,
-    pub flags: Uint32,
+    pub balance: i64,
+    pub limit: i64,
+    pub flags: u32,
     pub ext: TrustLineEntryExt,
 }
 
@@ -2589,9 +2535,9 @@ impl ReadXDR for TrustLineEntry {
         Ok(Self {
             account_id: <AccountId as ReadXDR>::read_xdr(r)?,
             asset: <TrustLineAsset as ReadXDR>::read_xdr(r)?,
-            balance: <Int64 as ReadXDR>::read_xdr(r)?,
-            limit: <Int64 as ReadXDR>::read_xdr(r)?,
-            flags: <Uint32 as ReadXDR>::read_xdr(r)?,
+            balance: <i64 as ReadXDR>::read_xdr(r)?,
+            limit: <i64 as ReadXDR>::read_xdr(r)?,
+            flags: <u32 as ReadXDR>::read_xdr(r)?,
             ext: <TrustLineEntryExt as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -2690,7 +2636,7 @@ impl OfferEntryExt {
 impl ReadXDR for OfferEntryExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -2739,12 +2685,12 @@ impl WriteXDR for OfferEntryExt {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct OfferEntry {
     pub seller_id: AccountId,
-    pub offer_id: Int64,
+    pub offer_id: i64,
     pub selling: Asset,
     pub buying: Asset,
-    pub amount: Int64,
+    pub amount: i64,
     pub price: Price,
-    pub flags: Uint32,
+    pub flags: u32,
     pub ext: OfferEntryExt,
 }
 
@@ -2752,12 +2698,12 @@ impl ReadXDR for OfferEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             seller_id: <AccountId as ReadXDR>::read_xdr(r)?,
-            offer_id: <Int64 as ReadXDR>::read_xdr(r)?,
+            offer_id: <i64 as ReadXDR>::read_xdr(r)?,
             selling: <Asset as ReadXDR>::read_xdr(r)?,
             buying: <Asset as ReadXDR>::read_xdr(r)?,
-            amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount: <i64 as ReadXDR>::read_xdr(r)?,
             price: <Price as ReadXDR>::read_xdr(r)?,
-            flags: <Uint32 as ReadXDR>::read_xdr(r)?,
+            flags: <u32 as ReadXDR>::read_xdr(r)?,
             ext: <OfferEntryExt as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -2802,7 +2748,7 @@ impl DataEntryExt {
 impl ReadXDR for DataEntryExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -2841,7 +2787,7 @@ impl WriteXDR for DataEntryExt {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct DataEntry {
     pub account_id: AccountId,
-    pub data_name: String64,
+    pub data_name: Vec<u8>,
     pub data_value: DataValue,
     pub ext: DataEntryExt,
 }
@@ -2850,7 +2796,7 @@ impl ReadXDR for DataEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: <AccountId as ReadXDR>::read_xdr(r)?,
-            data_name: <String64 as ReadXDR>::read_xdr(r)?,
+            data_name: <Vec<u8> as ReadXDR>::read_xdr(r)?,
             data_value: <DataValue as ReadXDR>::read_xdr(r)?,
             ext: <DataEntryExt as ReadXDR>::read_xdr(r)?,
         })
@@ -2956,8 +2902,8 @@ pub enum ClaimPredicate {
     ClaimPredicateAnd(Vec<ClaimPredicate>),
     ClaimPredicateOr(Vec<ClaimPredicate>),
     ClaimPredicateNot(Option<Box<ClaimPredicate>>),
-    ClaimPredicateBeforeAbsoluteTime(Int64),
-    ClaimPredicateBeforeRelativeTime(Int64),
+    ClaimPredicateBeforeAbsoluteTime(i64),
+    ClaimPredicateBeforeRelativeTime(i64),
 }
 
 impl ClaimPredicate {
@@ -2980,7 +2926,7 @@ impl ClaimPredicate {
 impl ReadXDR for ClaimPredicate {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimPredicateType = <ClaimPredicateType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ClaimPredicateType::ClaimPredicateUnconditional => Self::ClaimPredicateUnconditional,
             ClaimPredicateType::ClaimPredicateAnd => {
                 Self::ClaimPredicateAnd(<Vec<ClaimPredicate> as ReadXDR>::read_xdr(r)?)
@@ -2992,10 +2938,10 @@ impl ReadXDR for ClaimPredicate {
                 Self::ClaimPredicateNot(<Option<Box<ClaimPredicate>> as ReadXDR>::read_xdr(r)?)
             }
             ClaimPredicateType::ClaimPredicateBeforeAbsoluteTime => {
-                Self::ClaimPredicateBeforeAbsoluteTime(<Int64 as ReadXDR>::read_xdr(r)?)
+                Self::ClaimPredicateBeforeAbsoluteTime(<i64 as ReadXDR>::read_xdr(r)?)
             }
             ClaimPredicateType::ClaimPredicateBeforeRelativeTime => {
-                Self::ClaimPredicateBeforeRelativeTime(<Int64 as ReadXDR>::read_xdr(r)?)
+                Self::ClaimPredicateBeforeRelativeTime(<i64 as ReadXDR>::read_xdr(r)?)
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -3127,7 +3073,7 @@ impl Claimant {
 impl ReadXDR for Claimant {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimantType = <ClaimantType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ClaimantType::ClaimantTypeV0 => {
                 Self::ClaimantTypeV0(<ClaimantV0 as ReadXDR>::read_xdr(r)?)
             }
@@ -3221,7 +3167,7 @@ impl ClaimableBalanceId {
 impl ReadXDR for ClaimableBalanceId {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ClaimableBalanceIdType::ClaimableBalanceIdTypeV0 => {
                 Self::ClaimableBalanceIdTypeV0(<Hash as ReadXDR>::read_xdr(r)?)
             }
@@ -3323,7 +3269,7 @@ impl ClaimableBalanceEntryExtensionV1Ext {
 impl ReadXDR for ClaimableBalanceEntryExtensionV1Ext {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -3359,14 +3305,14 @@ impl WriteXDR for ClaimableBalanceEntryExtensionV1Ext {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClaimableBalanceEntryExtensionV1 {
     pub ext: ClaimableBalanceEntryExtensionV1Ext,
-    pub flags: Uint32,
+    pub flags: u32,
 }
 
 impl ReadXDR for ClaimableBalanceEntryExtensionV1 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ext: <ClaimableBalanceEntryExtensionV1Ext as ReadXDR>::read_xdr(r)?,
-            flags: <Uint32 as ReadXDR>::read_xdr(r)?,
+            flags: <u32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -3408,7 +3354,7 @@ impl ClaimableBalanceEntryExt {
 impl ReadXDR for ClaimableBalanceEntryExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             1 => Self::V1(<ClaimableBalanceEntryExtensionV1 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -3461,7 +3407,7 @@ pub struct ClaimableBalanceEntry {
     pub balance_id: ClaimableBalanceId,
     pub claimants: Vec<Claimant>,
     pub asset: Asset,
-    pub amount: Int64,
+    pub amount: i64,
     pub ext: ClaimableBalanceEntryExt,
 }
 
@@ -3471,7 +3417,7 @@ impl ReadXDR for ClaimableBalanceEntry {
             balance_id: <ClaimableBalanceId as ReadXDR>::read_xdr(r)?,
             claimants: <Vec<Claimant> as ReadXDR>::read_xdr(r)?,
             asset: <Asset as ReadXDR>::read_xdr(r)?,
-            amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount: <i64 as ReadXDR>::read_xdr(r)?,
             ext: <ClaimableBalanceEntryExt as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -3501,7 +3447,7 @@ impl WriteXDR for ClaimableBalanceEntry {
 pub struct LiquidityPoolConstantProductParameters {
     pub asset_a: Asset,
     pub asset_b: Asset,
-    pub fee: Int32,
+    pub fee: i32,
 }
 
 impl ReadXDR for LiquidityPoolConstantProductParameters {
@@ -3509,7 +3455,7 @@ impl ReadXDR for LiquidityPoolConstantProductParameters {
         Ok(Self {
             asset_a: <Asset as ReadXDR>::read_xdr(r)?,
             asset_b: <Asset as ReadXDR>::read_xdr(r)?,
-            fee: <Int32 as ReadXDR>::read_xdr(r)?,
+            fee: <i32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -3539,20 +3485,20 @@ impl WriteXDR for LiquidityPoolConstantProductParameters {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LiquidityPoolEntryConstantProduct {
     pub params: LiquidityPoolConstantProductParameters,
-    pub reserve_a: Int64,
-    pub reserve_b: Int64,
-    pub total_pool_shares: Int64,
-    pub pool_shares_trust_line_count: Int64,
+    pub reserve_a: i64,
+    pub reserve_b: i64,
+    pub total_pool_shares: i64,
+    pub pool_shares_trust_line_count: i64,
 }
 
 impl ReadXDR for LiquidityPoolEntryConstantProduct {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             params: <LiquidityPoolConstantProductParameters as ReadXDR>::read_xdr(r)?,
-            reserve_a: <Int64 as ReadXDR>::read_xdr(r)?,
-            reserve_b: <Int64 as ReadXDR>::read_xdr(r)?,
-            total_pool_shares: <Int64 as ReadXDR>::read_xdr(r)?,
-            pool_shares_trust_line_count: <Int64 as ReadXDR>::read_xdr(r)?,
+            reserve_a: <i64 as ReadXDR>::read_xdr(r)?,
+            reserve_b: <i64 as ReadXDR>::read_xdr(r)?,
+            total_pool_shares: <i64 as ReadXDR>::read_xdr(r)?,
+            pool_shares_trust_line_count: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -3604,7 +3550,7 @@ impl LiquidityPoolEntryBody {
 impl ReadXDR for LiquidityPoolEntryBody {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LiquidityPoolType = <LiquidityPoolType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             LiquidityPoolType::LiquidityPoolConstantProduct => Self::LiquidityPoolConstantProduct(
                 <LiquidityPoolEntryConstantProduct as ReadXDR>::read_xdr(r)?,
             ),
@@ -3696,7 +3642,7 @@ impl LedgerEntryExtensionV1Ext {
 impl ReadXDR for LedgerEntryExtensionV1Ext {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -3797,7 +3743,7 @@ impl LedgerEntryData {
 impl ReadXDR for LedgerEntryData {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LedgerEntryType = <LedgerEntryType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             LedgerEntryType::Account => Self::Account(<AccountEntry as ReadXDR>::read_xdr(r)?),
             LedgerEntryType::Trustline => {
                 Self::Trustline(<TrustLineEntry as ReadXDR>::read_xdr(r)?)
@@ -3861,7 +3807,7 @@ impl LedgerEntryExt {
 impl ReadXDR for LedgerEntryExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             1 => Self::V1(<LedgerEntryExtensionV1 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -3918,7 +3864,7 @@ impl WriteXDR for LedgerEntryExt {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerEntry {
-    pub last_modified_ledger_seq: Uint32,
+    pub last_modified_ledger_seq: u32,
     pub data: LedgerEntryData,
     pub ext: LedgerEntryExt,
 }
@@ -3926,7 +3872,7 @@ pub struct LedgerEntry {
 impl ReadXDR for LedgerEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            last_modified_ledger_seq: <Uint32 as ReadXDR>::read_xdr(r)?,
+            last_modified_ledger_seq: <u32 as ReadXDR>::read_xdr(r)?,
             data: <LedgerEntryData as ReadXDR>::read_xdr(r)?,
             ext: <LedgerEntryExt as ReadXDR>::read_xdr(r)?,
         })
@@ -4011,14 +3957,14 @@ impl WriteXDR for LedgerKeyTrustLine {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerKeyOffer {
     pub seller_id: AccountId,
-    pub offer_id: Int64,
+    pub offer_id: i64,
 }
 
 impl ReadXDR for LedgerKeyOffer {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             seller_id: <AccountId as ReadXDR>::read_xdr(r)?,
-            offer_id: <Int64 as ReadXDR>::read_xdr(r)?,
+            offer_id: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -4042,14 +3988,14 @@ impl WriteXDR for LedgerKeyOffer {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerKeyData {
     pub account_id: AccountId,
-    pub data_name: String64,
+    pub data_name: Vec<u8>,
 }
 
 impl ReadXDR for LedgerKeyData {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: <AccountId as ReadXDR>::read_xdr(r)?,
-            data_name: <String64 as ReadXDR>::read_xdr(r)?,
+            data_name: <Vec<u8> as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -4187,7 +4133,7 @@ impl LedgerKey {
 impl ReadXDR for LedgerKey {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LedgerEntryType = <LedgerEntryType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             LedgerEntryType::Account => Self::Account(<LedgerKeyAccount as ReadXDR>::read_xdr(r)?),
             LedgerEntryType::Trustline => {
                 Self::Trustline(<LedgerKeyTrustLine as ReadXDR>::read_xdr(r)?)
@@ -4435,7 +4381,7 @@ impl StellarValueExt {
 impl ReadXDR for StellarValueExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: StellarValueType = <StellarValueType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             StellarValueType::StellarValueBasic => Self::StellarValueBasic,
             StellarValueType::StellarValueSigned => {
                 Self::StellarValueSigned(<LedgerCloseValueSignature as ReadXDR>::read_xdr(r)?)
@@ -4597,7 +4543,7 @@ impl LedgerHeaderExtensionV1Ext {
 impl ReadXDR for LedgerHeaderExtensionV1Ext {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -4632,14 +4578,14 @@ impl WriteXDR for LedgerHeaderExtensionV1Ext {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerHeaderExtensionV1 {
-    pub flags: Uint32,
+    pub flags: u32,
     pub ext: LedgerHeaderExtensionV1Ext,
 }
 
 impl ReadXDR for LedgerHeaderExtensionV1 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            flags: <Uint32 as ReadXDR>::read_xdr(r)?,
+            flags: <u32 as ReadXDR>::read_xdr(r)?,
             ext: <LedgerHeaderExtensionV1Ext as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -4682,7 +4628,7 @@ impl LedgerHeaderExt {
 impl ReadXDR for LedgerHeaderExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             1 => Self::V1(<LedgerHeaderExtensionV1 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -4747,19 +4693,19 @@ impl WriteXDR for LedgerHeaderExt {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerHeader {
-    pub ledger_version: Uint32,
+    pub ledger_version: u32,
     pub previous_ledger_hash: Hash,
     pub scp_value: StellarValue,
     pub tx_set_result_hash: Hash,
     pub bucket_list_hash: Hash,
-    pub ledger_seq: Uint32,
-    pub total_coins: Int64,
-    pub fee_pool: Int64,
-    pub inflation_seq: Uint32,
-    pub id_pool: Uint64,
-    pub base_fee: Uint32,
-    pub base_reserve: Uint32,
-    pub max_tx_set_size: Uint32,
+    pub ledger_seq: u32,
+    pub total_coins: i64,
+    pub fee_pool: i64,
+    pub inflation_seq: u32,
+    pub id_pool: u64,
+    pub base_fee: u32,
+    pub base_reserve: u32,
+    pub max_tx_set_size: u32,
     pub skip_list: [Hash; 4],
     pub ext: LedgerHeaderExt,
 }
@@ -4767,19 +4713,19 @@ pub struct LedgerHeader {
 impl ReadXDR for LedgerHeader {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_version: <Uint32 as ReadXDR>::read_xdr(r)?,
+            ledger_version: <u32 as ReadXDR>::read_xdr(r)?,
             previous_ledger_hash: <Hash as ReadXDR>::read_xdr(r)?,
             scp_value: <StellarValue as ReadXDR>::read_xdr(r)?,
             tx_set_result_hash: <Hash as ReadXDR>::read_xdr(r)?,
             bucket_list_hash: <Hash as ReadXDR>::read_xdr(r)?,
-            ledger_seq: <Uint32 as ReadXDR>::read_xdr(r)?,
-            total_coins: <Int64 as ReadXDR>::read_xdr(r)?,
-            fee_pool: <Int64 as ReadXDR>::read_xdr(r)?,
-            inflation_seq: <Uint32 as ReadXDR>::read_xdr(r)?,
-            id_pool: <Uint64 as ReadXDR>::read_xdr(r)?,
-            base_fee: <Uint32 as ReadXDR>::read_xdr(r)?,
-            base_reserve: <Uint32 as ReadXDR>::read_xdr(r)?,
-            max_tx_set_size: <Uint32 as ReadXDR>::read_xdr(r)?,
+            ledger_seq: <u32 as ReadXDR>::read_xdr(r)?,
+            total_coins: <i64 as ReadXDR>::read_xdr(r)?,
+            fee_pool: <i64 as ReadXDR>::read_xdr(r)?,
+            inflation_seq: <u32 as ReadXDR>::read_xdr(r)?,
+            id_pool: <u64 as ReadXDR>::read_xdr(r)?,
+            base_fee: <u32 as ReadXDR>::read_xdr(r)?,
+            base_reserve: <u32 as ReadXDR>::read_xdr(r)?,
+            max_tx_set_size: <u32 as ReadXDR>::read_xdr(r)?,
             skip_list: <[Hash; 4] as ReadXDR>::read_xdr(r)?,
             ext: <LedgerHeaderExt as ReadXDR>::read_xdr(r)?,
         })
@@ -4886,11 +4832,11 @@ impl WriteXDR for LedgerUpgradeType {
 // union with discriminant LedgerUpgradeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum LedgerUpgrade {
-    LedgerUpgradeVersion(Uint32),
-    LedgerUpgradeBaseFee(Uint32),
-    LedgerUpgradeMaxTxSetSize(Uint32),
-    LedgerUpgradeBaseReserve(Uint32),
-    LedgerUpgradeFlags(Uint32),
+    LedgerUpgradeVersion(u32),
+    LedgerUpgradeBaseFee(u32),
+    LedgerUpgradeMaxTxSetSize(u32),
+    LedgerUpgradeBaseReserve(u32),
+    LedgerUpgradeFlags(u32),
 }
 
 impl LedgerUpgrade {
@@ -4908,21 +4854,21 @@ impl LedgerUpgrade {
 impl ReadXDR for LedgerUpgrade {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             LedgerUpgradeType::LedgerUpgradeVersion => {
-                Self::LedgerUpgradeVersion(<Uint32 as ReadXDR>::read_xdr(r)?)
+                Self::LedgerUpgradeVersion(<u32 as ReadXDR>::read_xdr(r)?)
             }
             LedgerUpgradeType::LedgerUpgradeBaseFee => {
-                Self::LedgerUpgradeBaseFee(<Uint32 as ReadXDR>::read_xdr(r)?)
+                Self::LedgerUpgradeBaseFee(<u32 as ReadXDR>::read_xdr(r)?)
             }
             LedgerUpgradeType::LedgerUpgradeMaxTxSetSize => {
-                Self::LedgerUpgradeMaxTxSetSize(<Uint32 as ReadXDR>::read_xdr(r)?)
+                Self::LedgerUpgradeMaxTxSetSize(<u32 as ReadXDR>::read_xdr(r)?)
             }
             LedgerUpgradeType::LedgerUpgradeBaseReserve => {
-                Self::LedgerUpgradeBaseReserve(<Uint32 as ReadXDR>::read_xdr(r)?)
+                Self::LedgerUpgradeBaseReserve(<u32 as ReadXDR>::read_xdr(r)?)
             }
             LedgerUpgradeType::LedgerUpgradeFlags => {
-                Self::LedgerUpgradeFlags(<Uint32 as ReadXDR>::read_xdr(r)?)
+                Self::LedgerUpgradeFlags(<u32 as ReadXDR>::read_xdr(r)?)
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -5029,7 +4975,7 @@ impl BucketMetadataExt {
 impl ReadXDR for BucketMetadataExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -5066,14 +5012,14 @@ impl WriteXDR for BucketMetadataExt {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct BucketMetadata {
-    pub ledger_version: Uint32,
+    pub ledger_version: u32,
     pub ext: BucketMetadataExt,
 }
 
 impl ReadXDR for BucketMetadata {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_version: <Uint32 as ReadXDR>::read_xdr(r)?,
+            ledger_version: <u32 as ReadXDR>::read_xdr(r)?,
             ext: <BucketMetadataExt as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -5124,7 +5070,7 @@ impl BucketEntry {
 impl ReadXDR for BucketEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: BucketEntryType = <BucketEntryType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             BucketEntryType::Liveentry => Self::Liveentry(<LedgerEntry as ReadXDR>::read_xdr(r)?),
             BucketEntryType::Initentry => Self::Initentry(<LedgerEntry as ReadXDR>::read_xdr(r)?),
             BucketEntryType::Deadentry => Self::Deadentry(<LedgerKey as ReadXDR>::read_xdr(r)?),
@@ -5265,7 +5211,7 @@ impl TransactionHistoryEntryExt {
 impl ReadXDR for TransactionHistoryEntryExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -5302,7 +5248,7 @@ impl WriteXDR for TransactionHistoryEntryExt {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionHistoryEntry {
-    pub ledger_seq: Uint32,
+    pub ledger_seq: u32,
     pub tx_set: TransactionSet,
     pub ext: TransactionHistoryEntryExt,
 }
@@ -5310,7 +5256,7 @@ pub struct TransactionHistoryEntry {
 impl ReadXDR for TransactionHistoryEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_seq: <Uint32 as ReadXDR>::read_xdr(r)?,
+            ledger_seq: <u32 as ReadXDR>::read_xdr(r)?,
             tx_set: <TransactionSet as ReadXDR>::read_xdr(r)?,
             ext: <TransactionHistoryEntryExt as ReadXDR>::read_xdr(r)?,
         })
@@ -5351,7 +5297,7 @@ impl TransactionHistoryResultEntryExt {
 impl ReadXDR for TransactionHistoryResultEntryExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -5388,7 +5334,7 @@ impl WriteXDR for TransactionHistoryResultEntryExt {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionHistoryResultEntry {
-    pub ledger_seq: Uint32,
+    pub ledger_seq: u32,
     pub tx_result_set: TransactionResultSet,
     pub ext: TransactionHistoryResultEntryExt,
 }
@@ -5396,7 +5342,7 @@ pub struct TransactionHistoryResultEntry {
 impl ReadXDR for TransactionHistoryResultEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_seq: <Uint32 as ReadXDR>::read_xdr(r)?,
+            ledger_seq: <u32 as ReadXDR>::read_xdr(r)?,
             tx_result_set: <TransactionResultSet as ReadXDR>::read_xdr(r)?,
             ext: <TransactionHistoryResultEntryExt as ReadXDR>::read_xdr(r)?,
         })
@@ -5437,7 +5383,7 @@ impl LedgerHeaderHistoryEntryExt {
 impl ReadXDR for LedgerHeaderHistoryEntryExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -5508,14 +5454,14 @@ impl WriteXDR for LedgerHeaderHistoryEntry {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerScpMessages {
-    pub ledger_seq: Uint32,
+    pub ledger_seq: u32,
     pub messages: Vec<ScpEnvelope>,
 }
 
 impl ReadXDR for LedgerScpMessages {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_seq: <Uint32 as ReadXDR>::read_xdr(r)?,
+            ledger_seq: <u32 as ReadXDR>::read_xdr(r)?,
             messages: <Vec<ScpEnvelope> as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -5585,7 +5531,7 @@ impl ScpHistoryEntry {
 impl ReadXDR for ScpHistoryEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0(<ScpHistoryEntryV0 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -5698,7 +5644,7 @@ impl LedgerEntryChange {
 impl ReadXDR for LedgerEntryChange {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             LedgerEntryChangeType::LedgerEntryCreated => {
                 Self::LedgerEntryCreated(<LedgerEntry as ReadXDR>::read_xdr(r)?)
             }
@@ -5892,7 +5838,7 @@ impl TransactionMeta {
 impl ReadXDR for TransactionMeta {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0(<Vec<OperationMeta> as ReadXDR>::read_xdr(r)?),
             1 => Self::V1(<TransactionMetaV1 as ReadXDR>::read_xdr(r)?),
             2 => Self::V2(<TransactionMetaV2 as ReadXDR>::read_xdr(r)?),
@@ -6058,7 +6004,7 @@ impl LedgerCloseMeta {
 impl ReadXDR for LedgerCloseMeta {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0(<LedgerCloseMetaV0 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -6177,13 +6123,13 @@ impl WriteXDR for SError {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SendMore {
-    pub num_messages: Uint32,
+    pub num_messages: u32,
 }
 
 impl ReadXDR for SendMore {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            num_messages: <Uint32 as ReadXDR>::read_xdr(r)?,
+            num_messages: <u32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -6207,7 +6153,7 @@ impl WriteXDR for SendMore {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AuthCert {
     pub pubkey: Curve25519Public,
-    pub expiration: Uint64,
+    pub expiration: u64,
     pub sig: Signature,
 }
 
@@ -6215,7 +6161,7 @@ impl ReadXDR for AuthCert {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             pubkey: <Curve25519Public as ReadXDR>::read_xdr(r)?,
-            expiration: <Uint64 as ReadXDR>::read_xdr(r)?,
+            expiration: <u64 as ReadXDR>::read_xdr(r)?,
             sig: <Signature as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -6247,9 +6193,9 @@ impl WriteXDR for AuthCert {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Hello {
-    pub ledger_version: Uint32,
-    pub overlay_version: Uint32,
-    pub overlay_min_version: Uint32,
+    pub ledger_version: u32,
+    pub overlay_version: u32,
+    pub overlay_min_version: u32,
     pub network_id: Hash,
     pub version_str: Vec<u8>,
     pub listening_port: i32,
@@ -6261,9 +6207,9 @@ pub struct Hello {
 impl ReadXDR for Hello {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_version: <Uint32 as ReadXDR>::read_xdr(r)?,
-            overlay_version: <Uint32 as ReadXDR>::read_xdr(r)?,
-            overlay_min_version: <Uint32 as ReadXDR>::read_xdr(r)?,
+            ledger_version: <u32 as ReadXDR>::read_xdr(r)?,
+            overlay_version: <u32 as ReadXDR>::read_xdr(r)?,
+            overlay_min_version: <u32 as ReadXDR>::read_xdr(r)?,
             network_id: <Hash as ReadXDR>::read_xdr(r)?,
             version_str: <Vec<u8> as ReadXDR>::read_xdr(r)?,
             listening_port: <i32 as ReadXDR>::read_xdr(r)?,
@@ -6398,7 +6344,7 @@ impl PeerAddressIp {
 impl ReadXDR for PeerAddressIp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: IpAddrType = <IpAddrType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             IpAddrType::IPv4 => Self::IPv4(<[u8; 4] as ReadXDR>::read_xdr(r)?),
             IpAddrType::IPv6 => Self::IPv6(<[u8; 16] as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -6438,16 +6384,16 @@ impl WriteXDR for PeerAddressIp {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PeerAddress {
     pub ip: PeerAddressIp,
-    pub port: Uint32,
-    pub num_failures: Uint32,
+    pub port: u32,
+    pub num_failures: u32,
 }
 
 impl ReadXDR for PeerAddress {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ip: <PeerAddressIp as ReadXDR>::read_xdr(r)?,
-            port: <Uint32 as ReadXDR>::read_xdr(r)?,
-            num_failures: <Uint32 as ReadXDR>::read_xdr(r)?,
+            port: <u32 as ReadXDR>::read_xdr(r)?,
+            num_failures: <u32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -6657,7 +6603,7 @@ impl WriteXDR for SurveyMessageCommandType {
 pub struct SurveyRequestMessage {
     pub surveyor_peer_id: NodeId,
     pub surveyed_peer_id: NodeId,
-    pub ledger_num: Uint32,
+    pub ledger_num: u32,
     pub encryption_key: Curve25519Public,
     pub command_type: SurveyMessageCommandType,
 }
@@ -6667,7 +6613,7 @@ impl ReadXDR for SurveyRequestMessage {
         Ok(Self {
             surveyor_peer_id: <NodeId as ReadXDR>::read_xdr(r)?,
             surveyed_peer_id: <NodeId as ReadXDR>::read_xdr(r)?,
-            ledger_num: <Uint32 as ReadXDR>::read_xdr(r)?,
+            ledger_num: <u32 as ReadXDR>::read_xdr(r)?,
             encryption_key: <Curve25519Public as ReadXDR>::read_xdr(r)?,
             command_type: <SurveyMessageCommandType as ReadXDR>::read_xdr(r)?,
         })
@@ -6764,7 +6710,7 @@ impl WriteXDR for EncryptedBody {
 pub struct SurveyResponseMessage {
     pub surveyor_peer_id: NodeId,
     pub surveyed_peer_id: NodeId,
-    pub ledger_num: Uint32,
+    pub ledger_num: u32,
     pub command_type: SurveyMessageCommandType,
     pub encrypted_body: EncryptedBody,
 }
@@ -6774,7 +6720,7 @@ impl ReadXDR for SurveyResponseMessage {
         Ok(Self {
             surveyor_peer_id: <NodeId as ReadXDR>::read_xdr(r)?,
             surveyed_peer_id: <NodeId as ReadXDR>::read_xdr(r)?,
-            ledger_num: <Uint32 as ReadXDR>::read_xdr(r)?,
+            ledger_num: <u32 as ReadXDR>::read_xdr(r)?,
             command_type: <SurveyMessageCommandType as ReadXDR>::read_xdr(r)?,
             encrypted_body: <EncryptedBody as ReadXDR>::read_xdr(r)?,
         })
@@ -6850,19 +6796,19 @@ impl WriteXDR for SignedSurveyResponseMessage {
 pub struct PeerStats {
     pub id: NodeId,
     pub version_str: Vec<u8>,
-    pub messages_read: Uint64,
-    pub messages_written: Uint64,
-    pub bytes_read: Uint64,
-    pub bytes_written: Uint64,
-    pub seconds_connected: Uint64,
-    pub unique_flood_bytes_recv: Uint64,
-    pub duplicate_flood_bytes_recv: Uint64,
-    pub unique_fetch_bytes_recv: Uint64,
-    pub duplicate_fetch_bytes_recv: Uint64,
-    pub unique_flood_message_recv: Uint64,
-    pub duplicate_flood_message_recv: Uint64,
-    pub unique_fetch_message_recv: Uint64,
-    pub duplicate_fetch_message_recv: Uint64,
+    pub messages_read: u64,
+    pub messages_written: u64,
+    pub bytes_read: u64,
+    pub bytes_written: u64,
+    pub seconds_connected: u64,
+    pub unique_flood_bytes_recv: u64,
+    pub duplicate_flood_bytes_recv: u64,
+    pub unique_fetch_bytes_recv: u64,
+    pub duplicate_fetch_bytes_recv: u64,
+    pub unique_flood_message_recv: u64,
+    pub duplicate_flood_message_recv: u64,
+    pub unique_fetch_message_recv: u64,
+    pub duplicate_fetch_message_recv: u64,
 }
 
 impl ReadXDR for PeerStats {
@@ -6870,19 +6816,19 @@ impl ReadXDR for PeerStats {
         Ok(Self {
             id: <NodeId as ReadXDR>::read_xdr(r)?,
             version_str: <Vec<u8> as ReadXDR>::read_xdr(r)?,
-            messages_read: <Uint64 as ReadXDR>::read_xdr(r)?,
-            messages_written: <Uint64 as ReadXDR>::read_xdr(r)?,
-            bytes_read: <Uint64 as ReadXDR>::read_xdr(r)?,
-            bytes_written: <Uint64 as ReadXDR>::read_xdr(r)?,
-            seconds_connected: <Uint64 as ReadXDR>::read_xdr(r)?,
-            unique_flood_bytes_recv: <Uint64 as ReadXDR>::read_xdr(r)?,
-            duplicate_flood_bytes_recv: <Uint64 as ReadXDR>::read_xdr(r)?,
-            unique_fetch_bytes_recv: <Uint64 as ReadXDR>::read_xdr(r)?,
-            duplicate_fetch_bytes_recv: <Uint64 as ReadXDR>::read_xdr(r)?,
-            unique_flood_message_recv: <Uint64 as ReadXDR>::read_xdr(r)?,
-            duplicate_flood_message_recv: <Uint64 as ReadXDR>::read_xdr(r)?,
-            unique_fetch_message_recv: <Uint64 as ReadXDR>::read_xdr(r)?,
-            duplicate_fetch_message_recv: <Uint64 as ReadXDR>::read_xdr(r)?,
+            messages_read: <u64 as ReadXDR>::read_xdr(r)?,
+            messages_written: <u64 as ReadXDR>::read_xdr(r)?,
+            bytes_read: <u64 as ReadXDR>::read_xdr(r)?,
+            bytes_written: <u64 as ReadXDR>::read_xdr(r)?,
+            seconds_connected: <u64 as ReadXDR>::read_xdr(r)?,
+            unique_flood_bytes_recv: <u64 as ReadXDR>::read_xdr(r)?,
+            duplicate_flood_bytes_recv: <u64 as ReadXDR>::read_xdr(r)?,
+            unique_fetch_bytes_recv: <u64 as ReadXDR>::read_xdr(r)?,
+            duplicate_fetch_bytes_recv: <u64 as ReadXDR>::read_xdr(r)?,
+            unique_flood_message_recv: <u64 as ReadXDR>::read_xdr(r)?,
+            duplicate_flood_message_recv: <u64 as ReadXDR>::read_xdr(r)?,
+            unique_fetch_message_recv: <u64 as ReadXDR>::read_xdr(r)?,
+            duplicate_fetch_message_recv: <u64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -6956,8 +6902,8 @@ impl WriteXDR for PeerStatList {
 pub struct TopologyResponseBody {
     pub inbound_peers: PeerStatList,
     pub outbound_peers: PeerStatList,
-    pub total_inbound_peer_count: Uint32,
-    pub total_outbound_peer_count: Uint32,
+    pub total_inbound_peer_count: u32,
+    pub total_outbound_peer_count: u32,
 }
 
 impl ReadXDR for TopologyResponseBody {
@@ -6965,8 +6911,8 @@ impl ReadXDR for TopologyResponseBody {
         Ok(Self {
             inbound_peers: <PeerStatList as ReadXDR>::read_xdr(r)?,
             outbound_peers: <PeerStatList as ReadXDR>::read_xdr(r)?,
-            total_inbound_peer_count: <Uint32 as ReadXDR>::read_xdr(r)?,
-            total_outbound_peer_count: <Uint32 as ReadXDR>::read_xdr(r)?,
+            total_inbound_peer_count: <u32 as ReadXDR>::read_xdr(r)?,
+            total_outbound_peer_count: <u32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -7006,7 +6952,7 @@ impl SurveyResponseBody {
 impl ReadXDR for SurveyResponseBody {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: SurveyMessageCommandType = <SurveyMessageCommandType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             SurveyMessageCommandType::SurveyTopology => {
                 Self::SurveyTopology(<TopologyResponseBody as ReadXDR>::read_xdr(r)?)
             }
@@ -7088,7 +7034,7 @@ pub enum StellarMessage {
     GetScpQuorumset(Uint256),
     ScpQuorumset(ScpQuorumSet),
     ScpMessage(ScpEnvelope),
-    GetScpState(Uint32),
+    GetScpState(u32),
     SendMore(SendMore),
 }
 
@@ -7118,7 +7064,7 @@ impl StellarMessage {
 impl ReadXDR for StellarMessage {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: MessageType = <MessageType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             MessageType::ErrorMsg => Self::ErrorMsg(<SError as ReadXDR>::read_xdr(r)?),
             MessageType::Hello => Self::Hello(<Hello as ReadXDR>::read_xdr(r)?),
             MessageType::Auth => Self::Auth(<Auth as ReadXDR>::read_xdr(r)?),
@@ -7143,7 +7089,7 @@ impl ReadXDR for StellarMessage {
                 Self::ScpQuorumset(<ScpQuorumSet as ReadXDR>::read_xdr(r)?)
             }
             MessageType::ScpMessage => Self::ScpMessage(<ScpEnvelope as ReadXDR>::read_xdr(r)?),
-            MessageType::GetScpState => Self::GetScpState(<Uint32 as ReadXDR>::read_xdr(r)?),
+            MessageType::GetScpState => Self::GetScpState(<u32 as ReadXDR>::read_xdr(r)?),
             MessageType::SendMore => Self::SendMore(<SendMore as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -7188,7 +7134,7 @@ impl WriteXDR for StellarMessage {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AuthenticatedMessageV0 {
-    pub sequence: Uint64,
+    pub sequence: u64,
     pub message: StellarMessage,
     pub mac: HmacSha256Mac,
 }
@@ -7196,7 +7142,7 @@ pub struct AuthenticatedMessageV0 {
 impl ReadXDR for AuthenticatedMessageV0 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            sequence: <Uint64 as ReadXDR>::read_xdr(r)?,
+            sequence: <u64 as ReadXDR>::read_xdr(r)?,
             message: <StellarMessage as ReadXDR>::read_xdr(r)?,
             mac: <HmacSha256Mac as ReadXDR>::read_xdr(r)?,
         })
@@ -7225,24 +7171,24 @@ impl WriteXDR for AuthenticatedMessageV0 {
 //        } v0;
 //    };
 //
-// union with discriminant Uint32
+// union with discriminant u32
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum AuthenticatedMessage {
     V0(AuthenticatedMessageV0),
 }
 
 impl AuthenticatedMessage {
-    pub fn discriminant(&self) -> Uint32 {
+    pub fn discriminant(&self) -> u32 {
         match self {
-            Self::V0(_) => Uint32(0),
+            Self::V0(_) => 0,
         }
     }
 }
 
 impl ReadXDR for AuthenticatedMessage {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: Uint32 = <Uint32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let dv: u32 = <u32 as ReadXDR>::read_xdr(r)?;
+        let v = match dv {
             0 => Self::V0(<AuthenticatedMessageV0 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -7288,7 +7234,7 @@ impl LiquidityPoolParameters {
 impl ReadXDR for LiquidityPoolParameters {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LiquidityPoolType = <LiquidityPoolType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             LiquidityPoolType::LiquidityPoolConstantProduct => Self::LiquidityPoolConstantProduct(
                 <LiquidityPoolConstantProductParameters as ReadXDR>::read_xdr(r)?,
             ),
@@ -7319,14 +7265,14 @@ impl WriteXDR for LiquidityPoolParameters {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct MuxedAccountMed25519 {
-    pub id: Uint64,
+    pub id: u64,
     pub ed25519: Uint256,
 }
 
 impl ReadXDR for MuxedAccountMed25519 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            id: <Uint64 as ReadXDR>::read_xdr(r)?,
+            id: <u64 as ReadXDR>::read_xdr(r)?,
             ed25519: <Uint256 as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -7373,7 +7319,7 @@ impl MuxedAccount {
 impl ReadXDR for MuxedAccount {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: CryptoKeyType = <CryptoKeyType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             CryptoKeyType::KeyTypeEd25519 => {
                 Self::KeyTypeEd25519(<Uint256 as ReadXDR>::read_xdr(r)?)
             }
@@ -7557,14 +7503,14 @@ impl WriteXDR for OperationType {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct CreateAccountOp {
     pub destination: AccountId,
-    pub starting_balance: Int64,
+    pub starting_balance: i64,
 }
 
 impl ReadXDR for CreateAccountOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             destination: <AccountId as ReadXDR>::read_xdr(r)?,
-            starting_balance: <Int64 as ReadXDR>::read_xdr(r)?,
+            starting_balance: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -7590,7 +7536,7 @@ impl WriteXDR for CreateAccountOp {
 pub struct PaymentOp {
     pub destination: MuxedAccount,
     pub asset: Asset,
-    pub amount: Int64,
+    pub amount: i64,
 }
 
 impl ReadXDR for PaymentOp {
@@ -7598,7 +7544,7 @@ impl ReadXDR for PaymentOp {
         Ok(Self {
             destination: <MuxedAccount as ReadXDR>::read_xdr(r)?,
             asset: <Asset as ReadXDR>::read_xdr(r)?,
-            amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -7631,10 +7577,10 @@ impl WriteXDR for PaymentOp {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PathPaymentStrictReceiveOp {
     pub send_asset: Asset,
-    pub send_max: Int64,
+    pub send_max: i64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
-    pub dest_amount: Int64,
+    pub dest_amount: i64,
     pub path: Vec<Asset>,
 }
 
@@ -7642,10 +7588,10 @@ impl ReadXDR for PathPaymentStrictReceiveOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             send_asset: <Asset as ReadXDR>::read_xdr(r)?,
-            send_max: <Int64 as ReadXDR>::read_xdr(r)?,
+            send_max: <i64 as ReadXDR>::read_xdr(r)?,
             destination: <MuxedAccount as ReadXDR>::read_xdr(r)?,
             dest_asset: <Asset as ReadXDR>::read_xdr(r)?,
-            dest_amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            dest_amount: <i64 as ReadXDR>::read_xdr(r)?,
             path: <Vec<Asset> as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -7682,10 +7628,10 @@ impl WriteXDR for PathPaymentStrictReceiveOp {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PathPaymentStrictSendOp {
     pub send_asset: Asset,
-    pub send_amount: Int64,
+    pub send_amount: i64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
-    pub dest_min: Int64,
+    pub dest_min: i64,
     pub path: Vec<Asset>,
 }
 
@@ -7693,10 +7639,10 @@ impl ReadXDR for PathPaymentStrictSendOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             send_asset: <Asset as ReadXDR>::read_xdr(r)?,
-            send_amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            send_amount: <i64 as ReadXDR>::read_xdr(r)?,
             destination: <MuxedAccount as ReadXDR>::read_xdr(r)?,
             dest_asset: <Asset as ReadXDR>::read_xdr(r)?,
-            dest_min: <Int64 as ReadXDR>::read_xdr(r)?,
+            dest_min: <i64 as ReadXDR>::read_xdr(r)?,
             path: <Vec<Asset> as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -7731,9 +7677,9 @@ impl WriteXDR for PathPaymentStrictSendOp {
 pub struct ManageSellOfferOp {
     pub selling: Asset,
     pub buying: Asset,
-    pub amount: Int64,
+    pub amount: i64,
     pub price: Price,
-    pub offer_id: Int64,
+    pub offer_id: i64,
 }
 
 impl ReadXDR for ManageSellOfferOp {
@@ -7741,9 +7687,9 @@ impl ReadXDR for ManageSellOfferOp {
         Ok(Self {
             selling: <Asset as ReadXDR>::read_xdr(r)?,
             buying: <Asset as ReadXDR>::read_xdr(r)?,
-            amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount: <i64 as ReadXDR>::read_xdr(r)?,
             price: <Price as ReadXDR>::read_xdr(r)?,
-            offer_id: <Int64 as ReadXDR>::read_xdr(r)?,
+            offer_id: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -7777,9 +7723,9 @@ impl WriteXDR for ManageSellOfferOp {
 pub struct ManageBuyOfferOp {
     pub selling: Asset,
     pub buying: Asset,
-    pub buy_amount: Int64,
+    pub buy_amount: i64,
     pub price: Price,
-    pub offer_id: Int64,
+    pub offer_id: i64,
 }
 
 impl ReadXDR for ManageBuyOfferOp {
@@ -7787,9 +7733,9 @@ impl ReadXDR for ManageBuyOfferOp {
         Ok(Self {
             selling: <Asset as ReadXDR>::read_xdr(r)?,
             buying: <Asset as ReadXDR>::read_xdr(r)?,
-            buy_amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            buy_amount: <i64 as ReadXDR>::read_xdr(r)?,
             price: <Price as ReadXDR>::read_xdr(r)?,
-            offer_id: <Int64 as ReadXDR>::read_xdr(r)?,
+            offer_id: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -7819,7 +7765,7 @@ impl WriteXDR for ManageBuyOfferOp {
 pub struct CreatePassiveSellOfferOp {
     pub selling: Asset,
     pub buying: Asset,
-    pub amount: Int64,
+    pub amount: i64,
     pub price: Price,
 }
 
@@ -7828,7 +7774,7 @@ impl ReadXDR for CreatePassiveSellOfferOp {
         Ok(Self {
             selling: <Asset as ReadXDR>::read_xdr(r)?,
             buying: <Asset as ReadXDR>::read_xdr(r)?,
-            amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount: <i64 as ReadXDR>::read_xdr(r)?,
             price: <Price as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -7869,13 +7815,13 @@ impl WriteXDR for CreatePassiveSellOfferOp {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SetOptionsOp {
     pub inflation_dest: Option<AccountId>,
-    pub clear_flags: Option<Uint32>,
-    pub set_flags: Option<Uint32>,
-    pub master_weight: Option<Uint32>,
-    pub low_threshold: Option<Uint32>,
-    pub med_threshold: Option<Uint32>,
-    pub high_threshold: Option<Uint32>,
-    pub home_domain: Option<String32>,
+    pub clear_flags: Option<u32>,
+    pub set_flags: Option<u32>,
+    pub master_weight: Option<u32>,
+    pub low_threshold: Option<u32>,
+    pub med_threshold: Option<u32>,
+    pub high_threshold: Option<u32>,
+    pub home_domain: Option<Vec<u8>>,
     pub signer: Option<Signer>,
 }
 
@@ -7883,13 +7829,13 @@ impl ReadXDR for SetOptionsOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             inflation_dest: <Option<AccountId> as ReadXDR>::read_xdr(r)?,
-            clear_flags: <Option<Uint32> as ReadXDR>::read_xdr(r)?,
-            set_flags: <Option<Uint32> as ReadXDR>::read_xdr(r)?,
-            master_weight: <Option<Uint32> as ReadXDR>::read_xdr(r)?,
-            low_threshold: <Option<Uint32> as ReadXDR>::read_xdr(r)?,
-            med_threshold: <Option<Uint32> as ReadXDR>::read_xdr(r)?,
-            high_threshold: <Option<Uint32> as ReadXDR>::read_xdr(r)?,
-            home_domain: <Option<String32> as ReadXDR>::read_xdr(r)?,
+            clear_flags: <Option<u32> as ReadXDR>::read_xdr(r)?,
+            set_flags: <Option<u32> as ReadXDR>::read_xdr(r)?,
+            master_weight: <Option<u32> as ReadXDR>::read_xdr(r)?,
+            low_threshold: <Option<u32> as ReadXDR>::read_xdr(r)?,
+            med_threshold: <Option<u32> as ReadXDR>::read_xdr(r)?,
+            high_threshold: <Option<u32> as ReadXDR>::read_xdr(r)?,
+            home_domain: <Option<Vec<u8>> as ReadXDR>::read_xdr(r)?,
             signer: <Option<Signer> as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -7952,7 +7898,7 @@ impl ChangeTrustAsset {
 impl ReadXDR for ChangeTrustAsset {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             AssetType::AssetTypeNative => Self::AssetTypeNative,
             AssetType::AssetTypeCreditAlphanum4 => {
                 Self::AssetTypeCreditAlphanum4(<AlphaNum4 as ReadXDR>::read_xdr(r)?)
@@ -7996,14 +7942,14 @@ impl WriteXDR for ChangeTrustAsset {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ChangeTrustOp {
     pub line: ChangeTrustAsset,
-    pub limit: Int64,
+    pub limit: i64,
 }
 
 impl ReadXDR for ChangeTrustOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             line: <ChangeTrustAsset as ReadXDR>::read_xdr(r)?,
-            limit: <Int64 as ReadXDR>::read_xdr(r)?,
+            limit: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -8031,7 +7977,7 @@ impl WriteXDR for ChangeTrustOp {
 pub struct AllowTrustOp {
     pub trustor: AccountId,
     pub asset: AssetCode,
-    pub authorize: Uint32,
+    pub authorize: u32,
 }
 
 impl ReadXDR for AllowTrustOp {
@@ -8039,7 +7985,7 @@ impl ReadXDR for AllowTrustOp {
         Ok(Self {
             trustor: <AccountId as ReadXDR>::read_xdr(r)?,
             asset: <AssetCode as ReadXDR>::read_xdr(r)?,
-            authorize: <Uint32 as ReadXDR>::read_xdr(r)?,
+            authorize: <u32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -8063,14 +8009,14 @@ impl WriteXDR for AllowTrustOp {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ManageDataOp {
-    pub data_name: String64,
+    pub data_name: Vec<u8>,
     pub data_value: Option<DataValue>,
 }
 
 impl ReadXDR for ManageDataOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            data_name: <String64 as ReadXDR>::read_xdr(r)?,
+            data_name: <Vec<u8> as ReadXDR>::read_xdr(r)?,
             data_value: <Option<DataValue> as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -8123,7 +8069,7 @@ impl WriteXDR for BumpSequenceOp {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct CreateClaimableBalanceOp {
     pub asset: Asset,
-    pub amount: Int64,
+    pub amount: i64,
     pub claimants: Vec<Claimant>,
 }
 
@@ -8131,7 +8077,7 @@ impl ReadXDR for CreateClaimableBalanceOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             asset: <Asset as ReadXDR>::read_xdr(r)?,
-            amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount: <i64 as ReadXDR>::read_xdr(r)?,
             claimants: <Vec<Claimant> as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -8317,7 +8263,7 @@ impl RevokeSponsorshipOp {
 impl ReadXDR for RevokeSponsorshipOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             RevokeSponsorshipType::RevokeSponsorshipLedgerEntry => {
                 Self::RevokeSponsorshipLedgerEntry(<LedgerKey as ReadXDR>::read_xdr(r)?)
             }
@@ -8355,7 +8301,7 @@ impl WriteXDR for RevokeSponsorshipOp {
 pub struct ClawbackOp {
     pub asset: Asset,
     pub from: MuxedAccount,
-    pub amount: Int64,
+    pub amount: i64,
 }
 
 impl ReadXDR for ClawbackOp {
@@ -8363,7 +8309,7 @@ impl ReadXDR for ClawbackOp {
         Ok(Self {
             asset: <Asset as ReadXDR>::read_xdr(r)?,
             from: <MuxedAccount as ReadXDR>::read_xdr(r)?,
-            amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -8419,8 +8365,8 @@ impl WriteXDR for ClawbackClaimableBalanceOp {
 pub struct SetTrustLineFlagsOp {
     pub trustor: AccountId,
     pub asset: Asset,
-    pub clear_flags: Uint32,
-    pub set_flags: Uint32,
+    pub clear_flags: u32,
+    pub set_flags: u32,
 }
 
 impl ReadXDR for SetTrustLineFlagsOp {
@@ -8428,8 +8374,8 @@ impl ReadXDR for SetTrustLineFlagsOp {
         Ok(Self {
             trustor: <AccountId as ReadXDR>::read_xdr(r)?,
             asset: <Asset as ReadXDR>::read_xdr(r)?,
-            clear_flags: <Uint32 as ReadXDR>::read_xdr(r)?,
-            set_flags: <Uint32 as ReadXDR>::read_xdr(r)?,
+            clear_flags: <u32 as ReadXDR>::read_xdr(r)?,
+            set_flags: <u32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -8464,8 +8410,8 @@ pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LiquidityPoolDepositOp {
     pub liquidity_pool_id: PoolId,
-    pub max_amount_a: Int64,
-    pub max_amount_b: Int64,
+    pub max_amount_a: i64,
+    pub max_amount_b: i64,
     pub min_price: Price,
     pub max_price: Price,
 }
@@ -8474,8 +8420,8 @@ impl ReadXDR for LiquidityPoolDepositOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             liquidity_pool_id: <PoolId as ReadXDR>::read_xdr(r)?,
-            max_amount_a: <Int64 as ReadXDR>::read_xdr(r)?,
-            max_amount_b: <Int64 as ReadXDR>::read_xdr(r)?,
+            max_amount_a: <i64 as ReadXDR>::read_xdr(r)?,
+            max_amount_b: <i64 as ReadXDR>::read_xdr(r)?,
             min_price: <Price as ReadXDR>::read_xdr(r)?,
             max_price: <Price as ReadXDR>::read_xdr(r)?,
         })
@@ -8506,18 +8452,18 @@ impl WriteXDR for LiquidityPoolDepositOp {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LiquidityPoolWithdrawOp {
     pub liquidity_pool_id: PoolId,
-    pub amount: Int64,
-    pub min_amount_a: Int64,
-    pub min_amount_b: Int64,
+    pub amount: i64,
+    pub min_amount_a: i64,
+    pub min_amount_b: i64,
 }
 
 impl ReadXDR for LiquidityPoolWithdrawOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             liquidity_pool_id: <PoolId as ReadXDR>::read_xdr(r)?,
-            amount: <Int64 as ReadXDR>::read_xdr(r)?,
-            min_amount_a: <Int64 as ReadXDR>::read_xdr(r)?,
-            min_amount_b: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount: <i64 as ReadXDR>::read_xdr(r)?,
+            min_amount_a: <i64 as ReadXDR>::read_xdr(r)?,
+            min_amount_b: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -8649,7 +8595,7 @@ impl OperationBody {
 impl ReadXDR for OperationBody {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: OperationType = <OperationType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             OperationType::CreateAccount => {
                 Self::CreateAccount(<CreateAccountOp as ReadXDR>::read_xdr(r)?)
             }
@@ -8847,7 +8793,7 @@ impl WriteXDR for Operation {
 pub struct HashIdPreimageOperationId {
     pub source_account: AccountId,
     pub seq_num: SequenceNumber,
-    pub op_num: Uint32,
+    pub op_num: u32,
 }
 
 impl ReadXDR for HashIdPreimageOperationId {
@@ -8855,7 +8801,7 @@ impl ReadXDR for HashIdPreimageOperationId {
         Ok(Self {
             source_account: <AccountId as ReadXDR>::read_xdr(r)?,
             seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
-            op_num: <Uint32 as ReadXDR>::read_xdr(r)?,
+            op_num: <u32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -8884,7 +8830,7 @@ impl WriteXDR for HashIdPreimageOperationId {
 pub struct HashIdPreimageRevokeId {
     pub source_account: AccountId,
     pub seq_num: SequenceNumber,
-    pub op_num: Uint32,
+    pub op_num: u32,
     pub liquidity_pool_id: PoolId,
     pub asset: Asset,
 }
@@ -8894,7 +8840,7 @@ impl ReadXDR for HashIdPreimageRevokeId {
         Ok(Self {
             source_account: <AccountId as ReadXDR>::read_xdr(r)?,
             seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
-            op_num: <Uint32 as ReadXDR>::read_xdr(r)?,
+            op_num: <u32 as ReadXDR>::read_xdr(r)?,
             liquidity_pool_id: <PoolId as ReadXDR>::read_xdr(r)?,
             asset: <Asset as ReadXDR>::read_xdr(r)?,
         })
@@ -8953,7 +8899,7 @@ impl HashIdPreimage {
 impl ReadXDR for HashIdPreimage {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             EnvelopeType::EnvelopeTypeOpId => {
                 Self::EnvelopeTypeOpId(<HashIdPreimageOperationId as ReadXDR>::read_xdr(r)?)
             }
@@ -9059,7 +9005,7 @@ impl WriteXDR for MemoType {
 pub enum Memo {
     MemoNone,
     MemoText(Vec<u8>),
-    MemoId(Uint64),
+    MemoId(u64),
     MemoHash(Hash),
     MemoReturn(Hash),
 }
@@ -9079,10 +9025,10 @@ impl Memo {
 impl ReadXDR for Memo {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: MemoType = <MemoType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             MemoType::MemoNone => Self::MemoNone,
             MemoType::MemoText => Self::MemoText(<Vec<u8> as ReadXDR>::read_xdr(r)?),
-            MemoType::MemoId => Self::MemoId(<Uint64 as ReadXDR>::read_xdr(r)?),
+            MemoType::MemoId => Self::MemoId(<u64 as ReadXDR>::read_xdr(r)?),
             MemoType::MemoHash => Self::MemoHash(<Hash as ReadXDR>::read_xdr(r)?),
             MemoType::MemoReturn => Self::MemoReturn(<Hash as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -9147,15 +9093,15 @@ impl WriteXDR for TimeBounds {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LedgerBounds {
-    pub min_ledger: Uint32,
-    pub max_ledger: Uint32,
+    pub min_ledger: u32,
+    pub max_ledger: u32,
 }
 
 impl ReadXDR for LedgerBounds {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            min_ledger: <Uint32 as ReadXDR>::read_xdr(r)?,
-            max_ledger: <Uint32 as ReadXDR>::read_xdr(r)?,
+            min_ledger: <u32 as ReadXDR>::read_xdr(r)?,
+            max_ledger: <u32 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -9209,7 +9155,7 @@ pub struct PreconditionsV2 {
     pub ledger_bounds: Option<LedgerBounds>,
     pub min_seq_num: Option<SequenceNumber>,
     pub min_seq_age: Duration,
-    pub min_seq_ledger_gap: Uint32,
+    pub min_seq_ledger_gap: u32,
     pub extra_signers: Vec<SignerKey>,
 }
 
@@ -9220,7 +9166,7 @@ impl ReadXDR for PreconditionsV2 {
             ledger_bounds: <Option<LedgerBounds> as ReadXDR>::read_xdr(r)?,
             min_seq_num: <Option<SequenceNumber> as ReadXDR>::read_xdr(r)?,
             min_seq_age: <Duration as ReadXDR>::read_xdr(r)?,
-            min_seq_ledger_gap: <Uint32 as ReadXDR>::read_xdr(r)?,
+            min_seq_ledger_gap: <u32 as ReadXDR>::read_xdr(r)?,
             extra_signers: <Vec<SignerKey> as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -9325,7 +9271,7 @@ impl Preconditions {
 impl ReadXDR for Preconditions {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PreconditionType = <PreconditionType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             PreconditionType::PrecondNone => Self::PrecondNone,
             PreconditionType::PrecondTime => {
                 Self::PrecondTime(<TimeBounds as ReadXDR>::read_xdr(r)?)
@@ -9383,7 +9329,7 @@ impl TransactionV0Ext {
 impl ReadXDR for TransactionV0Ext {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -9423,7 +9369,7 @@ impl WriteXDR for TransactionV0Ext {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionV0 {
     pub source_account_ed25519: Uint256,
-    pub fee: Uint32,
+    pub fee: u32,
     pub seq_num: SequenceNumber,
     pub time_bounds: Option<TimeBounds>,
     pub memo: Memo,
@@ -9435,7 +9381,7 @@ impl ReadXDR for TransactionV0 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             source_account_ed25519: <Uint256 as ReadXDR>::read_xdr(r)?,
-            fee: <Uint32 as ReadXDR>::read_xdr(r)?,
+            fee: <u32 as ReadXDR>::read_xdr(r)?,
             seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
             time_bounds: <Option<TimeBounds> as ReadXDR>::read_xdr(r)?,
             memo: <Memo as ReadXDR>::read_xdr(r)?,
@@ -9516,7 +9462,7 @@ impl TransactionExt {
 impl ReadXDR for TransactionExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -9567,7 +9513,7 @@ impl WriteXDR for TransactionExt {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Transaction {
     pub source_account: MuxedAccount,
-    pub fee: Uint32,
+    pub fee: u32,
     pub seq_num: SequenceNumber,
     pub cond: Preconditions,
     pub memo: Memo,
@@ -9579,7 +9525,7 @@ impl ReadXDR for Transaction {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             source_account: <MuxedAccount as ReadXDR>::read_xdr(r)?,
-            fee: <Uint32 as ReadXDR>::read_xdr(r)?,
+            fee: <u32 as ReadXDR>::read_xdr(r)?,
             seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
             cond: <Preconditions as ReadXDR>::read_xdr(r)?,
             memo: <Memo as ReadXDR>::read_xdr(r)?,
@@ -9660,7 +9606,7 @@ impl FeeBumpTransactionInnerTx {
 impl ReadXDR for FeeBumpTransactionInnerTx {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             EnvelopeType::EnvelopeTypeTx => {
                 Self::EnvelopeTypeTx(<TransactionV1Envelope as ReadXDR>::read_xdr(r)?)
             }
@@ -9706,7 +9652,7 @@ impl FeeBumpTransactionExt {
 impl ReadXDR for FeeBumpTransactionExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -9748,7 +9694,7 @@ impl WriteXDR for FeeBumpTransactionExt {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FeeBumpTransaction {
     pub fee_source: MuxedAccount,
-    pub fee: Int64,
+    pub fee: i64,
     pub inner_tx: FeeBumpTransactionInnerTx,
     pub ext: FeeBumpTransactionExt,
 }
@@ -9757,7 +9703,7 @@ impl ReadXDR for FeeBumpTransaction {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             fee_source: <MuxedAccount as ReadXDR>::read_xdr(r)?,
-            fee: <Int64 as ReadXDR>::read_xdr(r)?,
+            fee: <i64 as ReadXDR>::read_xdr(r)?,
             inner_tx: <FeeBumpTransactionInnerTx as ReadXDR>::read_xdr(r)?,
             ext: <FeeBumpTransactionExt as ReadXDR>::read_xdr(r)?,
         })
@@ -9840,7 +9786,7 @@ impl TransactionEnvelope {
 impl ReadXDR for TransactionEnvelope {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             EnvelopeType::EnvelopeTypeTxV0 => {
                 Self::EnvelopeTypeTxV0(<TransactionV0Envelope as ReadXDR>::read_xdr(r)?)
             }
@@ -9899,7 +9845,7 @@ impl TransactionSignaturePayloadTaggedTransaction {
 impl ReadXDR for TransactionSignaturePayloadTaggedTransaction {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             EnvelopeType::EnvelopeTypeTx => {
                 Self::EnvelopeTypeTx(<Transaction as ReadXDR>::read_xdr(r)?)
             }
@@ -10038,22 +9984,22 @@ impl WriteXDR for ClaimAtomType {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClaimOfferAtomV0 {
     pub seller_ed25519: Uint256,
-    pub offer_id: Int64,
+    pub offer_id: i64,
     pub asset_sold: Asset,
-    pub amount_sold: Int64,
+    pub amount_sold: i64,
     pub asset_bought: Asset,
-    pub amount_bought: Int64,
+    pub amount_bought: i64,
 }
 
 impl ReadXDR for ClaimOfferAtomV0 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             seller_ed25519: <Uint256 as ReadXDR>::read_xdr(r)?,
-            offer_id: <Int64 as ReadXDR>::read_xdr(r)?,
+            offer_id: <i64 as ReadXDR>::read_xdr(r)?,
             asset_sold: <Asset as ReadXDR>::read_xdr(r)?,
-            amount_sold: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount_sold: <i64 as ReadXDR>::read_xdr(r)?,
             asset_bought: <Asset as ReadXDR>::read_xdr(r)?,
-            amount_bought: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount_bought: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -10090,22 +10036,22 @@ impl WriteXDR for ClaimOfferAtomV0 {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ClaimOfferAtom {
     pub seller_id: AccountId,
-    pub offer_id: Int64,
+    pub offer_id: i64,
     pub asset_sold: Asset,
-    pub amount_sold: Int64,
+    pub amount_sold: i64,
     pub asset_bought: Asset,
-    pub amount_bought: Int64,
+    pub amount_bought: i64,
 }
 
 impl ReadXDR for ClaimOfferAtom {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             seller_id: <AccountId as ReadXDR>::read_xdr(r)?,
-            offer_id: <Int64 as ReadXDR>::read_xdr(r)?,
+            offer_id: <i64 as ReadXDR>::read_xdr(r)?,
             asset_sold: <Asset as ReadXDR>::read_xdr(r)?,
-            amount_sold: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount_sold: <i64 as ReadXDR>::read_xdr(r)?,
             asset_bought: <Asset as ReadXDR>::read_xdr(r)?,
-            amount_bought: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount_bought: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -10141,9 +10087,9 @@ impl WriteXDR for ClaimOfferAtom {
 pub struct ClaimLiquidityAtom {
     pub liquidity_pool_id: PoolId,
     pub asset_sold: Asset,
-    pub amount_sold: Int64,
+    pub amount_sold: i64,
     pub asset_bought: Asset,
-    pub amount_bought: Int64,
+    pub amount_bought: i64,
 }
 
 impl ReadXDR for ClaimLiquidityAtom {
@@ -10151,9 +10097,9 @@ impl ReadXDR for ClaimLiquidityAtom {
         Ok(Self {
             liquidity_pool_id: <PoolId as ReadXDR>::read_xdr(r)?,
             asset_sold: <Asset as ReadXDR>::read_xdr(r)?,
-            amount_sold: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount_sold: <i64 as ReadXDR>::read_xdr(r)?,
             asset_bought: <Asset as ReadXDR>::read_xdr(r)?,
-            amount_bought: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount_bought: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -10202,7 +10148,7 @@ impl ClaimAtom {
 impl ReadXDR for ClaimAtom {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimAtomType = <ClaimAtomType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ClaimAtomType::ClaimAtomTypeV0 => {
                 Self::ClaimAtomTypeV0(<ClaimOfferAtomV0 as ReadXDR>::read_xdr(r)?)
             }
@@ -10322,7 +10268,7 @@ impl CreateAccountResult {
 impl ReadXDR for CreateAccountResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             CreateAccountResultCode::CreateAccountSuccess => Self::CreateAccountSuccess,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -10446,7 +10392,7 @@ impl PaymentResult {
 impl ReadXDR for PaymentResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PaymentResultCode = <PaymentResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             PaymentResultCode::PaymentSuccess => Self::PaymentSuccess,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -10574,7 +10520,7 @@ impl WriteXDR for PathPaymentStrictReceiveResultCode {
 pub struct SimplePaymentResult {
     pub destination: AccountId,
     pub asset: Asset,
-    pub amount: Int64,
+    pub amount: i64,
 }
 
 impl ReadXDR for SimplePaymentResult {
@@ -10582,7 +10528,7 @@ impl ReadXDR for SimplePaymentResult {
         Ok(Self {
             destination: <AccountId as ReadXDR>::read_xdr(r)?,
             asset: <Asset as ReadXDR>::read_xdr(r)?,
-            amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -10668,7 +10614,7 @@ impl ReadXDR for PathPaymentStrictReceiveResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PathPaymentStrictReceiveResultCode =
             <PathPaymentStrictReceiveResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSuccess => {
                 Self::PathPaymentStrictReceiveSuccess(
                     <PathPaymentStrictReceiveResultSuccess as ReadXDR>::read_xdr(r)?,
@@ -10861,7 +10807,7 @@ impl ReadXDR for PathPaymentStrictSendResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PathPaymentStrictSendResultCode =
             <PathPaymentStrictSendResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             PathPaymentStrictSendResultCode::PathPaymentStrictSendSuccess => {
                 Self::PathPaymentStrictSendSuccess(
                     <PathPaymentStrictSendResultSuccess as ReadXDR>::read_xdr(r)?,
@@ -11066,7 +11012,7 @@ impl ManageOfferSuccessResultOffer {
 impl ReadXDR for ManageOfferSuccessResultOffer {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageOfferEffect = <ManageOfferEffect as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ManageOfferEffect::ManageOfferCreated => {
                 Self::ManageOfferCreated(<OfferEntry as ReadXDR>::read_xdr(r)?)
             }
@@ -11159,7 +11105,7 @@ impl ManageSellOfferResult {
 impl ReadXDR for ManageSellOfferResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageSellOfferResultCode = <ManageSellOfferResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ManageSellOfferResultCode::ManageSellOfferSuccess => {
                 Self::ManageSellOfferSuccess(<ManageOfferSuccessResult as ReadXDR>::read_xdr(r)?)
             }
@@ -11298,7 +11244,7 @@ impl ManageBuyOfferResult {
 impl ReadXDR for ManageBuyOfferResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ManageBuyOfferResultCode::ManageBuyOfferSuccess => {
                 Self::ManageBuyOfferSuccess(<ManageOfferSuccessResult as ReadXDR>::read_xdr(r)?)
             }
@@ -11427,7 +11373,7 @@ impl SetOptionsResult {
 impl ReadXDR for SetOptionsResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             SetOptionsResultCode::SetOptionsSuccess => Self::SetOptionsSuccess,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -11551,7 +11497,7 @@ impl ChangeTrustResult {
 impl ReadXDR for ChangeTrustResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ChangeTrustResultCode::ChangeTrustSuccess => Self::ChangeTrustSuccess,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -11667,7 +11613,7 @@ impl AllowTrustResult {
 impl ReadXDR for AllowTrustResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             AllowTrustResultCode::AllowTrustSuccess => Self::AllowTrustSuccess,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -11771,7 +11717,7 @@ impl WriteXDR for AccountMergeResultCode {
 // union with discriminant AccountMergeResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum AccountMergeResult {
-    AccountMergeSuccess(Int64),
+    AccountMergeSuccess(i64),
 }
 
 impl AccountMergeResult {
@@ -11785,9 +11731,9 @@ impl AccountMergeResult {
 impl ReadXDR for AccountMergeResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             AccountMergeResultCode::AccountMergeSuccess => {
-                Self::AccountMergeSuccess(<Int64 as ReadXDR>::read_xdr(r)?)
+                Self::AccountMergeSuccess(<i64 as ReadXDR>::read_xdr(r)?)
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -11870,14 +11816,14 @@ impl WriteXDR for InflationResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct InflationPayout {
     pub destination: AccountId,
-    pub amount: Int64,
+    pub amount: i64,
 }
 
 impl ReadXDR for InflationPayout {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             destination: <AccountId as ReadXDR>::read_xdr(r)?,
-            amount: <Int64 as ReadXDR>::read_xdr(r)?,
+            amount: <i64 as ReadXDR>::read_xdr(r)?,
         })
     }
 }
@@ -11917,7 +11863,7 @@ impl InflationResult {
 impl ReadXDR for InflationResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: InflationResultCode = <InflationResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             InflationResultCode::InflationSuccess => {
                 Self::InflationSuccess(<Vec<InflationPayout> as ReadXDR>::read_xdr(r)?)
             }
@@ -12029,7 +11975,7 @@ impl ManageDataResult {
 impl ReadXDR for ManageDataResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageDataResultCode = <ManageDataResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ManageDataResultCode::ManageDataSuccess => Self::ManageDataSuccess,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -12128,7 +12074,7 @@ impl BumpSequenceResult {
 impl ReadXDR for BumpSequenceResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             BumpSequenceResultCode::BumpSequenceSuccess => Self::BumpSequenceSuccess,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -12241,7 +12187,7 @@ impl ReadXDR for CreateClaimableBalanceResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: CreateClaimableBalanceResultCode =
             <CreateClaimableBalanceResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             CreateClaimableBalanceResultCode::CreateClaimableBalanceSuccess => {
                 Self::CreateClaimableBalanceSuccess(<ClaimableBalanceId as ReadXDR>::read_xdr(r)?)
             }
@@ -12356,7 +12302,7 @@ impl ReadXDR for ClaimClaimableBalanceResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimClaimableBalanceResultCode =
             <ClaimClaimableBalanceResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ClaimClaimableBalanceResultCode::ClaimClaimableBalanceSuccess => {
                 Self::ClaimClaimableBalanceSuccess
             }
@@ -12468,7 +12414,7 @@ impl ReadXDR for BeginSponsoringFutureReservesResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: BeginSponsoringFutureReservesResultCode =
             <BeginSponsoringFutureReservesResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesSuccess => {
                 Self::BeginSponsoringFutureReservesSuccess
             }
@@ -12574,7 +12520,7 @@ impl ReadXDR for EndSponsoringFutureReservesResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EndSponsoringFutureReservesResultCode =
             <EndSponsoringFutureReservesResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesSuccess => {
                 Self::EndSponsoringFutureReservesSuccess
             }
@@ -12689,7 +12635,7 @@ impl ReadXDR for RevokeSponsorshipResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: RevokeSponsorshipResultCode =
             <RevokeSponsorshipResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             RevokeSponsorshipResultCode::RevokeSponsorshipSuccess => Self::RevokeSponsorshipSuccess,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -12798,7 +12744,7 @@ impl ClawbackResult {
 impl ReadXDR for ClawbackResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClawbackResultCode = <ClawbackResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ClawbackResultCode::ClawbackSuccess => Self::ClawbackSuccess,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -12908,7 +12854,7 @@ impl ReadXDR for ClawbackClaimableBalanceResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClawbackClaimableBalanceResultCode =
             <ClawbackClaimableBalanceResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceSuccess => {
                 Self::ClawbackClaimableBalanceSuccess
             }
@@ -13024,7 +12970,7 @@ impl ReadXDR for SetTrustLineFlagsResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: SetTrustLineFlagsResultCode =
             <SetTrustLineFlagsResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             SetTrustLineFlagsResultCode::SetTrustLineFlagsSuccess => Self::SetTrustLineFlagsSuccess,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -13149,7 +13095,7 @@ impl ReadXDR for LiquidityPoolDepositResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LiquidityPoolDepositResultCode =
             <LiquidityPoolDepositResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             LiquidityPoolDepositResultCode::LiquidityPoolDepositSuccess => {
                 Self::LiquidityPoolDepositSuccess
             }
@@ -13269,7 +13215,7 @@ impl ReadXDR for LiquidityPoolWithdrawResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LiquidityPoolWithdrawResultCode =
             <LiquidityPoolWithdrawResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawSuccess => {
                 Self::LiquidityPoolWithdrawSuccess
             }
@@ -13474,7 +13420,7 @@ impl OperationResultTr {
 impl ReadXDR for OperationResultTr {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: OperationType = <OperationType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             OperationType::CreateAccount => {
                 Self::CreateAccount(<CreateAccountResult as ReadXDR>::read_xdr(r)?)
             }
@@ -13659,7 +13605,7 @@ impl OperationResult {
 impl ReadXDR for OperationResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: OperationResultCode = <OperationResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             OperationResultCode::OpInner => {
                 Self::OpInner(<OperationResultTr as ReadXDR>::read_xdr(r)?)
             }
@@ -13857,7 +13803,7 @@ impl InnerTransactionResultResult {
 impl ReadXDR for InnerTransactionResultResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: TransactionResultCode = <TransactionResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             TransactionResultCode::TxSuccess => {
                 Self::TxSuccess(<Vec<OperationResult> as ReadXDR>::read_xdr(r)?)
             }
@@ -13935,7 +13881,7 @@ impl InnerTransactionResultExt {
 impl ReadXDR for InnerTransactionResultExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -13997,7 +13943,7 @@ impl WriteXDR for InnerTransactionResultExt {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct InnerTransactionResult {
-    pub fee_charged: Int64,
+    pub fee_charged: i64,
     pub result: InnerTransactionResultResult,
     pub ext: InnerTransactionResultExt,
 }
@@ -14005,7 +13951,7 @@ pub struct InnerTransactionResult {
 impl ReadXDR for InnerTransactionResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            fee_charged: <Int64 as ReadXDR>::read_xdr(r)?,
+            fee_charged: <i64 as ReadXDR>::read_xdr(r)?,
             result: <InnerTransactionResultResult as ReadXDR>::read_xdr(r)?,
             ext: <InnerTransactionResultExt as ReadXDR>::read_xdr(r)?,
         })
@@ -14089,7 +14035,7 @@ impl TransactionResultResult {
 impl ReadXDR for TransactionResultResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: TransactionResultCode = <TransactionResultCode as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             TransactionResultCode::TxFeeBumpInnerSuccess => {
                 Self::TxFeeBumpInnerSuccess(<InnerTransactionResultPair as ReadXDR>::read_xdr(r)?)
             }
@@ -14147,7 +14093,7 @@ impl TransactionResultExt {
 impl ReadXDR for TransactionResultExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -14196,7 +14142,7 @@ impl WriteXDR for TransactionResultExt {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct TransactionResult {
-    pub fee_charged: Int64,
+    pub fee_charged: i64,
     pub result: TransactionResultResult,
     pub ext: TransactionResultExt,
 }
@@ -14204,7 +14150,7 @@ pub struct TransactionResult {
 impl ReadXDR for TransactionResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            fee_charged: <Int64 as ReadXDR>::read_xdr(r)?,
+            fee_charged: <i64 as ReadXDR>::read_xdr(r)?,
             result: <TransactionResultResult as ReadXDR>::read_xdr(r)?,
             ext: <TransactionResultExt as ReadXDR>::read_xdr(r)?,
         })
@@ -14290,133 +14236,25 @@ impl WriteXDR for Uint256 {
 //
 //   typedef unsigned int uint32;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct Uint32(pub u32);
-
-impl From<Uint32> for u32 {
-    fn from(x: Uint32) -> Self {
-        x.0
-    }
-}
-
-impl From<u32> for Uint32 {
-    fn from(x: u32) -> Self {
-        Uint32(x)
-    }
-}
-
-impl ReadXDR for Uint32 {
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <u32 as ReadXDR>::read_xdr(r)?;
-        let v = Uint32(i);
-        Ok(v)
-    }
-}
-
-impl WriteXDR for Uint32 {
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
+pub type Uint32 = u32;
 
 // Int32 is an XDR Typedef defines as:
 //
 //   typedef int int32;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct Int32(pub i32);
-
-impl From<Int32> for i32 {
-    fn from(x: Int32) -> Self {
-        x.0
-    }
-}
-
-impl From<i32> for Int32 {
-    fn from(x: i32) -> Self {
-        Int32(x)
-    }
-}
-
-impl ReadXDR for Int32 {
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = Int32(i);
-        Ok(v)
-    }
-}
-
-impl WriteXDR for Int32 {
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
+pub type Int32 = i32;
 
 // Uint64 is an XDR Typedef defines as:
 //
 //   typedef unsigned hyper uint64;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct Uint64(pub u64);
-
-impl From<Uint64> for u64 {
-    fn from(x: Uint64) -> Self {
-        x.0
-    }
-}
-
-impl From<u64> for Uint64 {
-    fn from(x: u64) -> Self {
-        Uint64(x)
-    }
-}
-
-impl ReadXDR for Uint64 {
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <u64 as ReadXDR>::read_xdr(r)?;
-        let v = Uint64(i);
-        Ok(v)
-    }
-}
-
-impl WriteXDR for Uint64 {
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
+pub type Uint64 = u64;
 
 // Int64 is an XDR Typedef defines as:
 //
 //   typedef hyper int64;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct Int64(pub i64);
-
-impl From<Int64> for i64 {
-    fn from(x: Int64) -> Self {
-        x.0
-    }
-}
-
-impl From<i64> for Int64 {
-    fn from(x: i64) -> Self {
-        Int64(x)
-    }
-}
-
-impl ReadXDR for Int64 {
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <i64 as ReadXDR>::read_xdr(r)?;
-        let v = Int64(i);
-        Ok(v)
-    }
-}
-
-impl WriteXDR for Int64 {
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
+pub type Int64 = i64;
 
 // ExtensionPoint is an XDR Union defines as:
 //
@@ -14443,7 +14281,7 @@ impl ExtensionPoint {
 impl ReadXDR for ExtensionPoint {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
-        let v = match dv.into() {
+        let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -14654,7 +14492,7 @@ impl PublicKey {
 impl ReadXDR for PublicKey {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PublicKeyType = <PublicKeyType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             PublicKeyType::PublicKeyTypeEd25519 => {
                 Self::PublicKeyTypeEd25519(<Uint256 as ReadXDR>::read_xdr(r)?)
             }
@@ -14755,7 +14593,7 @@ impl SignerKey {
 impl ReadXDR for SignerKey {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: SignerKeyType = <SignerKeyType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             SignerKeyType::SignerKeyTypeEd25519 => {
                 Self::SignerKeyTypeEd25519(<Uint256 as ReadXDR>::read_xdr(r)?)
             }
@@ -15001,34 +14839,7 @@ impl WriteXDR for HmacSha256Mac {
 //
 //   typedef string SCSymbol<10>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct ScSymbol(pub Vec<u8>);
-
-impl From<ScSymbol> for Vec<u8> {
-    fn from(x: ScSymbol) -> Self {
-        x.0
-    }
-}
-
-impl From<Vec<u8>> for ScSymbol {
-    fn from(x: Vec<u8>) -> Self {
-        ScSymbol(x)
-    }
-}
-
-impl ReadXDR for ScSymbol {
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
-        let v = ScSymbol(i);
-        Ok(v)
-    }
-}
-
-impl WriteXDR for ScSymbol {
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
+pub type ScSymbol = Vec<u8>;
 
 // ScValType is an XDR Enum defines as:
 //
@@ -15219,7 +15030,7 @@ impl WriteXDR for ScStatusType {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ScStatus {
     SstOk,
-    SstUnknownError(Uint32),
+    SstUnknownError(u32),
 }
 
 impl ScStatus {
@@ -15234,11 +15045,9 @@ impl ScStatus {
 impl ReadXDR for ScStatus {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScStatusType = <ScStatusType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ScStatusType::SstOk => Self::SstOk,
-            ScStatusType::SstUnknownError => {
-                Self::SstUnknownError(<Uint32 as ReadXDR>::read_xdr(r)?)
-            }
+            ScStatusType::SstUnknownError => Self::SstUnknownError(<u32 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -15282,13 +15091,13 @@ impl WriteXDR for ScStatus {
 // union with discriminant ScValType
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ScVal {
-    ScvU63(Uint64),
-    ScvU32(Uint32),
-    ScvI32(Int32),
+    ScvU63(u64),
+    ScvU32(u32),
+    ScvI32(i32),
     ScvStatic(ScStatic),
     ScvObject(Option<Box<ScObject>>),
-    ScvSymbol(ScSymbol),
-    ScvBitset(Uint64),
+    ScvSymbol(Vec<u8>),
+    ScvBitset(u64),
     ScvStatus(ScStatus),
 }
 
@@ -15310,16 +15119,16 @@ impl ScVal {
 impl ReadXDR for ScVal {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScValType = <ScValType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
-            ScValType::ScvU63 => Self::ScvU63(<Uint64 as ReadXDR>::read_xdr(r)?),
-            ScValType::ScvU32 => Self::ScvU32(<Uint32 as ReadXDR>::read_xdr(r)?),
-            ScValType::ScvI32 => Self::ScvI32(<Int32 as ReadXDR>::read_xdr(r)?),
+        let v = match dv.into() {
+            ScValType::ScvU63 => Self::ScvU63(<u64 as ReadXDR>::read_xdr(r)?),
+            ScValType::ScvU32 => Self::ScvU32(<u32 as ReadXDR>::read_xdr(r)?),
+            ScValType::ScvI32 => Self::ScvI32(<i32 as ReadXDR>::read_xdr(r)?),
             ScValType::ScvStatic => Self::ScvStatic(<ScStatic as ReadXDR>::read_xdr(r)?),
             ScValType::ScvObject => {
                 Self::ScvObject(<Option<Box<ScObject>> as ReadXDR>::read_xdr(r)?)
             }
-            ScValType::ScvSymbol => Self::ScvSymbol(<ScSymbol as ReadXDR>::read_xdr(r)?),
-            ScValType::ScvBitset => Self::ScvBitset(<Uint64 as ReadXDR>::read_xdr(r)?),
+            ScValType::ScvSymbol => Self::ScvSymbol(<Vec<u8> as ReadXDR>::read_xdr(r)?),
+            ScValType::ScvBitset => Self::ScvBitset(<u64 as ReadXDR>::read_xdr(r)?),
             ScValType::ScvStatus => Self::ScvStatus(<ScStatus as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -15657,8 +15466,8 @@ pub enum ScObject {
     ScoBox(ScVal),
     ScoVec(ScVec),
     ScoMap(ScMap),
-    ScoU64(Uint64),
-    ScoI64(Int64),
+    ScoU64(u64),
+    ScoI64(i64),
     ScoString(Vec<u8>),
     ScoBinary(Vec<u8>),
     ScoBigint(ScBigInt),
@@ -15698,12 +15507,12 @@ impl ScObject {
 impl ReadXDR for ScObject {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScObjectType = <ScObjectType as ReadXDR>::read_xdr(r)?;
-        let v = match dv {
+        let v = match dv.into() {
             ScObjectType::ScoBox => Self::ScoBox(<ScVal as ReadXDR>::read_xdr(r)?),
             ScObjectType::ScoVec => Self::ScoVec(<ScVec as ReadXDR>::read_xdr(r)?),
             ScObjectType::ScoMap => Self::ScoMap(<ScMap as ReadXDR>::read_xdr(r)?),
-            ScObjectType::ScoU64 => Self::ScoU64(<Uint64 as ReadXDR>::read_xdr(r)?),
-            ScObjectType::ScoI64 => Self::ScoI64(<Int64 as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoU64 => Self::ScoU64(<u64 as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoI64 => Self::ScoI64(<i64 as ReadXDR>::read_xdr(r)?),
             ScObjectType::ScoString => Self::ScoString(<Vec<u8> as ReadXDR>::read_xdr(r)?),
             ScObjectType::ScoBinary => Self::ScoBinary(<Vec<u8> as ReadXDR>::read_xdr(r)?),
             ScObjectType::ScoBigint => Self::ScoBigint(<ScBigInt as ReadXDR>::read_xdr(r)?),

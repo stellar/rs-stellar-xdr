@@ -2,8 +2,6 @@ use stellar_xdr::*;
 
 #[test]
 fn test_build_small_tx() {
-    let ac: AccountId = AccountId(PublicKey::PublicKeyTypeEd25519(Uint256([0; 32])));
-    let pk: &PublicKey = ac.as_ref();
     let te = TransactionEnvelope::EnvelopeTypeTx(TransactionV1Envelope {
         tx: Transaction {
             source_account: MuxedAccount::KeyTypeEd25519(Uint256([0; 32])),

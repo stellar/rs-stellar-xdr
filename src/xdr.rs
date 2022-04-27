@@ -5,6 +5,7 @@
 //  xdr/Stellar-overlay.x
 //  xdr/Stellar-transaction.x
 //  xdr/Stellar-types.x
+//  xdr/Stellar-contract.x
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::{
@@ -14968,6 +14969,764 @@ impl ReadXDR for HmacSha256Mac {
 impl WriteXDR for HmacSha256Mac {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.mac.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSymbol is an XDR Typedef defines as:
+//
+//   typedef string SCSymbol<10>;
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct ScSymbol(pub Vec<u8>);
+
+impl From<ScSymbol> for Vec<u8> {
+    fn from(x: ScSymbol) -> Self {
+        x.0
+    }
+}
+
+impl From<Vec<u8>> for ScSymbol {
+    fn from(x: Vec<u8>) -> Self {
+        ScSymbol(x)
+    }
+}
+
+impl ReadXDR for ScSymbol {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
+        let v = ScSymbol(i);
+        Ok(v)
+    }
+}
+
+impl WriteXDR for ScSymbol {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+// ScValType is an XDR Enum defines as:
+//
+//   enum SCValType
+//    {
+//        SCV_U63 = 0,
+//        SCV_U32 = 1,
+//        SCV_I32 = 2,
+//        SCV_STATIC = 3,
+//        SCV_OBJECT = 4,
+//        SCV_SYMBOL = 5,
+//        SCV_BITSET = 6,
+//        SCV_STATUS = 7
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum ScValType {
+    ScvU63 = 0,
+    ScvU32 = 1,
+    ScvI32 = 2,
+    ScvStatic = 3,
+    ScvObject = 4,
+    ScvSymbol = 5,
+    ScvBitset = 6,
+    ScvStatus = 7,
+}
+
+impl TryFrom<i32> for ScValType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> std::result::Result<Self, Self::Error> {
+        let e = match i {
+            0 => ScValType::ScvU63,
+            1 => ScValType::ScvU32,
+            2 => ScValType::ScvI32,
+            3 => ScValType::ScvStatic,
+            4 => ScValType::ScvObject,
+            5 => ScValType::ScvSymbol,
+            6 => ScValType::ScvBitset,
+            7 => ScValType::ScvStatus,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScValType> for i32 {
+    fn from(e: ScValType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXDR for ScValType {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXDR for ScValType {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScStatic is an XDR Enum defines as:
+//
+//   enum SCStatic
+//    {
+//        SCS_VOID = 0,
+//        SCS_TRUE = 1,
+//        SCS_FALSE = 2
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum ScStatic {
+    ScsVoid = 0,
+    ScsTrue = 1,
+    ScsFalse = 2,
+}
+
+impl TryFrom<i32> for ScStatic {
+    type Error = Error;
+
+    fn try_from(i: i32) -> std::result::Result<Self, Self::Error> {
+        let e = match i {
+            0 => ScStatic::ScsVoid,
+            1 => ScStatic::ScsTrue,
+            2 => ScStatic::ScsFalse,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScStatic> for i32 {
+    fn from(e: ScStatic) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXDR for ScStatic {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXDR for ScStatic {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScStatusType is an XDR Enum defines as:
+//
+//   enum SCStatusType
+//    {
+//        SST_OK = 0,
+//        SST_UNKNOWN_ERROR = 1
+//        // TODO: add more
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum ScStatusType {
+    SstOk = 0,
+    SstUnknownError = 1,
+}
+
+impl TryFrom<i32> for ScStatusType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> std::result::Result<Self, Self::Error> {
+        let e = match i {
+            0 => ScStatusType::SstOk,
+            1 => ScStatusType::SstUnknownError,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScStatusType> for i32 {
+    fn from(e: ScStatusType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXDR for ScStatusType {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXDR for ScStatusType {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScStatus is an XDR Union defines as:
+//
+//   union SCStatus switch (SCStatusType type)
+//    {
+//    case SST_OK:
+//        void;
+//    case SST_UNKNOWN_ERROR:
+//        uint32 unknownCode;
+//    };
+//
+// union with discriminant ScStatusType
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub enum ScStatus {
+    SstOk,
+    SstUnknownError(Uint32),
+}
+
+impl ScStatus {
+    fn discriminant(&self) -> ScStatusType {
+        match self {
+            Self::SstOk => ScStatusType::SstOk,
+            Self::SstUnknownError(_) => ScStatusType::SstUnknownError,
+        }
+    }
+}
+
+impl ReadXDR for ScStatus {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScStatusType = <ScStatusType as ReadXDR>::read_xdr(r)?;
+        let v = match dv {
+            ScStatusType::SstOk => Self::SstOk,
+            ScStatusType::SstUnknownError => {
+                Self::SstUnknownError(<Uint32 as ReadXDR>::read_xdr(r)?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXDR for ScStatus {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        match self {
+            Self::SstOk => ().write_xdr(w)?,
+            Self::SstUnknownError(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ScVal is an XDR Union defines as:
+//
+//   union SCVal switch (SCValType type)
+//    {
+//    case SCV_U63:
+//        uint64 u63;
+//    case SCV_U32:
+//        uint32 u32;
+//    case SCV_I32:
+//        int32 i32;
+//    case SCV_STATIC:
+//        SCStatic ic;
+//    case SCV_OBJECT:
+//        SCObject* obj;
+//    case SCV_SYMBOL:
+//        SCSymbol sym;
+//    case SCV_BITSET:
+//        uint64 bits;
+//    case SCV_STATUS:
+//        SCStatus status;
+//    };
+//
+// union with discriminant ScValType
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub enum ScVal {
+    ScvU63(Uint64),
+    ScvU32(Uint32),
+    ScvI32(Int32),
+    ScvStatic(ScStatic),
+    ScvObject(Option<Box<ScObject>>),
+    ScvSymbol(ScSymbol),
+    ScvBitset(Uint64),
+    ScvStatus(ScStatus),
+}
+
+impl ScVal {
+    fn discriminant(&self) -> ScValType {
+        match self {
+            Self::ScvU63(_) => ScValType::ScvU63,
+            Self::ScvU32(_) => ScValType::ScvU32,
+            Self::ScvI32(_) => ScValType::ScvI32,
+            Self::ScvStatic(_) => ScValType::ScvStatic,
+            Self::ScvObject(_) => ScValType::ScvObject,
+            Self::ScvSymbol(_) => ScValType::ScvSymbol,
+            Self::ScvBitset(_) => ScValType::ScvBitset,
+            Self::ScvStatus(_) => ScValType::ScvStatus,
+        }
+    }
+}
+
+impl ReadXDR for ScVal {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScValType = <ScValType as ReadXDR>::read_xdr(r)?;
+        let v = match dv {
+            ScValType::ScvU63 => Self::ScvU63(<Uint64 as ReadXDR>::read_xdr(r)?),
+            ScValType::ScvU32 => Self::ScvU32(<Uint32 as ReadXDR>::read_xdr(r)?),
+            ScValType::ScvI32 => Self::ScvI32(<Int32 as ReadXDR>::read_xdr(r)?),
+            ScValType::ScvStatic => Self::ScvStatic(<ScStatic as ReadXDR>::read_xdr(r)?),
+            ScValType::ScvObject => {
+                Self::ScvObject(<Option<Box<ScObject>> as ReadXDR>::read_xdr(r)?)
+            }
+            ScValType::ScvSymbol => Self::ScvSymbol(<ScSymbol as ReadXDR>::read_xdr(r)?),
+            ScValType::ScvBitset => Self::ScvBitset(<Uint64 as ReadXDR>::read_xdr(r)?),
+            ScValType::ScvStatus => Self::ScvStatus(<ScStatus as ReadXDR>::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXDR for ScVal {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        match self {
+            Self::ScvU63(v) => v.write_xdr(w)?,
+            Self::ScvU32(v) => v.write_xdr(w)?,
+            Self::ScvI32(v) => v.write_xdr(w)?,
+            Self::ScvStatic(v) => v.write_xdr(w)?,
+            Self::ScvObject(v) => v.write_xdr(w)?,
+            Self::ScvSymbol(v) => v.write_xdr(w)?,
+            Self::ScvBitset(v) => v.write_xdr(w)?,
+            Self::ScvStatus(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ScObjectType is an XDR Enum defines as:
+//
+//   enum SCObjectType
+//    {
+//        // We have a few objects that represent non-stellar-specific concepts
+//        // like general-purpose maps, vectors, strings, numbers, blobs, etc.
+//
+//        SCO_BOX = 0,
+//        SCO_VEC = 1,
+//        SCO_MAP = 2,
+//        SCO_U64 = 3,
+//        SCO_I64 = 4,
+//        SCO_STRING = 5,
+//        SCO_BINARY = 6,
+//        SCO_BIGINT = 7,
+//        SCO_BIGRAT = 8,
+//
+//        // Followed by a potentially much longer list of object types
+//        // corresponding to any XDR ledger types users might want to manipulate
+//        // directly. Separate type codes are required for composite types and
+//        // each of their members, if it is reasonable for a user to want to hold
+//        // a handle to the member separately from the composite type.
+//
+//        SCO_LEDGERKEY = 9,
+//        SCO_OPERATION = 10,
+//        SCO_OPERATION_RESULT = 11,
+//        SCO_TRANSACTION = 12,
+//        SCO_ASSET = 13,
+//        SCO_PRICE = 14,
+//        SCO_ACCOUNTID = 15
+//
+//        // TODO: add more
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum ScObjectType {
+    ScoBox = 0,
+    ScoVec = 1,
+    ScoMap = 2,
+    ScoU64 = 3,
+    ScoI64 = 4,
+    ScoString = 5,
+    ScoBinary = 6,
+    ScoBigint = 7,
+    ScoBigrat = 8,
+    ScoLedgerkey = 9,
+    ScoOperation = 10,
+    ScoOperationResult = 11,
+    ScoTransaction = 12,
+    ScoAsset = 13,
+    ScoPrice = 14,
+    ScoAccountid = 15,
+}
+
+impl TryFrom<i32> for ScObjectType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> std::result::Result<Self, Self::Error> {
+        let e = match i {
+            0 => ScObjectType::ScoBox,
+            1 => ScObjectType::ScoVec,
+            2 => ScObjectType::ScoMap,
+            3 => ScObjectType::ScoU64,
+            4 => ScObjectType::ScoI64,
+            5 => ScObjectType::ScoString,
+            6 => ScObjectType::ScoBinary,
+            7 => ScObjectType::ScoBigint,
+            8 => ScObjectType::ScoBigrat,
+            9 => ScObjectType::ScoLedgerkey,
+            10 => ScObjectType::ScoOperation,
+            11 => ScObjectType::ScoOperationResult,
+            12 => ScObjectType::ScoTransaction,
+            13 => ScObjectType::ScoAsset,
+            14 => ScObjectType::ScoPrice,
+            15 => ScObjectType::ScoAccountid,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScObjectType> for i32 {
+    fn from(e: ScObjectType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXDR for ScObjectType {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXDR for ScObjectType {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScMapEntry is an XDR Struct defines as:
+//
+//   struct SCMapEntry
+//    {
+//        SCVal key;
+//        SCVal val;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct ScMapEntry {
+    pub key: ScVal,
+    pub val: ScVal,
+}
+
+impl ReadXDR for ScMapEntry {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            key: <ScVal as ReadXDR>::read_xdr(r)?,
+            val: <ScVal as ReadXDR>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXDR for ScMapEntry {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.key.write_xdr(w)?;
+        self.val.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScVec is an XDR Typedef defines as:
+//
+//   typedef SCVal SCVec<>;
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct ScVec(pub Vec<ScVal>);
+
+impl From<ScVec> for Vec<ScVal> {
+    fn from(x: ScVec) -> Self {
+        x.0
+    }
+}
+
+impl From<Vec<ScVal>> for ScVec {
+    fn from(x: Vec<ScVal>) -> Self {
+        ScVec(x)
+    }
+}
+
+impl ReadXDR for ScVec {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = <Vec<ScVal> as ReadXDR>::read_xdr(r)?;
+        let v = ScVec(i);
+        Ok(v)
+    }
+}
+
+impl WriteXDR for ScVec {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+// ScMap is an XDR Typedef defines as:
+//
+//   typedef SCMapEntry SCMap<>;
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct ScMap(pub Vec<ScMapEntry>);
+
+impl From<ScMap> for Vec<ScMapEntry> {
+    fn from(x: ScMap) -> Self {
+        x.0
+    }
+}
+
+impl From<Vec<ScMapEntry>> for ScMap {
+    fn from(x: Vec<ScMapEntry>) -> Self {
+        ScMap(x)
+    }
+}
+
+impl ReadXDR for ScMap {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = <Vec<ScMapEntry> as ReadXDR>::read_xdr(r)?;
+        let v = ScMap(i);
+        Ok(v)
+    }
+}
+
+impl WriteXDR for ScMap {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+// ScBigInt is an XDR Struct defines as:
+//
+//   struct SCBigInt
+//    {
+//        bool positive;
+//        opaque magnitude<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct ScBigInt {
+    pub positive: bool,
+    pub magnitude: Vec<u8>,
+}
+
+impl ReadXDR for ScBigInt {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            positive: <bool as ReadXDR>::read_xdr(r)?,
+            magnitude: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXDR for ScBigInt {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.positive.write_xdr(w)?;
+        self.magnitude.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScBigRat is an XDR Struct defines as:
+//
+//   struct SCBigRat
+//    {
+//        bool positive;
+//        opaque numerator<>;
+//        opaque denominator<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct ScBigRat {
+    pub positive: bool,
+    pub numerator: Vec<u8>,
+    pub denominator: Vec<u8>,
+}
+
+impl ReadXDR for ScBigRat {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            positive: <bool as ReadXDR>::read_xdr(r)?,
+            numerator: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+            denominator: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXDR for ScBigRat {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.positive.write_xdr(w)?;
+        self.numerator.write_xdr(w)?;
+        self.denominator.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScObject is an XDR Union defines as:
+//
+//   union SCObject switch (SCObjectType type)
+//    {
+//    case SCO_BOX:
+//        SCVal box;
+//    case SCO_VEC:
+//        SCVec vec;
+//    case SCO_MAP:
+//        SCMap map;
+//    case SCO_U64:
+//        uint64 u64;
+//    case SCO_I64:
+//        int64 i64;
+//    case SCO_STRING:
+//        string str<>;
+//    case SCO_BINARY:
+//        opaque bin<>;
+//    case SCO_BIGINT:
+//        SCBigInt bi;
+//    case SCO_BIGRAT:
+//        SCBigRat br;
+//    case SCO_LEDGERKEY:
+//        LedgerKey* lkey;
+//    case SCO_OPERATION:
+//        Operation* op;
+//    case SCO_OPERATION_RESULT:
+//        OperationResult* ores;
+//    case SCO_TRANSACTION:
+//        Transaction* tx;
+//    case SCO_ASSET:
+//        Asset asset;
+//    case SCO_PRICE:
+//        Price price;
+//    case SCO_ACCOUNTID:
+//        AccountID accountID;
+//    };
+//
+// union with discriminant ScObjectType
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub enum ScObject {
+    ScoBox(ScVal),
+    ScoVec(ScVec),
+    ScoMap(ScMap),
+    ScoU64(Uint64),
+    ScoI64(Int64),
+    ScoString(Vec<u8>),
+    ScoBinary(Vec<u8>),
+    ScoBigint(ScBigInt),
+    ScoBigrat(ScBigRat),
+    ScoLedgerkey(Option<LedgerKey>),
+    ScoOperation(Option<Operation>),
+    ScoOperationResult(Option<OperationResult>),
+    ScoTransaction(Option<Transaction>),
+    ScoAsset(Asset),
+    ScoPrice(Price),
+    ScoAccountid(AccountId),
+}
+
+impl ScObject {
+    fn discriminant(&self) -> ScObjectType {
+        match self {
+            Self::ScoBox(_) => ScObjectType::ScoBox,
+            Self::ScoVec(_) => ScObjectType::ScoVec,
+            Self::ScoMap(_) => ScObjectType::ScoMap,
+            Self::ScoU64(_) => ScObjectType::ScoU64,
+            Self::ScoI64(_) => ScObjectType::ScoI64,
+            Self::ScoString(_) => ScObjectType::ScoString,
+            Self::ScoBinary(_) => ScObjectType::ScoBinary,
+            Self::ScoBigint(_) => ScObjectType::ScoBigint,
+            Self::ScoBigrat(_) => ScObjectType::ScoBigrat,
+            Self::ScoLedgerkey(_) => ScObjectType::ScoLedgerkey,
+            Self::ScoOperation(_) => ScObjectType::ScoOperation,
+            Self::ScoOperationResult(_) => ScObjectType::ScoOperationResult,
+            Self::ScoTransaction(_) => ScObjectType::ScoTransaction,
+            Self::ScoAsset(_) => ScObjectType::ScoAsset,
+            Self::ScoPrice(_) => ScObjectType::ScoPrice,
+            Self::ScoAccountid(_) => ScObjectType::ScoAccountid,
+        }
+    }
+}
+
+impl ReadXDR for ScObject {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScObjectType = <ScObjectType as ReadXDR>::read_xdr(r)?;
+        let v = match dv {
+            ScObjectType::ScoBox => Self::ScoBox(<ScVal as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoVec => Self::ScoVec(<ScVec as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoMap => Self::ScoMap(<ScMap as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoU64 => Self::ScoU64(<Uint64 as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoI64 => Self::ScoI64(<Int64 as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoString => Self::ScoString(<Vec<u8> as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoBinary => Self::ScoBinary(<Vec<u8> as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoBigint => Self::ScoBigint(<ScBigInt as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoBigrat => Self::ScoBigrat(<ScBigRat as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoLedgerkey => {
+                Self::ScoLedgerkey(<Option<LedgerKey> as ReadXDR>::read_xdr(r)?)
+            }
+            ScObjectType::ScoOperation => {
+                Self::ScoOperation(<Option<Operation> as ReadXDR>::read_xdr(r)?)
+            }
+            ScObjectType::ScoOperationResult => {
+                Self::ScoOperationResult(<Option<OperationResult> as ReadXDR>::read_xdr(r)?)
+            }
+            ScObjectType::ScoTransaction => {
+                Self::ScoTransaction(<Option<Transaction> as ReadXDR>::read_xdr(r)?)
+            }
+            ScObjectType::ScoAsset => Self::ScoAsset(<Asset as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoPrice => Self::ScoPrice(<Price as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoAccountid => Self::ScoAccountid(<AccountId as ReadXDR>::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXDR for ScObject {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        match self {
+            Self::ScoBox(v) => v.write_xdr(w)?,
+            Self::ScoVec(v) => v.write_xdr(w)?,
+            Self::ScoMap(v) => v.write_xdr(w)?,
+            Self::ScoU64(v) => v.write_xdr(w)?,
+            Self::ScoI64(v) => v.write_xdr(w)?,
+            Self::ScoString(v) => v.write_xdr(w)?,
+            Self::ScoBinary(v) => v.write_xdr(w)?,
+            Self::ScoBigint(v) => v.write_xdr(w)?,
+            Self::ScoBigrat(v) => v.write_xdr(w)?,
+            Self::ScoLedgerkey(v) => v.write_xdr(w)?,
+            Self::ScoOperation(v) => v.write_xdr(w)?,
+            Self::ScoOperationResult(v) => v.write_xdr(w)?,
+            Self::ScoTransaction(v) => v.write_xdr(w)?,
+            Self::ScoAsset(v) => v.write_xdr(w)?,
+            Self::ScoPrice(v) => v.write_xdr(w)?,
+            Self::ScoAccountid(v) => v.write_xdr(w)?,
+        };
         Ok(())
     }
 }

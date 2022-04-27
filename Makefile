@@ -1,3 +1,5 @@
+XDR_BASE_URL=https://github.com/graydon/stellar-core/raw/wasm-runtime/src/xdr
+
 test: build
 	cargo test
 
@@ -19,18 +21,20 @@ src/xdr.rs: xdr
 			xdr/Stellar-overlay.x \
 			xdr/Stellar-transaction.x \
 			xdr/Stellar-types.x \
+			xdr/Stellar-contract.x \
 		'
 	rustfmt src/xdr.rs
 
 xdr:
 	mkdir xdr
 	cd xdr && \
-	curl -LO https://github.com/stellar/stellar-core/raw/master/src/xdr/Stellar-SCP.x && \
-	curl -LO https://github.com/stellar/stellar-core/raw/master/src/xdr/Stellar-ledger-entries.x && \
-	curl -LO https://github.com/stellar/stellar-core/raw/master/src/xdr/Stellar-ledger.x && \
-	curl -LO https://github.com/stellar/stellar-core/raw/master/src/xdr/Stellar-overlay.x && \
-	curl -LO https://github.com/stellar/stellar-core/raw/master/src/xdr/Stellar-transaction.x && \
-	curl -LO https://github.com/stellar/stellar-core/raw/master/src/xdr/Stellar-types.x && \
+	curl -LO $(XDR_BASE_URL)/Stellar-SCP.x && \
+	curl -LO $(XDR_BASE_URL)/Stellar-ledger-entries.x && \
+	curl -LO $(XDR_BASE_URL)/Stellar-ledger.x && \
+	curl -LO $(XDR_BASE_URL)/Stellar-overlay.x && \
+	curl -LO $(XDR_BASE_URL)/Stellar-transaction.x && \
+	curl -LO $(XDR_BASE_URL)/Stellar-types.x && \
+	curl -LO $(XDR_BASE_URL)/Stellar-contract.x && \
 	true
 
 clean:

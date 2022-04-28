@@ -17,6 +17,7 @@ use std::{
 #[derive(Debug)]
 pub enum Error {
     Invalid,
+    LengthExceedsMax,
     IO(io::Error),
     OutOfRange(TryFromIntError),
 }
@@ -54,7 +55,37 @@ where
     }
 }
 
+pub trait ReadVariableXDR<const MAX: u32 = { u32::MAX }>
+where
+    Self: Sized,
+{
+    fn read_xdr(r: &mut impl Read) -> Result<Self>;
+
+    fn read_xdr_into(&mut self, r: &mut impl Read) -> Result<()> {
+        *self = Self::read_xdr(r)?;
+        Ok(())
+    }
+
+    fn from_xdr_base64(b64: String) -> Result<Self> {
+        let mut b64_reader = Cursor::new(b64);
+        let mut dec = base64::read::DecoderReader::new(&mut b64_reader, base64::STANDARD);
+        let t = Self::read_xdr(&mut dec)?;
+        Ok(t)
+    }
+}
+
 pub trait WriteXDR {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()>;
+
+    fn to_xdr_base64(&self) -> Result<String> {
+        let mut enc = base64::write::EncoderStringWriter::new(base64::STANDARD);
+        self.write_xdr(&mut enc)?;
+        let b64 = enc.into_inner();
+        Ok(b64)
+    }
+}
+
+pub trait WriteVariableXDR<const MAX: u32 = { u32::MAX }> {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()>;
 
     fn to_xdr_base64(&self) -> Result<String> {
@@ -187,7 +218,33 @@ impl<T: ReadXDR> ReadXDR for Option<T> {
     }
 }
 
+impl<T: ReadVariableXDR, const MAX: u32> ReadVariableXDR<MAX> for Option<T> {
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = u32::read_xdr(r)?;
+        match i {
+            0 => Ok(None),
+            1 => {
+                let t = T::read_xdr(r)?;
+                Ok(Some(t))
+            }
+            _ => Err(Error::Invalid),
+        }
+    }
+}
+
 impl<T: WriteXDR> WriteXDR for Option<T> {
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        if let Some(t) = self {
+            (1 as u32).write_xdr(w)?;
+            t.write_xdr(w)?;
+        } else {
+            (0 as u32).write_xdr(w)?;
+        }
+        Ok(())
+    }
+}
+
+impl<T: WriteVariableXDR, const MAX: u32> WriteVariableXDR<MAX> for Option<T> {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         if let Some(t) = self {
             (1 as u32).write_xdr(w)?;
@@ -225,10 +282,12 @@ impl WriteXDR for () {
     }
 }
 
-impl ReadXDR for Vec<u8> {
+impl<const MAX: u32> ReadVariableXDR<MAX> for Vec<u8> {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let len: u32 = u32::read_xdr(r)?;
-        // TODO: Error on length greater than max length.
+        if len > MAX {
+            return Err(Error::LengthExceedsMax);
+        }
 
         let mut vec = vec![0u8; len as usize];
         r.read_exact(&mut vec)?;
@@ -241,10 +300,12 @@ impl ReadXDR for Vec<u8> {
     }
 }
 
-impl WriteXDR for Vec<u8> {
+impl<const MAX: u32> WriteVariableXDR<MAX> for Vec<u8> {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let len: u32 = self.len().try_into()?;
-        // TODO: Error on length greater than max length.
+        if len > MAX {
+            return Err(Error::LengthExceedsMax);
+        }
         len.write_xdr(w)?;
 
         w.write_all(self)?;
@@ -257,10 +318,12 @@ impl WriteXDR for Vec<u8> {
     }
 }
 
-impl<T: ReadXDR> ReadXDR for Vec<T> {
+impl<T: ReadXDR, const MAX: u32> ReadVariableXDR<MAX> for Vec<T> {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let len = u32::read_xdr(r)?;
-        // TODO: Error on length greater than max length.
+        if len > MAX {
+            return Err(Error::LengthExceedsMax);
+        }
 
         let mut vec = Vec::with_capacity(len.try_into()?);
         for _ in 0..len {
@@ -272,10 +335,12 @@ impl<T: ReadXDR> ReadXDR for Vec<T> {
     }
 }
 
-impl<T: WriteXDR> WriteXDR for Vec<T> {
+impl<T: WriteXDR, const MAX: u32> WriteVariableXDR<MAX> for Vec<T> {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let len: u32 = self.len().try_into()?;
-        // TODO: Error on length greater than max length.
+        if len > MAX {
+            return Err(Error::LengthExceedsMax);
+        }
         len.write_xdr(w)?;
 
         for t in self.iter() {
@@ -301,7 +366,7 @@ impl<const N: usize> WriteXDR for [u8; N] {
     }
 }
 
-impl<T: ReadXDR + Clone, const N: usize> ReadXDR for [T; N] {
+impl<T: ReadXDR, const N: usize> ReadXDR for [T; N] {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let mut vec = Vec::with_capacity(N);
         for _ in 0..N {
@@ -313,7 +378,7 @@ impl<T: ReadXDR + Clone, const N: usize> ReadXDR for [T; N] {
     }
 }
 
-impl<T: WriteXDR + Clone, const N: usize> WriteXDR for [T; N] {
+impl<T: WriteXDR, const N: usize> WriteXDR for [T; N] {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         for t in self {
             t.write_xdr(w)?;
@@ -354,7 +419,7 @@ impl AsRef<Vec<u8>> for Value {
 
 impl ReadXDR for Value {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
+        let i = <Vec<u8> as ReadVariableXDR>::read_xdr(r)?;
         let v = Value(i);
         Ok(v)
     }
@@ -362,7 +427,7 @@ impl ReadXDR for Value {
 
 impl WriteXDR for Value {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <Vec<u8> as WriteVariableXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -391,8 +456,8 @@ impl ReadXDR for ScpBallot {
 
 impl WriteXDR for ScpBallot {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.counter.write_xdr(w)?;
-        self.value.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.counter, w)?;
+        <Value as WriteXDR>::write_xdr(&self.value, w)?;
         Ok(())
     }
 }
@@ -474,17 +539,17 @@ impl ReadXDR for ScpNomination {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             quorum_set_hash: <Hash as ReadXDR>::read_xdr(r)?,
-            votes: <Vec<Value> as ReadXDR>::read_xdr(r)?,
-            accepted: <Vec<Value> as ReadXDR>::read_xdr(r)?,
+            votes: <Vec<Value> as ReadVariableXDR>::read_xdr(r)?,
+            accepted: <Vec<Value> as ReadVariableXDR>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for ScpNomination {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.quorum_set_hash.write_xdr(w)?;
-        self.votes.write_xdr(w)?;
-        self.accepted.write_xdr(w)?;
+        <Hash as WriteXDR>::write_xdr(&self.quorum_set_hash, w)?;
+        <Vec<Value> as WriteVariableXDR>::write_xdr(&self.votes, w)?;
+        <Vec<Value> as WriteVariableXDR>::write_xdr(&self.accepted, w)?;
         Ok(())
     }
 }
@@ -526,12 +591,12 @@ impl ReadXDR for ScpStatementPrepare {
 
 impl WriteXDR for ScpStatementPrepare {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.quorum_set_hash.write_xdr(w)?;
-        self.ballot.write_xdr(w)?;
-        self.prepared.write_xdr(w)?;
-        self.prepared_prime.write_xdr(w)?;
-        self.n_c.write_xdr(w)?;
-        self.n_h.write_xdr(w)?;
+        <Hash as WriteXDR>::write_xdr(&self.quorum_set_hash, w)?;
+        <ScpBallot as WriteXDR>::write_xdr(&self.ballot, w)?;
+        <Option<ScpBallot> as WriteXDR>::write_xdr(&self.prepared, w)?;
+        <Option<ScpBallot> as WriteXDR>::write_xdr(&self.prepared_prime, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.n_c, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.n_h, w)?;
         Ok(())
     }
 }
@@ -570,11 +635,11 @@ impl ReadXDR for ScpStatementConfirm {
 
 impl WriteXDR for ScpStatementConfirm {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ballot.write_xdr(w)?;
-        self.n_prepared.write_xdr(w)?;
-        self.n_commit.write_xdr(w)?;
-        self.n_h.write_xdr(w)?;
-        self.quorum_set_hash.write_xdr(w)?;
+        <ScpBallot as WriteXDR>::write_xdr(&self.ballot, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.n_prepared, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.n_commit, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.n_h, w)?;
+        <Hash as WriteXDR>::write_xdr(&self.quorum_set_hash, w)?;
         Ok(())
     }
 }
@@ -607,9 +672,9 @@ impl ReadXDR for ScpStatementExternalize {
 
 impl WriteXDR for ScpStatementExternalize {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.commit.write_xdr(w)?;
-        self.n_h.write_xdr(w)?;
-        self.commit_quorum_set_hash.write_xdr(w)?;
+        <ScpBallot as WriteXDR>::write_xdr(&self.commit, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.n_h, w)?;
+        <Hash as WriteXDR>::write_xdr(&self.commit_quorum_set_hash, w)?;
         Ok(())
     }
 }
@@ -695,10 +760,10 @@ impl WriteXDR for ScpStatementPledges {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ScpStPrepare(v) => v.write_xdr(w)?,
-            Self::ScpStConfirm(v) => v.write_xdr(w)?,
-            Self::ScpStExternalize(v) => v.write_xdr(w)?,
-            Self::ScpStNominate(v) => v.write_xdr(w)?,
+            Self::ScpStPrepare(v) => <ScpStatementPrepare as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScpStConfirm(v) => <ScpStatementConfirm as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScpStExternalize(v) => <ScpStatementExternalize as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScpStNominate(v) => <ScpNomination as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -764,9 +829,9 @@ impl ReadXDR for ScpStatement {
 
 impl WriteXDR for ScpStatement {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.node_id.write_xdr(w)?;
-        self.slot_index.write_xdr(w)?;
-        self.pledges.write_xdr(w)?;
+        <NodeId as WriteXDR>::write_xdr(&self.node_id, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.slot_index, w)?;
+        <ScpStatementPledges as WriteXDR>::write_xdr(&self.pledges, w)?;
         Ok(())
     }
 }
@@ -796,8 +861,8 @@ impl ReadXDR for ScpEnvelope {
 
 impl WriteXDR for ScpEnvelope {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.statement.write_xdr(w)?;
-        self.signature.write_xdr(w)?;
+        <ScpStatement as WriteXDR>::write_xdr(&self.statement, w)?;
+        <Signature as WriteXDR>::write_xdr(&self.signature, w)?;
         Ok(())
     }
 }
@@ -822,17 +887,17 @@ impl ReadXDR for ScpQuorumSet {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             threshold: <u32 as ReadXDR>::read_xdr(r)?,
-            validators: <Vec<NodeId> as ReadXDR>::read_xdr(r)?,
-            inner_sets: <Vec<ScpQuorumSet> as ReadXDR>::read_xdr(r)?,
+            validators: <Vec<NodeId> as ReadVariableXDR>::read_xdr(r)?,
+            inner_sets: <Vec<ScpQuorumSet> as ReadVariableXDR>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for ScpQuorumSet {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.threshold.write_xdr(w)?;
-        self.validators.write_xdr(w)?;
-        self.inner_sets.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.threshold, w)?;
+        <Vec<NodeId> as WriteVariableXDR>::write_xdr(&self.validators, w)?;
+        <Vec<ScpQuorumSet> as WriteVariableXDR>::write_xdr(&self.inner_sets, w)?;
         Ok(())
     }
 }
@@ -872,7 +937,7 @@ impl ReadXDR for AccountId {
 
 impl WriteXDR for AccountId {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <PublicKey as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -911,7 +976,7 @@ impl ReadXDR for Thresholds {
 
 impl WriteXDR for Thresholds {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <[u8; 4] as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -962,7 +1027,7 @@ impl ReadXDR for SequenceNumber {
 
 impl WriteXDR for SequenceNumber {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <i64 as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -1001,7 +1066,7 @@ impl ReadXDR for TimePoint {
 
 impl WriteXDR for TimePoint {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <u64 as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -1040,7 +1105,7 @@ impl ReadXDR for Duration {
 
 impl WriteXDR for Duration {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <u64 as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -1071,7 +1136,7 @@ impl AsRef<Vec<u8>> for DataValue {
 
 impl ReadXDR for DataValue {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
+        let i = <Vec<u8> as ReadVariableXDR<64>>::read_xdr(r)?;
         let v = DataValue(i);
         Ok(v)
     }
@@ -1079,7 +1144,7 @@ impl ReadXDR for DataValue {
 
 impl WriteXDR for DataValue {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <Vec<u8> as WriteVariableXDR<64>>::write_xdr(&self.0, w)
     }
 }
 
@@ -1118,7 +1183,7 @@ impl ReadXDR for PoolId {
 
 impl WriteXDR for PoolId {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <Hash as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -1157,7 +1222,7 @@ impl ReadXDR for AssetCode4 {
 
 impl WriteXDR for AssetCode4 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <[u8; 4] as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -1196,7 +1261,7 @@ impl ReadXDR for AssetCode12 {
 
 impl WriteXDR for AssetCode12 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <[u8; 12] as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -1307,8 +1372,8 @@ impl WriteXDR for AssetCode {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::AssetTypeCreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum12(v) => v.write_xdr(w)?,
+            Self::AssetTypeCreditAlphanum4(v) => <AssetCode4 as WriteXDR>::write_xdr(&v, w)?,
+            Self::AssetTypeCreditAlphanum12(v) => <AssetCode12 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -1339,8 +1404,8 @@ impl ReadXDR for AlphaNum4 {
 
 impl WriteXDR for AlphaNum4 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.asset_code.write_xdr(w)?;
-        self.issuer.write_xdr(w)?;
+        <AssetCode4 as WriteXDR>::write_xdr(&self.asset_code, w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.issuer, w)?;
         Ok(())
     }
 }
@@ -1370,8 +1435,8 @@ impl ReadXDR for AlphaNum12 {
 
 impl WriteXDR for AlphaNum12 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.asset_code.write_xdr(w)?;
-        self.issuer.write_xdr(w)?;
+        <AssetCode12 as WriteXDR>::write_xdr(&self.asset_code, w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.issuer, w)?;
         Ok(())
     }
 }
@@ -1433,8 +1498,8 @@ impl WriteXDR for Asset {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::AssetTypeNative => ().write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum12(v) => v.write_xdr(w)?,
+            Self::AssetTypeCreditAlphanum4(v) => <AlphaNum4 as WriteXDR>::write_xdr(&v, w)?,
+            Self::AssetTypeCreditAlphanum12(v) => <AlphaNum12 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -1465,8 +1530,8 @@ impl ReadXDR for Price {
 
 impl WriteXDR for Price {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.n.write_xdr(w)?;
-        self.d.write_xdr(w)?;
+        <i32 as WriteXDR>::write_xdr(&self.n, w)?;
+        <i32 as WriteXDR>::write_xdr(&self.d, w)?;
         Ok(())
     }
 }
@@ -1496,8 +1561,8 @@ impl ReadXDR for Liabilities {
 
 impl WriteXDR for Liabilities {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.buying.write_xdr(w)?;
-        self.selling.write_xdr(w)?;
+        <i64 as WriteXDR>::write_xdr(&self.buying, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.selling, w)?;
         Ok(())
     }
 }
@@ -1647,8 +1712,8 @@ impl ReadXDR for Signer {
 
 impl WriteXDR for Signer {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
-        self.weight.write_xdr(w)?;
+        <SignerKey as WriteXDR>::write_xdr(&self.key, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.weight, w)?;
         Ok(())
     }
 }
@@ -1773,7 +1838,7 @@ impl ReadXDR for SponsorshipDescriptor {
 
 impl WriteXDR for SponsorshipDescriptor {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <Option<AccountId> as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -1811,9 +1876,9 @@ impl ReadXDR for AccountEntryExtensionV3 {
 
 impl WriteXDR for AccountEntryExtensionV3 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ext.write_xdr(w)?;
-        self.seq_ledger.write_xdr(w)?;
-        self.seq_time.write_xdr(w)?;
+        <ExtensionPoint as WriteXDR>::write_xdr(&self.ext, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.seq_ledger, w)?;
+        <TimePoint as WriteXDR>::write_xdr(&self.seq_time, w)?;
         Ok(())
     }
 }
@@ -1862,7 +1927,7 @@ impl WriteXDR for AccountEntryExtensionV2Ext {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::V0 => ().write_xdr(w)?,
-            Self::V3(v) => v.write_xdr(w)?,
+            Self::V3(v) => <AccountEntryExtensionV3 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -1899,7 +1964,9 @@ impl ReadXDR for AccountEntryExtensionV2 {
         Ok(Self {
             num_sponsored: <u32 as ReadXDR>::read_xdr(r)?,
             num_sponsoring: <u32 as ReadXDR>::read_xdr(r)?,
-            signer_sponsoring_i_ds: <Vec<SponsorshipDescriptor> as ReadXDR>::read_xdr(r)?,
+            signer_sponsoring_i_ds: <Vec<SponsorshipDescriptor> as ReadVariableXDR<20>>::read_xdr(
+                r,
+            )?,
             ext: <AccountEntryExtensionV2Ext as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -1907,10 +1974,13 @@ impl ReadXDR for AccountEntryExtensionV2 {
 
 impl WriteXDR for AccountEntryExtensionV2 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.num_sponsored.write_xdr(w)?;
-        self.num_sponsoring.write_xdr(w)?;
-        self.signer_sponsoring_i_ds.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.num_sponsored, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.num_sponsoring, w)?;
+        <Vec<SponsorshipDescriptor> as WriteVariableXDR<20>>::write_xdr(
+            &self.signer_sponsoring_i_ds,
+            w,
+        )?;
+        <AccountEntryExtensionV2Ext as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -1959,7 +2029,7 @@ impl WriteXDR for AccountEntryExtensionV1Ext {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::V0 => ().write_xdr(w)?,
-            Self::V2(v) => v.write_xdr(w)?,
+            Self::V2(v) => <AccountEntryExtensionV2 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -1998,8 +2068,8 @@ impl ReadXDR for AccountEntryExtensionV1 {
 
 impl WriteXDR for AccountEntryExtensionV1 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liabilities.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <Liabilities as WriteXDR>::write_xdr(&self.liabilities, w)?;
+        <AccountEntryExtensionV1Ext as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -2048,7 +2118,7 @@ impl WriteXDR for AccountEntryExt {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::V0 => ().write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
+            Self::V1(v) => <AccountEntryExtensionV1 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -2108,9 +2178,9 @@ impl ReadXDR for AccountEntry {
             num_sub_entries: <u32 as ReadXDR>::read_xdr(r)?,
             inflation_dest: <Option<AccountId> as ReadXDR>::read_xdr(r)?,
             flags: <u32 as ReadXDR>::read_xdr(r)?,
-            home_domain: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+            home_domain: <Vec<u8> as ReadVariableXDR<32>>::read_xdr(r)?,
             thresholds: <Thresholds as ReadXDR>::read_xdr(r)?,
-            signers: <Vec<Signer> as ReadXDR>::read_xdr(r)?,
+            signers: <Vec<Signer> as ReadVariableXDR<20>>::read_xdr(r)?,
             ext: <AccountEntryExt as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -2118,16 +2188,16 @@ impl ReadXDR for AccountEntry {
 
 impl WriteXDR for AccountEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.balance.write_xdr(w)?;
-        self.seq_num.write_xdr(w)?;
-        self.num_sub_entries.write_xdr(w)?;
-        self.inflation_dest.write_xdr(w)?;
-        self.flags.write_xdr(w)?;
-        self.home_domain.write_xdr(w)?;
-        self.thresholds.write_xdr(w)?;
-        self.signers.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.account_id, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.balance, w)?;
+        <SequenceNumber as WriteXDR>::write_xdr(&self.seq_num, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.num_sub_entries, w)?;
+        <Option<AccountId> as WriteXDR>::write_xdr(&self.inflation_dest, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.flags, w)?;
+        <Vec<u8> as WriteVariableXDR<32>>::write_xdr(&self.home_domain, w)?;
+        <Thresholds as WriteXDR>::write_xdr(&self.thresholds, w)?;
+        <Vec<Signer> as WriteVariableXDR<20>>::write_xdr(&self.signers, w)?;
+        <AccountEntryExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -2322,9 +2392,9 @@ impl WriteXDR for TrustLineAsset {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::AssetTypeNative => ().write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum12(v) => v.write_xdr(w)?,
-            Self::AssetTypePoolShare(v) => v.write_xdr(w)?,
+            Self::AssetTypeCreditAlphanum4(v) => <AlphaNum4 as WriteXDR>::write_xdr(&v, w)?,
+            Self::AssetTypeCreditAlphanum12(v) => <AlphaNum12 as WriteXDR>::write_xdr(&v, w)?,
+            Self::AssetTypePoolShare(v) => <PoolId as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -2405,8 +2475,8 @@ impl ReadXDR for TrustLineEntryExtensionV2 {
 
 impl WriteXDR for TrustLineEntryExtensionV2 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_use_count.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <i32 as WriteXDR>::write_xdr(&self.liquidity_pool_use_count, w)?;
+        <TrustLineEntryExtensionV2Ext as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -2455,7 +2525,7 @@ impl WriteXDR for TrustLineEntryV1Ext {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::V0 => ().write_xdr(w)?,
-            Self::V2(v) => v.write_xdr(w)?,
+            Self::V2(v) => <TrustLineEntryExtensionV2 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -2494,8 +2564,8 @@ impl ReadXDR for TrustLineEntryV1 {
 
 impl WriteXDR for TrustLineEntryV1 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liabilities.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <Liabilities as WriteXDR>::write_xdr(&self.liabilities, w)?;
+        <TrustLineEntryV1Ext as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -2556,7 +2626,7 @@ impl WriteXDR for TrustLineEntryExt {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::V0 => ().write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
+            Self::V1(v) => <TrustLineEntryV1 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -2622,12 +2692,12 @@ impl ReadXDR for TrustLineEntry {
 
 impl WriteXDR for TrustLineEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.balance.write_xdr(w)?;
-        self.limit.write_xdr(w)?;
-        self.flags.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.account_id, w)?;
+        <TrustLineAsset as WriteXDR>::write_xdr(&self.asset, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.balance, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.limit, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.flags, w)?;
+        <TrustLineEntryExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -2788,14 +2858,14 @@ impl ReadXDR for OfferEntry {
 
 impl WriteXDR for OfferEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.seller_id.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
-        self.selling.write_xdr(w)?;
-        self.buying.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.price.write_xdr(w)?;
-        self.flags.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.seller_id, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.offer_id, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.selling, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.buying, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount, w)?;
+        <Price as WriteXDR>::write_xdr(&self.price, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.flags, w)?;
+        <OfferEntryExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -2873,7 +2943,7 @@ impl ReadXDR for DataEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: <AccountId as ReadXDR>::read_xdr(r)?,
-            data_name: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+            data_name: <Vec<u8> as ReadVariableXDR<64>>::read_xdr(r)?,
             data_value: <DataValue as ReadXDR>::read_xdr(r)?,
             ext: <DataEntryExt as ReadXDR>::read_xdr(r)?,
         })
@@ -2882,10 +2952,10 @@ impl ReadXDR for DataEntry {
 
 impl WriteXDR for DataEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.data_name.write_xdr(w)?;
-        self.data_value.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.account_id, w)?;
+        <Vec<u8> as WriteVariableXDR<64>>::write_xdr(&self.data_name, w)?;
+        <DataValue as WriteXDR>::write_xdr(&self.data_value, w)?;
+        <DataEntryExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -3006,10 +3076,10 @@ impl ReadXDR for ClaimPredicate {
         let v = match dv.into() {
             ClaimPredicateType::ClaimPredicateUnconditional => Self::ClaimPredicateUnconditional,
             ClaimPredicateType::ClaimPredicateAnd => {
-                Self::ClaimPredicateAnd(<Vec<ClaimPredicate> as ReadXDR>::read_xdr(r)?)
+                Self::ClaimPredicateAnd(<Vec<ClaimPredicate> as ReadVariableXDR<2>>::read_xdr(r)?)
             }
             ClaimPredicateType::ClaimPredicateOr => {
-                Self::ClaimPredicateOr(<Vec<ClaimPredicate> as ReadXDR>::read_xdr(r)?)
+                Self::ClaimPredicateOr(<Vec<ClaimPredicate> as ReadVariableXDR<2>>::read_xdr(r)?)
             }
             ClaimPredicateType::ClaimPredicateNot => {
                 Self::ClaimPredicateNot(<Option<Box<ClaimPredicate>> as ReadXDR>::read_xdr(r)?)
@@ -3032,11 +3102,17 @@ impl WriteXDR for ClaimPredicate {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::ClaimPredicateUnconditional => ().write_xdr(w)?,
-            Self::ClaimPredicateAnd(v) => v.write_xdr(w)?,
-            Self::ClaimPredicateOr(v) => v.write_xdr(w)?,
-            Self::ClaimPredicateNot(v) => v.write_xdr(w)?,
-            Self::ClaimPredicateBeforeAbsoluteTime(v) => v.write_xdr(w)?,
-            Self::ClaimPredicateBeforeRelativeTime(v) => v.write_xdr(w)?,
+            Self::ClaimPredicateAnd(v) => {
+                <Vec<ClaimPredicate> as WriteVariableXDR<2>>::write_xdr(&v, w)?
+            }
+            Self::ClaimPredicateOr(v) => {
+                <Vec<ClaimPredicate> as WriteVariableXDR<2>>::write_xdr(&v, w)?
+            }
+            Self::ClaimPredicateNot(v) => {
+                <Option<Box<ClaimPredicate>> as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::ClaimPredicateBeforeAbsoluteTime(v) => <i64 as WriteXDR>::write_xdr(&v, w)?,
+            Self::ClaimPredicateBeforeRelativeTime(v) => <i64 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -3115,8 +3191,8 @@ impl ReadXDR for ClaimantV0 {
 
 impl WriteXDR for ClaimantV0 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.destination.write_xdr(w)?;
-        self.predicate.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.destination, w)?;
+        <ClaimPredicate as WriteXDR>::write_xdr(&self.predicate, w)?;
         Ok(())
     }
 }
@@ -3165,7 +3241,7 @@ impl WriteXDR for Claimant {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ClaimantTypeV0(v) => v.write_xdr(w)?,
+            Self::ClaimantTypeV0(v) => <ClaimantV0 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -3259,7 +3335,7 @@ impl WriteXDR for ClaimableBalanceId {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ClaimableBalanceIdTypeV0(v) => v.write_xdr(w)?,
+            Self::ClaimableBalanceIdTypeV0(v) => <Hash as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -3396,8 +3472,8 @@ impl ReadXDR for ClaimableBalanceEntryExtensionV1 {
 
 impl WriteXDR for ClaimableBalanceEntryExtensionV1 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ext.write_xdr(w)?;
-        self.flags.write_xdr(w)?;
+        <ClaimableBalanceEntryExtensionV1Ext as WriteXDR>::write_xdr(&self.ext, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.flags, w)?;
         Ok(())
     }
 }
@@ -3446,7 +3522,7 @@ impl WriteXDR for ClaimableBalanceEntryExt {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::V0 => ().write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
+            Self::V1(v) => <ClaimableBalanceEntryExtensionV1 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -3492,7 +3568,7 @@ impl ReadXDR for ClaimableBalanceEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             balance_id: <ClaimableBalanceId as ReadXDR>::read_xdr(r)?,
-            claimants: <Vec<Claimant> as ReadXDR>::read_xdr(r)?,
+            claimants: <Vec<Claimant> as ReadVariableXDR<10>>::read_xdr(r)?,
             asset: <Asset as ReadXDR>::read_xdr(r)?,
             amount: <i64 as ReadXDR>::read_xdr(r)?,
             ext: <ClaimableBalanceEntryExt as ReadXDR>::read_xdr(r)?,
@@ -3502,11 +3578,11 @@ impl ReadXDR for ClaimableBalanceEntry {
 
 impl WriteXDR for ClaimableBalanceEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.balance_id.write_xdr(w)?;
-        self.claimants.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <ClaimableBalanceId as WriteXDR>::write_xdr(&self.balance_id, w)?;
+        <Vec<Claimant> as WriteVariableXDR<10>>::write_xdr(&self.claimants, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount, w)?;
+        <ClaimableBalanceEntryExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -3539,9 +3615,9 @@ impl ReadXDR for LiquidityPoolConstantProductParameters {
 
 impl WriteXDR for LiquidityPoolConstantProductParameters {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.asset_a.write_xdr(w)?;
-        self.asset_b.write_xdr(w)?;
-        self.fee.write_xdr(w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset_a, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset_b, w)?;
+        <i32 as WriteXDR>::write_xdr(&self.fee, w)?;
         Ok(())
     }
 }
@@ -3582,11 +3658,11 @@ impl ReadXDR for LiquidityPoolEntryConstantProduct {
 
 impl WriteXDR for LiquidityPoolEntryConstantProduct {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.params.write_xdr(w)?;
-        self.reserve_a.write_xdr(w)?;
-        self.reserve_b.write_xdr(w)?;
-        self.total_pool_shares.write_xdr(w)?;
-        self.pool_shares_trust_line_count.write_xdr(w)?;
+        <LiquidityPoolConstantProductParameters as WriteXDR>::write_xdr(&self.params, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.reserve_a, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.reserve_b, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.total_pool_shares, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.pool_shares_trust_line_count, w)?;
         Ok(())
     }
 }
@@ -3642,7 +3718,9 @@ impl WriteXDR for LiquidityPoolEntryBody {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::LiquidityPoolConstantProduct(v) => v.write_xdr(w)?,
+            Self::LiquidityPoolConstantProduct(v) => {
+                <LiquidityPoolEntryConstantProduct as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -3688,8 +3766,8 @@ impl ReadXDR for LiquidityPoolEntry {
 
 impl WriteXDR for LiquidityPoolEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_id.write_xdr(w)?;
-        self.body.write_xdr(w)?;
+        <PoolId as WriteXDR>::write_xdr(&self.liquidity_pool_id, w)?;
+        <LiquidityPoolEntryBody as WriteXDR>::write_xdr(&self.body, w)?;
         Ok(())
     }
 }
@@ -3769,8 +3847,8 @@ impl ReadXDR for LedgerEntryExtensionV1 {
 
 impl WriteXDR for LedgerEntryExtensionV1 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.sponsoring_id.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <SponsorshipDescriptor as WriteXDR>::write_xdr(&self.sponsoring_id, w)?;
+        <LedgerEntryExtensionV1Ext as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -3844,12 +3922,12 @@ impl WriteXDR for LedgerEntryData {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::Account(v) => v.write_xdr(w)?,
-            Self::Trustline(v) => v.write_xdr(w)?,
-            Self::Offer(v) => v.write_xdr(w)?,
-            Self::Data(v) => v.write_xdr(w)?,
-            Self::ClaimableBalance(v) => v.write_xdr(w)?,
-            Self::LiquidityPool(v) => v.write_xdr(w)?,
+            Self::Account(v) => <AccountEntry as WriteXDR>::write_xdr(&v, w)?,
+            Self::Trustline(v) => <TrustLineEntry as WriteXDR>::write_xdr(&v, w)?,
+            Self::Offer(v) => <OfferEntry as WriteXDR>::write_xdr(&v, w)?,
+            Self::Data(v) => <DataEntry as WriteXDR>::write_xdr(&v, w)?,
+            Self::ClaimableBalance(v) => <ClaimableBalanceEntry as WriteXDR>::write_xdr(&v, w)?,
+            Self::LiquidityPool(v) => <LiquidityPoolEntry as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -3899,7 +3977,7 @@ impl WriteXDR for LedgerEntryExt {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::V0 => ().write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
+            Self::V1(v) => <LedgerEntryExtensionV1 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -3958,9 +4036,9 @@ impl ReadXDR for LedgerEntry {
 
 impl WriteXDR for LedgerEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.last_modified_ledger_seq.write_xdr(w)?;
-        self.data.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.last_modified_ledger_seq, w)?;
+        <LedgerEntryData as WriteXDR>::write_xdr(&self.data, w)?;
+        <LedgerEntryExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -3987,7 +4065,7 @@ impl ReadXDR for LedgerKeyAccount {
 
 impl WriteXDR for LedgerKeyAccount {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.account_id, w)?;
         Ok(())
     }
 }
@@ -4017,8 +4095,8 @@ impl ReadXDR for LedgerKeyTrustLine {
 
 impl WriteXDR for LedgerKeyTrustLine {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.account_id, w)?;
+        <TrustLineAsset as WriteXDR>::write_xdr(&self.asset, w)?;
         Ok(())
     }
 }
@@ -4048,8 +4126,8 @@ impl ReadXDR for LedgerKeyOffer {
 
 impl WriteXDR for LedgerKeyOffer {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.seller_id.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.seller_id, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.offer_id, w)?;
         Ok(())
     }
 }
@@ -4072,15 +4150,15 @@ impl ReadXDR for LedgerKeyData {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: <AccountId as ReadXDR>::read_xdr(r)?,
-            data_name: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+            data_name: <Vec<u8> as ReadVariableXDR<64>>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for LedgerKeyData {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.data_name.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.account_id, w)?;
+        <Vec<u8> as WriteVariableXDR<64>>::write_xdr(&self.data_name, w)?;
         Ok(())
     }
 }
@@ -4107,7 +4185,7 @@ impl ReadXDR for LedgerKeyClaimableBalance {
 
 impl WriteXDR for LedgerKeyClaimableBalance {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.balance_id.write_xdr(w)?;
+        <ClaimableBalanceId as WriteXDR>::write_xdr(&self.balance_id, w)?;
         Ok(())
     }
 }
@@ -4134,7 +4212,7 @@ impl ReadXDR for LedgerKeyLiquidityPool {
 
 impl WriteXDR for LedgerKeyLiquidityPool {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_id.write_xdr(w)?;
+        <PoolId as WriteXDR>::write_xdr(&self.liquidity_pool_id, w)?;
         Ok(())
     }
 }
@@ -4234,12 +4312,12 @@ impl WriteXDR for LedgerKey {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::Account(v) => v.write_xdr(w)?,
-            Self::Trustline(v) => v.write_xdr(w)?,
-            Self::Offer(v) => v.write_xdr(w)?,
-            Self::Data(v) => v.write_xdr(w)?,
-            Self::ClaimableBalance(v) => v.write_xdr(w)?,
-            Self::LiquidityPool(v) => v.write_xdr(w)?,
+            Self::Account(v) => <LedgerKeyAccount as WriteXDR>::write_xdr(&v, w)?,
+            Self::Trustline(v) => <LedgerKeyTrustLine as WriteXDR>::write_xdr(&v, w)?,
+            Self::Offer(v) => <LedgerKeyOffer as WriteXDR>::write_xdr(&v, w)?,
+            Self::Data(v) => <LedgerKeyData as WriteXDR>::write_xdr(&v, w)?,
+            Self::ClaimableBalance(v) => <LedgerKeyClaimableBalance as WriteXDR>::write_xdr(&v, w)?,
+            Self::LiquidityPool(v) => <LedgerKeyLiquidityPool as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -4341,7 +4419,7 @@ impl AsRef<Vec<u8>> for UpgradeType {
 
 impl ReadXDR for UpgradeType {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
+        let i = <Vec<u8> as ReadVariableXDR<128>>::read_xdr(r)?;
         let v = UpgradeType(i);
         Ok(v)
     }
@@ -4349,7 +4427,7 @@ impl ReadXDR for UpgradeType {
 
 impl WriteXDR for UpgradeType {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <Vec<u8> as WriteVariableXDR<128>>::write_xdr(&self.0, w)
     }
 }
 
@@ -4429,8 +4507,8 @@ impl ReadXDR for LedgerCloseValueSignature {
 
 impl WriteXDR for LedgerCloseValueSignature {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.node_id.write_xdr(w)?;
-        self.signature.write_xdr(w)?;
+        <NodeId as WriteXDR>::write_xdr(&self.node_id, w)?;
+        <Signature as WriteXDR>::write_xdr(&self.signature, w)?;
         Ok(())
     }
 }
@@ -4481,7 +4559,9 @@ impl WriteXDR for StellarValueExt {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::StellarValueBasic => ().write_xdr(w)?,
-            Self::StellarValueSigned(v) => v.write_xdr(w)?,
+            Self::StellarValueSigned(v) => {
+                <LedgerCloseValueSignature as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -4525,7 +4605,7 @@ impl ReadXDR for StellarValue {
         Ok(Self {
             tx_set_hash: <Hash as ReadXDR>::read_xdr(r)?,
             close_time: <TimePoint as ReadXDR>::read_xdr(r)?,
-            upgrades: <Vec<UpgradeType> as ReadXDR>::read_xdr(r)?,
+            upgrades: <Vec<UpgradeType> as ReadVariableXDR<6>>::read_xdr(r)?,
             ext: <StellarValueExt as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -4533,10 +4613,10 @@ impl ReadXDR for StellarValue {
 
 impl WriteXDR for StellarValue {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx_set_hash.write_xdr(w)?;
-        self.close_time.write_xdr(w)?;
-        self.upgrades.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <Hash as WriteXDR>::write_xdr(&self.tx_set_hash, w)?;
+        <TimePoint as WriteXDR>::write_xdr(&self.close_time, w)?;
+        <Vec<UpgradeType> as WriteVariableXDR<6>>::write_xdr(&self.upgrades, w)?;
+        <StellarValueExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -4676,8 +4756,8 @@ impl ReadXDR for LedgerHeaderExtensionV1 {
 
 impl WriteXDR for LedgerHeaderExtensionV1 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.flags.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.flags, w)?;
+        <LedgerHeaderExtensionV1Ext as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -4726,7 +4806,7 @@ impl WriteXDR for LedgerHeaderExt {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::V0 => ().write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
+            Self::V1(v) => <LedgerHeaderExtensionV1 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -4817,21 +4897,21 @@ impl ReadXDR for LedgerHeader {
 
 impl WriteXDR for LedgerHeader {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_version.write_xdr(w)?;
-        self.previous_ledger_hash.write_xdr(w)?;
-        self.scp_value.write_xdr(w)?;
-        self.tx_set_result_hash.write_xdr(w)?;
-        self.bucket_list_hash.write_xdr(w)?;
-        self.ledger_seq.write_xdr(w)?;
-        self.total_coins.write_xdr(w)?;
-        self.fee_pool.write_xdr(w)?;
-        self.inflation_seq.write_xdr(w)?;
-        self.id_pool.write_xdr(w)?;
-        self.base_fee.write_xdr(w)?;
-        self.base_reserve.write_xdr(w)?;
-        self.max_tx_set_size.write_xdr(w)?;
-        self.skip_list.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.ledger_version, w)?;
+        <Hash as WriteXDR>::write_xdr(&self.previous_ledger_hash, w)?;
+        <StellarValue as WriteXDR>::write_xdr(&self.scp_value, w)?;
+        <Hash as WriteXDR>::write_xdr(&self.tx_set_result_hash, w)?;
+        <Hash as WriteXDR>::write_xdr(&self.bucket_list_hash, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.ledger_seq, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.total_coins, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.fee_pool, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.inflation_seq, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.id_pool, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.base_fee, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.base_reserve, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.max_tx_set_size, w)?;
+        <[Hash; 4] as WriteXDR>::write_xdr(&self.skip_list, w)?;
+        <LedgerHeaderExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -4964,11 +5044,11 @@ impl WriteXDR for LedgerUpgrade {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::LedgerUpgradeVersion(v) => v.write_xdr(w)?,
-            Self::LedgerUpgradeBaseFee(v) => v.write_xdr(w)?,
-            Self::LedgerUpgradeMaxTxSetSize(v) => v.write_xdr(w)?,
-            Self::LedgerUpgradeBaseReserve(v) => v.write_xdr(w)?,
-            Self::LedgerUpgradeFlags(v) => v.write_xdr(w)?,
+            Self::LedgerUpgradeVersion(v) => <u32 as WriteXDR>::write_xdr(&v, w)?,
+            Self::LedgerUpgradeBaseFee(v) => <u32 as WriteXDR>::write_xdr(&v, w)?,
+            Self::LedgerUpgradeMaxTxSetSize(v) => <u32 as WriteXDR>::write_xdr(&v, w)?,
+            Self::LedgerUpgradeBaseReserve(v) => <u32 as WriteXDR>::write_xdr(&v, w)?,
+            Self::LedgerUpgradeFlags(v) => <u32 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -5110,8 +5190,8 @@ impl ReadXDR for BucketMetadata {
 
 impl WriteXDR for BucketMetadata {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_version.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.ledger_version, w)?;
+        <BucketMetadataExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -5171,10 +5251,10 @@ impl WriteXDR for BucketEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::Liveentry(v) => v.write_xdr(w)?,
-            Self::Initentry(v) => v.write_xdr(w)?,
-            Self::Deadentry(v) => v.write_xdr(w)?,
-            Self::Metaentry(v) => v.write_xdr(w)?,
+            Self::Liveentry(v) => <LedgerEntry as WriteXDR>::write_xdr(&v, w)?,
+            Self::Initentry(v) => <LedgerEntry as WriteXDR>::write_xdr(&v, w)?,
+            Self::Deadentry(v) => <LedgerKey as WriteXDR>::write_xdr(&v, w)?,
+            Self::Metaentry(v) => <BucketMetadata as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -5198,15 +5278,15 @@ impl ReadXDR for TransactionSet {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             previous_ledger_hash: <Hash as ReadXDR>::read_xdr(r)?,
-            txs: <Vec<TransactionEnvelope> as ReadXDR>::read_xdr(r)?,
+            txs: <Vec<TransactionEnvelope> as ReadVariableXDR>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for TransactionSet {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.previous_ledger_hash.write_xdr(w)?;
-        self.txs.write_xdr(w)?;
+        <Hash as WriteXDR>::write_xdr(&self.previous_ledger_hash, w)?;
+        <Vec<TransactionEnvelope> as WriteVariableXDR>::write_xdr(&self.txs, w)?;
         Ok(())
     }
 }
@@ -5236,8 +5316,8 @@ impl ReadXDR for TransactionResultPair {
 
 impl WriteXDR for TransactionResultPair {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.transaction_hash.write_xdr(w)?;
-        self.result.write_xdr(w)?;
+        <Hash as WriteXDR>::write_xdr(&self.transaction_hash, w)?;
+        <TransactionResult as WriteXDR>::write_xdr(&self.result, w)?;
         Ok(())
     }
 }
@@ -5257,14 +5337,14 @@ pub struct TransactionResultSet {
 impl ReadXDR for TransactionResultSet {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            results: <Vec<TransactionResultPair> as ReadXDR>::read_xdr(r)?,
+            results: <Vec<TransactionResultPair> as ReadVariableXDR>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for TransactionResultSet {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.results.write_xdr(w)?;
+        <Vec<TransactionResultPair> as WriteVariableXDR>::write_xdr(&self.results, w)?;
         Ok(())
     }
 }
@@ -5348,9 +5428,9 @@ impl ReadXDR for TransactionHistoryEntry {
 
 impl WriteXDR for TransactionHistoryEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_seq.write_xdr(w)?;
-        self.tx_set.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.ledger_seq, w)?;
+        <TransactionSet as WriteXDR>::write_xdr(&self.tx_set, w)?;
+        <TransactionHistoryEntryExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -5434,9 +5514,9 @@ impl ReadXDR for TransactionHistoryResultEntry {
 
 impl WriteXDR for TransactionHistoryResultEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_seq.write_xdr(w)?;
-        self.tx_result_set.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.ledger_seq, w)?;
+        <TransactionResultSet as WriteXDR>::write_xdr(&self.tx_result_set, w)?;
+        <TransactionHistoryResultEntryExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -5520,9 +5600,9 @@ impl ReadXDR for LedgerHeaderHistoryEntry {
 
 impl WriteXDR for LedgerHeaderHistoryEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.hash.write_xdr(w)?;
-        self.header.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <Hash as WriteXDR>::write_xdr(&self.hash, w)?;
+        <LedgerHeader as WriteXDR>::write_xdr(&self.header, w)?;
+        <LedgerHeaderHistoryEntryExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -5545,15 +5625,15 @@ impl ReadXDR for LedgerScpMessages {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ledger_seq: <u32 as ReadXDR>::read_xdr(r)?,
-            messages: <Vec<ScpEnvelope> as ReadXDR>::read_xdr(r)?,
+            messages: <Vec<ScpEnvelope> as ReadVariableXDR>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for LedgerScpMessages {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_seq.write_xdr(w)?;
-        self.messages.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.ledger_seq, w)?;
+        <Vec<ScpEnvelope> as WriteVariableXDR>::write_xdr(&self.messages, w)?;
         Ok(())
     }
 }
@@ -5575,7 +5655,7 @@ pub struct ScpHistoryEntryV0 {
 impl ReadXDR for ScpHistoryEntryV0 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            quorum_sets: <Vec<ScpQuorumSet> as ReadXDR>::read_xdr(r)?,
+            quorum_sets: <Vec<ScpQuorumSet> as ReadVariableXDR>::read_xdr(r)?,
             ledger_messages: <LedgerScpMessages as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -5583,8 +5663,8 @@ impl ReadXDR for ScpHistoryEntryV0 {
 
 impl WriteXDR for ScpHistoryEntryV0 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.quorum_sets.write_xdr(w)?;
-        self.ledger_messages.write_xdr(w)?;
+        <Vec<ScpQuorumSet> as WriteVariableXDR>::write_xdr(&self.quorum_sets, w)?;
+        <LedgerScpMessages as WriteXDR>::write_xdr(&self.ledger_messages, w)?;
         Ok(())
     }
 }
@@ -5627,7 +5707,7 @@ impl WriteXDR for ScpHistoryEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::V0(v) => v.write_xdr(w)?,
+            Self::V0(v) => <ScpHistoryEntryV0 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -5751,10 +5831,10 @@ impl WriteXDR for LedgerEntryChange {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::LedgerEntryCreated(v) => v.write_xdr(w)?,
-            Self::LedgerEntryUpdated(v) => v.write_xdr(w)?,
-            Self::LedgerEntryRemoved(v) => v.write_xdr(w)?,
-            Self::LedgerEntryState(v) => v.write_xdr(w)?,
+            Self::LedgerEntryCreated(v) => <LedgerEntry as WriteXDR>::write_xdr(&v, w)?,
+            Self::LedgerEntryUpdated(v) => <LedgerEntry as WriteXDR>::write_xdr(&v, w)?,
+            Self::LedgerEntryRemoved(v) => <LedgerKey as WriteXDR>::write_xdr(&v, w)?,
+            Self::LedgerEntryState(v) => <LedgerEntry as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -5787,7 +5867,7 @@ impl AsRef<Vec<LedgerEntryChange>> for LedgerEntryChanges {
 
 impl ReadXDR for LedgerEntryChanges {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<LedgerEntryChange> as ReadXDR>::read_xdr(r)?;
+        let i = <Vec<LedgerEntryChange> as ReadVariableXDR>::read_xdr(r)?;
         let v = LedgerEntryChanges(i);
         Ok(v)
     }
@@ -5795,7 +5875,7 @@ impl ReadXDR for LedgerEntryChanges {
 
 impl WriteXDR for LedgerEntryChanges {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <Vec<LedgerEntryChange> as WriteVariableXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -5821,7 +5901,7 @@ impl ReadXDR for OperationMeta {
 
 impl WriteXDR for OperationMeta {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.changes.write_xdr(w)?;
+        <LedgerEntryChanges as WriteXDR>::write_xdr(&self.changes, w)?;
         Ok(())
     }
 }
@@ -5844,15 +5924,15 @@ impl ReadXDR for TransactionMetaV1 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             tx_changes: <LedgerEntryChanges as ReadXDR>::read_xdr(r)?,
-            operations: <Vec<OperationMeta> as ReadXDR>::read_xdr(r)?,
+            operations: <Vec<OperationMeta> as ReadVariableXDR>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for TransactionMetaV1 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx_changes.write_xdr(w)?;
-        self.operations.write_xdr(w)?;
+        <LedgerEntryChanges as WriteXDR>::write_xdr(&self.tx_changes, w)?;
+        <Vec<OperationMeta> as WriteVariableXDR>::write_xdr(&self.operations, w)?;
         Ok(())
     }
 }
@@ -5879,7 +5959,7 @@ impl ReadXDR for TransactionMetaV2 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             tx_changes_before: <LedgerEntryChanges as ReadXDR>::read_xdr(r)?,
-            operations: <Vec<OperationMeta> as ReadXDR>::read_xdr(r)?,
+            operations: <Vec<OperationMeta> as ReadVariableXDR>::read_xdr(r)?,
             tx_changes_after: <LedgerEntryChanges as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -5887,9 +5967,9 @@ impl ReadXDR for TransactionMetaV2 {
 
 impl WriteXDR for TransactionMetaV2 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx_changes_before.write_xdr(w)?;
-        self.operations.write_xdr(w)?;
-        self.tx_changes_after.write_xdr(w)?;
+        <LedgerEntryChanges as WriteXDR>::write_xdr(&self.tx_changes_before, w)?;
+        <Vec<OperationMeta> as WriteVariableXDR>::write_xdr(&self.operations, w)?;
+        <LedgerEntryChanges as WriteXDR>::write_xdr(&self.tx_changes_after, w)?;
         Ok(())
     }
 }
@@ -5928,7 +6008,7 @@ impl ReadXDR for TransactionMeta {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
         let v = match dv {
-            0 => Self::V0(<Vec<OperationMeta> as ReadXDR>::read_xdr(r)?),
+            0 => Self::V0(<Vec<OperationMeta> as ReadVariableXDR>::read_xdr(r)?),
             1 => Self::V1(<TransactionMetaV1 as ReadXDR>::read_xdr(r)?),
             2 => Self::V2(<TransactionMetaV2 as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -5942,9 +6022,9 @@ impl WriteXDR for TransactionMeta {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::V0(v) => v.write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
-            Self::V2(v) => v.write_xdr(w)?,
+            Self::V0(v) => <Vec<OperationMeta> as WriteVariableXDR>::write_xdr(&v, w)?,
+            Self::V1(v) => <TransactionMetaV1 as WriteXDR>::write_xdr(&v, w)?,
+            Self::V2(v) => <TransactionMetaV2 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -5978,9 +6058,9 @@ impl ReadXDR for TransactionResultMeta {
 
 impl WriteXDR for TransactionResultMeta {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.result.write_xdr(w)?;
-        self.fee_processing.write_xdr(w)?;
-        self.tx_apply_processing.write_xdr(w)?;
+        <TransactionResultPair as WriteXDR>::write_xdr(&self.result, w)?;
+        <LedgerEntryChanges as WriteXDR>::write_xdr(&self.fee_processing, w)?;
+        <TransactionMeta as WriteXDR>::write_xdr(&self.tx_apply_processing, w)?;
         Ok(())
     }
 }
@@ -6010,8 +6090,8 @@ impl ReadXDR for UpgradeEntryMeta {
 
 impl WriteXDR for UpgradeEntryMeta {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.upgrade.write_xdr(w)?;
-        self.changes.write_xdr(w)?;
+        <LedgerUpgrade as WriteXDR>::write_xdr(&self.upgrade, w)?;
+        <LedgerEntryChanges as WriteXDR>::write_xdr(&self.changes, w)?;
         Ok(())
     }
 }
@@ -6050,20 +6130,20 @@ impl ReadXDR for LedgerCloseMetaV0 {
         Ok(Self {
             ledger_header: <LedgerHeaderHistoryEntry as ReadXDR>::read_xdr(r)?,
             tx_set: <TransactionSet as ReadXDR>::read_xdr(r)?,
-            tx_processing: <Vec<TransactionResultMeta> as ReadXDR>::read_xdr(r)?,
-            upgrades_processing: <Vec<UpgradeEntryMeta> as ReadXDR>::read_xdr(r)?,
-            scp_info: <Vec<ScpHistoryEntry> as ReadXDR>::read_xdr(r)?,
+            tx_processing: <Vec<TransactionResultMeta> as ReadVariableXDR>::read_xdr(r)?,
+            upgrades_processing: <Vec<UpgradeEntryMeta> as ReadVariableXDR>::read_xdr(r)?,
+            scp_info: <Vec<ScpHistoryEntry> as ReadVariableXDR>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for LedgerCloseMetaV0 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_header.write_xdr(w)?;
-        self.tx_set.write_xdr(w)?;
-        self.tx_processing.write_xdr(w)?;
-        self.upgrades_processing.write_xdr(w)?;
-        self.scp_info.write_xdr(w)?;
+        <LedgerHeaderHistoryEntry as WriteXDR>::write_xdr(&self.ledger_header, w)?;
+        <TransactionSet as WriteXDR>::write_xdr(&self.tx_set, w)?;
+        <Vec<TransactionResultMeta> as WriteVariableXDR>::write_xdr(&self.tx_processing, w)?;
+        <Vec<UpgradeEntryMeta> as WriteVariableXDR>::write_xdr(&self.upgrades_processing, w)?;
+        <Vec<ScpHistoryEntry> as WriteVariableXDR>::write_xdr(&self.scp_info, w)?;
         Ok(())
     }
 }
@@ -6106,7 +6186,7 @@ impl WriteXDR for LedgerCloseMeta {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::V0(v) => v.write_xdr(w)?,
+            Self::V0(v) => <LedgerCloseMetaV0 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -6190,15 +6270,15 @@ impl ReadXDR for SError {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             code: <ErrorCode as ReadXDR>::read_xdr(r)?,
-            msg: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+            msg: <Vec<u8> as ReadVariableXDR<100>>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for SError {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.code.write_xdr(w)?;
-        self.msg.write_xdr(w)?;
+        <ErrorCode as WriteXDR>::write_xdr(&self.code, w)?;
+        <Vec<u8> as WriteVariableXDR<100>>::write_xdr(&self.msg, w)?;
         Ok(())
     }
 }
@@ -6225,7 +6305,7 @@ impl ReadXDR for SendMore {
 
 impl WriteXDR for SendMore {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.num_messages.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.num_messages, w)?;
         Ok(())
     }
 }
@@ -6258,9 +6338,9 @@ impl ReadXDR for AuthCert {
 
 impl WriteXDR for AuthCert {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.pubkey.write_xdr(w)?;
-        self.expiration.write_xdr(w)?;
-        self.sig.write_xdr(w)?;
+        <Curve25519Public as WriteXDR>::write_xdr(&self.pubkey, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.expiration, w)?;
+        <Signature as WriteXDR>::write_xdr(&self.sig, w)?;
         Ok(())
     }
 }
@@ -6300,7 +6380,7 @@ impl ReadXDR for Hello {
             overlay_version: <u32 as ReadXDR>::read_xdr(r)?,
             overlay_min_version: <u32 as ReadXDR>::read_xdr(r)?,
             network_id: <Hash as ReadXDR>::read_xdr(r)?,
-            version_str: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+            version_str: <Vec<u8> as ReadVariableXDR<100>>::read_xdr(r)?,
             listening_port: <i32 as ReadXDR>::read_xdr(r)?,
             peer_id: <NodeId as ReadXDR>::read_xdr(r)?,
             cert: <AuthCert as ReadXDR>::read_xdr(r)?,
@@ -6311,15 +6391,15 @@ impl ReadXDR for Hello {
 
 impl WriteXDR for Hello {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_version.write_xdr(w)?;
-        self.overlay_version.write_xdr(w)?;
-        self.overlay_min_version.write_xdr(w)?;
-        self.network_id.write_xdr(w)?;
-        self.version_str.write_xdr(w)?;
-        self.listening_port.write_xdr(w)?;
-        self.peer_id.write_xdr(w)?;
-        self.cert.write_xdr(w)?;
-        self.nonce.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.ledger_version, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.overlay_version, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.overlay_min_version, w)?;
+        <Hash as WriteXDR>::write_xdr(&self.network_id, w)?;
+        <Vec<u8> as WriteVariableXDR<100>>::write_xdr(&self.version_str, w)?;
+        <i32 as WriteXDR>::write_xdr(&self.listening_port, w)?;
+        <NodeId as WriteXDR>::write_xdr(&self.peer_id, w)?;
+        <AuthCert as WriteXDR>::write_xdr(&self.cert, w)?;
+        <Uint256 as WriteXDR>::write_xdr(&self.nonce, w)?;
         Ok(())
     }
 }
@@ -6348,7 +6428,7 @@ impl ReadXDR for Auth {
 
 impl WriteXDR for Auth {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.unused.write_xdr(w)?;
+        <i32 as WriteXDR>::write_xdr(&self.unused, w)?;
         Ok(())
     }
 }
@@ -6447,8 +6527,8 @@ impl WriteXDR for PeerAddressIp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::IPv4(v) => v.write_xdr(w)?,
-            Self::IPv6(v) => v.write_xdr(w)?,
+            Self::IPv4(v) => <[u8; 4] as WriteXDR>::write_xdr(&v, w)?,
+            Self::IPv6(v) => <[u8; 16] as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -6489,9 +6569,9 @@ impl ReadXDR for PeerAddress {
 
 impl WriteXDR for PeerAddress {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ip.write_xdr(w)?;
-        self.port.write_xdr(w)?;
-        self.num_failures.write_xdr(w)?;
+        <PeerAddressIp as WriteXDR>::write_xdr(&self.ip, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.port, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.num_failures, w)?;
         Ok(())
     }
 }
@@ -6623,8 +6703,8 @@ impl ReadXDR for DontHave {
 
 impl WriteXDR for DontHave {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.type_.write_xdr(w)?;
-        self.req_hash.write_xdr(w)?;
+        <MessageType as WriteXDR>::write_xdr(&self.type_, w)?;
+        <Uint256 as WriteXDR>::write_xdr(&self.req_hash, w)?;
         Ok(())
     }
 }
@@ -6711,11 +6791,11 @@ impl ReadXDR for SurveyRequestMessage {
 
 impl WriteXDR for SurveyRequestMessage {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.surveyor_peer_id.write_xdr(w)?;
-        self.surveyed_peer_id.write_xdr(w)?;
-        self.ledger_num.write_xdr(w)?;
-        self.encryption_key.write_xdr(w)?;
-        self.command_type.write_xdr(w)?;
+        <NodeId as WriteXDR>::write_xdr(&self.surveyor_peer_id, w)?;
+        <NodeId as WriteXDR>::write_xdr(&self.surveyed_peer_id, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.ledger_num, w)?;
+        <Curve25519Public as WriteXDR>::write_xdr(&self.encryption_key, w)?;
+        <SurveyMessageCommandType as WriteXDR>::write_xdr(&self.command_type, w)?;
         Ok(())
     }
 }
@@ -6745,8 +6825,8 @@ impl ReadXDR for SignedSurveyRequestMessage {
 
 impl WriteXDR for SignedSurveyRequestMessage {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.request_signature.write_xdr(w)?;
-        self.request.write_xdr(w)?;
+        <Signature as WriteXDR>::write_xdr(&self.request_signature, w)?;
+        <SurveyRequestMessage as WriteXDR>::write_xdr(&self.request, w)?;
         Ok(())
     }
 }
@@ -6778,7 +6858,7 @@ impl AsRef<Vec<u8>> for EncryptedBody {
 
 impl ReadXDR for EncryptedBody {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
+        let i = <Vec<u8> as ReadVariableXDR<64000>>::read_xdr(r)?;
         let v = EncryptedBody(i);
         Ok(v)
     }
@@ -6786,7 +6866,7 @@ impl ReadXDR for EncryptedBody {
 
 impl WriteXDR for EncryptedBody {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <Vec<u8> as WriteVariableXDR<64000>>::write_xdr(&self.0, w)
     }
 }
 
@@ -6824,11 +6904,11 @@ impl ReadXDR for SurveyResponseMessage {
 
 impl WriteXDR for SurveyResponseMessage {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.surveyor_peer_id.write_xdr(w)?;
-        self.surveyed_peer_id.write_xdr(w)?;
-        self.ledger_num.write_xdr(w)?;
-        self.command_type.write_xdr(w)?;
-        self.encrypted_body.write_xdr(w)?;
+        <NodeId as WriteXDR>::write_xdr(&self.surveyor_peer_id, w)?;
+        <NodeId as WriteXDR>::write_xdr(&self.surveyed_peer_id, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.ledger_num, w)?;
+        <SurveyMessageCommandType as WriteXDR>::write_xdr(&self.command_type, w)?;
+        <EncryptedBody as WriteXDR>::write_xdr(&self.encrypted_body, w)?;
         Ok(())
     }
 }
@@ -6858,8 +6938,8 @@ impl ReadXDR for SignedSurveyResponseMessage {
 
 impl WriteXDR for SignedSurveyResponseMessage {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.response_signature.write_xdr(w)?;
-        self.response.write_xdr(w)?;
+        <Signature as WriteXDR>::write_xdr(&self.response_signature, w)?;
+        <SurveyResponseMessage as WriteXDR>::write_xdr(&self.response, w)?;
         Ok(())
     }
 }
@@ -6910,7 +6990,7 @@ impl ReadXDR for PeerStats {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             id: <NodeId as ReadXDR>::read_xdr(r)?,
-            version_str: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+            version_str: <Vec<u8> as ReadVariableXDR<100>>::read_xdr(r)?,
             messages_read: <u64 as ReadXDR>::read_xdr(r)?,
             messages_written: <u64 as ReadXDR>::read_xdr(r)?,
             bytes_read: <u64 as ReadXDR>::read_xdr(r)?,
@@ -6930,21 +7010,21 @@ impl ReadXDR for PeerStats {
 
 impl WriteXDR for PeerStats {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.id.write_xdr(w)?;
-        self.version_str.write_xdr(w)?;
-        self.messages_read.write_xdr(w)?;
-        self.messages_written.write_xdr(w)?;
-        self.bytes_read.write_xdr(w)?;
-        self.bytes_written.write_xdr(w)?;
-        self.seconds_connected.write_xdr(w)?;
-        self.unique_flood_bytes_recv.write_xdr(w)?;
-        self.duplicate_flood_bytes_recv.write_xdr(w)?;
-        self.unique_fetch_bytes_recv.write_xdr(w)?;
-        self.duplicate_fetch_bytes_recv.write_xdr(w)?;
-        self.unique_flood_message_recv.write_xdr(w)?;
-        self.duplicate_flood_message_recv.write_xdr(w)?;
-        self.unique_fetch_message_recv.write_xdr(w)?;
-        self.duplicate_fetch_message_recv.write_xdr(w)?;
+        <NodeId as WriteXDR>::write_xdr(&self.id, w)?;
+        <Vec<u8> as WriteVariableXDR<100>>::write_xdr(&self.version_str, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.messages_read, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.messages_written, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.bytes_read, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.bytes_written, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.seconds_connected, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.unique_flood_bytes_recv, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.duplicate_flood_bytes_recv, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.unique_fetch_bytes_recv, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.duplicate_fetch_bytes_recv, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.unique_flood_message_recv, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.duplicate_flood_message_recv, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.unique_fetch_message_recv, w)?;
+        <u64 as WriteXDR>::write_xdr(&self.duplicate_fetch_message_recv, w)?;
         Ok(())
     }
 }
@@ -6976,7 +7056,7 @@ impl AsRef<Vec<PeerStats>> for PeerStatList {
 
 impl ReadXDR for PeerStatList {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<PeerStats> as ReadXDR>::read_xdr(r)?;
+        let i = <Vec<PeerStats> as ReadVariableXDR<25>>::read_xdr(r)?;
         let v = PeerStatList(i);
         Ok(v)
     }
@@ -6984,7 +7064,7 @@ impl ReadXDR for PeerStatList {
 
 impl WriteXDR for PeerStatList {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <Vec<PeerStats> as WriteVariableXDR<25>>::write_xdr(&self.0, w)
     }
 }
 
@@ -7020,10 +7100,10 @@ impl ReadXDR for TopologyResponseBody {
 
 impl WriteXDR for TopologyResponseBody {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.inbound_peers.write_xdr(w)?;
-        self.outbound_peers.write_xdr(w)?;
-        self.total_inbound_peer_count.write_xdr(w)?;
-        self.total_outbound_peer_count.write_xdr(w)?;
+        <PeerStatList as WriteXDR>::write_xdr(&self.inbound_peers, w)?;
+        <PeerStatList as WriteXDR>::write_xdr(&self.outbound_peers, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.total_inbound_peer_count, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.total_outbound_peer_count, w)?;
         Ok(())
     }
 }
@@ -7068,7 +7148,7 @@ impl WriteXDR for SurveyResponseBody {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::SurveyTopology(v) => v.write_xdr(w)?,
+            Self::SurveyTopology(v) => <TopologyResponseBody as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -7171,7 +7251,9 @@ impl ReadXDR for StellarMessage {
             MessageType::Auth => Self::Auth(<Auth as ReadXDR>::read_xdr(r)?),
             MessageType::DontHave => Self::DontHave(<DontHave as ReadXDR>::read_xdr(r)?),
             MessageType::GetPeers => Self::GetPeers,
-            MessageType::Peers => Self::Peers(<Vec<PeerAddress> as ReadXDR>::read_xdr(r)?),
+            MessageType::Peers => {
+                Self::Peers(<Vec<PeerAddress> as ReadVariableXDR<100>>::read_xdr(r)?)
+            }
             MessageType::GetTxSet => Self::GetTxSet(<Uint256 as ReadXDR>::read_xdr(r)?),
             MessageType::TxSet => Self::TxSet(<TransactionSet as ReadXDR>::read_xdr(r)?),
             MessageType::Transaction => {
@@ -7203,22 +7285,22 @@ impl WriteXDR for StellarMessage {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ErrorMsg(v) => v.write_xdr(w)?,
-            Self::Hello(v) => v.write_xdr(w)?,
-            Self::Auth(v) => v.write_xdr(w)?,
-            Self::DontHave(v) => v.write_xdr(w)?,
+            Self::ErrorMsg(v) => <SError as WriteXDR>::write_xdr(&v, w)?,
+            Self::Hello(v) => <Hello as WriteXDR>::write_xdr(&v, w)?,
+            Self::Auth(v) => <Auth as WriteXDR>::write_xdr(&v, w)?,
+            Self::DontHave(v) => <DontHave as WriteXDR>::write_xdr(&v, w)?,
             Self::GetPeers => ().write_xdr(w)?,
-            Self::Peers(v) => v.write_xdr(w)?,
-            Self::GetTxSet(v) => v.write_xdr(w)?,
-            Self::TxSet(v) => v.write_xdr(w)?,
-            Self::Transaction(v) => v.write_xdr(w)?,
-            Self::SurveyRequest(v) => v.write_xdr(w)?,
-            Self::SurveyResponse(v) => v.write_xdr(w)?,
-            Self::GetScpQuorumset(v) => v.write_xdr(w)?,
-            Self::ScpQuorumset(v) => v.write_xdr(w)?,
-            Self::ScpMessage(v) => v.write_xdr(w)?,
-            Self::GetScpState(v) => v.write_xdr(w)?,
-            Self::SendMore(v) => v.write_xdr(w)?,
+            Self::Peers(v) => <Vec<PeerAddress> as WriteVariableXDR<100>>::write_xdr(&v, w)?,
+            Self::GetTxSet(v) => <Uint256 as WriteXDR>::write_xdr(&v, w)?,
+            Self::TxSet(v) => <TransactionSet as WriteXDR>::write_xdr(&v, w)?,
+            Self::Transaction(v) => <TransactionEnvelope as WriteXDR>::write_xdr(&v, w)?,
+            Self::SurveyRequest(v) => <SignedSurveyRequestMessage as WriteXDR>::write_xdr(&v, w)?,
+            Self::SurveyResponse(v) => <SignedSurveyResponseMessage as WriteXDR>::write_xdr(&v, w)?,
+            Self::GetScpQuorumset(v) => <Uint256 as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScpQuorumset(v) => <ScpQuorumSet as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScpMessage(v) => <ScpEnvelope as WriteXDR>::write_xdr(&v, w)?,
+            Self::GetScpState(v) => <u32 as WriteXDR>::write_xdr(&v, w)?,
+            Self::SendMore(v) => <SendMore as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -7252,9 +7334,9 @@ impl ReadXDR for AuthenticatedMessageV0 {
 
 impl WriteXDR for AuthenticatedMessageV0 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.sequence.write_xdr(w)?;
-        self.message.write_xdr(w)?;
-        self.mac.write_xdr(w)?;
+        <u64 as WriteXDR>::write_xdr(&self.sequence, w)?;
+        <StellarMessage as WriteXDR>::write_xdr(&self.message, w)?;
+        <HmacSha256Mac as WriteXDR>::write_xdr(&self.mac, w)?;
         Ok(())
     }
 }
@@ -7302,7 +7384,7 @@ impl WriteXDR for AuthenticatedMessage {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::V0(v) => v.write_xdr(w)?,
+            Self::V0(v) => <AuthenticatedMessageV0 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -7350,7 +7432,9 @@ impl WriteXDR for LiquidityPoolParameters {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::LiquidityPoolConstantProduct(v) => v.write_xdr(w)?,
+            Self::LiquidityPoolConstantProduct(v) => {
+                <LiquidityPoolConstantProductParameters as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -7381,8 +7465,8 @@ impl ReadXDR for MuxedAccountMed25519 {
 
 impl WriteXDR for MuxedAccountMed25519 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.id.write_xdr(w)?;
-        self.ed25519.write_xdr(w)?;
+        <u64 as WriteXDR>::write_xdr(&self.id, w)?;
+        <Uint256 as WriteXDR>::write_xdr(&self.ed25519, w)?;
         Ok(())
     }
 }
@@ -7438,8 +7522,8 @@ impl WriteXDR for MuxedAccount {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::KeyTypeEd25519(v) => v.write_xdr(w)?,
-            Self::KeyTypeMuxedEd25519(v) => v.write_xdr(w)?,
+            Self::KeyTypeEd25519(v) => <Uint256 as WriteXDR>::write_xdr(&v, w)?,
+            Self::KeyTypeMuxedEd25519(v) => <MuxedAccountMed25519 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -7470,8 +7554,8 @@ impl ReadXDR for DecoratedSignature {
 
 impl WriteXDR for DecoratedSignature {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.hint.write_xdr(w)?;
-        self.signature.write_xdr(w)?;
+        <SignatureHint as WriteXDR>::write_xdr(&self.hint, w)?;
+        <Signature as WriteXDR>::write_xdr(&self.signature, w)?;
         Ok(())
     }
 }
@@ -7618,8 +7702,8 @@ impl ReadXDR for CreateAccountOp {
 
 impl WriteXDR for CreateAccountOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.destination.write_xdr(w)?;
-        self.starting_balance.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.destination, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.starting_balance, w)?;
         Ok(())
     }
 }
@@ -7652,9 +7736,9 @@ impl ReadXDR for PaymentOp {
 
 impl WriteXDR for PaymentOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.destination.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
+        <MuxedAccount as WriteXDR>::write_xdr(&self.destination, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount, w)?;
         Ok(())
     }
 }
@@ -7693,19 +7777,19 @@ impl ReadXDR for PathPaymentStrictReceiveOp {
             destination: <MuxedAccount as ReadXDR>::read_xdr(r)?,
             dest_asset: <Asset as ReadXDR>::read_xdr(r)?,
             dest_amount: <i64 as ReadXDR>::read_xdr(r)?,
-            path: <Vec<Asset> as ReadXDR>::read_xdr(r)?,
+            path: <Vec<Asset> as ReadVariableXDR<5>>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for PathPaymentStrictReceiveOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.send_asset.write_xdr(w)?;
-        self.send_max.write_xdr(w)?;
-        self.destination.write_xdr(w)?;
-        self.dest_asset.write_xdr(w)?;
-        self.dest_amount.write_xdr(w)?;
-        self.path.write_xdr(w)?;
+        <Asset as WriteXDR>::write_xdr(&self.send_asset, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.send_max, w)?;
+        <MuxedAccount as WriteXDR>::write_xdr(&self.destination, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.dest_asset, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.dest_amount, w)?;
+        <Vec<Asset> as WriteVariableXDR<5>>::write_xdr(&self.path, w)?;
         Ok(())
     }
 }
@@ -7744,19 +7828,19 @@ impl ReadXDR for PathPaymentStrictSendOp {
             destination: <MuxedAccount as ReadXDR>::read_xdr(r)?,
             dest_asset: <Asset as ReadXDR>::read_xdr(r)?,
             dest_min: <i64 as ReadXDR>::read_xdr(r)?,
-            path: <Vec<Asset> as ReadXDR>::read_xdr(r)?,
+            path: <Vec<Asset> as ReadVariableXDR<5>>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for PathPaymentStrictSendOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.send_asset.write_xdr(w)?;
-        self.send_amount.write_xdr(w)?;
-        self.destination.write_xdr(w)?;
-        self.dest_asset.write_xdr(w)?;
-        self.dest_min.write_xdr(w)?;
-        self.path.write_xdr(w)?;
+        <Asset as WriteXDR>::write_xdr(&self.send_asset, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.send_amount, w)?;
+        <MuxedAccount as WriteXDR>::write_xdr(&self.destination, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.dest_asset, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.dest_min, w)?;
+        <Vec<Asset> as WriteVariableXDR<5>>::write_xdr(&self.path, w)?;
         Ok(())
     }
 }
@@ -7797,11 +7881,11 @@ impl ReadXDR for ManageSellOfferOp {
 
 impl WriteXDR for ManageSellOfferOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.selling.write_xdr(w)?;
-        self.buying.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.price.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
+        <Asset as WriteXDR>::write_xdr(&self.selling, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.buying, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount, w)?;
+        <Price as WriteXDR>::write_xdr(&self.price, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.offer_id, w)?;
         Ok(())
     }
 }
@@ -7843,11 +7927,11 @@ impl ReadXDR for ManageBuyOfferOp {
 
 impl WriteXDR for ManageBuyOfferOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.selling.write_xdr(w)?;
-        self.buying.write_xdr(w)?;
-        self.buy_amount.write_xdr(w)?;
-        self.price.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
+        <Asset as WriteXDR>::write_xdr(&self.selling, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.buying, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.buy_amount, w)?;
+        <Price as WriteXDR>::write_xdr(&self.price, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.offer_id, w)?;
         Ok(())
     }
 }
@@ -7883,10 +7967,10 @@ impl ReadXDR for CreatePassiveSellOfferOp {
 
 impl WriteXDR for CreatePassiveSellOfferOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.selling.write_xdr(w)?;
-        self.buying.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.price.write_xdr(w)?;
+        <Asset as WriteXDR>::write_xdr(&self.selling, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.buying, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount, w)?;
+        <Price as WriteXDR>::write_xdr(&self.price, w)?;
         Ok(())
     }
 }
@@ -7936,7 +8020,7 @@ impl ReadXDR for SetOptionsOp {
             low_threshold: <Option<u32> as ReadXDR>::read_xdr(r)?,
             med_threshold: <Option<u32> as ReadXDR>::read_xdr(r)?,
             high_threshold: <Option<u32> as ReadXDR>::read_xdr(r)?,
-            home_domain: <Option<Vec<u8>> as ReadXDR>::read_xdr(r)?,
+            home_domain: <Option<Vec<u8>> as ReadVariableXDR<32>>::read_xdr(r)?,
             signer: <Option<Signer> as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -7944,15 +8028,15 @@ impl ReadXDR for SetOptionsOp {
 
 impl WriteXDR for SetOptionsOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.inflation_dest.write_xdr(w)?;
-        self.clear_flags.write_xdr(w)?;
-        self.set_flags.write_xdr(w)?;
-        self.master_weight.write_xdr(w)?;
-        self.low_threshold.write_xdr(w)?;
-        self.med_threshold.write_xdr(w)?;
-        self.high_threshold.write_xdr(w)?;
-        self.home_domain.write_xdr(w)?;
-        self.signer.write_xdr(w)?;
+        <Option<AccountId> as WriteXDR>::write_xdr(&self.inflation_dest, w)?;
+        <Option<u32> as WriteXDR>::write_xdr(&self.clear_flags, w)?;
+        <Option<u32> as WriteXDR>::write_xdr(&self.set_flags, w)?;
+        <Option<u32> as WriteXDR>::write_xdr(&self.master_weight, w)?;
+        <Option<u32> as WriteXDR>::write_xdr(&self.low_threshold, w)?;
+        <Option<u32> as WriteXDR>::write_xdr(&self.med_threshold, w)?;
+        <Option<u32> as WriteXDR>::write_xdr(&self.high_threshold, w)?;
+        <Option<Vec<u8>> as WriteVariableXDR<32>>::write_xdr(&self.home_domain, w)?;
+        <Option<Signer> as WriteXDR>::write_xdr(&self.signer, w)?;
         Ok(())
     }
 }
@@ -8022,9 +8106,9 @@ impl WriteXDR for ChangeTrustAsset {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::AssetTypeNative => ().write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum12(v) => v.write_xdr(w)?,
-            Self::AssetTypePoolShare(v) => v.write_xdr(w)?,
+            Self::AssetTypeCreditAlphanum4(v) => <AlphaNum4 as WriteXDR>::write_xdr(&v, w)?,
+            Self::AssetTypeCreditAlphanum12(v) => <AlphaNum12 as WriteXDR>::write_xdr(&v, w)?,
+            Self::AssetTypePoolShare(v) => <LiquidityPoolParameters as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -8057,8 +8141,8 @@ impl ReadXDR for ChangeTrustOp {
 
 impl WriteXDR for ChangeTrustOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.line.write_xdr(w)?;
-        self.limit.write_xdr(w)?;
+        <ChangeTrustAsset as WriteXDR>::write_xdr(&self.line, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.limit, w)?;
         Ok(())
     }
 }
@@ -8093,9 +8177,9 @@ impl ReadXDR for AllowTrustOp {
 
 impl WriteXDR for AllowTrustOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.trustor.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.authorize.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.trustor, w)?;
+        <AssetCode as WriteXDR>::write_xdr(&self.asset, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.authorize, w)?;
         Ok(())
     }
 }
@@ -8117,7 +8201,7 @@ pub struct ManageDataOp {
 impl ReadXDR for ManageDataOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            data_name: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+            data_name: <Vec<u8> as ReadVariableXDR<64>>::read_xdr(r)?,
             data_value: <Option<DataValue> as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -8125,8 +8209,8 @@ impl ReadXDR for ManageDataOp {
 
 impl WriteXDR for ManageDataOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.data_name.write_xdr(w)?;
-        self.data_value.write_xdr(w)?;
+        <Vec<u8> as WriteVariableXDR<64>>::write_xdr(&self.data_name, w)?;
+        <Option<DataValue> as WriteXDR>::write_xdr(&self.data_value, w)?;
         Ok(())
     }
 }
@@ -8153,7 +8237,7 @@ impl ReadXDR for BumpSequenceOp {
 
 impl WriteXDR for BumpSequenceOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.bump_to.write_xdr(w)?;
+        <SequenceNumber as WriteXDR>::write_xdr(&self.bump_to, w)?;
         Ok(())
     }
 }
@@ -8179,16 +8263,16 @@ impl ReadXDR for CreateClaimableBalanceOp {
         Ok(Self {
             asset: <Asset as ReadXDR>::read_xdr(r)?,
             amount: <i64 as ReadXDR>::read_xdr(r)?,
-            claimants: <Vec<Claimant> as ReadXDR>::read_xdr(r)?,
+            claimants: <Vec<Claimant> as ReadVariableXDR<10>>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for CreateClaimableBalanceOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.asset.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.claimants.write_xdr(w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount, w)?;
+        <Vec<Claimant> as WriteVariableXDR<10>>::write_xdr(&self.claimants, w)?;
         Ok(())
     }
 }
@@ -8215,7 +8299,7 @@ impl ReadXDR for ClaimClaimableBalanceOp {
 
 impl WriteXDR for ClaimClaimableBalanceOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.balance_id.write_xdr(w)?;
+        <ClaimableBalanceId as WriteXDR>::write_xdr(&self.balance_id, w)?;
         Ok(())
     }
 }
@@ -8242,7 +8326,7 @@ impl ReadXDR for BeginSponsoringFutureReservesOp {
 
 impl WriteXDR for BeginSponsoringFutureReservesOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.sponsored_id.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.sponsored_id, w)?;
         Ok(())
     }
 }
@@ -8323,8 +8407,8 @@ impl ReadXDR for RevokeSponsorshipOpSigner {
 
 impl WriteXDR for RevokeSponsorshipOpSigner {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.signer_key.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.account_id, w)?;
+        <SignerKey as WriteXDR>::write_xdr(&self.signer_key, w)?;
         Ok(())
     }
 }
@@ -8382,8 +8466,10 @@ impl WriteXDR for RevokeSponsorshipOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::RevokeSponsorshipLedgerEntry(v) => v.write_xdr(w)?,
-            Self::RevokeSponsorshipSigner(v) => v.write_xdr(w)?,
+            Self::RevokeSponsorshipLedgerEntry(v) => <LedgerKey as WriteXDR>::write_xdr(&v, w)?,
+            Self::RevokeSponsorshipSigner(v) => {
+                <RevokeSponsorshipOpSigner as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -8417,9 +8503,9 @@ impl ReadXDR for ClawbackOp {
 
 impl WriteXDR for ClawbackOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.asset.write_xdr(w)?;
-        self.from.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset, w)?;
+        <MuxedAccount as WriteXDR>::write_xdr(&self.from, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount, w)?;
         Ok(())
     }
 }
@@ -8446,7 +8532,7 @@ impl ReadXDR for ClawbackClaimableBalanceOp {
 
 impl WriteXDR for ClawbackClaimableBalanceOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.balance_id.write_xdr(w)?;
+        <ClaimableBalanceId as WriteXDR>::write_xdr(&self.balance_id, w)?;
         Ok(())
     }
 }
@@ -8483,10 +8569,10 @@ impl ReadXDR for SetTrustLineFlagsOp {
 
 impl WriteXDR for SetTrustLineFlagsOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.trustor.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.clear_flags.write_xdr(w)?;
-        self.set_flags.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.trustor, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.clear_flags, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.set_flags, w)?;
         Ok(())
     }
 }
@@ -8531,11 +8617,11 @@ impl ReadXDR for LiquidityPoolDepositOp {
 
 impl WriteXDR for LiquidityPoolDepositOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_id.write_xdr(w)?;
-        self.max_amount_a.write_xdr(w)?;
-        self.max_amount_b.write_xdr(w)?;
-        self.min_price.write_xdr(w)?;
-        self.max_price.write_xdr(w)?;
+        <PoolId as WriteXDR>::write_xdr(&self.liquidity_pool_id, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.max_amount_a, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.max_amount_b, w)?;
+        <Price as WriteXDR>::write_xdr(&self.min_price, w)?;
+        <Price as WriteXDR>::write_xdr(&self.max_price, w)?;
         Ok(())
     }
 }
@@ -8571,10 +8657,10 @@ impl ReadXDR for LiquidityPoolWithdrawOp {
 
 impl WriteXDR for LiquidityPoolWithdrawOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_id.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.min_amount_a.write_xdr(w)?;
-        self.min_amount_b.write_xdr(w)?;
+        <PoolId as WriteXDR>::write_xdr(&self.liquidity_pool_id, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.min_amount_a, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.min_amount_b, w)?;
         Ok(())
     }
 }
@@ -8766,30 +8852,48 @@ impl WriteXDR for OperationBody {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::CreateAccount(v) => v.write_xdr(w)?,
-            Self::Payment(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictReceive(v) => v.write_xdr(w)?,
-            Self::ManageSellOffer(v) => v.write_xdr(w)?,
-            Self::CreatePassiveSellOffer(v) => v.write_xdr(w)?,
-            Self::SetOptions(v) => v.write_xdr(w)?,
-            Self::ChangeTrust(v) => v.write_xdr(w)?,
-            Self::AllowTrust(v) => v.write_xdr(w)?,
-            Self::AccountMerge(v) => v.write_xdr(w)?,
+            Self::CreateAccount(v) => <CreateAccountOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::Payment(v) => <PaymentOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::PathPaymentStrictReceive(v) => {
+                <PathPaymentStrictReceiveOp as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::ManageSellOffer(v) => <ManageSellOfferOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::CreatePassiveSellOffer(v) => {
+                <CreatePassiveSellOfferOp as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::SetOptions(v) => <SetOptionsOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::ChangeTrust(v) => <ChangeTrustOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::AllowTrust(v) => <AllowTrustOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::AccountMerge(v) => <MuxedAccount as WriteXDR>::write_xdr(&v, w)?,
             Self::Inflation => ().write_xdr(w)?,
-            Self::ManageData(v) => v.write_xdr(w)?,
-            Self::BumpSequence(v) => v.write_xdr(w)?,
-            Self::ManageBuyOffer(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictSend(v) => v.write_xdr(w)?,
-            Self::CreateClaimableBalance(v) => v.write_xdr(w)?,
-            Self::ClaimClaimableBalance(v) => v.write_xdr(w)?,
-            Self::BeginSponsoringFutureReserves(v) => v.write_xdr(w)?,
+            Self::ManageData(v) => <ManageDataOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::BumpSequence(v) => <BumpSequenceOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::ManageBuyOffer(v) => <ManageBuyOfferOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::PathPaymentStrictSend(v) => {
+                <PathPaymentStrictSendOp as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::CreateClaimableBalance(v) => {
+                <CreateClaimableBalanceOp as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::ClaimClaimableBalance(v) => {
+                <ClaimClaimableBalanceOp as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::BeginSponsoringFutureReserves(v) => {
+                <BeginSponsoringFutureReservesOp as WriteXDR>::write_xdr(&v, w)?
+            }
             Self::EndSponsoringFutureReserves => ().write_xdr(w)?,
-            Self::RevokeSponsorship(v) => v.write_xdr(w)?,
-            Self::Clawback(v) => v.write_xdr(w)?,
-            Self::ClawbackClaimableBalance(v) => v.write_xdr(w)?,
-            Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
-            Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
-            Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+            Self::RevokeSponsorship(v) => <RevokeSponsorshipOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::Clawback(v) => <ClawbackOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::ClawbackClaimableBalance(v) => {
+                <ClawbackClaimableBalanceOp as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::SetTrustLineFlags(v) => <SetTrustLineFlagsOp as WriteXDR>::write_xdr(&v, w)?,
+            Self::LiquidityPoolDeposit(v) => {
+                <LiquidityPoolDepositOp as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::LiquidityPoolWithdraw(v) => {
+                <LiquidityPoolWithdrawOp as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -8875,8 +8979,8 @@ impl ReadXDR for Operation {
 
 impl WriteXDR for Operation {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.source_account.write_xdr(w)?;
-        self.body.write_xdr(w)?;
+        <Option<MuxedAccount> as WriteXDR>::write_xdr(&self.source_account, w)?;
+        <OperationBody as WriteXDR>::write_xdr(&self.body, w)?;
         Ok(())
     }
 }
@@ -8909,9 +9013,9 @@ impl ReadXDR for HashIdPreimageOperationId {
 
 impl WriteXDR for HashIdPreimageOperationId {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.source_account.write_xdr(w)?;
-        self.seq_num.write_xdr(w)?;
-        self.op_num.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.source_account, w)?;
+        <SequenceNumber as WriteXDR>::write_xdr(&self.seq_num, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.op_num, w)?;
         Ok(())
     }
 }
@@ -8950,11 +9054,11 @@ impl ReadXDR for HashIdPreimageRevokeId {
 
 impl WriteXDR for HashIdPreimageRevokeId {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.source_account.write_xdr(w)?;
-        self.seq_num.write_xdr(w)?;
-        self.op_num.write_xdr(w)?;
-        self.liquidity_pool_id.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.source_account, w)?;
+        <SequenceNumber as WriteXDR>::write_xdr(&self.seq_num, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.op_num, w)?;
+        <PoolId as WriteXDR>::write_xdr(&self.liquidity_pool_id, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset, w)?;
         Ok(())
     }
 }
@@ -9018,8 +9122,10 @@ impl WriteXDR for HashIdPreimage {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::EnvelopeTypeOpId(v) => v.write_xdr(w)?,
-            Self::EnvelopeTypePoolRevokeOpId(v) => v.write_xdr(w)?,
+            Self::EnvelopeTypeOpId(v) => <HashIdPreimageOperationId as WriteXDR>::write_xdr(&v, w)?,
+            Self::EnvelopeTypePoolRevokeOpId(v) => {
+                <HashIdPreimageRevokeId as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -9128,7 +9234,7 @@ impl ReadXDR for Memo {
         let dv: MemoType = <MemoType as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             MemoType::MemoNone => Self::MemoNone,
-            MemoType::MemoText => Self::MemoText(<Vec<u8> as ReadXDR>::read_xdr(r)?),
+            MemoType::MemoText => Self::MemoText(<Vec<u8> as ReadVariableXDR<28>>::read_xdr(r)?),
             MemoType::MemoId => Self::MemoId(<u64 as ReadXDR>::read_xdr(r)?),
             MemoType::MemoHash => Self::MemoHash(<Hash as ReadXDR>::read_xdr(r)?),
             MemoType::MemoReturn => Self::MemoReturn(<Hash as ReadXDR>::read_xdr(r)?),
@@ -9144,10 +9250,10 @@ impl WriteXDR for Memo {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::MemoNone => ().write_xdr(w)?,
-            Self::MemoText(v) => v.write_xdr(w)?,
-            Self::MemoId(v) => v.write_xdr(w)?,
-            Self::MemoHash(v) => v.write_xdr(w)?,
-            Self::MemoReturn(v) => v.write_xdr(w)?,
+            Self::MemoText(v) => <Vec<u8> as WriteVariableXDR<28>>::write_xdr(&v, w)?,
+            Self::MemoId(v) => <u64 as WriteXDR>::write_xdr(&v, w)?,
+            Self::MemoHash(v) => <Hash as WriteXDR>::write_xdr(&v, w)?,
+            Self::MemoReturn(v) => <Hash as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -9178,8 +9284,8 @@ impl ReadXDR for TimeBounds {
 
 impl WriteXDR for TimeBounds {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.min_time.write_xdr(w)?;
-        self.max_time.write_xdr(w)?;
+        <TimePoint as WriteXDR>::write_xdr(&self.min_time, w)?;
+        <TimePoint as WriteXDR>::write_xdr(&self.max_time, w)?;
         Ok(())
     }
 }
@@ -9209,8 +9315,8 @@ impl ReadXDR for LedgerBounds {
 
 impl WriteXDR for LedgerBounds {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.min_ledger.write_xdr(w)?;
-        self.max_ledger.write_xdr(w)?;
+        <u32 as WriteXDR>::write_xdr(&self.min_ledger, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.max_ledger, w)?;
         Ok(())
     }
 }
@@ -9268,19 +9374,19 @@ impl ReadXDR for PreconditionsV2 {
             min_seq_num: <Option<SequenceNumber> as ReadXDR>::read_xdr(r)?,
             min_seq_age: <Duration as ReadXDR>::read_xdr(r)?,
             min_seq_ledger_gap: <u32 as ReadXDR>::read_xdr(r)?,
-            extra_signers: <Vec<SignerKey> as ReadXDR>::read_xdr(r)?,
+            extra_signers: <Vec<SignerKey> as ReadVariableXDR<2>>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for PreconditionsV2 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.time_bounds.write_xdr(w)?;
-        self.ledger_bounds.write_xdr(w)?;
-        self.min_seq_num.write_xdr(w)?;
-        self.min_seq_age.write_xdr(w)?;
-        self.min_seq_ledger_gap.write_xdr(w)?;
-        self.extra_signers.write_xdr(w)?;
+        <Option<TimeBounds> as WriteXDR>::write_xdr(&self.time_bounds, w)?;
+        <Option<LedgerBounds> as WriteXDR>::write_xdr(&self.ledger_bounds, w)?;
+        <Option<SequenceNumber> as WriteXDR>::write_xdr(&self.min_seq_num, w)?;
+        <Duration as WriteXDR>::write_xdr(&self.min_seq_age, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.min_seq_ledger_gap, w)?;
+        <Vec<SignerKey> as WriteVariableXDR<2>>::write_xdr(&self.extra_signers, w)?;
         Ok(())
     }
 }
@@ -9392,8 +9498,8 @@ impl WriteXDR for Preconditions {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::PrecondNone => ().write_xdr(w)?,
-            Self::PrecondTime(v) => v.write_xdr(w)?,
-            Self::PrecondV2(v) => v.write_xdr(w)?,
+            Self::PrecondTime(v) => <TimeBounds as WriteXDR>::write_xdr(&v, w)?,
+            Self::PrecondV2(v) => <PreconditionsV2 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -9486,7 +9592,7 @@ impl ReadXDR for TransactionV0 {
             seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
             time_bounds: <Option<TimeBounds> as ReadXDR>::read_xdr(r)?,
             memo: <Memo as ReadXDR>::read_xdr(r)?,
-            operations: <Vec<Operation> as ReadXDR>::read_xdr(r)?,
+            operations: <Vec<Operation> as ReadVariableXDR<100>>::read_xdr(r)?,
             ext: <TransactionV0Ext as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -9494,13 +9600,13 @@ impl ReadXDR for TransactionV0 {
 
 impl WriteXDR for TransactionV0 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.source_account_ed25519.write_xdr(w)?;
-        self.fee.write_xdr(w)?;
-        self.seq_num.write_xdr(w)?;
-        self.time_bounds.write_xdr(w)?;
-        self.memo.write_xdr(w)?;
-        self.operations.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <Uint256 as WriteXDR>::write_xdr(&self.source_account_ed25519, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.fee, w)?;
+        <SequenceNumber as WriteXDR>::write_xdr(&self.seq_num, w)?;
+        <Option<TimeBounds> as WriteXDR>::write_xdr(&self.time_bounds, w)?;
+        <Memo as WriteXDR>::write_xdr(&self.memo, w)?;
+        <Vec<Operation> as WriteVariableXDR<100>>::write_xdr(&self.operations, w)?;
+        <TransactionV0Ext as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -9525,15 +9631,15 @@ impl ReadXDR for TransactionV0Envelope {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             tx: <TransactionV0 as ReadXDR>::read_xdr(r)?,
-            signatures: <Vec<DecoratedSignature> as ReadXDR>::read_xdr(r)?,
+            signatures: <Vec<DecoratedSignature> as ReadVariableXDR<20>>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for TransactionV0Envelope {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx.write_xdr(w)?;
-        self.signatures.write_xdr(w)?;
+        <TransactionV0 as WriteXDR>::write_xdr(&self.tx, w)?;
+        <Vec<DecoratedSignature> as WriteVariableXDR<20>>::write_xdr(&self.signatures, w)?;
         Ok(())
     }
 }
@@ -9630,7 +9736,7 @@ impl ReadXDR for Transaction {
             seq_num: <SequenceNumber as ReadXDR>::read_xdr(r)?,
             cond: <Preconditions as ReadXDR>::read_xdr(r)?,
             memo: <Memo as ReadXDR>::read_xdr(r)?,
-            operations: <Vec<Operation> as ReadXDR>::read_xdr(r)?,
+            operations: <Vec<Operation> as ReadVariableXDR<100>>::read_xdr(r)?,
             ext: <TransactionExt as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -9638,13 +9744,13 @@ impl ReadXDR for Transaction {
 
 impl WriteXDR for Transaction {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.source_account.write_xdr(w)?;
-        self.fee.write_xdr(w)?;
-        self.seq_num.write_xdr(w)?;
-        self.cond.write_xdr(w)?;
-        self.memo.write_xdr(w)?;
-        self.operations.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <MuxedAccount as WriteXDR>::write_xdr(&self.source_account, w)?;
+        <u32 as WriteXDR>::write_xdr(&self.fee, w)?;
+        <SequenceNumber as WriteXDR>::write_xdr(&self.seq_num, w)?;
+        <Preconditions as WriteXDR>::write_xdr(&self.cond, w)?;
+        <Memo as WriteXDR>::write_xdr(&self.memo, w)?;
+        <Vec<Operation> as WriteVariableXDR<100>>::write_xdr(&self.operations, w)?;
+        <TransactionExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -9669,15 +9775,15 @@ impl ReadXDR for TransactionV1Envelope {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             tx: <Transaction as ReadXDR>::read_xdr(r)?,
-            signatures: <Vec<DecoratedSignature> as ReadXDR>::read_xdr(r)?,
+            signatures: <Vec<DecoratedSignature> as ReadVariableXDR<20>>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for TransactionV1Envelope {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx.write_xdr(w)?;
-        self.signatures.write_xdr(w)?;
+        <Transaction as WriteXDR>::write_xdr(&self.tx, w)?;
+        <Vec<DecoratedSignature> as WriteVariableXDR<20>>::write_xdr(&self.signatures, w)?;
         Ok(())
     }
 }
@@ -9722,7 +9828,7 @@ impl WriteXDR for FeeBumpTransactionInnerTx {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::EnvelopeTypeTx(v) => v.write_xdr(w)?,
+            Self::EnvelopeTypeTx(v) => <TransactionV1Envelope as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -9813,10 +9919,10 @@ impl ReadXDR for FeeBumpTransaction {
 
 impl WriteXDR for FeeBumpTransaction {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.fee_source.write_xdr(w)?;
-        self.fee.write_xdr(w)?;
-        self.inner_tx.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <MuxedAccount as WriteXDR>::write_xdr(&self.fee_source, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.fee, w)?;
+        <FeeBumpTransactionInnerTx as WriteXDR>::write_xdr(&self.inner_tx, w)?;
+        <FeeBumpTransactionExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -9841,15 +9947,15 @@ impl ReadXDR for FeeBumpTransactionEnvelope {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             tx: <FeeBumpTransaction as ReadXDR>::read_xdr(r)?,
-            signatures: <Vec<DecoratedSignature> as ReadXDR>::read_xdr(r)?,
+            signatures: <Vec<DecoratedSignature> as ReadVariableXDR<20>>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for FeeBumpTransactionEnvelope {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx.write_xdr(w)?;
-        self.signatures.write_xdr(w)?;
+        <FeeBumpTransaction as WriteXDR>::write_xdr(&self.tx, w)?;
+        <Vec<DecoratedSignature> as WriteVariableXDR<20>>::write_xdr(&self.signatures, w)?;
         Ok(())
     }
 }
@@ -9908,9 +10014,11 @@ impl WriteXDR for TransactionEnvelope {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::EnvelopeTypeTxV0(v) => v.write_xdr(w)?,
-            Self::EnvelopeTypeTx(v) => v.write_xdr(w)?,
-            Self::EnvelopeTypeTxFeeBump(v) => v.write_xdr(w)?,
+            Self::EnvelopeTypeTxV0(v) => <TransactionV0Envelope as WriteXDR>::write_xdr(&v, w)?,
+            Self::EnvelopeTypeTx(v) => <TransactionV1Envelope as WriteXDR>::write_xdr(&v, w)?,
+            Self::EnvelopeTypeTxFeeBump(v) => {
+                <FeeBumpTransactionEnvelope as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -9964,8 +10072,8 @@ impl WriteXDR for TransactionSignaturePayloadTaggedTransaction {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::EnvelopeTypeTx(v) => v.write_xdr(w)?,
-            Self::EnvelopeTypeTxFeeBump(v) => v.write_xdr(w)?,
+            Self::EnvelopeTypeTx(v) => <Transaction as WriteXDR>::write_xdr(&v, w)?,
+            Self::EnvelopeTypeTxFeeBump(v) => <FeeBumpTransaction as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -10005,8 +10113,11 @@ impl ReadXDR for TransactionSignaturePayload {
 
 impl WriteXDR for TransactionSignaturePayload {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.network_id.write_xdr(w)?;
-        self.tagged_transaction.write_xdr(w)?;
+        <Hash as WriteXDR>::write_xdr(&self.network_id, w)?;
+        <TransactionSignaturePayloadTaggedTransaction as WriteXDR>::write_xdr(
+            &self.tagged_transaction,
+            w,
+        )?;
         Ok(())
     }
 }
@@ -10107,12 +10218,12 @@ impl ReadXDR for ClaimOfferAtomV0 {
 
 impl WriteXDR for ClaimOfferAtomV0 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.seller_ed25519.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
-        self.asset_sold.write_xdr(w)?;
-        self.amount_sold.write_xdr(w)?;
-        self.asset_bought.write_xdr(w)?;
-        self.amount_bought.write_xdr(w)?;
+        <Uint256 as WriteXDR>::write_xdr(&self.seller_ed25519, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.offer_id, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset_sold, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount_sold, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset_bought, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount_bought, w)?;
         Ok(())
     }
 }
@@ -10159,12 +10270,12 @@ impl ReadXDR for ClaimOfferAtom {
 
 impl WriteXDR for ClaimOfferAtom {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.seller_id.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
-        self.asset_sold.write_xdr(w)?;
-        self.amount_sold.write_xdr(w)?;
-        self.asset_bought.write_xdr(w)?;
-        self.amount_bought.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.seller_id, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.offer_id, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset_sold, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount_sold, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset_bought, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount_bought, w)?;
         Ok(())
     }
 }
@@ -10207,11 +10318,11 @@ impl ReadXDR for ClaimLiquidityAtom {
 
 impl WriteXDR for ClaimLiquidityAtom {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_id.write_xdr(w)?;
-        self.asset_sold.write_xdr(w)?;
-        self.amount_sold.write_xdr(w)?;
-        self.asset_bought.write_xdr(w)?;
-        self.amount_bought.write_xdr(w)?;
+        <PoolId as WriteXDR>::write_xdr(&self.liquidity_pool_id, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset_sold, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount_sold, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset_bought, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount_bought, w)?;
         Ok(())
     }
 }
@@ -10270,9 +10381,11 @@ impl WriteXDR for ClaimAtom {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ClaimAtomTypeV0(v) => v.write_xdr(w)?,
-            Self::ClaimAtomTypeOrderBook(v) => v.write_xdr(w)?,
-            Self::ClaimAtomTypeLiquidityPool(v) => v.write_xdr(w)?,
+            Self::ClaimAtomTypeV0(v) => <ClaimOfferAtomV0 as WriteXDR>::write_xdr(&v, w)?,
+            Self::ClaimAtomTypeOrderBook(v) => <ClaimOfferAtom as WriteXDR>::write_xdr(&v, w)?,
+            Self::ClaimAtomTypeLiquidityPool(v) => {
+                <ClaimLiquidityAtom as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -10636,9 +10749,9 @@ impl ReadXDR for SimplePaymentResult {
 
 impl WriteXDR for SimplePaymentResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.destination.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.destination, w)?;
+        <Asset as WriteXDR>::write_xdr(&self.asset, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount, w)?;
         Ok(())
     }
 }
@@ -10660,7 +10773,7 @@ pub struct PathPaymentStrictReceiveResultSuccess {
 impl ReadXDR for PathPaymentStrictReceiveResultSuccess {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            offers: <Vec<ClaimAtom> as ReadXDR>::read_xdr(r)?,
+            offers: <Vec<ClaimAtom> as ReadVariableXDR>::read_xdr(r)?,
             last: <SimplePaymentResult as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -10668,8 +10781,8 @@ impl ReadXDR for PathPaymentStrictReceiveResultSuccess {
 
 impl WriteXDR for PathPaymentStrictReceiveResultSuccess {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.offers.write_xdr(w)?;
-        self.last.write_xdr(w)?;
+        <Vec<ClaimAtom> as WriteVariableXDR>::write_xdr(&self.offers, w)?;
+        <SimplePaymentResult as WriteXDR>::write_xdr(&self.last, w)?;
         Ok(())
     }
 }
@@ -10735,8 +10848,10 @@ impl WriteXDR for PathPaymentStrictReceiveResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::PathPaymentStrictReceiveSuccess(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictReceiveNoIssuer(v) => v.write_xdr(w)?,
+            Self::PathPaymentStrictReceiveSuccess(v) => {
+                <PathPaymentStrictReceiveResultSuccess as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::PathPaymentStrictReceiveNoIssuer(v) => <Asset as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -10854,7 +10969,7 @@ pub struct PathPaymentStrictSendResultSuccess {
 impl ReadXDR for PathPaymentStrictSendResultSuccess {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            offers: <Vec<ClaimAtom> as ReadXDR>::read_xdr(r)?,
+            offers: <Vec<ClaimAtom> as ReadVariableXDR>::read_xdr(r)?,
             last: <SimplePaymentResult as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -10862,8 +10977,8 @@ impl ReadXDR for PathPaymentStrictSendResultSuccess {
 
 impl WriteXDR for PathPaymentStrictSendResultSuccess {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.offers.write_xdr(w)?;
-        self.last.write_xdr(w)?;
+        <Vec<ClaimAtom> as WriteVariableXDR>::write_xdr(&self.offers, w)?;
+        <SimplePaymentResult as WriteXDR>::write_xdr(&self.last, w)?;
         Ok(())
     }
 }
@@ -10928,8 +11043,10 @@ impl WriteXDR for PathPaymentStrictSendResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::PathPaymentStrictSendSuccess(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictSendNoIssuer(v) => v.write_xdr(w)?,
+            Self::PathPaymentStrictSendSuccess(v) => {
+                <PathPaymentStrictSendResultSuccess as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::PathPaymentStrictSendNoIssuer(v) => <Asset as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -11131,8 +11248,8 @@ impl WriteXDR for ManageOfferSuccessResultOffer {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ManageOfferCreated(v) => v.write_xdr(w)?,
-            Self::ManageOfferUpdated(v) => v.write_xdr(w)?,
+            Self::ManageOfferCreated(v) => <OfferEntry as WriteXDR>::write_xdr(&v, w)?,
+            Self::ManageOfferUpdated(v) => <OfferEntry as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -11165,7 +11282,7 @@ pub struct ManageOfferSuccessResult {
 impl ReadXDR for ManageOfferSuccessResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            offers_claimed: <Vec<ClaimAtom> as ReadXDR>::read_xdr(r)?,
+            offers_claimed: <Vec<ClaimAtom> as ReadVariableXDR>::read_xdr(r)?,
             offer: <ManageOfferSuccessResultOffer as ReadXDR>::read_xdr(r)?,
         })
     }
@@ -11173,8 +11290,8 @@ impl ReadXDR for ManageOfferSuccessResult {
 
 impl WriteXDR for ManageOfferSuccessResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.offers_claimed.write_xdr(w)?;
-        self.offer.write_xdr(w)?;
+        <Vec<ClaimAtom> as WriteVariableXDR>::write_xdr(&self.offers_claimed, w)?;
+        <ManageOfferSuccessResultOffer as WriteXDR>::write_xdr(&self.offer, w)?;
         Ok(())
     }
 }
@@ -11221,7 +11338,9 @@ impl WriteXDR for ManageSellOfferResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ManageSellOfferSuccess(v) => v.write_xdr(w)?,
+            Self::ManageSellOfferSuccess(v) => {
+                <ManageOfferSuccessResult as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -11360,7 +11479,9 @@ impl WriteXDR for ManageBuyOfferResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ManageBuyOfferSuccess(v) => v.write_xdr(w)?,
+            Self::ManageBuyOfferSuccess(v) => {
+                <ManageOfferSuccessResult as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -11847,7 +11968,7 @@ impl WriteXDR for AccountMergeResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::AccountMergeSuccess(v) => v.write_xdr(w)?,
+            Self::AccountMergeSuccess(v) => <i64 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -11931,8 +12052,8 @@ impl ReadXDR for InflationPayout {
 
 impl WriteXDR for InflationPayout {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.destination.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
+        <AccountId as WriteXDR>::write_xdr(&self.destination, w)?;
+        <i64 as WriteXDR>::write_xdr(&self.amount, w)?;
         Ok(())
     }
 }
@@ -11966,7 +12087,7 @@ impl ReadXDR for InflationResult {
         let dv: InflationResultCode = <InflationResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             InflationResultCode::InflationSuccess => {
-                Self::InflationSuccess(<Vec<InflationPayout> as ReadXDR>::read_xdr(r)?)
+                Self::InflationSuccess(<Vec<InflationPayout> as ReadVariableXDR>::read_xdr(r)?)
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -11979,7 +12100,9 @@ impl WriteXDR for InflationResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::InflationSuccess(v) => v.write_xdr(w)?,
+            Self::InflationSuccess(v) => {
+                <Vec<InflationPayout> as WriteVariableXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -12303,7 +12426,9 @@ impl WriteXDR for CreateClaimableBalanceResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::CreateClaimableBalanceSuccess(v) => v.write_xdr(w)?,
+            Self::CreateClaimableBalanceSuccess(v) => {
+                <ClaimableBalanceId as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -13599,30 +13724,50 @@ impl WriteXDR for OperationResultTr {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::CreateAccount(v) => v.write_xdr(w)?,
-            Self::Payment(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictReceive(v) => v.write_xdr(w)?,
-            Self::ManageSellOffer(v) => v.write_xdr(w)?,
-            Self::CreatePassiveSellOffer(v) => v.write_xdr(w)?,
-            Self::SetOptions(v) => v.write_xdr(w)?,
-            Self::ChangeTrust(v) => v.write_xdr(w)?,
-            Self::AllowTrust(v) => v.write_xdr(w)?,
-            Self::AccountMerge(v) => v.write_xdr(w)?,
-            Self::Inflation(v) => v.write_xdr(w)?,
-            Self::ManageData(v) => v.write_xdr(w)?,
-            Self::BumpSequence(v) => v.write_xdr(w)?,
-            Self::ManageBuyOffer(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictSend(v) => v.write_xdr(w)?,
-            Self::CreateClaimableBalance(v) => v.write_xdr(w)?,
-            Self::ClaimClaimableBalance(v) => v.write_xdr(w)?,
-            Self::BeginSponsoringFutureReserves(v) => v.write_xdr(w)?,
-            Self::EndSponsoringFutureReserves(v) => v.write_xdr(w)?,
-            Self::RevokeSponsorship(v) => v.write_xdr(w)?,
-            Self::Clawback(v) => v.write_xdr(w)?,
-            Self::ClawbackClaimableBalance(v) => v.write_xdr(w)?,
-            Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
-            Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
-            Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+            Self::CreateAccount(v) => <CreateAccountResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::Payment(v) => <PaymentResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::PathPaymentStrictReceive(v) => {
+                <PathPaymentStrictReceiveResult as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::ManageSellOffer(v) => <ManageSellOfferResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::CreatePassiveSellOffer(v) => {
+                <ManageSellOfferResult as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::SetOptions(v) => <SetOptionsResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::ChangeTrust(v) => <ChangeTrustResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::AllowTrust(v) => <AllowTrustResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::AccountMerge(v) => <AccountMergeResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::Inflation(v) => <InflationResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::ManageData(v) => <ManageDataResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::BumpSequence(v) => <BumpSequenceResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::ManageBuyOffer(v) => <ManageBuyOfferResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::PathPaymentStrictSend(v) => {
+                <PathPaymentStrictSendResult as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::CreateClaimableBalance(v) => {
+                <CreateClaimableBalanceResult as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::ClaimClaimableBalance(v) => {
+                <ClaimClaimableBalanceResult as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::BeginSponsoringFutureReserves(v) => {
+                <BeginSponsoringFutureReservesResult as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::EndSponsoringFutureReserves(v) => {
+                <EndSponsoringFutureReservesResult as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::RevokeSponsorship(v) => <RevokeSponsorshipResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::Clawback(v) => <ClawbackResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::ClawbackClaimableBalance(v) => {
+                <ClawbackClaimableBalanceResult as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::SetTrustLineFlags(v) => <SetTrustLineFlagsResult as WriteXDR>::write_xdr(&v, w)?,
+            Self::LiquidityPoolDeposit(v) => {
+                <LiquidityPoolDepositResult as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::LiquidityPoolWithdraw(v) => {
+                <LiquidityPoolWithdrawResult as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -13721,7 +13866,7 @@ impl WriteXDR for OperationResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::OpInner(v) => v.write_xdr(w)?,
+            Self::OpInner(v) => <OperationResultTr as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -13906,10 +14051,10 @@ impl ReadXDR for InnerTransactionResultResult {
         let dv: TransactionResultCode = <TransactionResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             TransactionResultCode::TxSuccess => {
-                Self::TxSuccess(<Vec<OperationResult> as ReadXDR>::read_xdr(r)?)
+                Self::TxSuccess(<Vec<OperationResult> as ReadVariableXDR>::read_xdr(r)?)
             }
             TransactionResultCode::TxFailed => {
-                Self::TxFailed(<Vec<OperationResult> as ReadXDR>::read_xdr(r)?)
+                Self::TxFailed(<Vec<OperationResult> as ReadVariableXDR>::read_xdr(r)?)
             }
             TransactionResultCode::TxTooEarly => Self::TxTooEarly,
             TransactionResultCode::TxTooLate => Self::TxTooLate,
@@ -13936,8 +14081,8 @@ impl WriteXDR for InnerTransactionResultResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::TxSuccess(v) => v.write_xdr(w)?,
-            Self::TxFailed(v) => v.write_xdr(w)?,
+            Self::TxSuccess(v) => <Vec<OperationResult> as WriteVariableXDR>::write_xdr(&v, w)?,
+            Self::TxFailed(v) => <Vec<OperationResult> as WriteVariableXDR>::write_xdr(&v, w)?,
             Self::TxTooEarly => ().write_xdr(w)?,
             Self::TxTooLate => ().write_xdr(w)?,
             Self::TxMissingOperation => ().write_xdr(w)?,
@@ -14061,9 +14206,9 @@ impl ReadXDR for InnerTransactionResult {
 
 impl WriteXDR for InnerTransactionResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.fee_charged.write_xdr(w)?;
-        self.result.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <i64 as WriteXDR>::write_xdr(&self.fee_charged, w)?;
+        <InnerTransactionResultResult as WriteXDR>::write_xdr(&self.result, w)?;
+        <InnerTransactionResultExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -14093,8 +14238,8 @@ impl ReadXDR for InnerTransactionResultPair {
 
 impl WriteXDR for InnerTransactionResultPair {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.transaction_hash.write_xdr(w)?;
-        self.result.write_xdr(w)?;
+        <Hash as WriteXDR>::write_xdr(&self.transaction_hash, w)?;
+        <InnerTransactionResult as WriteXDR>::write_xdr(&self.result, w)?;
         Ok(())
     }
 }
@@ -14144,10 +14289,10 @@ impl ReadXDR for TransactionResultResult {
                 Self::TxFeeBumpInnerFailed(<InnerTransactionResultPair as ReadXDR>::read_xdr(r)?)
             }
             TransactionResultCode::TxSuccess => {
-                Self::TxSuccess(<Vec<OperationResult> as ReadXDR>::read_xdr(r)?)
+                Self::TxSuccess(<Vec<OperationResult> as ReadVariableXDR>::read_xdr(r)?)
             }
             TransactionResultCode::TxFailed => {
-                Self::TxFailed(<Vec<OperationResult> as ReadXDR>::read_xdr(r)?)
+                Self::TxFailed(<Vec<OperationResult> as ReadVariableXDR>::read_xdr(r)?)
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -14160,10 +14305,14 @@ impl WriteXDR for TransactionResultResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::TxFeeBumpInnerSuccess(v) => v.write_xdr(w)?,
-            Self::TxFeeBumpInnerFailed(v) => v.write_xdr(w)?,
-            Self::TxSuccess(v) => v.write_xdr(w)?,
-            Self::TxFailed(v) => v.write_xdr(w)?,
+            Self::TxFeeBumpInnerSuccess(v) => {
+                <InnerTransactionResultPair as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::TxFeeBumpInnerFailed(v) => {
+                <InnerTransactionResultPair as WriteXDR>::write_xdr(&v, w)?
+            }
+            Self::TxSuccess(v) => <Vec<OperationResult> as WriteVariableXDR>::write_xdr(&v, w)?,
+            Self::TxFailed(v) => <Vec<OperationResult> as WriteVariableXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -14260,9 +14409,9 @@ impl ReadXDR for TransactionResult {
 
 impl WriteXDR for TransactionResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.fee_charged.write_xdr(w)?;
-        self.result.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
+        <i64 as WriteXDR>::write_xdr(&self.fee_charged, w)?;
+        <TransactionResultResult as WriteXDR>::write_xdr(&self.result, w)?;
+        <TransactionResultExt as WriteXDR>::write_xdr(&self.ext, w)?;
         Ok(())
     }
 }
@@ -14302,7 +14451,7 @@ impl ReadXDR for Hash {
 
 impl WriteXDR for Hash {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <[u8; 32] as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -14341,7 +14490,7 @@ impl ReadXDR for Uint256 {
 
 impl WriteXDR for Uint256 {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <[u8; 32] as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -14620,7 +14769,7 @@ impl WriteXDR for PublicKey {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::PublicKeyTypeEd25519(v) => v.write_xdr(w)?,
+            Self::PublicKeyTypeEd25519(v) => <Uint256 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -14646,15 +14795,15 @@ impl ReadXDR for SignerKeyEd25519SignedPayload {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ed25519: <Uint256 as ReadXDR>::read_xdr(r)?,
-            payload: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+            payload: <Vec<u8> as ReadVariableXDR<64>>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for SignerKeyEd25519SignedPayload {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ed25519.write_xdr(w)?;
-        self.payload.write_xdr(w)?;
+        <Uint256 as WriteXDR>::write_xdr(&self.ed25519, w)?;
+        <Vec<u8> as WriteVariableXDR<64>>::write_xdr(&self.payload, w)?;
         Ok(())
     }
 }
@@ -14732,10 +14881,12 @@ impl WriteXDR for SignerKey {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::SignerKeyTypeEd25519(v) => v.write_xdr(w)?,
-            Self::SignerKeyTypePreAuthTx(v) => v.write_xdr(w)?,
-            Self::SignerKeyTypeHashX(v) => v.write_xdr(w)?,
-            Self::SignerKeyTypeEd25519SignedPayload(v) => v.write_xdr(w)?,
+            Self::SignerKeyTypeEd25519(v) => <Uint256 as WriteXDR>::write_xdr(&v, w)?,
+            Self::SignerKeyTypePreAuthTx(v) => <Uint256 as WriteXDR>::write_xdr(&v, w)?,
+            Self::SignerKeyTypeHashX(v) => <Uint256 as WriteXDR>::write_xdr(&v, w)?,
+            Self::SignerKeyTypeEd25519SignedPayload(v) => {
+                <SignerKeyEd25519SignedPayload as WriteXDR>::write_xdr(&v, w)?
+            }
         };
         Ok(())
     }
@@ -14768,7 +14919,7 @@ impl AsRef<Vec<u8>> for Signature {
 
 impl ReadXDR for Signature {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<u8> as ReadXDR>::read_xdr(r)?;
+        let i = <Vec<u8> as ReadVariableXDR<64>>::read_xdr(r)?;
         let v = Signature(i);
         Ok(v)
     }
@@ -14776,7 +14927,7 @@ impl ReadXDR for Signature {
 
 impl WriteXDR for Signature {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <Vec<u8> as WriteVariableXDR<64>>::write_xdr(&self.0, w)
     }
 }
 
@@ -14815,7 +14966,7 @@ impl ReadXDR for SignatureHint {
 
 impl WriteXDR for SignatureHint {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <[u8; 4] as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -14854,7 +15005,7 @@ impl ReadXDR for NodeId {
 
 impl WriteXDR for NodeId {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <PublicKey as WriteXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -14880,7 +15031,7 @@ impl ReadXDR for Curve25519Secret {
 
 impl WriteXDR for Curve25519Secret {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
+        <[u8; 32] as WriteXDR>::write_xdr(&self.key, w)?;
         Ok(())
     }
 }
@@ -14907,7 +15058,7 @@ impl ReadXDR for Curve25519Public {
 
 impl WriteXDR for Curve25519Public {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
+        <[u8; 32] as WriteXDR>::write_xdr(&self.key, w)?;
         Ok(())
     }
 }
@@ -14934,7 +15085,7 @@ impl ReadXDR for HmacSha256Key {
 
 impl WriteXDR for HmacSha256Key {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
+        <[u8; 32] as WriteXDR>::write_xdr(&self.key, w)?;
         Ok(())
     }
 }
@@ -14961,7 +15112,7 @@ impl ReadXDR for HmacSha256Mac {
 
 impl WriteXDR for HmacSha256Mac {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.mac.write_xdr(w)?;
+        <[u8; 32] as WriteXDR>::write_xdr(&self.mac, w)?;
         Ok(())
     }
 }
@@ -15191,7 +15342,7 @@ impl WriteXDR for ScStatus {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::SstOk => ().write_xdr(w)?,
-            Self::SstUnknownError(v) => v.write_xdr(w)?,
+            Self::SstUnknownError(v) => <u32 as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -15258,7 +15409,7 @@ impl ReadXDR for ScVal {
             ScValType::ScvObject => {
                 Self::ScvObject(<Option<Box<ScObject>> as ReadXDR>::read_xdr(r)?)
             }
-            ScValType::ScvSymbol => Self::ScvSymbol(<Vec<u8> as ReadXDR>::read_xdr(r)?),
+            ScValType::ScvSymbol => Self::ScvSymbol(<Vec<u8> as ReadVariableXDR<10>>::read_xdr(r)?),
             ScValType::ScvBitset => Self::ScvBitset(<u64 as ReadXDR>::read_xdr(r)?),
             ScValType::ScvStatus => Self::ScvStatus(<ScStatus as ReadXDR>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -15272,14 +15423,14 @@ impl WriteXDR for ScVal {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ScvU63(v) => v.write_xdr(w)?,
-            Self::ScvU32(v) => v.write_xdr(w)?,
-            Self::ScvI32(v) => v.write_xdr(w)?,
-            Self::ScvStatic(v) => v.write_xdr(w)?,
-            Self::ScvObject(v) => v.write_xdr(w)?,
-            Self::ScvSymbol(v) => v.write_xdr(w)?,
-            Self::ScvBitset(v) => v.write_xdr(w)?,
-            Self::ScvStatus(v) => v.write_xdr(w)?,
+            Self::ScvU63(v) => <u64 as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScvU32(v) => <u32 as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScvI32(v) => <i32 as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScvStatic(v) => <ScStatic as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScvObject(v) => <Option<Box<ScObject>> as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScvSymbol(v) => <Vec<u8> as WriteVariableXDR<10>>::write_xdr(&v, w)?,
+            Self::ScvBitset(v) => <u64 as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScvStatus(v) => <ScStatus as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }
@@ -15415,8 +15566,8 @@ impl ReadXDR for ScMapEntry {
 
 impl WriteXDR for ScMapEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
-        self.val.write_xdr(w)?;
+        <ScVal as WriteXDR>::write_xdr(&self.key, w)?;
+        <ScVal as WriteXDR>::write_xdr(&self.val, w)?;
         Ok(())
     }
 }
@@ -15448,7 +15599,7 @@ impl AsRef<Vec<ScVal>> for ScVec {
 
 impl ReadXDR for ScVec {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<ScVal> as ReadXDR>::read_xdr(r)?;
+        let i = <Vec<ScVal> as ReadVariableXDR>::read_xdr(r)?;
         let v = ScVec(i);
         Ok(v)
     }
@@ -15456,7 +15607,7 @@ impl ReadXDR for ScVec {
 
 impl WriteXDR for ScVec {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <Vec<ScVal> as WriteVariableXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -15487,7 +15638,7 @@ impl AsRef<Vec<ScMapEntry>> for ScMap {
 
 impl ReadXDR for ScMap {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <Vec<ScMapEntry> as ReadXDR>::read_xdr(r)?;
+        let i = <Vec<ScMapEntry> as ReadVariableXDR>::read_xdr(r)?;
         let v = ScMap(i);
         Ok(v)
     }
@@ -15495,7 +15646,7 @@ impl ReadXDR for ScMap {
 
 impl WriteXDR for ScMap {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        <Vec<ScMapEntry> as WriteVariableXDR>::write_xdr(&self.0, w)
     }
 }
 
@@ -15517,15 +15668,15 @@ impl ReadXDR for ScBigInt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             positive: <bool as ReadXDR>::read_xdr(r)?,
-            magnitude: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+            magnitude: <Vec<u8> as ReadVariableXDR>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for ScBigInt {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.positive.write_xdr(w)?;
-        self.magnitude.write_xdr(w)?;
+        <bool as WriteXDR>::write_xdr(&self.positive, w)?;
+        <Vec<u8> as WriteVariableXDR>::write_xdr(&self.magnitude, w)?;
         Ok(())
     }
 }
@@ -15550,17 +15701,17 @@ impl ReadXDR for ScBigRat {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             positive: <bool as ReadXDR>::read_xdr(r)?,
-            numerator: <Vec<u8> as ReadXDR>::read_xdr(r)?,
-            denominator: <Vec<u8> as ReadXDR>::read_xdr(r)?,
+            numerator: <Vec<u8> as ReadVariableXDR>::read_xdr(r)?,
+            denominator: <Vec<u8> as ReadVariableXDR>::read_xdr(r)?,
         })
     }
 }
 
 impl WriteXDR for ScBigRat {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.positive.write_xdr(w)?;
-        self.numerator.write_xdr(w)?;
-        self.denominator.write_xdr(w)?;
+        <bool as WriteXDR>::write_xdr(&self.positive, w)?;
+        <Vec<u8> as WriteVariableXDR>::write_xdr(&self.numerator, w)?;
+        <Vec<u8> as WriteVariableXDR>::write_xdr(&self.denominator, w)?;
         Ok(())
     }
 }
@@ -15656,8 +15807,8 @@ impl ReadXDR for ScObject {
             ScObjectType::ScoMap => Self::ScoMap(<ScMap as ReadXDR>::read_xdr(r)?),
             ScObjectType::ScoU64 => Self::ScoU64(<u64 as ReadXDR>::read_xdr(r)?),
             ScObjectType::ScoI64 => Self::ScoI64(<i64 as ReadXDR>::read_xdr(r)?),
-            ScObjectType::ScoString => Self::ScoString(<Vec<u8> as ReadXDR>::read_xdr(r)?),
-            ScObjectType::ScoBinary => Self::ScoBinary(<Vec<u8> as ReadXDR>::read_xdr(r)?),
+            ScObjectType::ScoString => Self::ScoString(<Vec<u8> as ReadVariableXDR>::read_xdr(r)?),
+            ScObjectType::ScoBinary => Self::ScoBinary(<Vec<u8> as ReadVariableXDR>::read_xdr(r)?),
             ScObjectType::ScoBigint => Self::ScoBigint(<ScBigInt as ReadXDR>::read_xdr(r)?),
             ScObjectType::ScoBigrat => Self::ScoBigrat(<ScBigRat as ReadXDR>::read_xdr(r)?),
             ScObjectType::ScoLedgerkey => {
@@ -15686,22 +15837,22 @@ impl WriteXDR for ScObject {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ScoBox(v) => v.write_xdr(w)?,
-            Self::ScoVec(v) => v.write_xdr(w)?,
-            Self::ScoMap(v) => v.write_xdr(w)?,
-            Self::ScoU64(v) => v.write_xdr(w)?,
-            Self::ScoI64(v) => v.write_xdr(w)?,
-            Self::ScoString(v) => v.write_xdr(w)?,
-            Self::ScoBinary(v) => v.write_xdr(w)?,
-            Self::ScoBigint(v) => v.write_xdr(w)?,
-            Self::ScoBigrat(v) => v.write_xdr(w)?,
-            Self::ScoLedgerkey(v) => v.write_xdr(w)?,
-            Self::ScoOperation(v) => v.write_xdr(w)?,
-            Self::ScoOperationResult(v) => v.write_xdr(w)?,
-            Self::ScoTransaction(v) => v.write_xdr(w)?,
-            Self::ScoAsset(v) => v.write_xdr(w)?,
-            Self::ScoPrice(v) => v.write_xdr(w)?,
-            Self::ScoAccountid(v) => v.write_xdr(w)?,
+            Self::ScoBox(v) => <ScVal as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoVec(v) => <ScVec as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoMap(v) => <ScMap as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoU64(v) => <u64 as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoI64(v) => <i64 as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoString(v) => <Vec<u8> as WriteVariableXDR>::write_xdr(&v, w)?,
+            Self::ScoBinary(v) => <Vec<u8> as WriteVariableXDR>::write_xdr(&v, w)?,
+            Self::ScoBigint(v) => <ScBigInt as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoBigrat(v) => <ScBigRat as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoLedgerkey(v) => <Option<LedgerKey> as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoOperation(v) => <Option<Operation> as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoOperationResult(v) => <Option<OperationResult> as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoTransaction(v) => <Option<Transaction> as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoAsset(v) => <Asset as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoPrice(v) => <Price as WriteXDR>::write_xdr(&v, w)?,
+            Self::ScoAccountid(v) => <AccountId as WriteXDR>::write_xdr(&v, w)?,
         };
         Ok(())
     }

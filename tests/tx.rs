@@ -12,7 +12,7 @@ fn test_build_small_tx() -> Result<(), Error> {
             operations: [].to_vec().try_into()?,
             ext: TransactionExt::V0,
         },
-        signatures: [].to_vec().try_into()?,
+        signatures: [].try_into()?,
     });
     let xdr = te.to_xdr_base64()?;
     assert_eq!(xdr, "AAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAB1N0ZWxsYXIAAAAAAAAAAAAAAAAA");

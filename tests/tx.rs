@@ -8,7 +8,7 @@ fn test_build_small_tx() -> Result<(), Error> {
             fee: 0,
             seq_num: SequenceNumber(1),
             cond: Preconditions::PrecondNone,
-            memo: Memo::MemoText("Stellar".as_bytes().to_vec().try_into()?),
+            memo: Memo::MemoText("Stellar".as_bytes().try_into()?),
             operations: [].to_vec().try_into()?,
             ext: TransactionExt::V0,
         },

@@ -219,63 +219,6 @@ impl WriteXDR for () {
     }
 }
 
-impl ReadXDR for Vec<u8> {
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let len: u32 = u32::read_xdr(r)?;
-
-        let mut vec = vec![0u8; len as usize];
-        r.read_exact(&mut vec)?;
-
-        let pad_len = (4 - (len % 4)) % 4;
-        let mut pad = vec![0u8; pad_len as usize];
-        r.read_exact(&mut pad)?;
-
-        Ok(vec)
-    }
-}
-
-impl WriteXDR for Vec<u8> {
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        len.write_xdr(w)?;
-
-        w.write_all(self)?;
-
-        let pad_len = (4 - (len % 4)) % 4;
-        let mut pad = vec![0u8; pad_len as usize];
-        w.write_all(&mut pad)?;
-
-        Ok(())
-    }
-}
-
-impl<T: ReadXDR> ReadXDR for Vec<T> {
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let len = u32::read_xdr(r)?;
-
-        let mut vec = Vec::with_capacity(len as usize);
-        for _ in 0..len {
-            let t = T::read_xdr(r)?;
-            vec.push(t);
-        }
-
-        Ok(vec)
-    }
-}
-
-impl<T: WriteXDR> WriteXDR for Vec<T> {
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        len.write_xdr(w)?;
-
-        for t in self.iter() {
-            t.write_xdr(w)?;
-        }
-
-        Ok(())
-    }
-}
-
 impl<const N: usize> ReadXDR for [u8; N] {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let mut arr = [0u8; N];
@@ -401,27 +344,64 @@ impl<T: Clone, const N: usize, const MAX: u32> TryFrom<VecM<T, MAX>> for [T; N] 
 
 impl<const MAX: u32> ReadXDR for VecM<u8, MAX> {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let v = Vec::<u8>::read_xdr(r)?;
-        Ok(v.try_into().unwrap())
+        let len: u32 = u32::read_xdr(r)?;
+        if len > MAX {
+            return Err(Error::LengthExceedsMax);
+        }
+
+        let mut vec = vec![0u8; len as usize];
+        r.read_exact(&mut vec)?;
+
+        let pad_len = (4 - (len % 4)) % 4;
+        let mut pad = vec![0u8; pad_len as usize];
+        r.read_exact(&mut pad)?;
+
+        Ok(VecM(vec))
     }
 }
 
 impl<const MAX: u32> WriteXDR for VecM<u8, MAX> {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        len.write_xdr(w)?;
+
+        w.write_all(&self.0)?;
+
+        let pad_len = (4 - (len % 4)) % 4;
+        let mut pad = vec![0u8; pad_len as usize];
+        w.write_all(&mut pad)?;
+
+        Ok(())
     }
 }
 
 impl<T: ReadXDR, const MAX: u32> ReadXDR for VecM<T, MAX> {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let v = Vec::<T>::read_xdr(r)?;
-        Ok(v.try_into().unwrap())
+        let len = u32::read_xdr(r)?;
+        if len > MAX {
+            return Err(Error::LengthExceedsMax);
+        }
+
+        let mut vec = Vec::with_capacity(len as usize);
+        for _ in 0..len {
+            let t = T::read_xdr(r)?;
+            vec.push(t);
+        }
+
+        Ok(VecM(vec))
     }
 }
 
 impl<T: WriteXDR, const MAX: u32> WriteXDR for VecM<T, MAX> {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+        let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        len.write_xdr(w)?;
+
+        for t in self.0.iter() {
+            t.write_xdr(w)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -435,29 +415,29 @@ mod tests {
 //   typedef opaque Value<>;
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Value(pub Vec<u8>);
+pub struct Value(pub VecM<u8>);
 
-impl From<Value> for Vec<u8> {
+impl From<Value> for VecM<u8> {
     fn from(x: Value) -> Self {
         x.0
     }
 }
 
-impl From<Vec<u8>> for Value {
-    fn from(x: Vec<u8>) -> Self {
+impl From<VecM<u8>> for Value {
+    fn from(x: VecM<u8>) -> Self {
         Value(x)
     }
 }
 
-impl AsRef<Vec<u8>> for Value {
-    fn as_ref(&self) -> &Vec<u8> {
+impl AsRef<VecM<u8>> for Value {
+    fn as_ref(&self) -> &VecM<u8> {
         &self.0
     }
 }
 
 impl ReadXDR for Value {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = Vec::<u8>::read_xdr(r)?;
+        let i = VecM::<u8>::read_xdr(r)?;
         let v = Value(i);
         Ok(v)
     }
@@ -569,16 +549,16 @@ impl WriteXDR for ScpStatementType {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpNomination {
     pub quorum_set_hash: Hash,
-    pub votes: Vec<Value>,
-    pub accepted: Vec<Value>,
+    pub votes: VecM<Value>,
+    pub accepted: VecM<Value>,
 }
 
 impl ReadXDR for ScpNomination {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             quorum_set_hash: Hash::read_xdr(r)?,
-            votes: Vec::<Value>::read_xdr(r)?,
-            accepted: Vec::<Value>::read_xdr(r)?,
+            votes: VecM::<Value>::read_xdr(r)?,
+            accepted: VecM::<Value>::read_xdr(r)?,
         })
     }
 }
@@ -911,16 +891,16 @@ impl WriteXDR for ScpEnvelope {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpQuorumSet {
     pub threshold: u32,
-    pub validators: Vec<NodeId>,
-    pub inner_sets: Vec<ScpQuorumSet>,
+    pub validators: VecM<NodeId>,
+    pub inner_sets: VecM<ScpQuorumSet>,
 }
 
 impl ReadXDR for ScpQuorumSet {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             threshold: u32::read_xdr(r)?,
-            validators: Vec::<NodeId>::read_xdr(r)?,
-            inner_sets: Vec::<ScpQuorumSet>::read_xdr(r)?,
+            validators: VecM::<NodeId>::read_xdr(r)?,
+            inner_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
         })
     }
 }
@@ -5274,14 +5254,14 @@ impl WriteXDR for BucketEntry {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionSet {
     pub previous_ledger_hash: Hash,
-    pub txs: Vec<TransactionEnvelope>,
+    pub txs: VecM<TransactionEnvelope>,
 }
 
 impl ReadXDR for TransactionSet {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             previous_ledger_hash: Hash::read_xdr(r)?,
-            txs: Vec::<TransactionEnvelope>::read_xdr(r)?,
+            txs: VecM::<TransactionEnvelope>::read_xdr(r)?,
         })
     }
 }
@@ -5334,13 +5314,13 @@ impl WriteXDR for TransactionResultPair {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionResultSet {
-    pub results: Vec<TransactionResultPair>,
+    pub results: VecM<TransactionResultPair>,
 }
 
 impl ReadXDR for TransactionResultSet {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            results: Vec::<TransactionResultPair>::read_xdr(r)?,
+            results: VecM::<TransactionResultPair>::read_xdr(r)?,
         })
     }
 }
@@ -5621,14 +5601,14 @@ impl WriteXDR for LedgerHeaderHistoryEntry {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LedgerScpMessages {
     pub ledger_seq: u32,
-    pub messages: Vec<ScpEnvelope>,
+    pub messages: VecM<ScpEnvelope>,
 }
 
 impl ReadXDR for LedgerScpMessages {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ledger_seq: u32::read_xdr(r)?,
-            messages: Vec::<ScpEnvelope>::read_xdr(r)?,
+            messages: VecM::<ScpEnvelope>::read_xdr(r)?,
         })
     }
 }
@@ -5651,14 +5631,14 @@ impl WriteXDR for LedgerScpMessages {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScpHistoryEntryV0 {
-    pub quorum_sets: Vec<ScpQuorumSet>,
+    pub quorum_sets: VecM<ScpQuorumSet>,
     pub ledger_messages: LedgerScpMessages,
 }
 
 impl ReadXDR for ScpHistoryEntryV0 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            quorum_sets: Vec::<ScpQuorumSet>::read_xdr(r)?,
+            quorum_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
             ledger_messages: LedgerScpMessages::read_xdr(r)?,
         })
     }
@@ -5848,29 +5828,29 @@ impl WriteXDR for LedgerEntryChange {
 //   typedef LedgerEntryChange LedgerEntryChanges<>;
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LedgerEntryChanges(pub Vec<LedgerEntryChange>);
+pub struct LedgerEntryChanges(pub VecM<LedgerEntryChange>);
 
-impl From<LedgerEntryChanges> for Vec<LedgerEntryChange> {
+impl From<LedgerEntryChanges> for VecM<LedgerEntryChange> {
     fn from(x: LedgerEntryChanges) -> Self {
         x.0
     }
 }
 
-impl From<Vec<LedgerEntryChange>> for LedgerEntryChanges {
-    fn from(x: Vec<LedgerEntryChange>) -> Self {
+impl From<VecM<LedgerEntryChange>> for LedgerEntryChanges {
+    fn from(x: VecM<LedgerEntryChange>) -> Self {
         LedgerEntryChanges(x)
     }
 }
 
-impl AsRef<Vec<LedgerEntryChange>> for LedgerEntryChanges {
-    fn as_ref(&self) -> &Vec<LedgerEntryChange> {
+impl AsRef<VecM<LedgerEntryChange>> for LedgerEntryChanges {
+    fn as_ref(&self) -> &VecM<LedgerEntryChange> {
         &self.0
     }
 }
 
 impl ReadXDR for LedgerEntryChanges {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = Vec::<LedgerEntryChange>::read_xdr(r)?;
+        let i = VecM::<LedgerEntryChange>::read_xdr(r)?;
         let v = LedgerEntryChanges(i);
         Ok(v)
     }
@@ -5920,14 +5900,14 @@ impl WriteXDR for OperationMeta {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionMetaV1 {
     pub tx_changes: LedgerEntryChanges,
-    pub operations: Vec<OperationMeta>,
+    pub operations: VecM<OperationMeta>,
 }
 
 impl ReadXDR for TransactionMetaV1 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             tx_changes: LedgerEntryChanges::read_xdr(r)?,
-            operations: Vec::<OperationMeta>::read_xdr(r)?,
+            operations: VecM::<OperationMeta>::read_xdr(r)?,
         })
     }
 }
@@ -5954,7 +5934,7 @@ impl WriteXDR for TransactionMetaV1 {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TransactionMetaV2 {
     pub tx_changes_before: LedgerEntryChanges,
-    pub operations: Vec<OperationMeta>,
+    pub operations: VecM<OperationMeta>,
     pub tx_changes_after: LedgerEntryChanges,
 }
 
@@ -5962,7 +5942,7 @@ impl ReadXDR for TransactionMetaV2 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
-            operations: Vec::<OperationMeta>::read_xdr(r)?,
+            operations: VecM::<OperationMeta>::read_xdr(r)?,
             tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
         })
     }
@@ -5992,7 +5972,7 @@ impl WriteXDR for TransactionMetaV2 {
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TransactionMeta {
-    V0(Vec<OperationMeta>),
+    V0(VecM<OperationMeta>),
     V1(TransactionMetaV1),
     V2(TransactionMetaV2),
 }
@@ -6011,7 +5991,7 @@ impl ReadXDR for TransactionMeta {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
         let v = match dv {
-            0 => Self::V0(Vec::<OperationMeta>::read_xdr(r)?),
+            0 => Self::V0(VecM::<OperationMeta>::read_xdr(r)?),
             1 => Self::V1(TransactionMetaV1::read_xdr(r)?),
             2 => Self::V2(TransactionMetaV2::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -6123,9 +6103,9 @@ impl WriteXDR for UpgradeEntryMeta {
 pub struct LedgerCloseMetaV0 {
     pub ledger_header: LedgerHeaderHistoryEntry,
     pub tx_set: TransactionSet,
-    pub tx_processing: Vec<TransactionResultMeta>,
-    pub upgrades_processing: Vec<UpgradeEntryMeta>,
-    pub scp_info: Vec<ScpHistoryEntry>,
+    pub tx_processing: VecM<TransactionResultMeta>,
+    pub upgrades_processing: VecM<UpgradeEntryMeta>,
+    pub scp_info: VecM<ScpHistoryEntry>,
 }
 
 impl ReadXDR for LedgerCloseMetaV0 {
@@ -6133,9 +6113,9 @@ impl ReadXDR for LedgerCloseMetaV0 {
         Ok(Self {
             ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
             tx_set: TransactionSet::read_xdr(r)?,
-            tx_processing: Vec::<TransactionResultMeta>::read_xdr(r)?,
-            upgrades_processing: Vec::<UpgradeEntryMeta>::read_xdr(r)?,
-            scp_info: Vec::<ScpHistoryEntry>::read_xdr(r)?,
+            tx_processing: VecM::<TransactionResultMeta>::read_xdr(r)?,
+            upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
+            scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
         })
     }
 }
@@ -10709,14 +10689,14 @@ impl WriteXDR for SimplePaymentResult {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PathPaymentStrictReceiveResultSuccess {
-    pub offers: Vec<ClaimAtom>,
+    pub offers: VecM<ClaimAtom>,
     pub last: SimplePaymentResult,
 }
 
 impl ReadXDR for PathPaymentStrictReceiveResultSuccess {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            offers: Vec::<ClaimAtom>::read_xdr(r)?,
+            offers: VecM::<ClaimAtom>::read_xdr(r)?,
             last: SimplePaymentResult::read_xdr(r)?,
         })
     }
@@ -10903,14 +10883,14 @@ impl WriteXDR for PathPaymentStrictSendResultCode {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PathPaymentStrictSendResultSuccess {
-    pub offers: Vec<ClaimAtom>,
+    pub offers: VecM<ClaimAtom>,
     pub last: SimplePaymentResult,
 }
 
 impl ReadXDR for PathPaymentStrictSendResultSuccess {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            offers: Vec::<ClaimAtom>::read_xdr(r)?,
+            offers: VecM::<ClaimAtom>::read_xdr(r)?,
             last: SimplePaymentResult::read_xdr(r)?,
         })
     }
@@ -11212,14 +11192,14 @@ impl WriteXDR for ManageOfferSuccessResultOffer {
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ManageOfferSuccessResult {
-    pub offers_claimed: Vec<ClaimAtom>,
+    pub offers_claimed: VecM<ClaimAtom>,
     pub offer: ManageOfferSuccessResultOffer,
 }
 
 impl ReadXDR for ManageOfferSuccessResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            offers_claimed: Vec::<ClaimAtom>::read_xdr(r)?,
+            offers_claimed: VecM::<ClaimAtom>::read_xdr(r)?,
             offer: ManageOfferSuccessResultOffer::read_xdr(r)?,
         })
     }
@@ -12004,7 +11984,7 @@ impl WriteXDR for InflationPayout {
 // union with discriminant InflationResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum InflationResult {
-    InflationSuccess(Vec<InflationPayout>),
+    InflationSuccess(VecM<InflationPayout>),
 }
 
 impl InflationResult {
@@ -12020,7 +12000,7 @@ impl ReadXDR for InflationResult {
         let dv: InflationResultCode = <InflationResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             InflationResultCode::InflationSuccess => {
-                Self::InflationSuccess(Vec::<InflationPayout>::read_xdr(r)?)
+                Self::InflationSuccess(VecM::<InflationPayout>::read_xdr(r)?)
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -13898,8 +13878,8 @@ impl WriteXDR for TransactionResultCode {
 // union with discriminant TransactionResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum InnerTransactionResultResult {
-    TxSuccess(Vec<OperationResult>),
-    TxFailed(Vec<OperationResult>),
+    TxSuccess(VecM<OperationResult>),
+    TxFailed(VecM<OperationResult>),
     TxTooEarly,
     TxTooLate,
     TxMissingOperation,
@@ -13944,9 +13924,11 @@ impl ReadXDR for InnerTransactionResultResult {
         let dv: TransactionResultCode = <TransactionResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             TransactionResultCode::TxSuccess => {
-                Self::TxSuccess(Vec::<OperationResult>::read_xdr(r)?)
+                Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?)
             }
-            TransactionResultCode::TxFailed => Self::TxFailed(Vec::<OperationResult>::read_xdr(r)?),
+            TransactionResultCode::TxFailed => {
+                Self::TxFailed(VecM::<OperationResult>::read_xdr(r)?)
+            }
             TransactionResultCode::TxTooEarly => Self::TxTooEarly,
             TransactionResultCode::TxTooLate => Self::TxTooLate,
             TransactionResultCode::TxMissingOperation => Self::TxMissingOperation,
@@ -14154,8 +14136,8 @@ impl WriteXDR for InnerTransactionResultPair {
 pub enum TransactionResultResult {
     TxFeeBumpInnerSuccess(InnerTransactionResultPair),
     TxFeeBumpInnerFailed(InnerTransactionResultPair),
-    TxSuccess(Vec<OperationResult>),
-    TxFailed(Vec<OperationResult>),
+    TxSuccess(VecM<OperationResult>),
+    TxFailed(VecM<OperationResult>),
 }
 
 impl TransactionResultResult {
@@ -14180,9 +14162,11 @@ impl ReadXDR for TransactionResultResult {
                 Self::TxFeeBumpInnerFailed(InnerTransactionResultPair::read_xdr(r)?)
             }
             TransactionResultCode::TxSuccess => {
-                Self::TxSuccess(Vec::<OperationResult>::read_xdr(r)?)
+                Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?)
             }
-            TransactionResultCode::TxFailed => Self::TxFailed(Vec::<OperationResult>::read_xdr(r)?),
+            TransactionResultCode::TxFailed => {
+                Self::TxFailed(VecM::<OperationResult>::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -15454,29 +15438,29 @@ impl WriteXDR for ScMapEntry {
 //   typedef SCVal SCVec<>;
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScVec(pub Vec<ScVal>);
+pub struct ScVec(pub VecM<ScVal>);
 
-impl From<ScVec> for Vec<ScVal> {
+impl From<ScVec> for VecM<ScVal> {
     fn from(x: ScVec) -> Self {
         x.0
     }
 }
 
-impl From<Vec<ScVal>> for ScVec {
-    fn from(x: Vec<ScVal>) -> Self {
+impl From<VecM<ScVal>> for ScVec {
+    fn from(x: VecM<ScVal>) -> Self {
         ScVec(x)
     }
 }
 
-impl AsRef<Vec<ScVal>> for ScVec {
-    fn as_ref(&self) -> &Vec<ScVal> {
+impl AsRef<VecM<ScVal>> for ScVec {
+    fn as_ref(&self) -> &VecM<ScVal> {
         &self.0
     }
 }
 
 impl ReadXDR for ScVec {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = Vec::<ScVal>::read_xdr(r)?;
+        let i = VecM::<ScVal>::read_xdr(r)?;
         let v = ScVec(i);
         Ok(v)
     }
@@ -15493,29 +15477,29 @@ impl WriteXDR for ScVec {
 //   typedef SCMapEntry SCMap<>;
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScMap(pub Vec<ScMapEntry>);
+pub struct ScMap(pub VecM<ScMapEntry>);
 
-impl From<ScMap> for Vec<ScMapEntry> {
+impl From<ScMap> for VecM<ScMapEntry> {
     fn from(x: ScMap) -> Self {
         x.0
     }
 }
 
-impl From<Vec<ScMapEntry>> for ScMap {
-    fn from(x: Vec<ScMapEntry>) -> Self {
+impl From<VecM<ScMapEntry>> for ScMap {
+    fn from(x: VecM<ScMapEntry>) -> Self {
         ScMap(x)
     }
 }
 
-impl AsRef<Vec<ScMapEntry>> for ScMap {
-    fn as_ref(&self) -> &Vec<ScMapEntry> {
+impl AsRef<VecM<ScMapEntry>> for ScMap {
+    fn as_ref(&self) -> &VecM<ScMapEntry> {
         &self.0
     }
 }
 
 impl ReadXDR for ScMap {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = Vec::<ScMapEntry>::read_xdr(r)?;
+        let i = VecM::<ScMapEntry>::read_xdr(r)?;
         let v = ScMap(i);
         Ok(v)
     }
@@ -15538,14 +15522,14 @@ impl WriteXDR for ScMap {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScBigInt {
     pub positive: bool,
-    pub magnitude: Vec<u8>,
+    pub magnitude: VecM<u8>,
 }
 
 impl ReadXDR for ScBigInt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             positive: bool::read_xdr(r)?,
-            magnitude: Vec::<u8>::read_xdr(r)?,
+            magnitude: VecM::<u8>::read_xdr(r)?,
         })
     }
 }
@@ -15570,16 +15554,16 @@ impl WriteXDR for ScBigInt {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScBigRat {
     pub positive: bool,
-    pub numerator: Vec<u8>,
-    pub denominator: Vec<u8>,
+    pub numerator: VecM<u8>,
+    pub denominator: VecM<u8>,
 }
 
 impl ReadXDR for ScBigRat {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             positive: bool::read_xdr(r)?,
-            numerator: Vec::<u8>::read_xdr(r)?,
-            denominator: Vec::<u8>::read_xdr(r)?,
+            numerator: VecM::<u8>::read_xdr(r)?,
+            denominator: VecM::<u8>::read_xdr(r)?,
         })
     }
 }
@@ -15639,8 +15623,8 @@ pub enum ScObject {
     ScoMap(ScMap),
     ScoU64(u64),
     ScoI64(i64),
-    ScoString(Vec<u8>),
-    ScoBinary(Vec<u8>),
+    ScoString(VecM<u8>),
+    ScoBinary(VecM<u8>),
     ScoBigint(ScBigInt),
     ScoBigrat(ScBigRat),
     ScoLedgerkey(Option<LedgerKey>),
@@ -15684,8 +15668,8 @@ impl ReadXDR for ScObject {
             ScObjectType::ScoMap => Self::ScoMap(ScMap::read_xdr(r)?),
             ScObjectType::ScoU64 => Self::ScoU64(u64::read_xdr(r)?),
             ScObjectType::ScoI64 => Self::ScoI64(i64::read_xdr(r)?),
-            ScObjectType::ScoString => Self::ScoString(Vec::<u8>::read_xdr(r)?),
-            ScObjectType::ScoBinary => Self::ScoBinary(Vec::<u8>::read_xdr(r)?),
+            ScObjectType::ScoString => Self::ScoString(VecM::<u8>::read_xdr(r)?),
+            ScObjectType::ScoBinary => Self::ScoBinary(VecM::<u8>::read_xdr(r)?),
             ScObjectType::ScoBigint => Self::ScoBigint(ScBigInt::read_xdr(r)?),
             ScObjectType::ScoBigrat => Self::ScoBigrat(ScBigRat::read_xdr(r)?),
             ScObjectType::ScoLedgerkey => Self::ScoLedgerkey(Option::<LedgerKey>::read_xdr(r)?),

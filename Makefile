@@ -10,7 +10,7 @@ build: src/xdr.rs xdr
 src/xdr.rs: xdr
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
 		gem install specific_install && \
-		gem specific_install https://github.com/leighmcculloch/stellar--xdrgen.git -b rust-no-deps && \
+		gem specific_install https://github.com/leighmcculloch/stellar--xdrgen.git -b rust-no-deps-8 && \
 		xdrgen \
 			--language rust \
 			--namespace xdr \

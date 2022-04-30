@@ -10402,7 +10402,10 @@ impl WriteXDR for CreateAccountResultCode {
 //    {
 //    case CREATE_ACCOUNT_SUCCESS:
 //        void;
-//    default:
+//    case CREATE_ACCOUNT_MALFORMED:
+//    case CREATE_ACCOUNT_UNDERFUNDED:
+//    case CREATE_ACCOUNT_LOW_RESERVE:
+//    case CREATE_ACCOUNT_ALREADY_EXIST:
 //        void;
 //    };
 //
@@ -10410,12 +10413,20 @@ impl WriteXDR for CreateAccountResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CreateAccountResult {
     CreateAccountSuccess,
+    CreateAccountMalformed,
+    CreateAccountUnderfunded,
+    CreateAccountLowReserve,
+    CreateAccountAlreadyExist,
 }
 
 impl CreateAccountResult {
     pub fn discriminant(&self) -> CreateAccountResultCode {
         match self {
             Self::CreateAccountSuccess => CreateAccountResultCode::CreateAccountSuccess,
+            Self::CreateAccountMalformed => CreateAccountResultCode::CreateAccountMalformed,
+            Self::CreateAccountUnderfunded => CreateAccountResultCode::CreateAccountUnderfunded,
+            Self::CreateAccountLowReserve => CreateAccountResultCode::CreateAccountLowReserve,
+            Self::CreateAccountAlreadyExist => CreateAccountResultCode::CreateAccountAlreadyExist,
         }
     }
 }
@@ -10425,6 +10436,10 @@ impl ReadXDR for CreateAccountResult {
         let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             CreateAccountResultCode::CreateAccountSuccess => Self::CreateAccountSuccess,
+            CreateAccountResultCode::CreateAccountMalformed => Self::CreateAccountMalformed,
+            CreateAccountResultCode::CreateAccountUnderfunded => Self::CreateAccountUnderfunded,
+            CreateAccountResultCode::CreateAccountLowReserve => Self::CreateAccountLowReserve,
+            CreateAccountResultCode::CreateAccountAlreadyExist => Self::CreateAccountAlreadyExist,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10437,6 +10452,10 @@ impl WriteXDR for CreateAccountResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::CreateAccountSuccess => ().write_xdr(w)?,
+            Self::CreateAccountMalformed => ().write_xdr(w)?,
+            Self::CreateAccountUnderfunded => ().write_xdr(w)?,
+            Self::CreateAccountLowReserve => ().write_xdr(w)?,
+            Self::CreateAccountAlreadyExist => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -10526,7 +10545,15 @@ impl WriteXDR for PaymentResultCode {
 //    {
 //    case PAYMENT_SUCCESS:
 //        void;
-//    default:
+//    case PAYMENT_MALFORMED:
+//    case PAYMENT_UNDERFUNDED:
+//    case PAYMENT_SRC_NO_TRUST:
+//    case PAYMENT_SRC_NOT_AUTHORIZED:
+//    case PAYMENT_NO_DESTINATION:
+//    case PAYMENT_NO_TRUST:
+//    case PAYMENT_NOT_AUTHORIZED:
+//    case PAYMENT_LINE_FULL:
+//    case PAYMENT_NO_ISSUER:
 //        void;
 //    };
 //
@@ -10534,12 +10561,30 @@ impl WriteXDR for PaymentResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PaymentResult {
     PaymentSuccess,
+    PaymentMalformed,
+    PaymentUnderfunded,
+    PaymentSrcNoTrust,
+    PaymentSrcNotAuthorized,
+    PaymentNoDestination,
+    PaymentNoTrust,
+    PaymentNotAuthorized,
+    PaymentLineFull,
+    PaymentNoIssuer,
 }
 
 impl PaymentResult {
     pub fn discriminant(&self) -> PaymentResultCode {
         match self {
             Self::PaymentSuccess => PaymentResultCode::PaymentSuccess,
+            Self::PaymentMalformed => PaymentResultCode::PaymentMalformed,
+            Self::PaymentUnderfunded => PaymentResultCode::PaymentUnderfunded,
+            Self::PaymentSrcNoTrust => PaymentResultCode::PaymentSrcNoTrust,
+            Self::PaymentSrcNotAuthorized => PaymentResultCode::PaymentSrcNotAuthorized,
+            Self::PaymentNoDestination => PaymentResultCode::PaymentNoDestination,
+            Self::PaymentNoTrust => PaymentResultCode::PaymentNoTrust,
+            Self::PaymentNotAuthorized => PaymentResultCode::PaymentNotAuthorized,
+            Self::PaymentLineFull => PaymentResultCode::PaymentLineFull,
+            Self::PaymentNoIssuer => PaymentResultCode::PaymentNoIssuer,
         }
     }
 }
@@ -10549,6 +10594,15 @@ impl ReadXDR for PaymentResult {
         let dv: PaymentResultCode = <PaymentResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             PaymentResultCode::PaymentSuccess => Self::PaymentSuccess,
+            PaymentResultCode::PaymentMalformed => Self::PaymentMalformed,
+            PaymentResultCode::PaymentUnderfunded => Self::PaymentUnderfunded,
+            PaymentResultCode::PaymentSrcNoTrust => Self::PaymentSrcNoTrust,
+            PaymentResultCode::PaymentSrcNotAuthorized => Self::PaymentSrcNotAuthorized,
+            PaymentResultCode::PaymentNoDestination => Self::PaymentNoDestination,
+            PaymentResultCode::PaymentNoTrust => Self::PaymentNoTrust,
+            PaymentResultCode::PaymentNotAuthorized => Self::PaymentNotAuthorized,
+            PaymentResultCode::PaymentLineFull => Self::PaymentLineFull,
+            PaymentResultCode::PaymentNoIssuer => Self::PaymentNoIssuer,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10561,6 +10615,15 @@ impl WriteXDR for PaymentResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::PaymentSuccess => ().write_xdr(w)?,
+            Self::PaymentMalformed => ().write_xdr(w)?,
+            Self::PaymentUnderfunded => ().write_xdr(w)?,
+            Self::PaymentSrcNoTrust => ().write_xdr(w)?,
+            Self::PaymentSrcNotAuthorized => ().write_xdr(w)?,
+            Self::PaymentNoDestination => ().write_xdr(w)?,
+            Self::PaymentNoTrust => ().write_xdr(w)?,
+            Self::PaymentNotAuthorized => ().write_xdr(w)?,
+            Self::PaymentLineFull => ().write_xdr(w)?,
+            Self::PaymentNoIssuer => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -10739,9 +10802,20 @@ impl WriteXDR for PathPaymentStrictReceiveResultSuccess {
 //            ClaimAtom offers<>;
 //            SimplePaymentResult last;
 //        } success;
+//    case PATH_PAYMENT_STRICT_RECEIVE_MALFORMED:
+//    case PATH_PAYMENT_STRICT_RECEIVE_UNDERFUNDED:
+//    case PATH_PAYMENT_STRICT_RECEIVE_SRC_NO_TRUST:
+//    case PATH_PAYMENT_STRICT_RECEIVE_SRC_NOT_AUTHORIZED:
+//    case PATH_PAYMENT_STRICT_RECEIVE_NO_DESTINATION:
+//    case PATH_PAYMENT_STRICT_RECEIVE_NO_TRUST:
+//    case PATH_PAYMENT_STRICT_RECEIVE_NOT_AUTHORIZED:
+//    case PATH_PAYMENT_STRICT_RECEIVE_LINE_FULL:
+//        void;
 //    case PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER:
 //        Asset noIssuer; // the asset that caused the error
-//    default:
+//    case PATH_PAYMENT_STRICT_RECEIVE_TOO_FEW_OFFERS:
+//    case PATH_PAYMENT_STRICT_RECEIVE_OFFER_CROSS_SELF:
+//    case PATH_PAYMENT_STRICT_RECEIVE_OVER_SENDMAX:
 //        void;
 //    };
 //
@@ -10749,7 +10823,18 @@ impl WriteXDR for PathPaymentStrictReceiveResultSuccess {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PathPaymentStrictReceiveResult {
     PathPaymentStrictReceiveSuccess(PathPaymentStrictReceiveResultSuccess),
+    PathPaymentStrictReceiveMalformed,
+    PathPaymentStrictReceiveUnderfunded,
+    PathPaymentStrictReceiveSrcNoTrust,
+    PathPaymentStrictReceiveSrcNotAuthorized,
+    PathPaymentStrictReceiveNoDestination,
+    PathPaymentStrictReceiveNoTrust,
+    PathPaymentStrictReceiveNotAuthorized,
+    PathPaymentStrictReceiveLineFull,
     PathPaymentStrictReceiveNoIssuer(Asset),
+    PathPaymentStrictReceiveTooFewOffers,
+    PathPaymentStrictReceiveOfferCrossSelf,
+    PathPaymentStrictReceiveOverSendmax,
 }
 
 impl PathPaymentStrictReceiveResult {
@@ -10758,8 +10843,41 @@ impl PathPaymentStrictReceiveResult {
             Self::PathPaymentStrictReceiveSuccess(_) => {
                 PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSuccess
             }
+            Self::PathPaymentStrictReceiveMalformed => {
+                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveMalformed
+            }
+            Self::PathPaymentStrictReceiveUnderfunded => {
+                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveUnderfunded
+            }
+            Self::PathPaymentStrictReceiveSrcNoTrust => {
+                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSrcNoTrust
+            }
+            Self::PathPaymentStrictReceiveSrcNotAuthorized => {
+                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSrcNotAuthorized
+            }
+            Self::PathPaymentStrictReceiveNoDestination => {
+                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoDestination
+            }
+            Self::PathPaymentStrictReceiveNoTrust => {
+                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoTrust
+            }
+            Self::PathPaymentStrictReceiveNotAuthorized => {
+                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNotAuthorized
+            }
+            Self::PathPaymentStrictReceiveLineFull => {
+                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveLineFull
+            }
             Self::PathPaymentStrictReceiveNoIssuer(_) => {
                 PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoIssuer
+            }
+            Self::PathPaymentStrictReceiveTooFewOffers => {
+                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveTooFewOffers
+            }
+            Self::PathPaymentStrictReceiveOfferCrossSelf => {
+                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveOfferCrossSelf
+            }
+            Self::PathPaymentStrictReceiveOverSendmax => {
+                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveOverSendmax
             }
         }
     }
@@ -10775,8 +10893,41 @@ impl ReadXDR for PathPaymentStrictReceiveResult {
                     PathPaymentStrictReceiveResultSuccess::read_xdr(r)?,
                 )
             }
+            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveMalformed => {
+                Self::PathPaymentStrictReceiveMalformed
+            }
+            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveUnderfunded => {
+                Self::PathPaymentStrictReceiveUnderfunded
+            }
+            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSrcNoTrust => {
+                Self::PathPaymentStrictReceiveSrcNoTrust
+            }
+            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSrcNotAuthorized => {
+                Self::PathPaymentStrictReceiveSrcNotAuthorized
+            }
+            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoDestination => {
+                Self::PathPaymentStrictReceiveNoDestination
+            }
+            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoTrust => {
+                Self::PathPaymentStrictReceiveNoTrust
+            }
+            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNotAuthorized => {
+                Self::PathPaymentStrictReceiveNotAuthorized
+            }
+            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveLineFull => {
+                Self::PathPaymentStrictReceiveLineFull
+            }
             PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoIssuer => {
                 Self::PathPaymentStrictReceiveNoIssuer(Asset::read_xdr(r)?)
+            }
+            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveTooFewOffers => {
+                Self::PathPaymentStrictReceiveTooFewOffers
+            }
+            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveOfferCrossSelf => {
+                Self::PathPaymentStrictReceiveOfferCrossSelf
+            }
+            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveOverSendmax => {
+                Self::PathPaymentStrictReceiveOverSendmax
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -10790,7 +10941,18 @@ impl WriteXDR for PathPaymentStrictReceiveResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::PathPaymentStrictReceiveSuccess(v) => v.write_xdr(w)?,
+            Self::PathPaymentStrictReceiveMalformed => ().write_xdr(w)?,
+            Self::PathPaymentStrictReceiveUnderfunded => ().write_xdr(w)?,
+            Self::PathPaymentStrictReceiveSrcNoTrust => ().write_xdr(w)?,
+            Self::PathPaymentStrictReceiveSrcNotAuthorized => ().write_xdr(w)?,
+            Self::PathPaymentStrictReceiveNoDestination => ().write_xdr(w)?,
+            Self::PathPaymentStrictReceiveNoTrust => ().write_xdr(w)?,
+            Self::PathPaymentStrictReceiveNotAuthorized => ().write_xdr(w)?,
+            Self::PathPaymentStrictReceiveLineFull => ().write_xdr(w)?,
             Self::PathPaymentStrictReceiveNoIssuer(v) => v.write_xdr(w)?,
+            Self::PathPaymentStrictReceiveTooFewOffers => ().write_xdr(w)?,
+            Self::PathPaymentStrictReceiveOfferCrossSelf => ().write_xdr(w)?,
+            Self::PathPaymentStrictReceiveOverSendmax => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -10932,9 +11094,20 @@ impl WriteXDR for PathPaymentStrictSendResultSuccess {
 //            ClaimAtom offers<>;
 //            SimplePaymentResult last;
 //        } success;
+//    case PATH_PAYMENT_STRICT_SEND_MALFORMED:
+//    case PATH_PAYMENT_STRICT_SEND_UNDERFUNDED:
+//    case PATH_PAYMENT_STRICT_SEND_SRC_NO_TRUST:
+//    case PATH_PAYMENT_STRICT_SEND_SRC_NOT_AUTHORIZED:
+//    case PATH_PAYMENT_STRICT_SEND_NO_DESTINATION:
+//    case PATH_PAYMENT_STRICT_SEND_NO_TRUST:
+//    case PATH_PAYMENT_STRICT_SEND_NOT_AUTHORIZED:
+//    case PATH_PAYMENT_STRICT_SEND_LINE_FULL:
+//        void;
 //    case PATH_PAYMENT_STRICT_SEND_NO_ISSUER:
 //        Asset noIssuer; // the asset that caused the error
-//    default:
+//    case PATH_PAYMENT_STRICT_SEND_TOO_FEW_OFFERS:
+//    case PATH_PAYMENT_STRICT_SEND_OFFER_CROSS_SELF:
+//    case PATH_PAYMENT_STRICT_SEND_UNDER_DESTMIN:
 //        void;
 //    };
 //
@@ -10942,7 +11115,18 @@ impl WriteXDR for PathPaymentStrictSendResultSuccess {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PathPaymentStrictSendResult {
     PathPaymentStrictSendSuccess(PathPaymentStrictSendResultSuccess),
+    PathPaymentStrictSendMalformed,
+    PathPaymentStrictSendUnderfunded,
+    PathPaymentStrictSendSrcNoTrust,
+    PathPaymentStrictSendSrcNotAuthorized,
+    PathPaymentStrictSendNoDestination,
+    PathPaymentStrictSendNoTrust,
+    PathPaymentStrictSendNotAuthorized,
+    PathPaymentStrictSendLineFull,
     PathPaymentStrictSendNoIssuer(Asset),
+    PathPaymentStrictSendTooFewOffers,
+    PathPaymentStrictSendOfferCrossSelf,
+    PathPaymentStrictSendUnderDestmin,
 }
 
 impl PathPaymentStrictSendResult {
@@ -10951,8 +11135,41 @@ impl PathPaymentStrictSendResult {
             Self::PathPaymentStrictSendSuccess(_) => {
                 PathPaymentStrictSendResultCode::PathPaymentStrictSendSuccess
             }
+            Self::PathPaymentStrictSendMalformed => {
+                PathPaymentStrictSendResultCode::PathPaymentStrictSendMalformed
+            }
+            Self::PathPaymentStrictSendUnderfunded => {
+                PathPaymentStrictSendResultCode::PathPaymentStrictSendUnderfunded
+            }
+            Self::PathPaymentStrictSendSrcNoTrust => {
+                PathPaymentStrictSendResultCode::PathPaymentStrictSendSrcNoTrust
+            }
+            Self::PathPaymentStrictSendSrcNotAuthorized => {
+                PathPaymentStrictSendResultCode::PathPaymentStrictSendSrcNotAuthorized
+            }
+            Self::PathPaymentStrictSendNoDestination => {
+                PathPaymentStrictSendResultCode::PathPaymentStrictSendNoDestination
+            }
+            Self::PathPaymentStrictSendNoTrust => {
+                PathPaymentStrictSendResultCode::PathPaymentStrictSendNoTrust
+            }
+            Self::PathPaymentStrictSendNotAuthorized => {
+                PathPaymentStrictSendResultCode::PathPaymentStrictSendNotAuthorized
+            }
+            Self::PathPaymentStrictSendLineFull => {
+                PathPaymentStrictSendResultCode::PathPaymentStrictSendLineFull
+            }
             Self::PathPaymentStrictSendNoIssuer(_) => {
                 PathPaymentStrictSendResultCode::PathPaymentStrictSendNoIssuer
+            }
+            Self::PathPaymentStrictSendTooFewOffers => {
+                PathPaymentStrictSendResultCode::PathPaymentStrictSendTooFewOffers
+            }
+            Self::PathPaymentStrictSendOfferCrossSelf => {
+                PathPaymentStrictSendResultCode::PathPaymentStrictSendOfferCrossSelf
+            }
+            Self::PathPaymentStrictSendUnderDestmin => {
+                PathPaymentStrictSendResultCode::PathPaymentStrictSendUnderDestmin
             }
         }
     }
@@ -10966,8 +11183,41 @@ impl ReadXDR for PathPaymentStrictSendResult {
             PathPaymentStrictSendResultCode::PathPaymentStrictSendSuccess => {
                 Self::PathPaymentStrictSendSuccess(PathPaymentStrictSendResultSuccess::read_xdr(r)?)
             }
+            PathPaymentStrictSendResultCode::PathPaymentStrictSendMalformed => {
+                Self::PathPaymentStrictSendMalformed
+            }
+            PathPaymentStrictSendResultCode::PathPaymentStrictSendUnderfunded => {
+                Self::PathPaymentStrictSendUnderfunded
+            }
+            PathPaymentStrictSendResultCode::PathPaymentStrictSendSrcNoTrust => {
+                Self::PathPaymentStrictSendSrcNoTrust
+            }
+            PathPaymentStrictSendResultCode::PathPaymentStrictSendSrcNotAuthorized => {
+                Self::PathPaymentStrictSendSrcNotAuthorized
+            }
+            PathPaymentStrictSendResultCode::PathPaymentStrictSendNoDestination => {
+                Self::PathPaymentStrictSendNoDestination
+            }
+            PathPaymentStrictSendResultCode::PathPaymentStrictSendNoTrust => {
+                Self::PathPaymentStrictSendNoTrust
+            }
+            PathPaymentStrictSendResultCode::PathPaymentStrictSendNotAuthorized => {
+                Self::PathPaymentStrictSendNotAuthorized
+            }
+            PathPaymentStrictSendResultCode::PathPaymentStrictSendLineFull => {
+                Self::PathPaymentStrictSendLineFull
+            }
             PathPaymentStrictSendResultCode::PathPaymentStrictSendNoIssuer => {
                 Self::PathPaymentStrictSendNoIssuer(Asset::read_xdr(r)?)
+            }
+            PathPaymentStrictSendResultCode::PathPaymentStrictSendTooFewOffers => {
+                Self::PathPaymentStrictSendTooFewOffers
+            }
+            PathPaymentStrictSendResultCode::PathPaymentStrictSendOfferCrossSelf => {
+                Self::PathPaymentStrictSendOfferCrossSelf
+            }
+            PathPaymentStrictSendResultCode::PathPaymentStrictSendUnderDestmin => {
+                Self::PathPaymentStrictSendUnderDestmin
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -10981,7 +11231,18 @@ impl WriteXDR for PathPaymentStrictSendResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::PathPaymentStrictSendSuccess(v) => v.write_xdr(w)?,
+            Self::PathPaymentStrictSendMalformed => ().write_xdr(w)?,
+            Self::PathPaymentStrictSendUnderfunded => ().write_xdr(w)?,
+            Self::PathPaymentStrictSendSrcNoTrust => ().write_xdr(w)?,
+            Self::PathPaymentStrictSendSrcNotAuthorized => ().write_xdr(w)?,
+            Self::PathPaymentStrictSendNoDestination => ().write_xdr(w)?,
+            Self::PathPaymentStrictSendNoTrust => ().write_xdr(w)?,
+            Self::PathPaymentStrictSendNotAuthorized => ().write_xdr(w)?,
+            Self::PathPaymentStrictSendLineFull => ().write_xdr(w)?,
             Self::PathPaymentStrictSendNoIssuer(v) => v.write_xdr(w)?,
+            Self::PathPaymentStrictSendTooFewOffers => ().write_xdr(w)?,
+            Self::PathPaymentStrictSendOfferCrossSelf => ().write_xdr(w)?,
+            Self::PathPaymentStrictSendUnderDestmin => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11142,7 +11403,7 @@ impl WriteXDR for ManageOfferEffect {
 //        case MANAGE_OFFER_CREATED:
 //        case MANAGE_OFFER_UPDATED:
 //            OfferEntry offer;
-//        default:
+//        case MANAGE_OFFER_DELETED:
 //            void;
 //        }
 //
@@ -11151,6 +11412,7 @@ impl WriteXDR for ManageOfferEffect {
 pub enum ManageOfferSuccessResultOffer {
     ManageOfferCreated(OfferEntry),
     ManageOfferUpdated(OfferEntry),
+    ManageOfferDeleted,
 }
 
 impl ManageOfferSuccessResultOffer {
@@ -11158,6 +11420,7 @@ impl ManageOfferSuccessResultOffer {
         match self {
             Self::ManageOfferCreated(_) => ManageOfferEffect::ManageOfferCreated,
             Self::ManageOfferUpdated(_) => ManageOfferEffect::ManageOfferUpdated,
+            Self::ManageOfferDeleted => ManageOfferEffect::ManageOfferDeleted,
         }
     }
 }
@@ -11172,6 +11435,7 @@ impl ReadXDR for ManageOfferSuccessResultOffer {
             ManageOfferEffect::ManageOfferUpdated => {
                 Self::ManageOfferUpdated(OfferEntry::read_xdr(r)?)
             }
+            ManageOfferEffect::ManageOfferDeleted => Self::ManageOfferDeleted,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11185,6 +11449,7 @@ impl WriteXDR for ManageOfferSuccessResultOffer {
         match self {
             Self::ManageOfferCreated(v) => v.write_xdr(w)?,
             Self::ManageOfferUpdated(v) => v.write_xdr(w)?,
+            Self::ManageOfferDeleted => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11202,7 +11467,7 @@ impl WriteXDR for ManageOfferSuccessResultOffer {
 //        case MANAGE_OFFER_CREATED:
 //        case MANAGE_OFFER_UPDATED:
 //            OfferEntry offer;
-//        default:
+//        case MANAGE_OFFER_DELETED:
 //            void;
 //        }
 //        offer;
@@ -11237,7 +11502,18 @@ impl WriteXDR for ManageOfferSuccessResult {
 //    {
 //    case MANAGE_SELL_OFFER_SUCCESS:
 //        ManageOfferSuccessResult success;
-//    default:
+//    case MANAGE_SELL_OFFER_MALFORMED:
+//    case MANAGE_SELL_OFFER_SELL_NO_TRUST:
+//    case MANAGE_SELL_OFFER_BUY_NO_TRUST:
+//    case MANAGE_SELL_OFFER_SELL_NOT_AUTHORIZED:
+//    case MANAGE_SELL_OFFER_BUY_NOT_AUTHORIZED:
+//    case MANAGE_SELL_OFFER_LINE_FULL:
+//    case MANAGE_SELL_OFFER_UNDERFUNDED:
+//    case MANAGE_SELL_OFFER_CROSS_SELF:
+//    case MANAGE_SELL_OFFER_SELL_NO_ISSUER:
+//    case MANAGE_SELL_OFFER_BUY_NO_ISSUER:
+//    case MANAGE_SELL_OFFER_NOT_FOUND:
+//    case MANAGE_SELL_OFFER_LOW_RESERVE:
 //        void;
 //    };
 //
@@ -11245,12 +11521,48 @@ impl WriteXDR for ManageOfferSuccessResult {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ManageSellOfferResult {
     ManageSellOfferSuccess(ManageOfferSuccessResult),
+    ManageSellOfferMalformed,
+    ManageSellOfferSellNoTrust,
+    ManageSellOfferBuyNoTrust,
+    ManageSellOfferSellNotAuthorized,
+    ManageSellOfferBuyNotAuthorized,
+    ManageSellOfferLineFull,
+    ManageSellOfferUnderfunded,
+    ManageSellOfferCrossSelf,
+    ManageSellOfferSellNoIssuer,
+    ManageSellOfferBuyNoIssuer,
+    ManageSellOfferNotFound,
+    ManageSellOfferLowReserve,
 }
 
 impl ManageSellOfferResult {
     pub fn discriminant(&self) -> ManageSellOfferResultCode {
         match self {
             Self::ManageSellOfferSuccess(_) => ManageSellOfferResultCode::ManageSellOfferSuccess,
+            Self::ManageSellOfferMalformed => ManageSellOfferResultCode::ManageSellOfferMalformed,
+            Self::ManageSellOfferSellNoTrust => {
+                ManageSellOfferResultCode::ManageSellOfferSellNoTrust
+            }
+            Self::ManageSellOfferBuyNoTrust => ManageSellOfferResultCode::ManageSellOfferBuyNoTrust,
+            Self::ManageSellOfferSellNotAuthorized => {
+                ManageSellOfferResultCode::ManageSellOfferSellNotAuthorized
+            }
+            Self::ManageSellOfferBuyNotAuthorized => {
+                ManageSellOfferResultCode::ManageSellOfferBuyNotAuthorized
+            }
+            Self::ManageSellOfferLineFull => ManageSellOfferResultCode::ManageSellOfferLineFull,
+            Self::ManageSellOfferUnderfunded => {
+                ManageSellOfferResultCode::ManageSellOfferUnderfunded
+            }
+            Self::ManageSellOfferCrossSelf => ManageSellOfferResultCode::ManageSellOfferCrossSelf,
+            Self::ManageSellOfferSellNoIssuer => {
+                ManageSellOfferResultCode::ManageSellOfferSellNoIssuer
+            }
+            Self::ManageSellOfferBuyNoIssuer => {
+                ManageSellOfferResultCode::ManageSellOfferBuyNoIssuer
+            }
+            Self::ManageSellOfferNotFound => ManageSellOfferResultCode::ManageSellOfferNotFound,
+            Self::ManageSellOfferLowReserve => ManageSellOfferResultCode::ManageSellOfferLowReserve,
         }
     }
 }
@@ -11262,6 +11574,30 @@ impl ReadXDR for ManageSellOfferResult {
             ManageSellOfferResultCode::ManageSellOfferSuccess => {
                 Self::ManageSellOfferSuccess(ManageOfferSuccessResult::read_xdr(r)?)
             }
+            ManageSellOfferResultCode::ManageSellOfferMalformed => Self::ManageSellOfferMalformed,
+            ManageSellOfferResultCode::ManageSellOfferSellNoTrust => {
+                Self::ManageSellOfferSellNoTrust
+            }
+            ManageSellOfferResultCode::ManageSellOfferBuyNoTrust => Self::ManageSellOfferBuyNoTrust,
+            ManageSellOfferResultCode::ManageSellOfferSellNotAuthorized => {
+                Self::ManageSellOfferSellNotAuthorized
+            }
+            ManageSellOfferResultCode::ManageSellOfferBuyNotAuthorized => {
+                Self::ManageSellOfferBuyNotAuthorized
+            }
+            ManageSellOfferResultCode::ManageSellOfferLineFull => Self::ManageSellOfferLineFull,
+            ManageSellOfferResultCode::ManageSellOfferUnderfunded => {
+                Self::ManageSellOfferUnderfunded
+            }
+            ManageSellOfferResultCode::ManageSellOfferCrossSelf => Self::ManageSellOfferCrossSelf,
+            ManageSellOfferResultCode::ManageSellOfferSellNoIssuer => {
+                Self::ManageSellOfferSellNoIssuer
+            }
+            ManageSellOfferResultCode::ManageSellOfferBuyNoIssuer => {
+                Self::ManageSellOfferBuyNoIssuer
+            }
+            ManageSellOfferResultCode::ManageSellOfferNotFound => Self::ManageSellOfferNotFound,
+            ManageSellOfferResultCode::ManageSellOfferLowReserve => Self::ManageSellOfferLowReserve,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11274,6 +11610,18 @@ impl WriteXDR for ManageSellOfferResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::ManageSellOfferSuccess(v) => v.write_xdr(w)?,
+            Self::ManageSellOfferMalformed => ().write_xdr(w)?,
+            Self::ManageSellOfferSellNoTrust => ().write_xdr(w)?,
+            Self::ManageSellOfferBuyNoTrust => ().write_xdr(w)?,
+            Self::ManageSellOfferSellNotAuthorized => ().write_xdr(w)?,
+            Self::ManageSellOfferBuyNotAuthorized => ().write_xdr(w)?,
+            Self::ManageSellOfferLineFull => ().write_xdr(w)?,
+            Self::ManageSellOfferUnderfunded => ().write_xdr(w)?,
+            Self::ManageSellOfferCrossSelf => ().write_xdr(w)?,
+            Self::ManageSellOfferSellNoIssuer => ().write_xdr(w)?,
+            Self::ManageSellOfferBuyNoIssuer => ().write_xdr(w)?,
+            Self::ManageSellOfferNotFound => ().write_xdr(w)?,
+            Self::ManageSellOfferLowReserve => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11376,7 +11724,18 @@ impl WriteXDR for ManageBuyOfferResultCode {
 //    {
 //    case MANAGE_BUY_OFFER_SUCCESS:
 //        ManageOfferSuccessResult success;
-//    default:
+//    case MANAGE_BUY_OFFER_MALFORMED:
+//    case MANAGE_BUY_OFFER_SELL_NO_TRUST:
+//    case MANAGE_BUY_OFFER_BUY_NO_TRUST:
+//    case MANAGE_BUY_OFFER_SELL_NOT_AUTHORIZED:
+//    case MANAGE_BUY_OFFER_BUY_NOT_AUTHORIZED:
+//    case MANAGE_BUY_OFFER_LINE_FULL:
+//    case MANAGE_BUY_OFFER_UNDERFUNDED:
+//    case MANAGE_BUY_OFFER_CROSS_SELF:
+//    case MANAGE_BUY_OFFER_SELL_NO_ISSUER:
+//    case MANAGE_BUY_OFFER_BUY_NO_ISSUER:
+//    case MANAGE_BUY_OFFER_NOT_FOUND:
+//    case MANAGE_BUY_OFFER_LOW_RESERVE:
 //        void;
 //    };
 //
@@ -11384,12 +11743,42 @@ impl WriteXDR for ManageBuyOfferResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ManageBuyOfferResult {
     ManageBuyOfferSuccess(ManageOfferSuccessResult),
+    ManageBuyOfferMalformed,
+    ManageBuyOfferSellNoTrust,
+    ManageBuyOfferBuyNoTrust,
+    ManageBuyOfferSellNotAuthorized,
+    ManageBuyOfferBuyNotAuthorized,
+    ManageBuyOfferLineFull,
+    ManageBuyOfferUnderfunded,
+    ManageBuyOfferCrossSelf,
+    ManageBuyOfferSellNoIssuer,
+    ManageBuyOfferBuyNoIssuer,
+    ManageBuyOfferNotFound,
+    ManageBuyOfferLowReserve,
 }
 
 impl ManageBuyOfferResult {
     pub fn discriminant(&self) -> ManageBuyOfferResultCode {
         match self {
             Self::ManageBuyOfferSuccess(_) => ManageBuyOfferResultCode::ManageBuyOfferSuccess,
+            Self::ManageBuyOfferMalformed => ManageBuyOfferResultCode::ManageBuyOfferMalformed,
+            Self::ManageBuyOfferSellNoTrust => ManageBuyOfferResultCode::ManageBuyOfferSellNoTrust,
+            Self::ManageBuyOfferBuyNoTrust => ManageBuyOfferResultCode::ManageBuyOfferBuyNoTrust,
+            Self::ManageBuyOfferSellNotAuthorized => {
+                ManageBuyOfferResultCode::ManageBuyOfferSellNotAuthorized
+            }
+            Self::ManageBuyOfferBuyNotAuthorized => {
+                ManageBuyOfferResultCode::ManageBuyOfferBuyNotAuthorized
+            }
+            Self::ManageBuyOfferLineFull => ManageBuyOfferResultCode::ManageBuyOfferLineFull,
+            Self::ManageBuyOfferUnderfunded => ManageBuyOfferResultCode::ManageBuyOfferUnderfunded,
+            Self::ManageBuyOfferCrossSelf => ManageBuyOfferResultCode::ManageBuyOfferCrossSelf,
+            Self::ManageBuyOfferSellNoIssuer => {
+                ManageBuyOfferResultCode::ManageBuyOfferSellNoIssuer
+            }
+            Self::ManageBuyOfferBuyNoIssuer => ManageBuyOfferResultCode::ManageBuyOfferBuyNoIssuer,
+            Self::ManageBuyOfferNotFound => ManageBuyOfferResultCode::ManageBuyOfferNotFound,
+            Self::ManageBuyOfferLowReserve => ManageBuyOfferResultCode::ManageBuyOfferLowReserve,
         }
     }
 }
@@ -11401,6 +11790,24 @@ impl ReadXDR for ManageBuyOfferResult {
             ManageBuyOfferResultCode::ManageBuyOfferSuccess => {
                 Self::ManageBuyOfferSuccess(ManageOfferSuccessResult::read_xdr(r)?)
             }
+            ManageBuyOfferResultCode::ManageBuyOfferMalformed => Self::ManageBuyOfferMalformed,
+            ManageBuyOfferResultCode::ManageBuyOfferSellNoTrust => Self::ManageBuyOfferSellNoTrust,
+            ManageBuyOfferResultCode::ManageBuyOfferBuyNoTrust => Self::ManageBuyOfferBuyNoTrust,
+            ManageBuyOfferResultCode::ManageBuyOfferSellNotAuthorized => {
+                Self::ManageBuyOfferSellNotAuthorized
+            }
+            ManageBuyOfferResultCode::ManageBuyOfferBuyNotAuthorized => {
+                Self::ManageBuyOfferBuyNotAuthorized
+            }
+            ManageBuyOfferResultCode::ManageBuyOfferLineFull => Self::ManageBuyOfferLineFull,
+            ManageBuyOfferResultCode::ManageBuyOfferUnderfunded => Self::ManageBuyOfferUnderfunded,
+            ManageBuyOfferResultCode::ManageBuyOfferCrossSelf => Self::ManageBuyOfferCrossSelf,
+            ManageBuyOfferResultCode::ManageBuyOfferSellNoIssuer => {
+                Self::ManageBuyOfferSellNoIssuer
+            }
+            ManageBuyOfferResultCode::ManageBuyOfferBuyNoIssuer => Self::ManageBuyOfferBuyNoIssuer,
+            ManageBuyOfferResultCode::ManageBuyOfferNotFound => Self::ManageBuyOfferNotFound,
+            ManageBuyOfferResultCode::ManageBuyOfferLowReserve => Self::ManageBuyOfferLowReserve,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11413,6 +11820,18 @@ impl WriteXDR for ManageBuyOfferResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::ManageBuyOfferSuccess(v) => v.write_xdr(w)?,
+            Self::ManageBuyOfferMalformed => ().write_xdr(w)?,
+            Self::ManageBuyOfferSellNoTrust => ().write_xdr(w)?,
+            Self::ManageBuyOfferBuyNoTrust => ().write_xdr(w)?,
+            Self::ManageBuyOfferSellNotAuthorized => ().write_xdr(w)?,
+            Self::ManageBuyOfferBuyNotAuthorized => ().write_xdr(w)?,
+            Self::ManageBuyOfferLineFull => ().write_xdr(w)?,
+            Self::ManageBuyOfferUnderfunded => ().write_xdr(w)?,
+            Self::ManageBuyOfferCrossSelf => ().write_xdr(w)?,
+            Self::ManageBuyOfferSellNoIssuer => ().write_xdr(w)?,
+            Self::ManageBuyOfferBuyNoIssuer => ().write_xdr(w)?,
+            Self::ManageBuyOfferNotFound => ().write_xdr(w)?,
+            Self::ManageBuyOfferLowReserve => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11505,7 +11924,16 @@ impl WriteXDR for SetOptionsResultCode {
 //    {
 //    case SET_OPTIONS_SUCCESS:
 //        void;
-//    default:
+//    case SET_OPTIONS_LOW_RESERVE:
+//    case SET_OPTIONS_TOO_MANY_SIGNERS:
+//    case SET_OPTIONS_BAD_FLAGS:
+//    case SET_OPTIONS_INVALID_INFLATION:
+//    case SET_OPTIONS_CANT_CHANGE:
+//    case SET_OPTIONS_UNKNOWN_FLAG:
+//    case SET_OPTIONS_THRESHOLD_OUT_OF_RANGE:
+//    case SET_OPTIONS_BAD_SIGNER:
+//    case SET_OPTIONS_INVALID_HOME_DOMAIN:
+//    case SET_OPTIONS_AUTH_REVOCABLE_REQUIRED:
 //        void;
 //    };
 //
@@ -11513,12 +11941,36 @@ impl WriteXDR for SetOptionsResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SetOptionsResult {
     SetOptionsSuccess,
+    SetOptionsLowReserve,
+    SetOptionsTooManySigners,
+    SetOptionsBadFlags,
+    SetOptionsInvalidInflation,
+    SetOptionsCantChange,
+    SetOptionsUnknownFlag,
+    SetOptionsThresholdOutOfRange,
+    SetOptionsBadSigner,
+    SetOptionsInvalidHomeDomain,
+    SetOptionsAuthRevocableRequired,
 }
 
 impl SetOptionsResult {
     pub fn discriminant(&self) -> SetOptionsResultCode {
         match self {
             Self::SetOptionsSuccess => SetOptionsResultCode::SetOptionsSuccess,
+            Self::SetOptionsLowReserve => SetOptionsResultCode::SetOptionsLowReserve,
+            Self::SetOptionsTooManySigners => SetOptionsResultCode::SetOptionsTooManySigners,
+            Self::SetOptionsBadFlags => SetOptionsResultCode::SetOptionsBadFlags,
+            Self::SetOptionsInvalidInflation => SetOptionsResultCode::SetOptionsInvalidInflation,
+            Self::SetOptionsCantChange => SetOptionsResultCode::SetOptionsCantChange,
+            Self::SetOptionsUnknownFlag => SetOptionsResultCode::SetOptionsUnknownFlag,
+            Self::SetOptionsThresholdOutOfRange => {
+                SetOptionsResultCode::SetOptionsThresholdOutOfRange
+            }
+            Self::SetOptionsBadSigner => SetOptionsResultCode::SetOptionsBadSigner,
+            Self::SetOptionsInvalidHomeDomain => SetOptionsResultCode::SetOptionsInvalidHomeDomain,
+            Self::SetOptionsAuthRevocableRequired => {
+                SetOptionsResultCode::SetOptionsAuthRevocableRequired
+            }
         }
     }
 }
@@ -11528,6 +11980,20 @@ impl ReadXDR for SetOptionsResult {
         let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             SetOptionsResultCode::SetOptionsSuccess => Self::SetOptionsSuccess,
+            SetOptionsResultCode::SetOptionsLowReserve => Self::SetOptionsLowReserve,
+            SetOptionsResultCode::SetOptionsTooManySigners => Self::SetOptionsTooManySigners,
+            SetOptionsResultCode::SetOptionsBadFlags => Self::SetOptionsBadFlags,
+            SetOptionsResultCode::SetOptionsInvalidInflation => Self::SetOptionsInvalidInflation,
+            SetOptionsResultCode::SetOptionsCantChange => Self::SetOptionsCantChange,
+            SetOptionsResultCode::SetOptionsUnknownFlag => Self::SetOptionsUnknownFlag,
+            SetOptionsResultCode::SetOptionsThresholdOutOfRange => {
+                Self::SetOptionsThresholdOutOfRange
+            }
+            SetOptionsResultCode::SetOptionsBadSigner => Self::SetOptionsBadSigner,
+            SetOptionsResultCode::SetOptionsInvalidHomeDomain => Self::SetOptionsInvalidHomeDomain,
+            SetOptionsResultCode::SetOptionsAuthRevocableRequired => {
+                Self::SetOptionsAuthRevocableRequired
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11540,6 +12006,16 @@ impl WriteXDR for SetOptionsResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::SetOptionsSuccess => ().write_xdr(w)?,
+            Self::SetOptionsLowReserve => ().write_xdr(w)?,
+            Self::SetOptionsTooManySigners => ().write_xdr(w)?,
+            Self::SetOptionsBadFlags => ().write_xdr(w)?,
+            Self::SetOptionsInvalidInflation => ().write_xdr(w)?,
+            Self::SetOptionsCantChange => ().write_xdr(w)?,
+            Self::SetOptionsUnknownFlag => ().write_xdr(w)?,
+            Self::SetOptionsThresholdOutOfRange => ().write_xdr(w)?,
+            Self::SetOptionsBadSigner => ().write_xdr(w)?,
+            Self::SetOptionsInvalidHomeDomain => ().write_xdr(w)?,
+            Self::SetOptionsAuthRevocableRequired => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11629,7 +12105,14 @@ impl WriteXDR for ChangeTrustResultCode {
 //    {
 //    case CHANGE_TRUST_SUCCESS:
 //        void;
-//    default:
+//    case CHANGE_TRUST_MALFORMED:
+//    case CHANGE_TRUST_NO_ISSUER:
+//    case CHANGE_TRUST_INVALID_LIMIT:
+//    case CHANGE_TRUST_LOW_RESERVE:
+//    case CHANGE_TRUST_SELF_NOT_ALLOWED:
+//    case CHANGE_TRUST_TRUST_LINE_MISSING:
+//    case CHANGE_TRUST_CANNOT_DELETE:
+//    case CHANGE_TRUST_NOT_AUTH_MAINTAIN_LIABILITIES:
 //        void;
 //    };
 //
@@ -11637,12 +12120,30 @@ impl WriteXDR for ChangeTrustResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ChangeTrustResult {
     ChangeTrustSuccess,
+    ChangeTrustMalformed,
+    ChangeTrustNoIssuer,
+    ChangeTrustInvalidLimit,
+    ChangeTrustLowReserve,
+    ChangeTrustSelfNotAllowed,
+    ChangeTrustTrustLineMissing,
+    ChangeTrustCannotDelete,
+    ChangeTrustNotAuthMaintainLiabilities,
 }
 
 impl ChangeTrustResult {
     pub fn discriminant(&self) -> ChangeTrustResultCode {
         match self {
             Self::ChangeTrustSuccess => ChangeTrustResultCode::ChangeTrustSuccess,
+            Self::ChangeTrustMalformed => ChangeTrustResultCode::ChangeTrustMalformed,
+            Self::ChangeTrustNoIssuer => ChangeTrustResultCode::ChangeTrustNoIssuer,
+            Self::ChangeTrustInvalidLimit => ChangeTrustResultCode::ChangeTrustInvalidLimit,
+            Self::ChangeTrustLowReserve => ChangeTrustResultCode::ChangeTrustLowReserve,
+            Self::ChangeTrustSelfNotAllowed => ChangeTrustResultCode::ChangeTrustSelfNotAllowed,
+            Self::ChangeTrustTrustLineMissing => ChangeTrustResultCode::ChangeTrustTrustLineMissing,
+            Self::ChangeTrustCannotDelete => ChangeTrustResultCode::ChangeTrustCannotDelete,
+            Self::ChangeTrustNotAuthMaintainLiabilities => {
+                ChangeTrustResultCode::ChangeTrustNotAuthMaintainLiabilities
+            }
         }
     }
 }
@@ -11652,6 +12153,16 @@ impl ReadXDR for ChangeTrustResult {
         let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             ChangeTrustResultCode::ChangeTrustSuccess => Self::ChangeTrustSuccess,
+            ChangeTrustResultCode::ChangeTrustMalformed => Self::ChangeTrustMalformed,
+            ChangeTrustResultCode::ChangeTrustNoIssuer => Self::ChangeTrustNoIssuer,
+            ChangeTrustResultCode::ChangeTrustInvalidLimit => Self::ChangeTrustInvalidLimit,
+            ChangeTrustResultCode::ChangeTrustLowReserve => Self::ChangeTrustLowReserve,
+            ChangeTrustResultCode::ChangeTrustSelfNotAllowed => Self::ChangeTrustSelfNotAllowed,
+            ChangeTrustResultCode::ChangeTrustTrustLineMissing => Self::ChangeTrustTrustLineMissing,
+            ChangeTrustResultCode::ChangeTrustCannotDelete => Self::ChangeTrustCannotDelete,
+            ChangeTrustResultCode::ChangeTrustNotAuthMaintainLiabilities => {
+                Self::ChangeTrustNotAuthMaintainLiabilities
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11664,6 +12175,14 @@ impl WriteXDR for ChangeTrustResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::ChangeTrustSuccess => ().write_xdr(w)?,
+            Self::ChangeTrustMalformed => ().write_xdr(w)?,
+            Self::ChangeTrustNoIssuer => ().write_xdr(w)?,
+            Self::ChangeTrustInvalidLimit => ().write_xdr(w)?,
+            Self::ChangeTrustLowReserve => ().write_xdr(w)?,
+            Self::ChangeTrustSelfNotAllowed => ().write_xdr(w)?,
+            Self::ChangeTrustTrustLineMissing => ().write_xdr(w)?,
+            Self::ChangeTrustCannotDelete => ().write_xdr(w)?,
+            Self::ChangeTrustNotAuthMaintainLiabilities => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11745,7 +12264,12 @@ impl WriteXDR for AllowTrustResultCode {
 //    {
 //    case ALLOW_TRUST_SUCCESS:
 //        void;
-//    default:
+//    case ALLOW_TRUST_MALFORMED:
+//    case ALLOW_TRUST_NO_TRUST_LINE:
+//    case ALLOW_TRUST_TRUST_NOT_REQUIRED:
+//    case ALLOW_TRUST_CANT_REVOKE:
+//    case ALLOW_TRUST_SELF_NOT_ALLOWED:
+//    case ALLOW_TRUST_LOW_RESERVE:
 //        void;
 //    };
 //
@@ -11753,12 +12277,24 @@ impl WriteXDR for AllowTrustResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AllowTrustResult {
     AllowTrustSuccess,
+    AllowTrustMalformed,
+    AllowTrustNoTrustLine,
+    AllowTrustTrustNotRequired,
+    AllowTrustCantRevoke,
+    AllowTrustSelfNotAllowed,
+    AllowTrustLowReserve,
 }
 
 impl AllowTrustResult {
     pub fn discriminant(&self) -> AllowTrustResultCode {
         match self {
             Self::AllowTrustSuccess => AllowTrustResultCode::AllowTrustSuccess,
+            Self::AllowTrustMalformed => AllowTrustResultCode::AllowTrustMalformed,
+            Self::AllowTrustNoTrustLine => AllowTrustResultCode::AllowTrustNoTrustLine,
+            Self::AllowTrustTrustNotRequired => AllowTrustResultCode::AllowTrustTrustNotRequired,
+            Self::AllowTrustCantRevoke => AllowTrustResultCode::AllowTrustCantRevoke,
+            Self::AllowTrustSelfNotAllowed => AllowTrustResultCode::AllowTrustSelfNotAllowed,
+            Self::AllowTrustLowReserve => AllowTrustResultCode::AllowTrustLowReserve,
         }
     }
 }
@@ -11768,6 +12304,12 @@ impl ReadXDR for AllowTrustResult {
         let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             AllowTrustResultCode::AllowTrustSuccess => Self::AllowTrustSuccess,
+            AllowTrustResultCode::AllowTrustMalformed => Self::AllowTrustMalformed,
+            AllowTrustResultCode::AllowTrustNoTrustLine => Self::AllowTrustNoTrustLine,
+            AllowTrustResultCode::AllowTrustTrustNotRequired => Self::AllowTrustTrustNotRequired,
+            AllowTrustResultCode::AllowTrustCantRevoke => Self::AllowTrustCantRevoke,
+            AllowTrustResultCode::AllowTrustSelfNotAllowed => Self::AllowTrustSelfNotAllowed,
+            AllowTrustResultCode::AllowTrustLowReserve => Self::AllowTrustLowReserve,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11780,6 +12322,12 @@ impl WriteXDR for AllowTrustResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::AllowTrustSuccess => ().write_xdr(w)?,
+            Self::AllowTrustMalformed => ().write_xdr(w)?,
+            Self::AllowTrustNoTrustLine => ().write_xdr(w)?,
+            Self::AllowTrustTrustNotRequired => ().write_xdr(w)?,
+            Self::AllowTrustCantRevoke => ().write_xdr(w)?,
+            Self::AllowTrustSelfNotAllowed => ().write_xdr(w)?,
+            Self::AllowTrustLowReserve => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11863,7 +12411,13 @@ impl WriteXDR for AccountMergeResultCode {
 //    {
 //    case ACCOUNT_MERGE_SUCCESS:
 //        int64 sourceAccountBalance; // how much got transferred from source account
-//    default:
+//    case ACCOUNT_MERGE_MALFORMED:
+//    case ACCOUNT_MERGE_NO_ACCOUNT:
+//    case ACCOUNT_MERGE_IMMUTABLE_SET:
+//    case ACCOUNT_MERGE_HAS_SUB_ENTRIES:
+//    case ACCOUNT_MERGE_SEQNUM_TOO_FAR:
+//    case ACCOUNT_MERGE_DEST_FULL:
+//    case ACCOUNT_MERGE_IS_SPONSOR:
 //        void;
 //    };
 //
@@ -11871,12 +12425,26 @@ impl WriteXDR for AccountMergeResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AccountMergeResult {
     AccountMergeSuccess(i64),
+    AccountMergeMalformed,
+    AccountMergeNoAccount,
+    AccountMergeImmutableSet,
+    AccountMergeHasSubEntries,
+    AccountMergeSeqnumTooFar,
+    AccountMergeDestFull,
+    AccountMergeIsSponsor,
 }
 
 impl AccountMergeResult {
     pub fn discriminant(&self) -> AccountMergeResultCode {
         match self {
             Self::AccountMergeSuccess(_) => AccountMergeResultCode::AccountMergeSuccess,
+            Self::AccountMergeMalformed => AccountMergeResultCode::AccountMergeMalformed,
+            Self::AccountMergeNoAccount => AccountMergeResultCode::AccountMergeNoAccount,
+            Self::AccountMergeImmutableSet => AccountMergeResultCode::AccountMergeImmutableSet,
+            Self::AccountMergeHasSubEntries => AccountMergeResultCode::AccountMergeHasSubEntries,
+            Self::AccountMergeSeqnumTooFar => AccountMergeResultCode::AccountMergeSeqnumTooFar,
+            Self::AccountMergeDestFull => AccountMergeResultCode::AccountMergeDestFull,
+            Self::AccountMergeIsSponsor => AccountMergeResultCode::AccountMergeIsSponsor,
         }
     }
 }
@@ -11888,6 +12456,13 @@ impl ReadXDR for AccountMergeResult {
             AccountMergeResultCode::AccountMergeSuccess => {
                 Self::AccountMergeSuccess(i64::read_xdr(r)?)
             }
+            AccountMergeResultCode::AccountMergeMalformed => Self::AccountMergeMalformed,
+            AccountMergeResultCode::AccountMergeNoAccount => Self::AccountMergeNoAccount,
+            AccountMergeResultCode::AccountMergeImmutableSet => Self::AccountMergeImmutableSet,
+            AccountMergeResultCode::AccountMergeHasSubEntries => Self::AccountMergeHasSubEntries,
+            AccountMergeResultCode::AccountMergeSeqnumTooFar => Self::AccountMergeSeqnumTooFar,
+            AccountMergeResultCode::AccountMergeDestFull => Self::AccountMergeDestFull,
+            AccountMergeResultCode::AccountMergeIsSponsor => Self::AccountMergeIsSponsor,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11900,6 +12475,13 @@ impl WriteXDR for AccountMergeResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::AccountMergeSuccess(v) => v.write_xdr(w)?,
+            Self::AccountMergeMalformed => ().write_xdr(w)?,
+            Self::AccountMergeNoAccount => ().write_xdr(w)?,
+            Self::AccountMergeImmutableSet => ().write_xdr(w)?,
+            Self::AccountMergeHasSubEntries => ().write_xdr(w)?,
+            Self::AccountMergeSeqnumTooFar => ().write_xdr(w)?,
+            Self::AccountMergeDestFull => ().write_xdr(w)?,
+            Self::AccountMergeIsSponsor => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11995,7 +12577,7 @@ impl WriteXDR for InflationPayout {
 //    {
 //    case INFLATION_SUCCESS:
 //        InflationPayout payouts<>;
-//    default:
+//    case INFLATION_NOT_TIME:
 //        void;
 //    };
 //
@@ -12003,12 +12585,14 @@ impl WriteXDR for InflationPayout {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum InflationResult {
     InflationSuccess(VecM<InflationPayout>),
+    InflationNotTime,
 }
 
 impl InflationResult {
     pub fn discriminant(&self) -> InflationResultCode {
         match self {
             Self::InflationSuccess(_) => InflationResultCode::InflationSuccess,
+            Self::InflationNotTime => InflationResultCode::InflationNotTime,
         }
     }
 }
@@ -12020,6 +12604,7 @@ impl ReadXDR for InflationResult {
             InflationResultCode::InflationSuccess => {
                 Self::InflationSuccess(VecM::<InflationPayout>::read_xdr(r)?)
             }
+            InflationResultCode::InflationNotTime => Self::InflationNotTime,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12032,6 +12617,7 @@ impl WriteXDR for InflationResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::InflationSuccess(v) => v.write_xdr(w)?,
+            Self::InflationNotTime => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12107,7 +12693,10 @@ impl WriteXDR for ManageDataResultCode {
 //    {
 //    case MANAGE_DATA_SUCCESS:
 //        void;
-//    default:
+//    case MANAGE_DATA_NOT_SUPPORTED_YET:
+//    case MANAGE_DATA_NAME_NOT_FOUND:
+//    case MANAGE_DATA_LOW_RESERVE:
+//    case MANAGE_DATA_INVALID_NAME:
 //        void;
 //    };
 //
@@ -12115,12 +12704,20 @@ impl WriteXDR for ManageDataResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ManageDataResult {
     ManageDataSuccess,
+    ManageDataNotSupportedYet,
+    ManageDataNameNotFound,
+    ManageDataLowReserve,
+    ManageDataInvalidName,
 }
 
 impl ManageDataResult {
     pub fn discriminant(&self) -> ManageDataResultCode {
         match self {
             Self::ManageDataSuccess => ManageDataResultCode::ManageDataSuccess,
+            Self::ManageDataNotSupportedYet => ManageDataResultCode::ManageDataNotSupportedYet,
+            Self::ManageDataNameNotFound => ManageDataResultCode::ManageDataNameNotFound,
+            Self::ManageDataLowReserve => ManageDataResultCode::ManageDataLowReserve,
+            Self::ManageDataInvalidName => ManageDataResultCode::ManageDataInvalidName,
         }
     }
 }
@@ -12130,6 +12727,10 @@ impl ReadXDR for ManageDataResult {
         let dv: ManageDataResultCode = <ManageDataResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             ManageDataResultCode::ManageDataSuccess => Self::ManageDataSuccess,
+            ManageDataResultCode::ManageDataNotSupportedYet => Self::ManageDataNotSupportedYet,
+            ManageDataResultCode::ManageDataNameNotFound => Self::ManageDataNameNotFound,
+            ManageDataResultCode::ManageDataLowReserve => Self::ManageDataLowReserve,
+            ManageDataResultCode::ManageDataInvalidName => Self::ManageDataInvalidName,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12142,6 +12743,10 @@ impl WriteXDR for ManageDataResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::ManageDataSuccess => ().write_xdr(w)?,
+            Self::ManageDataNotSupportedYet => ().write_xdr(w)?,
+            Self::ManageDataNameNotFound => ().write_xdr(w)?,
+            Self::ManageDataLowReserve => ().write_xdr(w)?,
+            Self::ManageDataInvalidName => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12206,7 +12811,7 @@ impl WriteXDR for BumpSequenceResultCode {
 //    {
 //    case BUMP_SEQUENCE_SUCCESS:
 //        void;
-//    default:
+//    case BUMP_SEQUENCE_BAD_SEQ:
 //        void;
 //    };
 //
@@ -12214,12 +12819,14 @@ impl WriteXDR for BumpSequenceResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BumpSequenceResult {
     BumpSequenceSuccess,
+    BumpSequenceBadSeq,
 }
 
 impl BumpSequenceResult {
     pub fn discriminant(&self) -> BumpSequenceResultCode {
         match self {
             Self::BumpSequenceSuccess => BumpSequenceResultCode::BumpSequenceSuccess,
+            Self::BumpSequenceBadSeq => BumpSequenceResultCode::BumpSequenceBadSeq,
         }
     }
 }
@@ -12229,6 +12836,7 @@ impl ReadXDR for BumpSequenceResult {
         let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             BumpSequenceResultCode::BumpSequenceSuccess => Self::BumpSequenceSuccess,
+            BumpSequenceResultCode::BumpSequenceBadSeq => Self::BumpSequenceBadSeq,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12241,6 +12849,7 @@ impl WriteXDR for BumpSequenceResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::BumpSequenceSuccess => ().write_xdr(w)?,
+            Self::BumpSequenceBadSeq => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12316,7 +12925,11 @@ impl WriteXDR for CreateClaimableBalanceResultCode {
 //    {
 //    case CREATE_CLAIMABLE_BALANCE_SUCCESS:
 //        ClaimableBalanceID balanceID;
-//    default:
+//    case CREATE_CLAIMABLE_BALANCE_MALFORMED:
+//    case CREATE_CLAIMABLE_BALANCE_LOW_RESERVE:
+//    case CREATE_CLAIMABLE_BALANCE_NO_TRUST:
+//    case CREATE_CLAIMABLE_BALANCE_NOT_AUTHORIZED:
+//    case CREATE_CLAIMABLE_BALANCE_UNDERFUNDED:
 //        void;
 //    };
 //
@@ -12324,6 +12937,11 @@ impl WriteXDR for CreateClaimableBalanceResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CreateClaimableBalanceResult {
     CreateClaimableBalanceSuccess(ClaimableBalanceId),
+    CreateClaimableBalanceMalformed,
+    CreateClaimableBalanceLowReserve,
+    CreateClaimableBalanceNoTrust,
+    CreateClaimableBalanceNotAuthorized,
+    CreateClaimableBalanceUnderfunded,
 }
 
 impl CreateClaimableBalanceResult {
@@ -12331,6 +12949,21 @@ impl CreateClaimableBalanceResult {
         match self {
             Self::CreateClaimableBalanceSuccess(_) => {
                 CreateClaimableBalanceResultCode::CreateClaimableBalanceSuccess
+            }
+            Self::CreateClaimableBalanceMalformed => {
+                CreateClaimableBalanceResultCode::CreateClaimableBalanceMalformed
+            }
+            Self::CreateClaimableBalanceLowReserve => {
+                CreateClaimableBalanceResultCode::CreateClaimableBalanceLowReserve
+            }
+            Self::CreateClaimableBalanceNoTrust => {
+                CreateClaimableBalanceResultCode::CreateClaimableBalanceNoTrust
+            }
+            Self::CreateClaimableBalanceNotAuthorized => {
+                CreateClaimableBalanceResultCode::CreateClaimableBalanceNotAuthorized
+            }
+            Self::CreateClaimableBalanceUnderfunded => {
+                CreateClaimableBalanceResultCode::CreateClaimableBalanceUnderfunded
             }
         }
     }
@@ -12344,6 +12977,21 @@ impl ReadXDR for CreateClaimableBalanceResult {
             CreateClaimableBalanceResultCode::CreateClaimableBalanceSuccess => {
                 Self::CreateClaimableBalanceSuccess(ClaimableBalanceId::read_xdr(r)?)
             }
+            CreateClaimableBalanceResultCode::CreateClaimableBalanceMalformed => {
+                Self::CreateClaimableBalanceMalformed
+            }
+            CreateClaimableBalanceResultCode::CreateClaimableBalanceLowReserve => {
+                Self::CreateClaimableBalanceLowReserve
+            }
+            CreateClaimableBalanceResultCode::CreateClaimableBalanceNoTrust => {
+                Self::CreateClaimableBalanceNoTrust
+            }
+            CreateClaimableBalanceResultCode::CreateClaimableBalanceNotAuthorized => {
+                Self::CreateClaimableBalanceNotAuthorized
+            }
+            CreateClaimableBalanceResultCode::CreateClaimableBalanceUnderfunded => {
+                Self::CreateClaimableBalanceUnderfunded
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12356,6 +13004,11 @@ impl WriteXDR for CreateClaimableBalanceResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::CreateClaimableBalanceSuccess(v) => v.write_xdr(w)?,
+            Self::CreateClaimableBalanceMalformed => ().write_xdr(w)?,
+            Self::CreateClaimableBalanceLowReserve => ().write_xdr(w)?,
+            Self::CreateClaimableBalanceNoTrust => ().write_xdr(w)?,
+            Self::CreateClaimableBalanceNotAuthorized => ().write_xdr(w)?,
+            Self::CreateClaimableBalanceUnderfunded => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12371,7 +13024,6 @@ impl WriteXDR for CreateClaimableBalanceResult {
 //        CLAIM_CLAIMABLE_BALANCE_LINE_FULL = -3,
 //        CLAIM_CLAIMABLE_BALANCE_NO_TRUST = -4,
 //        CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED = -5
-//
 //    };
 //
 // enum
@@ -12431,7 +13083,11 @@ impl WriteXDR for ClaimClaimableBalanceResultCode {
 //    {
 //    case CLAIM_CLAIMABLE_BALANCE_SUCCESS:
 //        void;
-//    default:
+//    case CLAIM_CLAIMABLE_BALANCE_DOES_NOT_EXIST:
+//    case CLAIM_CLAIMABLE_BALANCE_CANNOT_CLAIM:
+//    case CLAIM_CLAIMABLE_BALANCE_LINE_FULL:
+//    case CLAIM_CLAIMABLE_BALANCE_NO_TRUST:
+//    case CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED:
 //        void;
 //    };
 //
@@ -12439,6 +13095,11 @@ impl WriteXDR for ClaimClaimableBalanceResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ClaimClaimableBalanceResult {
     ClaimClaimableBalanceSuccess,
+    ClaimClaimableBalanceDoesNotExist,
+    ClaimClaimableBalanceCannotClaim,
+    ClaimClaimableBalanceLineFull,
+    ClaimClaimableBalanceNoTrust,
+    ClaimClaimableBalanceNotAuthorized,
 }
 
 impl ClaimClaimableBalanceResult {
@@ -12446,6 +13107,21 @@ impl ClaimClaimableBalanceResult {
         match self {
             Self::ClaimClaimableBalanceSuccess => {
                 ClaimClaimableBalanceResultCode::ClaimClaimableBalanceSuccess
+            }
+            Self::ClaimClaimableBalanceDoesNotExist => {
+                ClaimClaimableBalanceResultCode::ClaimClaimableBalanceDoesNotExist
+            }
+            Self::ClaimClaimableBalanceCannotClaim => {
+                ClaimClaimableBalanceResultCode::ClaimClaimableBalanceCannotClaim
+            }
+            Self::ClaimClaimableBalanceLineFull => {
+                ClaimClaimableBalanceResultCode::ClaimClaimableBalanceLineFull
+            }
+            Self::ClaimClaimableBalanceNoTrust => {
+                ClaimClaimableBalanceResultCode::ClaimClaimableBalanceNoTrust
+            }
+            Self::ClaimClaimableBalanceNotAuthorized => {
+                ClaimClaimableBalanceResultCode::ClaimClaimableBalanceNotAuthorized
             }
         }
     }
@@ -12459,6 +13135,21 @@ impl ReadXDR for ClaimClaimableBalanceResult {
             ClaimClaimableBalanceResultCode::ClaimClaimableBalanceSuccess => {
                 Self::ClaimClaimableBalanceSuccess
             }
+            ClaimClaimableBalanceResultCode::ClaimClaimableBalanceDoesNotExist => {
+                Self::ClaimClaimableBalanceDoesNotExist
+            }
+            ClaimClaimableBalanceResultCode::ClaimClaimableBalanceCannotClaim => {
+                Self::ClaimClaimableBalanceCannotClaim
+            }
+            ClaimClaimableBalanceResultCode::ClaimClaimableBalanceLineFull => {
+                Self::ClaimClaimableBalanceLineFull
+            }
+            ClaimClaimableBalanceResultCode::ClaimClaimableBalanceNoTrust => {
+                Self::ClaimClaimableBalanceNoTrust
+            }
+            ClaimClaimableBalanceResultCode::ClaimClaimableBalanceNotAuthorized => {
+                Self::ClaimClaimableBalanceNotAuthorized
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12471,6 +13162,11 @@ impl WriteXDR for ClaimClaimableBalanceResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::ClaimClaimableBalanceSuccess => ().write_xdr(w)?,
+            Self::ClaimClaimableBalanceDoesNotExist => ().write_xdr(w)?,
+            Self::ClaimClaimableBalanceCannotClaim => ().write_xdr(w)?,
+            Self::ClaimClaimableBalanceLineFull => ().write_xdr(w)?,
+            Self::ClaimClaimableBalanceNoTrust => ().write_xdr(w)?,
+            Self::ClaimClaimableBalanceNotAuthorized => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12543,7 +13239,9 @@ impl WriteXDR for BeginSponsoringFutureReservesResultCode {
 //    {
 //    case BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS:
 //        void;
-//    default:
+//    case BEGIN_SPONSORING_FUTURE_RESERVES_MALFORMED:
+//    case BEGIN_SPONSORING_FUTURE_RESERVES_ALREADY_SPONSORED:
+//    case BEGIN_SPONSORING_FUTURE_RESERVES_RECURSIVE:
 //        void;
 //    };
 //
@@ -12551,15 +13249,19 @@ impl WriteXDR for BeginSponsoringFutureReservesResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BeginSponsoringFutureReservesResult {
     BeginSponsoringFutureReservesSuccess,
+    BeginSponsoringFutureReservesMalformed,
+    BeginSponsoringFutureReservesAlreadySponsored,
+    BeginSponsoringFutureReservesRecursive,
 }
 
 impl BeginSponsoringFutureReservesResult {
     pub fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
         match self {
-            Self::BeginSponsoringFutureReservesSuccess => {
-                BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesSuccess
-            }
-        }
+                    Self::BeginSponsoringFutureReservesSuccess => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesSuccess,
+Self::BeginSponsoringFutureReservesMalformed => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesMalformed,
+Self::BeginSponsoringFutureReservesAlreadySponsored => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesAlreadySponsored,
+Self::BeginSponsoringFutureReservesRecursive => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesRecursive,
+                }
     }
 }
 
@@ -12568,12 +13270,13 @@ impl ReadXDR for BeginSponsoringFutureReservesResult {
         let dv: BeginSponsoringFutureReservesResultCode =
             <BeginSponsoringFutureReservesResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
-            BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesSuccess => {
-                Self::BeginSponsoringFutureReservesSuccess
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
+                    BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesSuccess => Self::BeginSponsoringFutureReservesSuccess,
+BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesMalformed => Self::BeginSponsoringFutureReservesMalformed,
+BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesAlreadySponsored => Self::BeginSponsoringFutureReservesAlreadySponsored,
+BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesRecursive => Self::BeginSponsoringFutureReservesRecursive,
+                    #[allow(unreachable_patterns)]
+                    _ => return Err(Error::Invalid),
+                };
         Ok(v)
     }
 }
@@ -12583,6 +13286,9 @@ impl WriteXDR for BeginSponsoringFutureReservesResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::BeginSponsoringFutureReservesSuccess => ().write_xdr(w)?,
+            Self::BeginSponsoringFutureReservesMalformed => ().write_xdr(w)?,
+            Self::BeginSponsoringFutureReservesAlreadySponsored => ().write_xdr(w)?,
+            Self::BeginSponsoringFutureReservesRecursive => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12649,7 +13355,7 @@ impl WriteXDR for EndSponsoringFutureReservesResultCode {
 //    {
 //    case END_SPONSORING_FUTURE_RESERVES_SUCCESS:
 //        void;
-//    default:
+//    case END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED:
 //        void;
 //    };
 //
@@ -12657,6 +13363,7 @@ impl WriteXDR for EndSponsoringFutureReservesResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EndSponsoringFutureReservesResult {
     EndSponsoringFutureReservesSuccess,
+    EndSponsoringFutureReservesNotSponsored,
 }
 
 impl EndSponsoringFutureReservesResult {
@@ -12664,6 +13371,9 @@ impl EndSponsoringFutureReservesResult {
         match self {
             Self::EndSponsoringFutureReservesSuccess => {
                 EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesSuccess
+            }
+            Self::EndSponsoringFutureReservesNotSponsored => {
+                EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesNotSponsored
             }
         }
     }
@@ -12677,6 +13387,9 @@ impl ReadXDR for EndSponsoringFutureReservesResult {
             EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesSuccess => {
                 Self::EndSponsoringFutureReservesSuccess
             }
+            EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesNotSponsored => {
+                Self::EndSponsoringFutureReservesNotSponsored
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12689,6 +13402,7 @@ impl WriteXDR for EndSponsoringFutureReservesResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::EndSponsoringFutureReservesSuccess => ().write_xdr(w)?,
+            Self::EndSponsoringFutureReservesNotSponsored => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12766,7 +13480,11 @@ impl WriteXDR for RevokeSponsorshipResultCode {
 //    {
 //    case REVOKE_SPONSORSHIP_SUCCESS:
 //        void;
-//    default:
+//    case REVOKE_SPONSORSHIP_DOES_NOT_EXIST:
+//    case REVOKE_SPONSORSHIP_NOT_SPONSOR:
+//    case REVOKE_SPONSORSHIP_LOW_RESERVE:
+//    case REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE:
+//    case REVOKE_SPONSORSHIP_MALFORMED:
 //        void;
 //    };
 //
@@ -12774,12 +13492,32 @@ impl WriteXDR for RevokeSponsorshipResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RevokeSponsorshipResult {
     RevokeSponsorshipSuccess,
+    RevokeSponsorshipDoesNotExist,
+    RevokeSponsorshipNotSponsor,
+    RevokeSponsorshipLowReserve,
+    RevokeSponsorshipOnlyTransferable,
+    RevokeSponsorshipMalformed,
 }
 
 impl RevokeSponsorshipResult {
     pub fn discriminant(&self) -> RevokeSponsorshipResultCode {
         match self {
             Self::RevokeSponsorshipSuccess => RevokeSponsorshipResultCode::RevokeSponsorshipSuccess,
+            Self::RevokeSponsorshipDoesNotExist => {
+                RevokeSponsorshipResultCode::RevokeSponsorshipDoesNotExist
+            }
+            Self::RevokeSponsorshipNotSponsor => {
+                RevokeSponsorshipResultCode::RevokeSponsorshipNotSponsor
+            }
+            Self::RevokeSponsorshipLowReserve => {
+                RevokeSponsorshipResultCode::RevokeSponsorshipLowReserve
+            }
+            Self::RevokeSponsorshipOnlyTransferable => {
+                RevokeSponsorshipResultCode::RevokeSponsorshipOnlyTransferable
+            }
+            Self::RevokeSponsorshipMalformed => {
+                RevokeSponsorshipResultCode::RevokeSponsorshipMalformed
+            }
         }
     }
 }
@@ -12790,6 +13528,21 @@ impl ReadXDR for RevokeSponsorshipResult {
             <RevokeSponsorshipResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             RevokeSponsorshipResultCode::RevokeSponsorshipSuccess => Self::RevokeSponsorshipSuccess,
+            RevokeSponsorshipResultCode::RevokeSponsorshipDoesNotExist => {
+                Self::RevokeSponsorshipDoesNotExist
+            }
+            RevokeSponsorshipResultCode::RevokeSponsorshipNotSponsor => {
+                Self::RevokeSponsorshipNotSponsor
+            }
+            RevokeSponsorshipResultCode::RevokeSponsorshipLowReserve => {
+                Self::RevokeSponsorshipLowReserve
+            }
+            RevokeSponsorshipResultCode::RevokeSponsorshipOnlyTransferable => {
+                Self::RevokeSponsorshipOnlyTransferable
+            }
+            RevokeSponsorshipResultCode::RevokeSponsorshipMalformed => {
+                Self::RevokeSponsorshipMalformed
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12802,6 +13555,11 @@ impl WriteXDR for RevokeSponsorshipResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::RevokeSponsorshipSuccess => ().write_xdr(w)?,
+            Self::RevokeSponsorshipDoesNotExist => ().write_xdr(w)?,
+            Self::RevokeSponsorshipNotSponsor => ().write_xdr(w)?,
+            Self::RevokeSponsorshipLowReserve => ().write_xdr(w)?,
+            Self::RevokeSponsorshipOnlyTransferable => ().write_xdr(w)?,
+            Self::RevokeSponsorshipMalformed => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12876,7 +13634,10 @@ impl WriteXDR for ClawbackResultCode {
 //    {
 //    case CLAWBACK_SUCCESS:
 //        void;
-//    default:
+//    case CLAWBACK_MALFORMED:
+//    case CLAWBACK_NOT_CLAWBACK_ENABLED:
+//    case CLAWBACK_NO_TRUST:
+//    case CLAWBACK_UNDERFUNDED:
 //        void;
 //    };
 //
@@ -12884,12 +13645,20 @@ impl WriteXDR for ClawbackResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ClawbackResult {
     ClawbackSuccess,
+    ClawbackMalformed,
+    ClawbackNotClawbackEnabled,
+    ClawbackNoTrust,
+    ClawbackUnderfunded,
 }
 
 impl ClawbackResult {
     pub fn discriminant(&self) -> ClawbackResultCode {
         match self {
             Self::ClawbackSuccess => ClawbackResultCode::ClawbackSuccess,
+            Self::ClawbackMalformed => ClawbackResultCode::ClawbackMalformed,
+            Self::ClawbackNotClawbackEnabled => ClawbackResultCode::ClawbackNotClawbackEnabled,
+            Self::ClawbackNoTrust => ClawbackResultCode::ClawbackNoTrust,
+            Self::ClawbackUnderfunded => ClawbackResultCode::ClawbackUnderfunded,
         }
     }
 }
@@ -12899,6 +13668,10 @@ impl ReadXDR for ClawbackResult {
         let dv: ClawbackResultCode = <ClawbackResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             ClawbackResultCode::ClawbackSuccess => Self::ClawbackSuccess,
+            ClawbackResultCode::ClawbackMalformed => Self::ClawbackMalformed,
+            ClawbackResultCode::ClawbackNotClawbackEnabled => Self::ClawbackNotClawbackEnabled,
+            ClawbackResultCode::ClawbackNoTrust => Self::ClawbackNoTrust,
+            ClawbackResultCode::ClawbackUnderfunded => Self::ClawbackUnderfunded,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12911,6 +13684,10 @@ impl WriteXDR for ClawbackResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::ClawbackSuccess => ().write_xdr(w)?,
+            Self::ClawbackMalformed => ().write_xdr(w)?,
+            Self::ClawbackNotClawbackEnabled => ().write_xdr(w)?,
+            Self::ClawbackNoTrust => ().write_xdr(w)?,
+            Self::ClawbackUnderfunded => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12983,7 +13760,9 @@ impl WriteXDR for ClawbackClaimableBalanceResultCode {
 //    {
 //    case CLAWBACK_CLAIMABLE_BALANCE_SUCCESS:
 //        void;
-//    default:
+//    case CLAWBACK_CLAIMABLE_BALANCE_DOES_NOT_EXIST:
+//    case CLAWBACK_CLAIMABLE_BALANCE_NOT_ISSUER:
+//    case CLAWBACK_CLAIMABLE_BALANCE_NOT_CLAWBACK_ENABLED:
 //        void;
 //    };
 //
@@ -12991,6 +13770,9 @@ impl WriteXDR for ClawbackClaimableBalanceResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ClawbackClaimableBalanceResult {
     ClawbackClaimableBalanceSuccess,
+    ClawbackClaimableBalanceDoesNotExist,
+    ClawbackClaimableBalanceNotIssuer,
+    ClawbackClaimableBalanceNotClawbackEnabled,
 }
 
 impl ClawbackClaimableBalanceResult {
@@ -12998,6 +13780,15 @@ impl ClawbackClaimableBalanceResult {
         match self {
             Self::ClawbackClaimableBalanceSuccess => {
                 ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceSuccess
+            }
+            Self::ClawbackClaimableBalanceDoesNotExist => {
+                ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceDoesNotExist
+            }
+            Self::ClawbackClaimableBalanceNotIssuer => {
+                ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceNotIssuer
+            }
+            Self::ClawbackClaimableBalanceNotClawbackEnabled => {
+                ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceNotClawbackEnabled
             }
         }
     }
@@ -13011,6 +13802,15 @@ impl ReadXDR for ClawbackClaimableBalanceResult {
             ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceSuccess => {
                 Self::ClawbackClaimableBalanceSuccess
             }
+            ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceDoesNotExist => {
+                Self::ClawbackClaimableBalanceDoesNotExist
+            }
+            ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceNotIssuer => {
+                Self::ClawbackClaimableBalanceNotIssuer
+            }
+            ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceNotClawbackEnabled => {
+                Self::ClawbackClaimableBalanceNotClawbackEnabled
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13023,6 +13823,9 @@ impl WriteXDR for ClawbackClaimableBalanceResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::ClawbackClaimableBalanceSuccess => ().write_xdr(w)?,
+            Self::ClawbackClaimableBalanceDoesNotExist => ().write_xdr(w)?,
+            Self::ClawbackClaimableBalanceNotIssuer => ().write_xdr(w)?,
+            Self::ClawbackClaimableBalanceNotClawbackEnabled => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -13101,7 +13904,11 @@ impl WriteXDR for SetTrustLineFlagsResultCode {
 //    {
 //    case SET_TRUST_LINE_FLAGS_SUCCESS:
 //        void;
-//    default:
+//    case SET_TRUST_LINE_FLAGS_MALFORMED:
+//    case SET_TRUST_LINE_FLAGS_NO_TRUST_LINE:
+//    case SET_TRUST_LINE_FLAGS_CANT_REVOKE:
+//    case SET_TRUST_LINE_FLAGS_INVALID_STATE:
+//    case SET_TRUST_LINE_FLAGS_LOW_RESERVE:
 //        void;
 //    };
 //
@@ -13109,12 +13916,32 @@ impl WriteXDR for SetTrustLineFlagsResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SetTrustLineFlagsResult {
     SetTrustLineFlagsSuccess,
+    SetTrustLineFlagsMalformed,
+    SetTrustLineFlagsNoTrustLine,
+    SetTrustLineFlagsCantRevoke,
+    SetTrustLineFlagsInvalidState,
+    SetTrustLineFlagsLowReserve,
 }
 
 impl SetTrustLineFlagsResult {
     pub fn discriminant(&self) -> SetTrustLineFlagsResultCode {
         match self {
             Self::SetTrustLineFlagsSuccess => SetTrustLineFlagsResultCode::SetTrustLineFlagsSuccess,
+            Self::SetTrustLineFlagsMalformed => {
+                SetTrustLineFlagsResultCode::SetTrustLineFlagsMalformed
+            }
+            Self::SetTrustLineFlagsNoTrustLine => {
+                SetTrustLineFlagsResultCode::SetTrustLineFlagsNoTrustLine
+            }
+            Self::SetTrustLineFlagsCantRevoke => {
+                SetTrustLineFlagsResultCode::SetTrustLineFlagsCantRevoke
+            }
+            Self::SetTrustLineFlagsInvalidState => {
+                SetTrustLineFlagsResultCode::SetTrustLineFlagsInvalidState
+            }
+            Self::SetTrustLineFlagsLowReserve => {
+                SetTrustLineFlagsResultCode::SetTrustLineFlagsLowReserve
+            }
         }
     }
 }
@@ -13125,6 +13952,21 @@ impl ReadXDR for SetTrustLineFlagsResult {
             <SetTrustLineFlagsResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             SetTrustLineFlagsResultCode::SetTrustLineFlagsSuccess => Self::SetTrustLineFlagsSuccess,
+            SetTrustLineFlagsResultCode::SetTrustLineFlagsMalformed => {
+                Self::SetTrustLineFlagsMalformed
+            }
+            SetTrustLineFlagsResultCode::SetTrustLineFlagsNoTrustLine => {
+                Self::SetTrustLineFlagsNoTrustLine
+            }
+            SetTrustLineFlagsResultCode::SetTrustLineFlagsCantRevoke => {
+                Self::SetTrustLineFlagsCantRevoke
+            }
+            SetTrustLineFlagsResultCode::SetTrustLineFlagsInvalidState => {
+                Self::SetTrustLineFlagsInvalidState
+            }
+            SetTrustLineFlagsResultCode::SetTrustLineFlagsLowReserve => {
+                Self::SetTrustLineFlagsLowReserve
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13137,6 +13979,11 @@ impl WriteXDR for SetTrustLineFlagsResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::SetTrustLineFlagsSuccess => ().write_xdr(w)?,
+            Self::SetTrustLineFlagsMalformed => ().write_xdr(w)?,
+            Self::SetTrustLineFlagsNoTrustLine => ().write_xdr(w)?,
+            Self::SetTrustLineFlagsCantRevoke => ().write_xdr(w)?,
+            Self::SetTrustLineFlagsInvalidState => ().write_xdr(w)?,
+            Self::SetTrustLineFlagsLowReserve => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -13224,7 +14071,13 @@ impl WriteXDR for LiquidityPoolDepositResultCode {
 //    {
 //    case LIQUIDITY_POOL_DEPOSIT_SUCCESS:
 //        void;
-//    default:
+//    case LIQUIDITY_POOL_DEPOSIT_MALFORMED:
+//    case LIQUIDITY_POOL_DEPOSIT_NO_TRUST:
+//    case LIQUIDITY_POOL_DEPOSIT_NOT_AUTHORIZED:
+//    case LIQUIDITY_POOL_DEPOSIT_UNDERFUNDED:
+//    case LIQUIDITY_POOL_DEPOSIT_LINE_FULL:
+//    case LIQUIDITY_POOL_DEPOSIT_BAD_PRICE:
+//    case LIQUIDITY_POOL_DEPOSIT_POOL_FULL:
 //        void;
 //    };
 //
@@ -13232,6 +14085,13 @@ impl WriteXDR for LiquidityPoolDepositResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LiquidityPoolDepositResult {
     LiquidityPoolDepositSuccess,
+    LiquidityPoolDepositMalformed,
+    LiquidityPoolDepositNoTrust,
+    LiquidityPoolDepositNotAuthorized,
+    LiquidityPoolDepositUnderfunded,
+    LiquidityPoolDepositLineFull,
+    LiquidityPoolDepositBadPrice,
+    LiquidityPoolDepositPoolFull,
 }
 
 impl LiquidityPoolDepositResult {
@@ -13239,6 +14099,27 @@ impl LiquidityPoolDepositResult {
         match self {
             Self::LiquidityPoolDepositSuccess => {
                 LiquidityPoolDepositResultCode::LiquidityPoolDepositSuccess
+            }
+            Self::LiquidityPoolDepositMalformed => {
+                LiquidityPoolDepositResultCode::LiquidityPoolDepositMalformed
+            }
+            Self::LiquidityPoolDepositNoTrust => {
+                LiquidityPoolDepositResultCode::LiquidityPoolDepositNoTrust
+            }
+            Self::LiquidityPoolDepositNotAuthorized => {
+                LiquidityPoolDepositResultCode::LiquidityPoolDepositNotAuthorized
+            }
+            Self::LiquidityPoolDepositUnderfunded => {
+                LiquidityPoolDepositResultCode::LiquidityPoolDepositUnderfunded
+            }
+            Self::LiquidityPoolDepositLineFull => {
+                LiquidityPoolDepositResultCode::LiquidityPoolDepositLineFull
+            }
+            Self::LiquidityPoolDepositBadPrice => {
+                LiquidityPoolDepositResultCode::LiquidityPoolDepositBadPrice
+            }
+            Self::LiquidityPoolDepositPoolFull => {
+                LiquidityPoolDepositResultCode::LiquidityPoolDepositPoolFull
             }
         }
     }
@@ -13252,6 +14133,27 @@ impl ReadXDR for LiquidityPoolDepositResult {
             LiquidityPoolDepositResultCode::LiquidityPoolDepositSuccess => {
                 Self::LiquidityPoolDepositSuccess
             }
+            LiquidityPoolDepositResultCode::LiquidityPoolDepositMalformed => {
+                Self::LiquidityPoolDepositMalformed
+            }
+            LiquidityPoolDepositResultCode::LiquidityPoolDepositNoTrust => {
+                Self::LiquidityPoolDepositNoTrust
+            }
+            LiquidityPoolDepositResultCode::LiquidityPoolDepositNotAuthorized => {
+                Self::LiquidityPoolDepositNotAuthorized
+            }
+            LiquidityPoolDepositResultCode::LiquidityPoolDepositUnderfunded => {
+                Self::LiquidityPoolDepositUnderfunded
+            }
+            LiquidityPoolDepositResultCode::LiquidityPoolDepositLineFull => {
+                Self::LiquidityPoolDepositLineFull
+            }
+            LiquidityPoolDepositResultCode::LiquidityPoolDepositBadPrice => {
+                Self::LiquidityPoolDepositBadPrice
+            }
+            LiquidityPoolDepositResultCode::LiquidityPoolDepositPoolFull => {
+                Self::LiquidityPoolDepositPoolFull
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13264,6 +14166,13 @@ impl WriteXDR for LiquidityPoolDepositResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::LiquidityPoolDepositSuccess => ().write_xdr(w)?,
+            Self::LiquidityPoolDepositMalformed => ().write_xdr(w)?,
+            Self::LiquidityPoolDepositNoTrust => ().write_xdr(w)?,
+            Self::LiquidityPoolDepositNotAuthorized => ().write_xdr(w)?,
+            Self::LiquidityPoolDepositUnderfunded => ().write_xdr(w)?,
+            Self::LiquidityPoolDepositLineFull => ().write_xdr(w)?,
+            Self::LiquidityPoolDepositBadPrice => ().write_xdr(w)?,
+            Self::LiquidityPoolDepositPoolFull => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -13344,7 +14253,11 @@ impl WriteXDR for LiquidityPoolWithdrawResultCode {
 //    {
 //    case LIQUIDITY_POOL_WITHDRAW_SUCCESS:
 //        void;
-//    default:
+//    case LIQUIDITY_POOL_WITHDRAW_MALFORMED:
+//    case LIQUIDITY_POOL_WITHDRAW_NO_TRUST:
+//    case LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED:
+//    case LIQUIDITY_POOL_WITHDRAW_LINE_FULL:
+//    case LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM:
 //        void;
 //    };
 //
@@ -13352,6 +14265,11 @@ impl WriteXDR for LiquidityPoolWithdrawResultCode {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LiquidityPoolWithdrawResult {
     LiquidityPoolWithdrawSuccess,
+    LiquidityPoolWithdrawMalformed,
+    LiquidityPoolWithdrawNoTrust,
+    LiquidityPoolWithdrawUnderfunded,
+    LiquidityPoolWithdrawLineFull,
+    LiquidityPoolWithdrawUnderMinimum,
 }
 
 impl LiquidityPoolWithdrawResult {
@@ -13359,6 +14277,21 @@ impl LiquidityPoolWithdrawResult {
         match self {
             Self::LiquidityPoolWithdrawSuccess => {
                 LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawSuccess
+            }
+            Self::LiquidityPoolWithdrawMalformed => {
+                LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawMalformed
+            }
+            Self::LiquidityPoolWithdrawNoTrust => {
+                LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawNoTrust
+            }
+            Self::LiquidityPoolWithdrawUnderfunded => {
+                LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawUnderfunded
+            }
+            Self::LiquidityPoolWithdrawLineFull => {
+                LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawLineFull
+            }
+            Self::LiquidityPoolWithdrawUnderMinimum => {
+                LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawUnderMinimum
             }
         }
     }
@@ -13372,6 +14305,21 @@ impl ReadXDR for LiquidityPoolWithdrawResult {
             LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawSuccess => {
                 Self::LiquidityPoolWithdrawSuccess
             }
+            LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawMalformed => {
+                Self::LiquidityPoolWithdrawMalformed
+            }
+            LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawNoTrust => {
+                Self::LiquidityPoolWithdrawNoTrust
+            }
+            LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawUnderfunded => {
+                Self::LiquidityPoolWithdrawUnderfunded
+            }
+            LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawLineFull => {
+                Self::LiquidityPoolWithdrawLineFull
+            }
+            LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawUnderMinimum => {
+                Self::LiquidityPoolWithdrawUnderMinimum
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13384,6 +14332,11 @@ impl WriteXDR for LiquidityPoolWithdrawResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::LiquidityPoolWithdrawSuccess => ().write_xdr(w)?,
+            Self::LiquidityPoolWithdrawMalformed => ().write_xdr(w)?,
+            Self::LiquidityPoolWithdrawNoTrust => ().write_xdr(w)?,
+            Self::LiquidityPoolWithdrawUnderfunded => ().write_xdr(w)?,
+            Self::LiquidityPoolWithdrawLineFull => ().write_xdr(w)?,
+            Self::LiquidityPoolWithdrawUnderMinimum => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -13723,7 +14676,12 @@ impl WriteXDR for OperationResultTr {
 //            LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
 //        }
 //        tr;
-//    default:
+//    case opBAD_AUTH:
+//    case opNO_ACCOUNT:
+//    case opNOT_SUPPORTED:
+//    case opTOO_MANY_SUBENTRIES:
+//    case opEXCEEDED_WORK_LIMIT:
+//    case opTOO_MANY_SPONSORING:
 //        void;
 //    };
 //
@@ -13731,12 +14689,24 @@ impl WriteXDR for OperationResultTr {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum OperationResult {
     OpInner(OperationResultTr),
+    OpBadAuth,
+    OpNoAccount,
+    OpNotSupported,
+    OpTooManySubentries,
+    OpExceededWorkLimit,
+    OpTooManySponsoring,
 }
 
 impl OperationResult {
     pub fn discriminant(&self) -> OperationResultCode {
         match self {
             Self::OpInner(_) => OperationResultCode::OpInner,
+            Self::OpBadAuth => OperationResultCode::OpBadAuth,
+            Self::OpNoAccount => OperationResultCode::OpNoAccount,
+            Self::OpNotSupported => OperationResultCode::OpNotSupported,
+            Self::OpTooManySubentries => OperationResultCode::OpTooManySubentries,
+            Self::OpExceededWorkLimit => OperationResultCode::OpExceededWorkLimit,
+            Self::OpTooManySponsoring => OperationResultCode::OpTooManySponsoring,
         }
     }
 }
@@ -13746,6 +14716,12 @@ impl ReadXDR for OperationResult {
         let dv: OperationResultCode = <OperationResultCode as ReadXDR>::read_xdr(r)?;
         let v = match dv.into() {
             OperationResultCode::OpInner => Self::OpInner(OperationResultTr::read_xdr(r)?),
+            OperationResultCode::OpBadAuth => Self::OpBadAuth,
+            OperationResultCode::OpNoAccount => Self::OpNoAccount,
+            OperationResultCode::OpNotSupported => Self::OpNotSupported,
+            OperationResultCode::OpTooManySubentries => Self::OpTooManySubentries,
+            OperationResultCode::OpExceededWorkLimit => Self::OpExceededWorkLimit,
+            OperationResultCode::OpTooManySponsoring => Self::OpTooManySponsoring,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13758,6 +14734,12 @@ impl WriteXDR for OperationResult {
         self.discriminant().write_xdr(w)?;
         match self {
             Self::OpInner(v) => v.write_xdr(w)?,
+            Self::OpBadAuth => ().write_xdr(w)?,
+            Self::OpNoAccount => ().write_xdr(w)?,
+            Self::OpNotSupported => ().write_xdr(w)?,
+            Self::OpTooManySubentries => ().write_xdr(w)?,
+            Self::OpExceededWorkLimit => ().write_xdr(w)?,
+            Self::OpTooManySponsoring => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -14145,7 +15127,21 @@ impl WriteXDR for InnerTransactionResultPair {
 //        case txSUCCESS:
 //        case txFAILED:
 //            OperationResult results<>;
-//        default:
+//        case txTOO_EARLY:
+//        case txTOO_LATE:
+//        case txMISSING_OPERATION:
+//        case txBAD_SEQ:
+//        case txBAD_AUTH:
+//        case txINSUFFICIENT_BALANCE:
+//        case txNO_ACCOUNT:
+//        case txINSUFFICIENT_FEE:
+//        case txBAD_AUTH_EXTRA:
+//        case txINTERNAL_ERROR:
+//        case txNOT_SUPPORTED:
+//        // case txFEE_BUMP_INNER_FAILED: handled above
+//        case txBAD_SPONSORSHIP:
+//        case txBAD_MIN_SEQ_AGE_OR_GAP:
+//        case txMALFORMED:
 //            void;
 //        }
 //
@@ -14156,6 +15152,20 @@ pub enum TransactionResultResult {
     TxFeeBumpInnerFailed(InnerTransactionResultPair),
     TxSuccess(VecM<OperationResult>),
     TxFailed(VecM<OperationResult>),
+    TxTooEarly,
+    TxTooLate,
+    TxMissingOperation,
+    TxBadSeq,
+    TxBadAuth,
+    TxInsufficientBalance,
+    TxNoAccount,
+    TxInsufficientFee,
+    TxBadAuthExtra,
+    TxInternalError,
+    TxNotSupported,
+    TxBadSponsorship,
+    TxBadMinSeqAgeOrGap,
+    TxMalformed,
 }
 
 impl TransactionResultResult {
@@ -14165,6 +15175,20 @@ impl TransactionResultResult {
             Self::TxFeeBumpInnerFailed(_) => TransactionResultCode::TxFeeBumpInnerFailed,
             Self::TxSuccess(_) => TransactionResultCode::TxSuccess,
             Self::TxFailed(_) => TransactionResultCode::TxFailed,
+            Self::TxTooEarly => TransactionResultCode::TxTooEarly,
+            Self::TxTooLate => TransactionResultCode::TxTooLate,
+            Self::TxMissingOperation => TransactionResultCode::TxMissingOperation,
+            Self::TxBadSeq => TransactionResultCode::TxBadSeq,
+            Self::TxBadAuth => TransactionResultCode::TxBadAuth,
+            Self::TxInsufficientBalance => TransactionResultCode::TxInsufficientBalance,
+            Self::TxNoAccount => TransactionResultCode::TxNoAccount,
+            Self::TxInsufficientFee => TransactionResultCode::TxInsufficientFee,
+            Self::TxBadAuthExtra => TransactionResultCode::TxBadAuthExtra,
+            Self::TxInternalError => TransactionResultCode::TxInternalError,
+            Self::TxNotSupported => TransactionResultCode::TxNotSupported,
+            Self::TxBadSponsorship => TransactionResultCode::TxBadSponsorship,
+            Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
+            Self::TxMalformed => TransactionResultCode::TxMalformed,
         }
     }
 }
@@ -14185,6 +15209,20 @@ impl ReadXDR for TransactionResultResult {
             TransactionResultCode::TxFailed => {
                 Self::TxFailed(VecM::<OperationResult>::read_xdr(r)?)
             }
+            TransactionResultCode::TxTooEarly => Self::TxTooEarly,
+            TransactionResultCode::TxTooLate => Self::TxTooLate,
+            TransactionResultCode::TxMissingOperation => Self::TxMissingOperation,
+            TransactionResultCode::TxBadSeq => Self::TxBadSeq,
+            TransactionResultCode::TxBadAuth => Self::TxBadAuth,
+            TransactionResultCode::TxInsufficientBalance => Self::TxInsufficientBalance,
+            TransactionResultCode::TxNoAccount => Self::TxNoAccount,
+            TransactionResultCode::TxInsufficientFee => Self::TxInsufficientFee,
+            TransactionResultCode::TxBadAuthExtra => Self::TxBadAuthExtra,
+            TransactionResultCode::TxInternalError => Self::TxInternalError,
+            TransactionResultCode::TxNotSupported => Self::TxNotSupported,
+            TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
+            TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
+            TransactionResultCode::TxMalformed => Self::TxMalformed,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14200,6 +15238,20 @@ impl WriteXDR for TransactionResultResult {
             Self::TxFeeBumpInnerFailed(v) => v.write_xdr(w)?,
             Self::TxSuccess(v) => v.write_xdr(w)?,
             Self::TxFailed(v) => v.write_xdr(w)?,
+            Self::TxTooEarly => ().write_xdr(w)?,
+            Self::TxTooLate => ().write_xdr(w)?,
+            Self::TxMissingOperation => ().write_xdr(w)?,
+            Self::TxBadSeq => ().write_xdr(w)?,
+            Self::TxBadAuth => ().write_xdr(w)?,
+            Self::TxInsufficientBalance => ().write_xdr(w)?,
+            Self::TxNoAccount => ().write_xdr(w)?,
+            Self::TxInsufficientFee => ().write_xdr(w)?,
+            Self::TxBadAuthExtra => ().write_xdr(w)?,
+            Self::TxInternalError => ().write_xdr(w)?,
+            Self::TxNotSupported => ().write_xdr(w)?,
+            Self::TxBadSponsorship => ().write_xdr(w)?,
+            Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
+            Self::TxMalformed => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -14263,7 +15315,21 @@ impl WriteXDR for TransactionResultExt {
 //        case txSUCCESS:
 //        case txFAILED:
 //            OperationResult results<>;
-//        default:
+//        case txTOO_EARLY:
+//        case txTOO_LATE:
+//        case txMISSING_OPERATION:
+//        case txBAD_SEQ:
+//        case txBAD_AUTH:
+//        case txINSUFFICIENT_BALANCE:
+//        case txNO_ACCOUNT:
+//        case txINSUFFICIENT_FEE:
+//        case txBAD_AUTH_EXTRA:
+//        case txINTERNAL_ERROR:
+//        case txNOT_SUPPORTED:
+//        // case txFEE_BUMP_INNER_FAILED: handled above
+//        case txBAD_SPONSORSHIP:
+//        case txBAD_MIN_SEQ_AGE_OR_GAP:
+//        case txMALFORMED:
 //            void;
 //        }
 //        result;

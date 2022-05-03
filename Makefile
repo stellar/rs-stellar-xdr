@@ -1,12 +1,12 @@
-XDR_BASE_URL=https://github.com/graydon/stellar-core/raw/wasm-runtime/src/xdr
+XDR_BASE_URL=https://github.com/graydon/stellar-core/raw/wasm-runtime/src
 XDR_FILES= \
-	Stellar-SCP.x \
-	Stellar-ledger-entries.x \
-	Stellar-ledger.x \
-	Stellar-overlay.x \
-	Stellar-transaction.x \
-	Stellar-types.x \
-	Stellar-contract.x
+	xdr/Stellar-SCP.x \
+	xdr/Stellar-ledger-entries.x \
+	xdr/Stellar-ledger.x \
+	xdr/Stellar-overlay.x \
+	xdr/Stellar-transaction.x \
+	xdr/Stellar-types.x \
+	xdr/Stellar-contract.x
 
 test: build
 	cargo test
@@ -23,17 +23,14 @@ src/xdr.rs: $(XDR_FILES)
 			--language rust \
 			--namespace xdr \
 			--output src/ \
-			$(addprefix xdr/,$(XDR_FILES)) \
+			$(XDR_FILES) \
 		'
 	rustfmt src/xdr.rs
 
-$(XDR_FILES): xdr
-	curl -L -o xdr/$@ $(XDR_BASE_URL)/$@
-
-xdr:
-	mkdir -p xdr
+$(XDR_FILES):
+	curl -L -o $@ $(XDR_BASE_URL)/$@
 
 clean:
-	rm -fr xdr
-	rm -fr src/xdr.rs
+	rm -f xdr/*.x
+	rm -f src/xdr.rs
 	cargo clean

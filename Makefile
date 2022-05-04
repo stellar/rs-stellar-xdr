@@ -12,8 +12,9 @@ test: build
 	cargo test
 
 build: src/xdr.rs
-	cargo build
-	cargo build --no-default-features
+	cargo build --no-default-features --features 'std'
+	cargo build --no-default-features --features ''
+	cargo build --target wasm32-unknown-unknown --no-default-features --features ''
 
 src/xdr.rs: $(XDR_FILES)
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\

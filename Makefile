@@ -12,8 +12,9 @@ test: build
 	cargo test
 
 build: src/xdr.rs
-	cargo build --profile dev
-	cargo build --profile release
+	cargo build --no-default-features --features 'std'
+	cargo build --no-default-features --features ''
+	cargo build --target wasm32-unknown-unknown --no-default-features --features ''
 
 src/xdr.rs: $(XDR_FILES)
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
@@ -21,11 +22,11 @@ src/xdr.rs: $(XDR_FILES)
 		gem specific_install https://github.com/leighmcculloch/stellar--xdrgen.git -b rust-no-deps && \
 		xdrgen \
 			--language rust \
-			--namespace xdr \
+			--namespace lib \
 			--output src/ \
 			$(XDR_FILES) \
 		'
-	rustfmt src/xdr.rs
+	rustfmt src/lib.rs
 
 $(XDR_FILES):
 	curl -L -o $@ $(XDR_BASE_URL)/$@

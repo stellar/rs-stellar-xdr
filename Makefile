@@ -11,12 +11,15 @@ XDR_FILES= \
 test: build
 	cargo test
 
-build: src/xdr.rs
+build: src/lib.rs
 	cargo build --no-default-features --features 'std'
 	cargo build --no-default-features --features ''
 	cargo build --target wasm32-unknown-unknown --no-default-features --features ''
 
-src/xdr.rs: $(XDR_FILES)
+watch:
+	cargo watch --clear --watch-when-idle --shell '$(MAKE) build'
+
+src/lib.rs: $(XDR_FILES)
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
 		gem specific_install https://github.com/leighmcculloch/stellar--xdrgen.git -b rust-no-deps && \

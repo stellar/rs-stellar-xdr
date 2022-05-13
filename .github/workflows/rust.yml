@@ -28,27 +28,32 @@ jobs:
   build:
     strategy:
       matrix:
+        action: [build, test]
         os: [ubuntu-latest, macos-latest, windows-latest]
-        target: [x86_64-unknown-linux-gnu, wasm32-unknown-unknown]
+        target: [wasm32-unknown-unknown]
         profile: [dev, release]
         features: ['', 'alloc', 'std']
+        include:
+        - os: ubuntu-latest
+          target: x86_64-unknown-linux-gnu
+        - os: macos-latest
+          target: x86_64-apple-darwin
+        - os: macos-latest
+          target: aarch64-apple-darwin
+        - os: windows-latest
+          target: x86_64-pc-windows-msvc
+        exclude:
+        - action: test
+          target: wasm32-unknown-unknown
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
     - run: rustup update stable && rustup default stable
     - run: rustup target add ${{ matrix.target }}
-    - run: cargo build --verbose --profile ${{ matrix.profile }} --target ${{ matrix.target }} --no-default-features --features='${{ matrix.features }}'
-
-  test:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        target: [x86_64-unknown-linux-gnu]
-        profile: [test]
-        features: ['', 'alloc', 'std']
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v3
-    - run: rustup update stable && rustup default stable
-    - run: rustup target add ${{ matrix.target }}
-    - run: cargo test --verbose --profile ${{ matrix.profile }} --target ${{ matrix.target }} --no-default-features --features='${{ matrix.features }}'
+    - run: |
+        cargo ${{ matrix.action }} \
+          --verbose \
+          --profile ${{ matrix.profile }} \
+          --target ${{ matrix.target }} \
+          --no-default-features \
+          --features='${{ matrix.features }}'

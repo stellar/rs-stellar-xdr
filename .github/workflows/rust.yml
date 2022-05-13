@@ -15,7 +15,7 @@ jobs:
     needs: [fmt, build, test]
     runs-on: ubuntu-latest
     steps:
-    - if: failure()
+    - if: contains(needs.*.result, 'failure')
       run: exit 1
 
   fmt:

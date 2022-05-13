@@ -28,31 +28,10 @@ jobs:
   build:
     strategy:
       matrix:
-        include:
-        - os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
-          profile: dev
-          features: std
-        - os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
-          profile: dev
-          features: alloc
-        - os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
-          profile: dev
-          features:
-        - os: ubuntu-latest
-          target: wasm32-unknown-unknown
-          profile: release
-          features: std
-        - os: ubuntu-latest
-          target: wasm32-unknown-unknown
-          profile: release
-          features: alloc
-        - os: ubuntu-latest
-          target: wasm32-unknown-unknown
-          profile: release
-          features:
+        os: ubuntu-latest
+        target: [x86_64-unknown-linux-gnu, wasm32-unknown-unknown]
+        profile: [dev, release]
+        features: ['', 'alloc', 'std']
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -63,19 +42,10 @@ jobs:
   test:
     strategy:
       matrix:
-        include:
-        - os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
-          profile: test
-          features: std
-        - os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
-          profile: test
-          features: alloc
-        - os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
-          profile: test
-          features:
+        os: ubuntu-latest
+        target: [x86_64-unknown-linux-gnu]
+        profile: [test]
+        features: ['', 'alloc', 'std']
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3

@@ -12,14 +12,9 @@
 
 use core::{fmt, fmt::Debug, slice::Iter};
 
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
-extern crate alloc;
-
+// When feature alloc is turned off use static lifetime Box and Vec types.
 #[cfg(not(feature = "alloc"))]
-// TODO: Replace the Box and Vec static lifetime types with bumpalo, or
-// heapless, or change the interface to read/write_xdr to support providing a
-// custom allocator.
-mod alloc {
+mod noalloc {
     pub mod boxed {
         #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
         pub struct Box<T>(pub &'static T)
@@ -47,8 +42,18 @@ mod alloc {
         }
     }
 }
-#[cfg(not(feature = "std"))]
+#[cfg(not(feature = "alloc"))]
+use noalloc::{boxed::Box, vec::Vec};
+
+// When feature std is turned off, but feature alloc is turned on import the
+// alloc crate and use its Box and Vec types.
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+extern crate alloc;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::{boxed::Box, vec::Vec};
+
+// TODO: Add support for when the alloc or std feature is enabled for specifying
+// a custom allocator, instead of the Global allocator being used.
 
 #[cfg(feature = "std")]
 use std::{

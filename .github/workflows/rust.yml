@@ -27,16 +27,20 @@ jobs:
           features: std
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
-          profile: release
-          features: std
+          profile: dev
+          features: alloc
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
           profile: dev
           features:
         - os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
+          target: wasm32-unknown-unknown
           profile: release
-          features:
+          features: std
+        - os: ubuntu-latest
+          target: wasm32-unknown-unknown
+          profile: release
+          features: alloc
         - os: ubuntu-latest
           target: wasm32-unknown-unknown
           profile: release
@@ -55,9 +59,18 @@ jobs:
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
           profile: test
+          features: std
+        - os: ubuntu-latest
+          target: x86_64-unknown-linux-gnu
+          profile: test
+          features: alloc
+        - os: ubuntu-latest
+          target: x86_64-unknown-linux-gnu
+          profile: test
+          features:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
     - run: rustup update stable && rustup default stable
     - run: rustup target add ${{ matrix.target }}
-    - run: cargo test --verbose --profile ${{ matrix.profile }} --target ${{ matrix.target }}
+    - run: cargo test --verbose --profile ${{ matrix.profile }} --target ${{ matrix.target }} --no-default-features --features='${{ matrix.features }}'

@@ -28,7 +28,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: ubuntu-latest
+        os: [ubuntu-latest]
         target: [x86_64-unknown-linux-gnu, wasm32-unknown-unknown]
         profile: [dev, release]
         features: ['', 'alloc', 'std']
@@ -42,7 +42,7 @@ jobs:
   test:
     strategy:
       matrix:
-        os: ubuntu-latest
+        os: [ubuntu-latest]
         target: [x86_64-unknown-linux-gnu]
         profile: [test]
         features: ['', 'alloc', 'std']

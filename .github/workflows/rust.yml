@@ -28,13 +28,13 @@ jobs:
   cargo:
     strategy:
       matrix:
-        action: [check, test]
+        cmd: [check, test]
         os: [ubuntu-latest, macos-latest, windows-latest]
         target: [wasm32-unknown-unknown]
         profile: [dev, release]
         features: ['', 'alloc', 'std']
         exclude:
-        - action: test
+        - cmd: test
           target: wasm32-unknown-unknown
         include:
         - os: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
     - run: rustup update stable && rustup default stable
     - run: rustup target add ${{ matrix.target }}
     - run: |
-        cargo ${{ matrix.action }} \
+        cargo ${{ matrix.cmd }} \
           --verbose \
           --profile ${{ matrix.profile }} \
           --target ${{ matrix.target }} \

@@ -16,30 +16,10 @@ use core::{fmt, fmt::Debug, slice::Iter};
 #[cfg(not(feature = "alloc"))]
 mod noalloc {
     pub mod boxed {
-        #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-        pub struct Box<T>(pub &'static T)
-        where
-            T: 'static;
+        pub type Box<T> = &'static T;
     }
     pub mod vec {
-        use core::slice::Iter;
-        #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-        pub struct Vec<T>(pub &'static [T])
-        where
-            T: 'static;
-        impl<T> Vec<T> {
-            pub fn len(&self) -> usize {
-                self.0.len()
-            }
-            pub fn iter(&self) -> Iter<T> {
-                self.0.iter()
-            }
-        }
-        impl<T> AsRef<[T]> for Vec<T> {
-            fn as_ref(&self) -> &[T] {
-                self.0
-            }
-        }
+        pub type Vec<T> = &'static [T];
     }
 }
 #[cfg(not(feature = "alloc"))]
@@ -434,23 +414,6 @@ impl<T: Clone, const MAX: u32> TryFrom<&[T]> for VecM<T, MAX> {
     }
 }
 
-#[cfg(not(feature = "alloc"))]
-impl<T: Clone, const MAX: u32> TryFrom<&'static [T]> for VecM<T, MAX>
-where
-    T: 'static,
-{
-    type Error = Error;
-
-    fn try_from(v: &'static [T]) -> Result<Self> {
-        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        if len <= MAX {
-            Ok(VecM(Vec(v)))
-        } else {
-            Err(Error::LengthExceedsMax)
-        }
-    }
-}
-
 impl<T, const MAX: u32> AsRef<[T]> for VecM<T, MAX> {
     fn as_ref(&self) -> &[T] {
         self.0.as_ref()
@@ -505,7 +468,7 @@ where
     fn try_from(v: &'static [T; N]) -> Result<Self> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
-            Ok(VecM(Vec(v)))
+            Ok(VecM(v))
         } else {
             Err(Error::LengthExceedsMax)
         }

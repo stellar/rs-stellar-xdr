@@ -50,14 +50,14 @@ jobs:
         path: target/
         key: matrix(${{ join(matrix.*,'|') }})-sys(${{ join(matrix.sys.*,'|') }})-${{ hashFiles('**', '!.git') }}
         restore-keys: matrix(${{ join(matrix.*,'|') }})-sys(${{ join(matrix.sys.*,'|') }})-
-    - if: matrix.target != 'wasm32-unknown-unknown' && matrix.sys.target != 'aarch64-apple-darwin'
-      run: >
+    - run: >
         cargo check
         --profile ${{ matrix.profile }}
         --target ${{ matrix.target || matrix.sys.target }}
         --no-default-features
         --features='${{ matrix.features }}'
-    - run: >
+    - if: matrix.target != 'wasm32-unknown-unknown' && matrix.sys.target != 'aarch64-apple-darwin'
+      run: >
         cargo test
         --profile ${{ matrix.profile }}
         --target ${{ matrix.target || matrix.sys.target }}

@@ -43,6 +43,10 @@ jobs:
         exclude:
         - cmd: test
           target: wasm32-unknown-unknown
+        - cmd: test
+          sys:
+            os: macos-latest
+            target: aarch64-apple-darwin
     runs-on: ${{ matrix.sys.os }}
     steps:
     - run: rustup update stable && rustup default stable

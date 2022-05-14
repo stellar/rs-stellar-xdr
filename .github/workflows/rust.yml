@@ -30,24 +30,20 @@ jobs:
       matrix:
         cmd: [check, test]
         sys:
-        - os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
-        - os: macos-latest
-          target: x86_64-apple-darwin
-        - os: macos-latest
-          target: aarch64-apple-darwin
-        - os: windows-latest
-          target: x86_64-pc-windows-msvc
+        - [ubuntu-latest, x86_64-unknown-linux-gnu]
+        - [macos-latest, x86_64-apple-darwin]
+        - [macos-latest, aarch64-apple-darwin]
+        #- [windows-latest, x86_64-pc-windows-msvc]
         target: ['', wasm32-unknown-unknown]
         profile: [dev, release]
         features: ['', 'alloc', 'std']
         exclude:
         - cmd: test
           target: wasm32-unknown-unknown
-    runs-on: ${{ matrix.sys.os }}
+    runs-on: ${{ matrix.sys[0] }}
     steps:
     - run: rustup update stable && rustup default stable
-    - run: rustup target add ${{ matrix.target || matrix.sys.target }}
+    - run: rustup target add ${{ matrix.target || matrix.sys[1] }}
     - uses: actions/checkout@v3
     - uses: actions/cache@v2
       with:
@@ -57,6 +53,6 @@ jobs:
     - run: >
         cargo ${{ matrix.cmd }}
         --profile ${{ matrix.profile }}
-        --target ${{ matrix.target || matrix.sys.target }}
+        --target ${{ matrix.target || matrix.sys[1] }}
         --no-default-features
         --features='${{ matrix.features }}'

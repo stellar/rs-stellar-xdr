@@ -28,7 +28,6 @@ jobs:
   cargo:
     strategy:
       matrix:
-        cmd: [check, test]
         features: ['', 'alloc', 'std']
         profile: [dev, release]
         sys:
@@ -41,13 +40,6 @@ jobs:
         - os: windows-latest
           target: x86_64-pc-windows-msvc
         target: ['', wasm32-unknown-unknown]
-        exclude:
-        - cmd: test
-          target: wasm32-unknown-unknown
-        - cmd: test
-          sys:
-            os: macos-latest
-            target: aarch64-apple-darwin
     runs-on: ${{ matrix.sys.os }}
     steps:
     - run: rustup update stable && rustup default stable
@@ -61,7 +53,14 @@ jobs:
         key: matrix(${{ join(matrix.*,'|') }})-sys(${{ join(matrix.sys.*,'|') }})-${{ hashFiles('**', '!.git') }}
         restore-keys: matrix(${{ join(matrix.*,'|') }})-sys(${{ join(matrix.sys.*,'|') }})-
     - run: >
-        cargo ${{ matrix.cmd }}
+        cargo check
+        --profile ${{ matrix.profile }}
+        --target ${{ matrix.target || matrix.sys.target }}
+        --no-default-features
+        --features='${{ matrix.features }}'
+    - if: matrix.target != 'wasm32-unknown-unknown' && matrix.sys.target != 'aarch64-apple-darwin'
+      run: >
+        cargo test
         --profile ${{ matrix.profile }}
         --target ${{ matrix.target || matrix.sys.target }}
         --no-default-features

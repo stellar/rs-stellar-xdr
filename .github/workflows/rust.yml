@@ -30,12 +30,11 @@ jobs:
       matrix:
         cmd: [check, test]
         os: [ubuntu-latest, macos-latest, windows-latest]
-        target: [wasm32-unknown-unknown]
         profile: [dev, release]
         features: ['', 'alloc', 'std']
-        exclude:
-        - target: wasm32-unknown-unknown
         include:
+        - cmd: check
+          target: wasm32-unknown-unknown
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
         - os: macos-latest

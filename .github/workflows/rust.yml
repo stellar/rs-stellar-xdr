@@ -29,7 +29,7 @@ jobs:
     strategy:
       matrix:
         cmd: [check, test]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] #, windows-latest]
         profile: [dev, release]
         features: ['', 'alloc', 'std']
         include:

@@ -29,30 +29,33 @@ jobs:
     strategy:
       matrix:
         cmd: [check, test]
+        features: ['', 'alloc', 'std']
+        profile: [dev, release]
         sys:
-        - [ubuntu-latest, x86_64-unknown-linux-gnu]
-        - [macos-latest, x86_64-apple-darwin]
-        - [macos-latest, aarch64-apple-darwin]
+        - os: ubuntu-latest
+          target: x86_64-unknown-linux-gnu
+        - os: macos-latest
+          target: x86_64-apple-darwin
+        - os: macos-latest
+          target: aarch64-apple-darwin
         #- [windows-latest, x86_64-pc-windows-msvc]
         target: ['', wasm32-unknown-unknown]
-        profile: [dev, release]
-        features: ['', 'alloc', 'std']
         exclude:
         - cmd: test
           target: wasm32-unknown-unknown
-    runs-on: ${{ matrix.sys[0] }}
+    runs-on: ${{ matrix.sys.os }}
     steps:
     - run: rustup update stable && rustup default stable
-    - run: rustup target add ${{ matrix.target || matrix.sys[1] }}
+    - run: rustup target add ${{ matrix.target || matrix.sys.target }}
     - uses: actions/checkout@v3
     - uses: actions/cache@v2
       with:
         path: target/
-        key: matrix(${{ join(matrix.*,'|') }})-${{ hashFiles('**', '!.git') }}
-        restore-keys: matrix(${{ join(matrix.*,'|') }}-
+        key: matrix(${{ join(matrix.*,'|') }})-sys(${{ join(matrix.sys.*,'|') }})-${{ hashFiles('**', '!.git') }}
+        restore-keys: matrix(${{ join(matrix.*,'|') }}-sys(${{ join(matrix.sys.*,'|') }})-
     - run: >
         cargo ${{ matrix.cmd }}
         --profile ${{ matrix.profile }}
-        --target ${{ matrix.target || matrix.sys[1] }}
+        --target ${{ matrix.target || matrix.sys.target }}
         --no-default-features
         --features='${{ matrix.features }}'

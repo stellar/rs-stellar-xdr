@@ -52,6 +52,6 @@ jobs:
         cargo ${{ matrix.cmd }}
           --verbose
           --profile ${{ matrix.profile }}
-          --target ${{ matrix.target != '' && matrix.target || matrix.sys.target }}
+          --target ${{ (matrix.target != '' && matrix.target) || matrix.sys.target }}
           --no-default-features
           --features='${{ matrix.features }}'

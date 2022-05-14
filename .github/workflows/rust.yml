@@ -50,9 +50,9 @@ jobs:
     - run: rustup update stable && rustup default stable
     - run: rustup target add ${{ matrix.target }}
     - run: >
-        cargo ${{ matrix.cmd }}
-          --verbose
-          --profile ${{ matrix.profile }}
-          --target ${{ matrix.target }}
-          --no-default-features
+        cargo ${{ matrix.cmd }} \
+          --verbose \
+          --profile ${{ matrix.profile }} \
+          --target ${{ matrix.target }} \
+          --no-default-features \
           --features='${{ matrix.features }}'

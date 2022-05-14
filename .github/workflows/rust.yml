@@ -56,7 +56,7 @@ jobs:
       with:
         path: target/
         key: matrix(${{ join(matrix.*,'|') }})-sys(${{ join(matrix.sys.*,'|') }})-${{ hashFiles('**', '!.git') }}
-        restore-keys: matrix(${{ join(matrix.*,'|') }}-sys(${{ join(matrix.sys.*,'|') }})-
+        restore-keys: matrix(${{ join(matrix.*,'|') }})-sys(${{ join(matrix.sys.*,'|') }})-
     - run: >
         cargo ${{ matrix.cmd }}
         --profile ${{ matrix.profile }}

@@ -51,13 +51,21 @@ jobs:
     - run: rustup update stable && rustup default stable
     - run: rustup target add ${{ matrix.sys.target }}
     - uses: actions/checkout@v3
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       with:
         path: |
-          ~/.cargo/
-          target/
-        key: matrix(${{ join(matrix.*,'|') }})-sys(${{ join(matrix.sys.*,'|') }})-${{ hashFiles('**', '!.git') }}
-        restore-keys: matrix(${{ join(matrix.*,'|') }})-sys(${{ join(matrix.sys.*,'|') }})-
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: cargo-
+    - uses: actions/cache@v3
+      with:
+        path: target/
+        key: target-${{ strategy.job-index }}-${{ github.sha }}
+        restore-keys: |
+          target-${{ strategy.job-index }}
+          target-
     - run: >
         cargo check
         --profile ${{ matrix.profile }}

@@ -52,7 +52,7 @@ jobs:
     - uses: actions/cache@v2
       with:
         path: target/
-        key: ${{ matrix(${{ join(matrix.*,'|') }}) }}-${{ hashFiles('**', '!.git') }}
+        key: matrix(${{ join(matrix.*,'|') }})-${{ hashFiles('**', '!.git') }}
         restore-keys: ${{ matrix(${{ join(matrix.*,'|') }}-
     - run: >
         cargo ${{ matrix.cmd }}

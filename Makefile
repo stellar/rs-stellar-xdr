@@ -1,4 +1,4 @@
-XDR_BASE_URL=https://github.com/graydon/stellar-core/raw/wasm-runtime/src
+XDR_BASE_URL=https://github.com/graydon/stellar-core/raw/rust-wasm-runtime/src
 XDR_FILES= \
 	xdr/Stellar-SCP.x \
 	xdr/Stellar-ledger-entries.x \

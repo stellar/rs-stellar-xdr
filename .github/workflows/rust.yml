@@ -32,18 +32,24 @@ jobs:
         profile: [dev, release]
         sys:
         - os: ubuntu-latest
+          target: wasm32-unknown-unknown
+          test: false
+        - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
+          test: true
         - os: macos-latest
           target: x86_64-apple-darwin
+          test: true
         - os: macos-latest
           target: aarch64-apple-darwin
+          test: false
         - os: windows-latest
           target: x86_64-pc-windows-msvc
-        target: ['', wasm32-unknown-unknown]
+          test: true
     runs-on: ${{ matrix.sys.os }}
     steps:
     - run: rustup update stable && rustup default stable
-    - run: rustup target add ${{ matrix.target || matrix.sys.target }}
+    - run: rustup target add ${{ matrix.sys.target }}
     - uses: actions/checkout@v3
     - uses: actions/cache@v2
       with:
@@ -55,13 +61,13 @@ jobs:
     - run: >
         cargo check
         --profile ${{ matrix.profile }}
-        --target ${{ matrix.target || matrix.sys.target }}
+        --target ${{ matrix.sys.target }}
         --no-default-features
         --features='${{ matrix.features }}'
-    - if: matrix.target != 'wasm32-unknown-unknown' && matrix.sys.target != 'aarch64-apple-darwin'
+    - if: matrix.sys.test
       run: >
         cargo test
         --profile ${{ matrix.profile }}
-        --target ${{ matrix.target || matrix.sys.target }}
+        --target ${{ matrix.sys.target }}
         --no-default-features
         --features='${{ matrix.features }}'

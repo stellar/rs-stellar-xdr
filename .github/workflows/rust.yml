@@ -29,30 +29,29 @@ jobs:
     strategy:
       matrix:
         cmd: [check, test]
-        os: [ubuntu-latest, macos-latest] #, windows-latest]
-        target: [wasm32-unknown-unknown]
-        profile: [dev, release]
-        features: ['', 'alloc', 'std']
-        include:
+        sys:
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
         - os: macos-latest
           target: x86_64-apple-darwin
         - os: macos-latest
           target: aarch64-apple-darwin
-        # - os: windows-latest
-        #   target: x86_64-pc-windows-msvc
-        # - cmd: check
-        #   target: wasm32-unknown-unknown
-    runs-on: ${{ matrix.os }}
+        - os: windows-latest
+        target: ['', wasm32-unknown-unknown]
+        profile: [dev, release]
+        features: ['', 'alloc', 'std']
+        exclude:
+        - cmd: test
+          target: wasm32-unknown-unknown
+    runs-on: ${{ matrix.sys.os }}
     steps:
     - uses: actions/checkout@v3
     - run: rustup update stable && rustup default stable
     - run: rustup target add ${{ matrix.target }}
     - run: >
-        cargo ${{ matrix.cmd }} \
-          --verbose \
-          --profile ${{ matrix.profile }} \
-          --target ${{ matrix.target }} \
-          --no-default-features \
+        cargo ${{ matrix.cmd }}
+          --verbose
+          --profile ${{ matrix.profile }}
+          --target ${{ matrix.target || matrix.sys.target }}
+          --no-default-features
           --features='${{ matrix.features }}'

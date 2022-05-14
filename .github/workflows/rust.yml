@@ -47,6 +47,11 @@ jobs:
     runs-on: ${{ matrix.sys.os }}
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/cache@v2
+      with:
+        path: target/
+        key: ${{ matrix(${{ join(matrix.*,'|') }}) }}-${{ hashFiles('**', '!.git') }}
+        restore-keys: ${{ matrix(${{ join(matrix.*,'|') }}-
     - run: rustup update stable && rustup default stable
     - run: rustup target add ${{ matrix.target || matrix.sys.target }}
     - run: >

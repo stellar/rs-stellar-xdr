@@ -26,7 +26,6 @@ jobs:
     - run: find . -type f -name '*.rs' -print0 | xargs -I {} -0 rustfmt --check "{}"
 
   cargo:
-    name: "Check & Test"
     strategy:
       matrix:
         features: ['', 'alloc', 'std']

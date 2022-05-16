@@ -6225,6 +6225,53 @@ impl WriteXdr for LedgerEntryChanges {
     }
 }
 
+impl LedgerEntryChanges {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn to_vec(self) -> Vec<LedgerEntryChange> {
+        self.into()
+    }
+
+    pub fn as_vec(&self) -> &Vec<LedgerEntryChange> {
+        self.as_ref()
+    }
+
+    pub fn as_slice(&self) -> &[LedgerEntryChange] {
+        self.as_ref()
+    }
+
+    pub fn iter(&self) -> Iter<'_, LedgerEntryChange> {
+        self.0.iter()
+    }
+}
+
+impl From<LedgerEntryChanges> for Vec<LedgerEntryChange> {
+    fn from(x: LedgerEntryChanges) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<LedgerEntryChange>> for LedgerEntryChanges {
+    type Error = Error;
+    fn try_from(x: Vec<LedgerEntryChange>) -> Result<Self> {
+        Ok(LedgerEntryChanges(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<LedgerEntryChange>> for LedgerEntryChanges {
+    fn as_ref(&self) -> &Vec<LedgerEntryChange> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
+    fn as_ref(&self) -> &[LedgerEntryChange] {
+        &self.0 .0
+    }
+}
+
 // OperationMeta is an XDR Struct defines as:
 //
 //   struct OperationMeta
@@ -7465,6 +7512,53 @@ impl WriteXdr for PeerStatList {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
+    }
+}
+
+impl PeerStatList {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn to_vec(self) -> Vec<PeerStats> {
+        self.into()
+    }
+
+    pub fn as_vec(&self) -> &Vec<PeerStats> {
+        self.as_ref()
+    }
+
+    pub fn as_slice(&self) -> &[PeerStats] {
+        self.as_ref()
+    }
+
+    pub fn iter(&self) -> Iter<'_, PeerStats> {
+        self.0.iter()
+    }
+}
+
+impl From<PeerStatList> for Vec<PeerStats> {
+    fn from(x: PeerStatList) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<PeerStats>> for PeerStatList {
+    type Error = Error;
+    fn try_from(x: Vec<PeerStats>) -> Result<Self> {
+        Ok(PeerStatList(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<PeerStats>> for PeerStatList {
+    fn as_ref(&self) -> &Vec<PeerStats> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[PeerStats]> for PeerStatList {
+    fn as_ref(&self) -> &[PeerStats] {
+        &self.0 .0
     }
 }
 
@@ -17259,6 +17353,53 @@ impl WriteXdr for ScVec {
     }
 }
 
+impl ScVec {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn to_vec(self) -> Vec<ScVal> {
+        self.into()
+    }
+
+    pub fn as_vec(&self) -> &Vec<ScVal> {
+        self.as_ref()
+    }
+
+    pub fn as_slice(&self) -> &[ScVal] {
+        self.as_ref()
+    }
+
+    pub fn iter(&self) -> Iter<'_, ScVal> {
+        self.0.iter()
+    }
+}
+
+impl From<ScVec> for Vec<ScVal> {
+    fn from(x: ScVec) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ScVal>> for ScVec {
+    type Error = Error;
+    fn try_from(x: Vec<ScVal>) -> Result<Self> {
+        Ok(ScVec(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ScVal>> for ScVec {
+    fn as_ref(&self) -> &Vec<ScVal> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ScVal]> for ScVec {
+    fn as_ref(&self) -> &[ScVal] {
+        &self.0 .0
+    }
+}
+
 // ScMap is an XDR Typedef defines as:
 //
 //   typedef SCMapEntry SCMap<>;
@@ -17297,6 +17438,53 @@ impl WriteXdr for ScMap {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
+    }
+}
+
+impl ScMap {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn to_vec(self) -> Vec<ScMapEntry> {
+        self.into()
+    }
+
+    pub fn as_vec(&self) -> &Vec<ScMapEntry> {
+        self.as_ref()
+    }
+
+    pub fn as_slice(&self) -> &[ScMapEntry] {
+        self.as_ref()
+    }
+
+    pub fn iter(&self) -> Iter<'_, ScMapEntry> {
+        self.0.iter()
+    }
+}
+
+impl From<ScMap> for Vec<ScMapEntry> {
+    fn from(x: ScMap) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ScMapEntry>> for ScMap {
+    type Error = Error;
+    fn try_from(x: Vec<ScMapEntry>) -> Result<Self> {
+        Ok(ScMap(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ScMapEntry>> for ScMap {
+    fn as_ref(&self) -> &Vec<ScMapEntry> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ScMapEntry]> for ScMap {
+    fn as_ref(&self) -> &[ScMapEntry] {
+        &self.0 .0
     }
 }
 

@@ -88,7 +88,7 @@ impl From<Error> for () {
 #[allow(dead_code)]
 type Result<T> = core::result::Result<T, Error>;
 
-pub trait ReadXDR
+pub trait ReadXdr
 where
     Self: Sized,
 {
@@ -110,7 +110,7 @@ where
     }
 }
 
-pub trait WriteXDR {
+pub trait WriteXdr {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()>;
 
@@ -123,7 +123,7 @@ pub trait WriteXDR {
     }
 }
 
-impl ReadXDR for i32 {
+impl ReadXdr for i32 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let mut b = [0u8; 4];
@@ -133,7 +133,7 @@ impl ReadXDR for i32 {
     }
 }
 
-impl WriteXDR for i32 {
+impl WriteXdr for i32 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let b: [u8; 4] = self.to_be_bytes();
@@ -142,7 +142,7 @@ impl WriteXDR for i32 {
     }
 }
 
-impl ReadXDR for u32 {
+impl ReadXdr for u32 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let mut b = [0u8; 4];
@@ -152,7 +152,7 @@ impl ReadXDR for u32 {
     }
 }
 
-impl WriteXDR for u32 {
+impl WriteXdr for u32 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let b: [u8; 4] = self.to_be_bytes();
@@ -161,7 +161,7 @@ impl WriteXDR for u32 {
     }
 }
 
-impl ReadXDR for i64 {
+impl ReadXdr for i64 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let mut b = [0u8; 8];
@@ -171,7 +171,7 @@ impl ReadXDR for i64 {
     }
 }
 
-impl WriteXDR for i64 {
+impl WriteXdr for i64 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let b: [u8; 8] = self.to_be_bytes();
@@ -180,7 +180,7 @@ impl WriteXDR for i64 {
     }
 }
 
-impl ReadXDR for u64 {
+impl ReadXdr for u64 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let mut b = [0u8; 8];
@@ -190,7 +190,7 @@ impl ReadXDR for u64 {
     }
 }
 
-impl WriteXDR for u64 {
+impl WriteXdr for u64 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let b: [u8; 8] = self.to_be_bytes();
@@ -199,35 +199,35 @@ impl WriteXDR for u64 {
     }
 }
 
-impl ReadXDR for f32 {
+impl ReadXdr for f32 {
     #[cfg(feature = "std")]
     fn read_xdr(_r: &mut impl Read) -> Result<Self> {
         todo!()
     }
 }
 
-impl WriteXDR for f32 {
+impl WriteXdr for f32 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, _w: &mut impl Write) -> Result<()> {
         todo!()
     }
 }
 
-impl ReadXDR for f64 {
+impl ReadXdr for f64 {
     #[cfg(feature = "std")]
     fn read_xdr(_r: &mut impl Read) -> Result<Self> {
         todo!()
     }
 }
 
-impl WriteXDR for f64 {
+impl WriteXdr for f64 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, _w: &mut impl Write) -> Result<()> {
         todo!()
     }
 }
 
-impl ReadXDR for bool {
+impl ReadXdr for bool {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = u32::read_xdr(r)?;
@@ -236,7 +236,7 @@ impl ReadXDR for bool {
     }
 }
 
-impl WriteXDR for bool {
+impl WriteXdr for bool {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: u32 = if *self { 1 } else { 0 };
@@ -245,7 +245,7 @@ impl WriteXDR for bool {
     }
 }
 
-impl<T: ReadXDR> ReadXDR for Option<T> {
+impl<T: ReadXdr> ReadXdr for Option<T> {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = u32::read_xdr(r)?;
@@ -260,7 +260,7 @@ impl<T: ReadXDR> ReadXDR for Option<T> {
     }
 }
 
-impl<T: WriteXDR> WriteXDR for Option<T> {
+impl<T: WriteXdr> WriteXdr for Option<T> {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         if let Some(t) = self {
@@ -273,7 +273,7 @@ impl<T: WriteXDR> WriteXDR for Option<T> {
     }
 }
 
-impl<T: ReadXDR> ReadXDR for Box<T> {
+impl<T: ReadXdr> ReadXdr for Box<T> {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let t = T::read_xdr(r)?;
@@ -281,7 +281,7 @@ impl<T: ReadXDR> ReadXDR for Box<T> {
     }
 }
 
-impl<T: WriteXDR> WriteXDR for Box<T> {
+impl<T: WriteXdr> WriteXdr for Box<T> {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         T::write_xdr(self, w)?;
@@ -289,21 +289,21 @@ impl<T: WriteXDR> WriteXDR for Box<T> {
     }
 }
 
-impl ReadXDR for () {
+impl ReadXdr for () {
     #[cfg(feature = "std")]
     fn read_xdr(_r: &mut impl Read) -> Result<Self> {
         Ok(())
     }
 }
 
-impl WriteXDR for () {
+impl WriteXdr for () {
     #[cfg(feature = "std")]
     fn write_xdr(&self, _w: &mut impl Write) -> Result<()> {
         Ok(())
     }
 }
 
-impl<const N: usize> ReadXDR for [u8; N] {
+impl<const N: usize> ReadXdr for [u8; N] {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let mut arr = [0u8; N];
@@ -312,7 +312,7 @@ impl<const N: usize> ReadXDR for [u8; N] {
     }
 }
 
-impl<const N: usize> WriteXDR for [u8; N] {
+impl<const N: usize> WriteXdr for [u8; N] {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         w.write_all(self)?;
@@ -320,7 +320,7 @@ impl<const N: usize> WriteXDR for [u8; N] {
     }
 }
 
-impl<T: ReadXDR, const N: usize> ReadXDR for [T; N] {
+impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let mut vec = Vec::with_capacity(N);
@@ -333,7 +333,7 @@ impl<T: ReadXDR, const N: usize> ReadXDR for [T; N] {
     }
 }
 
-impl<T: WriteXDR, const N: usize> WriteXDR for [T; N] {
+impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         for t in self {
@@ -475,7 +475,7 @@ where
     }
 }
 
-impl<const MAX: u32> ReadXDR for VecM<u8, MAX> {
+impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let len: u32 = u32::read_xdr(r)?;
@@ -494,7 +494,7 @@ impl<const MAX: u32> ReadXDR for VecM<u8, MAX> {
     }
 }
 
-impl<const MAX: u32> WriteXDR for VecM<u8, MAX> {
+impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
@@ -510,7 +510,7 @@ impl<const MAX: u32> WriteXDR for VecM<u8, MAX> {
     }
 }
 
-impl<T: ReadXDR, const MAX: u32> ReadXDR for VecM<T, MAX> {
+impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let len = u32::read_xdr(r)?;
@@ -528,7 +528,7 @@ impl<T: ReadXDR, const MAX: u32> ReadXDR for VecM<T, MAX> {
     }
 }
 
-impl<T: WriteXDR, const MAX: u32> WriteXDR for VecM<T, MAX> {
+impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
@@ -572,7 +572,7 @@ impl AsRef<VecM<u8>> for Value {
     }
 }
 
-impl ReadXDR for Value {
+impl ReadXdr for Value {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = VecM::<u8>::read_xdr(r)?;
@@ -581,7 +581,7 @@ impl ReadXDR for Value {
     }
 }
 
-impl WriteXDR for Value {
+impl WriteXdr for Value {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -602,7 +602,7 @@ pub struct ScpBallot {
     pub value: Value,
 }
 
-impl ReadXDR for ScpBallot {
+impl ReadXdr for ScpBallot {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -612,7 +612,7 @@ impl ReadXDR for ScpBallot {
     }
 }
 
-impl WriteXDR for ScpBallot {
+impl WriteXdr for ScpBallot {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.counter.write_xdr(w)?;
@@ -663,7 +663,7 @@ impl From<ScpStatementType> for i32 {
     }
 }
 
-impl ReadXDR for ScpStatementType {
+impl ReadXdr for ScpStatementType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -672,7 +672,7 @@ impl ReadXDR for ScpStatementType {
     }
 }
 
-impl WriteXDR for ScpStatementType {
+impl WriteXdr for ScpStatementType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -696,7 +696,7 @@ pub struct ScpNomination {
     pub accepted: VecM<Value>,
 }
 
-impl ReadXDR for ScpNomination {
+impl ReadXdr for ScpNomination {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -707,7 +707,7 @@ impl ReadXDR for ScpNomination {
     }
 }
 
-impl WriteXDR for ScpNomination {
+impl WriteXdr for ScpNomination {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.quorum_set_hash.write_xdr(w)?;
@@ -739,7 +739,7 @@ pub struct ScpStatementPrepare {
     pub n_h: u32,
 }
 
-impl ReadXDR for ScpStatementPrepare {
+impl ReadXdr for ScpStatementPrepare {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -753,7 +753,7 @@ impl ReadXDR for ScpStatementPrepare {
     }
 }
 
-impl WriteXDR for ScpStatementPrepare {
+impl WriteXdr for ScpStatementPrepare {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.quorum_set_hash.write_xdr(w)?;
@@ -786,7 +786,7 @@ pub struct ScpStatementConfirm {
     pub quorum_set_hash: Hash,
 }
 
-impl ReadXDR for ScpStatementConfirm {
+impl ReadXdr for ScpStatementConfirm {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -799,7 +799,7 @@ impl ReadXDR for ScpStatementConfirm {
     }
 }
 
-impl WriteXDR for ScpStatementConfirm {
+impl WriteXdr for ScpStatementConfirm {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ballot.write_xdr(w)?;
@@ -827,7 +827,7 @@ pub struct ScpStatementExternalize {
     pub commit_quorum_set_hash: Hash,
 }
 
-impl ReadXDR for ScpStatementExternalize {
+impl ReadXdr for ScpStatementExternalize {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -838,7 +838,7 @@ impl ReadXDR for ScpStatementExternalize {
     }
 }
 
-impl WriteXDR for ScpStatementExternalize {
+impl WriteXdr for ScpStatementExternalize {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.commit.write_xdr(w)?;
@@ -902,10 +902,10 @@ impl ScpStatementPledges {
     }
 }
 
-impl ReadXDR for ScpStatementPledges {
+impl ReadXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ScpStatementType = <ScpStatementType as ReadXDR>::read_xdr(r)?;
+        let dv: ScpStatementType = <ScpStatementType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ScpStatementType::ScpStPrepare => Self::ScpStPrepare(ScpStatementPrepare::read_xdr(r)?),
             ScpStatementType::ScpStConfirm => Self::ScpStConfirm(ScpStatementConfirm::read_xdr(r)?),
@@ -920,7 +920,7 @@ impl ReadXDR for ScpStatementPledges {
     }
 }
 
-impl WriteXDR for ScpStatementPledges {
+impl WriteXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -982,7 +982,7 @@ pub struct ScpStatement {
     pub pledges: ScpStatementPledges,
 }
 
-impl ReadXDR for ScpStatement {
+impl ReadXdr for ScpStatement {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -993,7 +993,7 @@ impl ReadXDR for ScpStatement {
     }
 }
 
-impl WriteXDR for ScpStatement {
+impl WriteXdr for ScpStatement {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.node_id.write_xdr(w)?;
@@ -1017,7 +1017,7 @@ pub struct ScpEnvelope {
     pub signature: Signature,
 }
 
-impl ReadXDR for ScpEnvelope {
+impl ReadXdr for ScpEnvelope {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -1027,7 +1027,7 @@ impl ReadXDR for ScpEnvelope {
     }
 }
 
-impl WriteXDR for ScpEnvelope {
+impl WriteXdr for ScpEnvelope {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.statement.write_xdr(w)?;
@@ -1052,7 +1052,7 @@ pub struct ScpQuorumSet {
     pub inner_sets: VecM<ScpQuorumSet>,
 }
 
-impl ReadXDR for ScpQuorumSet {
+impl ReadXdr for ScpQuorumSet {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -1063,7 +1063,7 @@ impl ReadXDR for ScpQuorumSet {
     }
 }
 
-impl WriteXDR for ScpQuorumSet {
+impl WriteXdr for ScpQuorumSet {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.threshold.write_xdr(w)?;
@@ -1098,7 +1098,7 @@ impl AsRef<PublicKey> for AccountId {
     }
 }
 
-impl ReadXDR for AccountId {
+impl ReadXdr for AccountId {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = PublicKey::read_xdr(r)?;
@@ -1107,7 +1107,7 @@ impl ReadXDR for AccountId {
     }
 }
 
-impl WriteXDR for AccountId {
+impl WriteXdr for AccountId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -1139,7 +1139,7 @@ impl AsRef<[u8; 4]> for Thresholds {
     }
 }
 
-impl ReadXDR for Thresholds {
+impl ReadXdr for Thresholds {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <[u8; 4]>::read_xdr(r)?;
@@ -1148,7 +1148,7 @@ impl ReadXDR for Thresholds {
     }
 }
 
-impl WriteXDR for Thresholds {
+impl WriteXdr for Thresholds {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -1192,7 +1192,7 @@ impl AsRef<i64> for SequenceNumber {
     }
 }
 
-impl ReadXDR for SequenceNumber {
+impl ReadXdr for SequenceNumber {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = i64::read_xdr(r)?;
@@ -1201,7 +1201,7 @@ impl ReadXDR for SequenceNumber {
     }
 }
 
-impl WriteXDR for SequenceNumber {
+impl WriteXdr for SequenceNumber {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -1233,7 +1233,7 @@ impl AsRef<u64> for TimePoint {
     }
 }
 
-impl ReadXDR for TimePoint {
+impl ReadXdr for TimePoint {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = u64::read_xdr(r)?;
@@ -1242,7 +1242,7 @@ impl ReadXDR for TimePoint {
     }
 }
 
-impl WriteXDR for TimePoint {
+impl WriteXdr for TimePoint {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -1274,7 +1274,7 @@ impl AsRef<u64> for Duration {
     }
 }
 
-impl ReadXDR for Duration {
+impl ReadXdr for Duration {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = u64::read_xdr(r)?;
@@ -1283,7 +1283,7 @@ impl ReadXDR for Duration {
     }
 }
 
-impl WriteXDR for Duration {
+impl WriteXdr for Duration {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -1315,7 +1315,7 @@ impl AsRef<VecM<u8, 64>> for DataValue {
     }
 }
 
-impl ReadXDR for DataValue {
+impl ReadXdr for DataValue {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = VecM::<u8, 64>::read_xdr(r)?;
@@ -1324,7 +1324,7 @@ impl ReadXDR for DataValue {
     }
 }
 
-impl WriteXDR for DataValue {
+impl WriteXdr for DataValue {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -1356,7 +1356,7 @@ impl AsRef<Hash> for PoolId {
     }
 }
 
-impl ReadXDR for PoolId {
+impl ReadXdr for PoolId {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = Hash::read_xdr(r)?;
@@ -1365,7 +1365,7 @@ impl ReadXDR for PoolId {
     }
 }
 
-impl WriteXDR for PoolId {
+impl WriteXdr for PoolId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -1397,7 +1397,7 @@ impl AsRef<[u8; 4]> for AssetCode4 {
     }
 }
 
-impl ReadXDR for AssetCode4 {
+impl ReadXdr for AssetCode4 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <[u8; 4]>::read_xdr(r)?;
@@ -1406,7 +1406,7 @@ impl ReadXDR for AssetCode4 {
     }
 }
 
-impl WriteXDR for AssetCode4 {
+impl WriteXdr for AssetCode4 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -1438,7 +1438,7 @@ impl AsRef<[u8; 12]> for AssetCode12 {
     }
 }
 
-impl ReadXDR for AssetCode12 {
+impl ReadXdr for AssetCode12 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <[u8; 12]>::read_xdr(r)?;
@@ -1447,7 +1447,7 @@ impl ReadXDR for AssetCode12 {
     }
 }
 
-impl WriteXDR for AssetCode12 {
+impl WriteXdr for AssetCode12 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -1496,7 +1496,7 @@ impl From<AssetType> for i32 {
     }
 }
 
-impl ReadXDR for AssetType {
+impl ReadXdr for AssetType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -1505,7 +1505,7 @@ impl ReadXDR for AssetType {
     }
 }
 
-impl WriteXDR for AssetType {
+impl WriteXdr for AssetType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -1542,10 +1542,10 @@ impl AssetCode {
     }
 }
 
-impl ReadXDR for AssetCode {
+impl ReadXdr for AssetCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AssetType = <AssetType as ReadXDR>::read_xdr(r)?;
+        let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             AssetType::AssetTypeCreditAlphanum4 => {
                 Self::AssetTypeCreditAlphanum4(AssetCode4::read_xdr(r)?)
@@ -1560,7 +1560,7 @@ impl ReadXDR for AssetCode {
     }
 }
 
-impl WriteXDR for AssetCode {
+impl WriteXdr for AssetCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -1586,7 +1586,7 @@ pub struct AlphaNum4 {
     pub issuer: AccountId,
 }
 
-impl ReadXDR for AlphaNum4 {
+impl ReadXdr for AlphaNum4 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -1596,7 +1596,7 @@ impl ReadXDR for AlphaNum4 {
     }
 }
 
-impl WriteXDR for AlphaNum4 {
+impl WriteXdr for AlphaNum4 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.asset_code.write_xdr(w)?;
@@ -1619,7 +1619,7 @@ pub struct AlphaNum12 {
     pub issuer: AccountId,
 }
 
-impl ReadXDR for AlphaNum12 {
+impl ReadXdr for AlphaNum12 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -1629,7 +1629,7 @@ impl ReadXDR for AlphaNum12 {
     }
 }
 
-impl WriteXDR for AlphaNum12 {
+impl WriteXdr for AlphaNum12 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.asset_code.write_xdr(w)?;
@@ -1672,10 +1672,10 @@ impl Asset {
     }
 }
 
-impl ReadXDR for Asset {
+impl ReadXdr for Asset {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AssetType = <AssetType as ReadXDR>::read_xdr(r)?;
+        let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             AssetType::AssetTypeNative => Self::AssetTypeNative,
             AssetType::AssetTypeCreditAlphanum4 => {
@@ -1691,7 +1691,7 @@ impl ReadXDR for Asset {
     }
 }
 
-impl WriteXDR for Asset {
+impl WriteXdr for Asset {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -1718,7 +1718,7 @@ pub struct Price {
     pub d: i32,
 }
 
-impl ReadXDR for Price {
+impl ReadXdr for Price {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -1728,7 +1728,7 @@ impl ReadXDR for Price {
     }
 }
 
-impl WriteXDR for Price {
+impl WriteXdr for Price {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.n.write_xdr(w)?;
@@ -1751,7 +1751,7 @@ pub struct Liabilities {
     pub selling: i64,
 }
 
-impl ReadXDR for Liabilities {
+impl ReadXdr for Liabilities {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -1761,7 +1761,7 @@ impl ReadXDR for Liabilities {
     }
 }
 
-impl WriteXDR for Liabilities {
+impl WriteXdr for Liabilities {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.buying.write_xdr(w)?;
@@ -1812,7 +1812,7 @@ impl From<ThresholdIndexes> for i32 {
     }
 }
 
-impl ReadXDR for ThresholdIndexes {
+impl ReadXdr for ThresholdIndexes {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -1821,7 +1821,7 @@ impl ReadXDR for ThresholdIndexes {
     }
 }
 
-impl WriteXDR for ThresholdIndexes {
+impl WriteXdr for ThresholdIndexes {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -1877,7 +1877,7 @@ impl From<LedgerEntryType> for i32 {
     }
 }
 
-impl ReadXDR for LedgerEntryType {
+impl ReadXdr for LedgerEntryType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -1886,7 +1886,7 @@ impl ReadXDR for LedgerEntryType {
     }
 }
 
-impl WriteXDR for LedgerEntryType {
+impl WriteXdr for LedgerEntryType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -1908,7 +1908,7 @@ pub struct Signer {
     pub weight: u32,
 }
 
-impl ReadXDR for Signer {
+impl ReadXdr for Signer {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -1918,7 +1918,7 @@ impl ReadXDR for Signer {
     }
 }
 
-impl WriteXDR for Signer {
+impl WriteXdr for Signer {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.key.write_xdr(w)?;
@@ -1979,7 +1979,7 @@ impl From<AccountFlags> for i32 {
     }
 }
 
-impl ReadXDR for AccountFlags {
+impl ReadXdr for AccountFlags {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -1988,7 +1988,7 @@ impl ReadXDR for AccountFlags {
     }
 }
 
-impl WriteXDR for AccountFlags {
+impl WriteXdr for AccountFlags {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -2039,7 +2039,7 @@ impl AsRef<Option<AccountId>> for SponsorshipDescriptor {
     }
 }
 
-impl ReadXDR for SponsorshipDescriptor {
+impl ReadXdr for SponsorshipDescriptor {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = Option::<AccountId>::read_xdr(r)?;
@@ -2048,7 +2048,7 @@ impl ReadXDR for SponsorshipDescriptor {
     }
 }
 
-impl WriteXDR for SponsorshipDescriptor {
+impl WriteXdr for SponsorshipDescriptor {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -2077,7 +2077,7 @@ pub struct AccountEntryExtensionV3 {
     pub seq_time: TimePoint,
 }
 
-impl ReadXDR for AccountEntryExtensionV3 {
+impl ReadXdr for AccountEntryExtensionV3 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -2088,7 +2088,7 @@ impl ReadXDR for AccountEntryExtensionV3 {
     }
 }
 
-impl WriteXDR for AccountEntryExtensionV3 {
+impl WriteXdr for AccountEntryExtensionV3 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ext.write_xdr(w)?;
@@ -2124,10 +2124,10 @@ impl AccountEntryExtensionV2Ext {
     }
 }
 
-impl ReadXDR for AccountEntryExtensionV2Ext {
+impl ReadXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             3 => Self::V3(AccountEntryExtensionV3::read_xdr(r)?),
@@ -2138,7 +2138,7 @@ impl ReadXDR for AccountEntryExtensionV2Ext {
     }
 }
 
-impl WriteXDR for AccountEntryExtensionV2Ext {
+impl WriteXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -2176,7 +2176,7 @@ pub struct AccountEntryExtensionV2 {
     pub ext: AccountEntryExtensionV2Ext,
 }
 
-impl ReadXDR for AccountEntryExtensionV2 {
+impl ReadXdr for AccountEntryExtensionV2 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -2188,7 +2188,7 @@ impl ReadXDR for AccountEntryExtensionV2 {
     }
 }
 
-impl WriteXDR for AccountEntryExtensionV2 {
+impl WriteXdr for AccountEntryExtensionV2 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.num_sponsored.write_xdr(w)?;
@@ -2225,10 +2225,10 @@ impl AccountEntryExtensionV1Ext {
     }
 }
 
-impl ReadXDR for AccountEntryExtensionV1Ext {
+impl ReadXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             2 => Self::V2(AccountEntryExtensionV2::read_xdr(r)?),
@@ -2239,7 +2239,7 @@ impl ReadXDR for AccountEntryExtensionV1Ext {
     }
 }
 
-impl WriteXDR for AccountEntryExtensionV1Ext {
+impl WriteXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -2273,7 +2273,7 @@ pub struct AccountEntryExtensionV1 {
     pub ext: AccountEntryExtensionV1Ext,
 }
 
-impl ReadXDR for AccountEntryExtensionV1 {
+impl ReadXdr for AccountEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -2283,7 +2283,7 @@ impl ReadXDR for AccountEntryExtensionV1 {
     }
 }
 
-impl WriteXDR for AccountEntryExtensionV1 {
+impl WriteXdr for AccountEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.liabilities.write_xdr(w)?;
@@ -2318,10 +2318,10 @@ impl AccountEntryExt {
     }
 }
 
-impl ReadXDR for AccountEntryExt {
+impl ReadXdr for AccountEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             1 => Self::V1(AccountEntryExtensionV1::read_xdr(r)?),
@@ -2332,7 +2332,7 @@ impl ReadXDR for AccountEntryExt {
     }
 }
 
-impl WriteXDR for AccountEntryExt {
+impl WriteXdr for AccountEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -2389,7 +2389,7 @@ pub struct AccountEntry {
     pub ext: AccountEntryExt,
 }
 
-impl ReadXDR for AccountEntry {
+impl ReadXdr for AccountEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -2407,7 +2407,7 @@ impl ReadXDR for AccountEntry {
     }
 }
 
-impl WriteXDR for AccountEntry {
+impl WriteXdr for AccountEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.account_id.write_xdr(w)?;
@@ -2468,7 +2468,7 @@ impl From<TrustLineFlags> for i32 {
     }
 }
 
-impl ReadXDR for TrustLineFlags {
+impl ReadXdr for TrustLineFlags {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -2477,7 +2477,7 @@ impl ReadXDR for TrustLineFlags {
     }
 }
 
-impl WriteXDR for TrustLineFlags {
+impl WriteXdr for TrustLineFlags {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -2536,7 +2536,7 @@ impl From<LiquidityPoolType> for i32 {
     }
 }
 
-impl ReadXDR for LiquidityPoolType {
+impl ReadXdr for LiquidityPoolType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -2545,7 +2545,7 @@ impl ReadXDR for LiquidityPoolType {
     }
 }
 
-impl WriteXDR for LiquidityPoolType {
+impl WriteXdr for LiquidityPoolType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -2592,10 +2592,10 @@ impl TrustLineAsset {
     }
 }
 
-impl ReadXDR for TrustLineAsset {
+impl ReadXdr for TrustLineAsset {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AssetType = <AssetType as ReadXDR>::read_xdr(r)?;
+        let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             AssetType::AssetTypeNative => Self::AssetTypeNative,
             AssetType::AssetTypeCreditAlphanum4 => {
@@ -2612,7 +2612,7 @@ impl ReadXDR for TrustLineAsset {
     }
 }
 
-impl WriteXDR for TrustLineAsset {
+impl WriteXdr for TrustLineAsset {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -2648,10 +2648,10 @@ impl TrustLineEntryExtensionV2Ext {
     }
 }
 
-impl ReadXDR for TrustLineEntryExtensionV2Ext {
+impl ReadXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -2661,7 +2661,7 @@ impl ReadXDR for TrustLineEntryExtensionV2Ext {
     }
 }
 
-impl WriteXDR for TrustLineEntryExtensionV2Ext {
+impl WriteXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -2692,7 +2692,7 @@ pub struct TrustLineEntryExtensionV2 {
     pub ext: TrustLineEntryExtensionV2Ext,
 }
 
-impl ReadXDR for TrustLineEntryExtensionV2 {
+impl ReadXdr for TrustLineEntryExtensionV2 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -2702,7 +2702,7 @@ impl ReadXDR for TrustLineEntryExtensionV2 {
     }
 }
 
-impl WriteXDR for TrustLineEntryExtensionV2 {
+impl WriteXdr for TrustLineEntryExtensionV2 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.liquidity_pool_use_count.write_xdr(w)?;
@@ -2737,10 +2737,10 @@ impl TrustLineEntryV1Ext {
     }
 }
 
-impl ReadXDR for TrustLineEntryV1Ext {
+impl ReadXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             2 => Self::V2(TrustLineEntryExtensionV2::read_xdr(r)?),
@@ -2751,7 +2751,7 @@ impl ReadXDR for TrustLineEntryV1Ext {
     }
 }
 
-impl WriteXDR for TrustLineEntryV1Ext {
+impl WriteXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -2785,7 +2785,7 @@ pub struct TrustLineEntryV1 {
     pub ext: TrustLineEntryV1Ext,
 }
 
-impl ReadXDR for TrustLineEntryV1 {
+impl ReadXdr for TrustLineEntryV1 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -2795,7 +2795,7 @@ impl ReadXDR for TrustLineEntryV1 {
     }
 }
 
-impl WriteXDR for TrustLineEntryV1 {
+impl WriteXdr for TrustLineEntryV1 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.liabilities.write_xdr(w)?;
@@ -2842,10 +2842,10 @@ impl TrustLineEntryExt {
     }
 }
 
-impl ReadXDR for TrustLineEntryExt {
+impl ReadXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             1 => Self::V1(TrustLineEntryV1::read_xdr(r)?),
@@ -2856,7 +2856,7 @@ impl ReadXDR for TrustLineEntryExt {
     }
 }
 
-impl WriteXDR for TrustLineEntryExt {
+impl WriteXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -2913,7 +2913,7 @@ pub struct TrustLineEntry {
     pub ext: TrustLineEntryExt,
 }
 
-impl ReadXDR for TrustLineEntry {
+impl ReadXdr for TrustLineEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -2927,7 +2927,7 @@ impl ReadXDR for TrustLineEntry {
     }
 }
 
-impl WriteXDR for TrustLineEntry {
+impl WriteXdr for TrustLineEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.account_id.write_xdr(w)?;
@@ -2975,7 +2975,7 @@ impl From<OfferEntryFlags> for i32 {
     }
 }
 
-impl ReadXDR for OfferEntryFlags {
+impl ReadXdr for OfferEntryFlags {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -2984,7 +2984,7 @@ impl ReadXDR for OfferEntryFlags {
     }
 }
 
-impl WriteXDR for OfferEntryFlags {
+impl WriteXdr for OfferEntryFlags {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -3020,10 +3020,10 @@ impl OfferEntryExt {
     }
 }
 
-impl ReadXDR for OfferEntryExt {
+impl ReadXdr for OfferEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -3033,7 +3033,7 @@ impl ReadXDR for OfferEntryExt {
     }
 }
 
-impl WriteXDR for OfferEntryExt {
+impl WriteXdr for OfferEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -3083,7 +3083,7 @@ pub struct OfferEntry {
     pub ext: OfferEntryExt,
 }
 
-impl ReadXDR for OfferEntry {
+impl ReadXdr for OfferEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -3099,7 +3099,7 @@ impl ReadXDR for OfferEntry {
     }
 }
 
-impl WriteXDR for OfferEntry {
+impl WriteXdr for OfferEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.seller_id.write_xdr(w)?;
@@ -3136,10 +3136,10 @@ impl DataEntryExt {
     }
 }
 
-impl ReadXDR for DataEntryExt {
+impl ReadXdr for DataEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -3149,7 +3149,7 @@ impl ReadXDR for DataEntryExt {
     }
 }
 
-impl WriteXDR for DataEntryExt {
+impl WriteXdr for DataEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -3185,7 +3185,7 @@ pub struct DataEntry {
     pub ext: DataEntryExt,
 }
 
-impl ReadXDR for DataEntry {
+impl ReadXdr for DataEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -3197,7 +3197,7 @@ impl ReadXDR for DataEntry {
     }
 }
 
-impl WriteXDR for DataEntry {
+impl WriteXdr for DataEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.account_id.write_xdr(w)?;
@@ -3256,7 +3256,7 @@ impl From<ClaimPredicateType> for i32 {
     }
 }
 
-impl ReadXDR for ClaimPredicateType {
+impl ReadXdr for ClaimPredicateType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -3265,7 +3265,7 @@ impl ReadXDR for ClaimPredicateType {
     }
 }
 
-impl WriteXDR for ClaimPredicateType {
+impl WriteXdr for ClaimPredicateType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -3320,10 +3320,10 @@ impl ClaimPredicate {
     }
 }
 
-impl ReadXDR for ClaimPredicate {
+impl ReadXdr for ClaimPredicate {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClaimPredicateType = <ClaimPredicateType as ReadXDR>::read_xdr(r)?;
+        let dv: ClaimPredicateType = <ClaimPredicateType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ClaimPredicateType::ClaimPredicateUnconditional => Self::ClaimPredicateUnconditional,
             ClaimPredicateType::ClaimPredicateAnd => {
@@ -3348,7 +3348,7 @@ impl ReadXDR for ClaimPredicate {
     }
 }
 
-impl WriteXDR for ClaimPredicate {
+impl WriteXdr for ClaimPredicate {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -3397,7 +3397,7 @@ impl From<ClaimantType> for i32 {
     }
 }
 
-impl ReadXDR for ClaimantType {
+impl ReadXdr for ClaimantType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -3406,7 +3406,7 @@ impl ReadXDR for ClaimantType {
     }
 }
 
-impl WriteXDR for ClaimantType {
+impl WriteXdr for ClaimantType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -3428,7 +3428,7 @@ pub struct ClaimantV0 {
     pub predicate: ClaimPredicate,
 }
 
-impl ReadXDR for ClaimantV0 {
+impl ReadXdr for ClaimantV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -3438,7 +3438,7 @@ impl ReadXDR for ClaimantV0 {
     }
 }
 
-impl WriteXDR for ClaimantV0 {
+impl WriteXdr for ClaimantV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.destination.write_xdr(w)?;
@@ -3473,10 +3473,10 @@ impl Claimant {
     }
 }
 
-impl ReadXDR for Claimant {
+impl ReadXdr for Claimant {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClaimantType = <ClaimantType as ReadXDR>::read_xdr(r)?;
+        let dv: ClaimantType = <ClaimantType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ClaimantType::ClaimantTypeV0 => Self::ClaimantTypeV0(ClaimantV0::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -3486,7 +3486,7 @@ impl ReadXDR for Claimant {
     }
 }
 
-impl WriteXDR for Claimant {
+impl WriteXdr for Claimant {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -3530,7 +3530,7 @@ impl From<ClaimableBalanceIdType> for i32 {
     }
 }
 
-impl ReadXDR for ClaimableBalanceIdType {
+impl ReadXdr for ClaimableBalanceIdType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -3539,7 +3539,7 @@ impl ReadXDR for ClaimableBalanceIdType {
     }
 }
 
-impl WriteXDR for ClaimableBalanceIdType {
+impl WriteXdr for ClaimableBalanceIdType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -3569,10 +3569,10 @@ impl ClaimableBalanceId {
     }
 }
 
-impl ReadXDR for ClaimableBalanceId {
+impl ReadXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXDR>::read_xdr(r)?;
+        let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ClaimableBalanceIdType::ClaimableBalanceIdTypeV0 => {
                 Self::ClaimableBalanceIdTypeV0(Hash::read_xdr(r)?)
@@ -3584,7 +3584,7 @@ impl ReadXDR for ClaimableBalanceId {
     }
 }
 
-impl WriteXDR for ClaimableBalanceId {
+impl WriteXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -3630,7 +3630,7 @@ impl From<ClaimableBalanceFlags> for i32 {
     }
 }
 
-impl ReadXDR for ClaimableBalanceFlags {
+impl ReadXdr for ClaimableBalanceFlags {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -3639,7 +3639,7 @@ impl ReadXDR for ClaimableBalanceFlags {
     }
 }
 
-impl WriteXDR for ClaimableBalanceFlags {
+impl WriteXdr for ClaimableBalanceFlags {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -3675,10 +3675,10 @@ impl ClaimableBalanceEntryExtensionV1Ext {
     }
 }
 
-impl ReadXDR for ClaimableBalanceEntryExtensionV1Ext {
+impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -3688,7 +3688,7 @@ impl ReadXDR for ClaimableBalanceEntryExtensionV1Ext {
     }
 }
 
-impl WriteXDR for ClaimableBalanceEntryExtensionV1Ext {
+impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -3719,7 +3719,7 @@ pub struct ClaimableBalanceEntryExtensionV1 {
     pub flags: u32,
 }
 
-impl ReadXDR for ClaimableBalanceEntryExtensionV1 {
+impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -3729,7 +3729,7 @@ impl ReadXDR for ClaimableBalanceEntryExtensionV1 {
     }
 }
 
-impl WriteXDR for ClaimableBalanceEntryExtensionV1 {
+impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ext.write_xdr(w)?;
@@ -3764,10 +3764,10 @@ impl ClaimableBalanceEntryExt {
     }
 }
 
-impl ReadXDR for ClaimableBalanceEntryExt {
+impl ReadXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             1 => Self::V1(ClaimableBalanceEntryExtensionV1::read_xdr(r)?),
@@ -3778,7 +3778,7 @@ impl ReadXDR for ClaimableBalanceEntryExt {
     }
 }
 
-impl WriteXDR for ClaimableBalanceEntryExt {
+impl WriteXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -3826,7 +3826,7 @@ pub struct ClaimableBalanceEntry {
     pub ext: ClaimableBalanceEntryExt,
 }
 
-impl ReadXDR for ClaimableBalanceEntry {
+impl ReadXdr for ClaimableBalanceEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -3839,7 +3839,7 @@ impl ReadXDR for ClaimableBalanceEntry {
     }
 }
 
-impl WriteXDR for ClaimableBalanceEntry {
+impl WriteXdr for ClaimableBalanceEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.balance_id.write_xdr(w)?;
@@ -3867,7 +3867,7 @@ pub struct LiquidityPoolConstantProductParameters {
     pub fee: i32,
 }
 
-impl ReadXDR for LiquidityPoolConstantProductParameters {
+impl ReadXdr for LiquidityPoolConstantProductParameters {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -3878,7 +3878,7 @@ impl ReadXDR for LiquidityPoolConstantProductParameters {
     }
 }
 
-impl WriteXDR for LiquidityPoolConstantProductParameters {
+impl WriteXdr for LiquidityPoolConstantProductParameters {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.asset_a.write_xdr(w)?;
@@ -3910,7 +3910,7 @@ pub struct LiquidityPoolEntryConstantProduct {
     pub pool_shares_trust_line_count: i64,
 }
 
-impl ReadXDR for LiquidityPoolEntryConstantProduct {
+impl ReadXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -3923,7 +3923,7 @@ impl ReadXDR for LiquidityPoolEntryConstantProduct {
     }
 }
 
-impl WriteXDR for LiquidityPoolEntryConstantProduct {
+impl WriteXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.params.write_xdr(w)?;
@@ -3968,10 +3968,10 @@ impl LiquidityPoolEntryBody {
     }
 }
 
-impl ReadXDR for LiquidityPoolEntryBody {
+impl ReadXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LiquidityPoolType = <LiquidityPoolType as ReadXDR>::read_xdr(r)?;
+        let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             LiquidityPoolType::LiquidityPoolConstantProduct => {
                 Self::LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct::read_xdr(r)?)
@@ -3983,7 +3983,7 @@ impl ReadXDR for LiquidityPoolEntryBody {
     }
 }
 
-impl WriteXDR for LiquidityPoolEntryBody {
+impl WriteXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -4023,7 +4023,7 @@ pub struct LiquidityPoolEntry {
     pub body: LiquidityPoolEntryBody,
 }
 
-impl ReadXDR for LiquidityPoolEntry {
+impl ReadXdr for LiquidityPoolEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -4033,7 +4033,7 @@ impl ReadXDR for LiquidityPoolEntry {
     }
 }
 
-impl WriteXDR for LiquidityPoolEntry {
+impl WriteXdr for LiquidityPoolEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.liquidity_pool_id.write_xdr(w)?;
@@ -4064,10 +4064,10 @@ impl LedgerEntryExtensionV1Ext {
     }
 }
 
-impl ReadXDR for LedgerEntryExtensionV1Ext {
+impl ReadXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -4077,7 +4077,7 @@ impl ReadXDR for LedgerEntryExtensionV1Ext {
     }
 }
 
-impl WriteXDR for LedgerEntryExtensionV1Ext {
+impl WriteXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -4108,7 +4108,7 @@ pub struct LedgerEntryExtensionV1 {
     pub ext: LedgerEntryExtensionV1Ext,
 }
 
-impl ReadXDR for LedgerEntryExtensionV1 {
+impl ReadXdr for LedgerEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -4118,7 +4118,7 @@ impl ReadXDR for LedgerEntryExtensionV1 {
     }
 }
 
-impl WriteXDR for LedgerEntryExtensionV1 {
+impl WriteXdr for LedgerEntryExtensionV1 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.sponsoring_id.write_xdr(w)?;
@@ -4169,10 +4169,10 @@ impl LedgerEntryData {
     }
 }
 
-impl ReadXDR for LedgerEntryData {
+impl ReadXdr for LedgerEntryData {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LedgerEntryType = <LedgerEntryType as ReadXDR>::read_xdr(r)?;
+        let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             LedgerEntryType::Account => Self::Account(AccountEntry::read_xdr(r)?),
             LedgerEntryType::Trustline => Self::Trustline(TrustLineEntry::read_xdr(r)?),
@@ -4189,7 +4189,7 @@ impl ReadXDR for LedgerEntryData {
     }
 }
 
-impl WriteXDR for LedgerEntryData {
+impl WriteXdr for LedgerEntryData {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -4231,10 +4231,10 @@ impl LedgerEntryExt {
     }
 }
 
-impl ReadXDR for LedgerEntryExt {
+impl ReadXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             1 => Self::V1(LedgerEntryExtensionV1::read_xdr(r)?),
@@ -4245,7 +4245,7 @@ impl ReadXDR for LedgerEntryExt {
     }
 }
 
-impl WriteXDR for LedgerEntryExt {
+impl WriteXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -4298,7 +4298,7 @@ pub struct LedgerEntry {
     pub ext: LedgerEntryExt,
 }
 
-impl ReadXDR for LedgerEntry {
+impl ReadXdr for LedgerEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -4309,7 +4309,7 @@ impl ReadXDR for LedgerEntry {
     }
 }
 
-impl WriteXDR for LedgerEntry {
+impl WriteXdr for LedgerEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.last_modified_ledger_seq.write_xdr(w)?;
@@ -4331,7 +4331,7 @@ pub struct LedgerKeyAccount {
     pub account_id: AccountId,
 }
 
-impl ReadXDR for LedgerKeyAccount {
+impl ReadXdr for LedgerKeyAccount {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -4340,7 +4340,7 @@ impl ReadXDR for LedgerKeyAccount {
     }
 }
 
-impl WriteXDR for LedgerKeyAccount {
+impl WriteXdr for LedgerKeyAccount {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.account_id.write_xdr(w)?;
@@ -4362,7 +4362,7 @@ pub struct LedgerKeyTrustLine {
     pub asset: TrustLineAsset,
 }
 
-impl ReadXDR for LedgerKeyTrustLine {
+impl ReadXdr for LedgerKeyTrustLine {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -4372,7 +4372,7 @@ impl ReadXDR for LedgerKeyTrustLine {
     }
 }
 
-impl WriteXDR for LedgerKeyTrustLine {
+impl WriteXdr for LedgerKeyTrustLine {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.account_id.write_xdr(w)?;
@@ -4395,7 +4395,7 @@ pub struct LedgerKeyOffer {
     pub offer_id: i64,
 }
 
-impl ReadXDR for LedgerKeyOffer {
+impl ReadXdr for LedgerKeyOffer {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -4405,7 +4405,7 @@ impl ReadXDR for LedgerKeyOffer {
     }
 }
 
-impl WriteXDR for LedgerKeyOffer {
+impl WriteXdr for LedgerKeyOffer {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.seller_id.write_xdr(w)?;
@@ -4428,7 +4428,7 @@ pub struct LedgerKeyData {
     pub data_name: VecM<u8, 64>,
 }
 
-impl ReadXDR for LedgerKeyData {
+impl ReadXdr for LedgerKeyData {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -4438,7 +4438,7 @@ impl ReadXDR for LedgerKeyData {
     }
 }
 
-impl WriteXDR for LedgerKeyData {
+impl WriteXdr for LedgerKeyData {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.account_id.write_xdr(w)?;
@@ -4459,7 +4459,7 @@ pub struct LedgerKeyClaimableBalance {
     pub balance_id: ClaimableBalanceId,
 }
 
-impl ReadXDR for LedgerKeyClaimableBalance {
+impl ReadXdr for LedgerKeyClaimableBalance {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -4468,7 +4468,7 @@ impl ReadXDR for LedgerKeyClaimableBalance {
     }
 }
 
-impl WriteXDR for LedgerKeyClaimableBalance {
+impl WriteXdr for LedgerKeyClaimableBalance {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.balance_id.write_xdr(w)?;
@@ -4488,7 +4488,7 @@ pub struct LedgerKeyLiquidityPool {
     pub liquidity_pool_id: PoolId,
 }
 
-impl ReadXDR for LedgerKeyLiquidityPool {
+impl ReadXdr for LedgerKeyLiquidityPool {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -4497,7 +4497,7 @@ impl ReadXDR for LedgerKeyLiquidityPool {
     }
 }
 
-impl WriteXDR for LedgerKeyLiquidityPool {
+impl WriteXdr for LedgerKeyLiquidityPool {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.liquidity_pool_id.write_xdr(w)?;
@@ -4573,10 +4573,10 @@ impl LedgerKey {
     }
 }
 
-impl ReadXDR for LedgerKey {
+impl ReadXdr for LedgerKey {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LedgerEntryType = <LedgerEntryType as ReadXDR>::read_xdr(r)?;
+        let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             LedgerEntryType::Account => Self::Account(LedgerKeyAccount::read_xdr(r)?),
             LedgerEntryType::Trustline => Self::Trustline(LedgerKeyTrustLine::read_xdr(r)?),
@@ -4595,7 +4595,7 @@ impl ReadXDR for LedgerKey {
     }
 }
 
-impl WriteXDR for LedgerKey {
+impl WriteXdr for LedgerKey {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -4665,7 +4665,7 @@ impl From<EnvelopeType> for i32 {
     }
 }
 
-impl ReadXDR for EnvelopeType {
+impl ReadXdr for EnvelopeType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -4674,7 +4674,7 @@ impl ReadXDR for EnvelopeType {
     }
 }
 
-impl WriteXDR for EnvelopeType {
+impl WriteXdr for EnvelopeType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -4707,7 +4707,7 @@ impl AsRef<VecM<u8, 128>> for UpgradeType {
     }
 }
 
-impl ReadXDR for UpgradeType {
+impl ReadXdr for UpgradeType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = VecM::<u8, 128>::read_xdr(r)?;
@@ -4716,7 +4716,7 @@ impl ReadXDR for UpgradeType {
     }
 }
 
-impl WriteXDR for UpgradeType {
+impl WriteXdr for UpgradeType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -4759,7 +4759,7 @@ impl From<StellarValueType> for i32 {
     }
 }
 
-impl ReadXDR for StellarValueType {
+impl ReadXdr for StellarValueType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -4768,7 +4768,7 @@ impl ReadXDR for StellarValueType {
     }
 }
 
-impl WriteXDR for StellarValueType {
+impl WriteXdr for StellarValueType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -4790,7 +4790,7 @@ pub struct LedgerCloseValueSignature {
     pub signature: Signature,
 }
 
-impl ReadXDR for LedgerCloseValueSignature {
+impl ReadXdr for LedgerCloseValueSignature {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -4800,7 +4800,7 @@ impl ReadXDR for LedgerCloseValueSignature {
     }
 }
 
-impl WriteXDR for LedgerCloseValueSignature {
+impl WriteXdr for LedgerCloseValueSignature {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.node_id.write_xdr(w)?;
@@ -4835,10 +4835,10 @@ impl StellarValueExt {
     }
 }
 
-impl ReadXDR for StellarValueExt {
+impl ReadXdr for StellarValueExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: StellarValueType = <StellarValueType as ReadXDR>::read_xdr(r)?;
+        let dv: StellarValueType = <StellarValueType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             StellarValueType::StellarValueBasic => Self::StellarValueBasic,
             StellarValueType::StellarValueSigned => {
@@ -4851,7 +4851,7 @@ impl ReadXDR for StellarValueExt {
     }
 }
 
-impl WriteXDR for StellarValueExt {
+impl WriteXdr for StellarValueExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -4896,7 +4896,7 @@ pub struct StellarValue {
     pub ext: StellarValueExt,
 }
 
-impl ReadXDR for StellarValue {
+impl ReadXdr for StellarValue {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -4908,7 +4908,7 @@ impl ReadXDR for StellarValue {
     }
 }
 
-impl WriteXDR for StellarValue {
+impl WriteXdr for StellarValue {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.tx_set_hash.write_xdr(w)?;
@@ -4964,7 +4964,7 @@ impl From<LedgerHeaderFlags> for i32 {
     }
 }
 
-impl ReadXDR for LedgerHeaderFlags {
+impl ReadXdr for LedgerHeaderFlags {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -4973,7 +4973,7 @@ impl ReadXDR for LedgerHeaderFlags {
     }
 }
 
-impl WriteXDR for LedgerHeaderFlags {
+impl WriteXdr for LedgerHeaderFlags {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -5003,10 +5003,10 @@ impl LedgerHeaderExtensionV1Ext {
     }
 }
 
-impl ReadXDR for LedgerHeaderExtensionV1Ext {
+impl ReadXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -5016,7 +5016,7 @@ impl ReadXDR for LedgerHeaderExtensionV1Ext {
     }
 }
 
-impl WriteXDR for LedgerHeaderExtensionV1Ext {
+impl WriteXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -5047,7 +5047,7 @@ pub struct LedgerHeaderExtensionV1 {
     pub ext: LedgerHeaderExtensionV1Ext,
 }
 
-impl ReadXDR for LedgerHeaderExtensionV1 {
+impl ReadXdr for LedgerHeaderExtensionV1 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -5057,7 +5057,7 @@ impl ReadXDR for LedgerHeaderExtensionV1 {
     }
 }
 
-impl WriteXDR for LedgerHeaderExtensionV1 {
+impl WriteXdr for LedgerHeaderExtensionV1 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.flags.write_xdr(w)?;
@@ -5092,10 +5092,10 @@ impl LedgerHeaderExt {
     }
 }
 
-impl ReadXDR for LedgerHeaderExt {
+impl ReadXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             1 => Self::V1(LedgerHeaderExtensionV1::read_xdr(r)?),
@@ -5106,7 +5106,7 @@ impl ReadXDR for LedgerHeaderExt {
     }
 }
 
-impl WriteXDR for LedgerHeaderExt {
+impl WriteXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -5179,7 +5179,7 @@ pub struct LedgerHeader {
     pub ext: LedgerHeaderExt,
 }
 
-impl ReadXDR for LedgerHeader {
+impl ReadXdr for LedgerHeader {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -5202,7 +5202,7 @@ impl ReadXDR for LedgerHeader {
     }
 }
 
-impl WriteXDR for LedgerHeader {
+impl WriteXdr for LedgerHeader {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ledger_version.write_xdr(w)?;
@@ -5269,7 +5269,7 @@ impl From<LedgerUpgradeType> for i32 {
     }
 }
 
-impl ReadXDR for LedgerUpgradeType {
+impl ReadXdr for LedgerUpgradeType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -5278,7 +5278,7 @@ impl ReadXDR for LedgerUpgradeType {
     }
 }
 
-impl WriteXDR for LedgerUpgradeType {
+impl WriteXdr for LedgerUpgradeType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -5324,10 +5324,10 @@ impl LedgerUpgrade {
     }
 }
 
-impl ReadXDR for LedgerUpgrade {
+impl ReadXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXDR>::read_xdr(r)?;
+        let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             LedgerUpgradeType::LedgerUpgradeVersion => {
                 Self::LedgerUpgradeVersion(u32::read_xdr(r)?)
@@ -5349,7 +5349,7 @@ impl ReadXDR for LedgerUpgrade {
     }
 }
 
-impl WriteXDR for LedgerUpgrade {
+impl WriteXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -5408,7 +5408,7 @@ impl From<BucketEntryType> for i32 {
     }
 }
 
-impl ReadXDR for BucketEntryType {
+impl ReadXdr for BucketEntryType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -5417,7 +5417,7 @@ impl ReadXDR for BucketEntryType {
     }
 }
 
-impl WriteXDR for BucketEntryType {
+impl WriteXdr for BucketEntryType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -5447,10 +5447,10 @@ impl BucketMetadataExt {
     }
 }
 
-impl ReadXDR for BucketMetadataExt {
+impl ReadXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -5460,7 +5460,7 @@ impl ReadXDR for BucketMetadataExt {
     }
 }
 
-impl WriteXDR for BucketMetadataExt {
+impl WriteXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -5493,7 +5493,7 @@ pub struct BucketMetadata {
     pub ext: BucketMetadataExt,
 }
 
-impl ReadXDR for BucketMetadata {
+impl ReadXdr for BucketMetadata {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -5503,7 +5503,7 @@ impl ReadXDR for BucketMetadata {
     }
 }
 
-impl WriteXDR for BucketMetadata {
+impl WriteXdr for BucketMetadata {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ledger_version.write_xdr(w)?;
@@ -5546,10 +5546,10 @@ impl BucketEntry {
     }
 }
 
-impl ReadXDR for BucketEntry {
+impl ReadXdr for BucketEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: BucketEntryType = <BucketEntryType as ReadXDR>::read_xdr(r)?;
+        let dv: BucketEntryType = <BucketEntryType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             BucketEntryType::Liveentry => Self::Liveentry(LedgerEntry::read_xdr(r)?),
             BucketEntryType::Initentry => Self::Initentry(LedgerEntry::read_xdr(r)?),
@@ -5562,7 +5562,7 @@ impl ReadXDR for BucketEntry {
     }
 }
 
-impl WriteXDR for BucketEntry {
+impl WriteXdr for BucketEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -5590,7 +5590,7 @@ pub struct TransactionSet {
     pub txs: VecM<TransactionEnvelope>,
 }
 
-impl ReadXDR for TransactionSet {
+impl ReadXdr for TransactionSet {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -5600,7 +5600,7 @@ impl ReadXDR for TransactionSet {
     }
 }
 
-impl WriteXDR for TransactionSet {
+impl WriteXdr for TransactionSet {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.previous_ledger_hash.write_xdr(w)?;
@@ -5623,7 +5623,7 @@ pub struct TransactionResultPair {
     pub result: TransactionResult,
 }
 
-impl ReadXDR for TransactionResultPair {
+impl ReadXdr for TransactionResultPair {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -5633,7 +5633,7 @@ impl ReadXDR for TransactionResultPair {
     }
 }
 
-impl WriteXDR for TransactionResultPair {
+impl WriteXdr for TransactionResultPair {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.transaction_hash.write_xdr(w)?;
@@ -5654,7 +5654,7 @@ pub struct TransactionResultSet {
     pub results: VecM<TransactionResultPair>,
 }
 
-impl ReadXDR for TransactionResultSet {
+impl ReadXdr for TransactionResultSet {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -5663,7 +5663,7 @@ impl ReadXDR for TransactionResultSet {
     }
 }
 
-impl WriteXDR for TransactionResultSet {
+impl WriteXdr for TransactionResultSet {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.results.write_xdr(w)?;
@@ -5693,10 +5693,10 @@ impl TransactionHistoryEntryExt {
     }
 }
 
-impl ReadXDR for TransactionHistoryEntryExt {
+impl ReadXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -5706,7 +5706,7 @@ impl ReadXDR for TransactionHistoryEntryExt {
     }
 }
 
-impl WriteXDR for TransactionHistoryEntryExt {
+impl WriteXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -5740,7 +5740,7 @@ pub struct TransactionHistoryEntry {
     pub ext: TransactionHistoryEntryExt,
 }
 
-impl ReadXDR for TransactionHistoryEntry {
+impl ReadXdr for TransactionHistoryEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -5751,7 +5751,7 @@ impl ReadXDR for TransactionHistoryEntry {
     }
 }
 
-impl WriteXDR for TransactionHistoryEntry {
+impl WriteXdr for TransactionHistoryEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ledger_seq.write_xdr(w)?;
@@ -5783,10 +5783,10 @@ impl TransactionHistoryResultEntryExt {
     }
 }
 
-impl ReadXDR for TransactionHistoryResultEntryExt {
+impl ReadXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -5796,7 +5796,7 @@ impl ReadXDR for TransactionHistoryResultEntryExt {
     }
 }
 
-impl WriteXDR for TransactionHistoryResultEntryExt {
+impl WriteXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -5830,7 +5830,7 @@ pub struct TransactionHistoryResultEntry {
     pub ext: TransactionHistoryResultEntryExt,
 }
 
-impl ReadXDR for TransactionHistoryResultEntry {
+impl ReadXdr for TransactionHistoryResultEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -5841,7 +5841,7 @@ impl ReadXDR for TransactionHistoryResultEntry {
     }
 }
 
-impl WriteXDR for TransactionHistoryResultEntry {
+impl WriteXdr for TransactionHistoryResultEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ledger_seq.write_xdr(w)?;
@@ -5873,10 +5873,10 @@ impl LedgerHeaderHistoryEntryExt {
     }
 }
 
-impl ReadXDR for LedgerHeaderHistoryEntryExt {
+impl ReadXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -5886,7 +5886,7 @@ impl ReadXDR for LedgerHeaderHistoryEntryExt {
     }
 }
 
-impl WriteXDR for LedgerHeaderHistoryEntryExt {
+impl WriteXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -5920,7 +5920,7 @@ pub struct LedgerHeaderHistoryEntry {
     pub ext: LedgerHeaderHistoryEntryExt,
 }
 
-impl ReadXDR for LedgerHeaderHistoryEntry {
+impl ReadXdr for LedgerHeaderHistoryEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -5931,7 +5931,7 @@ impl ReadXDR for LedgerHeaderHistoryEntry {
     }
 }
 
-impl WriteXDR for LedgerHeaderHistoryEntry {
+impl WriteXdr for LedgerHeaderHistoryEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.hash.write_xdr(w)?;
@@ -5955,7 +5955,7 @@ pub struct LedgerScpMessages {
     pub messages: VecM<ScpEnvelope>,
 }
 
-impl ReadXDR for LedgerScpMessages {
+impl ReadXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -5965,7 +5965,7 @@ impl ReadXDR for LedgerScpMessages {
     }
 }
 
-impl WriteXDR for LedgerScpMessages {
+impl WriteXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ledger_seq.write_xdr(w)?;
@@ -5988,7 +5988,7 @@ pub struct ScpHistoryEntryV0 {
     pub ledger_messages: LedgerScpMessages,
 }
 
-impl ReadXDR for ScpHistoryEntryV0 {
+impl ReadXdr for ScpHistoryEntryV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -5998,7 +5998,7 @@ impl ReadXDR for ScpHistoryEntryV0 {
     }
 }
 
-impl WriteXDR for ScpHistoryEntryV0 {
+impl WriteXdr for ScpHistoryEntryV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.quorum_sets.write_xdr(w)?;
@@ -6029,10 +6029,10 @@ impl ScpHistoryEntry {
     }
 }
 
-impl ReadXDR for ScpHistoryEntry {
+impl ReadXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0(ScpHistoryEntryV0::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -6042,7 +6042,7 @@ impl ReadXDR for ScpHistoryEntry {
     }
 }
 
-impl WriteXDR for ScpHistoryEntry {
+impl WriteXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -6095,7 +6095,7 @@ impl From<LedgerEntryChangeType> for i32 {
     }
 }
 
-impl ReadXDR for LedgerEntryChangeType {
+impl ReadXdr for LedgerEntryChangeType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -6104,7 +6104,7 @@ impl ReadXDR for LedgerEntryChangeType {
     }
 }
 
-impl WriteXDR for LedgerEntryChangeType {
+impl WriteXdr for LedgerEntryChangeType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -6146,10 +6146,10 @@ impl LedgerEntryChange {
     }
 }
 
-impl ReadXDR for LedgerEntryChange {
+impl ReadXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXDR>::read_xdr(r)?;
+        let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             LedgerEntryChangeType::LedgerEntryCreated => {
                 Self::LedgerEntryCreated(LedgerEntry::read_xdr(r)?)
@@ -6170,7 +6170,7 @@ impl ReadXDR for LedgerEntryChange {
     }
 }
 
-impl WriteXDR for LedgerEntryChange {
+impl WriteXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -6209,7 +6209,7 @@ impl AsRef<VecM<LedgerEntryChange>> for LedgerEntryChanges {
     }
 }
 
-impl ReadXDR for LedgerEntryChanges {
+impl ReadXdr for LedgerEntryChanges {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = VecM::<LedgerEntryChange>::read_xdr(r)?;
@@ -6218,7 +6218,7 @@ impl ReadXDR for LedgerEntryChanges {
     }
 }
 
-impl WriteXDR for LedgerEntryChanges {
+impl WriteXdr for LedgerEntryChanges {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -6237,7 +6237,7 @@ pub struct OperationMeta {
     pub changes: LedgerEntryChanges,
 }
 
-impl ReadXDR for OperationMeta {
+impl ReadXdr for OperationMeta {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6246,7 +6246,7 @@ impl ReadXDR for OperationMeta {
     }
 }
 
-impl WriteXDR for OperationMeta {
+impl WriteXdr for OperationMeta {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.changes.write_xdr(w)?;
@@ -6268,7 +6268,7 @@ pub struct TransactionMetaV1 {
     pub operations: VecM<OperationMeta>,
 }
 
-impl ReadXDR for TransactionMetaV1 {
+impl ReadXdr for TransactionMetaV1 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6278,7 +6278,7 @@ impl ReadXDR for TransactionMetaV1 {
     }
 }
 
-impl WriteXDR for TransactionMetaV1 {
+impl WriteXdr for TransactionMetaV1 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.tx_changes.write_xdr(w)?;
@@ -6305,7 +6305,7 @@ pub struct TransactionMetaV2 {
     pub tx_changes_after: LedgerEntryChanges,
 }
 
-impl ReadXDR for TransactionMetaV2 {
+impl ReadXdr for TransactionMetaV2 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6316,7 +6316,7 @@ impl ReadXDR for TransactionMetaV2 {
     }
 }
 
-impl WriteXDR for TransactionMetaV2 {
+impl WriteXdr for TransactionMetaV2 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.tx_changes_before.write_xdr(w)?;
@@ -6356,10 +6356,10 @@ impl TransactionMeta {
     }
 }
 
-impl ReadXDR for TransactionMeta {
+impl ReadXdr for TransactionMeta {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0(VecM::<OperationMeta>::read_xdr(r)?),
             1 => Self::V1(TransactionMetaV1::read_xdr(r)?),
@@ -6371,7 +6371,7 @@ impl ReadXDR for TransactionMeta {
     }
 }
 
-impl WriteXDR for TransactionMeta {
+impl WriteXdr for TransactionMeta {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -6400,7 +6400,7 @@ pub struct TransactionResultMeta {
     pub tx_apply_processing: TransactionMeta,
 }
 
-impl ReadXDR for TransactionResultMeta {
+impl ReadXdr for TransactionResultMeta {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6411,7 +6411,7 @@ impl ReadXDR for TransactionResultMeta {
     }
 }
 
-impl WriteXDR for TransactionResultMeta {
+impl WriteXdr for TransactionResultMeta {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.result.write_xdr(w)?;
@@ -6435,7 +6435,7 @@ pub struct UpgradeEntryMeta {
     pub changes: LedgerEntryChanges,
 }
 
-impl ReadXDR for UpgradeEntryMeta {
+impl ReadXdr for UpgradeEntryMeta {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6445,7 +6445,7 @@ impl ReadXDR for UpgradeEntryMeta {
     }
 }
 
-impl WriteXDR for UpgradeEntryMeta {
+impl WriteXdr for UpgradeEntryMeta {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.upgrade.write_xdr(w)?;
@@ -6483,7 +6483,7 @@ pub struct LedgerCloseMetaV0 {
     pub scp_info: VecM<ScpHistoryEntry>,
 }
 
-impl ReadXDR for LedgerCloseMetaV0 {
+impl ReadXdr for LedgerCloseMetaV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6496,7 +6496,7 @@ impl ReadXDR for LedgerCloseMetaV0 {
     }
 }
 
-impl WriteXDR for LedgerCloseMetaV0 {
+impl WriteXdr for LedgerCloseMetaV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ledger_header.write_xdr(w)?;
@@ -6530,10 +6530,10 @@ impl LedgerCloseMeta {
     }
 }
 
-impl ReadXDR for LedgerCloseMeta {
+impl ReadXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -6543,7 +6543,7 @@ impl ReadXDR for LedgerCloseMeta {
     }
 }
 
-impl WriteXDR for LedgerCloseMeta {
+impl WriteXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -6599,7 +6599,7 @@ impl From<ErrorCode> for i32 {
     }
 }
 
-impl ReadXDR for ErrorCode {
+impl ReadXdr for ErrorCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -6608,7 +6608,7 @@ impl ReadXDR for ErrorCode {
     }
 }
 
-impl WriteXDR for ErrorCode {
+impl WriteXdr for ErrorCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -6630,7 +6630,7 @@ pub struct SError {
     pub msg: VecM<u8, 100>,
 }
 
-impl ReadXDR for SError {
+impl ReadXdr for SError {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6640,7 +6640,7 @@ impl ReadXDR for SError {
     }
 }
 
-impl WriteXDR for SError {
+impl WriteXdr for SError {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.code.write_xdr(w)?;
@@ -6661,7 +6661,7 @@ pub struct SendMore {
     pub num_messages: u32,
 }
 
-impl ReadXDR for SendMore {
+impl ReadXdr for SendMore {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6670,7 +6670,7 @@ impl ReadXDR for SendMore {
     }
 }
 
-impl WriteXDR for SendMore {
+impl WriteXdr for SendMore {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.num_messages.write_xdr(w)?;
@@ -6694,7 +6694,7 @@ pub struct AuthCert {
     pub sig: Signature,
 }
 
-impl ReadXDR for AuthCert {
+impl ReadXdr for AuthCert {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6705,7 +6705,7 @@ impl ReadXDR for AuthCert {
     }
 }
 
-impl WriteXDR for AuthCert {
+impl WriteXdr for AuthCert {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.pubkey.write_xdr(w)?;
@@ -6743,7 +6743,7 @@ pub struct Hello {
     pub nonce: Uint256,
 }
 
-impl ReadXDR for Hello {
+impl ReadXdr for Hello {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6760,7 +6760,7 @@ impl ReadXDR for Hello {
     }
 }
 
-impl WriteXDR for Hello {
+impl WriteXdr for Hello {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ledger_version.write_xdr(w)?;
@@ -6790,7 +6790,7 @@ pub struct Auth {
     pub unused: i32,
 }
 
-impl ReadXDR for Auth {
+impl ReadXdr for Auth {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6799,7 +6799,7 @@ impl ReadXDR for Auth {
     }
 }
 
-impl WriteXDR for Auth {
+impl WriteXdr for Auth {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.unused.write_xdr(w)?;
@@ -6843,7 +6843,7 @@ impl From<IpAddrType> for i32 {
     }
 }
 
-impl ReadXDR for IpAddrType {
+impl ReadXdr for IpAddrType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -6852,7 +6852,7 @@ impl ReadXDR for IpAddrType {
     }
 }
 
-impl WriteXDR for IpAddrType {
+impl WriteXdr for IpAddrType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -6886,10 +6886,10 @@ impl PeerAddressIp {
     }
 }
 
-impl ReadXDR for PeerAddressIp {
+impl ReadXdr for PeerAddressIp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: IpAddrType = <IpAddrType as ReadXDR>::read_xdr(r)?;
+        let dv: IpAddrType = <IpAddrType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             IpAddrType::IPv4 => Self::IPv4(<[u8; 4]>::read_xdr(r)?),
             IpAddrType::IPv6 => Self::IPv6(<[u8; 16]>::read_xdr(r)?),
@@ -6900,7 +6900,7 @@ impl ReadXDR for PeerAddressIp {
     }
 }
 
-impl WriteXDR for PeerAddressIp {
+impl WriteXdr for PeerAddressIp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -6935,7 +6935,7 @@ pub struct PeerAddress {
     pub num_failures: u32,
 }
 
-impl ReadXDR for PeerAddress {
+impl ReadXdr for PeerAddress {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -6946,7 +6946,7 @@ impl ReadXDR for PeerAddress {
     }
 }
 
-impl WriteXDR for PeerAddress {
+impl WriteXdr for PeerAddress {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ip.write_xdr(w)?;
@@ -7043,7 +7043,7 @@ impl From<MessageType> for i32 {
     }
 }
 
-impl ReadXDR for MessageType {
+impl ReadXdr for MessageType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -7052,7 +7052,7 @@ impl ReadXDR for MessageType {
     }
 }
 
-impl WriteXDR for MessageType {
+impl WriteXdr for MessageType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -7074,7 +7074,7 @@ pub struct DontHave {
     pub req_hash: Uint256,
 }
 
-impl ReadXDR for DontHave {
+impl ReadXdr for DontHave {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -7084,7 +7084,7 @@ impl ReadXDR for DontHave {
     }
 }
 
-impl WriteXDR for DontHave {
+impl WriteXdr for DontHave {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.type_.write_xdr(w)?;
@@ -7126,7 +7126,7 @@ impl From<SurveyMessageCommandType> for i32 {
     }
 }
 
-impl ReadXDR for SurveyMessageCommandType {
+impl ReadXdr for SurveyMessageCommandType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -7135,7 +7135,7 @@ impl ReadXDR for SurveyMessageCommandType {
     }
 }
 
-impl WriteXDR for SurveyMessageCommandType {
+impl WriteXdr for SurveyMessageCommandType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -7163,7 +7163,7 @@ pub struct SurveyRequestMessage {
     pub command_type: SurveyMessageCommandType,
 }
 
-impl ReadXDR for SurveyRequestMessage {
+impl ReadXdr for SurveyRequestMessage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -7176,7 +7176,7 @@ impl ReadXDR for SurveyRequestMessage {
     }
 }
 
-impl WriteXDR for SurveyRequestMessage {
+impl WriteXdr for SurveyRequestMessage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.surveyor_peer_id.write_xdr(w)?;
@@ -7202,7 +7202,7 @@ pub struct SignedSurveyRequestMessage {
     pub request: SurveyRequestMessage,
 }
 
-impl ReadXDR for SignedSurveyRequestMessage {
+impl ReadXdr for SignedSurveyRequestMessage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -7212,7 +7212,7 @@ impl ReadXDR for SignedSurveyRequestMessage {
     }
 }
 
-impl WriteXDR for SignedSurveyRequestMessage {
+impl WriteXdr for SignedSurveyRequestMessage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.request_signature.write_xdr(w)?;
@@ -7246,7 +7246,7 @@ impl AsRef<VecM<u8, 64000>> for EncryptedBody {
     }
 }
 
-impl ReadXDR for EncryptedBody {
+impl ReadXdr for EncryptedBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = VecM::<u8, 64000>::read_xdr(r)?;
@@ -7255,7 +7255,7 @@ impl ReadXDR for EncryptedBody {
     }
 }
 
-impl WriteXDR for EncryptedBody {
+impl WriteXdr for EncryptedBody {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -7282,7 +7282,7 @@ pub struct SurveyResponseMessage {
     pub encrypted_body: EncryptedBody,
 }
 
-impl ReadXDR for SurveyResponseMessage {
+impl ReadXdr for SurveyResponseMessage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -7295,7 +7295,7 @@ impl ReadXDR for SurveyResponseMessage {
     }
 }
 
-impl WriteXDR for SurveyResponseMessage {
+impl WriteXdr for SurveyResponseMessage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.surveyor_peer_id.write_xdr(w)?;
@@ -7321,7 +7321,7 @@ pub struct SignedSurveyResponseMessage {
     pub response: SurveyResponseMessage,
 }
 
-impl ReadXDR for SignedSurveyResponseMessage {
+impl ReadXdr for SignedSurveyResponseMessage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -7331,7 +7331,7 @@ impl ReadXDR for SignedSurveyResponseMessage {
     }
 }
 
-impl WriteXDR for SignedSurveyResponseMessage {
+impl WriteXdr for SignedSurveyResponseMessage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.response_signature.write_xdr(w)?;
@@ -7382,7 +7382,7 @@ pub struct PeerStats {
     pub duplicate_fetch_message_recv: u64,
 }
 
-impl ReadXDR for PeerStats {
+impl ReadXdr for PeerStats {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -7405,7 +7405,7 @@ impl ReadXDR for PeerStats {
     }
 }
 
-impl WriteXDR for PeerStats {
+impl WriteXdr for PeerStats {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.id.write_xdr(w)?;
@@ -7452,7 +7452,7 @@ impl AsRef<VecM<PeerStats, 25>> for PeerStatList {
     }
 }
 
-impl ReadXDR for PeerStatList {
+impl ReadXdr for PeerStatList {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = VecM::<PeerStats, 25>::read_xdr(r)?;
@@ -7461,7 +7461,7 @@ impl ReadXDR for PeerStatList {
     }
 }
 
-impl WriteXDR for PeerStatList {
+impl WriteXdr for PeerStatList {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -7487,7 +7487,7 @@ pub struct TopologyResponseBody {
     pub total_outbound_peer_count: u32,
 }
 
-impl ReadXDR for TopologyResponseBody {
+impl ReadXdr for TopologyResponseBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -7499,7 +7499,7 @@ impl ReadXDR for TopologyResponseBody {
     }
 }
 
-impl WriteXDR for TopologyResponseBody {
+impl WriteXdr for TopologyResponseBody {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.inbound_peers.write_xdr(w)?;
@@ -7532,10 +7532,10 @@ impl SurveyResponseBody {
     }
 }
 
-impl ReadXDR for SurveyResponseBody {
+impl ReadXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: SurveyMessageCommandType = <SurveyMessageCommandType as ReadXDR>::read_xdr(r)?;
+        let dv: SurveyMessageCommandType = <SurveyMessageCommandType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             SurveyMessageCommandType::SurveyTopology => {
                 Self::SurveyTopology(TopologyResponseBody::read_xdr(r)?)
@@ -7547,7 +7547,7 @@ impl ReadXDR for SurveyResponseBody {
     }
 }
 
-impl WriteXDR for SurveyResponseBody {
+impl WriteXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -7646,10 +7646,10 @@ impl StellarMessage {
     }
 }
 
-impl ReadXDR for StellarMessage {
+impl ReadXdr for StellarMessage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: MessageType = <MessageType as ReadXDR>::read_xdr(r)?;
+        let dv: MessageType = <MessageType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             MessageType::ErrorMsg => Self::ErrorMsg(SError::read_xdr(r)?),
             MessageType::Hello => Self::Hello(Hello::read_xdr(r)?),
@@ -7678,7 +7678,7 @@ impl ReadXDR for StellarMessage {
     }
 }
 
-impl WriteXDR for StellarMessage {
+impl WriteXdr for StellarMessage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -7720,7 +7720,7 @@ pub struct AuthenticatedMessageV0 {
     pub mac: HmacSha256Mac,
 }
 
-impl ReadXDR for AuthenticatedMessageV0 {
+impl ReadXdr for AuthenticatedMessageV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -7731,7 +7731,7 @@ impl ReadXDR for AuthenticatedMessageV0 {
     }
 }
 
-impl WriteXDR for AuthenticatedMessageV0 {
+impl WriteXdr for AuthenticatedMessageV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.sequence.write_xdr(w)?;
@@ -7768,10 +7768,10 @@ impl AuthenticatedMessage {
     }
 }
 
-impl ReadXDR for AuthenticatedMessage {
+impl ReadXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: u32 = <u32 as ReadXDR>::read_xdr(r)?;
+        let dv: u32 = <u32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0(AuthenticatedMessageV0::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -7781,7 +7781,7 @@ impl ReadXDR for AuthenticatedMessage {
     }
 }
 
-impl WriteXDR for AuthenticatedMessage {
+impl WriteXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -7816,10 +7816,10 @@ impl LiquidityPoolParameters {
     }
 }
 
-impl ReadXDR for LiquidityPoolParameters {
+impl ReadXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LiquidityPoolType = <LiquidityPoolType as ReadXDR>::read_xdr(r)?;
+        let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             LiquidityPoolType::LiquidityPoolConstantProduct => Self::LiquidityPoolConstantProduct(
                 LiquidityPoolConstantProductParameters::read_xdr(r)?,
@@ -7831,7 +7831,7 @@ impl ReadXDR for LiquidityPoolParameters {
     }
 }
 
-impl WriteXDR for LiquidityPoolParameters {
+impl WriteXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -7856,7 +7856,7 @@ pub struct MuxedAccountMed25519 {
     pub ed25519: Uint256,
 }
 
-impl ReadXDR for MuxedAccountMed25519 {
+impl ReadXdr for MuxedAccountMed25519 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -7866,7 +7866,7 @@ impl ReadXDR for MuxedAccountMed25519 {
     }
 }
 
-impl WriteXDR for MuxedAccountMed25519 {
+impl WriteXdr for MuxedAccountMed25519 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.id.write_xdr(w)?;
@@ -7905,10 +7905,10 @@ impl MuxedAccount {
     }
 }
 
-impl ReadXDR for MuxedAccount {
+impl ReadXdr for MuxedAccount {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: CryptoKeyType = <CryptoKeyType as ReadXDR>::read_xdr(r)?;
+        let dv: CryptoKeyType = <CryptoKeyType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             CryptoKeyType::KeyTypeEd25519 => Self::KeyTypeEd25519(Uint256::read_xdr(r)?),
             CryptoKeyType::KeyTypeMuxedEd25519 => {
@@ -7921,7 +7921,7 @@ impl ReadXDR for MuxedAccount {
     }
 }
 
-impl WriteXDR for MuxedAccount {
+impl WriteXdr for MuxedAccount {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -7947,7 +7947,7 @@ pub struct DecoratedSignature {
     pub signature: Signature,
 }
 
-impl ReadXDR for DecoratedSignature {
+impl ReadXdr for DecoratedSignature {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -7957,7 +7957,7 @@ impl ReadXDR for DecoratedSignature {
     }
 }
 
-impl WriteXDR for DecoratedSignature {
+impl WriteXdr for DecoratedSignature {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.hint.write_xdr(w)?;
@@ -8068,7 +8068,7 @@ impl From<OperationType> for i32 {
     }
 }
 
-impl ReadXDR for OperationType {
+impl ReadXdr for OperationType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -8077,7 +8077,7 @@ impl ReadXDR for OperationType {
     }
 }
 
-impl WriteXDR for OperationType {
+impl WriteXdr for OperationType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -8099,7 +8099,7 @@ pub struct CreateAccountOp {
     pub starting_balance: i64,
 }
 
-impl ReadXDR for CreateAccountOp {
+impl ReadXdr for CreateAccountOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8109,7 +8109,7 @@ impl ReadXDR for CreateAccountOp {
     }
 }
 
-impl WriteXDR for CreateAccountOp {
+impl WriteXdr for CreateAccountOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.destination.write_xdr(w)?;
@@ -8134,7 +8134,7 @@ pub struct PaymentOp {
     pub amount: i64,
 }
 
-impl ReadXDR for PaymentOp {
+impl ReadXdr for PaymentOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8145,7 +8145,7 @@ impl ReadXDR for PaymentOp {
     }
 }
 
-impl WriteXDR for PaymentOp {
+impl WriteXdr for PaymentOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.destination.write_xdr(w)?;
@@ -8181,7 +8181,7 @@ pub struct PathPaymentStrictReceiveOp {
     pub path: VecM<Asset, 5>,
 }
 
-impl ReadXDR for PathPaymentStrictReceiveOp {
+impl ReadXdr for PathPaymentStrictReceiveOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8195,7 +8195,7 @@ impl ReadXDR for PathPaymentStrictReceiveOp {
     }
 }
 
-impl WriteXDR for PathPaymentStrictReceiveOp {
+impl WriteXdr for PathPaymentStrictReceiveOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.send_asset.write_xdr(w)?;
@@ -8234,7 +8234,7 @@ pub struct PathPaymentStrictSendOp {
     pub path: VecM<Asset, 5>,
 }
 
-impl ReadXDR for PathPaymentStrictSendOp {
+impl ReadXdr for PathPaymentStrictSendOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8248,7 +8248,7 @@ impl ReadXDR for PathPaymentStrictSendOp {
     }
 }
 
-impl WriteXDR for PathPaymentStrictSendOp {
+impl WriteXdr for PathPaymentStrictSendOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.send_asset.write_xdr(w)?;
@@ -8283,7 +8283,7 @@ pub struct ManageSellOfferOp {
     pub offer_id: i64,
 }
 
-impl ReadXDR for ManageSellOfferOp {
+impl ReadXdr for ManageSellOfferOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8296,7 +8296,7 @@ impl ReadXDR for ManageSellOfferOp {
     }
 }
 
-impl WriteXDR for ManageSellOfferOp {
+impl WriteXdr for ManageSellOfferOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.selling.write_xdr(w)?;
@@ -8331,7 +8331,7 @@ pub struct ManageBuyOfferOp {
     pub offer_id: i64,
 }
 
-impl ReadXDR for ManageBuyOfferOp {
+impl ReadXdr for ManageBuyOfferOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8344,7 +8344,7 @@ impl ReadXDR for ManageBuyOfferOp {
     }
 }
 
-impl WriteXDR for ManageBuyOfferOp {
+impl WriteXdr for ManageBuyOfferOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.selling.write_xdr(w)?;
@@ -8374,7 +8374,7 @@ pub struct CreatePassiveSellOfferOp {
     pub price: Price,
 }
 
-impl ReadXDR for CreatePassiveSellOfferOp {
+impl ReadXdr for CreatePassiveSellOfferOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8386,7 +8386,7 @@ impl ReadXDR for CreatePassiveSellOfferOp {
     }
 }
 
-impl WriteXDR for CreatePassiveSellOfferOp {
+impl WriteXdr for CreatePassiveSellOfferOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.selling.write_xdr(w)?;
@@ -8432,7 +8432,7 @@ pub struct SetOptionsOp {
     pub signer: Option<Signer>,
 }
 
-impl ReadXDR for SetOptionsOp {
+impl ReadXdr for SetOptionsOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8449,7 +8449,7 @@ impl ReadXDR for SetOptionsOp {
     }
 }
 
-impl WriteXDR for SetOptionsOp {
+impl WriteXdr for SetOptionsOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.inflation_dest.write_xdr(w)?;
@@ -8504,10 +8504,10 @@ impl ChangeTrustAsset {
     }
 }
 
-impl ReadXDR for ChangeTrustAsset {
+impl ReadXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AssetType = <AssetType as ReadXDR>::read_xdr(r)?;
+        let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             AssetType::AssetTypeNative => Self::AssetTypeNative,
             AssetType::AssetTypeCreditAlphanum4 => {
@@ -8526,7 +8526,7 @@ impl ReadXDR for ChangeTrustAsset {
     }
 }
 
-impl WriteXDR for ChangeTrustAsset {
+impl WriteXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -8556,7 +8556,7 @@ pub struct ChangeTrustOp {
     pub limit: i64,
 }
 
-impl ReadXDR for ChangeTrustOp {
+impl ReadXdr for ChangeTrustOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8566,7 +8566,7 @@ impl ReadXDR for ChangeTrustOp {
     }
 }
 
-impl WriteXDR for ChangeTrustOp {
+impl WriteXdr for ChangeTrustOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.line.write_xdr(w)?;
@@ -8593,7 +8593,7 @@ pub struct AllowTrustOp {
     pub authorize: u32,
 }
 
-impl ReadXDR for AllowTrustOp {
+impl ReadXdr for AllowTrustOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8604,7 +8604,7 @@ impl ReadXDR for AllowTrustOp {
     }
 }
 
-impl WriteXDR for AllowTrustOp {
+impl WriteXdr for AllowTrustOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.trustor.write_xdr(w)?;
@@ -8628,7 +8628,7 @@ pub struct ManageDataOp {
     pub data_value: Option<DataValue>,
 }
 
-impl ReadXDR for ManageDataOp {
+impl ReadXdr for ManageDataOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8638,7 +8638,7 @@ impl ReadXDR for ManageDataOp {
     }
 }
 
-impl WriteXDR for ManageDataOp {
+impl WriteXdr for ManageDataOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.data_name.write_xdr(w)?;
@@ -8659,7 +8659,7 @@ pub struct BumpSequenceOp {
     pub bump_to: SequenceNumber,
 }
 
-impl ReadXDR for BumpSequenceOp {
+impl ReadXdr for BumpSequenceOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8668,7 +8668,7 @@ impl ReadXDR for BumpSequenceOp {
     }
 }
 
-impl WriteXDR for BumpSequenceOp {
+impl WriteXdr for BumpSequenceOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.bump_to.write_xdr(w)?;
@@ -8692,7 +8692,7 @@ pub struct CreateClaimableBalanceOp {
     pub claimants: VecM<Claimant, 10>,
 }
 
-impl ReadXDR for CreateClaimableBalanceOp {
+impl ReadXdr for CreateClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8703,7 +8703,7 @@ impl ReadXDR for CreateClaimableBalanceOp {
     }
 }
 
-impl WriteXDR for CreateClaimableBalanceOp {
+impl WriteXdr for CreateClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.asset.write_xdr(w)?;
@@ -8725,7 +8725,7 @@ pub struct ClaimClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
 }
 
-impl ReadXDR for ClaimClaimableBalanceOp {
+impl ReadXdr for ClaimClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8734,7 +8734,7 @@ impl ReadXDR for ClaimClaimableBalanceOp {
     }
 }
 
-impl WriteXDR for ClaimClaimableBalanceOp {
+impl WriteXdr for ClaimClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.balance_id.write_xdr(w)?;
@@ -8754,7 +8754,7 @@ pub struct BeginSponsoringFutureReservesOp {
     pub sponsored_id: AccountId,
 }
 
-impl ReadXDR for BeginSponsoringFutureReservesOp {
+impl ReadXdr for BeginSponsoringFutureReservesOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8763,7 +8763,7 @@ impl ReadXDR for BeginSponsoringFutureReservesOp {
     }
 }
 
-impl WriteXDR for BeginSponsoringFutureReservesOp {
+impl WriteXdr for BeginSponsoringFutureReservesOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.sponsored_id.write_xdr(w)?;
@@ -8807,7 +8807,7 @@ impl From<RevokeSponsorshipType> for i32 {
     }
 }
 
-impl ReadXDR for RevokeSponsorshipType {
+impl ReadXdr for RevokeSponsorshipType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -8816,7 +8816,7 @@ impl ReadXDR for RevokeSponsorshipType {
     }
 }
 
-impl WriteXDR for RevokeSponsorshipType {
+impl WriteXdr for RevokeSponsorshipType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -8838,7 +8838,7 @@ pub struct RevokeSponsorshipOpSigner {
     pub signer_key: SignerKey,
 }
 
-impl ReadXDR for RevokeSponsorshipOpSigner {
+impl ReadXdr for RevokeSponsorshipOpSigner {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8848,7 +8848,7 @@ impl ReadXDR for RevokeSponsorshipOpSigner {
     }
 }
 
-impl WriteXDR for RevokeSponsorshipOpSigner {
+impl WriteXdr for RevokeSponsorshipOpSigner {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.account_id.write_xdr(w)?;
@@ -8889,10 +8889,10 @@ impl RevokeSponsorshipOp {
     }
 }
 
-impl ReadXDR for RevokeSponsorshipOp {
+impl ReadXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXDR>::read_xdr(r)?;
+        let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             RevokeSponsorshipType::RevokeSponsorshipLedgerEntry => {
                 Self::RevokeSponsorshipLedgerEntry(LedgerKey::read_xdr(r)?)
@@ -8907,7 +8907,7 @@ impl ReadXDR for RevokeSponsorshipOp {
     }
 }
 
-impl WriteXDR for RevokeSponsorshipOp {
+impl WriteXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -8935,7 +8935,7 @@ pub struct ClawbackOp {
     pub amount: i64,
 }
 
-impl ReadXDR for ClawbackOp {
+impl ReadXdr for ClawbackOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8946,7 +8946,7 @@ impl ReadXDR for ClawbackOp {
     }
 }
 
-impl WriteXDR for ClawbackOp {
+impl WriteXdr for ClawbackOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.asset.write_xdr(w)?;
@@ -8968,7 +8968,7 @@ pub struct ClawbackClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
 }
 
-impl ReadXDR for ClawbackClaimableBalanceOp {
+impl ReadXdr for ClawbackClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -8977,7 +8977,7 @@ impl ReadXDR for ClawbackClaimableBalanceOp {
     }
 }
 
-impl WriteXDR for ClawbackClaimableBalanceOp {
+impl WriteXdr for ClawbackClaimableBalanceOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.balance_id.write_xdr(w)?;
@@ -9004,7 +9004,7 @@ pub struct SetTrustLineFlagsOp {
     pub set_flags: u32,
 }
 
-impl ReadXDR for SetTrustLineFlagsOp {
+impl ReadXdr for SetTrustLineFlagsOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -9016,7 +9016,7 @@ impl ReadXDR for SetTrustLineFlagsOp {
     }
 }
 
-impl WriteXDR for SetTrustLineFlagsOp {
+impl WriteXdr for SetTrustLineFlagsOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.trustor.write_xdr(w)?;
@@ -9053,7 +9053,7 @@ pub struct LiquidityPoolDepositOp {
     pub max_price: Price,
 }
 
-impl ReadXDR for LiquidityPoolDepositOp {
+impl ReadXdr for LiquidityPoolDepositOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -9066,7 +9066,7 @@ impl ReadXDR for LiquidityPoolDepositOp {
     }
 }
 
-impl WriteXDR for LiquidityPoolDepositOp {
+impl WriteXdr for LiquidityPoolDepositOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.liquidity_pool_id.write_xdr(w)?;
@@ -9096,7 +9096,7 @@ pub struct LiquidityPoolWithdrawOp {
     pub min_amount_b: i64,
 }
 
-impl ReadXDR for LiquidityPoolWithdrawOp {
+impl ReadXdr for LiquidityPoolWithdrawOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -9108,7 +9108,7 @@ impl ReadXDR for LiquidityPoolWithdrawOp {
     }
 }
 
-impl WriteXDR for LiquidityPoolWithdrawOp {
+impl WriteXdr for LiquidityPoolWithdrawOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.liquidity_pool_id.write_xdr(w)?;
@@ -9233,10 +9233,10 @@ impl OperationBody {
     }
 }
 
-impl ReadXDR for OperationBody {
+impl ReadXdr for OperationBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: OperationType = <OperationType as ReadXDR>::read_xdr(r)?;
+        let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             OperationType::CreateAccount => Self::CreateAccount(CreateAccountOp::read_xdr(r)?),
             OperationType::Payment => Self::Payment(PaymentOp::read_xdr(r)?),
@@ -9293,7 +9293,7 @@ impl ReadXDR for OperationBody {
     }
 }
 
-impl WriteXDR for OperationBody {
+impl WriteXdr for OperationBody {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -9396,7 +9396,7 @@ pub struct Operation {
     pub body: OperationBody,
 }
 
-impl ReadXDR for Operation {
+impl ReadXdr for Operation {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -9406,7 +9406,7 @@ impl ReadXDR for Operation {
     }
 }
 
-impl WriteXDR for Operation {
+impl WriteXdr for Operation {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.source_account.write_xdr(w)?;
@@ -9431,7 +9431,7 @@ pub struct HashIdPreimageOperationId {
     pub op_num: u32,
 }
 
-impl ReadXDR for HashIdPreimageOperationId {
+impl ReadXdr for HashIdPreimageOperationId {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -9442,7 +9442,7 @@ impl ReadXDR for HashIdPreimageOperationId {
     }
 }
 
-impl WriteXDR for HashIdPreimageOperationId {
+impl WriteXdr for HashIdPreimageOperationId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.source_account.write_xdr(w)?;
@@ -9472,7 +9472,7 @@ pub struct HashIdPreimageRevokeId {
     pub asset: Asset,
 }
 
-impl ReadXDR for HashIdPreimageRevokeId {
+impl ReadXdr for HashIdPreimageRevokeId {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -9485,7 +9485,7 @@ impl ReadXDR for HashIdPreimageRevokeId {
     }
 }
 
-impl WriteXDR for HashIdPreimageRevokeId {
+impl WriteXdr for HashIdPreimageRevokeId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.source_account.write_xdr(w)?;
@@ -9535,10 +9535,10 @@ impl HashIdPreimage {
     }
 }
 
-impl ReadXDR for HashIdPreimage {
+impl ReadXdr for HashIdPreimage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: EnvelopeType = <EnvelopeType as ReadXDR>::read_xdr(r)?;
+        let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             EnvelopeType::EnvelopeTypeOpId => {
                 Self::EnvelopeTypeOpId(HashIdPreimageOperationId::read_xdr(r)?)
@@ -9553,7 +9553,7 @@ impl ReadXDR for HashIdPreimage {
     }
 }
 
-impl WriteXDR for HashIdPreimage {
+impl WriteXdr for HashIdPreimage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -9610,7 +9610,7 @@ impl From<MemoType> for i32 {
     }
 }
 
-impl ReadXDR for MemoType {
+impl ReadXdr for MemoType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -9619,7 +9619,7 @@ impl ReadXDR for MemoType {
     }
 }
 
-impl WriteXDR for MemoType {
+impl WriteXdr for MemoType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -9665,10 +9665,10 @@ impl Memo {
     }
 }
 
-impl ReadXDR for Memo {
+impl ReadXdr for Memo {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: MemoType = <MemoType as ReadXDR>::read_xdr(r)?;
+        let dv: MemoType = <MemoType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             MemoType::MemoNone => Self::MemoNone,
             MemoType::MemoText => Self::MemoText(VecM::<u8, 28>::read_xdr(r)?),
@@ -9682,7 +9682,7 @@ impl ReadXDR for Memo {
     }
 }
 
-impl WriteXDR for Memo {
+impl WriteXdr for Memo {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -9711,7 +9711,7 @@ pub struct TimeBounds {
     pub max_time: TimePoint,
 }
 
-impl ReadXDR for TimeBounds {
+impl ReadXdr for TimeBounds {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -9721,7 +9721,7 @@ impl ReadXDR for TimeBounds {
     }
 }
 
-impl WriteXDR for TimeBounds {
+impl WriteXdr for TimeBounds {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.min_time.write_xdr(w)?;
@@ -9744,7 +9744,7 @@ pub struct LedgerBounds {
     pub max_ledger: u32,
 }
 
-impl ReadXDR for LedgerBounds {
+impl ReadXdr for LedgerBounds {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -9754,7 +9754,7 @@ impl ReadXDR for LedgerBounds {
     }
 }
 
-impl WriteXDR for LedgerBounds {
+impl WriteXdr for LedgerBounds {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.min_ledger.write_xdr(w)?;
@@ -9808,7 +9808,7 @@ pub struct PreconditionsV2 {
     pub extra_signers: VecM<SignerKey, 2>,
 }
 
-impl ReadXDR for PreconditionsV2 {
+impl ReadXdr for PreconditionsV2 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -9822,7 +9822,7 @@ impl ReadXDR for PreconditionsV2 {
     }
 }
 
-impl WriteXDR for PreconditionsV2 {
+impl WriteXdr for PreconditionsV2 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.time_bounds.write_xdr(w)?;
@@ -9874,7 +9874,7 @@ impl From<PreconditionType> for i32 {
     }
 }
 
-impl ReadXDR for PreconditionType {
+impl ReadXdr for PreconditionType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -9883,7 +9883,7 @@ impl ReadXDR for PreconditionType {
     }
 }
 
-impl WriteXDR for PreconditionType {
+impl WriteXdr for PreconditionType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -9921,10 +9921,10 @@ impl Preconditions {
     }
 }
 
-impl ReadXDR for Preconditions {
+impl ReadXdr for Preconditions {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: PreconditionType = <PreconditionType as ReadXDR>::read_xdr(r)?;
+        let dv: PreconditionType = <PreconditionType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             PreconditionType::PrecondNone => Self::PrecondNone,
             PreconditionType::PrecondTime => Self::PrecondTime(TimeBounds::read_xdr(r)?),
@@ -9936,7 +9936,7 @@ impl ReadXDR for Preconditions {
     }
 }
 
-impl WriteXDR for Preconditions {
+impl WriteXdr for Preconditions {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -9977,10 +9977,10 @@ impl TransactionV0Ext {
     }
 }
 
-impl ReadXDR for TransactionV0Ext {
+impl ReadXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -9990,7 +9990,7 @@ impl ReadXDR for TransactionV0Ext {
     }
 }
 
-impl WriteXDR for TransactionV0Ext {
+impl WriteXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -10030,7 +10030,7 @@ pub struct TransactionV0 {
     pub ext: TransactionV0Ext,
 }
 
-impl ReadXDR for TransactionV0 {
+impl ReadXdr for TransactionV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -10045,7 +10045,7 @@ impl ReadXDR for TransactionV0 {
     }
 }
 
-impl WriteXDR for TransactionV0 {
+impl WriteXdr for TransactionV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.source_account_ed25519.write_xdr(w)?;
@@ -10075,7 +10075,7 @@ pub struct TransactionV0Envelope {
     pub signatures: VecM<DecoratedSignature, 20>,
 }
 
-impl ReadXDR for TransactionV0Envelope {
+impl ReadXdr for TransactionV0Envelope {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -10085,7 +10085,7 @@ impl ReadXDR for TransactionV0Envelope {
     }
 }
 
-impl WriteXDR for TransactionV0Envelope {
+impl WriteXdr for TransactionV0Envelope {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.tx.write_xdr(w)?;
@@ -10116,10 +10116,10 @@ impl TransactionExt {
     }
 }
 
-impl ReadXDR for TransactionExt {
+impl ReadXdr for TransactionExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -10129,7 +10129,7 @@ impl ReadXDR for TransactionExt {
     }
 }
 
-impl WriteXDR for TransactionExt {
+impl WriteXdr for TransactionExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -10180,7 +10180,7 @@ pub struct Transaction {
     pub ext: TransactionExt,
 }
 
-impl ReadXDR for Transaction {
+impl ReadXdr for Transaction {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -10195,7 +10195,7 @@ impl ReadXDR for Transaction {
     }
 }
 
-impl WriteXDR for Transaction {
+impl WriteXdr for Transaction {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.source_account.write_xdr(w)?;
@@ -10225,7 +10225,7 @@ pub struct TransactionV1Envelope {
     pub signatures: VecM<DecoratedSignature, 20>,
 }
 
-impl ReadXDR for TransactionV1Envelope {
+impl ReadXdr for TransactionV1Envelope {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -10235,7 +10235,7 @@ impl ReadXDR for TransactionV1Envelope {
     }
 }
 
-impl WriteXDR for TransactionV1Envelope {
+impl WriteXdr for TransactionV1Envelope {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.tx.write_xdr(w)?;
@@ -10266,10 +10266,10 @@ impl FeeBumpTransactionInnerTx {
     }
 }
 
-impl ReadXDR for FeeBumpTransactionInnerTx {
+impl ReadXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: EnvelopeType = <EnvelopeType as ReadXDR>::read_xdr(r)?;
+        let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             EnvelopeType::EnvelopeTypeTx => {
                 Self::EnvelopeTypeTx(TransactionV1Envelope::read_xdr(r)?)
@@ -10281,7 +10281,7 @@ impl ReadXDR for FeeBumpTransactionInnerTx {
     }
 }
 
-impl WriteXDR for FeeBumpTransactionInnerTx {
+impl WriteXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -10314,10 +10314,10 @@ impl FeeBumpTransactionExt {
     }
 }
 
-impl ReadXDR for FeeBumpTransactionExt {
+impl ReadXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -10327,7 +10327,7 @@ impl ReadXDR for FeeBumpTransactionExt {
     }
 }
 
-impl WriteXDR for FeeBumpTransactionExt {
+impl WriteXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -10366,7 +10366,7 @@ pub struct FeeBumpTransaction {
     pub ext: FeeBumpTransactionExt,
 }
 
-impl ReadXDR for FeeBumpTransaction {
+impl ReadXdr for FeeBumpTransaction {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -10378,7 +10378,7 @@ impl ReadXDR for FeeBumpTransaction {
     }
 }
 
-impl WriteXDR for FeeBumpTransaction {
+impl WriteXdr for FeeBumpTransaction {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.fee_source.write_xdr(w)?;
@@ -10405,7 +10405,7 @@ pub struct FeeBumpTransactionEnvelope {
     pub signatures: VecM<DecoratedSignature, 20>,
 }
 
-impl ReadXDR for FeeBumpTransactionEnvelope {
+impl ReadXdr for FeeBumpTransactionEnvelope {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -10415,7 +10415,7 @@ impl ReadXDR for FeeBumpTransactionEnvelope {
     }
 }
 
-impl WriteXDR for FeeBumpTransactionEnvelope {
+impl WriteXdr for FeeBumpTransactionEnvelope {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.tx.write_xdr(w)?;
@@ -10454,10 +10454,10 @@ impl TransactionEnvelope {
     }
 }
 
-impl ReadXDR for TransactionEnvelope {
+impl ReadXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: EnvelopeType = <EnvelopeType as ReadXDR>::read_xdr(r)?;
+        let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             EnvelopeType::EnvelopeTypeTxV0 => {
                 Self::EnvelopeTypeTxV0(TransactionV0Envelope::read_xdr(r)?)
@@ -10475,7 +10475,7 @@ impl ReadXDR for TransactionEnvelope {
     }
 }
 
-impl WriteXDR for TransactionEnvelope {
+impl WriteXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -10515,10 +10515,10 @@ impl TransactionSignaturePayloadTaggedTransaction {
     }
 }
 
-impl ReadXDR for TransactionSignaturePayloadTaggedTransaction {
+impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: EnvelopeType = <EnvelopeType as ReadXDR>::read_xdr(r)?;
+        let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             EnvelopeType::EnvelopeTypeTx => Self::EnvelopeTypeTx(Transaction::read_xdr(r)?),
             EnvelopeType::EnvelopeTypeTxFeeBump => {
@@ -10531,7 +10531,7 @@ impl ReadXDR for TransactionSignaturePayloadTaggedTransaction {
     }
 }
 
-impl WriteXDR for TransactionSignaturePayloadTaggedTransaction {
+impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -10565,7 +10565,7 @@ pub struct TransactionSignaturePayload {
     pub tagged_transaction: TransactionSignaturePayloadTaggedTransaction,
 }
 
-impl ReadXDR for TransactionSignaturePayload {
+impl ReadXdr for TransactionSignaturePayload {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -10575,7 +10575,7 @@ impl ReadXDR for TransactionSignaturePayload {
     }
 }
 
-impl WriteXDR for TransactionSignaturePayload {
+impl WriteXdr for TransactionSignaturePayload {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.network_id.write_xdr(w)?;
@@ -10623,7 +10623,7 @@ impl From<ClaimAtomType> for i32 {
     }
 }
 
-impl ReadXDR for ClaimAtomType {
+impl ReadXdr for ClaimAtomType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -10632,7 +10632,7 @@ impl ReadXDR for ClaimAtomType {
     }
 }
 
-impl WriteXDR for ClaimAtomType {
+impl WriteXdr for ClaimAtomType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -10667,7 +10667,7 @@ pub struct ClaimOfferAtomV0 {
     pub amount_bought: i64,
 }
 
-impl ReadXDR for ClaimOfferAtomV0 {
+impl ReadXdr for ClaimOfferAtomV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -10681,7 +10681,7 @@ impl ReadXDR for ClaimOfferAtomV0 {
     }
 }
 
-impl WriteXDR for ClaimOfferAtomV0 {
+impl WriteXdr for ClaimOfferAtomV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.seller_ed25519.write_xdr(w)?;
@@ -10721,7 +10721,7 @@ pub struct ClaimOfferAtom {
     pub amount_bought: i64,
 }
 
-impl ReadXDR for ClaimOfferAtom {
+impl ReadXdr for ClaimOfferAtom {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -10735,7 +10735,7 @@ impl ReadXDR for ClaimOfferAtom {
     }
 }
 
-impl WriteXDR for ClaimOfferAtom {
+impl WriteXdr for ClaimOfferAtom {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.seller_id.write_xdr(w)?;
@@ -10772,7 +10772,7 @@ pub struct ClaimLiquidityAtom {
     pub amount_bought: i64,
 }
 
-impl ReadXDR for ClaimLiquidityAtom {
+impl ReadXdr for ClaimLiquidityAtom {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -10785,7 +10785,7 @@ impl ReadXDR for ClaimLiquidityAtom {
     }
 }
 
-impl WriteXDR for ClaimLiquidityAtom {
+impl WriteXdr for ClaimLiquidityAtom {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.liquidity_pool_id.write_xdr(w)?;
@@ -10827,10 +10827,10 @@ impl ClaimAtom {
     }
 }
 
-impl ReadXDR for ClaimAtom {
+impl ReadXdr for ClaimAtom {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClaimAtomType = <ClaimAtomType as ReadXDR>::read_xdr(r)?;
+        let dv: ClaimAtomType = <ClaimAtomType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ClaimAtomType::ClaimAtomTypeV0 => Self::ClaimAtomTypeV0(ClaimOfferAtomV0::read_xdr(r)?),
             ClaimAtomType::ClaimAtomTypeOrderBook => {
@@ -10846,7 +10846,7 @@ impl ReadXDR for ClaimAtom {
     }
 }
 
-impl WriteXDR for ClaimAtom {
+impl WriteXdr for ClaimAtom {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -10908,7 +10908,7 @@ impl From<CreateAccountResultCode> for i32 {
     }
 }
 
-impl ReadXDR for CreateAccountResultCode {
+impl ReadXdr for CreateAccountResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -10917,7 +10917,7 @@ impl ReadXDR for CreateAccountResultCode {
     }
 }
 
-impl WriteXDR for CreateAccountResultCode {
+impl WriteXdr for CreateAccountResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -10960,10 +10960,10 @@ impl CreateAccountResult {
     }
 }
 
-impl ReadXDR for CreateAccountResult {
+impl ReadXdr for CreateAccountResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             CreateAccountResultCode::CreateAccountSuccess => Self::CreateAccountSuccess,
             CreateAccountResultCode::CreateAccountMalformed => Self::CreateAccountMalformed,
@@ -10977,7 +10977,7 @@ impl ReadXDR for CreateAccountResult {
     }
 }
 
-impl WriteXDR for CreateAccountResult {
+impl WriteXdr for CreateAccountResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -11055,7 +11055,7 @@ impl From<PaymentResultCode> for i32 {
     }
 }
 
-impl ReadXDR for PaymentResultCode {
+impl ReadXdr for PaymentResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -11064,7 +11064,7 @@ impl ReadXDR for PaymentResultCode {
     }
 }
 
-impl WriteXDR for PaymentResultCode {
+impl WriteXdr for PaymentResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -11122,10 +11122,10 @@ impl PaymentResult {
     }
 }
 
-impl ReadXDR for PaymentResult {
+impl ReadXdr for PaymentResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: PaymentResultCode = <PaymentResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: PaymentResultCode = <PaymentResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             PaymentResultCode::PaymentSuccess => Self::PaymentSuccess,
             PaymentResultCode::PaymentMalformed => Self::PaymentMalformed,
@@ -11144,7 +11144,7 @@ impl ReadXDR for PaymentResult {
     }
 }
 
-impl WriteXDR for PaymentResult {
+impl WriteXdr for PaymentResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -11245,7 +11245,7 @@ impl From<PathPaymentStrictReceiveResultCode> for i32 {
     }
 }
 
-impl ReadXDR for PathPaymentStrictReceiveResultCode {
+impl ReadXdr for PathPaymentStrictReceiveResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -11254,7 +11254,7 @@ impl ReadXDR for PathPaymentStrictReceiveResultCode {
     }
 }
 
-impl WriteXDR for PathPaymentStrictReceiveResultCode {
+impl WriteXdr for PathPaymentStrictReceiveResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -11278,7 +11278,7 @@ pub struct SimplePaymentResult {
     pub amount: i64,
 }
 
-impl ReadXDR for SimplePaymentResult {
+impl ReadXdr for SimplePaymentResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -11289,7 +11289,7 @@ impl ReadXDR for SimplePaymentResult {
     }
 }
 
-impl WriteXDR for SimplePaymentResult {
+impl WriteXdr for SimplePaymentResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.destination.write_xdr(w)?;
@@ -11313,7 +11313,7 @@ pub struct PathPaymentStrictReceiveResultSuccess {
     pub last: SimplePaymentResult,
 }
 
-impl ReadXDR for PathPaymentStrictReceiveResultSuccess {
+impl ReadXdr for PathPaymentStrictReceiveResultSuccess {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -11323,7 +11323,7 @@ impl ReadXDR for PathPaymentStrictReceiveResultSuccess {
     }
 }
 
-impl WriteXDR for PathPaymentStrictReceiveResultSuccess {
+impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.offers.write_xdr(w)?;
@@ -11424,11 +11424,11 @@ impl PathPaymentStrictReceiveResult {
     }
 }
 
-impl ReadXDR for PathPaymentStrictReceiveResult {
+impl ReadXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PathPaymentStrictReceiveResultCode =
-            <PathPaymentStrictReceiveResultCode as ReadXDR>::read_xdr(r)?;
+            <PathPaymentStrictReceiveResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSuccess => {
                 Self::PathPaymentStrictReceiveSuccess(
@@ -11478,7 +11478,7 @@ impl ReadXDR for PathPaymentStrictReceiveResult {
     }
 }
 
-impl WriteXDR for PathPaymentStrictReceiveResult {
+impl WriteXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -11581,7 +11581,7 @@ impl From<PathPaymentStrictSendResultCode> for i32 {
     }
 }
 
-impl ReadXDR for PathPaymentStrictSendResultCode {
+impl ReadXdr for PathPaymentStrictSendResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -11590,7 +11590,7 @@ impl ReadXDR for PathPaymentStrictSendResultCode {
     }
 }
 
-impl WriteXDR for PathPaymentStrictSendResultCode {
+impl WriteXdr for PathPaymentStrictSendResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -11612,7 +11612,7 @@ pub struct PathPaymentStrictSendResultSuccess {
     pub last: SimplePaymentResult,
 }
 
-impl ReadXDR for PathPaymentStrictSendResultSuccess {
+impl ReadXdr for PathPaymentStrictSendResultSuccess {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -11622,7 +11622,7 @@ impl ReadXDR for PathPaymentStrictSendResultSuccess {
     }
 }
 
-impl WriteXDR for PathPaymentStrictSendResultSuccess {
+impl WriteXdr for PathPaymentStrictSendResultSuccess {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.offers.write_xdr(w)?;
@@ -11722,11 +11722,11 @@ impl PathPaymentStrictSendResult {
     }
 }
 
-impl ReadXDR for PathPaymentStrictSendResult {
+impl ReadXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PathPaymentStrictSendResultCode =
-            <PathPaymentStrictSendResultCode as ReadXDR>::read_xdr(r)?;
+            <PathPaymentStrictSendResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             PathPaymentStrictSendResultCode::PathPaymentStrictSendSuccess => {
                 Self::PathPaymentStrictSendSuccess(PathPaymentStrictSendResultSuccess::read_xdr(r)?)
@@ -11774,7 +11774,7 @@ impl ReadXDR for PathPaymentStrictSendResult {
     }
 }
 
-impl WriteXDR for PathPaymentStrictSendResult {
+impl WriteXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -11876,7 +11876,7 @@ impl From<ManageSellOfferResultCode> for i32 {
     }
 }
 
-impl ReadXDR for ManageSellOfferResultCode {
+impl ReadXdr for ManageSellOfferResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -11885,7 +11885,7 @@ impl ReadXDR for ManageSellOfferResultCode {
     }
 }
 
-impl WriteXDR for ManageSellOfferResultCode {
+impl WriteXdr for ManageSellOfferResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -11932,7 +11932,7 @@ impl From<ManageOfferEffect> for i32 {
     }
 }
 
-impl ReadXDR for ManageOfferEffect {
+impl ReadXdr for ManageOfferEffect {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -11941,7 +11941,7 @@ impl ReadXDR for ManageOfferEffect {
     }
 }
 
-impl WriteXDR for ManageOfferEffect {
+impl WriteXdr for ManageOfferEffect {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -11978,10 +11978,10 @@ impl ManageOfferSuccessResultOffer {
     }
 }
 
-impl ReadXDR for ManageOfferSuccessResultOffer {
+impl ReadXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ManageOfferEffect = <ManageOfferEffect as ReadXDR>::read_xdr(r)?;
+        let dv: ManageOfferEffect = <ManageOfferEffect as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ManageOfferEffect::ManageOfferCreated => {
                 Self::ManageOfferCreated(OfferEntry::read_xdr(r)?)
@@ -11997,7 +11997,7 @@ impl ReadXDR for ManageOfferSuccessResultOffer {
     }
 }
 
-impl WriteXDR for ManageOfferSuccessResultOffer {
+impl WriteXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -12034,7 +12034,7 @@ pub struct ManageOfferSuccessResult {
     pub offer: ManageOfferSuccessResultOffer,
 }
 
-impl ReadXDR for ManageOfferSuccessResult {
+impl ReadXdr for ManageOfferSuccessResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -12044,7 +12044,7 @@ impl ReadXDR for ManageOfferSuccessResult {
     }
 }
 
-impl WriteXDR for ManageOfferSuccessResult {
+impl WriteXdr for ManageOfferSuccessResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.offers_claimed.write_xdr(w)?;
@@ -12124,10 +12124,10 @@ impl ManageSellOfferResult {
     }
 }
 
-impl ReadXDR for ManageSellOfferResult {
+impl ReadXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ManageSellOfferResultCode = <ManageSellOfferResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: ManageSellOfferResultCode = <ManageSellOfferResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ManageSellOfferResultCode::ManageSellOfferSuccess => {
                 Self::ManageSellOfferSuccess(ManageOfferSuccessResult::read_xdr(r)?)
@@ -12163,7 +12163,7 @@ impl ReadXDR for ManageSellOfferResult {
     }
 }
 
-impl WriteXDR for ManageSellOfferResult {
+impl WriteXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -12262,7 +12262,7 @@ impl From<ManageBuyOfferResultCode> for i32 {
     }
 }
 
-impl ReadXDR for ManageBuyOfferResultCode {
+impl ReadXdr for ManageBuyOfferResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -12271,7 +12271,7 @@ impl ReadXDR for ManageBuyOfferResultCode {
     }
 }
 
-impl WriteXDR for ManageBuyOfferResultCode {
+impl WriteXdr for ManageBuyOfferResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -12344,10 +12344,10 @@ impl ManageBuyOfferResult {
     }
 }
 
-impl ReadXDR for ManageBuyOfferResult {
+impl ReadXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ManageBuyOfferResultCode::ManageBuyOfferSuccess => {
                 Self::ManageBuyOfferSuccess(ManageOfferSuccessResult::read_xdr(r)?)
@@ -12377,7 +12377,7 @@ impl ReadXDR for ManageBuyOfferResult {
     }
 }
 
-impl WriteXDR for ManageBuyOfferResult {
+impl WriteXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -12466,7 +12466,7 @@ impl From<SetOptionsResultCode> for i32 {
     }
 }
 
-impl ReadXDR for SetOptionsResultCode {
+impl ReadXdr for SetOptionsResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -12475,7 +12475,7 @@ impl ReadXDR for SetOptionsResultCode {
     }
 }
 
-impl WriteXDR for SetOptionsResultCode {
+impl WriteXdr for SetOptionsResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -12540,10 +12540,10 @@ impl SetOptionsResult {
     }
 }
 
-impl ReadXDR for SetOptionsResult {
+impl ReadXdr for SetOptionsResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             SetOptionsResultCode::SetOptionsSuccess => Self::SetOptionsSuccess,
             SetOptionsResultCode::SetOptionsLowReserve => Self::SetOptionsLowReserve,
@@ -12567,7 +12567,7 @@ impl ReadXDR for SetOptionsResult {
     }
 }
 
-impl WriteXDR for SetOptionsResult {
+impl WriteXdr for SetOptionsResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -12651,7 +12651,7 @@ impl From<ChangeTrustResultCode> for i32 {
     }
 }
 
-impl ReadXDR for ChangeTrustResultCode {
+impl ReadXdr for ChangeTrustResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -12660,7 +12660,7 @@ impl ReadXDR for ChangeTrustResultCode {
     }
 }
 
-impl WriteXDR for ChangeTrustResultCode {
+impl WriteXdr for ChangeTrustResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -12717,10 +12717,10 @@ impl ChangeTrustResult {
     }
 }
 
-impl ReadXDR for ChangeTrustResult {
+impl ReadXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ChangeTrustResultCode::ChangeTrustSuccess => Self::ChangeTrustSuccess,
             ChangeTrustResultCode::ChangeTrustMalformed => Self::ChangeTrustMalformed,
@@ -12740,7 +12740,7 @@ impl ReadXDR for ChangeTrustResult {
     }
 }
 
-impl WriteXDR for ChangeTrustResult {
+impl WriteXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -12814,7 +12814,7 @@ impl From<AllowTrustResultCode> for i32 {
     }
 }
 
-impl ReadXDR for AllowTrustResultCode {
+impl ReadXdr for AllowTrustResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -12823,7 +12823,7 @@ impl ReadXDR for AllowTrustResultCode {
     }
 }
 
-impl WriteXDR for AllowTrustResultCode {
+impl WriteXdr for AllowTrustResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -12872,10 +12872,10 @@ impl AllowTrustResult {
     }
 }
 
-impl ReadXDR for AllowTrustResult {
+impl ReadXdr for AllowTrustResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             AllowTrustResultCode::AllowTrustSuccess => Self::AllowTrustSuccess,
             AllowTrustResultCode::AllowTrustMalformed => Self::AllowTrustMalformed,
@@ -12891,7 +12891,7 @@ impl ReadXDR for AllowTrustResult {
     }
 }
 
-impl WriteXDR for AllowTrustResult {
+impl WriteXdr for AllowTrustResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -12965,7 +12965,7 @@ impl From<AccountMergeResultCode> for i32 {
     }
 }
 
-impl ReadXDR for AccountMergeResultCode {
+impl ReadXdr for AccountMergeResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -12974,7 +12974,7 @@ impl ReadXDR for AccountMergeResultCode {
     }
 }
 
-impl WriteXDR for AccountMergeResultCode {
+impl WriteXdr for AccountMergeResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -13026,10 +13026,10 @@ impl AccountMergeResult {
     }
 }
 
-impl ReadXDR for AccountMergeResult {
+impl ReadXdr for AccountMergeResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             AccountMergeResultCode::AccountMergeSuccess => {
                 Self::AccountMergeSuccess(i64::read_xdr(r)?)
@@ -13048,7 +13048,7 @@ impl ReadXDR for AccountMergeResult {
     }
 }
 
-impl WriteXDR for AccountMergeResult {
+impl WriteXdr for AccountMergeResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -13104,7 +13104,7 @@ impl From<InflationResultCode> for i32 {
     }
 }
 
-impl ReadXDR for InflationResultCode {
+impl ReadXdr for InflationResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -13113,7 +13113,7 @@ impl ReadXDR for InflationResultCode {
     }
 }
 
-impl WriteXDR for InflationResultCode {
+impl WriteXdr for InflationResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -13135,7 +13135,7 @@ pub struct InflationPayout {
     pub amount: i64,
 }
 
-impl ReadXDR for InflationPayout {
+impl ReadXdr for InflationPayout {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -13145,7 +13145,7 @@ impl ReadXDR for InflationPayout {
     }
 }
 
-impl WriteXDR for InflationPayout {
+impl WriteXdr for InflationPayout {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.destination.write_xdr(w)?;
@@ -13180,10 +13180,10 @@ impl InflationResult {
     }
 }
 
-impl ReadXDR for InflationResult {
+impl ReadXdr for InflationResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: InflationResultCode = <InflationResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: InflationResultCode = <InflationResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             InflationResultCode::InflationSuccess => {
                 Self::InflationSuccess(VecM::<InflationPayout>::read_xdr(r)?)
@@ -13196,7 +13196,7 @@ impl ReadXDR for InflationResult {
     }
 }
 
-impl WriteXDR for InflationResult {
+impl WriteXdr for InflationResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -13257,7 +13257,7 @@ impl From<ManageDataResultCode> for i32 {
     }
 }
 
-impl ReadXDR for ManageDataResultCode {
+impl ReadXdr for ManageDataResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -13266,7 +13266,7 @@ impl ReadXDR for ManageDataResultCode {
     }
 }
 
-impl WriteXDR for ManageDataResultCode {
+impl WriteXdr for ManageDataResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -13309,10 +13309,10 @@ impl ManageDataResult {
     }
 }
 
-impl ReadXDR for ManageDataResult {
+impl ReadXdr for ManageDataResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ManageDataResultCode = <ManageDataResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: ManageDataResultCode = <ManageDataResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ManageDataResultCode::ManageDataSuccess => Self::ManageDataSuccess,
             ManageDataResultCode::ManageDataNotSupportedYet => Self::ManageDataNotSupportedYet,
@@ -13326,7 +13326,7 @@ impl ReadXDR for ManageDataResult {
     }
 }
 
-impl WriteXDR for ManageDataResult {
+impl WriteXdr for ManageDataResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -13379,7 +13379,7 @@ impl From<BumpSequenceResultCode> for i32 {
     }
 }
 
-impl ReadXDR for BumpSequenceResultCode {
+impl ReadXdr for BumpSequenceResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -13388,7 +13388,7 @@ impl ReadXDR for BumpSequenceResultCode {
     }
 }
 
-impl WriteXDR for BumpSequenceResultCode {
+impl WriteXdr for BumpSequenceResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -13422,10 +13422,10 @@ impl BumpSequenceResult {
     }
 }
 
-impl ReadXDR for BumpSequenceResult {
+impl ReadXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             BumpSequenceResultCode::BumpSequenceSuccess => Self::BumpSequenceSuccess,
             BumpSequenceResultCode::BumpSequenceBadSeq => Self::BumpSequenceBadSeq,
@@ -13436,7 +13436,7 @@ impl ReadXDR for BumpSequenceResult {
     }
 }
 
-impl WriteXDR for BumpSequenceResult {
+impl WriteXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -13496,7 +13496,7 @@ impl From<CreateClaimableBalanceResultCode> for i32 {
     }
 }
 
-impl ReadXDR for CreateClaimableBalanceResultCode {
+impl ReadXdr for CreateClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -13505,7 +13505,7 @@ impl ReadXDR for CreateClaimableBalanceResultCode {
     }
 }
 
-impl WriteXDR for CreateClaimableBalanceResultCode {
+impl WriteXdr for CreateClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -13564,11 +13564,11 @@ impl CreateClaimableBalanceResult {
     }
 }
 
-impl ReadXDR for CreateClaimableBalanceResult {
+impl ReadXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: CreateClaimableBalanceResultCode =
-            <CreateClaimableBalanceResultCode as ReadXDR>::read_xdr(r)?;
+            <CreateClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             CreateClaimableBalanceResultCode::CreateClaimableBalanceSuccess => {
                 Self::CreateClaimableBalanceSuccess(ClaimableBalanceId::read_xdr(r)?)
@@ -13595,7 +13595,7 @@ impl ReadXDR for CreateClaimableBalanceResult {
     }
 }
 
-impl WriteXDR for CreateClaimableBalanceResult {
+impl WriteXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -13659,7 +13659,7 @@ impl From<ClaimClaimableBalanceResultCode> for i32 {
     }
 }
 
-impl ReadXDR for ClaimClaimableBalanceResultCode {
+impl ReadXdr for ClaimClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -13668,7 +13668,7 @@ impl ReadXDR for ClaimClaimableBalanceResultCode {
     }
 }
 
-impl WriteXDR for ClaimClaimableBalanceResultCode {
+impl WriteXdr for ClaimClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -13726,11 +13726,11 @@ impl ClaimClaimableBalanceResult {
     }
 }
 
-impl ReadXDR for ClaimClaimableBalanceResult {
+impl ReadXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimClaimableBalanceResultCode =
-            <ClaimClaimableBalanceResultCode as ReadXDR>::read_xdr(r)?;
+            <ClaimClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ClaimClaimableBalanceResultCode::ClaimClaimableBalanceSuccess => {
                 Self::ClaimClaimableBalanceSuccess
@@ -13757,7 +13757,7 @@ impl ReadXDR for ClaimClaimableBalanceResult {
     }
 }
 
-impl WriteXDR for ClaimClaimableBalanceResult {
+impl WriteXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -13818,7 +13818,7 @@ impl From<BeginSponsoringFutureReservesResultCode> for i32 {
     }
 }
 
-impl ReadXDR for BeginSponsoringFutureReservesResultCode {
+impl ReadXdr for BeginSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -13827,7 +13827,7 @@ impl ReadXDR for BeginSponsoringFutureReservesResultCode {
     }
 }
 
-impl WriteXDR for BeginSponsoringFutureReservesResultCode {
+impl WriteXdr for BeginSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -13868,11 +13868,11 @@ Self::BeginSponsoringFutureReservesRecursive => BeginSponsoringFutureReservesRes
     }
 }
 
-impl ReadXDR for BeginSponsoringFutureReservesResult {
+impl ReadXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: BeginSponsoringFutureReservesResultCode =
-            <BeginSponsoringFutureReservesResultCode as ReadXDR>::read_xdr(r)?;
+            <BeginSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
                     BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesSuccess => Self::BeginSponsoringFutureReservesSuccess,
 BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesMalformed => Self::BeginSponsoringFutureReservesMalformed,
@@ -13885,7 +13885,7 @@ BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesRecursive 
     }
 }
 
-impl WriteXDR for BeginSponsoringFutureReservesResult {
+impl WriteXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -13938,7 +13938,7 @@ impl From<EndSponsoringFutureReservesResultCode> for i32 {
     }
 }
 
-impl ReadXDR for EndSponsoringFutureReservesResultCode {
+impl ReadXdr for EndSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -13947,7 +13947,7 @@ impl ReadXDR for EndSponsoringFutureReservesResultCode {
     }
 }
 
-impl WriteXDR for EndSponsoringFutureReservesResultCode {
+impl WriteXdr for EndSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -13986,11 +13986,11 @@ impl EndSponsoringFutureReservesResult {
     }
 }
 
-impl ReadXDR for EndSponsoringFutureReservesResult {
+impl ReadXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EndSponsoringFutureReservesResultCode =
-            <EndSponsoringFutureReservesResultCode as ReadXDR>::read_xdr(r)?;
+            <EndSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesSuccess => {
                 Self::EndSponsoringFutureReservesSuccess
@@ -14005,7 +14005,7 @@ impl ReadXDR for EndSponsoringFutureReservesResult {
     }
 }
 
-impl WriteXDR for EndSponsoringFutureReservesResult {
+impl WriteXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -14068,7 +14068,7 @@ impl From<RevokeSponsorshipResultCode> for i32 {
     }
 }
 
-impl ReadXDR for RevokeSponsorshipResultCode {
+impl ReadXdr for RevokeSponsorshipResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -14077,7 +14077,7 @@ impl ReadXDR for RevokeSponsorshipResultCode {
     }
 }
 
-impl WriteXDR for RevokeSponsorshipResultCode {
+impl WriteXdr for RevokeSponsorshipResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -14133,11 +14133,11 @@ impl RevokeSponsorshipResult {
     }
 }
 
-impl ReadXDR for RevokeSponsorshipResult {
+impl ReadXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: RevokeSponsorshipResultCode =
-            <RevokeSponsorshipResultCode as ReadXDR>::read_xdr(r)?;
+            <RevokeSponsorshipResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             RevokeSponsorshipResultCode::RevokeSponsorshipSuccess => Self::RevokeSponsorshipSuccess,
             RevokeSponsorshipResultCode::RevokeSponsorshipDoesNotExist => {
@@ -14162,7 +14162,7 @@ impl ReadXDR for RevokeSponsorshipResult {
     }
 }
 
-impl WriteXDR for RevokeSponsorshipResult {
+impl WriteXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -14226,7 +14226,7 @@ impl From<ClawbackResultCode> for i32 {
     }
 }
 
-impl ReadXDR for ClawbackResultCode {
+impl ReadXdr for ClawbackResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -14235,7 +14235,7 @@ impl ReadXDR for ClawbackResultCode {
     }
 }
 
-impl WriteXDR for ClawbackResultCode {
+impl WriteXdr for ClawbackResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -14278,10 +14278,10 @@ impl ClawbackResult {
     }
 }
 
-impl ReadXDR for ClawbackResult {
+impl ReadXdr for ClawbackResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClawbackResultCode = <ClawbackResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: ClawbackResultCode = <ClawbackResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ClawbackResultCode::ClawbackSuccess => Self::ClawbackSuccess,
             ClawbackResultCode::ClawbackMalformed => Self::ClawbackMalformed,
@@ -14295,7 +14295,7 @@ impl ReadXDR for ClawbackResult {
     }
 }
 
-impl WriteXDR for ClawbackResult {
+impl WriteXdr for ClawbackResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -14355,7 +14355,7 @@ impl From<ClawbackClaimableBalanceResultCode> for i32 {
     }
 }
 
-impl ReadXDR for ClawbackClaimableBalanceResultCode {
+impl ReadXdr for ClawbackClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -14364,7 +14364,7 @@ impl ReadXDR for ClawbackClaimableBalanceResultCode {
     }
 }
 
-impl WriteXDR for ClawbackClaimableBalanceResultCode {
+impl WriteXdr for ClawbackClaimableBalanceResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -14413,11 +14413,11 @@ impl ClawbackClaimableBalanceResult {
     }
 }
 
-impl ReadXDR for ClawbackClaimableBalanceResult {
+impl ReadXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClawbackClaimableBalanceResultCode =
-            <ClawbackClaimableBalanceResultCode as ReadXDR>::read_xdr(r)?;
+            <ClawbackClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceSuccess => {
                 Self::ClawbackClaimableBalanceSuccess
@@ -14438,7 +14438,7 @@ impl ReadXDR for ClawbackClaimableBalanceResult {
     }
 }
 
-impl WriteXDR for ClawbackClaimableBalanceResult {
+impl WriteXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -14504,7 +14504,7 @@ impl From<SetTrustLineFlagsResultCode> for i32 {
     }
 }
 
-impl ReadXDR for SetTrustLineFlagsResultCode {
+impl ReadXdr for SetTrustLineFlagsResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -14513,7 +14513,7 @@ impl ReadXDR for SetTrustLineFlagsResultCode {
     }
 }
 
-impl WriteXDR for SetTrustLineFlagsResultCode {
+impl WriteXdr for SetTrustLineFlagsResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -14569,11 +14569,11 @@ impl SetTrustLineFlagsResult {
     }
 }
 
-impl ReadXDR for SetTrustLineFlagsResult {
+impl ReadXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: SetTrustLineFlagsResultCode =
-            <SetTrustLineFlagsResultCode as ReadXDR>::read_xdr(r)?;
+            <SetTrustLineFlagsResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             SetTrustLineFlagsResultCode::SetTrustLineFlagsSuccess => Self::SetTrustLineFlagsSuccess,
             SetTrustLineFlagsResultCode::SetTrustLineFlagsMalformed => {
@@ -14598,7 +14598,7 @@ impl ReadXDR for SetTrustLineFlagsResult {
     }
 }
 
-impl WriteXDR for SetTrustLineFlagsResult {
+impl WriteXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -14675,7 +14675,7 @@ impl From<LiquidityPoolDepositResultCode> for i32 {
     }
 }
 
-impl ReadXDR for LiquidityPoolDepositResultCode {
+impl ReadXdr for LiquidityPoolDepositResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -14684,7 +14684,7 @@ impl ReadXDR for LiquidityPoolDepositResultCode {
     }
 }
 
-impl WriteXDR for LiquidityPoolDepositResultCode {
+impl WriteXdr for LiquidityPoolDepositResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -14752,11 +14752,11 @@ impl LiquidityPoolDepositResult {
     }
 }
 
-impl ReadXDR for LiquidityPoolDepositResult {
+impl ReadXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LiquidityPoolDepositResultCode =
-            <LiquidityPoolDepositResultCode as ReadXDR>::read_xdr(r)?;
+            <LiquidityPoolDepositResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             LiquidityPoolDepositResultCode::LiquidityPoolDepositSuccess => {
                 Self::LiquidityPoolDepositSuccess
@@ -14789,7 +14789,7 @@ impl ReadXDR for LiquidityPoolDepositResult {
     }
 }
 
-impl WriteXDR for LiquidityPoolDepositResult {
+impl WriteXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -14861,7 +14861,7 @@ impl From<LiquidityPoolWithdrawResultCode> for i32 {
     }
 }
 
-impl ReadXDR for LiquidityPoolWithdrawResultCode {
+impl ReadXdr for LiquidityPoolWithdrawResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -14870,7 +14870,7 @@ impl ReadXDR for LiquidityPoolWithdrawResultCode {
     }
 }
 
-impl WriteXDR for LiquidityPoolWithdrawResultCode {
+impl WriteXdr for LiquidityPoolWithdrawResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -14928,11 +14928,11 @@ impl LiquidityPoolWithdrawResult {
     }
 }
 
-impl ReadXDR for LiquidityPoolWithdrawResult {
+impl ReadXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LiquidityPoolWithdrawResultCode =
-            <LiquidityPoolWithdrawResultCode as ReadXDR>::read_xdr(r)?;
+            <LiquidityPoolWithdrawResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawSuccess => {
                 Self::LiquidityPoolWithdrawSuccess
@@ -14959,7 +14959,7 @@ impl ReadXDR for LiquidityPoolWithdrawResult {
     }
 }
 
-impl WriteXDR for LiquidityPoolWithdrawResult {
+impl WriteXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -15027,7 +15027,7 @@ impl From<OperationResultCode> for i32 {
     }
 }
 
-impl ReadXDR for OperationResultCode {
+impl ReadXdr for OperationResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -15036,7 +15036,7 @@ impl ReadXDR for OperationResultCode {
     }
 }
 
-impl WriteXDR for OperationResultCode {
+impl WriteXdr for OperationResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -15158,10 +15158,10 @@ impl OperationResultTr {
     }
 }
 
-impl ReadXDR for OperationResultTr {
+impl ReadXdr for OperationResultTr {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: OperationType = <OperationType as ReadXDR>::read_xdr(r)?;
+        let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             OperationType::CreateAccount => Self::CreateAccount(CreateAccountResult::read_xdr(r)?),
             OperationType::Payment => Self::Payment(PaymentResult::read_xdr(r)?),
@@ -15222,7 +15222,7 @@ impl ReadXDR for OperationResultTr {
     }
 }
 
-impl WriteXDR for OperationResultTr {
+impl WriteXdr for OperationResultTr {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -15348,10 +15348,10 @@ impl OperationResult {
     }
 }
 
-impl ReadXDR for OperationResult {
+impl ReadXdr for OperationResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: OperationResultCode = <OperationResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: OperationResultCode = <OperationResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             OperationResultCode::OpInner => Self::OpInner(OperationResultTr::read_xdr(r)?),
             OperationResultCode::OpBadAuth => Self::OpBadAuth,
@@ -15367,7 +15367,7 @@ impl ReadXDR for OperationResult {
     }
 }
 
-impl WriteXDR for OperationResult {
+impl WriteXdr for OperationResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -15473,7 +15473,7 @@ impl From<TransactionResultCode> for i32 {
     }
 }
 
-impl ReadXDR for TransactionResultCode {
+impl ReadXdr for TransactionResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -15482,7 +15482,7 @@ impl ReadXDR for TransactionResultCode {
     }
 }
 
-impl WriteXDR for TransactionResultCode {
+impl WriteXdr for TransactionResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -15560,10 +15560,10 @@ impl InnerTransactionResultResult {
     }
 }
 
-impl ReadXDR for InnerTransactionResultResult {
+impl ReadXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: TransactionResultCode = <TransactionResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             TransactionResultCode::TxSuccess => {
                 Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?)
@@ -15592,7 +15592,7 @@ impl ReadXDR for InnerTransactionResultResult {
     }
 }
 
-impl WriteXDR for InnerTransactionResultResult {
+impl WriteXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -15640,10 +15640,10 @@ impl InnerTransactionResultExt {
     }
 }
 
-impl ReadXDR for InnerTransactionResultExt {
+impl ReadXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -15653,7 +15653,7 @@ impl ReadXDR for InnerTransactionResultExt {
     }
 }
 
-impl WriteXDR for InnerTransactionResultExt {
+impl WriteXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -15712,7 +15712,7 @@ pub struct InnerTransactionResult {
     pub ext: InnerTransactionResultExt,
 }
 
-impl ReadXDR for InnerTransactionResult {
+impl ReadXdr for InnerTransactionResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -15723,7 +15723,7 @@ impl ReadXDR for InnerTransactionResult {
     }
 }
 
-impl WriteXDR for InnerTransactionResult {
+impl WriteXdr for InnerTransactionResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.fee_charged.write_xdr(w)?;
@@ -15747,7 +15747,7 @@ pub struct InnerTransactionResultPair {
     pub result: InnerTransactionResult,
 }
 
-impl ReadXDR for InnerTransactionResultPair {
+impl ReadXdr for InnerTransactionResultPair {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -15757,7 +15757,7 @@ impl ReadXDR for InnerTransactionResultPair {
     }
 }
 
-impl WriteXDR for InnerTransactionResultPair {
+impl WriteXdr for InnerTransactionResultPair {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.transaction_hash.write_xdr(w)?;
@@ -15842,10 +15842,10 @@ impl TransactionResultResult {
     }
 }
 
-impl ReadXDR for TransactionResultResult {
+impl ReadXdr for TransactionResultResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: TransactionResultCode = <TransactionResultCode as ReadXDR>::read_xdr(r)?;
+        let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             TransactionResultCode::TxFeeBumpInnerSuccess => {
                 Self::TxFeeBumpInnerSuccess(InnerTransactionResultPair::read_xdr(r)?)
@@ -15880,7 +15880,7 @@ impl ReadXDR for TransactionResultResult {
     }
 }
 
-impl WriteXDR for TransactionResultResult {
+impl WriteXdr for TransactionResultResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -15930,10 +15930,10 @@ impl TransactionResultExt {
     }
 }
 
-impl ReadXDR for TransactionResultExt {
+impl ReadXdr for TransactionResultExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -15943,7 +15943,7 @@ impl ReadXDR for TransactionResultExt {
     }
 }
 
-impl WriteXDR for TransactionResultExt {
+impl WriteXdr for TransactionResultExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -16003,7 +16003,7 @@ pub struct TransactionResult {
     pub ext: TransactionResultExt,
 }
 
-impl ReadXDR for TransactionResult {
+impl ReadXdr for TransactionResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -16014,7 +16014,7 @@ impl ReadXDR for TransactionResult {
     }
 }
 
-impl WriteXDR for TransactionResult {
+impl WriteXdr for TransactionResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.fee_charged.write_xdr(w)?;
@@ -16049,7 +16049,7 @@ impl AsRef<[u8; 32]> for Hash {
     }
 }
 
-impl ReadXDR for Hash {
+impl ReadXdr for Hash {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <[u8; 32]>::read_xdr(r)?;
@@ -16058,7 +16058,7 @@ impl ReadXDR for Hash {
     }
 }
 
-impl WriteXDR for Hash {
+impl WriteXdr for Hash {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -16090,7 +16090,7 @@ impl AsRef<[u8; 32]> for Uint256 {
     }
 }
 
-impl ReadXDR for Uint256 {
+impl ReadXdr for Uint256 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <[u8; 32]>::read_xdr(r)?;
@@ -16099,7 +16099,7 @@ impl ReadXDR for Uint256 {
     }
 }
 
-impl WriteXDR for Uint256 {
+impl WriteXdr for Uint256 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -16152,10 +16152,10 @@ impl ExtensionPoint {
     }
 }
 
-impl ReadXDR for ExtensionPoint {
+impl ReadXdr for ExtensionPoint {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXDR>::read_xdr(r)?;
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -16165,7 +16165,7 @@ impl ReadXDR for ExtensionPoint {
     }
 }
 
-impl WriteXDR for ExtensionPoint {
+impl WriteXdr for ExtensionPoint {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -16223,7 +16223,7 @@ impl From<CryptoKeyType> for i32 {
     }
 }
 
-impl ReadXDR for CryptoKeyType {
+impl ReadXdr for CryptoKeyType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -16232,7 +16232,7 @@ impl ReadXDR for CryptoKeyType {
     }
 }
 
-impl WriteXDR for CryptoKeyType {
+impl WriteXdr for CryptoKeyType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -16273,7 +16273,7 @@ impl From<PublicKeyType> for i32 {
     }
 }
 
-impl ReadXDR for PublicKeyType {
+impl ReadXdr for PublicKeyType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -16282,7 +16282,7 @@ impl ReadXDR for PublicKeyType {
     }
 }
 
-impl WriteXDR for PublicKeyType {
+impl WriteXdr for PublicKeyType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -16332,7 +16332,7 @@ impl From<SignerKeyType> for i32 {
     }
 }
 
-impl ReadXDR for SignerKeyType {
+impl ReadXdr for SignerKeyType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -16341,7 +16341,7 @@ impl ReadXDR for SignerKeyType {
     }
 }
 
-impl WriteXDR for SignerKeyType {
+impl WriteXdr for SignerKeyType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -16371,10 +16371,10 @@ impl PublicKey {
     }
 }
 
-impl ReadXDR for PublicKey {
+impl ReadXdr for PublicKey {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: PublicKeyType = <PublicKeyType as ReadXDR>::read_xdr(r)?;
+        let dv: PublicKeyType = <PublicKeyType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             PublicKeyType::PublicKeyTypeEd25519 => {
                 Self::PublicKeyTypeEd25519(Uint256::read_xdr(r)?)
@@ -16386,7 +16386,7 @@ impl ReadXDR for PublicKey {
     }
 }
 
-impl WriteXDR for PublicKey {
+impl WriteXdr for PublicKey {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -16413,7 +16413,7 @@ pub struct SignerKeyEd25519SignedPayload {
     pub payload: VecM<u8, 64>,
 }
 
-impl ReadXDR for SignerKeyEd25519SignedPayload {
+impl ReadXdr for SignerKeyEd25519SignedPayload {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -16423,7 +16423,7 @@ impl ReadXDR for SignerKeyEd25519SignedPayload {
     }
 }
 
-impl WriteXDR for SignerKeyEd25519SignedPayload {
+impl WriteXdr for SignerKeyEd25519SignedPayload {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.ed25519.write_xdr(w)?;
@@ -16476,10 +16476,10 @@ impl SignerKey {
     }
 }
 
-impl ReadXDR for SignerKey {
+impl ReadXdr for SignerKey {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: SignerKeyType = <SignerKeyType as ReadXDR>::read_xdr(r)?;
+        let dv: SignerKeyType = <SignerKeyType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             SignerKeyType::SignerKeyTypeEd25519 => {
                 Self::SignerKeyTypeEd25519(Uint256::read_xdr(r)?)
@@ -16498,7 +16498,7 @@ impl ReadXDR for SignerKey {
     }
 }
 
-impl WriteXDR for SignerKey {
+impl WriteXdr for SignerKey {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -16537,7 +16537,7 @@ impl AsRef<VecM<u8, 64>> for Signature {
     }
 }
 
-impl ReadXDR for Signature {
+impl ReadXdr for Signature {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = VecM::<u8, 64>::read_xdr(r)?;
@@ -16546,7 +16546,7 @@ impl ReadXDR for Signature {
     }
 }
 
-impl WriteXDR for Signature {
+impl WriteXdr for Signature {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -16578,7 +16578,7 @@ impl AsRef<[u8; 4]> for SignatureHint {
     }
 }
 
-impl ReadXDR for SignatureHint {
+impl ReadXdr for SignatureHint {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = <[u8; 4]>::read_xdr(r)?;
@@ -16587,7 +16587,7 @@ impl ReadXDR for SignatureHint {
     }
 }
 
-impl WriteXDR for SignatureHint {
+impl WriteXdr for SignatureHint {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -16619,7 +16619,7 @@ impl AsRef<PublicKey> for NodeId {
     }
 }
 
-impl ReadXDR for NodeId {
+impl ReadXdr for NodeId {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = PublicKey::read_xdr(r)?;
@@ -16628,7 +16628,7 @@ impl ReadXDR for NodeId {
     }
 }
 
-impl WriteXDR for NodeId {
+impl WriteXdr for NodeId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -16647,7 +16647,7 @@ pub struct Curve25519Secret {
     pub key: [u8; 32],
 }
 
-impl ReadXDR for Curve25519Secret {
+impl ReadXdr for Curve25519Secret {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -16656,7 +16656,7 @@ impl ReadXDR for Curve25519Secret {
     }
 }
 
-impl WriteXDR for Curve25519Secret {
+impl WriteXdr for Curve25519Secret {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.key.write_xdr(w)?;
@@ -16676,7 +16676,7 @@ pub struct Curve25519Public {
     pub key: [u8; 32],
 }
 
-impl ReadXDR for Curve25519Public {
+impl ReadXdr for Curve25519Public {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -16685,7 +16685,7 @@ impl ReadXDR for Curve25519Public {
     }
 }
 
-impl WriteXDR for Curve25519Public {
+impl WriteXdr for Curve25519Public {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.key.write_xdr(w)?;
@@ -16705,7 +16705,7 @@ pub struct HmacSha256Key {
     pub key: [u8; 32],
 }
 
-impl ReadXDR for HmacSha256Key {
+impl ReadXdr for HmacSha256Key {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -16714,7 +16714,7 @@ impl ReadXDR for HmacSha256Key {
     }
 }
 
-impl WriteXDR for HmacSha256Key {
+impl WriteXdr for HmacSha256Key {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.key.write_xdr(w)?;
@@ -16734,7 +16734,7 @@ pub struct HmacSha256Mac {
     pub mac: [u8; 32],
 }
 
-impl ReadXDR for HmacSha256Mac {
+impl ReadXdr for HmacSha256Mac {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -16743,7 +16743,7 @@ impl ReadXDR for HmacSha256Mac {
     }
 }
 
-impl WriteXDR for HmacSha256Mac {
+impl WriteXdr for HmacSha256Mac {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.mac.write_xdr(w)?;
@@ -16811,7 +16811,7 @@ impl From<ScValType> for i32 {
     }
 }
 
-impl ReadXDR for ScValType {
+impl ReadXdr for ScValType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -16820,7 +16820,7 @@ impl ReadXDR for ScValType {
     }
 }
 
-impl WriteXDR for ScValType {
+impl WriteXdr for ScValType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -16867,7 +16867,7 @@ impl From<ScStatic> for i32 {
     }
 }
 
-impl ReadXDR for ScStatic {
+impl ReadXdr for ScStatic {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -16876,7 +16876,7 @@ impl ReadXDR for ScStatic {
     }
 }
 
-impl WriteXDR for ScStatic {
+impl WriteXdr for ScStatic {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -16921,7 +16921,7 @@ impl From<ScStatusType> for i32 {
     }
 }
 
-impl ReadXDR for ScStatusType {
+impl ReadXdr for ScStatusType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -16930,7 +16930,7 @@ impl ReadXDR for ScStatusType {
     }
 }
 
-impl WriteXDR for ScStatusType {
+impl WriteXdr for ScStatusType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -16964,10 +16964,10 @@ impl ScStatus {
     }
 }
 
-impl ReadXDR for ScStatus {
+impl ReadXdr for ScStatus {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ScStatusType = <ScStatusType as ReadXDR>::read_xdr(r)?;
+        let dv: ScStatusType = <ScStatusType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ScStatusType::SstOk => Self::SstOk,
             ScStatusType::SstUnknownError => Self::SstUnknownError(u32::read_xdr(r)?),
@@ -16978,7 +16978,7 @@ impl ReadXDR for ScStatus {
     }
 }
 
-impl WriteXDR for ScStatus {
+impl WriteXdr for ScStatus {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -17040,10 +17040,10 @@ impl ScVal {
     }
 }
 
-impl ReadXDR for ScVal {
+impl ReadXdr for ScVal {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ScValType = <ScValType as ReadXDR>::read_xdr(r)?;
+        let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ScValType::ScvU63 => Self::ScvU63(u64::read_xdr(r)?),
             ScValType::ScvU32 => Self::ScvU32(u32::read_xdr(r)?),
@@ -17060,7 +17060,7 @@ impl ReadXDR for ScVal {
     }
 }
 
-impl WriteXDR for ScVal {
+impl WriteXdr for ScVal {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -17168,7 +17168,7 @@ impl From<ScObjectType> for i32 {
     }
 }
 
-impl ReadXDR for ScObjectType {
+impl ReadXdr for ScObjectType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -17177,7 +17177,7 @@ impl ReadXDR for ScObjectType {
     }
 }
 
-impl WriteXDR for ScObjectType {
+impl WriteXdr for ScObjectType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -17199,7 +17199,7 @@ pub struct ScMapEntry {
     pub val: ScVal,
 }
 
-impl ReadXDR for ScMapEntry {
+impl ReadXdr for ScMapEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -17209,7 +17209,7 @@ impl ReadXDR for ScMapEntry {
     }
 }
 
-impl WriteXDR for ScMapEntry {
+impl WriteXdr for ScMapEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.key.write_xdr(w)?;
@@ -17243,7 +17243,7 @@ impl AsRef<VecM<ScVal>> for ScVec {
     }
 }
 
-impl ReadXDR for ScVec {
+impl ReadXdr for ScVec {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = VecM::<ScVal>::read_xdr(r)?;
@@ -17252,7 +17252,7 @@ impl ReadXDR for ScVec {
     }
 }
 
-impl WriteXDR for ScVec {
+impl WriteXdr for ScVec {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -17284,7 +17284,7 @@ impl AsRef<VecM<ScMapEntry>> for ScMap {
     }
 }
 
-impl ReadXDR for ScMap {
+impl ReadXdr for ScMap {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let i = VecM::<ScMapEntry>::read_xdr(r)?;
@@ -17293,7 +17293,7 @@ impl ReadXDR for ScMap {
     }
 }
 
-impl WriteXDR for ScMap {
+impl WriteXdr for ScMap {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -17314,7 +17314,7 @@ pub struct ScBigInt {
     pub magnitude: VecM<u8>,
 }
 
-impl ReadXDR for ScBigInt {
+impl ReadXdr for ScBigInt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -17324,7 +17324,7 @@ impl ReadXDR for ScBigInt {
     }
 }
 
-impl WriteXDR for ScBigInt {
+impl WriteXdr for ScBigInt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.positive.write_xdr(w)?;
@@ -17349,7 +17349,7 @@ pub struct ScBigRat {
     pub denominator: VecM<u8>,
 }
 
-impl ReadXDR for ScBigRat {
+impl ReadXdr for ScBigRat {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -17360,7 +17360,7 @@ impl ReadXDR for ScBigRat {
     }
 }
 
-impl WriteXDR for ScBigRat {
+impl WriteXdr for ScBigRat {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.positive.write_xdr(w)?;
@@ -17452,10 +17452,10 @@ impl ScObject {
     }
 }
 
-impl ReadXDR for ScObject {
+impl ReadXdr for ScObject {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ScObjectType = <ScObjectType as ReadXDR>::read_xdr(r)?;
+        let dv: ScObjectType = <ScObjectType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
             ScObjectType::ScoBox => Self::ScoBox(ScVal::read_xdr(r)?),
             ScObjectType::ScoVec => Self::ScoVec(ScVec::read_xdr(r)?),
@@ -17484,7 +17484,7 @@ impl ReadXDR for ScObject {
     }
 }
 
-impl WriteXDR for ScObject {
+impl WriteXdr for ScObject {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;

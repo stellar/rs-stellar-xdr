@@ -8,7 +8,7 @@ fn test_parse_pubnet_v18_tx() -> Result<(), Error> {
     let te = TransactionEnvelope::from_xdr_base64(xdr.to_string()).unwrap();
     println!("{:?}", te);
 
-    if let TransactionEnvelope::EnvelopeTypeTx(te) = te {
+    if let TransactionEnvelope::Tx(te) = te {
         assert_eq!(te.tx.seq_num, SequenceNumber(2470486663495685));
         if let OperationBody::CreateAccount(op) = &te.tx.operations.as_vec()[0].body {
             assert_eq!(op.starting_balance, 100000000000);

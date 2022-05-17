@@ -635,10 +635,10 @@ impl WriteXdr for ScpBallot {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScpStatementType {
-    ScpStPrepare = 0,
-    ScpStConfirm = 1,
-    ScpStExternalize = 2,
-    ScpStNominate = 3,
+    Prepare = 0,
+    Confirm = 1,
+    Externalize = 2,
+    Nominate = 3,
 }
 
 impl TryFrom<i32> for ScpStatementType {
@@ -646,10 +646,10 @@ impl TryFrom<i32> for ScpStatementType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScpStatementType::ScpStPrepare,
-            1 => ScpStatementType::ScpStConfirm,
-            2 => ScpStatementType::ScpStExternalize,
-            3 => ScpStatementType::ScpStNominate,
+            0 => ScpStatementType::Prepare,
+            1 => ScpStatementType::Confirm,
+            2 => ScpStatementType::Externalize,
+            3 => ScpStatementType::Nominate,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -885,19 +885,19 @@ impl WriteXdr for ScpStatementExternalize {
 // union with discriminant ScpStatementType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ScpStatementPledges {
-    ScpStPrepare(ScpStatementPrepare),
-    ScpStConfirm(ScpStatementConfirm),
-    ScpStExternalize(ScpStatementExternalize),
-    ScpStNominate(ScpNomination),
+    Prepare(ScpStatementPrepare),
+    Confirm(ScpStatementConfirm),
+    Externalize(ScpStatementExternalize),
+    Nominate(ScpNomination),
 }
 
 impl ScpStatementPledges {
     pub fn discriminant(&self) -> ScpStatementType {
         match self {
-            Self::ScpStPrepare(_) => ScpStatementType::ScpStPrepare,
-            Self::ScpStConfirm(_) => ScpStatementType::ScpStConfirm,
-            Self::ScpStExternalize(_) => ScpStatementType::ScpStExternalize,
-            Self::ScpStNominate(_) => ScpStatementType::ScpStNominate,
+            Self::Prepare(_) => ScpStatementType::Prepare,
+            Self::Confirm(_) => ScpStatementType::Confirm,
+            Self::Externalize(_) => ScpStatementType::Externalize,
+            Self::Nominate(_) => ScpStatementType::Nominate,
         }
     }
 }
@@ -907,12 +907,12 @@ impl ReadXdr for ScpStatementPledges {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScpStatementType = <ScpStatementType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ScpStatementType::ScpStPrepare => Self::ScpStPrepare(ScpStatementPrepare::read_xdr(r)?),
-            ScpStatementType::ScpStConfirm => Self::ScpStConfirm(ScpStatementConfirm::read_xdr(r)?),
-            ScpStatementType::ScpStExternalize => {
-                Self::ScpStExternalize(ScpStatementExternalize::read_xdr(r)?)
+            ScpStatementType::Prepare => Self::Prepare(ScpStatementPrepare::read_xdr(r)?),
+            ScpStatementType::Confirm => Self::Confirm(ScpStatementConfirm::read_xdr(r)?),
+            ScpStatementType::Externalize => {
+                Self::Externalize(ScpStatementExternalize::read_xdr(r)?)
             }
-            ScpStatementType::ScpStNominate => Self::ScpStNominate(ScpNomination::read_xdr(r)?),
+            ScpStatementType::Nominate => Self::Nominate(ScpNomination::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -925,10 +925,10 @@ impl WriteXdr for ScpStatementPledges {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ScpStPrepare(v) => v.write_xdr(w)?,
-            Self::ScpStConfirm(v) => v.write_xdr(w)?,
-            Self::ScpStExternalize(v) => v.write_xdr(w)?,
-            Self::ScpStNominate(v) => v.write_xdr(w)?,
+            Self::Prepare(v) => v.write_xdr(w)?,
+            Self::Confirm(v) => v.write_xdr(w)?,
+            Self::Externalize(v) => v.write_xdr(w)?,
+            Self::Nominate(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -1468,10 +1468,10 @@ impl WriteXdr for AssetCode12 {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum AssetType {
-    AssetTypeNative = 0,
-    AssetTypeCreditAlphanum4 = 1,
-    AssetTypeCreditAlphanum12 = 2,
-    AssetTypePoolShare = 3,
+    Native = 0,
+    CreditAlphanum4 = 1,
+    CreditAlphanum12 = 2,
+    PoolShare = 3,
 }
 
 impl TryFrom<i32> for AssetType {
@@ -1479,10 +1479,10 @@ impl TryFrom<i32> for AssetType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => AssetType::AssetTypeNative,
-            1 => AssetType::AssetTypeCreditAlphanum4,
-            2 => AssetType::AssetTypeCreditAlphanum12,
-            3 => AssetType::AssetTypePoolShare,
+            0 => AssetType::Native,
+            1 => AssetType::CreditAlphanum4,
+            2 => AssetType::CreditAlphanum12,
+            3 => AssetType::PoolShare,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -1529,15 +1529,15 @@ impl WriteXdr for AssetType {
 // union with discriminant AssetType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AssetCode {
-    AssetTypeCreditAlphanum4(AssetCode4),
-    AssetTypeCreditAlphanum12(AssetCode12),
+    CreditAlphanum4(AssetCode4),
+    CreditAlphanum12(AssetCode12),
 }
 
 impl AssetCode {
     pub fn discriminant(&self) -> AssetType {
         match self {
-            Self::AssetTypeCreditAlphanum4(_) => AssetType::AssetTypeCreditAlphanum4,
-            Self::AssetTypeCreditAlphanum12(_) => AssetType::AssetTypeCreditAlphanum12,
+            Self::CreditAlphanum4(_) => AssetType::CreditAlphanum4,
+            Self::CreditAlphanum12(_) => AssetType::CreditAlphanum12,
         }
     }
 }
@@ -1547,12 +1547,8 @@ impl ReadXdr for AssetCode {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            AssetType::AssetTypeCreditAlphanum4 => {
-                Self::AssetTypeCreditAlphanum4(AssetCode4::read_xdr(r)?)
-            }
-            AssetType::AssetTypeCreditAlphanum12 => {
-                Self::AssetTypeCreditAlphanum12(AssetCode12::read_xdr(r)?)
-            }
+            AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AssetCode4::read_xdr(r)?),
+            AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AssetCode12::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -1565,8 +1561,8 @@ impl WriteXdr for AssetCode {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::AssetTypeCreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum12(v) => v.write_xdr(w)?,
+            Self::CreditAlphanum4(v) => v.write_xdr(w)?,
+            Self::CreditAlphanum12(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -1657,17 +1653,17 @@ impl WriteXdr for AlphaNum12 {
 // union with discriminant AssetType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Asset {
-    AssetTypeNative,
-    AssetTypeCreditAlphanum4(AlphaNum4),
-    AssetTypeCreditAlphanum12(AlphaNum12),
+    Native,
+    CreditAlphanum4(AlphaNum4),
+    CreditAlphanum12(AlphaNum12),
 }
 
 impl Asset {
     pub fn discriminant(&self) -> AssetType {
         match self {
-            Self::AssetTypeNative => AssetType::AssetTypeNative,
-            Self::AssetTypeCreditAlphanum4(_) => AssetType::AssetTypeCreditAlphanum4,
-            Self::AssetTypeCreditAlphanum12(_) => AssetType::AssetTypeCreditAlphanum12,
+            Self::Native => AssetType::Native,
+            Self::CreditAlphanum4(_) => AssetType::CreditAlphanum4,
+            Self::CreditAlphanum12(_) => AssetType::CreditAlphanum12,
         }
     }
 }
@@ -1677,13 +1673,9 @@ impl ReadXdr for Asset {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            AssetType::AssetTypeNative => Self::AssetTypeNative,
-            AssetType::AssetTypeCreditAlphanum4 => {
-                Self::AssetTypeCreditAlphanum4(AlphaNum4::read_xdr(r)?)
-            }
-            AssetType::AssetTypeCreditAlphanum12 => {
-                Self::AssetTypeCreditAlphanum12(AlphaNum12::read_xdr(r)?)
-            }
+            AssetType::Native => Self::Native,
+            AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
+            AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -1696,9 +1688,9 @@ impl WriteXdr for Asset {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::AssetTypeNative => ().write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum12(v) => v.write_xdr(w)?,
+            Self::Native => ().write_xdr(w)?,
+            Self::CreditAlphanum4(v) => v.write_xdr(w)?,
+            Self::CreditAlphanum12(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -1784,10 +1776,10 @@ impl WriteXdr for Liabilities {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ThresholdIndexes {
-    ThresholdMasterWeight = 0,
-    ThresholdLow = 1,
-    ThresholdMed = 2,
-    ThresholdHigh = 3,
+    MasterWeight = 0,
+    Low = 1,
+    Med = 2,
+    High = 3,
 }
 
 impl TryFrom<i32> for ThresholdIndexes {
@@ -1795,10 +1787,10 @@ impl TryFrom<i32> for ThresholdIndexes {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ThresholdIndexes::ThresholdMasterWeight,
-            1 => ThresholdIndexes::ThresholdLow,
-            2 => ThresholdIndexes::ThresholdMed,
-            3 => ThresholdIndexes::ThresholdHigh,
+            0 => ThresholdIndexes::MasterWeight,
+            1 => ThresholdIndexes::Low,
+            2 => ThresholdIndexes::Med,
+            3 => ThresholdIndexes::High,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -1951,10 +1943,10 @@ impl WriteXdr for Signer {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum AccountFlags {
-    AuthRequiredFlag = 1,
-    AuthRevocableFlag = 2,
-    AuthImmutableFlag = 4,
-    AuthClawbackEnabledFlag = 8,
+    RequiredFlag = 1,
+    RevocableFlag = 2,
+    ImmutableFlag = 4,
+    ClawbackEnabledFlag = 8,
 }
 
 impl TryFrom<i32> for AccountFlags {
@@ -1962,10 +1954,10 @@ impl TryFrom<i32> for AccountFlags {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            1 => AccountFlags::AuthRequiredFlag,
-            2 => AccountFlags::AuthRevocableFlag,
-            4 => AccountFlags::AuthImmutableFlag,
-            8 => AccountFlags::AuthClawbackEnabledFlag,
+            1 => AccountFlags::RequiredFlag,
+            2 => AccountFlags::RevocableFlag,
+            4 => AccountFlags::ImmutableFlag,
+            8 => AccountFlags::ClawbackEnabledFlag,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -2575,19 +2567,19 @@ impl WriteXdr for LiquidityPoolType {
 // union with discriminant AssetType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TrustLineAsset {
-    AssetTypeNative,
-    AssetTypeCreditAlphanum4(AlphaNum4),
-    AssetTypeCreditAlphanum12(AlphaNum12),
-    AssetTypePoolShare(PoolId),
+    Native,
+    CreditAlphanum4(AlphaNum4),
+    CreditAlphanum12(AlphaNum12),
+    PoolShare(PoolId),
 }
 
 impl TrustLineAsset {
     pub fn discriminant(&self) -> AssetType {
         match self {
-            Self::AssetTypeNative => AssetType::AssetTypeNative,
-            Self::AssetTypeCreditAlphanum4(_) => AssetType::AssetTypeCreditAlphanum4,
-            Self::AssetTypeCreditAlphanum12(_) => AssetType::AssetTypeCreditAlphanum12,
-            Self::AssetTypePoolShare(_) => AssetType::AssetTypePoolShare,
+            Self::Native => AssetType::Native,
+            Self::CreditAlphanum4(_) => AssetType::CreditAlphanum4,
+            Self::CreditAlphanum12(_) => AssetType::CreditAlphanum12,
+            Self::PoolShare(_) => AssetType::PoolShare,
         }
     }
 }
@@ -2597,14 +2589,10 @@ impl ReadXdr for TrustLineAsset {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            AssetType::AssetTypeNative => Self::AssetTypeNative,
-            AssetType::AssetTypeCreditAlphanum4 => {
-                Self::AssetTypeCreditAlphanum4(AlphaNum4::read_xdr(r)?)
-            }
-            AssetType::AssetTypeCreditAlphanum12 => {
-                Self::AssetTypeCreditAlphanum12(AlphaNum12::read_xdr(r)?)
-            }
-            AssetType::AssetTypePoolShare => Self::AssetTypePoolShare(PoolId::read_xdr(r)?),
+            AssetType::Native => Self::Native,
+            AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
+            AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
+            AssetType::PoolShare => Self::PoolShare(PoolId::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -2617,10 +2605,10 @@ impl WriteXdr for TrustLineAsset {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::AssetTypeNative => ().write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum12(v) => v.write_xdr(w)?,
-            Self::AssetTypePoolShare(v) => v.write_xdr(w)?,
+            Self::Native => ().write_xdr(w)?,
+            Self::CreditAlphanum4(v) => v.write_xdr(w)?,
+            Self::CreditAlphanum12(v) => v.write_xdr(w)?,
+            Self::PoolShare(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -3224,12 +3212,12 @@ impl WriteXdr for DataEntry {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ClaimPredicateType {
-    ClaimPredicateUnconditional = 0,
-    ClaimPredicateAnd = 1,
-    ClaimPredicateOr = 2,
-    ClaimPredicateNot = 3,
-    ClaimPredicateBeforeAbsoluteTime = 4,
-    ClaimPredicateBeforeRelativeTime = 5,
+    Unconditional = 0,
+    And = 1,
+    Or = 2,
+    Not = 3,
+    BeforeAbsoluteTime = 4,
+    BeforeRelativeTime = 5,
 }
 
 impl TryFrom<i32> for ClaimPredicateType {
@@ -3237,12 +3225,12 @@ impl TryFrom<i32> for ClaimPredicateType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ClaimPredicateType::ClaimPredicateUnconditional,
-            1 => ClaimPredicateType::ClaimPredicateAnd,
-            2 => ClaimPredicateType::ClaimPredicateOr,
-            3 => ClaimPredicateType::ClaimPredicateNot,
-            4 => ClaimPredicateType::ClaimPredicateBeforeAbsoluteTime,
-            5 => ClaimPredicateType::ClaimPredicateBeforeRelativeTime,
+            0 => ClaimPredicateType::Unconditional,
+            1 => ClaimPredicateType::And,
+            2 => ClaimPredicateType::Or,
+            3 => ClaimPredicateType::Not,
+            4 => ClaimPredicateType::BeforeAbsoluteTime,
+            5 => ClaimPredicateType::BeforeRelativeTime,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -3295,27 +3283,23 @@ impl WriteXdr for ClaimPredicateType {
 // union with discriminant ClaimPredicateType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ClaimPredicate {
-    ClaimPredicateUnconditional,
-    ClaimPredicateAnd(VecM<ClaimPredicate, 2>),
-    ClaimPredicateOr(VecM<ClaimPredicate, 2>),
-    ClaimPredicateNot(Option<Box<ClaimPredicate>>),
-    ClaimPredicateBeforeAbsoluteTime(i64),
-    ClaimPredicateBeforeRelativeTime(i64),
+    Unconditional,
+    And(VecM<ClaimPredicate, 2>),
+    Or(VecM<ClaimPredicate, 2>),
+    Not(Option<Box<ClaimPredicate>>),
+    BeforeAbsoluteTime(i64),
+    BeforeRelativeTime(i64),
 }
 
 impl ClaimPredicate {
     pub fn discriminant(&self) -> ClaimPredicateType {
         match self {
-            Self::ClaimPredicateUnconditional => ClaimPredicateType::ClaimPredicateUnconditional,
-            Self::ClaimPredicateAnd(_) => ClaimPredicateType::ClaimPredicateAnd,
-            Self::ClaimPredicateOr(_) => ClaimPredicateType::ClaimPredicateOr,
-            Self::ClaimPredicateNot(_) => ClaimPredicateType::ClaimPredicateNot,
-            Self::ClaimPredicateBeforeAbsoluteTime(_) => {
-                ClaimPredicateType::ClaimPredicateBeforeAbsoluteTime
-            }
-            Self::ClaimPredicateBeforeRelativeTime(_) => {
-                ClaimPredicateType::ClaimPredicateBeforeRelativeTime
-            }
+            Self::Unconditional => ClaimPredicateType::Unconditional,
+            Self::And(_) => ClaimPredicateType::And,
+            Self::Or(_) => ClaimPredicateType::Or,
+            Self::Not(_) => ClaimPredicateType::Not,
+            Self::BeforeAbsoluteTime(_) => ClaimPredicateType::BeforeAbsoluteTime,
+            Self::BeforeRelativeTime(_) => ClaimPredicateType::BeforeRelativeTime,
         }
     }
 }
@@ -3325,22 +3309,12 @@ impl ReadXdr for ClaimPredicate {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimPredicateType = <ClaimPredicateType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ClaimPredicateType::ClaimPredicateUnconditional => Self::ClaimPredicateUnconditional,
-            ClaimPredicateType::ClaimPredicateAnd => {
-                Self::ClaimPredicateAnd(VecM::<ClaimPredicate, 2>::read_xdr(r)?)
-            }
-            ClaimPredicateType::ClaimPredicateOr => {
-                Self::ClaimPredicateOr(VecM::<ClaimPredicate, 2>::read_xdr(r)?)
-            }
-            ClaimPredicateType::ClaimPredicateNot => {
-                Self::ClaimPredicateNot(Option::<Box<ClaimPredicate>>::read_xdr(r)?)
-            }
-            ClaimPredicateType::ClaimPredicateBeforeAbsoluteTime => {
-                Self::ClaimPredicateBeforeAbsoluteTime(i64::read_xdr(r)?)
-            }
-            ClaimPredicateType::ClaimPredicateBeforeRelativeTime => {
-                Self::ClaimPredicateBeforeRelativeTime(i64::read_xdr(r)?)
-            }
+            ClaimPredicateType::Unconditional => Self::Unconditional,
+            ClaimPredicateType::And => Self::And(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
+            ClaimPredicateType::Or => Self::Or(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
+            ClaimPredicateType::Not => Self::Not(Option::<Box<ClaimPredicate>>::read_xdr(r)?),
+            ClaimPredicateType::BeforeAbsoluteTime => Self::BeforeAbsoluteTime(i64::read_xdr(r)?),
+            ClaimPredicateType::BeforeRelativeTime => Self::BeforeRelativeTime(i64::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -3353,12 +3327,12 @@ impl WriteXdr for ClaimPredicate {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ClaimPredicateUnconditional => ().write_xdr(w)?,
-            Self::ClaimPredicateAnd(v) => v.write_xdr(w)?,
-            Self::ClaimPredicateOr(v) => v.write_xdr(w)?,
-            Self::ClaimPredicateNot(v) => v.write_xdr(w)?,
-            Self::ClaimPredicateBeforeAbsoluteTime(v) => v.write_xdr(w)?,
-            Self::ClaimPredicateBeforeRelativeTime(v) => v.write_xdr(w)?,
+            Self::Unconditional => ().write_xdr(w)?,
+            Self::And(v) => v.write_xdr(w)?,
+            Self::Or(v) => v.write_xdr(w)?,
+            Self::Not(v) => v.write_xdr(w)?,
+            Self::BeforeAbsoluteTime(v) => v.write_xdr(w)?,
+            Self::BeforeRelativeTime(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -4629,14 +4603,14 @@ impl WriteXdr for LedgerKey {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum EnvelopeType {
-    EnvelopeTypeTxV0 = 0,
-    EnvelopeTypeScp = 1,
-    EnvelopeTypeTx = 2,
-    EnvelopeTypeAuth = 3,
-    EnvelopeTypeScpvalue = 4,
-    EnvelopeTypeTxFeeBump = 5,
-    EnvelopeTypeOpId = 6,
-    EnvelopeTypePoolRevokeOpId = 7,
+    TxV0 = 0,
+    Scp = 1,
+    Tx = 2,
+    Auth = 3,
+    Scpvalue = 4,
+    TxFeeBump = 5,
+    OpId = 6,
+    PoolRevokeOpId = 7,
 }
 
 impl TryFrom<i32> for EnvelopeType {
@@ -4644,14 +4618,14 @@ impl TryFrom<i32> for EnvelopeType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => EnvelopeType::EnvelopeTypeTxV0,
-            1 => EnvelopeType::EnvelopeTypeScp,
-            2 => EnvelopeType::EnvelopeTypeTx,
-            3 => EnvelopeType::EnvelopeTypeAuth,
-            4 => EnvelopeType::EnvelopeTypeScpvalue,
-            5 => EnvelopeType::EnvelopeTypeTxFeeBump,
-            6 => EnvelopeType::EnvelopeTypeOpId,
-            7 => EnvelopeType::EnvelopeTypePoolRevokeOpId,
+            0 => EnvelopeType::TxV0,
+            1 => EnvelopeType::Scp,
+            2 => EnvelopeType::Tx,
+            3 => EnvelopeType::Auth,
+            4 => EnvelopeType::Scpvalue,
+            5 => EnvelopeType::TxFeeBump,
+            6 => EnvelopeType::OpId,
+            7 => EnvelopeType::PoolRevokeOpId,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -4735,8 +4709,8 @@ impl WriteXdr for UpgradeType {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum StellarValueType {
-    StellarValueBasic = 0,
-    StellarValueSigned = 1,
+    Basic = 0,
+    Signed = 1,
 }
 
 impl TryFrom<i32> for StellarValueType {
@@ -4744,8 +4718,8 @@ impl TryFrom<i32> for StellarValueType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => StellarValueType::StellarValueBasic,
-            1 => StellarValueType::StellarValueSigned,
+            0 => StellarValueType::Basic,
+            1 => StellarValueType::Signed,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -4822,15 +4796,15 @@ impl WriteXdr for LedgerCloseValueSignature {
 // union with discriminant StellarValueType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum StellarValueExt {
-    StellarValueBasic,
-    StellarValueSigned(LedgerCloseValueSignature),
+    Basic,
+    Signed(LedgerCloseValueSignature),
 }
 
 impl StellarValueExt {
     pub fn discriminant(&self) -> StellarValueType {
         match self {
-            Self::StellarValueBasic => StellarValueType::StellarValueBasic,
-            Self::StellarValueSigned(_) => StellarValueType::StellarValueSigned,
+            Self::Basic => StellarValueType::Basic,
+            Self::Signed(_) => StellarValueType::Signed,
         }
     }
 }
@@ -4840,10 +4814,8 @@ impl ReadXdr for StellarValueExt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: StellarValueType = <StellarValueType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            StellarValueType::StellarValueBasic => Self::StellarValueBasic,
-            StellarValueType::StellarValueSigned => {
-                Self::StellarValueSigned(LedgerCloseValueSignature::read_xdr(r)?)
-            }
+            StellarValueType::Basic => Self::Basic,
+            StellarValueType::Signed => Self::Signed(LedgerCloseValueSignature::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -4856,8 +4828,8 @@ impl WriteXdr for StellarValueExt {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::StellarValueBasic => ().write_xdr(w)?,
-            Self::StellarValueSigned(v) => v.write_xdr(w)?,
+            Self::Basic => ().write_xdr(w)?,
+            Self::Signed(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -4938,9 +4910,9 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum LedgerHeaderFlags {
-    DisableLiquidityPoolTradingFlag = 1,
-    DisableLiquidityPoolDepositFlag = 2,
-    DisableLiquidityPoolWithdrawalFlag = 4,
+    TradingFlag = 1,
+    DepositFlag = 2,
+    WithdrawalFlag = 4,
 }
 
 impl TryFrom<i32> for LedgerHeaderFlags {
@@ -4948,9 +4920,9 @@ impl TryFrom<i32> for LedgerHeaderFlags {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            1 => LedgerHeaderFlags::DisableLiquidityPoolTradingFlag,
-            2 => LedgerHeaderFlags::DisableLiquidityPoolDepositFlag,
-            4 => LedgerHeaderFlags::DisableLiquidityPoolWithdrawalFlag,
+            1 => LedgerHeaderFlags::TradingFlag,
+            2 => LedgerHeaderFlags::DepositFlag,
+            4 => LedgerHeaderFlags::WithdrawalFlag,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5239,11 +5211,11 @@ impl WriteXdr for LedgerHeader {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum LedgerUpgradeType {
-    LedgerUpgradeVersion = 1,
-    LedgerUpgradeBaseFee = 2,
-    LedgerUpgradeMaxTxSetSize = 3,
-    LedgerUpgradeBaseReserve = 4,
-    LedgerUpgradeFlags = 5,
+    Version = 1,
+    BaseFee = 2,
+    MaxTxSetSize = 3,
+    BaseReserve = 4,
+    Flags = 5,
 }
 
 impl TryFrom<i32> for LedgerUpgradeType {
@@ -5251,11 +5223,11 @@ impl TryFrom<i32> for LedgerUpgradeType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            1 => LedgerUpgradeType::LedgerUpgradeVersion,
-            2 => LedgerUpgradeType::LedgerUpgradeBaseFee,
-            3 => LedgerUpgradeType::LedgerUpgradeMaxTxSetSize,
-            4 => LedgerUpgradeType::LedgerUpgradeBaseReserve,
-            5 => LedgerUpgradeType::LedgerUpgradeFlags,
+            1 => LedgerUpgradeType::Version,
+            2 => LedgerUpgradeType::BaseFee,
+            3 => LedgerUpgradeType::MaxTxSetSize,
+            4 => LedgerUpgradeType::BaseReserve,
+            5 => LedgerUpgradeType::Flags,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5305,21 +5277,21 @@ impl WriteXdr for LedgerUpgradeType {
 // union with discriminant LedgerUpgradeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LedgerUpgrade {
-    LedgerUpgradeVersion(u32),
-    LedgerUpgradeBaseFee(u32),
-    LedgerUpgradeMaxTxSetSize(u32),
-    LedgerUpgradeBaseReserve(u32),
-    LedgerUpgradeFlags(u32),
+    Version(u32),
+    BaseFee(u32),
+    MaxTxSetSize(u32),
+    BaseReserve(u32),
+    Flags(u32),
 }
 
 impl LedgerUpgrade {
     pub fn discriminant(&self) -> LedgerUpgradeType {
         match self {
-            Self::LedgerUpgradeVersion(_) => LedgerUpgradeType::LedgerUpgradeVersion,
-            Self::LedgerUpgradeBaseFee(_) => LedgerUpgradeType::LedgerUpgradeBaseFee,
-            Self::LedgerUpgradeMaxTxSetSize(_) => LedgerUpgradeType::LedgerUpgradeMaxTxSetSize,
-            Self::LedgerUpgradeBaseReserve(_) => LedgerUpgradeType::LedgerUpgradeBaseReserve,
-            Self::LedgerUpgradeFlags(_) => LedgerUpgradeType::LedgerUpgradeFlags,
+            Self::Version(_) => LedgerUpgradeType::Version,
+            Self::BaseFee(_) => LedgerUpgradeType::BaseFee,
+            Self::MaxTxSetSize(_) => LedgerUpgradeType::MaxTxSetSize,
+            Self::BaseReserve(_) => LedgerUpgradeType::BaseReserve,
+            Self::Flags(_) => LedgerUpgradeType::Flags,
         }
     }
 }
@@ -5329,19 +5301,11 @@ impl ReadXdr for LedgerUpgrade {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            LedgerUpgradeType::LedgerUpgradeVersion => {
-                Self::LedgerUpgradeVersion(u32::read_xdr(r)?)
-            }
-            LedgerUpgradeType::LedgerUpgradeBaseFee => {
-                Self::LedgerUpgradeBaseFee(u32::read_xdr(r)?)
-            }
-            LedgerUpgradeType::LedgerUpgradeMaxTxSetSize => {
-                Self::LedgerUpgradeMaxTxSetSize(u32::read_xdr(r)?)
-            }
-            LedgerUpgradeType::LedgerUpgradeBaseReserve => {
-                Self::LedgerUpgradeBaseReserve(u32::read_xdr(r)?)
-            }
-            LedgerUpgradeType::LedgerUpgradeFlags => Self::LedgerUpgradeFlags(u32::read_xdr(r)?),
+            LedgerUpgradeType::Version => Self::Version(u32::read_xdr(r)?),
+            LedgerUpgradeType::BaseFee => Self::BaseFee(u32::read_xdr(r)?),
+            LedgerUpgradeType::MaxTxSetSize => Self::MaxTxSetSize(u32::read_xdr(r)?),
+            LedgerUpgradeType::BaseReserve => Self::BaseReserve(u32::read_xdr(r)?),
+            LedgerUpgradeType::Flags => Self::Flags(u32::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5354,11 +5318,11 @@ impl WriteXdr for LedgerUpgrade {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::LedgerUpgradeVersion(v) => v.write_xdr(w)?,
-            Self::LedgerUpgradeBaseFee(v) => v.write_xdr(w)?,
-            Self::LedgerUpgradeMaxTxSetSize(v) => v.write_xdr(w)?,
-            Self::LedgerUpgradeBaseReserve(v) => v.write_xdr(w)?,
-            Self::LedgerUpgradeFlags(v) => v.write_xdr(w)?,
+            Self::Version(v) => v.write_xdr(w)?,
+            Self::BaseFee(v) => v.write_xdr(w)?,
+            Self::MaxTxSetSize(v) => v.write_xdr(w)?,
+            Self::BaseReserve(v) => v.write_xdr(w)?,
+            Self::Flags(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -6067,10 +6031,10 @@ impl WriteXdr for ScpHistoryEntry {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum LedgerEntryChangeType {
-    LedgerEntryCreated = 0,
-    LedgerEntryUpdated = 1,
-    LedgerEntryRemoved = 2,
-    LedgerEntryState = 3,
+    Created = 0,
+    Updated = 1,
+    Removed = 2,
+    State = 3,
 }
 
 impl TryFrom<i32> for LedgerEntryChangeType {
@@ -6078,10 +6042,10 @@ impl TryFrom<i32> for LedgerEntryChangeType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => LedgerEntryChangeType::LedgerEntryCreated,
-            1 => LedgerEntryChangeType::LedgerEntryUpdated,
-            2 => LedgerEntryChangeType::LedgerEntryRemoved,
-            3 => LedgerEntryChangeType::LedgerEntryState,
+            0 => LedgerEntryChangeType::Created,
+            1 => LedgerEntryChangeType::Updated,
+            2 => LedgerEntryChangeType::Removed,
+            3 => LedgerEntryChangeType::State,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -6129,19 +6093,19 @@ impl WriteXdr for LedgerEntryChangeType {
 // union with discriminant LedgerEntryChangeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LedgerEntryChange {
-    LedgerEntryCreated(LedgerEntry),
-    LedgerEntryUpdated(LedgerEntry),
-    LedgerEntryRemoved(LedgerKey),
-    LedgerEntryState(LedgerEntry),
+    Created(LedgerEntry),
+    Updated(LedgerEntry),
+    Removed(LedgerKey),
+    State(LedgerEntry),
 }
 
 impl LedgerEntryChange {
     pub fn discriminant(&self) -> LedgerEntryChangeType {
         match self {
-            Self::LedgerEntryCreated(_) => LedgerEntryChangeType::LedgerEntryCreated,
-            Self::LedgerEntryUpdated(_) => LedgerEntryChangeType::LedgerEntryUpdated,
-            Self::LedgerEntryRemoved(_) => LedgerEntryChangeType::LedgerEntryRemoved,
-            Self::LedgerEntryState(_) => LedgerEntryChangeType::LedgerEntryState,
+            Self::Created(_) => LedgerEntryChangeType::Created,
+            Self::Updated(_) => LedgerEntryChangeType::Updated,
+            Self::Removed(_) => LedgerEntryChangeType::Removed,
+            Self::State(_) => LedgerEntryChangeType::State,
         }
     }
 }
@@ -6151,18 +6115,10 @@ impl ReadXdr for LedgerEntryChange {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            LedgerEntryChangeType::LedgerEntryCreated => {
-                Self::LedgerEntryCreated(LedgerEntry::read_xdr(r)?)
-            }
-            LedgerEntryChangeType::LedgerEntryUpdated => {
-                Self::LedgerEntryUpdated(LedgerEntry::read_xdr(r)?)
-            }
-            LedgerEntryChangeType::LedgerEntryRemoved => {
-                Self::LedgerEntryRemoved(LedgerKey::read_xdr(r)?)
-            }
-            LedgerEntryChangeType::LedgerEntryState => {
-                Self::LedgerEntryState(LedgerEntry::read_xdr(r)?)
-            }
+            LedgerEntryChangeType::Created => Self::Created(LedgerEntry::read_xdr(r)?),
+            LedgerEntryChangeType::Updated => Self::Updated(LedgerEntry::read_xdr(r)?),
+            LedgerEntryChangeType::Removed => Self::Removed(LedgerKey::read_xdr(r)?),
+            LedgerEntryChangeType::State => Self::State(LedgerEntry::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -6175,10 +6131,10 @@ impl WriteXdr for LedgerEntryChange {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::LedgerEntryCreated(v) => v.write_xdr(w)?,
-            Self::LedgerEntryUpdated(v) => v.write_xdr(w)?,
-            Self::LedgerEntryRemoved(v) => v.write_xdr(w)?,
-            Self::LedgerEntryState(v) => v.write_xdr(w)?,
+            Self::Created(v) => v.write_xdr(w)?,
+            Self::Updated(v) => v.write_xdr(w)?,
+            Self::Removed(v) => v.write_xdr(w)?,
+            Self::State(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -6616,11 +6572,11 @@ impl WriteXdr for LedgerCloseMeta {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ErrorCode {
-    ErrMisc = 0,
-    ErrData = 1,
-    ErrConf = 2,
-    ErrAuth = 3,
-    ErrLoad = 4,
+    Misc = 0,
+    Data = 1,
+    Conf = 2,
+    Auth = 3,
+    Load = 4,
 }
 
 impl TryFrom<i32> for ErrorCode {
@@ -6628,11 +6584,11 @@ impl TryFrom<i32> for ErrorCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ErrorCode::ErrMisc,
-            1 => ErrorCode::ErrData,
-            2 => ErrorCode::ErrConf,
-            3 => ErrorCode::ErrAuth,
-            4 => ErrorCode::ErrLoad,
+            0 => ErrorCode::Misc,
+            1 => ErrorCode::Data,
+            2 => ErrorCode::Conf,
+            3 => ErrorCode::Auth,
+            4 => ErrorCode::Load,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -7986,15 +7942,15 @@ impl WriteXdr for MuxedAccountMed25519 {
 // union with discriminant CryptoKeyType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MuxedAccount {
-    KeyTypeEd25519(Uint256),
-    KeyTypeMuxedEd25519(MuxedAccountMed25519),
+    Ed25519(Uint256),
+    MuxedEd25519(MuxedAccountMed25519),
 }
 
 impl MuxedAccount {
     pub fn discriminant(&self) -> CryptoKeyType {
         match self {
-            Self::KeyTypeEd25519(_) => CryptoKeyType::KeyTypeEd25519,
-            Self::KeyTypeMuxedEd25519(_) => CryptoKeyType::KeyTypeMuxedEd25519,
+            Self::Ed25519(_) => CryptoKeyType::Ed25519,
+            Self::MuxedEd25519(_) => CryptoKeyType::MuxedEd25519,
         }
     }
 }
@@ -8004,10 +7960,8 @@ impl ReadXdr for MuxedAccount {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: CryptoKeyType = <CryptoKeyType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            CryptoKeyType::KeyTypeEd25519 => Self::KeyTypeEd25519(Uint256::read_xdr(r)?),
-            CryptoKeyType::KeyTypeMuxedEd25519 => {
-                Self::KeyTypeMuxedEd25519(MuxedAccountMed25519::read_xdr(r)?)
-            }
+            CryptoKeyType::Ed25519 => Self::Ed25519(Uint256::read_xdr(r)?),
+            CryptoKeyType::MuxedEd25519 => Self::MuxedEd25519(MuxedAccountMed25519::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -8020,8 +7974,8 @@ impl WriteXdr for MuxedAccount {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::KeyTypeEd25519(v) => v.write_xdr(w)?,
-            Self::KeyTypeMuxedEd25519(v) => v.write_xdr(w)?,
+            Self::Ed25519(v) => v.write_xdr(w)?,
+            Self::MuxedEd25519(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -8581,19 +8535,19 @@ impl WriteXdr for SetOptionsOp {
 // union with discriminant AssetType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ChangeTrustAsset {
-    AssetTypeNative,
-    AssetTypeCreditAlphanum4(AlphaNum4),
-    AssetTypeCreditAlphanum12(AlphaNum12),
-    AssetTypePoolShare(LiquidityPoolParameters),
+    Native,
+    CreditAlphanum4(AlphaNum4),
+    CreditAlphanum12(AlphaNum12),
+    PoolShare(LiquidityPoolParameters),
 }
 
 impl ChangeTrustAsset {
     pub fn discriminant(&self) -> AssetType {
         match self {
-            Self::AssetTypeNative => AssetType::AssetTypeNative,
-            Self::AssetTypeCreditAlphanum4(_) => AssetType::AssetTypeCreditAlphanum4,
-            Self::AssetTypeCreditAlphanum12(_) => AssetType::AssetTypeCreditAlphanum12,
-            Self::AssetTypePoolShare(_) => AssetType::AssetTypePoolShare,
+            Self::Native => AssetType::Native,
+            Self::CreditAlphanum4(_) => AssetType::CreditAlphanum4,
+            Self::CreditAlphanum12(_) => AssetType::CreditAlphanum12,
+            Self::PoolShare(_) => AssetType::PoolShare,
         }
     }
 }
@@ -8603,16 +8557,10 @@ impl ReadXdr for ChangeTrustAsset {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            AssetType::AssetTypeNative => Self::AssetTypeNative,
-            AssetType::AssetTypeCreditAlphanum4 => {
-                Self::AssetTypeCreditAlphanum4(AlphaNum4::read_xdr(r)?)
-            }
-            AssetType::AssetTypeCreditAlphanum12 => {
-                Self::AssetTypeCreditAlphanum12(AlphaNum12::read_xdr(r)?)
-            }
-            AssetType::AssetTypePoolShare => {
-                Self::AssetTypePoolShare(LiquidityPoolParameters::read_xdr(r)?)
-            }
+            AssetType::Native => Self::Native,
+            AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
+            AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
+            AssetType::PoolShare => Self::PoolShare(LiquidityPoolParameters::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -8625,10 +8573,10 @@ impl WriteXdr for ChangeTrustAsset {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::AssetTypeNative => ().write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::AssetTypeCreditAlphanum12(v) => v.write_xdr(w)?,
-            Self::AssetTypePoolShare(v) => v.write_xdr(w)?,
+            Self::Native => ().write_xdr(w)?,
+            Self::CreditAlphanum4(v) => v.write_xdr(w)?,
+            Self::CreditAlphanum12(v) => v.write_xdr(w)?,
+            Self::PoolShare(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -8877,8 +8825,8 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum RevokeSponsorshipType {
-    RevokeSponsorshipLedgerEntry = 0,
-    RevokeSponsorshipSigner = 1,
+    LedgerEntry = 0,
+    Signer = 1,
 }
 
 impl TryFrom<i32> for RevokeSponsorshipType {
@@ -8886,8 +8834,8 @@ impl TryFrom<i32> for RevokeSponsorshipType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => RevokeSponsorshipType::RevokeSponsorshipLedgerEntry,
-            1 => RevokeSponsorshipType::RevokeSponsorshipSigner,
+            0 => RevokeSponsorshipType::LedgerEntry,
+            1 => RevokeSponsorshipType::Signer,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -8968,17 +8916,15 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
 // union with discriminant RevokeSponsorshipType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RevokeSponsorshipOp {
-    RevokeSponsorshipLedgerEntry(LedgerKey),
-    RevokeSponsorshipSigner(RevokeSponsorshipOpSigner),
+    LedgerEntry(LedgerKey),
+    Signer(RevokeSponsorshipOpSigner),
 }
 
 impl RevokeSponsorshipOp {
     pub fn discriminant(&self) -> RevokeSponsorshipType {
         match self {
-            Self::RevokeSponsorshipLedgerEntry(_) => {
-                RevokeSponsorshipType::RevokeSponsorshipLedgerEntry
-            }
-            Self::RevokeSponsorshipSigner(_) => RevokeSponsorshipType::RevokeSponsorshipSigner,
+            Self::LedgerEntry(_) => RevokeSponsorshipType::LedgerEntry,
+            Self::Signer(_) => RevokeSponsorshipType::Signer,
         }
     }
 }
@@ -8988,12 +8934,8 @@ impl ReadXdr for RevokeSponsorshipOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            RevokeSponsorshipType::RevokeSponsorshipLedgerEntry => {
-                Self::RevokeSponsorshipLedgerEntry(LedgerKey::read_xdr(r)?)
-            }
-            RevokeSponsorshipType::RevokeSponsorshipSigner => {
-                Self::RevokeSponsorshipSigner(RevokeSponsorshipOpSigner::read_xdr(r)?)
-            }
+            RevokeSponsorshipType::LedgerEntry => Self::LedgerEntry(LedgerKey::read_xdr(r)?),
+            RevokeSponsorshipType::Signer => Self::Signer(RevokeSponsorshipOpSigner::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -9006,8 +8948,8 @@ impl WriteXdr for RevokeSponsorshipOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::RevokeSponsorshipLedgerEntry(v) => v.write_xdr(w)?,
-            Self::RevokeSponsorshipSigner(v) => v.write_xdr(w)?,
+            Self::LedgerEntry(v) => v.write_xdr(w)?,
+            Self::Signer(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -9616,15 +9558,15 @@ impl WriteXdr for HashIdPreimageRevokeId {
 // union with discriminant EnvelopeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum HashIdPreimage {
-    EnvelopeTypeOpId(HashIdPreimageOperationId),
-    EnvelopeTypePoolRevokeOpId(HashIdPreimageRevokeId),
+    OpId(HashIdPreimageOperationId),
+    PoolRevokeOpId(HashIdPreimageRevokeId),
 }
 
 impl HashIdPreimage {
     pub fn discriminant(&self) -> EnvelopeType {
         match self {
-            Self::EnvelopeTypeOpId(_) => EnvelopeType::EnvelopeTypeOpId,
-            Self::EnvelopeTypePoolRevokeOpId(_) => EnvelopeType::EnvelopeTypePoolRevokeOpId,
+            Self::OpId(_) => EnvelopeType::OpId,
+            Self::PoolRevokeOpId(_) => EnvelopeType::PoolRevokeOpId,
         }
     }
 }
@@ -9634,11 +9576,9 @@ impl ReadXdr for HashIdPreimage {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            EnvelopeType::EnvelopeTypeOpId => {
-                Self::EnvelopeTypeOpId(HashIdPreimageOperationId::read_xdr(r)?)
-            }
-            EnvelopeType::EnvelopeTypePoolRevokeOpId => {
-                Self::EnvelopeTypePoolRevokeOpId(HashIdPreimageRevokeId::read_xdr(r)?)
+            EnvelopeType::OpId => Self::OpId(HashIdPreimageOperationId::read_xdr(r)?),
+            EnvelopeType::PoolRevokeOpId => {
+                Self::PoolRevokeOpId(HashIdPreimageRevokeId::read_xdr(r)?)
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -9652,8 +9592,8 @@ impl WriteXdr for HashIdPreimage {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::EnvelopeTypeOpId(v) => v.write_xdr(w)?,
-            Self::EnvelopeTypePoolRevokeOpId(v) => v.write_xdr(w)?,
+            Self::OpId(v) => v.write_xdr(w)?,
+            Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -9674,11 +9614,11 @@ impl WriteXdr for HashIdPreimage {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum MemoType {
-    MemoNone = 0,
-    MemoText = 1,
-    MemoId = 2,
-    MemoHash = 3,
-    MemoReturn = 4,
+    None = 0,
+    Text = 1,
+    Id = 2,
+    Hash = 3,
+    Return = 4,
 }
 
 impl TryFrom<i32> for MemoType {
@@ -9686,11 +9626,11 @@ impl TryFrom<i32> for MemoType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => MemoType::MemoNone,
-            1 => MemoType::MemoText,
-            2 => MemoType::MemoId,
-            3 => MemoType::MemoHash,
-            4 => MemoType::MemoReturn,
+            0 => MemoType::None,
+            1 => MemoType::Text,
+            2 => MemoType::Id,
+            3 => MemoType::Hash,
+            4 => MemoType::Return,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -9740,21 +9680,21 @@ impl WriteXdr for MemoType {
 // union with discriminant MemoType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Memo {
-    MemoNone,
-    MemoText(VecM<u8, 28>),
-    MemoId(u64),
-    MemoHash(Hash),
-    MemoReturn(Hash),
+    None,
+    Text(VecM<u8, 28>),
+    Id(u64),
+    Hash(Hash),
+    Return(Hash),
 }
 
 impl Memo {
     pub fn discriminant(&self) -> MemoType {
         match self {
-            Self::MemoNone => MemoType::MemoNone,
-            Self::MemoText(_) => MemoType::MemoText,
-            Self::MemoId(_) => MemoType::MemoId,
-            Self::MemoHash(_) => MemoType::MemoHash,
-            Self::MemoReturn(_) => MemoType::MemoReturn,
+            Self::None => MemoType::None,
+            Self::Text(_) => MemoType::Text,
+            Self::Id(_) => MemoType::Id,
+            Self::Hash(_) => MemoType::Hash,
+            Self::Return(_) => MemoType::Return,
         }
     }
 }
@@ -9764,11 +9704,11 @@ impl ReadXdr for Memo {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: MemoType = <MemoType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            MemoType::MemoNone => Self::MemoNone,
-            MemoType::MemoText => Self::MemoText(VecM::<u8, 28>::read_xdr(r)?),
-            MemoType::MemoId => Self::MemoId(u64::read_xdr(r)?),
-            MemoType::MemoHash => Self::MemoHash(Hash::read_xdr(r)?),
-            MemoType::MemoReturn => Self::MemoReturn(Hash::read_xdr(r)?),
+            MemoType::None => Self::None,
+            MemoType::Text => Self::Text(VecM::<u8, 28>::read_xdr(r)?),
+            MemoType::Id => Self::Id(u64::read_xdr(r)?),
+            MemoType::Hash => Self::Hash(Hash::read_xdr(r)?),
+            MemoType::Return => Self::Return(Hash::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -9781,11 +9721,11 @@ impl WriteXdr for Memo {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::MemoNone => ().write_xdr(w)?,
-            Self::MemoText(v) => v.write_xdr(w)?,
-            Self::MemoId(v) => v.write_xdr(w)?,
-            Self::MemoHash(v) => v.write_xdr(w)?,
-            Self::MemoReturn(v) => v.write_xdr(w)?,
+            Self::None => ().write_xdr(w)?,
+            Self::Text(v) => v.write_xdr(w)?,
+            Self::Id(v) => v.write_xdr(w)?,
+            Self::Hash(v) => v.write_xdr(w)?,
+            Self::Return(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -9942,9 +9882,9 @@ impl WriteXdr for PreconditionsV2 {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum PreconditionType {
-    PrecondNone = 0,
-    PrecondTime = 1,
-    PrecondV2 = 2,
+    None = 0,
+    Time = 1,
+    V2 = 2,
 }
 
 impl TryFrom<i32> for PreconditionType {
@@ -9952,9 +9892,9 @@ impl TryFrom<i32> for PreconditionType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => PreconditionType::PrecondNone,
-            1 => PreconditionType::PrecondTime,
-            2 => PreconditionType::PrecondV2,
+            0 => PreconditionType::None,
+            1 => PreconditionType::Time,
+            2 => PreconditionType::V2,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10000,17 +9940,17 @@ impl WriteXdr for PreconditionType {
 // union with discriminant PreconditionType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Preconditions {
-    PrecondNone,
-    PrecondTime(TimeBounds),
-    PrecondV2(PreconditionsV2),
+    None,
+    Time(TimeBounds),
+    V2(PreconditionsV2),
 }
 
 impl Preconditions {
     pub fn discriminant(&self) -> PreconditionType {
         match self {
-            Self::PrecondNone => PreconditionType::PrecondNone,
-            Self::PrecondTime(_) => PreconditionType::PrecondTime,
-            Self::PrecondV2(_) => PreconditionType::PrecondV2,
+            Self::None => PreconditionType::None,
+            Self::Time(_) => PreconditionType::Time,
+            Self::V2(_) => PreconditionType::V2,
         }
     }
 }
@@ -10020,9 +9960,9 @@ impl ReadXdr for Preconditions {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PreconditionType = <PreconditionType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            PreconditionType::PrecondNone => Self::PrecondNone,
-            PreconditionType::PrecondTime => Self::PrecondTime(TimeBounds::read_xdr(r)?),
-            PreconditionType::PrecondV2 => Self::PrecondV2(PreconditionsV2::read_xdr(r)?),
+            PreconditionType::None => Self::None,
+            PreconditionType::Time => Self::Time(TimeBounds::read_xdr(r)?),
+            PreconditionType::V2 => Self::V2(PreconditionsV2::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10035,9 +9975,9 @@ impl WriteXdr for Preconditions {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::PrecondNone => ().write_xdr(w)?,
-            Self::PrecondTime(v) => v.write_xdr(w)?,
-            Self::PrecondV2(v) => v.write_xdr(w)?,
+            Self::None => ().write_xdr(w)?,
+            Self::Time(v) => v.write_xdr(w)?,
+            Self::V2(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -10349,13 +10289,13 @@ impl WriteXdr for TransactionV1Envelope {
 // union with discriminant EnvelopeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum FeeBumpTransactionInnerTx {
-    EnvelopeTypeTx(TransactionV1Envelope),
+    Tx(TransactionV1Envelope),
 }
 
 impl FeeBumpTransactionInnerTx {
     pub fn discriminant(&self) -> EnvelopeType {
         match self {
-            Self::EnvelopeTypeTx(_) => EnvelopeType::EnvelopeTypeTx,
+            Self::Tx(_) => EnvelopeType::Tx,
         }
     }
 }
@@ -10365,9 +10305,7 @@ impl ReadXdr for FeeBumpTransactionInnerTx {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            EnvelopeType::EnvelopeTypeTx => {
-                Self::EnvelopeTypeTx(TransactionV1Envelope::read_xdr(r)?)
-            }
+            EnvelopeType::Tx => Self::Tx(TransactionV1Envelope::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10380,7 +10318,7 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::EnvelopeTypeTx(v) => v.write_xdr(w)?,
+            Self::Tx(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -10533,17 +10471,17 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
 // union with discriminant EnvelopeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TransactionEnvelope {
-    EnvelopeTypeTxV0(TransactionV0Envelope),
-    EnvelopeTypeTx(TransactionV1Envelope),
-    EnvelopeTypeTxFeeBump(FeeBumpTransactionEnvelope),
+    TxV0(TransactionV0Envelope),
+    Tx(TransactionV1Envelope),
+    TxFeeBump(FeeBumpTransactionEnvelope),
 }
 
 impl TransactionEnvelope {
     pub fn discriminant(&self) -> EnvelopeType {
         match self {
-            Self::EnvelopeTypeTxV0(_) => EnvelopeType::EnvelopeTypeTxV0,
-            Self::EnvelopeTypeTx(_) => EnvelopeType::EnvelopeTypeTx,
-            Self::EnvelopeTypeTxFeeBump(_) => EnvelopeType::EnvelopeTypeTxFeeBump,
+            Self::TxV0(_) => EnvelopeType::TxV0,
+            Self::Tx(_) => EnvelopeType::Tx,
+            Self::TxFeeBump(_) => EnvelopeType::TxFeeBump,
         }
     }
 }
@@ -10553,15 +10491,9 @@ impl ReadXdr for TransactionEnvelope {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            EnvelopeType::EnvelopeTypeTxV0 => {
-                Self::EnvelopeTypeTxV0(TransactionV0Envelope::read_xdr(r)?)
-            }
-            EnvelopeType::EnvelopeTypeTx => {
-                Self::EnvelopeTypeTx(TransactionV1Envelope::read_xdr(r)?)
-            }
-            EnvelopeType::EnvelopeTypeTxFeeBump => {
-                Self::EnvelopeTypeTxFeeBump(FeeBumpTransactionEnvelope::read_xdr(r)?)
-            }
+            EnvelopeType::TxV0 => Self::TxV0(TransactionV0Envelope::read_xdr(r)?),
+            EnvelopeType::Tx => Self::Tx(TransactionV1Envelope::read_xdr(r)?),
+            EnvelopeType::TxFeeBump => Self::TxFeeBump(FeeBumpTransactionEnvelope::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10574,9 +10506,9 @@ impl WriteXdr for TransactionEnvelope {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::EnvelopeTypeTxV0(v) => v.write_xdr(w)?,
-            Self::EnvelopeTypeTx(v) => v.write_xdr(w)?,
-            Self::EnvelopeTypeTxFeeBump(v) => v.write_xdr(w)?,
+            Self::TxV0(v) => v.write_xdr(w)?,
+            Self::Tx(v) => v.write_xdr(w)?,
+            Self::TxFeeBump(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -10596,15 +10528,15 @@ impl WriteXdr for TransactionEnvelope {
 // union with discriminant EnvelopeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TransactionSignaturePayloadTaggedTransaction {
-    EnvelopeTypeTx(Transaction),
-    EnvelopeTypeTxFeeBump(FeeBumpTransaction),
+    Tx(Transaction),
+    TxFeeBump(FeeBumpTransaction),
 }
 
 impl TransactionSignaturePayloadTaggedTransaction {
     pub fn discriminant(&self) -> EnvelopeType {
         match self {
-            Self::EnvelopeTypeTx(_) => EnvelopeType::EnvelopeTypeTx,
-            Self::EnvelopeTypeTxFeeBump(_) => EnvelopeType::EnvelopeTypeTxFeeBump,
+            Self::Tx(_) => EnvelopeType::Tx,
+            Self::TxFeeBump(_) => EnvelopeType::TxFeeBump,
         }
     }
 }
@@ -10614,10 +10546,8 @@ impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            EnvelopeType::EnvelopeTypeTx => Self::EnvelopeTypeTx(Transaction::read_xdr(r)?),
-            EnvelopeType::EnvelopeTypeTxFeeBump => {
-                Self::EnvelopeTypeTxFeeBump(FeeBumpTransaction::read_xdr(r)?)
-            }
+            EnvelopeType::Tx => Self::Tx(Transaction::read_xdr(r)?),
+            EnvelopeType::TxFeeBump => Self::TxFeeBump(FeeBumpTransaction::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10630,8 +10560,8 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::EnvelopeTypeTx(v) => v.write_xdr(w)?,
-            Self::EnvelopeTypeTxFeeBump(v) => v.write_xdr(w)?,
+            Self::Tx(v) => v.write_xdr(w)?,
+            Self::TxFeeBump(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -10691,9 +10621,9 @@ impl WriteXdr for TransactionSignaturePayload {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ClaimAtomType {
-    ClaimAtomTypeV0 = 0,
-    ClaimAtomTypeOrderBook = 1,
-    ClaimAtomTypeLiquidityPool = 2,
+    V0 = 0,
+    OrderBook = 1,
+    LiquidityPool = 2,
 }
 
 impl TryFrom<i32> for ClaimAtomType {
@@ -10701,9 +10631,9 @@ impl TryFrom<i32> for ClaimAtomType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ClaimAtomType::ClaimAtomTypeV0,
-            1 => ClaimAtomType::ClaimAtomTypeOrderBook,
-            2 => ClaimAtomType::ClaimAtomTypeLiquidityPool,
+            0 => ClaimAtomType::V0,
+            1 => ClaimAtomType::OrderBook,
+            2 => ClaimAtomType::LiquidityPool,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10906,17 +10836,17 @@ impl WriteXdr for ClaimLiquidityAtom {
 // union with discriminant ClaimAtomType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ClaimAtom {
-    ClaimAtomTypeV0(ClaimOfferAtomV0),
-    ClaimAtomTypeOrderBook(ClaimOfferAtom),
-    ClaimAtomTypeLiquidityPool(ClaimLiquidityAtom),
+    V0(ClaimOfferAtomV0),
+    OrderBook(ClaimOfferAtom),
+    LiquidityPool(ClaimLiquidityAtom),
 }
 
 impl ClaimAtom {
     pub fn discriminant(&self) -> ClaimAtomType {
         match self {
-            Self::ClaimAtomTypeV0(_) => ClaimAtomType::ClaimAtomTypeV0,
-            Self::ClaimAtomTypeOrderBook(_) => ClaimAtomType::ClaimAtomTypeOrderBook,
-            Self::ClaimAtomTypeLiquidityPool(_) => ClaimAtomType::ClaimAtomTypeLiquidityPool,
+            Self::V0(_) => ClaimAtomType::V0,
+            Self::OrderBook(_) => ClaimAtomType::OrderBook,
+            Self::LiquidityPool(_) => ClaimAtomType::LiquidityPool,
         }
     }
 }
@@ -10926,13 +10856,9 @@ impl ReadXdr for ClaimAtom {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimAtomType = <ClaimAtomType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ClaimAtomType::ClaimAtomTypeV0 => Self::ClaimAtomTypeV0(ClaimOfferAtomV0::read_xdr(r)?),
-            ClaimAtomType::ClaimAtomTypeOrderBook => {
-                Self::ClaimAtomTypeOrderBook(ClaimOfferAtom::read_xdr(r)?)
-            }
-            ClaimAtomType::ClaimAtomTypeLiquidityPool => {
-                Self::ClaimAtomTypeLiquidityPool(ClaimLiquidityAtom::read_xdr(r)?)
-            }
+            ClaimAtomType::V0 => Self::V0(ClaimOfferAtomV0::read_xdr(r)?),
+            ClaimAtomType::OrderBook => Self::OrderBook(ClaimOfferAtom::read_xdr(r)?),
+            ClaimAtomType::LiquidityPool => Self::LiquidityPool(ClaimLiquidityAtom::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10945,9 +10871,9 @@ impl WriteXdr for ClaimAtom {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ClaimAtomTypeV0(v) => v.write_xdr(w)?,
-            Self::ClaimAtomTypeOrderBook(v) => v.write_xdr(w)?,
-            Self::ClaimAtomTypeLiquidityPool(v) => v.write_xdr(w)?,
+            Self::V0(v) => v.write_xdr(w)?,
+            Self::OrderBook(v) => v.write_xdr(w)?,
+            Self::LiquidityPool(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -10972,11 +10898,11 @@ impl WriteXdr for ClaimAtom {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum CreateAccountResultCode {
-    CreateAccountSuccess = 0,
-    CreateAccountMalformed = -1,
-    CreateAccountUnderfunded = -2,
-    CreateAccountLowReserve = -3,
-    CreateAccountAlreadyExist = -4,
+    Success = 0,
+    Malformed = -1,
+    Underfunded = -2,
+    LowReserve = -3,
+    AlreadyExist = -4,
 }
 
 impl TryFrom<i32> for CreateAccountResultCode {
@@ -10984,11 +10910,11 @@ impl TryFrom<i32> for CreateAccountResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => CreateAccountResultCode::CreateAccountSuccess,
-            -1 => CreateAccountResultCode::CreateAccountMalformed,
-            -2 => CreateAccountResultCode::CreateAccountUnderfunded,
-            -3 => CreateAccountResultCode::CreateAccountLowReserve,
-            -4 => CreateAccountResultCode::CreateAccountAlreadyExist,
+            0 => CreateAccountResultCode::Success,
+            -1 => CreateAccountResultCode::Malformed,
+            -2 => CreateAccountResultCode::Underfunded,
+            -3 => CreateAccountResultCode::LowReserve,
+            -4 => CreateAccountResultCode::AlreadyExist,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11035,21 +10961,21 @@ impl WriteXdr for CreateAccountResultCode {
 // union with discriminant CreateAccountResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CreateAccountResult {
-    CreateAccountSuccess,
-    CreateAccountMalformed,
-    CreateAccountUnderfunded,
-    CreateAccountLowReserve,
-    CreateAccountAlreadyExist,
+    Success,
+    Malformed,
+    Underfunded,
+    LowReserve,
+    AlreadyExist,
 }
 
 impl CreateAccountResult {
     pub fn discriminant(&self) -> CreateAccountResultCode {
         match self {
-            Self::CreateAccountSuccess => CreateAccountResultCode::CreateAccountSuccess,
-            Self::CreateAccountMalformed => CreateAccountResultCode::CreateAccountMalformed,
-            Self::CreateAccountUnderfunded => CreateAccountResultCode::CreateAccountUnderfunded,
-            Self::CreateAccountLowReserve => CreateAccountResultCode::CreateAccountLowReserve,
-            Self::CreateAccountAlreadyExist => CreateAccountResultCode::CreateAccountAlreadyExist,
+            Self::Success => CreateAccountResultCode::Success,
+            Self::Malformed => CreateAccountResultCode::Malformed,
+            Self::Underfunded => CreateAccountResultCode::Underfunded,
+            Self::LowReserve => CreateAccountResultCode::LowReserve,
+            Self::AlreadyExist => CreateAccountResultCode::AlreadyExist,
         }
     }
 }
@@ -11059,11 +10985,11 @@ impl ReadXdr for CreateAccountResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            CreateAccountResultCode::CreateAccountSuccess => Self::CreateAccountSuccess,
-            CreateAccountResultCode::CreateAccountMalformed => Self::CreateAccountMalformed,
-            CreateAccountResultCode::CreateAccountUnderfunded => Self::CreateAccountUnderfunded,
-            CreateAccountResultCode::CreateAccountLowReserve => Self::CreateAccountLowReserve,
-            CreateAccountResultCode::CreateAccountAlreadyExist => Self::CreateAccountAlreadyExist,
+            CreateAccountResultCode::Success => Self::Success,
+            CreateAccountResultCode::Malformed => Self::Malformed,
+            CreateAccountResultCode::Underfunded => Self::Underfunded,
+            CreateAccountResultCode::LowReserve => Self::LowReserve,
+            CreateAccountResultCode::AlreadyExist => Self::AlreadyExist,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11076,11 +11002,11 @@ impl WriteXdr for CreateAccountResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::CreateAccountSuccess => ().write_xdr(w)?,
-            Self::CreateAccountMalformed => ().write_xdr(w)?,
-            Self::CreateAccountUnderfunded => ().write_xdr(w)?,
-            Self::CreateAccountLowReserve => ().write_xdr(w)?,
-            Self::CreateAccountAlreadyExist => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::Underfunded => ().write_xdr(w)?,
+            Self::LowReserve => ().write_xdr(w)?,
+            Self::AlreadyExist => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11109,16 +11035,16 @@ impl WriteXdr for CreateAccountResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum PaymentResultCode {
-    PaymentSuccess = 0,
-    PaymentMalformed = -1,
-    PaymentUnderfunded = -2,
-    PaymentSrcNoTrust = -3,
-    PaymentSrcNotAuthorized = -4,
-    PaymentNoDestination = -5,
-    PaymentNoTrust = -6,
-    PaymentNotAuthorized = -7,
-    PaymentLineFull = -8,
-    PaymentNoIssuer = -9,
+    Success = 0,
+    Malformed = -1,
+    Underfunded = -2,
+    SrcNoTrust = -3,
+    SrcNotAuthorized = -4,
+    NoDestination = -5,
+    NoTrust = -6,
+    NotAuthorized = -7,
+    LineFull = -8,
+    NoIssuer = -9,
 }
 
 impl TryFrom<i32> for PaymentResultCode {
@@ -11126,16 +11052,16 @@ impl TryFrom<i32> for PaymentResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => PaymentResultCode::PaymentSuccess,
-            -1 => PaymentResultCode::PaymentMalformed,
-            -2 => PaymentResultCode::PaymentUnderfunded,
-            -3 => PaymentResultCode::PaymentSrcNoTrust,
-            -4 => PaymentResultCode::PaymentSrcNotAuthorized,
-            -5 => PaymentResultCode::PaymentNoDestination,
-            -6 => PaymentResultCode::PaymentNoTrust,
-            -7 => PaymentResultCode::PaymentNotAuthorized,
-            -8 => PaymentResultCode::PaymentLineFull,
-            -9 => PaymentResultCode::PaymentNoIssuer,
+            0 => PaymentResultCode::Success,
+            -1 => PaymentResultCode::Malformed,
+            -2 => PaymentResultCode::Underfunded,
+            -3 => PaymentResultCode::SrcNoTrust,
+            -4 => PaymentResultCode::SrcNotAuthorized,
+            -5 => PaymentResultCode::NoDestination,
+            -6 => PaymentResultCode::NoTrust,
+            -7 => PaymentResultCode::NotAuthorized,
+            -8 => PaymentResultCode::LineFull,
+            -9 => PaymentResultCode::NoIssuer,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11187,31 +11113,31 @@ impl WriteXdr for PaymentResultCode {
 // union with discriminant PaymentResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PaymentResult {
-    PaymentSuccess,
-    PaymentMalformed,
-    PaymentUnderfunded,
-    PaymentSrcNoTrust,
-    PaymentSrcNotAuthorized,
-    PaymentNoDestination,
-    PaymentNoTrust,
-    PaymentNotAuthorized,
-    PaymentLineFull,
-    PaymentNoIssuer,
+    Success,
+    Malformed,
+    Underfunded,
+    SrcNoTrust,
+    SrcNotAuthorized,
+    NoDestination,
+    NoTrust,
+    NotAuthorized,
+    LineFull,
+    NoIssuer,
 }
 
 impl PaymentResult {
     pub fn discriminant(&self) -> PaymentResultCode {
         match self {
-            Self::PaymentSuccess => PaymentResultCode::PaymentSuccess,
-            Self::PaymentMalformed => PaymentResultCode::PaymentMalformed,
-            Self::PaymentUnderfunded => PaymentResultCode::PaymentUnderfunded,
-            Self::PaymentSrcNoTrust => PaymentResultCode::PaymentSrcNoTrust,
-            Self::PaymentSrcNotAuthorized => PaymentResultCode::PaymentSrcNotAuthorized,
-            Self::PaymentNoDestination => PaymentResultCode::PaymentNoDestination,
-            Self::PaymentNoTrust => PaymentResultCode::PaymentNoTrust,
-            Self::PaymentNotAuthorized => PaymentResultCode::PaymentNotAuthorized,
-            Self::PaymentLineFull => PaymentResultCode::PaymentLineFull,
-            Self::PaymentNoIssuer => PaymentResultCode::PaymentNoIssuer,
+            Self::Success => PaymentResultCode::Success,
+            Self::Malformed => PaymentResultCode::Malformed,
+            Self::Underfunded => PaymentResultCode::Underfunded,
+            Self::SrcNoTrust => PaymentResultCode::SrcNoTrust,
+            Self::SrcNotAuthorized => PaymentResultCode::SrcNotAuthorized,
+            Self::NoDestination => PaymentResultCode::NoDestination,
+            Self::NoTrust => PaymentResultCode::NoTrust,
+            Self::NotAuthorized => PaymentResultCode::NotAuthorized,
+            Self::LineFull => PaymentResultCode::LineFull,
+            Self::NoIssuer => PaymentResultCode::NoIssuer,
         }
     }
 }
@@ -11221,16 +11147,16 @@ impl ReadXdr for PaymentResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PaymentResultCode = <PaymentResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            PaymentResultCode::PaymentSuccess => Self::PaymentSuccess,
-            PaymentResultCode::PaymentMalformed => Self::PaymentMalformed,
-            PaymentResultCode::PaymentUnderfunded => Self::PaymentUnderfunded,
-            PaymentResultCode::PaymentSrcNoTrust => Self::PaymentSrcNoTrust,
-            PaymentResultCode::PaymentSrcNotAuthorized => Self::PaymentSrcNotAuthorized,
-            PaymentResultCode::PaymentNoDestination => Self::PaymentNoDestination,
-            PaymentResultCode::PaymentNoTrust => Self::PaymentNoTrust,
-            PaymentResultCode::PaymentNotAuthorized => Self::PaymentNotAuthorized,
-            PaymentResultCode::PaymentLineFull => Self::PaymentLineFull,
-            PaymentResultCode::PaymentNoIssuer => Self::PaymentNoIssuer,
+            PaymentResultCode::Success => Self::Success,
+            PaymentResultCode::Malformed => Self::Malformed,
+            PaymentResultCode::Underfunded => Self::Underfunded,
+            PaymentResultCode::SrcNoTrust => Self::SrcNoTrust,
+            PaymentResultCode::SrcNotAuthorized => Self::SrcNotAuthorized,
+            PaymentResultCode::NoDestination => Self::NoDestination,
+            PaymentResultCode::NoTrust => Self::NoTrust,
+            PaymentResultCode::NotAuthorized => Self::NotAuthorized,
+            PaymentResultCode::LineFull => Self::LineFull,
+            PaymentResultCode::NoIssuer => Self::NoIssuer,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11243,16 +11169,16 @@ impl WriteXdr for PaymentResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::PaymentSuccess => ().write_xdr(w)?,
-            Self::PaymentMalformed => ().write_xdr(w)?,
-            Self::PaymentUnderfunded => ().write_xdr(w)?,
-            Self::PaymentSrcNoTrust => ().write_xdr(w)?,
-            Self::PaymentSrcNotAuthorized => ().write_xdr(w)?,
-            Self::PaymentNoDestination => ().write_xdr(w)?,
-            Self::PaymentNoTrust => ().write_xdr(w)?,
-            Self::PaymentNotAuthorized => ().write_xdr(w)?,
-            Self::PaymentLineFull => ().write_xdr(w)?,
-            Self::PaymentNoIssuer => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::Underfunded => ().write_xdr(w)?,
+            Self::SrcNoTrust => ().write_xdr(w)?,
+            Self::SrcNotAuthorized => ().write_xdr(w)?,
+            Self::NoDestination => ().write_xdr(w)?,
+            Self::NoTrust => ().write_xdr(w)?,
+            Self::NotAuthorized => ().write_xdr(w)?,
+            Self::LineFull => ().write_xdr(w)?,
+            Self::NoIssuer => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11293,19 +11219,19 @@ impl WriteXdr for PaymentResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum PathPaymentStrictReceiveResultCode {
-    PathPaymentStrictReceiveSuccess = 0,
-    PathPaymentStrictReceiveMalformed = -1,
-    PathPaymentStrictReceiveUnderfunded = -2,
-    PathPaymentStrictReceiveSrcNoTrust = -3,
-    PathPaymentStrictReceiveSrcNotAuthorized = -4,
-    PathPaymentStrictReceiveNoDestination = -5,
-    PathPaymentStrictReceiveNoTrust = -6,
-    PathPaymentStrictReceiveNotAuthorized = -7,
-    PathPaymentStrictReceiveLineFull = -8,
-    PathPaymentStrictReceiveNoIssuer = -9,
-    PathPaymentStrictReceiveTooFewOffers = -10,
-    PathPaymentStrictReceiveOfferCrossSelf = -11,
-    PathPaymentStrictReceiveOverSendmax = -12,
+    Success = 0,
+    Malformed = -1,
+    Underfunded = -2,
+    SrcNoTrust = -3,
+    SrcNotAuthorized = -4,
+    NoDestination = -5,
+    NoTrust = -6,
+    NotAuthorized = -7,
+    LineFull = -8,
+    NoIssuer = -9,
+    TooFewOffers = -10,
+    OfferCrossSelf = -11,
+    OverSendmax = -12,
 }
 
 impl TryFrom<i32> for PathPaymentStrictReceiveResultCode {
@@ -11313,19 +11239,19 @@ impl TryFrom<i32> for PathPaymentStrictReceiveResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSuccess,
-            -1 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveMalformed,
-            -2 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveUnderfunded,
-            -3 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSrcNoTrust,
-            -4 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSrcNotAuthorized,
-            -5 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoDestination,
-            -6 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoTrust,
-            -7 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNotAuthorized,
-            -8 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveLineFull,
-            -9 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoIssuer,
-            -10 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveTooFewOffers,
-            -11 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveOfferCrossSelf,
-            -12 => PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveOverSendmax,
+            0 => PathPaymentStrictReceiveResultCode::Success,
+            -1 => PathPaymentStrictReceiveResultCode::Malformed,
+            -2 => PathPaymentStrictReceiveResultCode::Underfunded,
+            -3 => PathPaymentStrictReceiveResultCode::SrcNoTrust,
+            -4 => PathPaymentStrictReceiveResultCode::SrcNotAuthorized,
+            -5 => PathPaymentStrictReceiveResultCode::NoDestination,
+            -6 => PathPaymentStrictReceiveResultCode::NoTrust,
+            -7 => PathPaymentStrictReceiveResultCode::NotAuthorized,
+            -8 => PathPaymentStrictReceiveResultCode::LineFull,
+            -9 => PathPaymentStrictReceiveResultCode::NoIssuer,
+            -10 => PathPaymentStrictReceiveResultCode::TooFewOffers,
+            -11 => PathPaymentStrictReceiveResultCode::OfferCrossSelf,
+            -12 => PathPaymentStrictReceiveResultCode::OverSendmax,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11457,63 +11383,37 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
 // union with discriminant PathPaymentStrictReceiveResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PathPaymentStrictReceiveResult {
-    PathPaymentStrictReceiveSuccess(PathPaymentStrictReceiveResultSuccess),
-    PathPaymentStrictReceiveMalformed,
-    PathPaymentStrictReceiveUnderfunded,
-    PathPaymentStrictReceiveSrcNoTrust,
-    PathPaymentStrictReceiveSrcNotAuthorized,
-    PathPaymentStrictReceiveNoDestination,
-    PathPaymentStrictReceiveNoTrust,
-    PathPaymentStrictReceiveNotAuthorized,
-    PathPaymentStrictReceiveLineFull,
-    PathPaymentStrictReceiveNoIssuer(Asset),
-    PathPaymentStrictReceiveTooFewOffers,
-    PathPaymentStrictReceiveOfferCrossSelf,
-    PathPaymentStrictReceiveOverSendmax,
+    Success(PathPaymentStrictReceiveResultSuccess),
+    Malformed,
+    Underfunded,
+    SrcNoTrust,
+    SrcNotAuthorized,
+    NoDestination,
+    NoTrust,
+    NotAuthorized,
+    LineFull,
+    NoIssuer(Asset),
+    TooFewOffers,
+    OfferCrossSelf,
+    OverSendmax,
 }
 
 impl PathPaymentStrictReceiveResult {
     pub fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
         match self {
-            Self::PathPaymentStrictReceiveSuccess(_) => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSuccess
-            }
-            Self::PathPaymentStrictReceiveMalformed => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveMalformed
-            }
-            Self::PathPaymentStrictReceiveUnderfunded => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveUnderfunded
-            }
-            Self::PathPaymentStrictReceiveSrcNoTrust => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSrcNoTrust
-            }
-            Self::PathPaymentStrictReceiveSrcNotAuthorized => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSrcNotAuthorized
-            }
-            Self::PathPaymentStrictReceiveNoDestination => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoDestination
-            }
-            Self::PathPaymentStrictReceiveNoTrust => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoTrust
-            }
-            Self::PathPaymentStrictReceiveNotAuthorized => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNotAuthorized
-            }
-            Self::PathPaymentStrictReceiveLineFull => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveLineFull
-            }
-            Self::PathPaymentStrictReceiveNoIssuer(_) => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoIssuer
-            }
-            Self::PathPaymentStrictReceiveTooFewOffers => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveTooFewOffers
-            }
-            Self::PathPaymentStrictReceiveOfferCrossSelf => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveOfferCrossSelf
-            }
-            Self::PathPaymentStrictReceiveOverSendmax => {
-                PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveOverSendmax
-            }
+            Self::Success(_) => PathPaymentStrictReceiveResultCode::Success,
+            Self::Malformed => PathPaymentStrictReceiveResultCode::Malformed,
+            Self::Underfunded => PathPaymentStrictReceiveResultCode::Underfunded,
+            Self::SrcNoTrust => PathPaymentStrictReceiveResultCode::SrcNoTrust,
+            Self::SrcNotAuthorized => PathPaymentStrictReceiveResultCode::SrcNotAuthorized,
+            Self::NoDestination => PathPaymentStrictReceiveResultCode::NoDestination,
+            Self::NoTrust => PathPaymentStrictReceiveResultCode::NoTrust,
+            Self::NotAuthorized => PathPaymentStrictReceiveResultCode::NotAuthorized,
+            Self::LineFull => PathPaymentStrictReceiveResultCode::LineFull,
+            Self::NoIssuer(_) => PathPaymentStrictReceiveResultCode::NoIssuer,
+            Self::TooFewOffers => PathPaymentStrictReceiveResultCode::TooFewOffers,
+            Self::OfferCrossSelf => PathPaymentStrictReceiveResultCode::OfferCrossSelf,
+            Self::OverSendmax => PathPaymentStrictReceiveResultCode::OverSendmax,
         }
     }
 }
@@ -11524,47 +11424,21 @@ impl ReadXdr for PathPaymentStrictReceiveResult {
         let dv: PathPaymentStrictReceiveResultCode =
             <PathPaymentStrictReceiveResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSuccess => {
-                Self::PathPaymentStrictReceiveSuccess(
-                    PathPaymentStrictReceiveResultSuccess::read_xdr(r)?,
-                )
+            PathPaymentStrictReceiveResultCode::Success => {
+                Self::Success(PathPaymentStrictReceiveResultSuccess::read_xdr(r)?)
             }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveMalformed => {
-                Self::PathPaymentStrictReceiveMalformed
-            }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveUnderfunded => {
-                Self::PathPaymentStrictReceiveUnderfunded
-            }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSrcNoTrust => {
-                Self::PathPaymentStrictReceiveSrcNoTrust
-            }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveSrcNotAuthorized => {
-                Self::PathPaymentStrictReceiveSrcNotAuthorized
-            }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoDestination => {
-                Self::PathPaymentStrictReceiveNoDestination
-            }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoTrust => {
-                Self::PathPaymentStrictReceiveNoTrust
-            }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNotAuthorized => {
-                Self::PathPaymentStrictReceiveNotAuthorized
-            }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveLineFull => {
-                Self::PathPaymentStrictReceiveLineFull
-            }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveNoIssuer => {
-                Self::PathPaymentStrictReceiveNoIssuer(Asset::read_xdr(r)?)
-            }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveTooFewOffers => {
-                Self::PathPaymentStrictReceiveTooFewOffers
-            }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveOfferCrossSelf => {
-                Self::PathPaymentStrictReceiveOfferCrossSelf
-            }
-            PathPaymentStrictReceiveResultCode::PathPaymentStrictReceiveOverSendmax => {
-                Self::PathPaymentStrictReceiveOverSendmax
-            }
+            PathPaymentStrictReceiveResultCode::Malformed => Self::Malformed,
+            PathPaymentStrictReceiveResultCode::Underfunded => Self::Underfunded,
+            PathPaymentStrictReceiveResultCode::SrcNoTrust => Self::SrcNoTrust,
+            PathPaymentStrictReceiveResultCode::SrcNotAuthorized => Self::SrcNotAuthorized,
+            PathPaymentStrictReceiveResultCode::NoDestination => Self::NoDestination,
+            PathPaymentStrictReceiveResultCode::NoTrust => Self::NoTrust,
+            PathPaymentStrictReceiveResultCode::NotAuthorized => Self::NotAuthorized,
+            PathPaymentStrictReceiveResultCode::LineFull => Self::LineFull,
+            PathPaymentStrictReceiveResultCode::NoIssuer => Self::NoIssuer(Asset::read_xdr(r)?),
+            PathPaymentStrictReceiveResultCode::TooFewOffers => Self::TooFewOffers,
+            PathPaymentStrictReceiveResultCode::OfferCrossSelf => Self::OfferCrossSelf,
+            PathPaymentStrictReceiveResultCode::OverSendmax => Self::OverSendmax,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11577,19 +11451,19 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::PathPaymentStrictReceiveSuccess(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictReceiveMalformed => ().write_xdr(w)?,
-            Self::PathPaymentStrictReceiveUnderfunded => ().write_xdr(w)?,
-            Self::PathPaymentStrictReceiveSrcNoTrust => ().write_xdr(w)?,
-            Self::PathPaymentStrictReceiveSrcNotAuthorized => ().write_xdr(w)?,
-            Self::PathPaymentStrictReceiveNoDestination => ().write_xdr(w)?,
-            Self::PathPaymentStrictReceiveNoTrust => ().write_xdr(w)?,
-            Self::PathPaymentStrictReceiveNotAuthorized => ().write_xdr(w)?,
-            Self::PathPaymentStrictReceiveLineFull => ().write_xdr(w)?,
-            Self::PathPaymentStrictReceiveNoIssuer(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictReceiveTooFewOffers => ().write_xdr(w)?,
-            Self::PathPaymentStrictReceiveOfferCrossSelf => ().write_xdr(w)?,
-            Self::PathPaymentStrictReceiveOverSendmax => ().write_xdr(w)?,
+            Self::Success(v) => v.write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::Underfunded => ().write_xdr(w)?,
+            Self::SrcNoTrust => ().write_xdr(w)?,
+            Self::SrcNotAuthorized => ().write_xdr(w)?,
+            Self::NoDestination => ().write_xdr(w)?,
+            Self::NoTrust => ().write_xdr(w)?,
+            Self::NotAuthorized => ().write_xdr(w)?,
+            Self::LineFull => ().write_xdr(w)?,
+            Self::NoIssuer(v) => v.write_xdr(w)?,
+            Self::TooFewOffers => ().write_xdr(w)?,
+            Self::OfferCrossSelf => ().write_xdr(w)?,
+            Self::OverSendmax => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11629,19 +11503,19 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum PathPaymentStrictSendResultCode {
-    PathPaymentStrictSendSuccess = 0,
-    PathPaymentStrictSendMalformed = -1,
-    PathPaymentStrictSendUnderfunded = -2,
-    PathPaymentStrictSendSrcNoTrust = -3,
-    PathPaymentStrictSendSrcNotAuthorized = -4,
-    PathPaymentStrictSendNoDestination = -5,
-    PathPaymentStrictSendNoTrust = -6,
-    PathPaymentStrictSendNotAuthorized = -7,
-    PathPaymentStrictSendLineFull = -8,
-    PathPaymentStrictSendNoIssuer = -9,
-    PathPaymentStrictSendTooFewOffers = -10,
-    PathPaymentStrictSendOfferCrossSelf = -11,
-    PathPaymentStrictSendUnderDestmin = -12,
+    Success = 0,
+    Malformed = -1,
+    Underfunded = -2,
+    SrcNoTrust = -3,
+    SrcNotAuthorized = -4,
+    NoDestination = -5,
+    NoTrust = -6,
+    NotAuthorized = -7,
+    LineFull = -8,
+    NoIssuer = -9,
+    TooFewOffers = -10,
+    OfferCrossSelf = -11,
+    UnderDestmin = -12,
 }
 
 impl TryFrom<i32> for PathPaymentStrictSendResultCode {
@@ -11649,19 +11523,19 @@ impl TryFrom<i32> for PathPaymentStrictSendResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => PathPaymentStrictSendResultCode::PathPaymentStrictSendSuccess,
-            -1 => PathPaymentStrictSendResultCode::PathPaymentStrictSendMalformed,
-            -2 => PathPaymentStrictSendResultCode::PathPaymentStrictSendUnderfunded,
-            -3 => PathPaymentStrictSendResultCode::PathPaymentStrictSendSrcNoTrust,
-            -4 => PathPaymentStrictSendResultCode::PathPaymentStrictSendSrcNotAuthorized,
-            -5 => PathPaymentStrictSendResultCode::PathPaymentStrictSendNoDestination,
-            -6 => PathPaymentStrictSendResultCode::PathPaymentStrictSendNoTrust,
-            -7 => PathPaymentStrictSendResultCode::PathPaymentStrictSendNotAuthorized,
-            -8 => PathPaymentStrictSendResultCode::PathPaymentStrictSendLineFull,
-            -9 => PathPaymentStrictSendResultCode::PathPaymentStrictSendNoIssuer,
-            -10 => PathPaymentStrictSendResultCode::PathPaymentStrictSendTooFewOffers,
-            -11 => PathPaymentStrictSendResultCode::PathPaymentStrictSendOfferCrossSelf,
-            -12 => PathPaymentStrictSendResultCode::PathPaymentStrictSendUnderDestmin,
+            0 => PathPaymentStrictSendResultCode::Success,
+            -1 => PathPaymentStrictSendResultCode::Malformed,
+            -2 => PathPaymentStrictSendResultCode::Underfunded,
+            -3 => PathPaymentStrictSendResultCode::SrcNoTrust,
+            -4 => PathPaymentStrictSendResultCode::SrcNotAuthorized,
+            -5 => PathPaymentStrictSendResultCode::NoDestination,
+            -6 => PathPaymentStrictSendResultCode::NoTrust,
+            -7 => PathPaymentStrictSendResultCode::NotAuthorized,
+            -8 => PathPaymentStrictSendResultCode::LineFull,
+            -9 => PathPaymentStrictSendResultCode::NoIssuer,
+            -10 => PathPaymentStrictSendResultCode::TooFewOffers,
+            -11 => PathPaymentStrictSendResultCode::OfferCrossSelf,
+            -12 => PathPaymentStrictSendResultCode::UnderDestmin,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11755,63 +11629,37 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
 // union with discriminant PathPaymentStrictSendResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PathPaymentStrictSendResult {
-    PathPaymentStrictSendSuccess(PathPaymentStrictSendResultSuccess),
-    PathPaymentStrictSendMalformed,
-    PathPaymentStrictSendUnderfunded,
-    PathPaymentStrictSendSrcNoTrust,
-    PathPaymentStrictSendSrcNotAuthorized,
-    PathPaymentStrictSendNoDestination,
-    PathPaymentStrictSendNoTrust,
-    PathPaymentStrictSendNotAuthorized,
-    PathPaymentStrictSendLineFull,
-    PathPaymentStrictSendNoIssuer(Asset),
-    PathPaymentStrictSendTooFewOffers,
-    PathPaymentStrictSendOfferCrossSelf,
-    PathPaymentStrictSendUnderDestmin,
+    Success(PathPaymentStrictSendResultSuccess),
+    Malformed,
+    Underfunded,
+    SrcNoTrust,
+    SrcNotAuthorized,
+    NoDestination,
+    NoTrust,
+    NotAuthorized,
+    LineFull,
+    NoIssuer(Asset),
+    TooFewOffers,
+    OfferCrossSelf,
+    UnderDestmin,
 }
 
 impl PathPaymentStrictSendResult {
     pub fn discriminant(&self) -> PathPaymentStrictSendResultCode {
         match self {
-            Self::PathPaymentStrictSendSuccess(_) => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendSuccess
-            }
-            Self::PathPaymentStrictSendMalformed => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendMalformed
-            }
-            Self::PathPaymentStrictSendUnderfunded => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendUnderfunded
-            }
-            Self::PathPaymentStrictSendSrcNoTrust => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendSrcNoTrust
-            }
-            Self::PathPaymentStrictSendSrcNotAuthorized => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendSrcNotAuthorized
-            }
-            Self::PathPaymentStrictSendNoDestination => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendNoDestination
-            }
-            Self::PathPaymentStrictSendNoTrust => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendNoTrust
-            }
-            Self::PathPaymentStrictSendNotAuthorized => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendNotAuthorized
-            }
-            Self::PathPaymentStrictSendLineFull => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendLineFull
-            }
-            Self::PathPaymentStrictSendNoIssuer(_) => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendNoIssuer
-            }
-            Self::PathPaymentStrictSendTooFewOffers => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendTooFewOffers
-            }
-            Self::PathPaymentStrictSendOfferCrossSelf => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendOfferCrossSelf
-            }
-            Self::PathPaymentStrictSendUnderDestmin => {
-                PathPaymentStrictSendResultCode::PathPaymentStrictSendUnderDestmin
-            }
+            Self::Success(_) => PathPaymentStrictSendResultCode::Success,
+            Self::Malformed => PathPaymentStrictSendResultCode::Malformed,
+            Self::Underfunded => PathPaymentStrictSendResultCode::Underfunded,
+            Self::SrcNoTrust => PathPaymentStrictSendResultCode::SrcNoTrust,
+            Self::SrcNotAuthorized => PathPaymentStrictSendResultCode::SrcNotAuthorized,
+            Self::NoDestination => PathPaymentStrictSendResultCode::NoDestination,
+            Self::NoTrust => PathPaymentStrictSendResultCode::NoTrust,
+            Self::NotAuthorized => PathPaymentStrictSendResultCode::NotAuthorized,
+            Self::LineFull => PathPaymentStrictSendResultCode::LineFull,
+            Self::NoIssuer(_) => PathPaymentStrictSendResultCode::NoIssuer,
+            Self::TooFewOffers => PathPaymentStrictSendResultCode::TooFewOffers,
+            Self::OfferCrossSelf => PathPaymentStrictSendResultCode::OfferCrossSelf,
+            Self::UnderDestmin => PathPaymentStrictSendResultCode::UnderDestmin,
         }
     }
 }
@@ -11822,45 +11670,21 @@ impl ReadXdr for PathPaymentStrictSendResult {
         let dv: PathPaymentStrictSendResultCode =
             <PathPaymentStrictSendResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendSuccess => {
-                Self::PathPaymentStrictSendSuccess(PathPaymentStrictSendResultSuccess::read_xdr(r)?)
+            PathPaymentStrictSendResultCode::Success => {
+                Self::Success(PathPaymentStrictSendResultSuccess::read_xdr(r)?)
             }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendMalformed => {
-                Self::PathPaymentStrictSendMalformed
-            }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendUnderfunded => {
-                Self::PathPaymentStrictSendUnderfunded
-            }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendSrcNoTrust => {
-                Self::PathPaymentStrictSendSrcNoTrust
-            }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendSrcNotAuthorized => {
-                Self::PathPaymentStrictSendSrcNotAuthorized
-            }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendNoDestination => {
-                Self::PathPaymentStrictSendNoDestination
-            }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendNoTrust => {
-                Self::PathPaymentStrictSendNoTrust
-            }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendNotAuthorized => {
-                Self::PathPaymentStrictSendNotAuthorized
-            }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendLineFull => {
-                Self::PathPaymentStrictSendLineFull
-            }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendNoIssuer => {
-                Self::PathPaymentStrictSendNoIssuer(Asset::read_xdr(r)?)
-            }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendTooFewOffers => {
-                Self::PathPaymentStrictSendTooFewOffers
-            }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendOfferCrossSelf => {
-                Self::PathPaymentStrictSendOfferCrossSelf
-            }
-            PathPaymentStrictSendResultCode::PathPaymentStrictSendUnderDestmin => {
-                Self::PathPaymentStrictSendUnderDestmin
-            }
+            PathPaymentStrictSendResultCode::Malformed => Self::Malformed,
+            PathPaymentStrictSendResultCode::Underfunded => Self::Underfunded,
+            PathPaymentStrictSendResultCode::SrcNoTrust => Self::SrcNoTrust,
+            PathPaymentStrictSendResultCode::SrcNotAuthorized => Self::SrcNotAuthorized,
+            PathPaymentStrictSendResultCode::NoDestination => Self::NoDestination,
+            PathPaymentStrictSendResultCode::NoTrust => Self::NoTrust,
+            PathPaymentStrictSendResultCode::NotAuthorized => Self::NotAuthorized,
+            PathPaymentStrictSendResultCode::LineFull => Self::LineFull,
+            PathPaymentStrictSendResultCode::NoIssuer => Self::NoIssuer(Asset::read_xdr(r)?),
+            PathPaymentStrictSendResultCode::TooFewOffers => Self::TooFewOffers,
+            PathPaymentStrictSendResultCode::OfferCrossSelf => Self::OfferCrossSelf,
+            PathPaymentStrictSendResultCode::UnderDestmin => Self::UnderDestmin,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11873,19 +11697,19 @@ impl WriteXdr for PathPaymentStrictSendResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::PathPaymentStrictSendSuccess(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictSendMalformed => ().write_xdr(w)?,
-            Self::PathPaymentStrictSendUnderfunded => ().write_xdr(w)?,
-            Self::PathPaymentStrictSendSrcNoTrust => ().write_xdr(w)?,
-            Self::PathPaymentStrictSendSrcNotAuthorized => ().write_xdr(w)?,
-            Self::PathPaymentStrictSendNoDestination => ().write_xdr(w)?,
-            Self::PathPaymentStrictSendNoTrust => ().write_xdr(w)?,
-            Self::PathPaymentStrictSendNotAuthorized => ().write_xdr(w)?,
-            Self::PathPaymentStrictSendLineFull => ().write_xdr(w)?,
-            Self::PathPaymentStrictSendNoIssuer(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictSendTooFewOffers => ().write_xdr(w)?,
-            Self::PathPaymentStrictSendOfferCrossSelf => ().write_xdr(w)?,
-            Self::PathPaymentStrictSendUnderDestmin => ().write_xdr(w)?,
+            Self::Success(v) => v.write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::Underfunded => ().write_xdr(w)?,
+            Self::SrcNoTrust => ().write_xdr(w)?,
+            Self::SrcNotAuthorized => ().write_xdr(w)?,
+            Self::NoDestination => ().write_xdr(w)?,
+            Self::NoTrust => ().write_xdr(w)?,
+            Self::NotAuthorized => ().write_xdr(w)?,
+            Self::LineFull => ().write_xdr(w)?,
+            Self::NoIssuer(v) => v.write_xdr(w)?,
+            Self::TooFewOffers => ().write_xdr(w)?,
+            Self::OfferCrossSelf => ().write_xdr(w)?,
+            Self::UnderDestmin => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -11924,19 +11748,19 @@ impl WriteXdr for PathPaymentStrictSendResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ManageSellOfferResultCode {
-    ManageSellOfferSuccess = 0,
-    ManageSellOfferMalformed = -1,
-    ManageSellOfferSellNoTrust = -2,
-    ManageSellOfferBuyNoTrust = -3,
-    ManageSellOfferSellNotAuthorized = -4,
-    ManageSellOfferBuyNotAuthorized = -5,
-    ManageSellOfferLineFull = -6,
-    ManageSellOfferUnderfunded = -7,
-    ManageSellOfferCrossSelf = -8,
-    ManageSellOfferSellNoIssuer = -9,
-    ManageSellOfferBuyNoIssuer = -10,
-    ManageSellOfferNotFound = -11,
-    ManageSellOfferLowReserve = -12,
+    Success = 0,
+    Malformed = -1,
+    SellNoTrust = -2,
+    BuyNoTrust = -3,
+    SellNotAuthorized = -4,
+    BuyNotAuthorized = -5,
+    LineFull = -6,
+    Underfunded = -7,
+    CrossSelf = -8,
+    SellNoIssuer = -9,
+    BuyNoIssuer = -10,
+    NotFound = -11,
+    LowReserve = -12,
 }
 
 impl TryFrom<i32> for ManageSellOfferResultCode {
@@ -11944,19 +11768,19 @@ impl TryFrom<i32> for ManageSellOfferResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ManageSellOfferResultCode::ManageSellOfferSuccess,
-            -1 => ManageSellOfferResultCode::ManageSellOfferMalformed,
-            -2 => ManageSellOfferResultCode::ManageSellOfferSellNoTrust,
-            -3 => ManageSellOfferResultCode::ManageSellOfferBuyNoTrust,
-            -4 => ManageSellOfferResultCode::ManageSellOfferSellNotAuthorized,
-            -5 => ManageSellOfferResultCode::ManageSellOfferBuyNotAuthorized,
-            -6 => ManageSellOfferResultCode::ManageSellOfferLineFull,
-            -7 => ManageSellOfferResultCode::ManageSellOfferUnderfunded,
-            -8 => ManageSellOfferResultCode::ManageSellOfferCrossSelf,
-            -9 => ManageSellOfferResultCode::ManageSellOfferSellNoIssuer,
-            -10 => ManageSellOfferResultCode::ManageSellOfferBuyNoIssuer,
-            -11 => ManageSellOfferResultCode::ManageSellOfferNotFound,
-            -12 => ManageSellOfferResultCode::ManageSellOfferLowReserve,
+            0 => ManageSellOfferResultCode::Success,
+            -1 => ManageSellOfferResultCode::Malformed,
+            -2 => ManageSellOfferResultCode::SellNoTrust,
+            -3 => ManageSellOfferResultCode::BuyNoTrust,
+            -4 => ManageSellOfferResultCode::SellNotAuthorized,
+            -5 => ManageSellOfferResultCode::BuyNotAuthorized,
+            -6 => ManageSellOfferResultCode::LineFull,
+            -7 => ManageSellOfferResultCode::Underfunded,
+            -8 => ManageSellOfferResultCode::CrossSelf,
+            -9 => ManageSellOfferResultCode::SellNoIssuer,
+            -10 => ManageSellOfferResultCode::BuyNoIssuer,
+            -11 => ManageSellOfferResultCode::NotFound,
+            -12 => ManageSellOfferResultCode::LowReserve,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12000,9 +11824,9 @@ impl WriteXdr for ManageSellOfferResultCode {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ManageOfferEffect {
-    ManageOfferCreated = 0,
-    ManageOfferUpdated = 1,
-    ManageOfferDeleted = 2,
+    Created = 0,
+    Updated = 1,
+    Deleted = 2,
 }
 
 impl TryFrom<i32> for ManageOfferEffect {
@@ -12010,9 +11834,9 @@ impl TryFrom<i32> for ManageOfferEffect {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ManageOfferEffect::ManageOfferCreated,
-            1 => ManageOfferEffect::ManageOfferUpdated,
-            2 => ManageOfferEffect::ManageOfferDeleted,
+            0 => ManageOfferEffect::Created,
+            1 => ManageOfferEffect::Updated,
+            2 => ManageOfferEffect::Deleted,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12057,17 +11881,17 @@ impl WriteXdr for ManageOfferEffect {
 // union with discriminant ManageOfferEffect
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ManageOfferSuccessResultOffer {
-    ManageOfferCreated(OfferEntry),
-    ManageOfferUpdated(OfferEntry),
-    ManageOfferDeleted,
+    Created(OfferEntry),
+    Updated(OfferEntry),
+    Deleted,
 }
 
 impl ManageOfferSuccessResultOffer {
     pub fn discriminant(&self) -> ManageOfferEffect {
         match self {
-            Self::ManageOfferCreated(_) => ManageOfferEffect::ManageOfferCreated,
-            Self::ManageOfferUpdated(_) => ManageOfferEffect::ManageOfferUpdated,
-            Self::ManageOfferDeleted => ManageOfferEffect::ManageOfferDeleted,
+            Self::Created(_) => ManageOfferEffect::Created,
+            Self::Updated(_) => ManageOfferEffect::Updated,
+            Self::Deleted => ManageOfferEffect::Deleted,
         }
     }
 }
@@ -12077,13 +11901,9 @@ impl ReadXdr for ManageOfferSuccessResultOffer {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageOfferEffect = <ManageOfferEffect as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ManageOfferEffect::ManageOfferCreated => {
-                Self::ManageOfferCreated(OfferEntry::read_xdr(r)?)
-            }
-            ManageOfferEffect::ManageOfferUpdated => {
-                Self::ManageOfferUpdated(OfferEntry::read_xdr(r)?)
-            }
-            ManageOfferEffect::ManageOfferDeleted => Self::ManageOfferDeleted,
+            ManageOfferEffect::Created => Self::Created(OfferEntry::read_xdr(r)?),
+            ManageOfferEffect::Updated => Self::Updated(OfferEntry::read_xdr(r)?),
+            ManageOfferEffect::Deleted => Self::Deleted,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12096,9 +11916,9 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ManageOfferCreated(v) => v.write_xdr(w)?,
-            Self::ManageOfferUpdated(v) => v.write_xdr(w)?,
-            Self::ManageOfferDeleted => ().write_xdr(w)?,
+            Self::Created(v) => v.write_xdr(w)?,
+            Self::Updated(v) => v.write_xdr(w)?,
+            Self::Deleted => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12171,49 +11991,37 @@ impl WriteXdr for ManageOfferSuccessResult {
 // union with discriminant ManageSellOfferResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ManageSellOfferResult {
-    ManageSellOfferSuccess(ManageOfferSuccessResult),
-    ManageSellOfferMalformed,
-    ManageSellOfferSellNoTrust,
-    ManageSellOfferBuyNoTrust,
-    ManageSellOfferSellNotAuthorized,
-    ManageSellOfferBuyNotAuthorized,
-    ManageSellOfferLineFull,
-    ManageSellOfferUnderfunded,
-    ManageSellOfferCrossSelf,
-    ManageSellOfferSellNoIssuer,
-    ManageSellOfferBuyNoIssuer,
-    ManageSellOfferNotFound,
-    ManageSellOfferLowReserve,
+    Success(ManageOfferSuccessResult),
+    Malformed,
+    SellNoTrust,
+    BuyNoTrust,
+    SellNotAuthorized,
+    BuyNotAuthorized,
+    LineFull,
+    Underfunded,
+    CrossSelf,
+    SellNoIssuer,
+    BuyNoIssuer,
+    NotFound,
+    LowReserve,
 }
 
 impl ManageSellOfferResult {
     pub fn discriminant(&self) -> ManageSellOfferResultCode {
         match self {
-            Self::ManageSellOfferSuccess(_) => ManageSellOfferResultCode::ManageSellOfferSuccess,
-            Self::ManageSellOfferMalformed => ManageSellOfferResultCode::ManageSellOfferMalformed,
-            Self::ManageSellOfferSellNoTrust => {
-                ManageSellOfferResultCode::ManageSellOfferSellNoTrust
-            }
-            Self::ManageSellOfferBuyNoTrust => ManageSellOfferResultCode::ManageSellOfferBuyNoTrust,
-            Self::ManageSellOfferSellNotAuthorized => {
-                ManageSellOfferResultCode::ManageSellOfferSellNotAuthorized
-            }
-            Self::ManageSellOfferBuyNotAuthorized => {
-                ManageSellOfferResultCode::ManageSellOfferBuyNotAuthorized
-            }
-            Self::ManageSellOfferLineFull => ManageSellOfferResultCode::ManageSellOfferLineFull,
-            Self::ManageSellOfferUnderfunded => {
-                ManageSellOfferResultCode::ManageSellOfferUnderfunded
-            }
-            Self::ManageSellOfferCrossSelf => ManageSellOfferResultCode::ManageSellOfferCrossSelf,
-            Self::ManageSellOfferSellNoIssuer => {
-                ManageSellOfferResultCode::ManageSellOfferSellNoIssuer
-            }
-            Self::ManageSellOfferBuyNoIssuer => {
-                ManageSellOfferResultCode::ManageSellOfferBuyNoIssuer
-            }
-            Self::ManageSellOfferNotFound => ManageSellOfferResultCode::ManageSellOfferNotFound,
-            Self::ManageSellOfferLowReserve => ManageSellOfferResultCode::ManageSellOfferLowReserve,
+            Self::Success(_) => ManageSellOfferResultCode::Success,
+            Self::Malformed => ManageSellOfferResultCode::Malformed,
+            Self::SellNoTrust => ManageSellOfferResultCode::SellNoTrust,
+            Self::BuyNoTrust => ManageSellOfferResultCode::BuyNoTrust,
+            Self::SellNotAuthorized => ManageSellOfferResultCode::SellNotAuthorized,
+            Self::BuyNotAuthorized => ManageSellOfferResultCode::BuyNotAuthorized,
+            Self::LineFull => ManageSellOfferResultCode::LineFull,
+            Self::Underfunded => ManageSellOfferResultCode::Underfunded,
+            Self::CrossSelf => ManageSellOfferResultCode::CrossSelf,
+            Self::SellNoIssuer => ManageSellOfferResultCode::SellNoIssuer,
+            Self::BuyNoIssuer => ManageSellOfferResultCode::BuyNoIssuer,
+            Self::NotFound => ManageSellOfferResultCode::NotFound,
+            Self::LowReserve => ManageSellOfferResultCode::LowReserve,
         }
     }
 }
@@ -12223,33 +12031,21 @@ impl ReadXdr for ManageSellOfferResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageSellOfferResultCode = <ManageSellOfferResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ManageSellOfferResultCode::ManageSellOfferSuccess => {
-                Self::ManageSellOfferSuccess(ManageOfferSuccessResult::read_xdr(r)?)
+            ManageSellOfferResultCode::Success => {
+                Self::Success(ManageOfferSuccessResult::read_xdr(r)?)
             }
-            ManageSellOfferResultCode::ManageSellOfferMalformed => Self::ManageSellOfferMalformed,
-            ManageSellOfferResultCode::ManageSellOfferSellNoTrust => {
-                Self::ManageSellOfferSellNoTrust
-            }
-            ManageSellOfferResultCode::ManageSellOfferBuyNoTrust => Self::ManageSellOfferBuyNoTrust,
-            ManageSellOfferResultCode::ManageSellOfferSellNotAuthorized => {
-                Self::ManageSellOfferSellNotAuthorized
-            }
-            ManageSellOfferResultCode::ManageSellOfferBuyNotAuthorized => {
-                Self::ManageSellOfferBuyNotAuthorized
-            }
-            ManageSellOfferResultCode::ManageSellOfferLineFull => Self::ManageSellOfferLineFull,
-            ManageSellOfferResultCode::ManageSellOfferUnderfunded => {
-                Self::ManageSellOfferUnderfunded
-            }
-            ManageSellOfferResultCode::ManageSellOfferCrossSelf => Self::ManageSellOfferCrossSelf,
-            ManageSellOfferResultCode::ManageSellOfferSellNoIssuer => {
-                Self::ManageSellOfferSellNoIssuer
-            }
-            ManageSellOfferResultCode::ManageSellOfferBuyNoIssuer => {
-                Self::ManageSellOfferBuyNoIssuer
-            }
-            ManageSellOfferResultCode::ManageSellOfferNotFound => Self::ManageSellOfferNotFound,
-            ManageSellOfferResultCode::ManageSellOfferLowReserve => Self::ManageSellOfferLowReserve,
+            ManageSellOfferResultCode::Malformed => Self::Malformed,
+            ManageSellOfferResultCode::SellNoTrust => Self::SellNoTrust,
+            ManageSellOfferResultCode::BuyNoTrust => Self::BuyNoTrust,
+            ManageSellOfferResultCode::SellNotAuthorized => Self::SellNotAuthorized,
+            ManageSellOfferResultCode::BuyNotAuthorized => Self::BuyNotAuthorized,
+            ManageSellOfferResultCode::LineFull => Self::LineFull,
+            ManageSellOfferResultCode::Underfunded => Self::Underfunded,
+            ManageSellOfferResultCode::CrossSelf => Self::CrossSelf,
+            ManageSellOfferResultCode::SellNoIssuer => Self::SellNoIssuer,
+            ManageSellOfferResultCode::BuyNoIssuer => Self::BuyNoIssuer,
+            ManageSellOfferResultCode::NotFound => Self::NotFound,
+            ManageSellOfferResultCode::LowReserve => Self::LowReserve,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12262,19 +12058,19 @@ impl WriteXdr for ManageSellOfferResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ManageSellOfferSuccess(v) => v.write_xdr(w)?,
-            Self::ManageSellOfferMalformed => ().write_xdr(w)?,
-            Self::ManageSellOfferSellNoTrust => ().write_xdr(w)?,
-            Self::ManageSellOfferBuyNoTrust => ().write_xdr(w)?,
-            Self::ManageSellOfferSellNotAuthorized => ().write_xdr(w)?,
-            Self::ManageSellOfferBuyNotAuthorized => ().write_xdr(w)?,
-            Self::ManageSellOfferLineFull => ().write_xdr(w)?,
-            Self::ManageSellOfferUnderfunded => ().write_xdr(w)?,
-            Self::ManageSellOfferCrossSelf => ().write_xdr(w)?,
-            Self::ManageSellOfferSellNoIssuer => ().write_xdr(w)?,
-            Self::ManageSellOfferBuyNoIssuer => ().write_xdr(w)?,
-            Self::ManageSellOfferNotFound => ().write_xdr(w)?,
-            Self::ManageSellOfferLowReserve => ().write_xdr(w)?,
+            Self::Success(v) => v.write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::SellNoTrust => ().write_xdr(w)?,
+            Self::BuyNoTrust => ().write_xdr(w)?,
+            Self::SellNotAuthorized => ().write_xdr(w)?,
+            Self::BuyNotAuthorized => ().write_xdr(w)?,
+            Self::LineFull => ().write_xdr(w)?,
+            Self::Underfunded => ().write_xdr(w)?,
+            Self::CrossSelf => ().write_xdr(w)?,
+            Self::SellNoIssuer => ().write_xdr(w)?,
+            Self::BuyNoIssuer => ().write_xdr(w)?,
+            Self::NotFound => ().write_xdr(w)?,
+            Self::LowReserve => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12310,19 +12106,19 @@ impl WriteXdr for ManageSellOfferResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ManageBuyOfferResultCode {
-    ManageBuyOfferSuccess = 0,
-    ManageBuyOfferMalformed = -1,
-    ManageBuyOfferSellNoTrust = -2,
-    ManageBuyOfferBuyNoTrust = -3,
-    ManageBuyOfferSellNotAuthorized = -4,
-    ManageBuyOfferBuyNotAuthorized = -5,
-    ManageBuyOfferLineFull = -6,
-    ManageBuyOfferUnderfunded = -7,
-    ManageBuyOfferCrossSelf = -8,
-    ManageBuyOfferSellNoIssuer = -9,
-    ManageBuyOfferBuyNoIssuer = -10,
-    ManageBuyOfferNotFound = -11,
-    ManageBuyOfferLowReserve = -12,
+    Success = 0,
+    Malformed = -1,
+    SellNoTrust = -2,
+    BuyNoTrust = -3,
+    SellNotAuthorized = -4,
+    BuyNotAuthorized = -5,
+    LineFull = -6,
+    Underfunded = -7,
+    CrossSelf = -8,
+    SellNoIssuer = -9,
+    BuyNoIssuer = -10,
+    NotFound = -11,
+    LowReserve = -12,
 }
 
 impl TryFrom<i32> for ManageBuyOfferResultCode {
@@ -12330,19 +12126,19 @@ impl TryFrom<i32> for ManageBuyOfferResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ManageBuyOfferResultCode::ManageBuyOfferSuccess,
-            -1 => ManageBuyOfferResultCode::ManageBuyOfferMalformed,
-            -2 => ManageBuyOfferResultCode::ManageBuyOfferSellNoTrust,
-            -3 => ManageBuyOfferResultCode::ManageBuyOfferBuyNoTrust,
-            -4 => ManageBuyOfferResultCode::ManageBuyOfferSellNotAuthorized,
-            -5 => ManageBuyOfferResultCode::ManageBuyOfferBuyNotAuthorized,
-            -6 => ManageBuyOfferResultCode::ManageBuyOfferLineFull,
-            -7 => ManageBuyOfferResultCode::ManageBuyOfferUnderfunded,
-            -8 => ManageBuyOfferResultCode::ManageBuyOfferCrossSelf,
-            -9 => ManageBuyOfferResultCode::ManageBuyOfferSellNoIssuer,
-            -10 => ManageBuyOfferResultCode::ManageBuyOfferBuyNoIssuer,
-            -11 => ManageBuyOfferResultCode::ManageBuyOfferNotFound,
-            -12 => ManageBuyOfferResultCode::ManageBuyOfferLowReserve,
+            0 => ManageBuyOfferResultCode::Success,
+            -1 => ManageBuyOfferResultCode::Malformed,
+            -2 => ManageBuyOfferResultCode::SellNoTrust,
+            -3 => ManageBuyOfferResultCode::BuyNoTrust,
+            -4 => ManageBuyOfferResultCode::SellNotAuthorized,
+            -5 => ManageBuyOfferResultCode::BuyNotAuthorized,
+            -6 => ManageBuyOfferResultCode::LineFull,
+            -7 => ManageBuyOfferResultCode::Underfunded,
+            -8 => ManageBuyOfferResultCode::CrossSelf,
+            -9 => ManageBuyOfferResultCode::SellNoIssuer,
+            -10 => ManageBuyOfferResultCode::BuyNoIssuer,
+            -11 => ManageBuyOfferResultCode::NotFound,
+            -12 => ManageBuyOfferResultCode::LowReserve,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12397,43 +12193,37 @@ impl WriteXdr for ManageBuyOfferResultCode {
 // union with discriminant ManageBuyOfferResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ManageBuyOfferResult {
-    ManageBuyOfferSuccess(ManageOfferSuccessResult),
-    ManageBuyOfferMalformed,
-    ManageBuyOfferSellNoTrust,
-    ManageBuyOfferBuyNoTrust,
-    ManageBuyOfferSellNotAuthorized,
-    ManageBuyOfferBuyNotAuthorized,
-    ManageBuyOfferLineFull,
-    ManageBuyOfferUnderfunded,
-    ManageBuyOfferCrossSelf,
-    ManageBuyOfferSellNoIssuer,
-    ManageBuyOfferBuyNoIssuer,
-    ManageBuyOfferNotFound,
-    ManageBuyOfferLowReserve,
+    Success(ManageOfferSuccessResult),
+    Malformed,
+    SellNoTrust,
+    BuyNoTrust,
+    SellNotAuthorized,
+    BuyNotAuthorized,
+    LineFull,
+    Underfunded,
+    CrossSelf,
+    SellNoIssuer,
+    BuyNoIssuer,
+    NotFound,
+    LowReserve,
 }
 
 impl ManageBuyOfferResult {
     pub fn discriminant(&self) -> ManageBuyOfferResultCode {
         match self {
-            Self::ManageBuyOfferSuccess(_) => ManageBuyOfferResultCode::ManageBuyOfferSuccess,
-            Self::ManageBuyOfferMalformed => ManageBuyOfferResultCode::ManageBuyOfferMalformed,
-            Self::ManageBuyOfferSellNoTrust => ManageBuyOfferResultCode::ManageBuyOfferSellNoTrust,
-            Self::ManageBuyOfferBuyNoTrust => ManageBuyOfferResultCode::ManageBuyOfferBuyNoTrust,
-            Self::ManageBuyOfferSellNotAuthorized => {
-                ManageBuyOfferResultCode::ManageBuyOfferSellNotAuthorized
-            }
-            Self::ManageBuyOfferBuyNotAuthorized => {
-                ManageBuyOfferResultCode::ManageBuyOfferBuyNotAuthorized
-            }
-            Self::ManageBuyOfferLineFull => ManageBuyOfferResultCode::ManageBuyOfferLineFull,
-            Self::ManageBuyOfferUnderfunded => ManageBuyOfferResultCode::ManageBuyOfferUnderfunded,
-            Self::ManageBuyOfferCrossSelf => ManageBuyOfferResultCode::ManageBuyOfferCrossSelf,
-            Self::ManageBuyOfferSellNoIssuer => {
-                ManageBuyOfferResultCode::ManageBuyOfferSellNoIssuer
-            }
-            Self::ManageBuyOfferBuyNoIssuer => ManageBuyOfferResultCode::ManageBuyOfferBuyNoIssuer,
-            Self::ManageBuyOfferNotFound => ManageBuyOfferResultCode::ManageBuyOfferNotFound,
-            Self::ManageBuyOfferLowReserve => ManageBuyOfferResultCode::ManageBuyOfferLowReserve,
+            Self::Success(_) => ManageBuyOfferResultCode::Success,
+            Self::Malformed => ManageBuyOfferResultCode::Malformed,
+            Self::SellNoTrust => ManageBuyOfferResultCode::SellNoTrust,
+            Self::BuyNoTrust => ManageBuyOfferResultCode::BuyNoTrust,
+            Self::SellNotAuthorized => ManageBuyOfferResultCode::SellNotAuthorized,
+            Self::BuyNotAuthorized => ManageBuyOfferResultCode::BuyNotAuthorized,
+            Self::LineFull => ManageBuyOfferResultCode::LineFull,
+            Self::Underfunded => ManageBuyOfferResultCode::Underfunded,
+            Self::CrossSelf => ManageBuyOfferResultCode::CrossSelf,
+            Self::SellNoIssuer => ManageBuyOfferResultCode::SellNoIssuer,
+            Self::BuyNoIssuer => ManageBuyOfferResultCode::BuyNoIssuer,
+            Self::NotFound => ManageBuyOfferResultCode::NotFound,
+            Self::LowReserve => ManageBuyOfferResultCode::LowReserve,
         }
     }
 }
@@ -12443,27 +12233,21 @@ impl ReadXdr for ManageBuyOfferResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ManageBuyOfferResultCode::ManageBuyOfferSuccess => {
-                Self::ManageBuyOfferSuccess(ManageOfferSuccessResult::read_xdr(r)?)
+            ManageBuyOfferResultCode::Success => {
+                Self::Success(ManageOfferSuccessResult::read_xdr(r)?)
             }
-            ManageBuyOfferResultCode::ManageBuyOfferMalformed => Self::ManageBuyOfferMalformed,
-            ManageBuyOfferResultCode::ManageBuyOfferSellNoTrust => Self::ManageBuyOfferSellNoTrust,
-            ManageBuyOfferResultCode::ManageBuyOfferBuyNoTrust => Self::ManageBuyOfferBuyNoTrust,
-            ManageBuyOfferResultCode::ManageBuyOfferSellNotAuthorized => {
-                Self::ManageBuyOfferSellNotAuthorized
-            }
-            ManageBuyOfferResultCode::ManageBuyOfferBuyNotAuthorized => {
-                Self::ManageBuyOfferBuyNotAuthorized
-            }
-            ManageBuyOfferResultCode::ManageBuyOfferLineFull => Self::ManageBuyOfferLineFull,
-            ManageBuyOfferResultCode::ManageBuyOfferUnderfunded => Self::ManageBuyOfferUnderfunded,
-            ManageBuyOfferResultCode::ManageBuyOfferCrossSelf => Self::ManageBuyOfferCrossSelf,
-            ManageBuyOfferResultCode::ManageBuyOfferSellNoIssuer => {
-                Self::ManageBuyOfferSellNoIssuer
-            }
-            ManageBuyOfferResultCode::ManageBuyOfferBuyNoIssuer => Self::ManageBuyOfferBuyNoIssuer,
-            ManageBuyOfferResultCode::ManageBuyOfferNotFound => Self::ManageBuyOfferNotFound,
-            ManageBuyOfferResultCode::ManageBuyOfferLowReserve => Self::ManageBuyOfferLowReserve,
+            ManageBuyOfferResultCode::Malformed => Self::Malformed,
+            ManageBuyOfferResultCode::SellNoTrust => Self::SellNoTrust,
+            ManageBuyOfferResultCode::BuyNoTrust => Self::BuyNoTrust,
+            ManageBuyOfferResultCode::SellNotAuthorized => Self::SellNotAuthorized,
+            ManageBuyOfferResultCode::BuyNotAuthorized => Self::BuyNotAuthorized,
+            ManageBuyOfferResultCode::LineFull => Self::LineFull,
+            ManageBuyOfferResultCode::Underfunded => Self::Underfunded,
+            ManageBuyOfferResultCode::CrossSelf => Self::CrossSelf,
+            ManageBuyOfferResultCode::SellNoIssuer => Self::SellNoIssuer,
+            ManageBuyOfferResultCode::BuyNoIssuer => Self::BuyNoIssuer,
+            ManageBuyOfferResultCode::NotFound => Self::NotFound,
+            ManageBuyOfferResultCode::LowReserve => Self::LowReserve,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12476,19 +12260,19 @@ impl WriteXdr for ManageBuyOfferResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ManageBuyOfferSuccess(v) => v.write_xdr(w)?,
-            Self::ManageBuyOfferMalformed => ().write_xdr(w)?,
-            Self::ManageBuyOfferSellNoTrust => ().write_xdr(w)?,
-            Self::ManageBuyOfferBuyNoTrust => ().write_xdr(w)?,
-            Self::ManageBuyOfferSellNotAuthorized => ().write_xdr(w)?,
-            Self::ManageBuyOfferBuyNotAuthorized => ().write_xdr(w)?,
-            Self::ManageBuyOfferLineFull => ().write_xdr(w)?,
-            Self::ManageBuyOfferUnderfunded => ().write_xdr(w)?,
-            Self::ManageBuyOfferCrossSelf => ().write_xdr(w)?,
-            Self::ManageBuyOfferSellNoIssuer => ().write_xdr(w)?,
-            Self::ManageBuyOfferBuyNoIssuer => ().write_xdr(w)?,
-            Self::ManageBuyOfferNotFound => ().write_xdr(w)?,
-            Self::ManageBuyOfferLowReserve => ().write_xdr(w)?,
+            Self::Success(v) => v.write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::SellNoTrust => ().write_xdr(w)?,
+            Self::BuyNoTrust => ().write_xdr(w)?,
+            Self::SellNotAuthorized => ().write_xdr(w)?,
+            Self::BuyNotAuthorized => ().write_xdr(w)?,
+            Self::LineFull => ().write_xdr(w)?,
+            Self::Underfunded => ().write_xdr(w)?,
+            Self::CrossSelf => ().write_xdr(w)?,
+            Self::SellNoIssuer => ().write_xdr(w)?,
+            Self::BuyNoIssuer => ().write_xdr(w)?,
+            Self::NotFound => ().write_xdr(w)?,
+            Self::LowReserve => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12518,17 +12302,17 @@ impl WriteXdr for ManageBuyOfferResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum SetOptionsResultCode {
-    SetOptionsSuccess = 0,
-    SetOptionsLowReserve = -1,
-    SetOptionsTooManySigners = -2,
-    SetOptionsBadFlags = -3,
-    SetOptionsInvalidInflation = -4,
-    SetOptionsCantChange = -5,
-    SetOptionsUnknownFlag = -6,
-    SetOptionsThresholdOutOfRange = -7,
-    SetOptionsBadSigner = -8,
-    SetOptionsInvalidHomeDomain = -9,
-    SetOptionsAuthRevocableRequired = -10,
+    Success = 0,
+    LowReserve = -1,
+    TooManySigners = -2,
+    BadFlags = -3,
+    InvalidInflation = -4,
+    CantChange = -5,
+    UnknownFlag = -6,
+    ThresholdOutOfRange = -7,
+    BadSigner = -8,
+    InvalidHomeDomain = -9,
+    AuthRevocableRequired = -10,
 }
 
 impl TryFrom<i32> for SetOptionsResultCode {
@@ -12536,17 +12320,17 @@ impl TryFrom<i32> for SetOptionsResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => SetOptionsResultCode::SetOptionsSuccess,
-            -1 => SetOptionsResultCode::SetOptionsLowReserve,
-            -2 => SetOptionsResultCode::SetOptionsTooManySigners,
-            -3 => SetOptionsResultCode::SetOptionsBadFlags,
-            -4 => SetOptionsResultCode::SetOptionsInvalidInflation,
-            -5 => SetOptionsResultCode::SetOptionsCantChange,
-            -6 => SetOptionsResultCode::SetOptionsUnknownFlag,
-            -7 => SetOptionsResultCode::SetOptionsThresholdOutOfRange,
-            -8 => SetOptionsResultCode::SetOptionsBadSigner,
-            -9 => SetOptionsResultCode::SetOptionsInvalidHomeDomain,
-            -10 => SetOptionsResultCode::SetOptionsAuthRevocableRequired,
+            0 => SetOptionsResultCode::Success,
+            -1 => SetOptionsResultCode::LowReserve,
+            -2 => SetOptionsResultCode::TooManySigners,
+            -3 => SetOptionsResultCode::BadFlags,
+            -4 => SetOptionsResultCode::InvalidInflation,
+            -5 => SetOptionsResultCode::CantChange,
+            -6 => SetOptionsResultCode::UnknownFlag,
+            -7 => SetOptionsResultCode::ThresholdOutOfRange,
+            -8 => SetOptionsResultCode::BadSigner,
+            -9 => SetOptionsResultCode::InvalidHomeDomain,
+            -10 => SetOptionsResultCode::AuthRevocableRequired,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12599,37 +12383,33 @@ impl WriteXdr for SetOptionsResultCode {
 // union with discriminant SetOptionsResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SetOptionsResult {
-    SetOptionsSuccess,
-    SetOptionsLowReserve,
-    SetOptionsTooManySigners,
-    SetOptionsBadFlags,
-    SetOptionsInvalidInflation,
-    SetOptionsCantChange,
-    SetOptionsUnknownFlag,
-    SetOptionsThresholdOutOfRange,
-    SetOptionsBadSigner,
-    SetOptionsInvalidHomeDomain,
-    SetOptionsAuthRevocableRequired,
+    Success,
+    LowReserve,
+    TooManySigners,
+    BadFlags,
+    InvalidInflation,
+    CantChange,
+    UnknownFlag,
+    ThresholdOutOfRange,
+    BadSigner,
+    InvalidHomeDomain,
+    AuthRevocableRequired,
 }
 
 impl SetOptionsResult {
     pub fn discriminant(&self) -> SetOptionsResultCode {
         match self {
-            Self::SetOptionsSuccess => SetOptionsResultCode::SetOptionsSuccess,
-            Self::SetOptionsLowReserve => SetOptionsResultCode::SetOptionsLowReserve,
-            Self::SetOptionsTooManySigners => SetOptionsResultCode::SetOptionsTooManySigners,
-            Self::SetOptionsBadFlags => SetOptionsResultCode::SetOptionsBadFlags,
-            Self::SetOptionsInvalidInflation => SetOptionsResultCode::SetOptionsInvalidInflation,
-            Self::SetOptionsCantChange => SetOptionsResultCode::SetOptionsCantChange,
-            Self::SetOptionsUnknownFlag => SetOptionsResultCode::SetOptionsUnknownFlag,
-            Self::SetOptionsThresholdOutOfRange => {
-                SetOptionsResultCode::SetOptionsThresholdOutOfRange
-            }
-            Self::SetOptionsBadSigner => SetOptionsResultCode::SetOptionsBadSigner,
-            Self::SetOptionsInvalidHomeDomain => SetOptionsResultCode::SetOptionsInvalidHomeDomain,
-            Self::SetOptionsAuthRevocableRequired => {
-                SetOptionsResultCode::SetOptionsAuthRevocableRequired
-            }
+            Self::Success => SetOptionsResultCode::Success,
+            Self::LowReserve => SetOptionsResultCode::LowReserve,
+            Self::TooManySigners => SetOptionsResultCode::TooManySigners,
+            Self::BadFlags => SetOptionsResultCode::BadFlags,
+            Self::InvalidInflation => SetOptionsResultCode::InvalidInflation,
+            Self::CantChange => SetOptionsResultCode::CantChange,
+            Self::UnknownFlag => SetOptionsResultCode::UnknownFlag,
+            Self::ThresholdOutOfRange => SetOptionsResultCode::ThresholdOutOfRange,
+            Self::BadSigner => SetOptionsResultCode::BadSigner,
+            Self::InvalidHomeDomain => SetOptionsResultCode::InvalidHomeDomain,
+            Self::AuthRevocableRequired => SetOptionsResultCode::AuthRevocableRequired,
         }
     }
 }
@@ -12639,21 +12419,17 @@ impl ReadXdr for SetOptionsResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            SetOptionsResultCode::SetOptionsSuccess => Self::SetOptionsSuccess,
-            SetOptionsResultCode::SetOptionsLowReserve => Self::SetOptionsLowReserve,
-            SetOptionsResultCode::SetOptionsTooManySigners => Self::SetOptionsTooManySigners,
-            SetOptionsResultCode::SetOptionsBadFlags => Self::SetOptionsBadFlags,
-            SetOptionsResultCode::SetOptionsInvalidInflation => Self::SetOptionsInvalidInflation,
-            SetOptionsResultCode::SetOptionsCantChange => Self::SetOptionsCantChange,
-            SetOptionsResultCode::SetOptionsUnknownFlag => Self::SetOptionsUnknownFlag,
-            SetOptionsResultCode::SetOptionsThresholdOutOfRange => {
-                Self::SetOptionsThresholdOutOfRange
-            }
-            SetOptionsResultCode::SetOptionsBadSigner => Self::SetOptionsBadSigner,
-            SetOptionsResultCode::SetOptionsInvalidHomeDomain => Self::SetOptionsInvalidHomeDomain,
-            SetOptionsResultCode::SetOptionsAuthRevocableRequired => {
-                Self::SetOptionsAuthRevocableRequired
-            }
+            SetOptionsResultCode::Success => Self::Success,
+            SetOptionsResultCode::LowReserve => Self::LowReserve,
+            SetOptionsResultCode::TooManySigners => Self::TooManySigners,
+            SetOptionsResultCode::BadFlags => Self::BadFlags,
+            SetOptionsResultCode::InvalidInflation => Self::InvalidInflation,
+            SetOptionsResultCode::CantChange => Self::CantChange,
+            SetOptionsResultCode::UnknownFlag => Self::UnknownFlag,
+            SetOptionsResultCode::ThresholdOutOfRange => Self::ThresholdOutOfRange,
+            SetOptionsResultCode::BadSigner => Self::BadSigner,
+            SetOptionsResultCode::InvalidHomeDomain => Self::InvalidHomeDomain,
+            SetOptionsResultCode::AuthRevocableRequired => Self::AuthRevocableRequired,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12666,17 +12442,17 @@ impl WriteXdr for SetOptionsResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::SetOptionsSuccess => ().write_xdr(w)?,
-            Self::SetOptionsLowReserve => ().write_xdr(w)?,
-            Self::SetOptionsTooManySigners => ().write_xdr(w)?,
-            Self::SetOptionsBadFlags => ().write_xdr(w)?,
-            Self::SetOptionsInvalidInflation => ().write_xdr(w)?,
-            Self::SetOptionsCantChange => ().write_xdr(w)?,
-            Self::SetOptionsUnknownFlag => ().write_xdr(w)?,
-            Self::SetOptionsThresholdOutOfRange => ().write_xdr(w)?,
-            Self::SetOptionsBadSigner => ().write_xdr(w)?,
-            Self::SetOptionsInvalidHomeDomain => ().write_xdr(w)?,
-            Self::SetOptionsAuthRevocableRequired => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::LowReserve => ().write_xdr(w)?,
+            Self::TooManySigners => ().write_xdr(w)?,
+            Self::BadFlags => ().write_xdr(w)?,
+            Self::InvalidInflation => ().write_xdr(w)?,
+            Self::CantChange => ().write_xdr(w)?,
+            Self::UnknownFlag => ().write_xdr(w)?,
+            Self::ThresholdOutOfRange => ().write_xdr(w)?,
+            Self::BadSigner => ().write_xdr(w)?,
+            Self::InvalidHomeDomain => ().write_xdr(w)?,
+            Self::AuthRevocableRequired => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12707,15 +12483,15 @@ impl WriteXdr for SetOptionsResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ChangeTrustResultCode {
-    ChangeTrustSuccess = 0,
-    ChangeTrustMalformed = -1,
-    ChangeTrustNoIssuer = -2,
-    ChangeTrustInvalidLimit = -3,
-    ChangeTrustLowReserve = -4,
-    ChangeTrustSelfNotAllowed = -5,
-    ChangeTrustTrustLineMissing = -6,
-    ChangeTrustCannotDelete = -7,
-    ChangeTrustNotAuthMaintainLiabilities = -8,
+    Success = 0,
+    Malformed = -1,
+    NoIssuer = -2,
+    InvalidLimit = -3,
+    LowReserve = -4,
+    SelfNotAllowed = -5,
+    TrustLineMissing = -6,
+    CannotDelete = -7,
+    NotAuthMaintainLiabilities = -8,
 }
 
 impl TryFrom<i32> for ChangeTrustResultCode {
@@ -12723,15 +12499,15 @@ impl TryFrom<i32> for ChangeTrustResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ChangeTrustResultCode::ChangeTrustSuccess,
-            -1 => ChangeTrustResultCode::ChangeTrustMalformed,
-            -2 => ChangeTrustResultCode::ChangeTrustNoIssuer,
-            -3 => ChangeTrustResultCode::ChangeTrustInvalidLimit,
-            -4 => ChangeTrustResultCode::ChangeTrustLowReserve,
-            -5 => ChangeTrustResultCode::ChangeTrustSelfNotAllowed,
-            -6 => ChangeTrustResultCode::ChangeTrustTrustLineMissing,
-            -7 => ChangeTrustResultCode::ChangeTrustCannotDelete,
-            -8 => ChangeTrustResultCode::ChangeTrustNotAuthMaintainLiabilities,
+            0 => ChangeTrustResultCode::Success,
+            -1 => ChangeTrustResultCode::Malformed,
+            -2 => ChangeTrustResultCode::NoIssuer,
+            -3 => ChangeTrustResultCode::InvalidLimit,
+            -4 => ChangeTrustResultCode::LowReserve,
+            -5 => ChangeTrustResultCode::SelfNotAllowed,
+            -6 => ChangeTrustResultCode::TrustLineMissing,
+            -7 => ChangeTrustResultCode::CannotDelete,
+            -8 => ChangeTrustResultCode::NotAuthMaintainLiabilities,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12782,31 +12558,29 @@ impl WriteXdr for ChangeTrustResultCode {
 // union with discriminant ChangeTrustResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ChangeTrustResult {
-    ChangeTrustSuccess,
-    ChangeTrustMalformed,
-    ChangeTrustNoIssuer,
-    ChangeTrustInvalidLimit,
-    ChangeTrustLowReserve,
-    ChangeTrustSelfNotAllowed,
-    ChangeTrustTrustLineMissing,
-    ChangeTrustCannotDelete,
-    ChangeTrustNotAuthMaintainLiabilities,
+    Success,
+    Malformed,
+    NoIssuer,
+    InvalidLimit,
+    LowReserve,
+    SelfNotAllowed,
+    TrustLineMissing,
+    CannotDelete,
+    NotAuthMaintainLiabilities,
 }
 
 impl ChangeTrustResult {
     pub fn discriminant(&self) -> ChangeTrustResultCode {
         match self {
-            Self::ChangeTrustSuccess => ChangeTrustResultCode::ChangeTrustSuccess,
-            Self::ChangeTrustMalformed => ChangeTrustResultCode::ChangeTrustMalformed,
-            Self::ChangeTrustNoIssuer => ChangeTrustResultCode::ChangeTrustNoIssuer,
-            Self::ChangeTrustInvalidLimit => ChangeTrustResultCode::ChangeTrustInvalidLimit,
-            Self::ChangeTrustLowReserve => ChangeTrustResultCode::ChangeTrustLowReserve,
-            Self::ChangeTrustSelfNotAllowed => ChangeTrustResultCode::ChangeTrustSelfNotAllowed,
-            Self::ChangeTrustTrustLineMissing => ChangeTrustResultCode::ChangeTrustTrustLineMissing,
-            Self::ChangeTrustCannotDelete => ChangeTrustResultCode::ChangeTrustCannotDelete,
-            Self::ChangeTrustNotAuthMaintainLiabilities => {
-                ChangeTrustResultCode::ChangeTrustNotAuthMaintainLiabilities
-            }
+            Self::Success => ChangeTrustResultCode::Success,
+            Self::Malformed => ChangeTrustResultCode::Malformed,
+            Self::NoIssuer => ChangeTrustResultCode::NoIssuer,
+            Self::InvalidLimit => ChangeTrustResultCode::InvalidLimit,
+            Self::LowReserve => ChangeTrustResultCode::LowReserve,
+            Self::SelfNotAllowed => ChangeTrustResultCode::SelfNotAllowed,
+            Self::TrustLineMissing => ChangeTrustResultCode::TrustLineMissing,
+            Self::CannotDelete => ChangeTrustResultCode::CannotDelete,
+            Self::NotAuthMaintainLiabilities => ChangeTrustResultCode::NotAuthMaintainLiabilities,
         }
     }
 }
@@ -12816,17 +12590,15 @@ impl ReadXdr for ChangeTrustResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ChangeTrustResultCode::ChangeTrustSuccess => Self::ChangeTrustSuccess,
-            ChangeTrustResultCode::ChangeTrustMalformed => Self::ChangeTrustMalformed,
-            ChangeTrustResultCode::ChangeTrustNoIssuer => Self::ChangeTrustNoIssuer,
-            ChangeTrustResultCode::ChangeTrustInvalidLimit => Self::ChangeTrustInvalidLimit,
-            ChangeTrustResultCode::ChangeTrustLowReserve => Self::ChangeTrustLowReserve,
-            ChangeTrustResultCode::ChangeTrustSelfNotAllowed => Self::ChangeTrustSelfNotAllowed,
-            ChangeTrustResultCode::ChangeTrustTrustLineMissing => Self::ChangeTrustTrustLineMissing,
-            ChangeTrustResultCode::ChangeTrustCannotDelete => Self::ChangeTrustCannotDelete,
-            ChangeTrustResultCode::ChangeTrustNotAuthMaintainLiabilities => {
-                Self::ChangeTrustNotAuthMaintainLiabilities
-            }
+            ChangeTrustResultCode::Success => Self::Success,
+            ChangeTrustResultCode::Malformed => Self::Malformed,
+            ChangeTrustResultCode::NoIssuer => Self::NoIssuer,
+            ChangeTrustResultCode::InvalidLimit => Self::InvalidLimit,
+            ChangeTrustResultCode::LowReserve => Self::LowReserve,
+            ChangeTrustResultCode::SelfNotAllowed => Self::SelfNotAllowed,
+            ChangeTrustResultCode::TrustLineMissing => Self::TrustLineMissing,
+            ChangeTrustResultCode::CannotDelete => Self::CannotDelete,
+            ChangeTrustResultCode::NotAuthMaintainLiabilities => Self::NotAuthMaintainLiabilities,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12839,15 +12611,15 @@ impl WriteXdr for ChangeTrustResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ChangeTrustSuccess => ().write_xdr(w)?,
-            Self::ChangeTrustMalformed => ().write_xdr(w)?,
-            Self::ChangeTrustNoIssuer => ().write_xdr(w)?,
-            Self::ChangeTrustInvalidLimit => ().write_xdr(w)?,
-            Self::ChangeTrustLowReserve => ().write_xdr(w)?,
-            Self::ChangeTrustSelfNotAllowed => ().write_xdr(w)?,
-            Self::ChangeTrustTrustLineMissing => ().write_xdr(w)?,
-            Self::ChangeTrustCannotDelete => ().write_xdr(w)?,
-            Self::ChangeTrustNotAuthMaintainLiabilities => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::NoIssuer => ().write_xdr(w)?,
+            Self::InvalidLimit => ().write_xdr(w)?,
+            Self::LowReserve => ().write_xdr(w)?,
+            Self::SelfNotAllowed => ().write_xdr(w)?,
+            Self::TrustLineMissing => ().write_xdr(w)?,
+            Self::CannotDelete => ().write_xdr(w)?,
+            Self::NotAuthMaintainLiabilities => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -12874,13 +12646,13 @@ impl WriteXdr for ChangeTrustResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum AllowTrustResultCode {
-    AllowTrustSuccess = 0,
-    AllowTrustMalformed = -1,
-    AllowTrustNoTrustLine = -2,
-    AllowTrustTrustNotRequired = -3,
-    AllowTrustCantRevoke = -4,
-    AllowTrustSelfNotAllowed = -5,
-    AllowTrustLowReserve = -6,
+    Success = 0,
+    Malformed = -1,
+    NoTrustLine = -2,
+    TrustNotRequired = -3,
+    CantRevoke = -4,
+    SelfNotAllowed = -5,
+    LowReserve = -6,
 }
 
 impl TryFrom<i32> for AllowTrustResultCode {
@@ -12888,13 +12660,13 @@ impl TryFrom<i32> for AllowTrustResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => AllowTrustResultCode::AllowTrustSuccess,
-            -1 => AllowTrustResultCode::AllowTrustMalformed,
-            -2 => AllowTrustResultCode::AllowTrustNoTrustLine,
-            -3 => AllowTrustResultCode::AllowTrustTrustNotRequired,
-            -4 => AllowTrustResultCode::AllowTrustCantRevoke,
-            -5 => AllowTrustResultCode::AllowTrustSelfNotAllowed,
-            -6 => AllowTrustResultCode::AllowTrustLowReserve,
+            0 => AllowTrustResultCode::Success,
+            -1 => AllowTrustResultCode::Malformed,
+            -2 => AllowTrustResultCode::NoTrustLine,
+            -3 => AllowTrustResultCode::TrustNotRequired,
+            -4 => AllowTrustResultCode::CantRevoke,
+            -5 => AllowTrustResultCode::SelfNotAllowed,
+            -6 => AllowTrustResultCode::LowReserve,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12943,25 +12715,25 @@ impl WriteXdr for AllowTrustResultCode {
 // union with discriminant AllowTrustResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AllowTrustResult {
-    AllowTrustSuccess,
-    AllowTrustMalformed,
-    AllowTrustNoTrustLine,
-    AllowTrustTrustNotRequired,
-    AllowTrustCantRevoke,
-    AllowTrustSelfNotAllowed,
-    AllowTrustLowReserve,
+    Success,
+    Malformed,
+    NoTrustLine,
+    TrustNotRequired,
+    CantRevoke,
+    SelfNotAllowed,
+    LowReserve,
 }
 
 impl AllowTrustResult {
     pub fn discriminant(&self) -> AllowTrustResultCode {
         match self {
-            Self::AllowTrustSuccess => AllowTrustResultCode::AllowTrustSuccess,
-            Self::AllowTrustMalformed => AllowTrustResultCode::AllowTrustMalformed,
-            Self::AllowTrustNoTrustLine => AllowTrustResultCode::AllowTrustNoTrustLine,
-            Self::AllowTrustTrustNotRequired => AllowTrustResultCode::AllowTrustTrustNotRequired,
-            Self::AllowTrustCantRevoke => AllowTrustResultCode::AllowTrustCantRevoke,
-            Self::AllowTrustSelfNotAllowed => AllowTrustResultCode::AllowTrustSelfNotAllowed,
-            Self::AllowTrustLowReserve => AllowTrustResultCode::AllowTrustLowReserve,
+            Self::Success => AllowTrustResultCode::Success,
+            Self::Malformed => AllowTrustResultCode::Malformed,
+            Self::NoTrustLine => AllowTrustResultCode::NoTrustLine,
+            Self::TrustNotRequired => AllowTrustResultCode::TrustNotRequired,
+            Self::CantRevoke => AllowTrustResultCode::CantRevoke,
+            Self::SelfNotAllowed => AllowTrustResultCode::SelfNotAllowed,
+            Self::LowReserve => AllowTrustResultCode::LowReserve,
         }
     }
 }
@@ -12971,13 +12743,13 @@ impl ReadXdr for AllowTrustResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            AllowTrustResultCode::AllowTrustSuccess => Self::AllowTrustSuccess,
-            AllowTrustResultCode::AllowTrustMalformed => Self::AllowTrustMalformed,
-            AllowTrustResultCode::AllowTrustNoTrustLine => Self::AllowTrustNoTrustLine,
-            AllowTrustResultCode::AllowTrustTrustNotRequired => Self::AllowTrustTrustNotRequired,
-            AllowTrustResultCode::AllowTrustCantRevoke => Self::AllowTrustCantRevoke,
-            AllowTrustResultCode::AllowTrustSelfNotAllowed => Self::AllowTrustSelfNotAllowed,
-            AllowTrustResultCode::AllowTrustLowReserve => Self::AllowTrustLowReserve,
+            AllowTrustResultCode::Success => Self::Success,
+            AllowTrustResultCode::Malformed => Self::Malformed,
+            AllowTrustResultCode::NoTrustLine => Self::NoTrustLine,
+            AllowTrustResultCode::TrustNotRequired => Self::TrustNotRequired,
+            AllowTrustResultCode::CantRevoke => Self::CantRevoke,
+            AllowTrustResultCode::SelfNotAllowed => Self::SelfNotAllowed,
+            AllowTrustResultCode::LowReserve => Self::LowReserve,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12990,13 +12762,13 @@ impl WriteXdr for AllowTrustResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::AllowTrustSuccess => ().write_xdr(w)?,
-            Self::AllowTrustMalformed => ().write_xdr(w)?,
-            Self::AllowTrustNoTrustLine => ().write_xdr(w)?,
-            Self::AllowTrustTrustNotRequired => ().write_xdr(w)?,
-            Self::AllowTrustCantRevoke => ().write_xdr(w)?,
-            Self::AllowTrustSelfNotAllowed => ().write_xdr(w)?,
-            Self::AllowTrustLowReserve => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::NoTrustLine => ().write_xdr(w)?,
+            Self::TrustNotRequired => ().write_xdr(w)?,
+            Self::CantRevoke => ().write_xdr(w)?,
+            Self::SelfNotAllowed => ().write_xdr(w)?,
+            Self::LowReserve => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -13023,14 +12795,14 @@ impl WriteXdr for AllowTrustResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum AccountMergeResultCode {
-    AccountMergeSuccess = 0,
-    AccountMergeMalformed = -1,
-    AccountMergeNoAccount = -2,
-    AccountMergeImmutableSet = -3,
-    AccountMergeHasSubEntries = -4,
-    AccountMergeSeqnumTooFar = -5,
-    AccountMergeDestFull = -6,
-    AccountMergeIsSponsor = -7,
+    Success = 0,
+    Malformed = -1,
+    NoAccount = -2,
+    ImmutableSet = -3,
+    HasSubEntries = -4,
+    SeqnumTooFar = -5,
+    DestFull = -6,
+    IsSponsor = -7,
 }
 
 impl TryFrom<i32> for AccountMergeResultCode {
@@ -13038,14 +12810,14 @@ impl TryFrom<i32> for AccountMergeResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => AccountMergeResultCode::AccountMergeSuccess,
-            -1 => AccountMergeResultCode::AccountMergeMalformed,
-            -2 => AccountMergeResultCode::AccountMergeNoAccount,
-            -3 => AccountMergeResultCode::AccountMergeImmutableSet,
-            -4 => AccountMergeResultCode::AccountMergeHasSubEntries,
-            -5 => AccountMergeResultCode::AccountMergeSeqnumTooFar,
-            -6 => AccountMergeResultCode::AccountMergeDestFull,
-            -7 => AccountMergeResultCode::AccountMergeIsSponsor,
+            0 => AccountMergeResultCode::Success,
+            -1 => AccountMergeResultCode::Malformed,
+            -2 => AccountMergeResultCode::NoAccount,
+            -3 => AccountMergeResultCode::ImmutableSet,
+            -4 => AccountMergeResultCode::HasSubEntries,
+            -5 => AccountMergeResultCode::SeqnumTooFar,
+            -6 => AccountMergeResultCode::DestFull,
+            -7 => AccountMergeResultCode::IsSponsor,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13095,27 +12867,27 @@ impl WriteXdr for AccountMergeResultCode {
 // union with discriminant AccountMergeResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AccountMergeResult {
-    AccountMergeSuccess(i64),
-    AccountMergeMalformed,
-    AccountMergeNoAccount,
-    AccountMergeImmutableSet,
-    AccountMergeHasSubEntries,
-    AccountMergeSeqnumTooFar,
-    AccountMergeDestFull,
-    AccountMergeIsSponsor,
+    Success(i64),
+    Malformed,
+    NoAccount,
+    ImmutableSet,
+    HasSubEntries,
+    SeqnumTooFar,
+    DestFull,
+    IsSponsor,
 }
 
 impl AccountMergeResult {
     pub fn discriminant(&self) -> AccountMergeResultCode {
         match self {
-            Self::AccountMergeSuccess(_) => AccountMergeResultCode::AccountMergeSuccess,
-            Self::AccountMergeMalformed => AccountMergeResultCode::AccountMergeMalformed,
-            Self::AccountMergeNoAccount => AccountMergeResultCode::AccountMergeNoAccount,
-            Self::AccountMergeImmutableSet => AccountMergeResultCode::AccountMergeImmutableSet,
-            Self::AccountMergeHasSubEntries => AccountMergeResultCode::AccountMergeHasSubEntries,
-            Self::AccountMergeSeqnumTooFar => AccountMergeResultCode::AccountMergeSeqnumTooFar,
-            Self::AccountMergeDestFull => AccountMergeResultCode::AccountMergeDestFull,
-            Self::AccountMergeIsSponsor => AccountMergeResultCode::AccountMergeIsSponsor,
+            Self::Success(_) => AccountMergeResultCode::Success,
+            Self::Malformed => AccountMergeResultCode::Malformed,
+            Self::NoAccount => AccountMergeResultCode::NoAccount,
+            Self::ImmutableSet => AccountMergeResultCode::ImmutableSet,
+            Self::HasSubEntries => AccountMergeResultCode::HasSubEntries,
+            Self::SeqnumTooFar => AccountMergeResultCode::SeqnumTooFar,
+            Self::DestFull => AccountMergeResultCode::DestFull,
+            Self::IsSponsor => AccountMergeResultCode::IsSponsor,
         }
     }
 }
@@ -13125,16 +12897,14 @@ impl ReadXdr for AccountMergeResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            AccountMergeResultCode::AccountMergeSuccess => {
-                Self::AccountMergeSuccess(i64::read_xdr(r)?)
-            }
-            AccountMergeResultCode::AccountMergeMalformed => Self::AccountMergeMalformed,
-            AccountMergeResultCode::AccountMergeNoAccount => Self::AccountMergeNoAccount,
-            AccountMergeResultCode::AccountMergeImmutableSet => Self::AccountMergeImmutableSet,
-            AccountMergeResultCode::AccountMergeHasSubEntries => Self::AccountMergeHasSubEntries,
-            AccountMergeResultCode::AccountMergeSeqnumTooFar => Self::AccountMergeSeqnumTooFar,
-            AccountMergeResultCode::AccountMergeDestFull => Self::AccountMergeDestFull,
-            AccountMergeResultCode::AccountMergeIsSponsor => Self::AccountMergeIsSponsor,
+            AccountMergeResultCode::Success => Self::Success(i64::read_xdr(r)?),
+            AccountMergeResultCode::Malformed => Self::Malformed,
+            AccountMergeResultCode::NoAccount => Self::NoAccount,
+            AccountMergeResultCode::ImmutableSet => Self::ImmutableSet,
+            AccountMergeResultCode::HasSubEntries => Self::HasSubEntries,
+            AccountMergeResultCode::SeqnumTooFar => Self::SeqnumTooFar,
+            AccountMergeResultCode::DestFull => Self::DestFull,
+            AccountMergeResultCode::IsSponsor => Self::IsSponsor,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13147,14 +12917,14 @@ impl WriteXdr for AccountMergeResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::AccountMergeSuccess(v) => v.write_xdr(w)?,
-            Self::AccountMergeMalformed => ().write_xdr(w)?,
-            Self::AccountMergeNoAccount => ().write_xdr(w)?,
-            Self::AccountMergeImmutableSet => ().write_xdr(w)?,
-            Self::AccountMergeHasSubEntries => ().write_xdr(w)?,
-            Self::AccountMergeSeqnumTooFar => ().write_xdr(w)?,
-            Self::AccountMergeDestFull => ().write_xdr(w)?,
-            Self::AccountMergeIsSponsor => ().write_xdr(w)?,
+            Self::Success(v) => v.write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::NoAccount => ().write_xdr(w)?,
+            Self::ImmutableSet => ().write_xdr(w)?,
+            Self::HasSubEntries => ().write_xdr(w)?,
+            Self::SeqnumTooFar => ().write_xdr(w)?,
+            Self::DestFull => ().write_xdr(w)?,
+            Self::IsSponsor => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -13174,8 +12944,8 @@ impl WriteXdr for AccountMergeResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum InflationResultCode {
-    InflationSuccess = 0,
-    InflationNotTime = -1,
+    Success = 0,
+    NotTime = -1,
 }
 
 impl TryFrom<i32> for InflationResultCode {
@@ -13183,8 +12953,8 @@ impl TryFrom<i32> for InflationResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => InflationResultCode::InflationSuccess,
-            -1 => InflationResultCode::InflationNotTime,
+            0 => InflationResultCode::Success,
+            -1 => InflationResultCode::NotTime,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13261,15 +13031,15 @@ impl WriteXdr for InflationPayout {
 // union with discriminant InflationResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum InflationResult {
-    InflationSuccess(VecM<InflationPayout>),
-    InflationNotTime,
+    Success(VecM<InflationPayout>),
+    NotTime,
 }
 
 impl InflationResult {
     pub fn discriminant(&self) -> InflationResultCode {
         match self {
-            Self::InflationSuccess(_) => InflationResultCode::InflationSuccess,
-            Self::InflationNotTime => InflationResultCode::InflationNotTime,
+            Self::Success(_) => InflationResultCode::Success,
+            Self::NotTime => InflationResultCode::NotTime,
         }
     }
 }
@@ -13279,10 +13049,8 @@ impl ReadXdr for InflationResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: InflationResultCode = <InflationResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            InflationResultCode::InflationSuccess => {
-                Self::InflationSuccess(VecM::<InflationPayout>::read_xdr(r)?)
-            }
-            InflationResultCode::InflationNotTime => Self::InflationNotTime,
+            InflationResultCode::Success => Self::Success(VecM::<InflationPayout>::read_xdr(r)?),
+            InflationResultCode::NotTime => Self::NotTime,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13295,8 +13063,8 @@ impl WriteXdr for InflationResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::InflationSuccess(v) => v.write_xdr(w)?,
-            Self::InflationNotTime => ().write_xdr(w)?,
+            Self::Success(v) => v.write_xdr(w)?,
+            Self::NotTime => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -13321,11 +13089,11 @@ impl WriteXdr for InflationResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ManageDataResultCode {
-    ManageDataSuccess = 0,
-    ManageDataNotSupportedYet = -1,
-    ManageDataNameNotFound = -2,
-    ManageDataLowReserve = -3,
-    ManageDataInvalidName = -4,
+    Success = 0,
+    NotSupportedYet = -1,
+    NameNotFound = -2,
+    LowReserve = -3,
+    InvalidName = -4,
 }
 
 impl TryFrom<i32> for ManageDataResultCode {
@@ -13333,11 +13101,11 @@ impl TryFrom<i32> for ManageDataResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ManageDataResultCode::ManageDataSuccess,
-            -1 => ManageDataResultCode::ManageDataNotSupportedYet,
-            -2 => ManageDataResultCode::ManageDataNameNotFound,
-            -3 => ManageDataResultCode::ManageDataLowReserve,
-            -4 => ManageDataResultCode::ManageDataInvalidName,
+            0 => ManageDataResultCode::Success,
+            -1 => ManageDataResultCode::NotSupportedYet,
+            -2 => ManageDataResultCode::NameNotFound,
+            -3 => ManageDataResultCode::LowReserve,
+            -4 => ManageDataResultCode::InvalidName,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13384,21 +13152,21 @@ impl WriteXdr for ManageDataResultCode {
 // union with discriminant ManageDataResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ManageDataResult {
-    ManageDataSuccess,
-    ManageDataNotSupportedYet,
-    ManageDataNameNotFound,
-    ManageDataLowReserve,
-    ManageDataInvalidName,
+    Success,
+    NotSupportedYet,
+    NameNotFound,
+    LowReserve,
+    InvalidName,
 }
 
 impl ManageDataResult {
     pub fn discriminant(&self) -> ManageDataResultCode {
         match self {
-            Self::ManageDataSuccess => ManageDataResultCode::ManageDataSuccess,
-            Self::ManageDataNotSupportedYet => ManageDataResultCode::ManageDataNotSupportedYet,
-            Self::ManageDataNameNotFound => ManageDataResultCode::ManageDataNameNotFound,
-            Self::ManageDataLowReserve => ManageDataResultCode::ManageDataLowReserve,
-            Self::ManageDataInvalidName => ManageDataResultCode::ManageDataInvalidName,
+            Self::Success => ManageDataResultCode::Success,
+            Self::NotSupportedYet => ManageDataResultCode::NotSupportedYet,
+            Self::NameNotFound => ManageDataResultCode::NameNotFound,
+            Self::LowReserve => ManageDataResultCode::LowReserve,
+            Self::InvalidName => ManageDataResultCode::InvalidName,
         }
     }
 }
@@ -13408,11 +13176,11 @@ impl ReadXdr for ManageDataResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageDataResultCode = <ManageDataResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ManageDataResultCode::ManageDataSuccess => Self::ManageDataSuccess,
-            ManageDataResultCode::ManageDataNotSupportedYet => Self::ManageDataNotSupportedYet,
-            ManageDataResultCode::ManageDataNameNotFound => Self::ManageDataNameNotFound,
-            ManageDataResultCode::ManageDataLowReserve => Self::ManageDataLowReserve,
-            ManageDataResultCode::ManageDataInvalidName => Self::ManageDataInvalidName,
+            ManageDataResultCode::Success => Self::Success,
+            ManageDataResultCode::NotSupportedYet => Self::NotSupportedYet,
+            ManageDataResultCode::NameNotFound => Self::NameNotFound,
+            ManageDataResultCode::LowReserve => Self::LowReserve,
+            ManageDataResultCode::InvalidName => Self::InvalidName,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13425,11 +13193,11 @@ impl WriteXdr for ManageDataResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ManageDataSuccess => ().write_xdr(w)?,
-            Self::ManageDataNotSupportedYet => ().write_xdr(w)?,
-            Self::ManageDataNameNotFound => ().write_xdr(w)?,
-            Self::ManageDataLowReserve => ().write_xdr(w)?,
-            Self::ManageDataInvalidName => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::NotSupportedYet => ().write_xdr(w)?,
+            Self::NameNotFound => ().write_xdr(w)?,
+            Self::LowReserve => ().write_xdr(w)?,
+            Self::InvalidName => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -13449,8 +13217,8 @@ impl WriteXdr for ManageDataResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum BumpSequenceResultCode {
-    BumpSequenceSuccess = 0,
-    BumpSequenceBadSeq = -1,
+    Success = 0,
+    BadSeq = -1,
 }
 
 impl TryFrom<i32> for BumpSequenceResultCode {
@@ -13458,8 +13226,8 @@ impl TryFrom<i32> for BumpSequenceResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => BumpSequenceResultCode::BumpSequenceSuccess,
-            -1 => BumpSequenceResultCode::BumpSequenceBadSeq,
+            0 => BumpSequenceResultCode::Success,
+            -1 => BumpSequenceResultCode::BadSeq,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13503,15 +13271,15 @@ impl WriteXdr for BumpSequenceResultCode {
 // union with discriminant BumpSequenceResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BumpSequenceResult {
-    BumpSequenceSuccess,
-    BumpSequenceBadSeq,
+    Success,
+    BadSeq,
 }
 
 impl BumpSequenceResult {
     pub fn discriminant(&self) -> BumpSequenceResultCode {
         match self {
-            Self::BumpSequenceSuccess => BumpSequenceResultCode::BumpSequenceSuccess,
-            Self::BumpSequenceBadSeq => BumpSequenceResultCode::BumpSequenceBadSeq,
+            Self::Success => BumpSequenceResultCode::Success,
+            Self::BadSeq => BumpSequenceResultCode::BadSeq,
         }
     }
 }
@@ -13521,8 +13289,8 @@ impl ReadXdr for BumpSequenceResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            BumpSequenceResultCode::BumpSequenceSuccess => Self::BumpSequenceSuccess,
-            BumpSequenceResultCode::BumpSequenceBadSeq => Self::BumpSequenceBadSeq,
+            BumpSequenceResultCode::Success => Self::Success,
+            BumpSequenceResultCode::BadSeq => Self::BadSeq,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13535,8 +13303,8 @@ impl WriteXdr for BumpSequenceResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::BumpSequenceSuccess => ().write_xdr(w)?,
-            Self::BumpSequenceBadSeq => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::BadSeq => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -13558,12 +13326,12 @@ impl WriteXdr for BumpSequenceResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum CreateClaimableBalanceResultCode {
-    CreateClaimableBalanceSuccess = 0,
-    CreateClaimableBalanceMalformed = -1,
-    CreateClaimableBalanceLowReserve = -2,
-    CreateClaimableBalanceNoTrust = -3,
-    CreateClaimableBalanceNotAuthorized = -4,
-    CreateClaimableBalanceUnderfunded = -5,
+    Success = 0,
+    Malformed = -1,
+    LowReserve = -2,
+    NoTrust = -3,
+    NotAuthorized = -4,
+    Underfunded = -5,
 }
 
 impl TryFrom<i32> for CreateClaimableBalanceResultCode {
@@ -13571,12 +13339,12 @@ impl TryFrom<i32> for CreateClaimableBalanceResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => CreateClaimableBalanceResultCode::CreateClaimableBalanceSuccess,
-            -1 => CreateClaimableBalanceResultCode::CreateClaimableBalanceMalformed,
-            -2 => CreateClaimableBalanceResultCode::CreateClaimableBalanceLowReserve,
-            -3 => CreateClaimableBalanceResultCode::CreateClaimableBalanceNoTrust,
-            -4 => CreateClaimableBalanceResultCode::CreateClaimableBalanceNotAuthorized,
-            -5 => CreateClaimableBalanceResultCode::CreateClaimableBalanceUnderfunded,
+            0 => CreateClaimableBalanceResultCode::Success,
+            -1 => CreateClaimableBalanceResultCode::Malformed,
+            -2 => CreateClaimableBalanceResultCode::LowReserve,
+            -3 => CreateClaimableBalanceResultCode::NoTrust,
+            -4 => CreateClaimableBalanceResultCode::NotAuthorized,
+            -5 => CreateClaimableBalanceResultCode::Underfunded,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13625,35 +13393,23 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
 // union with discriminant CreateClaimableBalanceResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CreateClaimableBalanceResult {
-    CreateClaimableBalanceSuccess(ClaimableBalanceId),
-    CreateClaimableBalanceMalformed,
-    CreateClaimableBalanceLowReserve,
-    CreateClaimableBalanceNoTrust,
-    CreateClaimableBalanceNotAuthorized,
-    CreateClaimableBalanceUnderfunded,
+    Success(ClaimableBalanceId),
+    Malformed,
+    LowReserve,
+    NoTrust,
+    NotAuthorized,
+    Underfunded,
 }
 
 impl CreateClaimableBalanceResult {
     pub fn discriminant(&self) -> CreateClaimableBalanceResultCode {
         match self {
-            Self::CreateClaimableBalanceSuccess(_) => {
-                CreateClaimableBalanceResultCode::CreateClaimableBalanceSuccess
-            }
-            Self::CreateClaimableBalanceMalformed => {
-                CreateClaimableBalanceResultCode::CreateClaimableBalanceMalformed
-            }
-            Self::CreateClaimableBalanceLowReserve => {
-                CreateClaimableBalanceResultCode::CreateClaimableBalanceLowReserve
-            }
-            Self::CreateClaimableBalanceNoTrust => {
-                CreateClaimableBalanceResultCode::CreateClaimableBalanceNoTrust
-            }
-            Self::CreateClaimableBalanceNotAuthorized => {
-                CreateClaimableBalanceResultCode::CreateClaimableBalanceNotAuthorized
-            }
-            Self::CreateClaimableBalanceUnderfunded => {
-                CreateClaimableBalanceResultCode::CreateClaimableBalanceUnderfunded
-            }
+            Self::Success(_) => CreateClaimableBalanceResultCode::Success,
+            Self::Malformed => CreateClaimableBalanceResultCode::Malformed,
+            Self::LowReserve => CreateClaimableBalanceResultCode::LowReserve,
+            Self::NoTrust => CreateClaimableBalanceResultCode::NoTrust,
+            Self::NotAuthorized => CreateClaimableBalanceResultCode::NotAuthorized,
+            Self::Underfunded => CreateClaimableBalanceResultCode::Underfunded,
         }
     }
 }
@@ -13664,24 +13420,14 @@ impl ReadXdr for CreateClaimableBalanceResult {
         let dv: CreateClaimableBalanceResultCode =
             <CreateClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            CreateClaimableBalanceResultCode::CreateClaimableBalanceSuccess => {
-                Self::CreateClaimableBalanceSuccess(ClaimableBalanceId::read_xdr(r)?)
+            CreateClaimableBalanceResultCode::Success => {
+                Self::Success(ClaimableBalanceId::read_xdr(r)?)
             }
-            CreateClaimableBalanceResultCode::CreateClaimableBalanceMalformed => {
-                Self::CreateClaimableBalanceMalformed
-            }
-            CreateClaimableBalanceResultCode::CreateClaimableBalanceLowReserve => {
-                Self::CreateClaimableBalanceLowReserve
-            }
-            CreateClaimableBalanceResultCode::CreateClaimableBalanceNoTrust => {
-                Self::CreateClaimableBalanceNoTrust
-            }
-            CreateClaimableBalanceResultCode::CreateClaimableBalanceNotAuthorized => {
-                Self::CreateClaimableBalanceNotAuthorized
-            }
-            CreateClaimableBalanceResultCode::CreateClaimableBalanceUnderfunded => {
-                Self::CreateClaimableBalanceUnderfunded
-            }
+            CreateClaimableBalanceResultCode::Malformed => Self::Malformed,
+            CreateClaimableBalanceResultCode::LowReserve => Self::LowReserve,
+            CreateClaimableBalanceResultCode::NoTrust => Self::NoTrust,
+            CreateClaimableBalanceResultCode::NotAuthorized => Self::NotAuthorized,
+            CreateClaimableBalanceResultCode::Underfunded => Self::Underfunded,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13694,12 +13440,12 @@ impl WriteXdr for CreateClaimableBalanceResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::CreateClaimableBalanceSuccess(v) => v.write_xdr(w)?,
-            Self::CreateClaimableBalanceMalformed => ().write_xdr(w)?,
-            Self::CreateClaimableBalanceLowReserve => ().write_xdr(w)?,
-            Self::CreateClaimableBalanceNoTrust => ().write_xdr(w)?,
-            Self::CreateClaimableBalanceNotAuthorized => ().write_xdr(w)?,
-            Self::CreateClaimableBalanceUnderfunded => ().write_xdr(w)?,
+            Self::Success(v) => v.write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::LowReserve => ().write_xdr(w)?,
+            Self::NoTrust => ().write_xdr(w)?,
+            Self::NotAuthorized => ().write_xdr(w)?,
+            Self::Underfunded => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -13721,12 +13467,12 @@ impl WriteXdr for CreateClaimableBalanceResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ClaimClaimableBalanceResultCode {
-    ClaimClaimableBalanceSuccess = 0,
-    ClaimClaimableBalanceDoesNotExist = -1,
-    ClaimClaimableBalanceCannotClaim = -2,
-    ClaimClaimableBalanceLineFull = -3,
-    ClaimClaimableBalanceNoTrust = -4,
-    ClaimClaimableBalanceNotAuthorized = -5,
+    Success = 0,
+    DoesNotExist = -1,
+    CannotClaim = -2,
+    LineFull = -3,
+    NoTrust = -4,
+    NotAuthorized = -5,
 }
 
 impl TryFrom<i32> for ClaimClaimableBalanceResultCode {
@@ -13734,12 +13480,12 @@ impl TryFrom<i32> for ClaimClaimableBalanceResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ClaimClaimableBalanceResultCode::ClaimClaimableBalanceSuccess,
-            -1 => ClaimClaimableBalanceResultCode::ClaimClaimableBalanceDoesNotExist,
-            -2 => ClaimClaimableBalanceResultCode::ClaimClaimableBalanceCannotClaim,
-            -3 => ClaimClaimableBalanceResultCode::ClaimClaimableBalanceLineFull,
-            -4 => ClaimClaimableBalanceResultCode::ClaimClaimableBalanceNoTrust,
-            -5 => ClaimClaimableBalanceResultCode::ClaimClaimableBalanceNotAuthorized,
+            0 => ClaimClaimableBalanceResultCode::Success,
+            -1 => ClaimClaimableBalanceResultCode::DoesNotExist,
+            -2 => ClaimClaimableBalanceResultCode::CannotClaim,
+            -3 => ClaimClaimableBalanceResultCode::LineFull,
+            -4 => ClaimClaimableBalanceResultCode::NoTrust,
+            -5 => ClaimClaimableBalanceResultCode::NotAuthorized,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13787,35 +13533,23 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
 // union with discriminant ClaimClaimableBalanceResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ClaimClaimableBalanceResult {
-    ClaimClaimableBalanceSuccess,
-    ClaimClaimableBalanceDoesNotExist,
-    ClaimClaimableBalanceCannotClaim,
-    ClaimClaimableBalanceLineFull,
-    ClaimClaimableBalanceNoTrust,
-    ClaimClaimableBalanceNotAuthorized,
+    Success,
+    DoesNotExist,
+    CannotClaim,
+    LineFull,
+    NoTrust,
+    NotAuthorized,
 }
 
 impl ClaimClaimableBalanceResult {
     pub fn discriminant(&self) -> ClaimClaimableBalanceResultCode {
         match self {
-            Self::ClaimClaimableBalanceSuccess => {
-                ClaimClaimableBalanceResultCode::ClaimClaimableBalanceSuccess
-            }
-            Self::ClaimClaimableBalanceDoesNotExist => {
-                ClaimClaimableBalanceResultCode::ClaimClaimableBalanceDoesNotExist
-            }
-            Self::ClaimClaimableBalanceCannotClaim => {
-                ClaimClaimableBalanceResultCode::ClaimClaimableBalanceCannotClaim
-            }
-            Self::ClaimClaimableBalanceLineFull => {
-                ClaimClaimableBalanceResultCode::ClaimClaimableBalanceLineFull
-            }
-            Self::ClaimClaimableBalanceNoTrust => {
-                ClaimClaimableBalanceResultCode::ClaimClaimableBalanceNoTrust
-            }
-            Self::ClaimClaimableBalanceNotAuthorized => {
-                ClaimClaimableBalanceResultCode::ClaimClaimableBalanceNotAuthorized
-            }
+            Self::Success => ClaimClaimableBalanceResultCode::Success,
+            Self::DoesNotExist => ClaimClaimableBalanceResultCode::DoesNotExist,
+            Self::CannotClaim => ClaimClaimableBalanceResultCode::CannotClaim,
+            Self::LineFull => ClaimClaimableBalanceResultCode::LineFull,
+            Self::NoTrust => ClaimClaimableBalanceResultCode::NoTrust,
+            Self::NotAuthorized => ClaimClaimableBalanceResultCode::NotAuthorized,
         }
     }
 }
@@ -13826,24 +13560,12 @@ impl ReadXdr for ClaimClaimableBalanceResult {
         let dv: ClaimClaimableBalanceResultCode =
             <ClaimClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ClaimClaimableBalanceResultCode::ClaimClaimableBalanceSuccess => {
-                Self::ClaimClaimableBalanceSuccess
-            }
-            ClaimClaimableBalanceResultCode::ClaimClaimableBalanceDoesNotExist => {
-                Self::ClaimClaimableBalanceDoesNotExist
-            }
-            ClaimClaimableBalanceResultCode::ClaimClaimableBalanceCannotClaim => {
-                Self::ClaimClaimableBalanceCannotClaim
-            }
-            ClaimClaimableBalanceResultCode::ClaimClaimableBalanceLineFull => {
-                Self::ClaimClaimableBalanceLineFull
-            }
-            ClaimClaimableBalanceResultCode::ClaimClaimableBalanceNoTrust => {
-                Self::ClaimClaimableBalanceNoTrust
-            }
-            ClaimClaimableBalanceResultCode::ClaimClaimableBalanceNotAuthorized => {
-                Self::ClaimClaimableBalanceNotAuthorized
-            }
+            ClaimClaimableBalanceResultCode::Success => Self::Success,
+            ClaimClaimableBalanceResultCode::DoesNotExist => Self::DoesNotExist,
+            ClaimClaimableBalanceResultCode::CannotClaim => Self::CannotClaim,
+            ClaimClaimableBalanceResultCode::LineFull => Self::LineFull,
+            ClaimClaimableBalanceResultCode::NoTrust => Self::NoTrust,
+            ClaimClaimableBalanceResultCode::NotAuthorized => Self::NotAuthorized,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13856,12 +13578,12 @@ impl WriteXdr for ClaimClaimableBalanceResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ClaimClaimableBalanceSuccess => ().write_xdr(w)?,
-            Self::ClaimClaimableBalanceDoesNotExist => ().write_xdr(w)?,
-            Self::ClaimClaimableBalanceCannotClaim => ().write_xdr(w)?,
-            Self::ClaimClaimableBalanceLineFull => ().write_xdr(w)?,
-            Self::ClaimClaimableBalanceNoTrust => ().write_xdr(w)?,
-            Self::ClaimClaimableBalanceNotAuthorized => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::DoesNotExist => ().write_xdr(w)?,
+            Self::CannotClaim => ().write_xdr(w)?,
+            Self::LineFull => ().write_xdr(w)?,
+            Self::NoTrust => ().write_xdr(w)?,
+            Self::NotAuthorized => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -13884,10 +13606,10 @@ impl WriteXdr for ClaimClaimableBalanceResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum BeginSponsoringFutureReservesResultCode {
-    BeginSponsoringFutureReservesSuccess = 0,
-    BeginSponsoringFutureReservesMalformed = -1,
-    BeginSponsoringFutureReservesAlreadySponsored = -2,
-    BeginSponsoringFutureReservesRecursive = -3,
+    Success = 0,
+    Malformed = -1,
+    AlreadySponsored = -2,
+    Recursive = -3,
 }
 
 impl TryFrom<i32> for BeginSponsoringFutureReservesResultCode {
@@ -13895,13 +13617,13 @@ impl TryFrom<i32> for BeginSponsoringFutureReservesResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-                    0 => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesSuccess,
--1 => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesMalformed,
--2 => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesAlreadySponsored,
--3 => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesRecursive,
-                    #[allow(unreachable_patterns)]
-                    _ => return Err(Error::Invalid),
-                };
+            0 => BeginSponsoringFutureReservesResultCode::Success,
+            -1 => BeginSponsoringFutureReservesResultCode::Malformed,
+            -2 => BeginSponsoringFutureReservesResultCode::AlreadySponsored,
+            -3 => BeginSponsoringFutureReservesResultCode::Recursive,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
         Ok(e)
     }
 }
@@ -13945,20 +13667,20 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
 // union with discriminant BeginSponsoringFutureReservesResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BeginSponsoringFutureReservesResult {
-    BeginSponsoringFutureReservesSuccess,
-    BeginSponsoringFutureReservesMalformed,
-    BeginSponsoringFutureReservesAlreadySponsored,
-    BeginSponsoringFutureReservesRecursive,
+    Success,
+    Malformed,
+    AlreadySponsored,
+    Recursive,
 }
 
 impl BeginSponsoringFutureReservesResult {
     pub fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
         match self {
-                    Self::BeginSponsoringFutureReservesSuccess => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesSuccess,
-Self::BeginSponsoringFutureReservesMalformed => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesMalformed,
-Self::BeginSponsoringFutureReservesAlreadySponsored => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesAlreadySponsored,
-Self::BeginSponsoringFutureReservesRecursive => BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesRecursive,
-                }
+            Self::Success => BeginSponsoringFutureReservesResultCode::Success,
+            Self::Malformed => BeginSponsoringFutureReservesResultCode::Malformed,
+            Self::AlreadySponsored => BeginSponsoringFutureReservesResultCode::AlreadySponsored,
+            Self::Recursive => BeginSponsoringFutureReservesResultCode::Recursive,
+        }
     }
 }
 
@@ -13968,13 +13690,13 @@ impl ReadXdr for BeginSponsoringFutureReservesResult {
         let dv: BeginSponsoringFutureReservesResultCode =
             <BeginSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-                    BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesSuccess => Self::BeginSponsoringFutureReservesSuccess,
-BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesMalformed => Self::BeginSponsoringFutureReservesMalformed,
-BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesAlreadySponsored => Self::BeginSponsoringFutureReservesAlreadySponsored,
-BeginSponsoringFutureReservesResultCode::BeginSponsoringFutureReservesRecursive => Self::BeginSponsoringFutureReservesRecursive,
-                    #[allow(unreachable_patterns)]
-                    _ => return Err(Error::Invalid),
-                };
+            BeginSponsoringFutureReservesResultCode::Success => Self::Success,
+            BeginSponsoringFutureReservesResultCode::Malformed => Self::Malformed,
+            BeginSponsoringFutureReservesResultCode::AlreadySponsored => Self::AlreadySponsored,
+            BeginSponsoringFutureReservesResultCode::Recursive => Self::Recursive,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
         Ok(v)
     }
 }
@@ -13984,10 +13706,10 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::BeginSponsoringFutureReservesSuccess => ().write_xdr(w)?,
-            Self::BeginSponsoringFutureReservesMalformed => ().write_xdr(w)?,
-            Self::BeginSponsoringFutureReservesAlreadySponsored => ().write_xdr(w)?,
-            Self::BeginSponsoringFutureReservesRecursive => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::AlreadySponsored => ().write_xdr(w)?,
+            Self::Recursive => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -14008,8 +13730,8 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum EndSponsoringFutureReservesResultCode {
-    EndSponsoringFutureReservesSuccess = 0,
-    EndSponsoringFutureReservesNotSponsored = -1,
+    Success = 0,
+    NotSponsored = -1,
 }
 
 impl TryFrom<i32> for EndSponsoringFutureReservesResultCode {
@@ -14017,8 +13739,8 @@ impl TryFrom<i32> for EndSponsoringFutureReservesResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesSuccess,
-            -1 => EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesNotSponsored,
+            0 => EndSponsoringFutureReservesResultCode::Success,
+            -1 => EndSponsoringFutureReservesResultCode::NotSponsored,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14063,19 +13785,15 @@ impl WriteXdr for EndSponsoringFutureReservesResultCode {
 // union with discriminant EndSponsoringFutureReservesResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EndSponsoringFutureReservesResult {
-    EndSponsoringFutureReservesSuccess,
-    EndSponsoringFutureReservesNotSponsored,
+    Success,
+    NotSponsored,
 }
 
 impl EndSponsoringFutureReservesResult {
     pub fn discriminant(&self) -> EndSponsoringFutureReservesResultCode {
         match self {
-            Self::EndSponsoringFutureReservesSuccess => {
-                EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesSuccess
-            }
-            Self::EndSponsoringFutureReservesNotSponsored => {
-                EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesNotSponsored
-            }
+            Self::Success => EndSponsoringFutureReservesResultCode::Success,
+            Self::NotSponsored => EndSponsoringFutureReservesResultCode::NotSponsored,
         }
     }
 }
@@ -14086,12 +13804,8 @@ impl ReadXdr for EndSponsoringFutureReservesResult {
         let dv: EndSponsoringFutureReservesResultCode =
             <EndSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesSuccess => {
-                Self::EndSponsoringFutureReservesSuccess
-            }
-            EndSponsoringFutureReservesResultCode::EndSponsoringFutureReservesNotSponsored => {
-                Self::EndSponsoringFutureReservesNotSponsored
-            }
+            EndSponsoringFutureReservesResultCode::Success => Self::Success,
+            EndSponsoringFutureReservesResultCode::NotSponsored => Self::NotSponsored,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14104,8 +13818,8 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::EndSponsoringFutureReservesSuccess => ().write_xdr(w)?,
-            Self::EndSponsoringFutureReservesNotSponsored => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::NotSponsored => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -14130,12 +13844,12 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum RevokeSponsorshipResultCode {
-    RevokeSponsorshipSuccess = 0,
-    RevokeSponsorshipDoesNotExist = -1,
-    RevokeSponsorshipNotSponsor = -2,
-    RevokeSponsorshipLowReserve = -3,
-    RevokeSponsorshipOnlyTransferable = -4,
-    RevokeSponsorshipMalformed = -5,
+    Success = 0,
+    DoesNotExist = -1,
+    NotSponsor = -2,
+    LowReserve = -3,
+    OnlyTransferable = -4,
+    Malformed = -5,
 }
 
 impl TryFrom<i32> for RevokeSponsorshipResultCode {
@@ -14143,12 +13857,12 @@ impl TryFrom<i32> for RevokeSponsorshipResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => RevokeSponsorshipResultCode::RevokeSponsorshipSuccess,
-            -1 => RevokeSponsorshipResultCode::RevokeSponsorshipDoesNotExist,
-            -2 => RevokeSponsorshipResultCode::RevokeSponsorshipNotSponsor,
-            -3 => RevokeSponsorshipResultCode::RevokeSponsorshipLowReserve,
-            -4 => RevokeSponsorshipResultCode::RevokeSponsorshipOnlyTransferable,
-            -5 => RevokeSponsorshipResultCode::RevokeSponsorshipMalformed,
+            0 => RevokeSponsorshipResultCode::Success,
+            -1 => RevokeSponsorshipResultCode::DoesNotExist,
+            -2 => RevokeSponsorshipResultCode::NotSponsor,
+            -3 => RevokeSponsorshipResultCode::LowReserve,
+            -4 => RevokeSponsorshipResultCode::OnlyTransferable,
+            -5 => RevokeSponsorshipResultCode::Malformed,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14196,33 +13910,23 @@ impl WriteXdr for RevokeSponsorshipResultCode {
 // union with discriminant RevokeSponsorshipResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RevokeSponsorshipResult {
-    RevokeSponsorshipSuccess,
-    RevokeSponsorshipDoesNotExist,
-    RevokeSponsorshipNotSponsor,
-    RevokeSponsorshipLowReserve,
-    RevokeSponsorshipOnlyTransferable,
-    RevokeSponsorshipMalformed,
+    Success,
+    DoesNotExist,
+    NotSponsor,
+    LowReserve,
+    OnlyTransferable,
+    Malformed,
 }
 
 impl RevokeSponsorshipResult {
     pub fn discriminant(&self) -> RevokeSponsorshipResultCode {
         match self {
-            Self::RevokeSponsorshipSuccess => RevokeSponsorshipResultCode::RevokeSponsorshipSuccess,
-            Self::RevokeSponsorshipDoesNotExist => {
-                RevokeSponsorshipResultCode::RevokeSponsorshipDoesNotExist
-            }
-            Self::RevokeSponsorshipNotSponsor => {
-                RevokeSponsorshipResultCode::RevokeSponsorshipNotSponsor
-            }
-            Self::RevokeSponsorshipLowReserve => {
-                RevokeSponsorshipResultCode::RevokeSponsorshipLowReserve
-            }
-            Self::RevokeSponsorshipOnlyTransferable => {
-                RevokeSponsorshipResultCode::RevokeSponsorshipOnlyTransferable
-            }
-            Self::RevokeSponsorshipMalformed => {
-                RevokeSponsorshipResultCode::RevokeSponsorshipMalformed
-            }
+            Self::Success => RevokeSponsorshipResultCode::Success,
+            Self::DoesNotExist => RevokeSponsorshipResultCode::DoesNotExist,
+            Self::NotSponsor => RevokeSponsorshipResultCode::NotSponsor,
+            Self::LowReserve => RevokeSponsorshipResultCode::LowReserve,
+            Self::OnlyTransferable => RevokeSponsorshipResultCode::OnlyTransferable,
+            Self::Malformed => RevokeSponsorshipResultCode::Malformed,
         }
     }
 }
@@ -14233,22 +13937,12 @@ impl ReadXdr for RevokeSponsorshipResult {
         let dv: RevokeSponsorshipResultCode =
             <RevokeSponsorshipResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            RevokeSponsorshipResultCode::RevokeSponsorshipSuccess => Self::RevokeSponsorshipSuccess,
-            RevokeSponsorshipResultCode::RevokeSponsorshipDoesNotExist => {
-                Self::RevokeSponsorshipDoesNotExist
-            }
-            RevokeSponsorshipResultCode::RevokeSponsorshipNotSponsor => {
-                Self::RevokeSponsorshipNotSponsor
-            }
-            RevokeSponsorshipResultCode::RevokeSponsorshipLowReserve => {
-                Self::RevokeSponsorshipLowReserve
-            }
-            RevokeSponsorshipResultCode::RevokeSponsorshipOnlyTransferable => {
-                Self::RevokeSponsorshipOnlyTransferable
-            }
-            RevokeSponsorshipResultCode::RevokeSponsorshipMalformed => {
-                Self::RevokeSponsorshipMalformed
-            }
+            RevokeSponsorshipResultCode::Success => Self::Success,
+            RevokeSponsorshipResultCode::DoesNotExist => Self::DoesNotExist,
+            RevokeSponsorshipResultCode::NotSponsor => Self::NotSponsor,
+            RevokeSponsorshipResultCode::LowReserve => Self::LowReserve,
+            RevokeSponsorshipResultCode::OnlyTransferable => Self::OnlyTransferable,
+            RevokeSponsorshipResultCode::Malformed => Self::Malformed,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14261,12 +13955,12 @@ impl WriteXdr for RevokeSponsorshipResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::RevokeSponsorshipSuccess => ().write_xdr(w)?,
-            Self::RevokeSponsorshipDoesNotExist => ().write_xdr(w)?,
-            Self::RevokeSponsorshipNotSponsor => ().write_xdr(w)?,
-            Self::RevokeSponsorshipLowReserve => ().write_xdr(w)?,
-            Self::RevokeSponsorshipOnlyTransferable => ().write_xdr(w)?,
-            Self::RevokeSponsorshipMalformed => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::DoesNotExist => ().write_xdr(w)?,
+            Self::NotSponsor => ().write_xdr(w)?,
+            Self::LowReserve => ().write_xdr(w)?,
+            Self::OnlyTransferable => ().write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -14290,11 +13984,11 @@ impl WriteXdr for RevokeSponsorshipResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ClawbackResultCode {
-    ClawbackSuccess = 0,
-    ClawbackMalformed = -1,
-    ClawbackNotClawbackEnabled = -2,
-    ClawbackNoTrust = -3,
-    ClawbackUnderfunded = -4,
+    Success = 0,
+    Malformed = -1,
+    NotClawbackEnabled = -2,
+    NoTrust = -3,
+    Underfunded = -4,
 }
 
 impl TryFrom<i32> for ClawbackResultCode {
@@ -14302,11 +13996,11 @@ impl TryFrom<i32> for ClawbackResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ClawbackResultCode::ClawbackSuccess,
-            -1 => ClawbackResultCode::ClawbackMalformed,
-            -2 => ClawbackResultCode::ClawbackNotClawbackEnabled,
-            -3 => ClawbackResultCode::ClawbackNoTrust,
-            -4 => ClawbackResultCode::ClawbackUnderfunded,
+            0 => ClawbackResultCode::Success,
+            -1 => ClawbackResultCode::Malformed,
+            -2 => ClawbackResultCode::NotClawbackEnabled,
+            -3 => ClawbackResultCode::NoTrust,
+            -4 => ClawbackResultCode::Underfunded,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14353,21 +14047,21 @@ impl WriteXdr for ClawbackResultCode {
 // union with discriminant ClawbackResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ClawbackResult {
-    ClawbackSuccess,
-    ClawbackMalformed,
-    ClawbackNotClawbackEnabled,
-    ClawbackNoTrust,
-    ClawbackUnderfunded,
+    Success,
+    Malformed,
+    NotClawbackEnabled,
+    NoTrust,
+    Underfunded,
 }
 
 impl ClawbackResult {
     pub fn discriminant(&self) -> ClawbackResultCode {
         match self {
-            Self::ClawbackSuccess => ClawbackResultCode::ClawbackSuccess,
-            Self::ClawbackMalformed => ClawbackResultCode::ClawbackMalformed,
-            Self::ClawbackNotClawbackEnabled => ClawbackResultCode::ClawbackNotClawbackEnabled,
-            Self::ClawbackNoTrust => ClawbackResultCode::ClawbackNoTrust,
-            Self::ClawbackUnderfunded => ClawbackResultCode::ClawbackUnderfunded,
+            Self::Success => ClawbackResultCode::Success,
+            Self::Malformed => ClawbackResultCode::Malformed,
+            Self::NotClawbackEnabled => ClawbackResultCode::NotClawbackEnabled,
+            Self::NoTrust => ClawbackResultCode::NoTrust,
+            Self::Underfunded => ClawbackResultCode::Underfunded,
         }
     }
 }
@@ -14377,11 +14071,11 @@ impl ReadXdr for ClawbackResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClawbackResultCode = <ClawbackResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ClawbackResultCode::ClawbackSuccess => Self::ClawbackSuccess,
-            ClawbackResultCode::ClawbackMalformed => Self::ClawbackMalformed,
-            ClawbackResultCode::ClawbackNotClawbackEnabled => Self::ClawbackNotClawbackEnabled,
-            ClawbackResultCode::ClawbackNoTrust => Self::ClawbackNoTrust,
-            ClawbackResultCode::ClawbackUnderfunded => Self::ClawbackUnderfunded,
+            ClawbackResultCode::Success => Self::Success,
+            ClawbackResultCode::Malformed => Self::Malformed,
+            ClawbackResultCode::NotClawbackEnabled => Self::NotClawbackEnabled,
+            ClawbackResultCode::NoTrust => Self::NoTrust,
+            ClawbackResultCode::Underfunded => Self::Underfunded,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14394,11 +14088,11 @@ impl WriteXdr for ClawbackResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ClawbackSuccess => ().write_xdr(w)?,
-            Self::ClawbackMalformed => ().write_xdr(w)?,
-            Self::ClawbackNotClawbackEnabled => ().write_xdr(w)?,
-            Self::ClawbackNoTrust => ().write_xdr(w)?,
-            Self::ClawbackUnderfunded => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::NotClawbackEnabled => ().write_xdr(w)?,
+            Self::NoTrust => ().write_xdr(w)?,
+            Self::Underfunded => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -14421,10 +14115,10 @@ impl WriteXdr for ClawbackResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ClawbackClaimableBalanceResultCode {
-    ClawbackClaimableBalanceSuccess = 0,
-    ClawbackClaimableBalanceDoesNotExist = -1,
-    ClawbackClaimableBalanceNotIssuer = -2,
-    ClawbackClaimableBalanceNotClawbackEnabled = -3,
+    Success = 0,
+    DoesNotExist = -1,
+    NotIssuer = -2,
+    NotClawbackEnabled = -3,
 }
 
 impl TryFrom<i32> for ClawbackClaimableBalanceResultCode {
@@ -14432,10 +14126,10 @@ impl TryFrom<i32> for ClawbackClaimableBalanceResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceSuccess,
-            -1 => ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceDoesNotExist,
-            -2 => ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceNotIssuer,
-            -3 => ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceNotClawbackEnabled,
+            0 => ClawbackClaimableBalanceResultCode::Success,
+            -1 => ClawbackClaimableBalanceResultCode::DoesNotExist,
+            -2 => ClawbackClaimableBalanceResultCode::NotIssuer,
+            -3 => ClawbackClaimableBalanceResultCode::NotClawbackEnabled,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14482,27 +14176,19 @@ impl WriteXdr for ClawbackClaimableBalanceResultCode {
 // union with discriminant ClawbackClaimableBalanceResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ClawbackClaimableBalanceResult {
-    ClawbackClaimableBalanceSuccess,
-    ClawbackClaimableBalanceDoesNotExist,
-    ClawbackClaimableBalanceNotIssuer,
-    ClawbackClaimableBalanceNotClawbackEnabled,
+    Success,
+    DoesNotExist,
+    NotIssuer,
+    NotClawbackEnabled,
 }
 
 impl ClawbackClaimableBalanceResult {
     pub fn discriminant(&self) -> ClawbackClaimableBalanceResultCode {
         match self {
-            Self::ClawbackClaimableBalanceSuccess => {
-                ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceSuccess
-            }
-            Self::ClawbackClaimableBalanceDoesNotExist => {
-                ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceDoesNotExist
-            }
-            Self::ClawbackClaimableBalanceNotIssuer => {
-                ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceNotIssuer
-            }
-            Self::ClawbackClaimableBalanceNotClawbackEnabled => {
-                ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceNotClawbackEnabled
-            }
+            Self::Success => ClawbackClaimableBalanceResultCode::Success,
+            Self::DoesNotExist => ClawbackClaimableBalanceResultCode::DoesNotExist,
+            Self::NotIssuer => ClawbackClaimableBalanceResultCode::NotIssuer,
+            Self::NotClawbackEnabled => ClawbackClaimableBalanceResultCode::NotClawbackEnabled,
         }
     }
 }
@@ -14513,18 +14199,10 @@ impl ReadXdr for ClawbackClaimableBalanceResult {
         let dv: ClawbackClaimableBalanceResultCode =
             <ClawbackClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceSuccess => {
-                Self::ClawbackClaimableBalanceSuccess
-            }
-            ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceDoesNotExist => {
-                Self::ClawbackClaimableBalanceDoesNotExist
-            }
-            ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceNotIssuer => {
-                Self::ClawbackClaimableBalanceNotIssuer
-            }
-            ClawbackClaimableBalanceResultCode::ClawbackClaimableBalanceNotClawbackEnabled => {
-                Self::ClawbackClaimableBalanceNotClawbackEnabled
-            }
+            ClawbackClaimableBalanceResultCode::Success => Self::Success,
+            ClawbackClaimableBalanceResultCode::DoesNotExist => Self::DoesNotExist,
+            ClawbackClaimableBalanceResultCode::NotIssuer => Self::NotIssuer,
+            ClawbackClaimableBalanceResultCode::NotClawbackEnabled => Self::NotClawbackEnabled,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14537,10 +14215,10 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ClawbackClaimableBalanceSuccess => ().write_xdr(w)?,
-            Self::ClawbackClaimableBalanceDoesNotExist => ().write_xdr(w)?,
-            Self::ClawbackClaimableBalanceNotIssuer => ().write_xdr(w)?,
-            Self::ClawbackClaimableBalanceNotClawbackEnabled => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::DoesNotExist => ().write_xdr(w)?,
+            Self::NotIssuer => ().write_xdr(w)?,
+            Self::NotClawbackEnabled => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -14566,12 +14244,12 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum SetTrustLineFlagsResultCode {
-    SetTrustLineFlagsSuccess = 0,
-    SetTrustLineFlagsMalformed = -1,
-    SetTrustLineFlagsNoTrustLine = -2,
-    SetTrustLineFlagsCantRevoke = -3,
-    SetTrustLineFlagsInvalidState = -4,
-    SetTrustLineFlagsLowReserve = -5,
+    Success = 0,
+    Malformed = -1,
+    NoTrustLine = -2,
+    CantRevoke = -3,
+    InvalidState = -4,
+    LowReserve = -5,
 }
 
 impl TryFrom<i32> for SetTrustLineFlagsResultCode {
@@ -14579,12 +14257,12 @@ impl TryFrom<i32> for SetTrustLineFlagsResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => SetTrustLineFlagsResultCode::SetTrustLineFlagsSuccess,
-            -1 => SetTrustLineFlagsResultCode::SetTrustLineFlagsMalformed,
-            -2 => SetTrustLineFlagsResultCode::SetTrustLineFlagsNoTrustLine,
-            -3 => SetTrustLineFlagsResultCode::SetTrustLineFlagsCantRevoke,
-            -4 => SetTrustLineFlagsResultCode::SetTrustLineFlagsInvalidState,
-            -5 => SetTrustLineFlagsResultCode::SetTrustLineFlagsLowReserve,
+            0 => SetTrustLineFlagsResultCode::Success,
+            -1 => SetTrustLineFlagsResultCode::Malformed,
+            -2 => SetTrustLineFlagsResultCode::NoTrustLine,
+            -3 => SetTrustLineFlagsResultCode::CantRevoke,
+            -4 => SetTrustLineFlagsResultCode::InvalidState,
+            -5 => SetTrustLineFlagsResultCode::LowReserve,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14632,33 +14310,23 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
 // union with discriminant SetTrustLineFlagsResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SetTrustLineFlagsResult {
-    SetTrustLineFlagsSuccess,
-    SetTrustLineFlagsMalformed,
-    SetTrustLineFlagsNoTrustLine,
-    SetTrustLineFlagsCantRevoke,
-    SetTrustLineFlagsInvalidState,
-    SetTrustLineFlagsLowReserve,
+    Success,
+    Malformed,
+    NoTrustLine,
+    CantRevoke,
+    InvalidState,
+    LowReserve,
 }
 
 impl SetTrustLineFlagsResult {
     pub fn discriminant(&self) -> SetTrustLineFlagsResultCode {
         match self {
-            Self::SetTrustLineFlagsSuccess => SetTrustLineFlagsResultCode::SetTrustLineFlagsSuccess,
-            Self::SetTrustLineFlagsMalformed => {
-                SetTrustLineFlagsResultCode::SetTrustLineFlagsMalformed
-            }
-            Self::SetTrustLineFlagsNoTrustLine => {
-                SetTrustLineFlagsResultCode::SetTrustLineFlagsNoTrustLine
-            }
-            Self::SetTrustLineFlagsCantRevoke => {
-                SetTrustLineFlagsResultCode::SetTrustLineFlagsCantRevoke
-            }
-            Self::SetTrustLineFlagsInvalidState => {
-                SetTrustLineFlagsResultCode::SetTrustLineFlagsInvalidState
-            }
-            Self::SetTrustLineFlagsLowReserve => {
-                SetTrustLineFlagsResultCode::SetTrustLineFlagsLowReserve
-            }
+            Self::Success => SetTrustLineFlagsResultCode::Success,
+            Self::Malformed => SetTrustLineFlagsResultCode::Malformed,
+            Self::NoTrustLine => SetTrustLineFlagsResultCode::NoTrustLine,
+            Self::CantRevoke => SetTrustLineFlagsResultCode::CantRevoke,
+            Self::InvalidState => SetTrustLineFlagsResultCode::InvalidState,
+            Self::LowReserve => SetTrustLineFlagsResultCode::LowReserve,
         }
     }
 }
@@ -14669,22 +14337,12 @@ impl ReadXdr for SetTrustLineFlagsResult {
         let dv: SetTrustLineFlagsResultCode =
             <SetTrustLineFlagsResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            SetTrustLineFlagsResultCode::SetTrustLineFlagsSuccess => Self::SetTrustLineFlagsSuccess,
-            SetTrustLineFlagsResultCode::SetTrustLineFlagsMalformed => {
-                Self::SetTrustLineFlagsMalformed
-            }
-            SetTrustLineFlagsResultCode::SetTrustLineFlagsNoTrustLine => {
-                Self::SetTrustLineFlagsNoTrustLine
-            }
-            SetTrustLineFlagsResultCode::SetTrustLineFlagsCantRevoke => {
-                Self::SetTrustLineFlagsCantRevoke
-            }
-            SetTrustLineFlagsResultCode::SetTrustLineFlagsInvalidState => {
-                Self::SetTrustLineFlagsInvalidState
-            }
-            SetTrustLineFlagsResultCode::SetTrustLineFlagsLowReserve => {
-                Self::SetTrustLineFlagsLowReserve
-            }
+            SetTrustLineFlagsResultCode::Success => Self::Success,
+            SetTrustLineFlagsResultCode::Malformed => Self::Malformed,
+            SetTrustLineFlagsResultCode::NoTrustLine => Self::NoTrustLine,
+            SetTrustLineFlagsResultCode::CantRevoke => Self::CantRevoke,
+            SetTrustLineFlagsResultCode::InvalidState => Self::InvalidState,
+            SetTrustLineFlagsResultCode::LowReserve => Self::LowReserve,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14697,12 +14355,12 @@ impl WriteXdr for SetTrustLineFlagsResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::SetTrustLineFlagsSuccess => ().write_xdr(w)?,
-            Self::SetTrustLineFlagsMalformed => ().write_xdr(w)?,
-            Self::SetTrustLineFlagsNoTrustLine => ().write_xdr(w)?,
-            Self::SetTrustLineFlagsCantRevoke => ().write_xdr(w)?,
-            Self::SetTrustLineFlagsInvalidState => ().write_xdr(w)?,
-            Self::SetTrustLineFlagsLowReserve => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::NoTrustLine => ().write_xdr(w)?,
+            Self::CantRevoke => ().write_xdr(w)?,
+            Self::InvalidState => ().write_xdr(w)?,
+            Self::LowReserve => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -14733,14 +14391,14 @@ impl WriteXdr for SetTrustLineFlagsResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum LiquidityPoolDepositResultCode {
-    LiquidityPoolDepositSuccess = 0,
-    LiquidityPoolDepositMalformed = -1,
-    LiquidityPoolDepositNoTrust = -2,
-    LiquidityPoolDepositNotAuthorized = -3,
-    LiquidityPoolDepositUnderfunded = -4,
-    LiquidityPoolDepositLineFull = -5,
-    LiquidityPoolDepositBadPrice = -6,
-    LiquidityPoolDepositPoolFull = -7,
+    Success = 0,
+    Malformed = -1,
+    NoTrust = -2,
+    NotAuthorized = -3,
+    Underfunded = -4,
+    LineFull = -5,
+    BadPrice = -6,
+    PoolFull = -7,
 }
 
 impl TryFrom<i32> for LiquidityPoolDepositResultCode {
@@ -14748,14 +14406,14 @@ impl TryFrom<i32> for LiquidityPoolDepositResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => LiquidityPoolDepositResultCode::LiquidityPoolDepositSuccess,
-            -1 => LiquidityPoolDepositResultCode::LiquidityPoolDepositMalformed,
-            -2 => LiquidityPoolDepositResultCode::LiquidityPoolDepositNoTrust,
-            -3 => LiquidityPoolDepositResultCode::LiquidityPoolDepositNotAuthorized,
-            -4 => LiquidityPoolDepositResultCode::LiquidityPoolDepositUnderfunded,
-            -5 => LiquidityPoolDepositResultCode::LiquidityPoolDepositLineFull,
-            -6 => LiquidityPoolDepositResultCode::LiquidityPoolDepositBadPrice,
-            -7 => LiquidityPoolDepositResultCode::LiquidityPoolDepositPoolFull,
+            0 => LiquidityPoolDepositResultCode::Success,
+            -1 => LiquidityPoolDepositResultCode::Malformed,
+            -2 => LiquidityPoolDepositResultCode::NoTrust,
+            -3 => LiquidityPoolDepositResultCode::NotAuthorized,
+            -4 => LiquidityPoolDepositResultCode::Underfunded,
+            -5 => LiquidityPoolDepositResultCode::LineFull,
+            -6 => LiquidityPoolDepositResultCode::BadPrice,
+            -7 => LiquidityPoolDepositResultCode::PoolFull,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14805,43 +14463,27 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
 // union with discriminant LiquidityPoolDepositResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LiquidityPoolDepositResult {
-    LiquidityPoolDepositSuccess,
-    LiquidityPoolDepositMalformed,
-    LiquidityPoolDepositNoTrust,
-    LiquidityPoolDepositNotAuthorized,
-    LiquidityPoolDepositUnderfunded,
-    LiquidityPoolDepositLineFull,
-    LiquidityPoolDepositBadPrice,
-    LiquidityPoolDepositPoolFull,
+    Success,
+    Malformed,
+    NoTrust,
+    NotAuthorized,
+    Underfunded,
+    LineFull,
+    BadPrice,
+    PoolFull,
 }
 
 impl LiquidityPoolDepositResult {
     pub fn discriminant(&self) -> LiquidityPoolDepositResultCode {
         match self {
-            Self::LiquidityPoolDepositSuccess => {
-                LiquidityPoolDepositResultCode::LiquidityPoolDepositSuccess
-            }
-            Self::LiquidityPoolDepositMalformed => {
-                LiquidityPoolDepositResultCode::LiquidityPoolDepositMalformed
-            }
-            Self::LiquidityPoolDepositNoTrust => {
-                LiquidityPoolDepositResultCode::LiquidityPoolDepositNoTrust
-            }
-            Self::LiquidityPoolDepositNotAuthorized => {
-                LiquidityPoolDepositResultCode::LiquidityPoolDepositNotAuthorized
-            }
-            Self::LiquidityPoolDepositUnderfunded => {
-                LiquidityPoolDepositResultCode::LiquidityPoolDepositUnderfunded
-            }
-            Self::LiquidityPoolDepositLineFull => {
-                LiquidityPoolDepositResultCode::LiquidityPoolDepositLineFull
-            }
-            Self::LiquidityPoolDepositBadPrice => {
-                LiquidityPoolDepositResultCode::LiquidityPoolDepositBadPrice
-            }
-            Self::LiquidityPoolDepositPoolFull => {
-                LiquidityPoolDepositResultCode::LiquidityPoolDepositPoolFull
-            }
+            Self::Success => LiquidityPoolDepositResultCode::Success,
+            Self::Malformed => LiquidityPoolDepositResultCode::Malformed,
+            Self::NoTrust => LiquidityPoolDepositResultCode::NoTrust,
+            Self::NotAuthorized => LiquidityPoolDepositResultCode::NotAuthorized,
+            Self::Underfunded => LiquidityPoolDepositResultCode::Underfunded,
+            Self::LineFull => LiquidityPoolDepositResultCode::LineFull,
+            Self::BadPrice => LiquidityPoolDepositResultCode::BadPrice,
+            Self::PoolFull => LiquidityPoolDepositResultCode::PoolFull,
         }
     }
 }
@@ -14852,30 +14494,14 @@ impl ReadXdr for LiquidityPoolDepositResult {
         let dv: LiquidityPoolDepositResultCode =
             <LiquidityPoolDepositResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            LiquidityPoolDepositResultCode::LiquidityPoolDepositSuccess => {
-                Self::LiquidityPoolDepositSuccess
-            }
-            LiquidityPoolDepositResultCode::LiquidityPoolDepositMalformed => {
-                Self::LiquidityPoolDepositMalformed
-            }
-            LiquidityPoolDepositResultCode::LiquidityPoolDepositNoTrust => {
-                Self::LiquidityPoolDepositNoTrust
-            }
-            LiquidityPoolDepositResultCode::LiquidityPoolDepositNotAuthorized => {
-                Self::LiquidityPoolDepositNotAuthorized
-            }
-            LiquidityPoolDepositResultCode::LiquidityPoolDepositUnderfunded => {
-                Self::LiquidityPoolDepositUnderfunded
-            }
-            LiquidityPoolDepositResultCode::LiquidityPoolDepositLineFull => {
-                Self::LiquidityPoolDepositLineFull
-            }
-            LiquidityPoolDepositResultCode::LiquidityPoolDepositBadPrice => {
-                Self::LiquidityPoolDepositBadPrice
-            }
-            LiquidityPoolDepositResultCode::LiquidityPoolDepositPoolFull => {
-                Self::LiquidityPoolDepositPoolFull
-            }
+            LiquidityPoolDepositResultCode::Success => Self::Success,
+            LiquidityPoolDepositResultCode::Malformed => Self::Malformed,
+            LiquidityPoolDepositResultCode::NoTrust => Self::NoTrust,
+            LiquidityPoolDepositResultCode::NotAuthorized => Self::NotAuthorized,
+            LiquidityPoolDepositResultCode::Underfunded => Self::Underfunded,
+            LiquidityPoolDepositResultCode::LineFull => Self::LineFull,
+            LiquidityPoolDepositResultCode::BadPrice => Self::BadPrice,
+            LiquidityPoolDepositResultCode::PoolFull => Self::PoolFull,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14888,14 +14514,14 @@ impl WriteXdr for LiquidityPoolDepositResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::LiquidityPoolDepositSuccess => ().write_xdr(w)?,
-            Self::LiquidityPoolDepositMalformed => ().write_xdr(w)?,
-            Self::LiquidityPoolDepositNoTrust => ().write_xdr(w)?,
-            Self::LiquidityPoolDepositNotAuthorized => ().write_xdr(w)?,
-            Self::LiquidityPoolDepositUnderfunded => ().write_xdr(w)?,
-            Self::LiquidityPoolDepositLineFull => ().write_xdr(w)?,
-            Self::LiquidityPoolDepositBadPrice => ().write_xdr(w)?,
-            Self::LiquidityPoolDepositPoolFull => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::NoTrust => ().write_xdr(w)?,
+            Self::NotAuthorized => ().write_xdr(w)?,
+            Self::Underfunded => ().write_xdr(w)?,
+            Self::LineFull => ().write_xdr(w)?,
+            Self::BadPrice => ().write_xdr(w)?,
+            Self::PoolFull => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -14923,12 +14549,12 @@ impl WriteXdr for LiquidityPoolDepositResult {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum LiquidityPoolWithdrawResultCode {
-    LiquidityPoolWithdrawSuccess = 0,
-    LiquidityPoolWithdrawMalformed = -1,
-    LiquidityPoolWithdrawNoTrust = -2,
-    LiquidityPoolWithdrawUnderfunded = -3,
-    LiquidityPoolWithdrawLineFull = -4,
-    LiquidityPoolWithdrawUnderMinimum = -5,
+    Success = 0,
+    Malformed = -1,
+    NoTrust = -2,
+    Underfunded = -3,
+    LineFull = -4,
+    UnderMinimum = -5,
 }
 
 impl TryFrom<i32> for LiquidityPoolWithdrawResultCode {
@@ -14936,12 +14562,12 @@ impl TryFrom<i32> for LiquidityPoolWithdrawResultCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawSuccess,
-            -1 => LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawMalformed,
-            -2 => LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawNoTrust,
-            -3 => LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawUnderfunded,
-            -4 => LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawLineFull,
-            -5 => LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawUnderMinimum,
+            0 => LiquidityPoolWithdrawResultCode::Success,
+            -1 => LiquidityPoolWithdrawResultCode::Malformed,
+            -2 => LiquidityPoolWithdrawResultCode::NoTrust,
+            -3 => LiquidityPoolWithdrawResultCode::Underfunded,
+            -4 => LiquidityPoolWithdrawResultCode::LineFull,
+            -5 => LiquidityPoolWithdrawResultCode::UnderMinimum,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14989,35 +14615,23 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
 // union with discriminant LiquidityPoolWithdrawResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LiquidityPoolWithdrawResult {
-    LiquidityPoolWithdrawSuccess,
-    LiquidityPoolWithdrawMalformed,
-    LiquidityPoolWithdrawNoTrust,
-    LiquidityPoolWithdrawUnderfunded,
-    LiquidityPoolWithdrawLineFull,
-    LiquidityPoolWithdrawUnderMinimum,
+    Success,
+    Malformed,
+    NoTrust,
+    Underfunded,
+    LineFull,
+    UnderMinimum,
 }
 
 impl LiquidityPoolWithdrawResult {
     pub fn discriminant(&self) -> LiquidityPoolWithdrawResultCode {
         match self {
-            Self::LiquidityPoolWithdrawSuccess => {
-                LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawSuccess
-            }
-            Self::LiquidityPoolWithdrawMalformed => {
-                LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawMalformed
-            }
-            Self::LiquidityPoolWithdrawNoTrust => {
-                LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawNoTrust
-            }
-            Self::LiquidityPoolWithdrawUnderfunded => {
-                LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawUnderfunded
-            }
-            Self::LiquidityPoolWithdrawLineFull => {
-                LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawLineFull
-            }
-            Self::LiquidityPoolWithdrawUnderMinimum => {
-                LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawUnderMinimum
-            }
+            Self::Success => LiquidityPoolWithdrawResultCode::Success,
+            Self::Malformed => LiquidityPoolWithdrawResultCode::Malformed,
+            Self::NoTrust => LiquidityPoolWithdrawResultCode::NoTrust,
+            Self::Underfunded => LiquidityPoolWithdrawResultCode::Underfunded,
+            Self::LineFull => LiquidityPoolWithdrawResultCode::LineFull,
+            Self::UnderMinimum => LiquidityPoolWithdrawResultCode::UnderMinimum,
         }
     }
 }
@@ -15028,24 +14642,12 @@ impl ReadXdr for LiquidityPoolWithdrawResult {
         let dv: LiquidityPoolWithdrawResultCode =
             <LiquidityPoolWithdrawResultCode as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawSuccess => {
-                Self::LiquidityPoolWithdrawSuccess
-            }
-            LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawMalformed => {
-                Self::LiquidityPoolWithdrawMalformed
-            }
-            LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawNoTrust => {
-                Self::LiquidityPoolWithdrawNoTrust
-            }
-            LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawUnderfunded => {
-                Self::LiquidityPoolWithdrawUnderfunded
-            }
-            LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawLineFull => {
-                Self::LiquidityPoolWithdrawLineFull
-            }
-            LiquidityPoolWithdrawResultCode::LiquidityPoolWithdrawUnderMinimum => {
-                Self::LiquidityPoolWithdrawUnderMinimum
-            }
+            LiquidityPoolWithdrawResultCode::Success => Self::Success,
+            LiquidityPoolWithdrawResultCode::Malformed => Self::Malformed,
+            LiquidityPoolWithdrawResultCode::NoTrust => Self::NoTrust,
+            LiquidityPoolWithdrawResultCode::Underfunded => Self::Underfunded,
+            LiquidityPoolWithdrawResultCode::LineFull => Self::LineFull,
+            LiquidityPoolWithdrawResultCode::UnderMinimum => Self::UnderMinimum,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -15058,12 +14660,12 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::LiquidityPoolWithdrawSuccess => ().write_xdr(w)?,
-            Self::LiquidityPoolWithdrawMalformed => ().write_xdr(w)?,
-            Self::LiquidityPoolWithdrawNoTrust => ().write_xdr(w)?,
-            Self::LiquidityPoolWithdrawUnderfunded => ().write_xdr(w)?,
-            Self::LiquidityPoolWithdrawLineFull => ().write_xdr(w)?,
-            Self::LiquidityPoolWithdrawUnderMinimum => ().write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::NoTrust => ().write_xdr(w)?,
+            Self::Underfunded => ().write_xdr(w)?,
+            Self::LineFull => ().write_xdr(w)?,
+            Self::UnderMinimum => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -16287,11 +15889,11 @@ impl WriteXdr for ExtensionPoint {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum CryptoKeyType {
-    KeyTypeEd25519 = 0,
-    KeyTypePreAuthTx = 1,
-    KeyTypeHashX = 2,
-    KeyTypeEd25519SignedPayload = 3,
-    KeyTypeMuxedEd25519 = 256,
+    Ed25519 = 0,
+    PreAuthTx = 1,
+    HashX = 2,
+    Ed25519SignedPayload = 3,
+    MuxedEd25519 = 256,
 }
 
 impl TryFrom<i32> for CryptoKeyType {
@@ -16299,11 +15901,11 @@ impl TryFrom<i32> for CryptoKeyType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => CryptoKeyType::KeyTypeEd25519,
-            1 => CryptoKeyType::KeyTypePreAuthTx,
-            2 => CryptoKeyType::KeyTypeHashX,
-            3 => CryptoKeyType::KeyTypeEd25519SignedPayload,
-            256 => CryptoKeyType::KeyTypeMuxedEd25519,
+            0 => CryptoKeyType::Ed25519,
+            1 => CryptoKeyType::PreAuthTx,
+            2 => CryptoKeyType::HashX,
+            3 => CryptoKeyType::Ed25519SignedPayload,
+            256 => CryptoKeyType::MuxedEd25519,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -16398,10 +16000,10 @@ impl WriteXdr for PublicKeyType {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum SignerKeyType {
-    SignerKeyTypeEd25519 = 0,
-    SignerKeyTypePreAuthTx = 1,
-    SignerKeyTypeHashX = 2,
-    SignerKeyTypeEd25519SignedPayload = 3,
+    Ed25519 = 0,
+    PreAuthTx = 1,
+    HashX = 2,
+    Ed25519SignedPayload = 3,
 }
 
 impl TryFrom<i32> for SignerKeyType {
@@ -16409,10 +16011,10 @@ impl TryFrom<i32> for SignerKeyType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => SignerKeyType::SignerKeyTypeEd25519,
-            1 => SignerKeyType::SignerKeyTypePreAuthTx,
-            2 => SignerKeyType::SignerKeyTypeHashX,
-            3 => SignerKeyType::SignerKeyTypeEd25519SignedPayload,
+            0 => SignerKeyType::Ed25519,
+            1 => SignerKeyType::PreAuthTx,
+            2 => SignerKeyType::HashX,
+            3 => SignerKeyType::Ed25519SignedPayload,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -16551,21 +16153,19 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
 // union with discriminant SignerKeyType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SignerKey {
-    SignerKeyTypeEd25519(Uint256),
-    SignerKeyTypePreAuthTx(Uint256),
-    SignerKeyTypeHashX(Uint256),
-    SignerKeyTypeEd25519SignedPayload(SignerKeyEd25519SignedPayload),
+    Ed25519(Uint256),
+    PreAuthTx(Uint256),
+    HashX(Uint256),
+    Ed25519SignedPayload(SignerKeyEd25519SignedPayload),
 }
 
 impl SignerKey {
     pub fn discriminant(&self) -> SignerKeyType {
         match self {
-            Self::SignerKeyTypeEd25519(_) => SignerKeyType::SignerKeyTypeEd25519,
-            Self::SignerKeyTypePreAuthTx(_) => SignerKeyType::SignerKeyTypePreAuthTx,
-            Self::SignerKeyTypeHashX(_) => SignerKeyType::SignerKeyTypeHashX,
-            Self::SignerKeyTypeEd25519SignedPayload(_) => {
-                SignerKeyType::SignerKeyTypeEd25519SignedPayload
-            }
+            Self::Ed25519(_) => SignerKeyType::Ed25519,
+            Self::PreAuthTx(_) => SignerKeyType::PreAuthTx,
+            Self::HashX(_) => SignerKeyType::HashX,
+            Self::Ed25519SignedPayload(_) => SignerKeyType::Ed25519SignedPayload,
         }
     }
 }
@@ -16575,15 +16175,11 @@ impl ReadXdr for SignerKey {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: SignerKeyType = <SignerKeyType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            SignerKeyType::SignerKeyTypeEd25519 => {
-                Self::SignerKeyTypeEd25519(Uint256::read_xdr(r)?)
-            }
-            SignerKeyType::SignerKeyTypePreAuthTx => {
-                Self::SignerKeyTypePreAuthTx(Uint256::read_xdr(r)?)
-            }
-            SignerKeyType::SignerKeyTypeHashX => Self::SignerKeyTypeHashX(Uint256::read_xdr(r)?),
-            SignerKeyType::SignerKeyTypeEd25519SignedPayload => {
-                Self::SignerKeyTypeEd25519SignedPayload(SignerKeyEd25519SignedPayload::read_xdr(r)?)
+            SignerKeyType::Ed25519 => Self::Ed25519(Uint256::read_xdr(r)?),
+            SignerKeyType::PreAuthTx => Self::PreAuthTx(Uint256::read_xdr(r)?),
+            SignerKeyType::HashX => Self::HashX(Uint256::read_xdr(r)?),
+            SignerKeyType::Ed25519SignedPayload => {
+                Self::Ed25519SignedPayload(SignerKeyEd25519SignedPayload::read_xdr(r)?)
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -16597,10 +16193,10 @@ impl WriteXdr for SignerKey {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::SignerKeyTypeEd25519(v) => v.write_xdr(w)?,
-            Self::SignerKeyTypePreAuthTx(v) => v.write_xdr(w)?,
-            Self::SignerKeyTypeHashX(v) => v.write_xdr(w)?,
-            Self::SignerKeyTypeEd25519SignedPayload(v) => v.write_xdr(w)?,
+            Self::Ed25519(v) => v.write_xdr(w)?,
+            Self::PreAuthTx(v) => v.write_xdr(w)?,
+            Self::HashX(v) => v.write_xdr(w)?,
+            Self::Ed25519SignedPayload(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -16869,14 +16465,14 @@ pub type ScSymbol = VecM<u8, 10>;
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScValType {
-    ScvU63 = 0,
-    ScvU32 = 1,
-    ScvI32 = 2,
-    ScvStatic = 3,
-    ScvObject = 4,
-    ScvSymbol = 5,
-    ScvBitset = 6,
-    ScvStatus = 7,
+    U63 = 0,
+    U32 = 1,
+    I32 = 2,
+    Static = 3,
+    Object = 4,
+    Symbol = 5,
+    Bitset = 6,
+    Status = 7,
 }
 
 impl TryFrom<i32> for ScValType {
@@ -16884,14 +16480,14 @@ impl TryFrom<i32> for ScValType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScValType::ScvU63,
-            1 => ScValType::ScvU32,
-            2 => ScValType::ScvI32,
-            3 => ScValType::ScvStatic,
-            4 => ScValType::ScvObject,
-            5 => ScValType::ScvSymbol,
-            6 => ScValType::ScvBitset,
-            7 => ScValType::ScvStatus,
+            0 => ScValType::U63,
+            1 => ScValType::U32,
+            2 => ScValType::I32,
+            3 => ScValType::Static,
+            4 => ScValType::Object,
+            5 => ScValType::Symbol,
+            6 => ScValType::Bitset,
+            7 => ScValType::Status,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -16935,9 +16531,9 @@ impl WriteXdr for ScValType {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScStatic {
-    ScsVoid = 0,
-    ScsTrue = 1,
-    ScsFalse = 2,
+    Void = 0,
+    True = 1,
+    False = 2,
 }
 
 impl TryFrom<i32> for ScStatic {
@@ -16945,9 +16541,9 @@ impl TryFrom<i32> for ScStatic {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScStatic::ScsVoid,
-            1 => ScStatic::ScsTrue,
-            2 => ScStatic::ScsFalse,
+            0 => ScStatic::Void,
+            1 => ScStatic::True,
+            2 => ScStatic::False,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -16991,8 +16587,8 @@ impl WriteXdr for ScStatic {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScStatusType {
-    SstOk = 0,
-    SstUnknownError = 1,
+    Ok = 0,
+    UnknownError = 1,
 }
 
 impl TryFrom<i32> for ScStatusType {
@@ -17000,8 +16596,8 @@ impl TryFrom<i32> for ScStatusType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScStatusType::SstOk,
-            1 => ScStatusType::SstUnknownError,
+            0 => ScStatusType::Ok,
+            1 => ScStatusType::UnknownError,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17045,15 +16641,15 @@ impl WriteXdr for ScStatusType {
 // union with discriminant ScStatusType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ScStatus {
-    SstOk,
-    SstUnknownError(u32),
+    Ok,
+    UnknownError(u32),
 }
 
 impl ScStatus {
     pub fn discriminant(&self) -> ScStatusType {
         match self {
-            Self::SstOk => ScStatusType::SstOk,
-            Self::SstUnknownError(_) => ScStatusType::SstUnknownError,
+            Self::Ok => ScStatusType::Ok,
+            Self::UnknownError(_) => ScStatusType::UnknownError,
         }
     }
 }
@@ -17063,8 +16659,8 @@ impl ReadXdr for ScStatus {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScStatusType = <ScStatusType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ScStatusType::SstOk => Self::SstOk,
-            ScStatusType::SstUnknownError => Self::SstUnknownError(u32::read_xdr(r)?),
+            ScStatusType::Ok => Self::Ok,
+            ScStatusType::UnknownError => Self::UnknownError(u32::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17077,8 +16673,8 @@ impl WriteXdr for ScStatus {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::SstOk => ().write_xdr(w)?,
-            Self::SstUnknownError(v) => v.write_xdr(w)?,
+            Self::Ok => ().write_xdr(w)?,
+            Self::UnknownError(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -17109,27 +16705,27 @@ impl WriteXdr for ScStatus {
 // union with discriminant ScValType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ScVal {
-    ScvU63(u64),
-    ScvU32(u32),
-    ScvI32(i32),
-    ScvStatic(ScStatic),
-    ScvObject(Option<Box<ScObject>>),
-    ScvSymbol(VecM<u8, 10>),
-    ScvBitset(u64),
-    ScvStatus(ScStatus),
+    U63(u64),
+    U32(u32),
+    I32(i32),
+    Static(ScStatic),
+    Object(Option<Box<ScObject>>),
+    Symbol(VecM<u8, 10>),
+    Bitset(u64),
+    Status(ScStatus),
 }
 
 impl ScVal {
     pub fn discriminant(&self) -> ScValType {
         match self {
-            Self::ScvU63(_) => ScValType::ScvU63,
-            Self::ScvU32(_) => ScValType::ScvU32,
-            Self::ScvI32(_) => ScValType::ScvI32,
-            Self::ScvStatic(_) => ScValType::ScvStatic,
-            Self::ScvObject(_) => ScValType::ScvObject,
-            Self::ScvSymbol(_) => ScValType::ScvSymbol,
-            Self::ScvBitset(_) => ScValType::ScvBitset,
-            Self::ScvStatus(_) => ScValType::ScvStatus,
+            Self::U63(_) => ScValType::U63,
+            Self::U32(_) => ScValType::U32,
+            Self::I32(_) => ScValType::I32,
+            Self::Static(_) => ScValType::Static,
+            Self::Object(_) => ScValType::Object,
+            Self::Symbol(_) => ScValType::Symbol,
+            Self::Bitset(_) => ScValType::Bitset,
+            Self::Status(_) => ScValType::Status,
         }
     }
 }
@@ -17139,14 +16735,14 @@ impl ReadXdr for ScVal {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ScValType::ScvU63 => Self::ScvU63(u64::read_xdr(r)?),
-            ScValType::ScvU32 => Self::ScvU32(u32::read_xdr(r)?),
-            ScValType::ScvI32 => Self::ScvI32(i32::read_xdr(r)?),
-            ScValType::ScvStatic => Self::ScvStatic(ScStatic::read_xdr(r)?),
-            ScValType::ScvObject => Self::ScvObject(Option::<Box<ScObject>>::read_xdr(r)?),
-            ScValType::ScvSymbol => Self::ScvSymbol(VecM::<u8, 10>::read_xdr(r)?),
-            ScValType::ScvBitset => Self::ScvBitset(u64::read_xdr(r)?),
-            ScValType::ScvStatus => Self::ScvStatus(ScStatus::read_xdr(r)?),
+            ScValType::U63 => Self::U63(u64::read_xdr(r)?),
+            ScValType::U32 => Self::U32(u32::read_xdr(r)?),
+            ScValType::I32 => Self::I32(i32::read_xdr(r)?),
+            ScValType::Static => Self::Static(ScStatic::read_xdr(r)?),
+            ScValType::Object => Self::Object(Option::<Box<ScObject>>::read_xdr(r)?),
+            ScValType::Symbol => Self::Symbol(VecM::<u8, 10>::read_xdr(r)?),
+            ScValType::Bitset => Self::Bitset(u64::read_xdr(r)?),
+            ScValType::Status => Self::Status(ScStatus::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17159,14 +16755,14 @@ impl WriteXdr for ScVal {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ScvU63(v) => v.write_xdr(w)?,
-            Self::ScvU32(v) => v.write_xdr(w)?,
-            Self::ScvI32(v) => v.write_xdr(w)?,
-            Self::ScvStatic(v) => v.write_xdr(w)?,
-            Self::ScvObject(v) => v.write_xdr(w)?,
-            Self::ScvSymbol(v) => v.write_xdr(w)?,
-            Self::ScvBitset(v) => v.write_xdr(w)?,
-            Self::ScvStatus(v) => v.write_xdr(w)?,
+            Self::U63(v) => v.write_xdr(w)?,
+            Self::U32(v) => v.write_xdr(w)?,
+            Self::I32(v) => v.write_xdr(w)?,
+            Self::Static(v) => v.write_xdr(w)?,
+            Self::Object(v) => v.write_xdr(w)?,
+            Self::Symbol(v) => v.write_xdr(w)?,
+            Self::Bitset(v) => v.write_xdr(w)?,
+            Self::Status(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -17210,22 +16806,22 @@ impl WriteXdr for ScVal {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScObjectType {
-    ScoBox = 0,
-    ScoVec = 1,
-    ScoMap = 2,
-    ScoU64 = 3,
-    ScoI64 = 4,
-    ScoString = 5,
-    ScoBinary = 6,
-    ScoBigint = 7,
-    ScoBigrat = 8,
-    ScoLedgerkey = 9,
-    ScoOperation = 10,
-    ScoOperationResult = 11,
-    ScoTransaction = 12,
-    ScoAsset = 13,
-    ScoPrice = 14,
-    ScoAccountid = 15,
+    Box = 0,
+    Vec = 1,
+    Map = 2,
+    U64 = 3,
+    I64 = 4,
+    String = 5,
+    Binary = 6,
+    Bigint = 7,
+    Bigrat = 8,
+    Ledgerkey = 9,
+    Operation = 10,
+    OperationResult = 11,
+    Transaction = 12,
+    Asset = 13,
+    Price = 14,
+    Accountid = 15,
 }
 
 impl TryFrom<i32> for ScObjectType {
@@ -17233,22 +16829,22 @@ impl TryFrom<i32> for ScObjectType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScObjectType::ScoBox,
-            1 => ScObjectType::ScoVec,
-            2 => ScObjectType::ScoMap,
-            3 => ScObjectType::ScoU64,
-            4 => ScObjectType::ScoI64,
-            5 => ScObjectType::ScoString,
-            6 => ScObjectType::ScoBinary,
-            7 => ScObjectType::ScoBigint,
-            8 => ScObjectType::ScoBigrat,
-            9 => ScObjectType::ScoLedgerkey,
-            10 => ScObjectType::ScoOperation,
-            11 => ScObjectType::ScoOperationResult,
-            12 => ScObjectType::ScoTransaction,
-            13 => ScObjectType::ScoAsset,
-            14 => ScObjectType::ScoPrice,
-            15 => ScObjectType::ScoAccountid,
+            0 => ScObjectType::Box,
+            1 => ScObjectType::Vec,
+            2 => ScObjectType::Map,
+            3 => ScObjectType::U64,
+            4 => ScObjectType::I64,
+            5 => ScObjectType::String,
+            6 => ScObjectType::Binary,
+            7 => ScObjectType::Bigint,
+            8 => ScObjectType::Bigrat,
+            9 => ScObjectType::Ledgerkey,
+            10 => ScObjectType::Operation,
+            11 => ScObjectType::OperationResult,
+            12 => ScObjectType::Transaction,
+            13 => ScObjectType::Asset,
+            14 => ScObjectType::Price,
+            15 => ScObjectType::Accountid,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17599,43 +17195,43 @@ impl WriteXdr for ScBigRat {
 // union with discriminant ScObjectType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ScObject {
-    ScoBox(ScVal),
-    ScoVec(ScVec),
-    ScoMap(ScMap),
-    ScoU64(u64),
-    ScoI64(i64),
-    ScoString(VecM<u8>),
-    ScoBinary(VecM<u8>),
-    ScoBigint(ScBigInt),
-    ScoBigrat(ScBigRat),
-    ScoLedgerkey(Option<LedgerKey>),
-    ScoOperation(Option<Operation>),
-    ScoOperationResult(Option<OperationResult>),
-    ScoTransaction(Option<Transaction>),
-    ScoAsset(Asset),
-    ScoPrice(Price),
-    ScoAccountid(AccountId),
+    Box(ScVal),
+    Vec(ScVec),
+    Map(ScMap),
+    U64(u64),
+    I64(i64),
+    String(VecM<u8>),
+    Binary(VecM<u8>),
+    Bigint(ScBigInt),
+    Bigrat(ScBigRat),
+    Ledgerkey(Option<LedgerKey>),
+    Operation(Option<Operation>),
+    OperationResult(Option<OperationResult>),
+    Transaction(Option<Transaction>),
+    Asset(Asset),
+    Price(Price),
+    Accountid(AccountId),
 }
 
 impl ScObject {
     pub fn discriminant(&self) -> ScObjectType {
         match self {
-            Self::ScoBox(_) => ScObjectType::ScoBox,
-            Self::ScoVec(_) => ScObjectType::ScoVec,
-            Self::ScoMap(_) => ScObjectType::ScoMap,
-            Self::ScoU64(_) => ScObjectType::ScoU64,
-            Self::ScoI64(_) => ScObjectType::ScoI64,
-            Self::ScoString(_) => ScObjectType::ScoString,
-            Self::ScoBinary(_) => ScObjectType::ScoBinary,
-            Self::ScoBigint(_) => ScObjectType::ScoBigint,
-            Self::ScoBigrat(_) => ScObjectType::ScoBigrat,
-            Self::ScoLedgerkey(_) => ScObjectType::ScoLedgerkey,
-            Self::ScoOperation(_) => ScObjectType::ScoOperation,
-            Self::ScoOperationResult(_) => ScObjectType::ScoOperationResult,
-            Self::ScoTransaction(_) => ScObjectType::ScoTransaction,
-            Self::ScoAsset(_) => ScObjectType::ScoAsset,
-            Self::ScoPrice(_) => ScObjectType::ScoPrice,
-            Self::ScoAccountid(_) => ScObjectType::ScoAccountid,
+            Self::Box(_) => ScObjectType::Box,
+            Self::Vec(_) => ScObjectType::Vec,
+            Self::Map(_) => ScObjectType::Map,
+            Self::U64(_) => ScObjectType::U64,
+            Self::I64(_) => ScObjectType::I64,
+            Self::String(_) => ScObjectType::String,
+            Self::Binary(_) => ScObjectType::Binary,
+            Self::Bigint(_) => ScObjectType::Bigint,
+            Self::Bigrat(_) => ScObjectType::Bigrat,
+            Self::Ledgerkey(_) => ScObjectType::Ledgerkey,
+            Self::Operation(_) => ScObjectType::Operation,
+            Self::OperationResult(_) => ScObjectType::OperationResult,
+            Self::Transaction(_) => ScObjectType::Transaction,
+            Self::Asset(_) => ScObjectType::Asset,
+            Self::Price(_) => ScObjectType::Price,
+            Self::Accountid(_) => ScObjectType::Accountid,
         }
     }
 }
@@ -17645,26 +17241,24 @@ impl ReadXdr for ScObject {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScObjectType = <ScObjectType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ScObjectType::ScoBox => Self::ScoBox(ScVal::read_xdr(r)?),
-            ScObjectType::ScoVec => Self::ScoVec(ScVec::read_xdr(r)?),
-            ScObjectType::ScoMap => Self::ScoMap(ScMap::read_xdr(r)?),
-            ScObjectType::ScoU64 => Self::ScoU64(u64::read_xdr(r)?),
-            ScObjectType::ScoI64 => Self::ScoI64(i64::read_xdr(r)?),
-            ScObjectType::ScoString => Self::ScoString(VecM::<u8>::read_xdr(r)?),
-            ScObjectType::ScoBinary => Self::ScoBinary(VecM::<u8>::read_xdr(r)?),
-            ScObjectType::ScoBigint => Self::ScoBigint(ScBigInt::read_xdr(r)?),
-            ScObjectType::ScoBigrat => Self::ScoBigrat(ScBigRat::read_xdr(r)?),
-            ScObjectType::ScoLedgerkey => Self::ScoLedgerkey(Option::<LedgerKey>::read_xdr(r)?),
-            ScObjectType::ScoOperation => Self::ScoOperation(Option::<Operation>::read_xdr(r)?),
-            ScObjectType::ScoOperationResult => {
-                Self::ScoOperationResult(Option::<OperationResult>::read_xdr(r)?)
+            ScObjectType::Box => Self::Box(ScVal::read_xdr(r)?),
+            ScObjectType::Vec => Self::Vec(ScVec::read_xdr(r)?),
+            ScObjectType::Map => Self::Map(ScMap::read_xdr(r)?),
+            ScObjectType::U64 => Self::U64(u64::read_xdr(r)?),
+            ScObjectType::I64 => Self::I64(i64::read_xdr(r)?),
+            ScObjectType::String => Self::String(VecM::<u8>::read_xdr(r)?),
+            ScObjectType::Binary => Self::Binary(VecM::<u8>::read_xdr(r)?),
+            ScObjectType::Bigint => Self::Bigint(ScBigInt::read_xdr(r)?),
+            ScObjectType::Bigrat => Self::Bigrat(ScBigRat::read_xdr(r)?),
+            ScObjectType::Ledgerkey => Self::Ledgerkey(Option::<LedgerKey>::read_xdr(r)?),
+            ScObjectType::Operation => Self::Operation(Option::<Operation>::read_xdr(r)?),
+            ScObjectType::OperationResult => {
+                Self::OperationResult(Option::<OperationResult>::read_xdr(r)?)
             }
-            ScObjectType::ScoTransaction => {
-                Self::ScoTransaction(Option::<Transaction>::read_xdr(r)?)
-            }
-            ScObjectType::ScoAsset => Self::ScoAsset(Asset::read_xdr(r)?),
-            ScObjectType::ScoPrice => Self::ScoPrice(Price::read_xdr(r)?),
-            ScObjectType::ScoAccountid => Self::ScoAccountid(AccountId::read_xdr(r)?),
+            ScObjectType::Transaction => Self::Transaction(Option::<Transaction>::read_xdr(r)?),
+            ScObjectType::Asset => Self::Asset(Asset::read_xdr(r)?),
+            ScObjectType::Price => Self::Price(Price::read_xdr(r)?),
+            ScObjectType::Accountid => Self::Accountid(AccountId::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17677,22 +17271,22 @@ impl WriteXdr for ScObject {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::ScoBox(v) => v.write_xdr(w)?,
-            Self::ScoVec(v) => v.write_xdr(w)?,
-            Self::ScoMap(v) => v.write_xdr(w)?,
-            Self::ScoU64(v) => v.write_xdr(w)?,
-            Self::ScoI64(v) => v.write_xdr(w)?,
-            Self::ScoString(v) => v.write_xdr(w)?,
-            Self::ScoBinary(v) => v.write_xdr(w)?,
-            Self::ScoBigint(v) => v.write_xdr(w)?,
-            Self::ScoBigrat(v) => v.write_xdr(w)?,
-            Self::ScoLedgerkey(v) => v.write_xdr(w)?,
-            Self::ScoOperation(v) => v.write_xdr(w)?,
-            Self::ScoOperationResult(v) => v.write_xdr(w)?,
-            Self::ScoTransaction(v) => v.write_xdr(w)?,
-            Self::ScoAsset(v) => v.write_xdr(w)?,
-            Self::ScoPrice(v) => v.write_xdr(w)?,
-            Self::ScoAccountid(v) => v.write_xdr(w)?,
+            Self::Box(v) => v.write_xdr(w)?,
+            Self::Vec(v) => v.write_xdr(w)?,
+            Self::Map(v) => v.write_xdr(w)?,
+            Self::U64(v) => v.write_xdr(w)?,
+            Self::I64(v) => v.write_xdr(w)?,
+            Self::String(v) => v.write_xdr(w)?,
+            Self::Binary(v) => v.write_xdr(w)?,
+            Self::Bigint(v) => v.write_xdr(w)?,
+            Self::Bigrat(v) => v.write_xdr(w)?,
+            Self::Ledgerkey(v) => v.write_xdr(w)?,
+            Self::Operation(v) => v.write_xdr(w)?,
+            Self::OperationResult(v) => v.write_xdr(w)?,
+            Self::Transaction(v) => v.write_xdr(w)?,
+            Self::Asset(v) => v.write_xdr(w)?,
+            Self::Price(v) => v.write_xdr(w)?,
+            Self::Accountid(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

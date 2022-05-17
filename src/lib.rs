@@ -16451,7 +16451,7 @@ pub type ScSymbol = VecM<u8, 10>;
 //
 //   enum SCValType
 //    {
-//        SCV_U63 = 0,
+//        SCV_POS_I64 = 0,
 //        SCV_U32 = 1,
 //        SCV_I32 = 2,
 //        SCV_STATIC = 3,
@@ -16465,7 +16465,7 @@ pub type ScSymbol = VecM<u8, 10>;
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScValType {
-    U63 = 0,
+    PosI64 = 0,
     U32 = 1,
     I32 = 2,
     Static = 3,
@@ -16480,7 +16480,7 @@ impl TryFrom<i32> for ScValType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScValType::U63,
+            0 => ScValType::PosI64,
             1 => ScValType::U32,
             2 => ScValType::I32,
             3 => ScValType::Static,
@@ -16684,8 +16684,8 @@ impl WriteXdr for ScStatus {
 //
 //   union SCVal switch (SCValType type)
 //    {
-//    case SCV_U63:
-//        uint64 u63;
+//    case SCV_POS_I64:
+//        int64 pos_i64;
 //    case SCV_U32:
 //        uint32 u32;
 //    case SCV_I32:
@@ -16705,7 +16705,7 @@ impl WriteXdr for ScStatus {
 // union with discriminant ScValType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ScVal {
-    U63(u64),
+    PosI64(i64),
     U32(u32),
     I32(i32),
     Static(ScStatic),
@@ -16718,7 +16718,7 @@ pub enum ScVal {
 impl ScVal {
     pub fn discriminant(&self) -> ScValType {
         match self {
-            Self::U63(_) => ScValType::U63,
+            Self::PosI64(_) => ScValType::PosI64,
             Self::U32(_) => ScValType::U32,
             Self::I32(_) => ScValType::I32,
             Self::Static(_) => ScValType::Static,
@@ -16735,7 +16735,7 @@ impl ReadXdr for ScVal {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ScValType::U63 => Self::U63(u64::read_xdr(r)?),
+            ScValType::PosI64 => Self::PosI64(i64::read_xdr(r)?),
             ScValType::U32 => Self::U32(u32::read_xdr(r)?),
             ScValType::I32 => Self::I32(i32::read_xdr(r)?),
             ScValType::Static => Self::Static(ScStatic::read_xdr(r)?),
@@ -16755,7 +16755,7 @@ impl WriteXdr for ScVal {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         match self {
-            Self::U63(v) => v.write_xdr(w)?,
+            Self::PosI64(v) => v.write_xdr(w)?,
             Self::U32(v) => v.write_xdr(w)?,
             Self::I32(v) => v.write_xdr(w)?,
             Self::Static(v) => v.write_xdr(w)?,
@@ -16773,31 +16773,14 @@ impl WriteXdr for ScVal {
 //   enum SCObjectType
 //    {
 //        // We have a few objects that represent non-stellar-specific concepts
-//        // like general-purpose maps, vectors, strings, numbers, blobs, etc.
+//        // like general-purpose maps, vectors, numbers, blobs.
 //
 //        SCO_BOX = 0,
 //        SCO_VEC = 1,
 //        SCO_MAP = 2,
 //        SCO_U64 = 3,
 //        SCO_I64 = 4,
-//        SCO_STRING = 5,
-//        SCO_BINARY = 6,
-//        SCO_BIGINT = 7,
-//        SCO_BIGRAT = 8,
-//
-//        // Followed by a potentially much longer list of object types
-//        // corresponding to any XDR ledger types users might want to manipulate
-//        // directly. Separate type codes are required for composite types and
-//        // each of their members, if it is reasonable for a user to want to hold
-//        // a handle to the member separately from the composite type.
-//
-//        SCO_LEDGERKEY = 9,
-//        SCO_OPERATION = 10,
-//        SCO_OPERATION_RESULT = 11,
-//        SCO_TRANSACTION = 12,
-//        SCO_ASSET = 13,
-//        SCO_PRICE = 14,
-//        SCO_ACCOUNTID = 15
+//        SCO_BINARY = 5
 //
 //        // TODO: add more
 //    };
@@ -16811,17 +16794,7 @@ pub enum ScObjectType {
     Map = 2,
     U64 = 3,
     I64 = 4,
-    String = 5,
-    Binary = 6,
-    Bigint = 7,
-    Bigrat = 8,
-    Ledgerkey = 9,
-    Operation = 10,
-    OperationResult = 11,
-    Transaction = 12,
-    Asset = 13,
-    Price = 14,
-    Accountid = 15,
+    Binary = 5,
 }
 
 impl TryFrom<i32> for ScObjectType {
@@ -16834,17 +16807,7 @@ impl TryFrom<i32> for ScObjectType {
             2 => ScObjectType::Map,
             3 => ScObjectType::U64,
             4 => ScObjectType::I64,
-            5 => ScObjectType::String,
-            6 => ScObjectType::Binary,
-            7 => ScObjectType::Bigint,
-            8 => ScObjectType::Bigrat,
-            9 => ScObjectType::Ledgerkey,
-            10 => ScObjectType::Operation,
-            11 => ScObjectType::OperationResult,
-            12 => ScObjectType::Transaction,
-            13 => ScObjectType::Asset,
-            14 => ScObjectType::Price,
-            15 => ScObjectType::Accountid,
+            5 => ScObjectType::Binary,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17084,76 +17047,6 @@ impl AsRef<[ScMapEntry]> for ScMap {
     }
 }
 
-// ScBigInt is an XDR Struct defines as:
-//
-//   struct SCBigInt
-//    {
-//        bool positive;
-//        opaque magnitude<>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScBigInt {
-    pub positive: bool,
-    pub magnitude: VecM<u8>,
-}
-
-impl ReadXdr for ScBigInt {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            positive: bool::read_xdr(r)?,
-            magnitude: VecM::<u8>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ScBigInt {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.positive.write_xdr(w)?;
-        self.magnitude.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ScBigRat is an XDR Struct defines as:
-//
-//   struct SCBigRat
-//    {
-//        bool positive;
-//        opaque numerator<>;
-//        opaque denominator<>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScBigRat {
-    pub positive: bool,
-    pub numerator: VecM<u8>,
-    pub denominator: VecM<u8>,
-}
-
-impl ReadXdr for ScBigRat {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            positive: bool::read_xdr(r)?,
-            numerator: VecM::<u8>::read_xdr(r)?,
-            denominator: VecM::<u8>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ScBigRat {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.positive.write_xdr(w)?;
-        self.numerator.write_xdr(w)?;
-        self.denominator.write_xdr(w)?;
-        Ok(())
-    }
-}
-
 // ScObject is an XDR Union defines as:
 //
 //   union SCObject switch (SCObjectType type)
@@ -17168,28 +17061,8 @@ impl WriteXdr for ScBigRat {
 //        uint64 u64;
 //    case SCO_I64:
 //        int64 i64;
-//    case SCO_STRING:
-//        string str<>;
 //    case SCO_BINARY:
 //        opaque bin<>;
-//    case SCO_BIGINT:
-//        SCBigInt bi;
-//    case SCO_BIGRAT:
-//        SCBigRat br;
-//    case SCO_LEDGERKEY:
-//        LedgerKey* lkey;
-//    case SCO_OPERATION:
-//        Operation* op;
-//    case SCO_OPERATION_RESULT:
-//        OperationResult* ores;
-//    case SCO_TRANSACTION:
-//        Transaction* tx;
-//    case SCO_ASSET:
-//        Asset asset;
-//    case SCO_PRICE:
-//        Price price;
-//    case SCO_ACCOUNTID:
-//        AccountID accountID;
 //    };
 //
 // union with discriminant ScObjectType
@@ -17200,17 +17073,7 @@ pub enum ScObject {
     Map(ScMap),
     U64(u64),
     I64(i64),
-    String(VecM<u8>),
     Binary(VecM<u8>),
-    Bigint(ScBigInt),
-    Bigrat(ScBigRat),
-    Ledgerkey(Option<LedgerKey>),
-    Operation(Option<Operation>),
-    OperationResult(Option<OperationResult>),
-    Transaction(Option<Transaction>),
-    Asset(Asset),
-    Price(Price),
-    Accountid(AccountId),
 }
 
 impl ScObject {
@@ -17221,17 +17084,7 @@ impl ScObject {
             Self::Map(_) => ScObjectType::Map,
             Self::U64(_) => ScObjectType::U64,
             Self::I64(_) => ScObjectType::I64,
-            Self::String(_) => ScObjectType::String,
             Self::Binary(_) => ScObjectType::Binary,
-            Self::Bigint(_) => ScObjectType::Bigint,
-            Self::Bigrat(_) => ScObjectType::Bigrat,
-            Self::Ledgerkey(_) => ScObjectType::Ledgerkey,
-            Self::Operation(_) => ScObjectType::Operation,
-            Self::OperationResult(_) => ScObjectType::OperationResult,
-            Self::Transaction(_) => ScObjectType::Transaction,
-            Self::Asset(_) => ScObjectType::Asset,
-            Self::Price(_) => ScObjectType::Price,
-            Self::Accountid(_) => ScObjectType::Accountid,
         }
     }
 }
@@ -17246,19 +17099,7 @@ impl ReadXdr for ScObject {
             ScObjectType::Map => Self::Map(ScMap::read_xdr(r)?),
             ScObjectType::U64 => Self::U64(u64::read_xdr(r)?),
             ScObjectType::I64 => Self::I64(i64::read_xdr(r)?),
-            ScObjectType::String => Self::String(VecM::<u8>::read_xdr(r)?),
             ScObjectType::Binary => Self::Binary(VecM::<u8>::read_xdr(r)?),
-            ScObjectType::Bigint => Self::Bigint(ScBigInt::read_xdr(r)?),
-            ScObjectType::Bigrat => Self::Bigrat(ScBigRat::read_xdr(r)?),
-            ScObjectType::Ledgerkey => Self::Ledgerkey(Option::<LedgerKey>::read_xdr(r)?),
-            ScObjectType::Operation => Self::Operation(Option::<Operation>::read_xdr(r)?),
-            ScObjectType::OperationResult => {
-                Self::OperationResult(Option::<OperationResult>::read_xdr(r)?)
-            }
-            ScObjectType::Transaction => Self::Transaction(Option::<Transaction>::read_xdr(r)?),
-            ScObjectType::Asset => Self::Asset(Asset::read_xdr(r)?),
-            ScObjectType::Price => Self::Price(Price::read_xdr(r)?),
-            ScObjectType::Accountid => Self::Accountid(AccountId::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17276,17 +17117,7 @@ impl WriteXdr for ScObject {
             Self::Map(v) => v.write_xdr(w)?,
             Self::U64(v) => v.write_xdr(w)?,
             Self::I64(v) => v.write_xdr(w)?,
-            Self::String(v) => v.write_xdr(w)?,
             Self::Binary(v) => v.write_xdr(w)?,
-            Self::Bigint(v) => v.write_xdr(w)?,
-            Self::Bigrat(v) => v.write_xdr(w)?,
-            Self::Ledgerkey(v) => v.write_xdr(w)?,
-            Self::Operation(v) => v.write_xdr(w)?,
-            Self::OperationResult(v) => v.write_xdr(w)?,
-            Self::Transaction(v) => v.write_xdr(w)?,
-            Self::Asset(v) => v.write_xdr(w)?,
-            Self::Price(v) => v.write_xdr(w)?,
-            Self::Accountid(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

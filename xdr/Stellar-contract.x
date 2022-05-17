@@ -15,13 +15,13 @@ namespace stellar
  * SCVals are (in WASM's case) stored in a tagged 64-bit word encoding. Most
  * signed 64-bit values in Stellar are actually signed positive values
  * (sequence numbers, timestamps, amounts), so we don't need the high bit
- * and can get away with 1-bit tagging and store them as "u63", separate
- * from everything else.
+ * and can get away with 1-bit tagging and store them as "positive i64",
+ * separate from everything else.
  *
  * We actually reserve the low _four_ bits, leaving 3 bits for 8 cases of
- * "non u63 values", some of which has some substructure of their own.
+ * "non positive-i64 values", some of which have substructure of their own.
  *
- *    0x_NNNN_NNNN_NNNN_NNNX  - u63 for any even X
+ *    0x_NNNN_NNNN_NNNN_NNNX  - positive i64, for any even X
  *    0x_0000_000N_NNNN_NNN1  - u32
  *    0x_0000_000N_NNNN_NNN3  - i32
  *    0x_NNNN_NNNN_NNNN_NNN5  - static: void, true, false, ...
@@ -49,7 +49,7 @@ typedef string SCSymbol<10>;
 
 enum SCValType
 {
-    SCV_U63 = 0,
+    SCV_POS_I64 = 0,
     SCV_U32 = 1,
     SCV_I32 = 2,
     SCV_STATIC = 3,
@@ -85,8 +85,8 @@ case SST_UNKNOWN_ERROR:
 
 union SCVal switch (SCValType type)
 {
-case SCV_U63:
-    uint64 u63;
+case SCV_POS_I64:
+    int64 pos_i64;
 case SCV_U32:
     uint32 u32;
 case SCV_I32:
@@ -106,31 +106,14 @@ case SCV_STATUS:
 enum SCObjectType
 {
     // We have a few objects that represent non-stellar-specific concepts
-    // like general-purpose maps, vectors, strings, numbers, blobs, etc.
+    // like general-purpose maps, vectors, numbers, blobs.
 
     SCO_BOX = 0,
     SCO_VEC = 1,
     SCO_MAP = 2,
     SCO_U64 = 3,
     SCO_I64 = 4,
-    SCO_STRING = 5,
-    SCO_BINARY = 6,
-    SCO_BIGINT = 7,
-    SCO_BIGRAT = 8,
-
-    // Followed by a potentially much longer list of object types
-    // corresponding to any XDR ledger types users might want to manipulate
-    // directly. Separate type codes are required for composite types and
-    // each of their members, if it is reasonable for a user to want to hold
-    // a handle to the member separately from the composite type.
-
-    SCO_LEDGERKEY = 9,
-    SCO_OPERATION = 10,
-    SCO_OPERATION_RESULT = 11,
-    SCO_TRANSACTION = 12,
-    SCO_ASSET = 13,
-    SCO_PRICE = 14,
-    SCO_ACCOUNTID = 15
+    SCO_BINARY = 5
 
     // TODO: add more
 };
@@ -144,23 +127,6 @@ struct SCMapEntry
 typedef SCVal SCVec<>;
 typedef SCMapEntry SCMap<>;
 
-struct SCBigInt
-{
-    bool positive;
-    opaque magnitude<>;
-};
-
-struct SCBigRat
-{
-    bool positive;
-    opaque numerator<>;
-    opaque denominator<>;
-};
-
-% struct Transaction;
-% struct Operation;
-% struct OperationResult;
-
 union SCObject switch (SCObjectType type)
 {
 case SCO_BOX:
@@ -173,27 +139,7 @@ case SCO_U64:
     uint64 u64;
 case SCO_I64:
     int64 i64;
-case SCO_STRING:
-    string str<>;
 case SCO_BINARY:
     opaque bin<>;
-case SCO_BIGINT:
-    SCBigInt bi;
-case SCO_BIGRAT:
-    SCBigRat br;
-case SCO_LEDGERKEY:
-    LedgerKey* lkey;
-case SCO_OPERATION:
-    Operation* op;
-case SCO_OPERATION_RESULT:
-    OperationResult* ores;
-case SCO_TRANSACTION:
-    Transaction* tx;
-case SCO_ASSET:
-    Asset asset;
-case SCO_PRICE:
-    Price price;
-case SCO_ACCOUNTID:
-    AccountID accountID;
 };
 }

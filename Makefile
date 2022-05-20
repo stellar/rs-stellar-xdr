@@ -1,11 +1,12 @@
-XDR_BASE_URL=https://github.com/stellar/stellar-core/raw/master/src
+XDR_BASE_URL=https://github.com/graydon/stellar-core/raw/rust-wasm-runtime/src
 XDR_FILES= \
 	xdr/Stellar-SCP.x \
 	xdr/Stellar-ledger-entries.x \
 	xdr/Stellar-ledger.x \
 	xdr/Stellar-overlay.x \
 	xdr/Stellar-transaction.x \
-	xdr/Stellar-types.x
+	xdr/Stellar-types.x \
+	xdr/Stellar-contract.x
 
 all: build test
 

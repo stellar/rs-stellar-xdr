@@ -17195,7 +17195,7 @@ impl WriteXdr for ScBigRat {
 // union with discriminant ScObjectType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ScObject {
-    Box(ScVal),
+    Box(Box<ScVal>),
     Vec(ScVec),
     Map(ScMap),
     U64(u64),
@@ -17241,7 +17241,7 @@ impl ReadXdr for ScObject {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScObjectType = <ScObjectType as ReadXdr>::read_xdr(r)?;
         let v = match dv.into() {
-            ScObjectType::Box => Self::Box(ScVal::read_xdr(r)?),
+            ScObjectType::Box => Self::Box(Box::<ScVal>::read_xdr(r)?),
             ScObjectType::Vec => Self::Vec(ScVec::read_xdr(r)?),
             ScObjectType::Map => Self::Map(ScMap::read_xdr(r)?),
             ScObjectType::U64 => Self::U64(u64::read_xdr(r)?),

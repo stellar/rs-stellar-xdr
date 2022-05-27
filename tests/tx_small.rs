@@ -1,4 +1,10 @@
-use stellar_xdr::*;
+use stellar_xdr::{
+    Error, Memo, MuxedAccount, Preconditions, SequenceNumber, Transaction, TransactionEnvelope,
+    TransactionExt, TransactionV1Envelope, Uint256,
+};
+
+#[cfg(feature = "std")]
+use stellar_xdr::WriteXdr;
 
 #[cfg(feature = "std")]
 #[test]
@@ -23,7 +29,7 @@ fn test_build_small_tx_with_std() -> Result<(), Error> {
 #[cfg(feature = "alloc")]
 #[test]
 fn test_build_small_tx_with_alloc() -> Result<(), Error> {
-    let _ = TransactionEnvelope::Tx(TransactionV1Envelope {
+    let _tx = TransactionEnvelope::Tx(TransactionV1Envelope {
         tx: Transaction {
             source_account: MuxedAccount::Ed25519(Uint256([0; 32])),
             fee: 0,

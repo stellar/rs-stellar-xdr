@@ -379,7 +379,6 @@ impl<T, const MAX: u32> VecM<T, MAX> {
         self.as_ref()
     }
 
-    #[must_use]
     pub fn iter(&self) -> Iter<'_, T> {
         self.0.iter()
     }
@@ -6415,7 +6414,6 @@ impl LedgerEntryChanges {
         self.as_ref()
     }
 
-    #[must_use]
     pub fn iter(&self) -> Iter<'_, LedgerEntryChange> {
         self.0.iter()
     }
@@ -7746,7 +7744,6 @@ impl PeerStatList {
         self.as_ref()
     }
 
-    #[must_use]
     pub fn iter(&self) -> Iter<'_, PeerStats> {
         self.0.iter()
     }

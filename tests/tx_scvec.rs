@@ -1,5 +1,5 @@
 #[cfg(feature = "std")]
-use stellar_xdr::*;
+use stellar_xdr::{Error, ScVal, ScVec, WriteXdr};
 
 #[cfg(feature = "std")]
 #[test]

@@ -8,6 +8,8 @@ XDR_FILES= \
 	xdr/Stellar-types.x \
 	xdr/Stellar-contract.x
 
+export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
+
 all: build test
 
 test:
@@ -16,12 +18,12 @@ test:
 	cargo test --no-default-features --features ''
 
 build: src/lib.rs
-	cargo build --no-default-features --features 'std'
-	cargo build --no-default-features --features 'alloc'
-	cargo build --no-default-features --features ''
-	cargo build --no-default-features --features 'std' --release --target wasm32-unknown-unknown
-	cargo build --no-default-features --features 'alloc' --release --target wasm32-unknown-unknown
-	cargo build --no-default-features --features '' --release --target wasm32-unknown-unknown
+	cargo clippy --no-default-features --features 'std'
+	cargo clippy --no-default-features --features 'alloc'
+	cargo clippy --no-default-features --features ''
+	cargo clippy --no-default-features --features 'std' --release --target wasm32-unknown-unknown
+	cargo clippy --no-default-features --features 'alloc' --release --target wasm32-unknown-unknown
+	cargo clippy --no-default-features --features '' --release --target wasm32-unknown-unknown
 
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'

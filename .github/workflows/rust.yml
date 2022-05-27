@@ -6,7 +6,7 @@ on:
   pull_request:
 
 env:
-  RUSTFLAGS: -D warnings
+  RUSTFLAGS: -Dwarnings -Dclippy::all -Dclippy::pedantic
 
 jobs:
 
@@ -67,11 +67,12 @@ jobs:
           target-${{ strategy.job-index }}
           target-
     - run: >
-        cargo check
+        cargo clippy
         --profile ${{ matrix.profile }}
         --target ${{ matrix.sys.target }}
         --no-default-features
         --features='${{ matrix.features }}'
+        --all-targets
     - if: matrix.sys.test
       run: >
         cargo test

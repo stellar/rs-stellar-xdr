@@ -9,6 +9,7 @@
 
 #![forbid(unsafe_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::missing_errors_doc)]
 
 use core::{fmt, fmt::Debug, slice::Iter};
 
@@ -52,6 +53,7 @@ pub enum Error {
 
 #[cfg(feature = "std")]
 impl error::Error for Error {
+    #[must_use]
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             Self::IO(e) => Some(e),
@@ -74,15 +76,14 @@ impl fmt::Display for Error {
 
 #[cfg(feature = "std")]
 impl From<io::Error> for Error {
+    #[must_use]
     fn from(e: io::Error) -> Self {
         Error::IO(e)
     }
 }
 
 impl From<Error> for () {
-    fn from(_: Error) -> () {
-        ()
-    }
+    fn from(_: Error) {}
 }
 
 #[allow(dead_code)]
@@ -264,10 +265,10 @@ impl<T: WriteXdr> WriteXdr for Option<T> {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         if let Some(t) = self {
-            (1 as u32).write_xdr(w)?;
+            1u32.write_xdr(w)?;
             t.write_xdr(w)?;
         } else {
-            (0 as u32).write_xdr(w)?;
+            0u32.write_xdr(w)?;
         }
         Ok(())
     }
@@ -354,18 +355,27 @@ where
     T: 'static;
 
 impl<T, const MAX: u32> VecM<T, MAX> {
+    #[must_use]
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    #[must_use]
     pub fn to_vec(self) -> Vec<T> {
         self.into()
     }
 
+    #[must_use]
     pub fn as_vec(&self) -> &Vec<T> {
         self.as_ref()
     }
 
+    #[must_use]
     pub fn as_slice(&self) -> &[T] {
         self.as_ref()
     }
@@ -389,12 +399,14 @@ impl<T, const MAX: u32> TryFrom<Vec<T>> for VecM<T, MAX> {
 }
 
 impl<T, const MAX: u32> From<VecM<T, MAX>> for Vec<T> {
+    #[must_use]
     fn from(v: VecM<T, MAX>) -> Self {
         v.0
     }
 }
 
 impl<T, const MAX: u32> AsRef<Vec<T>> for VecM<T, MAX> {
+    #[must_use]
     fn as_ref(&self) -> &Vec<T> {
         &self.0
     }
@@ -415,8 +427,15 @@ impl<T: Clone, const MAX: u32> TryFrom<&[T]> for VecM<T, MAX> {
 }
 
 impl<T, const MAX: u32> AsRef<[T]> for VecM<T, MAX> {
+    #[cfg(feature = "alloc")]
+    #[must_use]
     fn as_ref(&self) -> &[T] {
         self.0.as_ref()
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[T] {
+        self.0
     }
 }
 
@@ -503,8 +522,8 @@ impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
         w.write_all(&self.0)?;
 
         let pad_len = (4 - (len % 4)) % 4;
-        let mut pad = vec![0u8; pad_len as usize];
-        w.write_all(&mut pad)?;
+        let pad = vec![0u8; pad_len as usize];
+        w.write_all(&pad)?;
 
         Ok(())
     }
@@ -534,7 +553,7 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
         let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         len.write_xdr(w)?;
 
-        for t in self.0.iter() {
+        for t in &self.0 {
             t.write_xdr(w)?;
         }
 
@@ -555,18 +574,21 @@ mod tests {
 pub struct Value(pub VecM<u8>);
 
 impl From<Value> for VecM<u8> {
+    #[must_use]
     fn from(x: Value) -> Self {
         x.0
     }
 }
 
 impl From<VecM<u8>> for Value {
+    #[must_use]
     fn from(x: VecM<u8>) -> Self {
         Value(x)
     }
 }
 
 impl AsRef<VecM<u8>> for Value {
+    #[must_use]
     fn as_ref(&self) -> &VecM<u8> {
         &self.0
     }
@@ -658,6 +680,7 @@ impl TryFrom<i32> for ScpStatementType {
 }
 
 impl From<ScpStatementType> for i32 {
+    #[must_use]
     fn from(e: ScpStatementType) -> Self {
         e as Self
     }
@@ -892,7 +915,9 @@ pub enum ScpStatementPledges {
 }
 
 impl ScpStatementPledges {
+    #[must_use]
     pub fn discriminant(&self) -> ScpStatementType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Prepare(_) => ScpStatementType::Prepare,
             Self::Confirm(_) => ScpStatementType::Confirm,
@@ -906,7 +931,8 @@ impl ReadXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScpStatementType = <ScpStatementType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ScpStatementType::Prepare => Self::Prepare(ScpStatementPrepare::read_xdr(r)?),
             ScpStatementType::Confirm => Self::Confirm(ScpStatementConfirm::read_xdr(r)?),
             ScpStatementType::Externalize => {
@@ -924,6 +950,7 @@ impl WriteXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Prepare(v) => v.write_xdr(w)?,
             Self::Confirm(v) => v.write_xdr(w)?,
@@ -1081,18 +1108,21 @@ impl WriteXdr for ScpQuorumSet {
 pub struct AccountId(pub PublicKey);
 
 impl From<AccountId> for PublicKey {
+    #[must_use]
     fn from(x: AccountId) -> Self {
         x.0
     }
 }
 
 impl From<PublicKey> for AccountId {
+    #[must_use]
     fn from(x: PublicKey) -> Self {
         AccountId(x)
     }
 }
 
 impl AsRef<PublicKey> for AccountId {
+    #[must_use]
     fn as_ref(&self) -> &PublicKey {
         &self.0
     }
@@ -1122,18 +1152,21 @@ impl WriteXdr for AccountId {
 pub struct Thresholds(pub [u8; 4]);
 
 impl From<Thresholds> for [u8; 4] {
+    #[must_use]
     fn from(x: Thresholds) -> Self {
         x.0
     }
 }
 
 impl From<[u8; 4]> for Thresholds {
+    #[must_use]
     fn from(x: [u8; 4]) -> Self {
         Thresholds(x)
     }
 }
 
 impl AsRef<[u8; 4]> for Thresholds {
+    #[must_use]
     fn as_ref(&self) -> &[u8; 4] {
         &self.0
     }
@@ -1175,18 +1208,21 @@ pub type String64 = VecM<u8, 64>;
 pub struct SequenceNumber(pub i64);
 
 impl From<SequenceNumber> for i64 {
+    #[must_use]
     fn from(x: SequenceNumber) -> Self {
         x.0
     }
 }
 
 impl From<i64> for SequenceNumber {
+    #[must_use]
     fn from(x: i64) -> Self {
         SequenceNumber(x)
     }
 }
 
 impl AsRef<i64> for SequenceNumber {
+    #[must_use]
     fn as_ref(&self) -> &i64 {
         &self.0
     }
@@ -1216,18 +1252,21 @@ impl WriteXdr for SequenceNumber {
 pub struct TimePoint(pub u64);
 
 impl From<TimePoint> for u64 {
+    #[must_use]
     fn from(x: TimePoint) -> Self {
         x.0
     }
 }
 
 impl From<u64> for TimePoint {
+    #[must_use]
     fn from(x: u64) -> Self {
         TimePoint(x)
     }
 }
 
 impl AsRef<u64> for TimePoint {
+    #[must_use]
     fn as_ref(&self) -> &u64 {
         &self.0
     }
@@ -1257,18 +1296,21 @@ impl WriteXdr for TimePoint {
 pub struct Duration(pub u64);
 
 impl From<Duration> for u64 {
+    #[must_use]
     fn from(x: Duration) -> Self {
         x.0
     }
 }
 
 impl From<u64> for Duration {
+    #[must_use]
     fn from(x: u64) -> Self {
         Duration(x)
     }
 }
 
 impl AsRef<u64> for Duration {
+    #[must_use]
     fn as_ref(&self) -> &u64 {
         &self.0
     }
@@ -1298,18 +1340,21 @@ impl WriteXdr for Duration {
 pub struct DataValue(pub VecM<u8, 64>);
 
 impl From<DataValue> for VecM<u8, 64> {
+    #[must_use]
     fn from(x: DataValue) -> Self {
         x.0
     }
 }
 
 impl From<VecM<u8, 64>> for DataValue {
+    #[must_use]
     fn from(x: VecM<u8, 64>) -> Self {
         DataValue(x)
     }
 }
 
 impl AsRef<VecM<u8, 64>> for DataValue {
+    #[must_use]
     fn as_ref(&self) -> &VecM<u8, 64> {
         &self.0
     }
@@ -1339,18 +1384,21 @@ impl WriteXdr for DataValue {
 pub struct PoolId(pub Hash);
 
 impl From<PoolId> for Hash {
+    #[must_use]
     fn from(x: PoolId) -> Self {
         x.0
     }
 }
 
 impl From<Hash> for PoolId {
+    #[must_use]
     fn from(x: Hash) -> Self {
         PoolId(x)
     }
 }
 
 impl AsRef<Hash> for PoolId {
+    #[must_use]
     fn as_ref(&self) -> &Hash {
         &self.0
     }
@@ -1380,18 +1428,21 @@ impl WriteXdr for PoolId {
 pub struct AssetCode4(pub [u8; 4]);
 
 impl From<AssetCode4> for [u8; 4] {
+    #[must_use]
     fn from(x: AssetCode4) -> Self {
         x.0
     }
 }
 
 impl From<[u8; 4]> for AssetCode4 {
+    #[must_use]
     fn from(x: [u8; 4]) -> Self {
         AssetCode4(x)
     }
 }
 
 impl AsRef<[u8; 4]> for AssetCode4 {
+    #[must_use]
     fn as_ref(&self) -> &[u8; 4] {
         &self.0
     }
@@ -1421,18 +1472,21 @@ impl WriteXdr for AssetCode4 {
 pub struct AssetCode12(pub [u8; 12]);
 
 impl From<AssetCode12> for [u8; 12] {
+    #[must_use]
     fn from(x: AssetCode12) -> Self {
         x.0
     }
 }
 
 impl From<[u8; 12]> for AssetCode12 {
+    #[must_use]
     fn from(x: [u8; 12]) -> Self {
         AssetCode12(x)
     }
 }
 
 impl AsRef<[u8; 12]> for AssetCode12 {
+    #[must_use]
     fn as_ref(&self) -> &[u8; 12] {
         &self.0
     }
@@ -1491,6 +1545,7 @@ impl TryFrom<i32> for AssetType {
 }
 
 impl From<AssetType> for i32 {
+    #[must_use]
     fn from(e: AssetType) -> Self {
         e as Self
     }
@@ -1534,7 +1589,9 @@ pub enum AssetCode {
 }
 
 impl AssetCode {
+    #[must_use]
     pub fn discriminant(&self) -> AssetType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::CreditAlphanum4(_) => AssetType::CreditAlphanum4,
             Self::CreditAlphanum12(_) => AssetType::CreditAlphanum12,
@@ -1546,7 +1603,8 @@ impl ReadXdr for AssetCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AssetCode4::read_xdr(r)?),
             AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AssetCode12::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -1560,6 +1618,7 @@ impl WriteXdr for AssetCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::CreditAlphanum4(v) => v.write_xdr(w)?,
             Self::CreditAlphanum12(v) => v.write_xdr(w)?,
@@ -1659,7 +1718,9 @@ pub enum Asset {
 }
 
 impl Asset {
+    #[must_use]
     pub fn discriminant(&self) -> AssetType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => AssetType::Native,
             Self::CreditAlphanum4(_) => AssetType::CreditAlphanum4,
@@ -1672,7 +1733,8 @@ impl ReadXdr for Asset {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             AssetType::Native => Self::Native,
             AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
             AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
@@ -1687,6 +1749,7 @@ impl WriteXdr for Asset {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => ().write_xdr(w)?,
             Self::CreditAlphanum4(v) => v.write_xdr(w)?,
@@ -1799,6 +1862,7 @@ impl TryFrom<i32> for ThresholdIndexes {
 }
 
 impl From<ThresholdIndexes> for i32 {
+    #[must_use]
     fn from(e: ThresholdIndexes) -> Self {
         e as Self
     }
@@ -1864,6 +1928,7 @@ impl TryFrom<i32> for LedgerEntryType {
 }
 
 impl From<LedgerEntryType> for i32 {
+    #[must_use]
     fn from(e: LedgerEntryType) -> Self {
         e as Self
     }
@@ -1966,6 +2031,7 @@ impl TryFrom<i32> for AccountFlags {
 }
 
 impl From<AccountFlags> for i32 {
+    #[must_use]
     fn from(e: AccountFlags) -> Self {
         e as Self
     }
@@ -2014,18 +2080,21 @@ pub const MAX_SIGNERS: u64 = 20;
 pub struct SponsorshipDescriptor(pub Option<AccountId>);
 
 impl From<SponsorshipDescriptor> for Option<AccountId> {
+    #[must_use]
     fn from(x: SponsorshipDescriptor) -> Self {
         x.0
     }
 }
 
 impl From<Option<AccountId>> for SponsorshipDescriptor {
+    #[must_use]
     fn from(x: Option<AccountId>) -> Self {
         SponsorshipDescriptor(x)
     }
 }
 
 impl AsRef<Option<AccountId>> for SponsorshipDescriptor {
+    #[must_use]
     fn as_ref(&self) -> &Option<AccountId> {
         &self.0
     }
@@ -2108,7 +2177,9 @@ pub enum AccountEntryExtensionV2Ext {
 }
 
 impl AccountEntryExtensionV2Ext {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
             Self::V3(_) => 3,
@@ -2120,6 +2191,7 @@ impl ReadXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             3 => Self::V3(AccountEntryExtensionV3::read_xdr(r)?),
@@ -2134,6 +2206,7 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
             Self::V3(v) => v.write_xdr(w)?,
@@ -2209,7 +2282,9 @@ pub enum AccountEntryExtensionV1Ext {
 }
 
 impl AccountEntryExtensionV1Ext {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
             Self::V2(_) => 2,
@@ -2221,6 +2296,7 @@ impl ReadXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             2 => Self::V2(AccountEntryExtensionV2::read_xdr(r)?),
@@ -2235,6 +2311,7 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
             Self::V2(v) => v.write_xdr(w)?,
@@ -2302,7 +2379,9 @@ pub enum AccountEntryExt {
 }
 
 impl AccountEntryExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
@@ -2314,6 +2393,7 @@ impl ReadXdr for AccountEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             1 => Self::V1(AccountEntryExtensionV1::read_xdr(r)?),
@@ -2328,6 +2408,7 @@ impl WriteXdr for AccountEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
             Self::V1(v) => v.write_xdr(w)?,
@@ -2455,6 +2536,7 @@ impl TryFrom<i32> for TrustLineFlags {
 }
 
 impl From<TrustLineFlags> for i32 {
+    #[must_use]
     fn from(e: TrustLineFlags) -> Self {
         e as Self
     }
@@ -2523,6 +2605,7 @@ impl TryFrom<i32> for LiquidityPoolType {
 }
 
 impl From<LiquidityPoolType> for i32 {
+    #[must_use]
     fn from(e: LiquidityPoolType) -> Self {
         e as Self
     }
@@ -2574,7 +2657,9 @@ pub enum TrustLineAsset {
 }
 
 impl TrustLineAsset {
+    #[must_use]
     pub fn discriminant(&self) -> AssetType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => AssetType::Native,
             Self::CreditAlphanum4(_) => AssetType::CreditAlphanum4,
@@ -2588,7 +2673,8 @@ impl ReadXdr for TrustLineAsset {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             AssetType::Native => Self::Native,
             AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
             AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
@@ -2604,6 +2690,7 @@ impl WriteXdr for TrustLineAsset {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => ().write_xdr(w)?,
             Self::CreditAlphanum4(v) => v.write_xdr(w)?,
@@ -2629,7 +2716,9 @@ pub enum TrustLineEntryExtensionV2Ext {
 }
 
 impl TrustLineEntryExtensionV2Ext {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -2640,6 +2729,7 @@ impl ReadXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -2653,6 +2743,7 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -2717,7 +2808,9 @@ pub enum TrustLineEntryV1Ext {
 }
 
 impl TrustLineEntryV1Ext {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
             Self::V2(_) => 2,
@@ -2729,6 +2822,7 @@ impl ReadXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             2 => Self::V2(TrustLineEntryExtensionV2::read_xdr(r)?),
@@ -2743,6 +2837,7 @@ impl WriteXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
             Self::V2(v) => v.write_xdr(w)?,
@@ -2822,7 +2917,9 @@ pub enum TrustLineEntryExt {
 }
 
 impl TrustLineEntryExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
@@ -2834,6 +2931,7 @@ impl ReadXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             1 => Self::V1(TrustLineEntryV1::read_xdr(r)?),
@@ -2848,6 +2946,7 @@ impl WriteXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
             Self::V1(v) => v.write_xdr(w)?,
@@ -2958,6 +3057,7 @@ impl TryFrom<i32> for OfferEntryFlags {
 }
 
 impl From<OfferEntryFlags> for i32 {
+    #[must_use]
     fn from(e: OfferEntryFlags) -> Self {
         e as Self
     }
@@ -3001,7 +3101,9 @@ pub enum OfferEntryExt {
 }
 
 impl OfferEntryExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -3012,6 +3114,7 @@ impl ReadXdr for OfferEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -3025,6 +3128,7 @@ impl WriteXdr for OfferEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -3117,7 +3221,9 @@ pub enum DataEntryExt {
 }
 
 impl DataEntryExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -3128,6 +3234,7 @@ impl ReadXdr for DataEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -3141,6 +3248,7 @@ impl WriteXdr for DataEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -3239,6 +3347,7 @@ impl TryFrom<i32> for ClaimPredicateType {
 }
 
 impl From<ClaimPredicateType> for i32 {
+    #[must_use]
     fn from(e: ClaimPredicateType) -> Self {
         e as Self
     }
@@ -3292,7 +3401,9 @@ pub enum ClaimPredicate {
 }
 
 impl ClaimPredicate {
+    #[must_use]
     pub fn discriminant(&self) -> ClaimPredicateType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Unconditional => ClaimPredicateType::Unconditional,
             Self::And(_) => ClaimPredicateType::And,
@@ -3308,7 +3419,8 @@ impl ReadXdr for ClaimPredicate {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimPredicateType = <ClaimPredicateType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ClaimPredicateType::Unconditional => Self::Unconditional,
             ClaimPredicateType::And => Self::And(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
             ClaimPredicateType::Or => Self::Or(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
@@ -3326,6 +3438,7 @@ impl WriteXdr for ClaimPredicate {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Unconditional => ().write_xdr(w)?,
             Self::And(v) => v.write_xdr(w)?,
@@ -3366,6 +3479,7 @@ impl TryFrom<i32> for ClaimantType {
 }
 
 impl From<ClaimantType> for i32 {
+    #[must_use]
     fn from(e: ClaimantType) -> Self {
         e as Self
     }
@@ -3440,7 +3554,9 @@ pub enum Claimant {
 }
 
 impl Claimant {
+    #[must_use]
     pub fn discriminant(&self) -> ClaimantType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::ClaimantTypeV0(_) => ClaimantType::ClaimantTypeV0,
         }
@@ -3451,7 +3567,8 @@ impl ReadXdr for Claimant {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimantType = <ClaimantType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ClaimantType::ClaimantTypeV0 => Self::ClaimantTypeV0(ClaimantV0::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -3464,6 +3581,7 @@ impl WriteXdr for Claimant {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::ClaimantTypeV0(v) => v.write_xdr(w)?,
         };
@@ -3499,6 +3617,7 @@ impl TryFrom<i32> for ClaimableBalanceIdType {
 }
 
 impl From<ClaimableBalanceIdType> for i32 {
+    #[must_use]
     fn from(e: ClaimableBalanceIdType) -> Self {
         e as Self
     }
@@ -3536,7 +3655,9 @@ pub enum ClaimableBalanceId {
 }
 
 impl ClaimableBalanceId {
+    #[must_use]
     pub fn discriminant(&self) -> ClaimableBalanceIdType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::ClaimableBalanceIdTypeV0(_) => ClaimableBalanceIdType::ClaimableBalanceIdTypeV0,
         }
@@ -3547,7 +3668,8 @@ impl ReadXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ClaimableBalanceIdType::ClaimableBalanceIdTypeV0 => {
                 Self::ClaimableBalanceIdTypeV0(Hash::read_xdr(r)?)
             }
@@ -3562,6 +3684,7 @@ impl WriteXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::ClaimableBalanceIdTypeV0(v) => v.write_xdr(w)?,
         };
@@ -3599,6 +3722,7 @@ impl TryFrom<i32> for ClaimableBalanceFlags {
 }
 
 impl From<ClaimableBalanceFlags> for i32 {
+    #[must_use]
     fn from(e: ClaimableBalanceFlags) -> Self {
         e as Self
     }
@@ -3642,7 +3766,9 @@ pub enum ClaimableBalanceEntryExtensionV1Ext {
 }
 
 impl ClaimableBalanceEntryExtensionV1Ext {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -3653,6 +3779,7 @@ impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -3666,6 +3793,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -3730,7 +3858,9 @@ pub enum ClaimableBalanceEntryExt {
 }
 
 impl ClaimableBalanceEntryExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
@@ -3742,6 +3872,7 @@ impl ReadXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             1 => Self::V1(ClaimableBalanceEntryExtensionV1::read_xdr(r)?),
@@ -3756,6 +3887,7 @@ impl WriteXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
             Self::V1(v) => v.write_xdr(w)?,
@@ -3933,7 +4065,9 @@ pub enum LiquidityPoolEntryBody {
 }
 
 impl LiquidityPoolEntryBody {
+    #[must_use]
     pub fn discriminant(&self) -> LiquidityPoolType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::LiquidityPoolConstantProduct(_) => {
                 LiquidityPoolType::LiquidityPoolConstantProduct
@@ -3946,7 +4080,8 @@ impl ReadXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             LiquidityPoolType::LiquidityPoolConstantProduct => {
                 Self::LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct::read_xdr(r)?)
             }
@@ -3961,6 +4096,7 @@ impl WriteXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::LiquidityPoolConstantProduct(v) => v.write_xdr(w)?,
         };
@@ -4031,7 +4167,9 @@ pub enum LedgerEntryExtensionV1Ext {
 }
 
 impl LedgerEntryExtensionV1Ext {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -4042,6 +4180,7 @@ impl ReadXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -4055,6 +4194,7 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -4131,7 +4271,9 @@ pub enum LedgerEntryData {
 }
 
 impl LedgerEntryData {
+    #[must_use]
     pub fn discriminant(&self) -> LedgerEntryType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Account(_) => LedgerEntryType::Account,
             Self::Trustline(_) => LedgerEntryType::Trustline,
@@ -4147,7 +4289,8 @@ impl ReadXdr for LedgerEntryData {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             LedgerEntryType::Account => Self::Account(AccountEntry::read_xdr(r)?),
             LedgerEntryType::Trustline => Self::Trustline(TrustLineEntry::read_xdr(r)?),
             LedgerEntryType::Offer => Self::Offer(OfferEntry::read_xdr(r)?),
@@ -4167,6 +4310,7 @@ impl WriteXdr for LedgerEntryData {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Account(v) => v.write_xdr(w)?,
             Self::Trustline(v) => v.write_xdr(w)?,
@@ -4197,7 +4341,9 @@ pub enum LedgerEntryExt {
 }
 
 impl LedgerEntryExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
@@ -4209,6 +4355,7 @@ impl ReadXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             1 => Self::V1(LedgerEntryExtensionV1::read_xdr(r)?),
@@ -4223,6 +4370,7 @@ impl WriteXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
             Self::V1(v) => v.write_xdr(w)?,
@@ -4535,7 +4683,9 @@ pub enum LedgerKey {
 }
 
 impl LedgerKey {
+    #[must_use]
     pub fn discriminant(&self) -> LedgerEntryType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Account(_) => LedgerEntryType::Account,
             Self::Trustline(_) => LedgerEntryType::Trustline,
@@ -4551,7 +4701,8 @@ impl ReadXdr for LedgerKey {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             LedgerEntryType::Account => Self::Account(LedgerKeyAccount::read_xdr(r)?),
             LedgerEntryType::Trustline => Self::Trustline(LedgerKeyTrustLine::read_xdr(r)?),
             LedgerEntryType::Offer => Self::Offer(LedgerKeyOffer::read_xdr(r)?),
@@ -4573,6 +4724,7 @@ impl WriteXdr for LedgerKey {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Account(v) => v.write_xdr(w)?,
             Self::Trustline(v) => v.write_xdr(w)?,
@@ -4634,6 +4786,7 @@ impl TryFrom<i32> for EnvelopeType {
 }
 
 impl From<EnvelopeType> for i32 {
+    #[must_use]
     fn from(e: EnvelopeType) -> Self {
         e as Self
     }
@@ -4664,18 +4817,21 @@ impl WriteXdr for EnvelopeType {
 pub struct UpgradeType(pub VecM<u8, 128>);
 
 impl From<UpgradeType> for VecM<u8, 128> {
+    #[must_use]
     fn from(x: UpgradeType) -> Self {
         x.0
     }
 }
 
 impl From<VecM<u8, 128>> for UpgradeType {
+    #[must_use]
     fn from(x: VecM<u8, 128>) -> Self {
         UpgradeType(x)
     }
 }
 
 impl AsRef<VecM<u8, 128>> for UpgradeType {
+    #[must_use]
     fn as_ref(&self) -> &VecM<u8, 128> {
         &self.0
     }
@@ -4728,6 +4884,7 @@ impl TryFrom<i32> for StellarValueType {
 }
 
 impl From<StellarValueType> for i32 {
+    #[must_use]
     fn from(e: StellarValueType) -> Self {
         e as Self
     }
@@ -4801,7 +4958,9 @@ pub enum StellarValueExt {
 }
 
 impl StellarValueExt {
+    #[must_use]
     pub fn discriminant(&self) -> StellarValueType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Basic => StellarValueType::Basic,
             Self::Signed(_) => StellarValueType::Signed,
@@ -4813,7 +4972,8 @@ impl ReadXdr for StellarValueExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: StellarValueType = <StellarValueType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             StellarValueType::Basic => Self::Basic,
             StellarValueType::Signed => Self::Signed(LedgerCloseValueSignature::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -4827,6 +4987,7 @@ impl WriteXdr for StellarValueExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Basic => ().write_xdr(w)?,
             Self::Signed(v) => v.write_xdr(w)?,
@@ -4931,6 +5092,7 @@ impl TryFrom<i32> for LedgerHeaderFlags {
 }
 
 impl From<LedgerHeaderFlags> for i32 {
+    #[must_use]
     fn from(e: LedgerHeaderFlags) -> Self {
         e as Self
     }
@@ -4968,7 +5130,9 @@ pub enum LedgerHeaderExtensionV1Ext {
 }
 
 impl LedgerHeaderExtensionV1Ext {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -4979,6 +5143,7 @@ impl ReadXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -4992,6 +5157,7 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -5056,7 +5222,9 @@ pub enum LedgerHeaderExt {
 }
 
 impl LedgerHeaderExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
@@ -5068,6 +5236,7 @@ impl ReadXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             1 => Self::V1(LedgerHeaderExtensionV1::read_xdr(r)?),
@@ -5082,6 +5251,7 @@ impl WriteXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
             Self::V1(v) => v.write_xdr(w)?,
@@ -5236,6 +5406,7 @@ impl TryFrom<i32> for LedgerUpgradeType {
 }
 
 impl From<LedgerUpgradeType> for i32 {
+    #[must_use]
     fn from(e: LedgerUpgradeType) -> Self {
         e as Self
     }
@@ -5285,7 +5456,9 @@ pub enum LedgerUpgrade {
 }
 
 impl LedgerUpgrade {
+    #[must_use]
     pub fn discriminant(&self) -> LedgerUpgradeType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Version(_) => LedgerUpgradeType::Version,
             Self::BaseFee(_) => LedgerUpgradeType::BaseFee,
@@ -5300,7 +5473,8 @@ impl ReadXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             LedgerUpgradeType::Version => Self::Version(u32::read_xdr(r)?),
             LedgerUpgradeType::BaseFee => Self::BaseFee(u32::read_xdr(r)?),
             LedgerUpgradeType::MaxTxSetSize => Self::MaxTxSetSize(u32::read_xdr(r)?),
@@ -5317,6 +5491,7 @@ impl WriteXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Version(v) => v.write_xdr(w)?,
             Self::BaseFee(v) => v.write_xdr(w)?,
@@ -5367,6 +5542,7 @@ impl TryFrom<i32> for BucketEntryType {
 }
 
 impl From<BucketEntryType> for i32 {
+    #[must_use]
     fn from(e: BucketEntryType) -> Self {
         e as Self
     }
@@ -5404,7 +5580,9 @@ pub enum BucketMetadataExt {
 }
 
 impl BucketMetadataExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -5415,6 +5593,7 @@ impl ReadXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -5428,6 +5607,7 @@ impl WriteXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -5500,7 +5680,9 @@ pub enum BucketEntry {
 }
 
 impl BucketEntry {
+    #[must_use]
     pub fn discriminant(&self) -> BucketEntryType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Liveentry(_) => BucketEntryType::Liveentry,
             Self::Initentry(_) => BucketEntryType::Initentry,
@@ -5514,7 +5696,8 @@ impl ReadXdr for BucketEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: BucketEntryType = <BucketEntryType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             BucketEntryType::Liveentry => Self::Liveentry(LedgerEntry::read_xdr(r)?),
             BucketEntryType::Initentry => Self::Initentry(LedgerEntry::read_xdr(r)?),
             BucketEntryType::Deadentry => Self::Deadentry(LedgerKey::read_xdr(r)?),
@@ -5530,6 +5713,7 @@ impl WriteXdr for BucketEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Liveentry(v) => v.write_xdr(w)?,
             Self::Initentry(v) => v.write_xdr(w)?,
@@ -5650,7 +5834,9 @@ pub enum TransactionHistoryEntryExt {
 }
 
 impl TransactionHistoryEntryExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -5661,6 +5847,7 @@ impl ReadXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -5674,6 +5861,7 @@ impl WriteXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -5740,7 +5928,9 @@ pub enum TransactionHistoryResultEntryExt {
 }
 
 impl TransactionHistoryResultEntryExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -5751,6 +5941,7 @@ impl ReadXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -5764,6 +5955,7 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -5830,7 +6022,9 @@ pub enum LedgerHeaderHistoryEntryExt {
 }
 
 impl LedgerHeaderHistoryEntryExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -5841,6 +6035,7 @@ impl ReadXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -5854,6 +6049,7 @@ impl WriteXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -5986,7 +6182,9 @@ pub enum ScpHistoryEntry {
 }
 
 impl ScpHistoryEntry {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
         }
@@ -5997,6 +6195,7 @@ impl ReadXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0(ScpHistoryEntryV0::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -6010,6 +6209,7 @@ impl WriteXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(v) => v.write_xdr(w)?,
         };
@@ -6054,6 +6254,7 @@ impl TryFrom<i32> for LedgerEntryChangeType {
 }
 
 impl From<LedgerEntryChangeType> for i32 {
+    #[must_use]
     fn from(e: LedgerEntryChangeType) -> Self {
         e as Self
     }
@@ -6100,7 +6301,9 @@ pub enum LedgerEntryChange {
 }
 
 impl LedgerEntryChange {
+    #[must_use]
     pub fn discriminant(&self) -> LedgerEntryChangeType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Created(_) => LedgerEntryChangeType::Created,
             Self::Updated(_) => LedgerEntryChangeType::Updated,
@@ -6114,7 +6317,8 @@ impl ReadXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             LedgerEntryChangeType::Created => Self::Created(LedgerEntry::read_xdr(r)?),
             LedgerEntryChangeType::Updated => Self::Updated(LedgerEntry::read_xdr(r)?),
             LedgerEntryChangeType::Removed => Self::Removed(LedgerKey::read_xdr(r)?),
@@ -6130,6 +6334,7 @@ impl WriteXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Created(v) => v.write_xdr(w)?,
             Self::Updated(v) => v.write_xdr(w)?,
@@ -6148,18 +6353,21 @@ impl WriteXdr for LedgerEntryChange {
 pub struct LedgerEntryChanges(pub VecM<LedgerEntryChange>);
 
 impl From<LedgerEntryChanges> for VecM<LedgerEntryChange> {
+    #[must_use]
     fn from(x: LedgerEntryChanges) -> Self {
         x.0
     }
 }
 
 impl From<VecM<LedgerEntryChange>> for LedgerEntryChanges {
+    #[must_use]
     fn from(x: VecM<LedgerEntryChange>) -> Self {
         LedgerEntryChanges(x)
     }
 }
 
 impl AsRef<VecM<LedgerEntryChange>> for LedgerEntryChanges {
+    #[must_use]
     fn as_ref(&self) -> &VecM<LedgerEntryChange> {
         &self.0
     }
@@ -6182,18 +6390,27 @@ impl WriteXdr for LedgerEntryChanges {
 }
 
 impl LedgerEntryChanges {
+    #[must_use]
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    #[must_use]
     pub fn to_vec(self) -> Vec<LedgerEntryChange> {
         self.into()
     }
 
+    #[must_use]
     pub fn as_vec(&self) -> &Vec<LedgerEntryChange> {
         self.as_ref()
     }
 
+    #[must_use]
     pub fn as_slice(&self) -> &[LedgerEntryChange] {
         self.as_ref()
     }
@@ -6204,6 +6421,7 @@ impl LedgerEntryChanges {
 }
 
 impl From<LedgerEntryChanges> for Vec<LedgerEntryChange> {
+    #[must_use]
     fn from(x: LedgerEntryChanges) -> Self {
         x.0 .0
     }
@@ -6217,14 +6435,22 @@ impl TryFrom<Vec<LedgerEntryChange>> for LedgerEntryChanges {
 }
 
 impl AsRef<Vec<LedgerEntryChange>> for LedgerEntryChanges {
+    #[must_use]
     fn as_ref(&self) -> &Vec<LedgerEntryChange> {
         &self.0 .0
     }
 }
 
 impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
+    #[cfg(feature = "alloc")]
+    #[must_use]
     fn as_ref(&self) -> &[LedgerEntryChange] {
         &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[LedgerEntryChange] {
+        self.0 .0
     }
 }
 
@@ -6350,7 +6576,9 @@ pub enum TransactionMeta {
 }
 
 impl TransactionMeta {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
@@ -6363,6 +6591,7 @@ impl ReadXdr for TransactionMeta {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0(VecM::<OperationMeta>::read_xdr(r)?),
             1 => Self::V1(TransactionMetaV1::read_xdr(r)?),
@@ -6378,6 +6607,7 @@ impl WriteXdr for TransactionMeta {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(v) => v.write_xdr(w)?,
             Self::V1(v) => v.write_xdr(w)?,
@@ -6526,7 +6756,9 @@ pub enum LedgerCloseMeta {
 }
 
 impl LedgerCloseMeta {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
         }
@@ -6537,6 +6769,7 @@ impl ReadXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -6550,6 +6783,7 @@ impl WriteXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(v) => v.write_xdr(w)?,
         };
@@ -6597,6 +6831,7 @@ impl TryFrom<i32> for ErrorCode {
 }
 
 impl From<ErrorCode> for i32 {
+    #[must_use]
     fn from(e: ErrorCode) -> Self {
         e as Self
     }
@@ -6841,6 +7076,7 @@ impl TryFrom<i32> for IpAddrType {
 }
 
 impl From<IpAddrType> for i32 {
+    #[must_use]
     fn from(e: IpAddrType) -> Self {
         e as Self
     }
@@ -6881,7 +7117,9 @@ pub enum PeerAddressIp {
 }
 
 impl PeerAddressIp {
+    #[must_use]
     pub fn discriminant(&self) -> IpAddrType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::IPv4(_) => IpAddrType::IPv4,
             Self::IPv6(_) => IpAddrType::IPv6,
@@ -6893,7 +7131,8 @@ impl ReadXdr for PeerAddressIp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: IpAddrType = <IpAddrType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             IpAddrType::IPv4 => Self::IPv4(<[u8; 4]>::read_xdr(r)?),
             IpAddrType::IPv6 => Self::IPv6(<[u8; 16]>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -6907,6 +7146,7 @@ impl WriteXdr for PeerAddressIp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::IPv4(v) => v.write_xdr(w)?,
             Self::IPv6(v) => v.write_xdr(w)?,
@@ -7041,6 +7281,7 @@ impl TryFrom<i32> for MessageType {
 }
 
 impl From<MessageType> for i32 {
+    #[must_use]
     fn from(e: MessageType) -> Self {
         e as Self
     }
@@ -7124,6 +7365,7 @@ impl TryFrom<i32> for SurveyMessageCommandType {
 }
 
 impl From<SurveyMessageCommandType> for i32 {
+    #[must_use]
     fn from(e: SurveyMessageCommandType) -> Self {
         e as Self
     }
@@ -7232,18 +7474,21 @@ impl WriteXdr for SignedSurveyRequestMessage {
 pub struct EncryptedBody(pub VecM<u8, 64000>);
 
 impl From<EncryptedBody> for VecM<u8, 64000> {
+    #[must_use]
     fn from(x: EncryptedBody) -> Self {
         x.0
     }
 }
 
 impl From<VecM<u8, 64000>> for EncryptedBody {
+    #[must_use]
     fn from(x: VecM<u8, 64000>) -> Self {
         EncryptedBody(x)
     }
 }
 
 impl AsRef<VecM<u8, 64000>> for EncryptedBody {
+    #[must_use]
     fn as_ref(&self) -> &VecM<u8, 64000> {
         &self.0
     }
@@ -7438,18 +7683,21 @@ impl WriteXdr for PeerStats {
 pub struct PeerStatList(pub VecM<PeerStats, 25>);
 
 impl From<PeerStatList> for VecM<PeerStats, 25> {
+    #[must_use]
     fn from(x: PeerStatList) -> Self {
         x.0
     }
 }
 
 impl From<VecM<PeerStats, 25>> for PeerStatList {
+    #[must_use]
     fn from(x: VecM<PeerStats, 25>) -> Self {
         PeerStatList(x)
     }
 }
 
 impl AsRef<VecM<PeerStats, 25>> for PeerStatList {
+    #[must_use]
     fn as_ref(&self) -> &VecM<PeerStats, 25> {
         &self.0
     }
@@ -7472,18 +7720,27 @@ impl WriteXdr for PeerStatList {
 }
 
 impl PeerStatList {
+    #[must_use]
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    #[must_use]
     pub fn to_vec(self) -> Vec<PeerStats> {
         self.into()
     }
 
+    #[must_use]
     pub fn as_vec(&self) -> &Vec<PeerStats> {
         self.as_ref()
     }
 
+    #[must_use]
     pub fn as_slice(&self) -> &[PeerStats] {
         self.as_ref()
     }
@@ -7494,6 +7751,7 @@ impl PeerStatList {
 }
 
 impl From<PeerStatList> for Vec<PeerStats> {
+    #[must_use]
     fn from(x: PeerStatList) -> Self {
         x.0 .0
     }
@@ -7507,14 +7765,22 @@ impl TryFrom<Vec<PeerStats>> for PeerStatList {
 }
 
 impl AsRef<Vec<PeerStats>> for PeerStatList {
+    #[must_use]
     fn as_ref(&self) -> &Vec<PeerStats> {
         &self.0 .0
     }
 }
 
 impl AsRef<[PeerStats]> for PeerStatList {
+    #[cfg(feature = "alloc")]
+    #[must_use]
     fn as_ref(&self) -> &[PeerStats] {
         &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[PeerStats] {
+        self.0 .0
     }
 }
 
@@ -7575,7 +7841,9 @@ pub enum SurveyResponseBody {
 }
 
 impl SurveyResponseBody {
+    #[must_use]
     pub fn discriminant(&self) -> SurveyMessageCommandType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::SurveyTopology(_) => SurveyMessageCommandType::SurveyTopology,
         }
@@ -7586,7 +7854,8 @@ impl ReadXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: SurveyMessageCommandType = <SurveyMessageCommandType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             SurveyMessageCommandType::SurveyTopology => {
                 Self::SurveyTopology(TopologyResponseBody::read_xdr(r)?)
             }
@@ -7601,6 +7870,7 @@ impl WriteXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::SurveyTopology(v) => v.write_xdr(w)?,
         };
@@ -7674,7 +7944,9 @@ pub enum StellarMessage {
 }
 
 impl StellarMessage {
+    #[must_use]
     pub fn discriminant(&self) -> MessageType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::ErrorMsg(_) => MessageType::ErrorMsg,
             Self::Hello(_) => MessageType::Hello,
@@ -7700,7 +7972,8 @@ impl ReadXdr for StellarMessage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: MessageType = <MessageType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             MessageType::ErrorMsg => Self::ErrorMsg(SError::read_xdr(r)?),
             MessageType::Hello => Self::Hello(Hello::read_xdr(r)?),
             MessageType::Auth => Self::Auth(Auth::read_xdr(r)?),
@@ -7732,6 +8005,7 @@ impl WriteXdr for StellarMessage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::ErrorMsg(v) => v.write_xdr(w)?,
             Self::Hello(v) => v.write_xdr(w)?,
@@ -7811,7 +8085,9 @@ pub enum AuthenticatedMessage {
 }
 
 impl AuthenticatedMessage {
+    #[must_use]
     pub fn discriminant(&self) -> u32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
         }
@@ -7822,6 +8098,7 @@ impl ReadXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: u32 = <u32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0(AuthenticatedMessageV0::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -7835,6 +8112,7 @@ impl WriteXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(v) => v.write_xdr(w)?,
         };
@@ -7857,7 +8135,9 @@ pub enum LiquidityPoolParameters {
 }
 
 impl LiquidityPoolParameters {
+    #[must_use]
     pub fn discriminant(&self) -> LiquidityPoolType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::LiquidityPoolConstantProduct(_) => {
                 LiquidityPoolType::LiquidityPoolConstantProduct
@@ -7870,7 +8150,8 @@ impl ReadXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             LiquidityPoolType::LiquidityPoolConstantProduct => Self::LiquidityPoolConstantProduct(
                 LiquidityPoolConstantProductParameters::read_xdr(r)?,
             ),
@@ -7885,6 +8166,7 @@ impl WriteXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::LiquidityPoolConstantProduct(v) => v.write_xdr(w)?,
         };
@@ -7947,7 +8229,9 @@ pub enum MuxedAccount {
 }
 
 impl MuxedAccount {
+    #[must_use]
     pub fn discriminant(&self) -> CryptoKeyType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ed25519(_) => CryptoKeyType::Ed25519,
             Self::MuxedEd25519(_) => CryptoKeyType::MuxedEd25519,
@@ -7959,7 +8243,8 @@ impl ReadXdr for MuxedAccount {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: CryptoKeyType = <CryptoKeyType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             CryptoKeyType::Ed25519 => Self::Ed25519(Uint256::read_xdr(r)?),
             CryptoKeyType::MuxedEd25519 => Self::MuxedEd25519(MuxedAccountMed25519::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -7973,6 +8258,7 @@ impl WriteXdr for MuxedAccount {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ed25519(v) => v.write_xdr(w)?,
             Self::MuxedEd25519(v) => v.write_xdr(w)?,
@@ -8111,6 +8397,7 @@ impl TryFrom<i32> for OperationType {
 }
 
 impl From<OperationType> for i32 {
+    #[must_use]
     fn from(e: OperationType) -> Self {
         e as Self
     }
@@ -8542,7 +8829,9 @@ pub enum ChangeTrustAsset {
 }
 
 impl ChangeTrustAsset {
+    #[must_use]
     pub fn discriminant(&self) -> AssetType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => AssetType::Native,
             Self::CreditAlphanum4(_) => AssetType::CreditAlphanum4,
@@ -8556,7 +8845,8 @@ impl ReadXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             AssetType::Native => Self::Native,
             AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
             AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
@@ -8572,6 +8862,7 @@ impl WriteXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => ().write_xdr(w)?,
             Self::CreditAlphanum4(v) => v.write_xdr(w)?,
@@ -8844,6 +9135,7 @@ impl TryFrom<i32> for RevokeSponsorshipType {
 }
 
 impl From<RevokeSponsorshipType> for i32 {
+    #[must_use]
     fn from(e: RevokeSponsorshipType) -> Self {
         e as Self
     }
@@ -8921,7 +9213,9 @@ pub enum RevokeSponsorshipOp {
 }
 
 impl RevokeSponsorshipOp {
+    #[must_use]
     pub fn discriminant(&self) -> RevokeSponsorshipType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::LedgerEntry(_) => RevokeSponsorshipType::LedgerEntry,
             Self::Signer(_) => RevokeSponsorshipType::Signer,
@@ -8933,7 +9227,8 @@ impl ReadXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             RevokeSponsorshipType::LedgerEntry => Self::LedgerEntry(LedgerKey::read_xdr(r)?),
             RevokeSponsorshipType::Signer => Self::Signer(RevokeSponsorshipOpSigner::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -8947,6 +9242,7 @@ impl WriteXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::LedgerEntry(v) => v.write_xdr(w)?,
             Self::Signer(v) => v.write_xdr(w)?,
@@ -9239,7 +9535,9 @@ pub enum OperationBody {
 }
 
 impl OperationBody {
+    #[must_use]
     pub fn discriminant(&self) -> OperationType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::CreateAccount(_) => OperationType::CreateAccount,
             Self::Payment(_) => OperationType::Payment,
@@ -9273,7 +9571,8 @@ impl ReadXdr for OperationBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             OperationType::CreateAccount => Self::CreateAccount(CreateAccountOp::read_xdr(r)?),
             OperationType::Payment => Self::Payment(PaymentOp::read_xdr(r)?),
             OperationType::PathPaymentStrictReceive => {
@@ -9333,6 +9632,7 @@ impl WriteXdr for OperationBody {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::CreateAccount(v) => v.write_xdr(w)?,
             Self::Payment(v) => v.write_xdr(w)?,
@@ -9563,7 +9863,9 @@ pub enum HashIdPreimage {
 }
 
 impl HashIdPreimage {
+    #[must_use]
     pub fn discriminant(&self) -> EnvelopeType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::OpId(_) => EnvelopeType::OpId,
             Self::PoolRevokeOpId(_) => EnvelopeType::PoolRevokeOpId,
@@ -9575,7 +9877,8 @@ impl ReadXdr for HashIdPreimage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             EnvelopeType::OpId => Self::OpId(HashIdPreimageOperationId::read_xdr(r)?),
             EnvelopeType::PoolRevokeOpId => {
                 Self::PoolRevokeOpId(HashIdPreimageRevokeId::read_xdr(r)?)
@@ -9591,6 +9894,7 @@ impl WriteXdr for HashIdPreimage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::OpId(v) => v.write_xdr(w)?,
             Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
@@ -9639,6 +9943,7 @@ impl TryFrom<i32> for MemoType {
 }
 
 impl From<MemoType> for i32 {
+    #[must_use]
     fn from(e: MemoType) -> Self {
         e as Self
     }
@@ -9688,7 +9993,9 @@ pub enum Memo {
 }
 
 impl Memo {
+    #[must_use]
     pub fn discriminant(&self) -> MemoType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::None => MemoType::None,
             Self::Text(_) => MemoType::Text,
@@ -9703,7 +10010,8 @@ impl ReadXdr for Memo {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: MemoType = <MemoType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             MemoType::None => Self::None,
             MemoType::Text => Self::Text(VecM::<u8, 28>::read_xdr(r)?),
             MemoType::Id => Self::Id(u64::read_xdr(r)?),
@@ -9720,6 +10028,7 @@ impl WriteXdr for Memo {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::None => ().write_xdr(w)?,
             Self::Text(v) => v.write_xdr(w)?,
@@ -9903,6 +10212,7 @@ impl TryFrom<i32> for PreconditionType {
 }
 
 impl From<PreconditionType> for i32 {
+    #[must_use]
     fn from(e: PreconditionType) -> Self {
         e as Self
     }
@@ -9946,7 +10256,9 @@ pub enum Preconditions {
 }
 
 impl Preconditions {
+    #[must_use]
     pub fn discriminant(&self) -> PreconditionType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::None => PreconditionType::None,
             Self::Time(_) => PreconditionType::Time,
@@ -9959,7 +10271,8 @@ impl ReadXdr for Preconditions {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PreconditionType = <PreconditionType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             PreconditionType::None => Self::None,
             PreconditionType::Time => Self::Time(TimeBounds::read_xdr(r)?),
             PreconditionType::V2 => Self::V2(PreconditionsV2::read_xdr(r)?),
@@ -9974,6 +10287,7 @@ impl WriteXdr for Preconditions {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::None => ().write_xdr(w)?,
             Self::Time(v) => v.write_xdr(w)?,
@@ -10004,7 +10318,9 @@ pub enum TransactionV0Ext {
 }
 
 impl TransactionV0Ext {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -10015,6 +10331,7 @@ impl ReadXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -10028,6 +10345,7 @@ impl WriteXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -10143,7 +10461,9 @@ pub enum TransactionExt {
 }
 
 impl TransactionExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -10154,6 +10474,7 @@ impl ReadXdr for TransactionExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -10167,6 +10488,7 @@ impl WriteXdr for TransactionExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -10293,7 +10615,9 @@ pub enum FeeBumpTransactionInnerTx {
 }
 
 impl FeeBumpTransactionInnerTx {
+    #[must_use]
     pub fn discriminant(&self) -> EnvelopeType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Tx(_) => EnvelopeType::Tx,
         }
@@ -10304,7 +10628,8 @@ impl ReadXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             EnvelopeType::Tx => Self::Tx(TransactionV1Envelope::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -10317,6 +10642,7 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Tx(v) => v.write_xdr(w)?,
         };
@@ -10339,7 +10665,9 @@ pub enum FeeBumpTransactionExt {
 }
 
 impl FeeBumpTransactionExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -10350,6 +10678,7 @@ impl ReadXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -10363,6 +10692,7 @@ impl WriteXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -10477,7 +10807,9 @@ pub enum TransactionEnvelope {
 }
 
 impl TransactionEnvelope {
+    #[must_use]
     pub fn discriminant(&self) -> EnvelopeType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::TxV0(_) => EnvelopeType::TxV0,
             Self::Tx(_) => EnvelopeType::Tx,
@@ -10490,7 +10822,8 @@ impl ReadXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             EnvelopeType::TxV0 => Self::TxV0(TransactionV0Envelope::read_xdr(r)?),
             EnvelopeType::Tx => Self::Tx(TransactionV1Envelope::read_xdr(r)?),
             EnvelopeType::TxFeeBump => Self::TxFeeBump(FeeBumpTransactionEnvelope::read_xdr(r)?),
@@ -10505,6 +10838,7 @@ impl WriteXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::TxV0(v) => v.write_xdr(w)?,
             Self::Tx(v) => v.write_xdr(w)?,
@@ -10533,7 +10867,9 @@ pub enum TransactionSignaturePayloadTaggedTransaction {
 }
 
 impl TransactionSignaturePayloadTaggedTransaction {
+    #[must_use]
     pub fn discriminant(&self) -> EnvelopeType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Tx(_) => EnvelopeType::Tx,
             Self::TxFeeBump(_) => EnvelopeType::TxFeeBump,
@@ -10545,7 +10881,8 @@ impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             EnvelopeType::Tx => Self::Tx(Transaction::read_xdr(r)?),
             EnvelopeType::TxFeeBump => Self::TxFeeBump(FeeBumpTransaction::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -10559,6 +10896,7 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Tx(v) => v.write_xdr(w)?,
             Self::TxFeeBump(v) => v.write_xdr(w)?,
@@ -10642,6 +10980,7 @@ impl TryFrom<i32> for ClaimAtomType {
 }
 
 impl From<ClaimAtomType> for i32 {
+    #[must_use]
     fn from(e: ClaimAtomType) -> Self {
         e as Self
     }
@@ -10842,7 +11181,9 @@ pub enum ClaimAtom {
 }
 
 impl ClaimAtom {
+    #[must_use]
     pub fn discriminant(&self) -> ClaimAtomType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => ClaimAtomType::V0,
             Self::OrderBook(_) => ClaimAtomType::OrderBook,
@@ -10855,7 +11196,8 @@ impl ReadXdr for ClaimAtom {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimAtomType = <ClaimAtomType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ClaimAtomType::V0 => Self::V0(ClaimOfferAtomV0::read_xdr(r)?),
             ClaimAtomType::OrderBook => Self::OrderBook(ClaimOfferAtom::read_xdr(r)?),
             ClaimAtomType::LiquidityPool => Self::LiquidityPool(ClaimLiquidityAtom::read_xdr(r)?),
@@ -10870,6 +11212,7 @@ impl WriteXdr for ClaimAtom {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(v) => v.write_xdr(w)?,
             Self::OrderBook(v) => v.write_xdr(w)?,
@@ -10923,6 +11266,7 @@ impl TryFrom<i32> for CreateAccountResultCode {
 }
 
 impl From<CreateAccountResultCode> for i32 {
+    #[must_use]
     fn from(e: CreateAccountResultCode) -> Self {
         e as Self
     }
@@ -10969,7 +11313,9 @@ pub enum CreateAccountResult {
 }
 
 impl CreateAccountResult {
+    #[must_use]
     pub fn discriminant(&self) -> CreateAccountResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => CreateAccountResultCode::Success,
             Self::Malformed => CreateAccountResultCode::Malformed,
@@ -10984,7 +11330,8 @@ impl ReadXdr for CreateAccountResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             CreateAccountResultCode::Success => Self::Success,
             CreateAccountResultCode::Malformed => Self::Malformed,
             CreateAccountResultCode::Underfunded => Self::Underfunded,
@@ -11001,6 +11348,7 @@ impl WriteXdr for CreateAccountResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -11070,6 +11418,7 @@ impl TryFrom<i32> for PaymentResultCode {
 }
 
 impl From<PaymentResultCode> for i32 {
+    #[must_use]
     fn from(e: PaymentResultCode) -> Self {
         e as Self
     }
@@ -11126,7 +11475,9 @@ pub enum PaymentResult {
 }
 
 impl PaymentResult {
+    #[must_use]
     pub fn discriminant(&self) -> PaymentResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => PaymentResultCode::Success,
             Self::Malformed => PaymentResultCode::Malformed,
@@ -11146,7 +11497,8 @@ impl ReadXdr for PaymentResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PaymentResultCode = <PaymentResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             PaymentResultCode::Success => Self::Success,
             PaymentResultCode::Malformed => Self::Malformed,
             PaymentResultCode::Underfunded => Self::Underfunded,
@@ -11168,6 +11520,7 @@ impl WriteXdr for PaymentResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -11260,6 +11613,7 @@ impl TryFrom<i32> for PathPaymentStrictReceiveResultCode {
 }
 
 impl From<PathPaymentStrictReceiveResultCode> for i32 {
+    #[must_use]
     fn from(e: PathPaymentStrictReceiveResultCode) -> Self {
         e as Self
     }
@@ -11399,7 +11753,9 @@ pub enum PathPaymentStrictReceiveResult {
 }
 
 impl PathPaymentStrictReceiveResult {
+    #[must_use]
     pub fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => PathPaymentStrictReceiveResultCode::Success,
             Self::Malformed => PathPaymentStrictReceiveResultCode::Malformed,
@@ -11423,7 +11779,8 @@ impl ReadXdr for PathPaymentStrictReceiveResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PathPaymentStrictReceiveResultCode =
             <PathPaymentStrictReceiveResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             PathPaymentStrictReceiveResultCode::Success => {
                 Self::Success(PathPaymentStrictReceiveResultSuccess::read_xdr(r)?)
             }
@@ -11450,6 +11807,7 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(v) => v.write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -11544,6 +11902,7 @@ impl TryFrom<i32> for PathPaymentStrictSendResultCode {
 }
 
 impl From<PathPaymentStrictSendResultCode> for i32 {
+    #[must_use]
     fn from(e: PathPaymentStrictSendResultCode) -> Self {
         e as Self
     }
@@ -11645,7 +12004,9 @@ pub enum PathPaymentStrictSendResult {
 }
 
 impl PathPaymentStrictSendResult {
+    #[must_use]
     pub fn discriminant(&self) -> PathPaymentStrictSendResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => PathPaymentStrictSendResultCode::Success,
             Self::Malformed => PathPaymentStrictSendResultCode::Malformed,
@@ -11669,7 +12030,8 @@ impl ReadXdr for PathPaymentStrictSendResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PathPaymentStrictSendResultCode =
             <PathPaymentStrictSendResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             PathPaymentStrictSendResultCode::Success => {
                 Self::Success(PathPaymentStrictSendResultSuccess::read_xdr(r)?)
             }
@@ -11696,6 +12058,7 @@ impl WriteXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(v) => v.write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -11789,6 +12152,7 @@ impl TryFrom<i32> for ManageSellOfferResultCode {
 }
 
 impl From<ManageSellOfferResultCode> for i32 {
+    #[must_use]
     fn from(e: ManageSellOfferResultCode) -> Self {
         e as Self
     }
@@ -11845,6 +12209,7 @@ impl TryFrom<i32> for ManageOfferEffect {
 }
 
 impl From<ManageOfferEffect> for i32 {
+    #[must_use]
     fn from(e: ManageOfferEffect) -> Self {
         e as Self
     }
@@ -11887,7 +12252,9 @@ pub enum ManageOfferSuccessResultOffer {
 }
 
 impl ManageOfferSuccessResultOffer {
+    #[must_use]
     pub fn discriminant(&self) -> ManageOfferEffect {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Created(_) => ManageOfferEffect::Created,
             Self::Updated(_) => ManageOfferEffect::Updated,
@@ -11900,7 +12267,8 @@ impl ReadXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageOfferEffect = <ManageOfferEffect as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ManageOfferEffect::Created => Self::Created(OfferEntry::read_xdr(r)?),
             ManageOfferEffect::Updated => Self::Updated(OfferEntry::read_xdr(r)?),
             ManageOfferEffect::Deleted => Self::Deleted,
@@ -11915,6 +12283,7 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Created(v) => v.write_xdr(w)?,
             Self::Updated(v) => v.write_xdr(w)?,
@@ -12007,7 +12376,9 @@ pub enum ManageSellOfferResult {
 }
 
 impl ManageSellOfferResult {
+    #[must_use]
     pub fn discriminant(&self) -> ManageSellOfferResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => ManageSellOfferResultCode::Success,
             Self::Malformed => ManageSellOfferResultCode::Malformed,
@@ -12030,7 +12401,8 @@ impl ReadXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageSellOfferResultCode = <ManageSellOfferResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ManageSellOfferResultCode::Success => {
                 Self::Success(ManageOfferSuccessResult::read_xdr(r)?)
             }
@@ -12057,6 +12429,7 @@ impl WriteXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(v) => v.write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -12147,6 +12520,7 @@ impl TryFrom<i32> for ManageBuyOfferResultCode {
 }
 
 impl From<ManageBuyOfferResultCode> for i32 {
+    #[must_use]
     fn from(e: ManageBuyOfferResultCode) -> Self {
         e as Self
     }
@@ -12209,7 +12583,9 @@ pub enum ManageBuyOfferResult {
 }
 
 impl ManageBuyOfferResult {
+    #[must_use]
     pub fn discriminant(&self) -> ManageBuyOfferResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => ManageBuyOfferResultCode::Success,
             Self::Malformed => ManageBuyOfferResultCode::Malformed,
@@ -12232,7 +12608,8 @@ impl ReadXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ManageBuyOfferResultCode::Success => {
                 Self::Success(ManageOfferSuccessResult::read_xdr(r)?)
             }
@@ -12259,6 +12636,7 @@ impl WriteXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(v) => v.write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -12339,6 +12717,7 @@ impl TryFrom<i32> for SetOptionsResultCode {
 }
 
 impl From<SetOptionsResultCode> for i32 {
+    #[must_use]
     fn from(e: SetOptionsResultCode) -> Self {
         e as Self
     }
@@ -12397,7 +12776,9 @@ pub enum SetOptionsResult {
 }
 
 impl SetOptionsResult {
+    #[must_use]
     pub fn discriminant(&self) -> SetOptionsResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => SetOptionsResultCode::Success,
             Self::LowReserve => SetOptionsResultCode::LowReserve,
@@ -12418,7 +12799,8 @@ impl ReadXdr for SetOptionsResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             SetOptionsResultCode::Success => Self::Success,
             SetOptionsResultCode::LowReserve => Self::LowReserve,
             SetOptionsResultCode::TooManySigners => Self::TooManySigners,
@@ -12441,6 +12823,7 @@ impl WriteXdr for SetOptionsResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::LowReserve => ().write_xdr(w)?,
@@ -12516,6 +12899,7 @@ impl TryFrom<i32> for ChangeTrustResultCode {
 }
 
 impl From<ChangeTrustResultCode> for i32 {
+    #[must_use]
     fn from(e: ChangeTrustResultCode) -> Self {
         e as Self
     }
@@ -12570,7 +12954,9 @@ pub enum ChangeTrustResult {
 }
 
 impl ChangeTrustResult {
+    #[must_use]
     pub fn discriminant(&self) -> ChangeTrustResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ChangeTrustResultCode::Success,
             Self::Malformed => ChangeTrustResultCode::Malformed,
@@ -12589,7 +12975,8 @@ impl ReadXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ChangeTrustResultCode::Success => Self::Success,
             ChangeTrustResultCode::Malformed => Self::Malformed,
             ChangeTrustResultCode::NoIssuer => Self::NoIssuer,
@@ -12610,6 +12997,7 @@ impl WriteXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -12675,6 +13063,7 @@ impl TryFrom<i32> for AllowTrustResultCode {
 }
 
 impl From<AllowTrustResultCode> for i32 {
+    #[must_use]
     fn from(e: AllowTrustResultCode) -> Self {
         e as Self
     }
@@ -12725,7 +13114,9 @@ pub enum AllowTrustResult {
 }
 
 impl AllowTrustResult {
+    #[must_use]
     pub fn discriminant(&self) -> AllowTrustResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => AllowTrustResultCode::Success,
             Self::Malformed => AllowTrustResultCode::Malformed,
@@ -12742,7 +13133,8 @@ impl ReadXdr for AllowTrustResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             AllowTrustResultCode::Success => Self::Success,
             AllowTrustResultCode::Malformed => Self::Malformed,
             AllowTrustResultCode::NoTrustLine => Self::NoTrustLine,
@@ -12761,6 +13153,7 @@ impl WriteXdr for AllowTrustResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -12826,6 +13219,7 @@ impl TryFrom<i32> for AccountMergeResultCode {
 }
 
 impl From<AccountMergeResultCode> for i32 {
+    #[must_use]
     fn from(e: AccountMergeResultCode) -> Self {
         e as Self
     }
@@ -12878,7 +13272,9 @@ pub enum AccountMergeResult {
 }
 
 impl AccountMergeResult {
+    #[must_use]
     pub fn discriminant(&self) -> AccountMergeResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => AccountMergeResultCode::Success,
             Self::Malformed => AccountMergeResultCode::Malformed,
@@ -12896,7 +13292,8 @@ impl ReadXdr for AccountMergeResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             AccountMergeResultCode::Success => Self::Success(i64::read_xdr(r)?),
             AccountMergeResultCode::Malformed => Self::Malformed,
             AccountMergeResultCode::NoAccount => Self::NoAccount,
@@ -12916,6 +13313,7 @@ impl WriteXdr for AccountMergeResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(v) => v.write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -12963,6 +13361,7 @@ impl TryFrom<i32> for InflationResultCode {
 }
 
 impl From<InflationResultCode> for i32 {
+    #[must_use]
     fn from(e: InflationResultCode) -> Self {
         e as Self
     }
@@ -13036,7 +13435,9 @@ pub enum InflationResult {
 }
 
 impl InflationResult {
+    #[must_use]
     pub fn discriminant(&self) -> InflationResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => InflationResultCode::Success,
             Self::NotTime => InflationResultCode::NotTime,
@@ -13048,7 +13449,8 @@ impl ReadXdr for InflationResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: InflationResultCode = <InflationResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             InflationResultCode::Success => Self::Success(VecM::<InflationPayout>::read_xdr(r)?),
             InflationResultCode::NotTime => Self::NotTime,
             #[allow(unreachable_patterns)]
@@ -13062,6 +13464,7 @@ impl WriteXdr for InflationResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(v) => v.write_xdr(w)?,
             Self::NotTime => ().write_xdr(w)?,
@@ -13114,6 +13517,7 @@ impl TryFrom<i32> for ManageDataResultCode {
 }
 
 impl From<ManageDataResultCode> for i32 {
+    #[must_use]
     fn from(e: ManageDataResultCode) -> Self {
         e as Self
     }
@@ -13160,7 +13564,9 @@ pub enum ManageDataResult {
 }
 
 impl ManageDataResult {
+    #[must_use]
     pub fn discriminant(&self) -> ManageDataResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ManageDataResultCode::Success,
             Self::NotSupportedYet => ManageDataResultCode::NotSupportedYet,
@@ -13175,7 +13581,8 @@ impl ReadXdr for ManageDataResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ManageDataResultCode = <ManageDataResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ManageDataResultCode::Success => Self::Success,
             ManageDataResultCode::NotSupportedYet => Self::NotSupportedYet,
             ManageDataResultCode::NameNotFound => Self::NameNotFound,
@@ -13192,6 +13599,7 @@ impl WriteXdr for ManageDataResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::NotSupportedYet => ().write_xdr(w)?,
@@ -13236,6 +13644,7 @@ impl TryFrom<i32> for BumpSequenceResultCode {
 }
 
 impl From<BumpSequenceResultCode> for i32 {
+    #[must_use]
     fn from(e: BumpSequenceResultCode) -> Self {
         e as Self
     }
@@ -13276,7 +13685,9 @@ pub enum BumpSequenceResult {
 }
 
 impl BumpSequenceResult {
+    #[must_use]
     pub fn discriminant(&self) -> BumpSequenceResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => BumpSequenceResultCode::Success,
             Self::BadSeq => BumpSequenceResultCode::BadSeq,
@@ -13288,7 +13699,8 @@ impl ReadXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             BumpSequenceResultCode::Success => Self::Success,
             BumpSequenceResultCode::BadSeq => Self::BadSeq,
             #[allow(unreachable_patterns)]
@@ -13302,6 +13714,7 @@ impl WriteXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::BadSeq => ().write_xdr(w)?,
@@ -13353,6 +13766,7 @@ impl TryFrom<i32> for CreateClaimableBalanceResultCode {
 }
 
 impl From<CreateClaimableBalanceResultCode> for i32 {
+    #[must_use]
     fn from(e: CreateClaimableBalanceResultCode) -> Self {
         e as Self
     }
@@ -13402,7 +13816,9 @@ pub enum CreateClaimableBalanceResult {
 }
 
 impl CreateClaimableBalanceResult {
+    #[must_use]
     pub fn discriminant(&self) -> CreateClaimableBalanceResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => CreateClaimableBalanceResultCode::Success,
             Self::Malformed => CreateClaimableBalanceResultCode::Malformed,
@@ -13419,7 +13835,8 @@ impl ReadXdr for CreateClaimableBalanceResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: CreateClaimableBalanceResultCode =
             <CreateClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             CreateClaimableBalanceResultCode::Success => {
                 Self::Success(ClaimableBalanceId::read_xdr(r)?)
             }
@@ -13439,6 +13856,7 @@ impl WriteXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(v) => v.write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -13494,6 +13912,7 @@ impl TryFrom<i32> for ClaimClaimableBalanceResultCode {
 }
 
 impl From<ClaimClaimableBalanceResultCode> for i32 {
+    #[must_use]
     fn from(e: ClaimClaimableBalanceResultCode) -> Self {
         e as Self
     }
@@ -13542,7 +13961,9 @@ pub enum ClaimClaimableBalanceResult {
 }
 
 impl ClaimClaimableBalanceResult {
+    #[must_use]
     pub fn discriminant(&self) -> ClaimClaimableBalanceResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ClaimClaimableBalanceResultCode::Success,
             Self::DoesNotExist => ClaimClaimableBalanceResultCode::DoesNotExist,
@@ -13559,7 +13980,8 @@ impl ReadXdr for ClaimClaimableBalanceResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClaimClaimableBalanceResultCode =
             <ClaimClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ClaimClaimableBalanceResultCode::Success => Self::Success,
             ClaimClaimableBalanceResultCode::DoesNotExist => Self::DoesNotExist,
             ClaimClaimableBalanceResultCode::CannotClaim => Self::CannotClaim,
@@ -13577,6 +13999,7 @@ impl WriteXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::DoesNotExist => ().write_xdr(w)?,
@@ -13629,6 +14052,7 @@ impl TryFrom<i32> for BeginSponsoringFutureReservesResultCode {
 }
 
 impl From<BeginSponsoringFutureReservesResultCode> for i32 {
+    #[must_use]
     fn from(e: BeginSponsoringFutureReservesResultCode) -> Self {
         e as Self
     }
@@ -13674,7 +14098,9 @@ pub enum BeginSponsoringFutureReservesResult {
 }
 
 impl BeginSponsoringFutureReservesResult {
+    #[must_use]
     pub fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => BeginSponsoringFutureReservesResultCode::Success,
             Self::Malformed => BeginSponsoringFutureReservesResultCode::Malformed,
@@ -13689,7 +14115,8 @@ impl ReadXdr for BeginSponsoringFutureReservesResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: BeginSponsoringFutureReservesResultCode =
             <BeginSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             BeginSponsoringFutureReservesResultCode::Success => Self::Success,
             BeginSponsoringFutureReservesResultCode::Malformed => Self::Malformed,
             BeginSponsoringFutureReservesResultCode::AlreadySponsored => Self::AlreadySponsored,
@@ -13705,6 +14132,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -13749,6 +14177,7 @@ impl TryFrom<i32> for EndSponsoringFutureReservesResultCode {
 }
 
 impl From<EndSponsoringFutureReservesResultCode> for i32 {
+    #[must_use]
     fn from(e: EndSponsoringFutureReservesResultCode) -> Self {
         e as Self
     }
@@ -13790,7 +14219,9 @@ pub enum EndSponsoringFutureReservesResult {
 }
 
 impl EndSponsoringFutureReservesResult {
+    #[must_use]
     pub fn discriminant(&self) -> EndSponsoringFutureReservesResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => EndSponsoringFutureReservesResultCode::Success,
             Self::NotSponsored => EndSponsoringFutureReservesResultCode::NotSponsored,
@@ -13803,7 +14234,8 @@ impl ReadXdr for EndSponsoringFutureReservesResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: EndSponsoringFutureReservesResultCode =
             <EndSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             EndSponsoringFutureReservesResultCode::Success => Self::Success,
             EndSponsoringFutureReservesResultCode::NotSponsored => Self::NotSponsored,
             #[allow(unreachable_patterns)]
@@ -13817,6 +14249,7 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::NotSponsored => ().write_xdr(w)?,
@@ -13871,6 +14304,7 @@ impl TryFrom<i32> for RevokeSponsorshipResultCode {
 }
 
 impl From<RevokeSponsorshipResultCode> for i32 {
+    #[must_use]
     fn from(e: RevokeSponsorshipResultCode) -> Self {
         e as Self
     }
@@ -13919,7 +14353,9 @@ pub enum RevokeSponsorshipResult {
 }
 
 impl RevokeSponsorshipResult {
+    #[must_use]
     pub fn discriminant(&self) -> RevokeSponsorshipResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => RevokeSponsorshipResultCode::Success,
             Self::DoesNotExist => RevokeSponsorshipResultCode::DoesNotExist,
@@ -13936,7 +14372,8 @@ impl ReadXdr for RevokeSponsorshipResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: RevokeSponsorshipResultCode =
             <RevokeSponsorshipResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             RevokeSponsorshipResultCode::Success => Self::Success,
             RevokeSponsorshipResultCode::DoesNotExist => Self::DoesNotExist,
             RevokeSponsorshipResultCode::NotSponsor => Self::NotSponsor,
@@ -13954,6 +14391,7 @@ impl WriteXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::DoesNotExist => ().write_xdr(w)?,
@@ -14009,6 +14447,7 @@ impl TryFrom<i32> for ClawbackResultCode {
 }
 
 impl From<ClawbackResultCode> for i32 {
+    #[must_use]
     fn from(e: ClawbackResultCode) -> Self {
         e as Self
     }
@@ -14055,7 +14494,9 @@ pub enum ClawbackResult {
 }
 
 impl ClawbackResult {
+    #[must_use]
     pub fn discriminant(&self) -> ClawbackResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ClawbackResultCode::Success,
             Self::Malformed => ClawbackResultCode::Malformed,
@@ -14070,7 +14511,8 @@ impl ReadXdr for ClawbackResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClawbackResultCode = <ClawbackResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ClawbackResultCode::Success => Self::Success,
             ClawbackResultCode::Malformed => Self::Malformed,
             ClawbackResultCode::NotClawbackEnabled => Self::NotClawbackEnabled,
@@ -14087,6 +14529,7 @@ impl WriteXdr for ClawbackResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -14138,6 +14581,7 @@ impl TryFrom<i32> for ClawbackClaimableBalanceResultCode {
 }
 
 impl From<ClawbackClaimableBalanceResultCode> for i32 {
+    #[must_use]
     fn from(e: ClawbackClaimableBalanceResultCode) -> Self {
         e as Self
     }
@@ -14183,7 +14627,9 @@ pub enum ClawbackClaimableBalanceResult {
 }
 
 impl ClawbackClaimableBalanceResult {
+    #[must_use]
     pub fn discriminant(&self) -> ClawbackClaimableBalanceResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ClawbackClaimableBalanceResultCode::Success,
             Self::DoesNotExist => ClawbackClaimableBalanceResultCode::DoesNotExist,
@@ -14198,7 +14644,8 @@ impl ReadXdr for ClawbackClaimableBalanceResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ClawbackClaimableBalanceResultCode =
             <ClawbackClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ClawbackClaimableBalanceResultCode::Success => Self::Success,
             ClawbackClaimableBalanceResultCode::DoesNotExist => Self::DoesNotExist,
             ClawbackClaimableBalanceResultCode::NotIssuer => Self::NotIssuer,
@@ -14214,6 +14661,7 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::DoesNotExist => ().write_xdr(w)?,
@@ -14271,6 +14719,7 @@ impl TryFrom<i32> for SetTrustLineFlagsResultCode {
 }
 
 impl From<SetTrustLineFlagsResultCode> for i32 {
+    #[must_use]
     fn from(e: SetTrustLineFlagsResultCode) -> Self {
         e as Self
     }
@@ -14319,7 +14768,9 @@ pub enum SetTrustLineFlagsResult {
 }
 
 impl SetTrustLineFlagsResult {
+    #[must_use]
     pub fn discriminant(&self) -> SetTrustLineFlagsResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => SetTrustLineFlagsResultCode::Success,
             Self::Malformed => SetTrustLineFlagsResultCode::Malformed,
@@ -14336,7 +14787,8 @@ impl ReadXdr for SetTrustLineFlagsResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: SetTrustLineFlagsResultCode =
             <SetTrustLineFlagsResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             SetTrustLineFlagsResultCode::Success => Self::Success,
             SetTrustLineFlagsResultCode::Malformed => Self::Malformed,
             SetTrustLineFlagsResultCode::NoTrustLine => Self::NoTrustLine,
@@ -14354,6 +14806,7 @@ impl WriteXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -14422,6 +14875,7 @@ impl TryFrom<i32> for LiquidityPoolDepositResultCode {
 }
 
 impl From<LiquidityPoolDepositResultCode> for i32 {
+    #[must_use]
     fn from(e: LiquidityPoolDepositResultCode) -> Self {
         e as Self
     }
@@ -14474,7 +14928,9 @@ pub enum LiquidityPoolDepositResult {
 }
 
 impl LiquidityPoolDepositResult {
+    #[must_use]
     pub fn discriminant(&self) -> LiquidityPoolDepositResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => LiquidityPoolDepositResultCode::Success,
             Self::Malformed => LiquidityPoolDepositResultCode::Malformed,
@@ -14493,7 +14949,8 @@ impl ReadXdr for LiquidityPoolDepositResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LiquidityPoolDepositResultCode =
             <LiquidityPoolDepositResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             LiquidityPoolDepositResultCode::Success => Self::Success,
             LiquidityPoolDepositResultCode::Malformed => Self::Malformed,
             LiquidityPoolDepositResultCode::NoTrust => Self::NoTrust,
@@ -14513,6 +14970,7 @@ impl WriteXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -14576,6 +15034,7 @@ impl TryFrom<i32> for LiquidityPoolWithdrawResultCode {
 }
 
 impl From<LiquidityPoolWithdrawResultCode> for i32 {
+    #[must_use]
     fn from(e: LiquidityPoolWithdrawResultCode) -> Self {
         e as Self
     }
@@ -14624,7 +15083,9 @@ pub enum LiquidityPoolWithdrawResult {
 }
 
 impl LiquidityPoolWithdrawResult {
+    #[must_use]
     pub fn discriminant(&self) -> LiquidityPoolWithdrawResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => LiquidityPoolWithdrawResultCode::Success,
             Self::Malformed => LiquidityPoolWithdrawResultCode::Malformed,
@@ -14641,7 +15102,8 @@ impl ReadXdr for LiquidityPoolWithdrawResult {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: LiquidityPoolWithdrawResultCode =
             <LiquidityPoolWithdrawResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             LiquidityPoolWithdrawResultCode::Success => Self::Success,
             LiquidityPoolWithdrawResultCode::Malformed => Self::Malformed,
             LiquidityPoolWithdrawResultCode::NoTrust => Self::NoTrust,
@@ -14659,6 +15121,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ().write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
@@ -14718,6 +15181,7 @@ impl TryFrom<i32> for OperationResultCode {
 }
 
 impl From<OperationResultCode> for i32 {
+    #[must_use]
     fn from(e: OperationResultCode) -> Self {
         e as Self
     }
@@ -14824,7 +15288,9 @@ pub enum OperationResultTr {
 }
 
 impl OperationResultTr {
+    #[must_use]
     pub fn discriminant(&self) -> OperationType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::CreateAccount(_) => OperationType::CreateAccount,
             Self::Payment(_) => OperationType::Payment,
@@ -14858,7 +15324,8 @@ impl ReadXdr for OperationResultTr {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             OperationType::CreateAccount => Self::CreateAccount(CreateAccountResult::read_xdr(r)?),
             OperationType::Payment => Self::Payment(PaymentResult::read_xdr(r)?),
             OperationType::PathPaymentStrictReceive => {
@@ -14922,6 +15389,7 @@ impl WriteXdr for OperationResultTr {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::CreateAccount(v) => v.write_xdr(w)?,
             Self::Payment(v) => v.write_xdr(w)?,
@@ -15031,7 +15499,9 @@ pub enum OperationResult {
 }
 
 impl OperationResult {
+    #[must_use]
     pub fn discriminant(&self) -> OperationResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::OpInner(_) => OperationResultCode::OpInner,
             Self::OpBadAuth => OperationResultCode::OpBadAuth,
@@ -15048,7 +15518,8 @@ impl ReadXdr for OperationResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: OperationResultCode = <OperationResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             OperationResultCode::OpInner => Self::OpInner(OperationResultTr::read_xdr(r)?),
             OperationResultCode::OpBadAuth => Self::OpBadAuth,
             OperationResultCode::OpNoAccount => Self::OpNoAccount,
@@ -15067,6 +15538,7 @@ impl WriteXdr for OperationResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::OpInner(v) => v.write_xdr(w)?,
             Self::OpBadAuth => ().write_xdr(w)?,
@@ -15164,6 +15636,7 @@ impl TryFrom<i32> for TransactionResultCode {
 }
 
 impl From<TransactionResultCode> for i32 {
+    #[must_use]
     fn from(e: TransactionResultCode) -> Self {
         e as Self
     }
@@ -15234,7 +15707,9 @@ pub enum InnerTransactionResultResult {
 }
 
 impl InnerTransactionResultResult {
+    #[must_use]
     pub fn discriminant(&self) -> TransactionResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::TxSuccess(_) => TransactionResultCode::TxSuccess,
             Self::TxFailed(_) => TransactionResultCode::TxFailed,
@@ -15260,7 +15735,8 @@ impl ReadXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             TransactionResultCode::TxSuccess => {
                 Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?)
             }
@@ -15292,6 +15768,7 @@ impl WriteXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::TxSuccess(v) => v.write_xdr(w)?,
             Self::TxFailed(v) => v.write_xdr(w)?,
@@ -15329,7 +15806,9 @@ pub enum InnerTransactionResultExt {
 }
 
 impl InnerTransactionResultExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -15340,6 +15819,7 @@ impl ReadXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -15353,6 +15833,7 @@ impl WriteXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -15514,7 +15995,9 @@ pub enum TransactionResultResult {
 }
 
 impl TransactionResultResult {
+    #[must_use]
     pub fn discriminant(&self) -> TransactionResultCode {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::TxFeeBumpInnerSuccess(_) => TransactionResultCode::TxFeeBumpInnerSuccess,
             Self::TxFeeBumpInnerFailed(_) => TransactionResultCode::TxFeeBumpInnerFailed,
@@ -15542,7 +16025,8 @@ impl ReadXdr for TransactionResultResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             TransactionResultCode::TxFeeBumpInnerSuccess => {
                 Self::TxFeeBumpInnerSuccess(InnerTransactionResultPair::read_xdr(r)?)
             }
@@ -15580,6 +16064,7 @@ impl WriteXdr for TransactionResultResult {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::TxFeeBumpInnerSuccess(v) => v.write_xdr(w)?,
             Self::TxFeeBumpInnerFailed(v) => v.write_xdr(w)?,
@@ -15619,7 +16104,9 @@ pub enum TransactionResultExt {
 }
 
 impl TransactionResultExt {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -15630,6 +16117,7 @@ impl ReadXdr for TransactionResultExt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -15643,6 +16131,7 @@ impl WriteXdr for TransactionResultExt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -15728,18 +16217,21 @@ impl WriteXdr for TransactionResult {
 pub struct Hash(pub [u8; 32]);
 
 impl From<Hash> for [u8; 32] {
+    #[must_use]
     fn from(x: Hash) -> Self {
         x.0
     }
 }
 
 impl From<[u8; 32]> for Hash {
+    #[must_use]
     fn from(x: [u8; 32]) -> Self {
         Hash(x)
     }
 }
 
 impl AsRef<[u8; 32]> for Hash {
+    #[must_use]
     fn as_ref(&self) -> &[u8; 32] {
         &self.0
     }
@@ -15769,18 +16261,21 @@ impl WriteXdr for Hash {
 pub struct Uint256(pub [u8; 32]);
 
 impl From<Uint256> for [u8; 32] {
+    #[must_use]
     fn from(x: Uint256) -> Self {
         x.0
     }
 }
 
 impl From<[u8; 32]> for Uint256 {
+    #[must_use]
     fn from(x: [u8; 32]) -> Self {
         Uint256(x)
     }
 }
 
 impl AsRef<[u8; 32]> for Uint256 {
+    #[must_use]
     fn as_ref(&self) -> &[u8; 32] {
         &self.0
     }
@@ -15841,7 +16336,9 @@ pub enum ExtensionPoint {
 }
 
 impl ExtensionPoint {
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
@@ -15852,6 +16349,7 @@ impl ReadXdr for ExtensionPoint {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
             #[allow(unreachable_patterns)]
@@ -15865,6 +16363,7 @@ impl WriteXdr for ExtensionPoint {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
         };
@@ -15914,6 +16413,7 @@ impl TryFrom<i32> for CryptoKeyType {
 }
 
 impl From<CryptoKeyType> for i32 {
+    #[must_use]
     fn from(e: CryptoKeyType) -> Self {
         e as Self
     }
@@ -15964,6 +16464,7 @@ impl TryFrom<i32> for PublicKeyType {
 }
 
 impl From<PublicKeyType> for i32 {
+    #[must_use]
     fn from(e: PublicKeyType) -> Self {
         e as Self
     }
@@ -16023,6 +16524,7 @@ impl TryFrom<i32> for SignerKeyType {
 }
 
 impl From<SignerKeyType> for i32 {
+    #[must_use]
     fn from(e: SignerKeyType) -> Self {
         e as Self
     }
@@ -16060,7 +16562,9 @@ pub enum PublicKey {
 }
 
 impl PublicKey {
+    #[must_use]
     pub fn discriminant(&self) -> PublicKeyType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::PublicKeyTypeEd25519(_) => PublicKeyType::PublicKeyTypeEd25519,
         }
@@ -16071,7 +16575,8 @@ impl ReadXdr for PublicKey {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: PublicKeyType = <PublicKeyType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             PublicKeyType::PublicKeyTypeEd25519 => {
                 Self::PublicKeyTypeEd25519(Uint256::read_xdr(r)?)
             }
@@ -16086,6 +16591,7 @@ impl WriteXdr for PublicKey {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::PublicKeyTypeEd25519(v) => v.write_xdr(w)?,
         };
@@ -16160,7 +16666,9 @@ pub enum SignerKey {
 }
 
 impl SignerKey {
+    #[must_use]
     pub fn discriminant(&self) -> SignerKeyType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ed25519(_) => SignerKeyType::Ed25519,
             Self::PreAuthTx(_) => SignerKeyType::PreAuthTx,
@@ -16174,7 +16682,8 @@ impl ReadXdr for SignerKey {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: SignerKeyType = <SignerKeyType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             SignerKeyType::Ed25519 => Self::Ed25519(Uint256::read_xdr(r)?),
             SignerKeyType::PreAuthTx => Self::PreAuthTx(Uint256::read_xdr(r)?),
             SignerKeyType::HashX => Self::HashX(Uint256::read_xdr(r)?),
@@ -16192,6 +16701,7 @@ impl WriteXdr for SignerKey {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ed25519(v) => v.write_xdr(w)?,
             Self::PreAuthTx(v) => v.write_xdr(w)?,
@@ -16210,18 +16720,21 @@ impl WriteXdr for SignerKey {
 pub struct Signature(pub VecM<u8, 64>);
 
 impl From<Signature> for VecM<u8, 64> {
+    #[must_use]
     fn from(x: Signature) -> Self {
         x.0
     }
 }
 
 impl From<VecM<u8, 64>> for Signature {
+    #[must_use]
     fn from(x: VecM<u8, 64>) -> Self {
         Signature(x)
     }
 }
 
 impl AsRef<VecM<u8, 64>> for Signature {
+    #[must_use]
     fn as_ref(&self) -> &VecM<u8, 64> {
         &self.0
     }
@@ -16251,18 +16764,21 @@ impl WriteXdr for Signature {
 pub struct SignatureHint(pub [u8; 4]);
 
 impl From<SignatureHint> for [u8; 4] {
+    #[must_use]
     fn from(x: SignatureHint) -> Self {
         x.0
     }
 }
 
 impl From<[u8; 4]> for SignatureHint {
+    #[must_use]
     fn from(x: [u8; 4]) -> Self {
         SignatureHint(x)
     }
 }
 
 impl AsRef<[u8; 4]> for SignatureHint {
+    #[must_use]
     fn as_ref(&self) -> &[u8; 4] {
         &self.0
     }
@@ -16292,18 +16808,21 @@ impl WriteXdr for SignatureHint {
 pub struct NodeId(pub PublicKey);
 
 impl From<NodeId> for PublicKey {
+    #[must_use]
     fn from(x: NodeId) -> Self {
         x.0
     }
 }
 
 impl From<PublicKey> for NodeId {
+    #[must_use]
     fn from(x: PublicKey) -> Self {
         NodeId(x)
     }
 }
 
 impl AsRef<PublicKey> for NodeId {
+    #[must_use]
     fn as_ref(&self) -> &PublicKey {
         &self.0
     }

@@ -66,12 +66,28 @@ jobs:
         restore-keys: |
           target-${{ strategy.job-index }}
           target-
+    # - uses: actions-rs/clippy-check@b5b5f21f4797c02da247df37026fcd0a5024aa4d
+    #   with:
+    #     token: ${{ secrets.GITHUB_TOKEN }}
+    #     args: >
+    #       --profile ${{ matrix.profile }}
+    #       --target ${{ matrix.sys.target }}
+    #       --no-default-features
+    #       --features='${{ matrix.features }}'
+    #       --all-targets
+    #       --
+    #       -Dclippy::all
+    #       -Dclippy::pedantic
     - run: >
-        cargo check
+        cargo clippy
         --profile ${{ matrix.profile }}
         --target ${{ matrix.sys.target }}
         --no-default-features
         --features='${{ matrix.features }}'
+        --all-targets
+        --
+        -Dclippy::all
+        -Dclippy::pedantic
     - if: matrix.sys.test
       run: >
         cargo test

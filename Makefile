@@ -18,12 +18,12 @@ test:
 	cargo test --no-default-features --features ''
 
 build: src/lib.rs
-	cargo clippy --no-default-features --features 'std'
-	cargo clippy --no-default-features --features 'alloc'
-	cargo clippy --no-default-features --features ''
-	cargo clippy --no-default-features --features 'std' --release --target wasm32-unknown-unknown
-	cargo clippy --no-default-features --features 'alloc' --release --target wasm32-unknown-unknown
-	cargo clippy --no-default-features --features '' --release --target wasm32-unknown-unknown
+	cargo clippy --all-targets --no-default-features --features 'std'
+	cargo clippy --all-targets --no-default-features --features 'alloc'
+	cargo clippy --all-targets --no-default-features --features ''
+	cargo clippy --all-targets --no-default-features --features 'std' --release --target wasm32-unknown-unknown
+	cargo clippy --all-targets --no-default-features --features 'alloc' --release --target wasm32-unknown-unknown
+	cargo clippy --all-targets --no-default-features --features '' --release --target wasm32-unknown-unknown
 
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'

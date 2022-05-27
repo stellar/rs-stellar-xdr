@@ -17015,6 +17015,7 @@ impl TryFrom<i32> for ScValType {
 }
 
 impl From<ScValType> for i32 {
+    #[must_use]
     fn from(e: ScValType) -> Self {
         e as Self
     }
@@ -17071,6 +17072,7 @@ impl TryFrom<i32> for ScStatic {
 }
 
 impl From<ScStatic> for i32 {
+    #[must_use]
     fn from(e: ScStatic) -> Self {
         e as Self
     }
@@ -17125,6 +17127,7 @@ impl TryFrom<i32> for ScStatusType {
 }
 
 impl From<ScStatusType> for i32 {
+    #[must_use]
     fn from(e: ScStatusType) -> Self {
         e as Self
     }
@@ -17165,7 +17168,9 @@ pub enum ScStatus {
 }
 
 impl ScStatus {
+    #[must_use]
     pub fn discriminant(&self) -> ScStatusType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ok => ScStatusType::Ok,
             Self::UnknownError(_) => ScStatusType::UnknownError,
@@ -17177,7 +17182,8 @@ impl ReadXdr for ScStatus {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScStatusType = <ScStatusType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ScStatusType::Ok => Self::Ok,
             ScStatusType::UnknownError => Self::UnknownError(u32::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -17191,6 +17197,7 @@ impl WriteXdr for ScStatus {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ok => ().write_xdr(w)?,
             Self::UnknownError(v) => v.write_xdr(w)?,
@@ -17235,7 +17242,9 @@ pub enum ScVal {
 }
 
 impl ScVal {
+    #[must_use]
     pub fn discriminant(&self) -> ScValType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::U63(_) => ScValType::U63,
             Self::U32(_) => ScValType::U32,
@@ -17253,7 +17262,8 @@ impl ReadXdr for ScVal {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ScValType::U63 => Self::U63(u64::read_xdr(r)?),
             ScValType::U32 => Self::U32(u32::read_xdr(r)?),
             ScValType::I32 => Self::I32(i32::read_xdr(r)?),
@@ -17273,6 +17283,7 @@ impl WriteXdr for ScVal {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::U63(v) => v.write_xdr(w)?,
             Self::U32(v) => v.write_xdr(w)?,
@@ -17372,6 +17383,7 @@ impl TryFrom<i32> for ScObjectType {
 }
 
 impl From<ScObjectType> for i32 {
+    #[must_use]
     fn from(e: ScObjectType) -> Self {
         e as Self
     }
@@ -17435,18 +17447,21 @@ impl WriteXdr for ScMapEntry {
 pub struct ScVec(pub VecM<ScVal>);
 
 impl From<ScVec> for VecM<ScVal> {
+    #[must_use]
     fn from(x: ScVec) -> Self {
         x.0
     }
 }
 
 impl From<VecM<ScVal>> for ScVec {
+    #[must_use]
     fn from(x: VecM<ScVal>) -> Self {
         ScVec(x)
     }
 }
 
 impl AsRef<VecM<ScVal>> for ScVec {
+    #[must_use]
     fn as_ref(&self) -> &VecM<ScVal> {
         &self.0
     }
@@ -17469,18 +17484,27 @@ impl WriteXdr for ScVec {
 }
 
 impl ScVec {
+    #[must_use]
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    #[must_use]
     pub fn to_vec(self) -> Vec<ScVal> {
         self.into()
     }
 
+    #[must_use]
     pub fn as_vec(&self) -> &Vec<ScVal> {
         self.as_ref()
     }
 
+    #[must_use]
     pub fn as_slice(&self) -> &[ScVal] {
         self.as_ref()
     }
@@ -17491,6 +17515,7 @@ impl ScVec {
 }
 
 impl From<ScVec> for Vec<ScVal> {
+    #[must_use]
     fn from(x: ScVec) -> Self {
         x.0 .0
     }
@@ -17504,14 +17529,22 @@ impl TryFrom<Vec<ScVal>> for ScVec {
 }
 
 impl AsRef<Vec<ScVal>> for ScVec {
+    #[must_use]
     fn as_ref(&self) -> &Vec<ScVal> {
         &self.0 .0
     }
 }
 
 impl AsRef<[ScVal]> for ScVec {
+    #[cfg(feature = "alloc")]
+    #[must_use]
     fn as_ref(&self) -> &[ScVal] {
         &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ScVal] {
+        self.0 .0
     }
 }
 
@@ -17523,18 +17556,21 @@ impl AsRef<[ScVal]> for ScVec {
 pub struct ScMap(pub VecM<ScMapEntry>);
 
 impl From<ScMap> for VecM<ScMapEntry> {
+    #[must_use]
     fn from(x: ScMap) -> Self {
         x.0
     }
 }
 
 impl From<VecM<ScMapEntry>> for ScMap {
+    #[must_use]
     fn from(x: VecM<ScMapEntry>) -> Self {
         ScMap(x)
     }
 }
 
 impl AsRef<VecM<ScMapEntry>> for ScMap {
+    #[must_use]
     fn as_ref(&self) -> &VecM<ScMapEntry> {
         &self.0
     }
@@ -17557,18 +17593,27 @@ impl WriteXdr for ScMap {
 }
 
 impl ScMap {
+    #[must_use]
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    #[must_use]
     pub fn to_vec(self) -> Vec<ScMapEntry> {
         self.into()
     }
 
+    #[must_use]
     pub fn as_vec(&self) -> &Vec<ScMapEntry> {
         self.as_ref()
     }
 
+    #[must_use]
     pub fn as_slice(&self) -> &[ScMapEntry] {
         self.as_ref()
     }
@@ -17579,6 +17624,7 @@ impl ScMap {
 }
 
 impl From<ScMap> for Vec<ScMapEntry> {
+    #[must_use]
     fn from(x: ScMap) -> Self {
         x.0 .0
     }
@@ -17592,14 +17638,22 @@ impl TryFrom<Vec<ScMapEntry>> for ScMap {
 }
 
 impl AsRef<Vec<ScMapEntry>> for ScMap {
+    #[must_use]
     fn as_ref(&self) -> &Vec<ScMapEntry> {
         &self.0 .0
     }
 }
 
 impl AsRef<[ScMapEntry]> for ScMap {
+    #[cfg(feature = "alloc")]
+    #[must_use]
     fn as_ref(&self) -> &[ScMapEntry] {
         &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ScMapEntry] {
+        self.0 .0
     }
 }
 
@@ -17733,7 +17787,9 @@ pub enum ScObject {
 }
 
 impl ScObject {
+    #[must_use]
     pub fn discriminant(&self) -> ScObjectType {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Box(_) => ScObjectType::Box,
             Self::Vec(_) => ScObjectType::Vec,
@@ -17759,7 +17815,8 @@ impl ReadXdr for ScObject {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: ScObjectType = <ScObjectType as ReadXdr>::read_xdr(r)?;
-        let v = match dv.into() {
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
             ScObjectType::Box => Self::Box(Box::<ScVal>::read_xdr(r)?),
             ScObjectType::Vec => Self::Vec(ScVec::read_xdr(r)?),
             ScObjectType::Map => Self::Map(ScMap::read_xdr(r)?),
@@ -17789,6 +17846,7 @@ impl WriteXdr for ScObject {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Box(v) => v.write_xdr(w)?,
             Self::Vec(v) => v.write_xdr(w)?,

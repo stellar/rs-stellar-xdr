@@ -10,3 +10,4 @@ base64 = "0.13.0"
 default = ["std"]
 std = ["alloc", "base64/std"]
 alloc = []
+next = []

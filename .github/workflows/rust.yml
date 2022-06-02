@@ -28,7 +28,7 @@ jobs:
   cargo:
     strategy:
       matrix:
-        features: ['', 'alloc', 'std']
+        features: ['', 'alloc', 'std', 'next', 'next,alloc', 'next,std']
         profile: [dev, release]
         sys:
         - os: ubuntu-latest

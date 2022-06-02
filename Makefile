@@ -54,15 +54,15 @@ watch:
 src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
-		gem specific_install https://github.com/leighmcculloch/stellar--xdrgen.git -b rustlib && \
-		xdrgen --language rust --namespace curr --output src/ $^ \
+		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
+		xdrgen --language rust --namespace curr --output src/ xdr/curr/*.x \
 		'
 	rustfmt src/curr.rs
 
 src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
-		gem specific_install https://github.com/leighmcculloch/stellar--xdrgen.git -b rustlib && \
+		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
 		xdrgen --language rust --namespace next --output src/ $^ \
 		'
 	rustfmt src/next.rs

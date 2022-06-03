@@ -57,7 +57,8 @@ src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
 		xdrgen --language rust --namespace curr --output src/ $^ \
 		'
-	rustfmt src/curr.rs
+	sudo chown $$USER $@
+	rustfmt $@
 
 src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
@@ -65,7 +66,8 @@ src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
 		xdrgen --language rust --namespace next --output src/ $^ \
 		'
-	rustfmt src/next.rs
+	sudo chown $$USER $@
+	rustfmt $@
 
 $(XDR_FILES_LOCAL_CURR):
 	curl -L -o $@ $(XDR_BASE_URL_CURR)/$(notdir $@)

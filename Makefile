@@ -58,7 +58,7 @@ src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
 		xdrgen --language rust --namespace curr --output src/ $^ \
 		'
-	rustfmt src/curr.rs
+	rustfmt $@
 
 src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 	touch $@
@@ -67,7 +67,7 @@ src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
 		xdrgen --language rust --namespace next --output src/ $^ \
 		'
-	rustfmt src/next.rs
+	rustfmt $@
 
 $(XDR_FILES_LOCAL_CURR):
 	curl -L -o $@ $(XDR_BASE_URL_CURR)/$(notdir $@)
@@ -76,7 +76,7 @@ $(XDR_FILES_LOCAL_NEXT):
 	curl -L -o $@ $(XDR_BASE_URL_NEXT)/$(notdir $@)
 
 clean:
-	rm -f xdr/*.x
+	rm -f xdr/*/*.x
 	rm -f src/curr.rs
 	rm -f src/next.rs
 	cargo clean

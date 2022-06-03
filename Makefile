@@ -76,7 +76,7 @@ $(XDR_FILES_LOCAL_NEXT):
 	curl -L -o $@ $(XDR_BASE_URL_NEXT)/$(notdir $@)
 
 clean:
-	rm -f xdr/*.x
+	rm -f xdr/*/*.x
 	rm -f src/curr.rs
 	rm -f src/next.rs
 	cargo clean

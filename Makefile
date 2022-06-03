@@ -58,7 +58,6 @@ src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
 		xdrgen --language rust --namespace curr --output src/ $^ \
 		'
-	sudo chown $$USER $@
 	rustfmt $@
 
 src/next.rs: $(XDR_FILES_LOCAL_NEXT)
@@ -68,7 +67,6 @@ src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
 		xdrgen --language rust --namespace next --output src/ $^ \
 		'
-	sudo chown $$USER $@
 	rustfmt $@
 
 $(XDR_FILES_LOCAL_CURR):

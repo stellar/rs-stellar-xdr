@@ -8926,7 +8926,8 @@ impl WriteXdr for LedgerFootprint {
 //        CLAWBACK_CLAIMABLE_BALANCE = 20,
 //        SET_TRUST_LINE_FLAGS = 21,
 //        LIQUIDITY_POOL_DEPOSIT = 22,
-//        LIQUIDITY_POOL_WITHDRAW = 23
+//        LIQUIDITY_POOL_WITHDRAW = 23,
+//        INVOKE_HOST_FUNCTION = 24
 //    };
 //
 // enum
@@ -8957,6 +8958,7 @@ pub enum OperationType {
     SetTrustLineFlags = 21,
     LiquidityPoolDeposit = 22,
     LiquidityPoolWithdraw = 23,
+    InvokeHostFunction = 24,
 }
 
 impl TryFrom<i32> for OperationType {
@@ -8988,6 +8990,7 @@ impl TryFrom<i32> for OperationType {
             21 => OperationType::SetTrustLineFlags,
             22 => OperationType::LiquidityPoolDeposit,
             23 => OperationType::LiquidityPoolWithdraw,
+            24 => OperationType::InvokeHostFunction,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10050,6 +10053,102 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
     }
 }
 
+// HostFunction is an XDR Enum defines as:
+//
+//   enum HostFunction
+//    {
+//        HOST_FN_CALL = 0,
+//        HOST_FN_CREATE_CONTRACT = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum HostFunction {
+    Call = 0,
+    CreateContract = 1,
+}
+
+impl TryFrom<i32> for HostFunction {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => HostFunction::Call,
+            1 => HostFunction::CreateContract,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<HostFunction> for i32 {
+    #[must_use]
+    fn from(e: HostFunction) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for HostFunction {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for HostFunction {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// InvokeHostFunctionOp is an XDR Struct defines as:
+//
+//   struct InvokeHostFunctionOp
+//    {
+//        // The host function to invoke
+//        HostFunction function;
+//
+//        // Parameters to the host function
+//        SCVec parameters;
+//
+//        // The footprint for this invocation
+//        LedgerFootprint footprint;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct InvokeHostFunctionOp {
+    pub function: HostFunction,
+    pub parameters: ScVec,
+    pub footprint: LedgerFootprint,
+}
+
+impl ReadXdr for InvokeHostFunctionOp {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            function: HostFunction::read_xdr(r)?,
+            parameters: ScVec::read_xdr(r)?,
+            footprint: LedgerFootprint::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for InvokeHostFunctionOp {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.function.write_xdr(w)?;
+        self.parameters.write_xdr(w)?;
+        self.footprint.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // OperationBody is an XDR NestedUnion defines as:
 //
 //   union switch (OperationType type)
@@ -10102,6 +10201,8 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 //            LiquidityPoolDepositOp liquidityPoolDepositOp;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawOp liquidityPoolWithdrawOp;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionOp invokeHostFunctionOp;
 //        }
 //
 // union with discriminant OperationType
@@ -10131,6 +10232,7 @@ pub enum OperationBody {
     SetTrustLineFlags(SetTrustLineFlagsOp),
     LiquidityPoolDeposit(LiquidityPoolDepositOp),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawOp),
+    InvokeHostFunction(InvokeHostFunctionOp),
 }
 
 impl OperationBody {
@@ -10162,6 +10264,7 @@ impl OperationBody {
             Self::SetTrustLineFlags(_) => OperationType::SetTrustLineFlags,
             Self::LiquidityPoolDeposit(_) => OperationType::LiquidityPoolDeposit,
             Self::LiquidityPoolWithdraw(_) => OperationType::LiquidityPoolWithdraw,
+            Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
         }
     }
 }
@@ -10220,6 +10323,9 @@ impl ReadXdr for OperationBody {
             OperationType::LiquidityPoolWithdraw => {
                 Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawOp::read_xdr(r)?)
             }
+            OperationType::InvokeHostFunction => {
+                Self::InvokeHostFunction(InvokeHostFunctionOp::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10257,6 +10363,7 @@ impl WriteXdr for OperationBody {
             Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
             Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
             Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+            Self::InvokeHostFunction(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -10321,6 +10428,8 @@ impl WriteXdr for OperationBody {
 //            LiquidityPoolDepositOp liquidityPoolDepositOp;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawOp liquidityPoolWithdrawOp;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionOp invokeHostFunctionOp;
 //        }
 //        body;
 //    };
@@ -15733,6 +15842,123 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
     }
 }
 
+// InvokeHostFunctionResultCode is an XDR Enum defines as:
+//
+//   enum InvokeHostFunctionResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        INVOKE_HOST_FUNCTION_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        INVOKE_HOST_FUNCTION_MALFORMED = -1,
+//        INVOKE_HOST_FUNCTION_TRAPPED = -2
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum InvokeHostFunctionResultCode {
+    Success = 0,
+    Malformed = -1,
+    Trapped = -2,
+}
+
+impl TryFrom<i32> for InvokeHostFunctionResultCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => InvokeHostFunctionResultCode::Success,
+            -1 => InvokeHostFunctionResultCode::Malformed,
+            -2 => InvokeHostFunctionResultCode::Trapped,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<InvokeHostFunctionResultCode> for i32 {
+    #[must_use]
+    fn from(e: InvokeHostFunctionResultCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for InvokeHostFunctionResultCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for InvokeHostFunctionResultCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// InvokeHostFunctionResult is an XDR Union defines as:
+//
+//   union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code)
+//    {
+//    case INVOKE_HOST_FUNCTION_SUCCESS:
+//        SCVal success;
+//    case INVOKE_HOST_FUNCTION_TRAPPED:
+//        void;
+//    };
+//
+// union with discriminant InvokeHostFunctionResultCode
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum InvokeHostFunctionResult {
+    Success(ScVal),
+    Trapped,
+}
+
+impl InvokeHostFunctionResult {
+    #[must_use]
+    pub fn discriminant(&self) -> InvokeHostFunctionResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => InvokeHostFunctionResultCode::Success,
+            Self::Trapped => InvokeHostFunctionResultCode::Trapped,
+        }
+    }
+}
+
+impl ReadXdr for InvokeHostFunctionResult {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: InvokeHostFunctionResultCode =
+            <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            InvokeHostFunctionResultCode::Success => Self::Success(ScVal::read_xdr(r)?),
+            InvokeHostFunctionResultCode::Trapped => Self::Trapped,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for InvokeHostFunctionResult {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(v) => v.write_xdr(w)?,
+            Self::Trapped => ().write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
 // OperationResultCode is an XDR Enum defines as:
 //
 //   enum OperationResultCode
@@ -15855,6 +16081,8 @@ impl WriteXdr for OperationResultCode {
 //            LiquidityPoolDepositResult liquidityPoolDepositResult;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionResult invokeHostFunctionResult;
 //        }
 //
 // union with discriminant OperationType
@@ -15884,6 +16112,7 @@ pub enum OperationResultTr {
     SetTrustLineFlags(SetTrustLineFlagsResult),
     LiquidityPoolDeposit(LiquidityPoolDepositResult),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawResult),
+    InvokeHostFunction(InvokeHostFunctionResult),
 }
 
 impl OperationResultTr {
@@ -15915,6 +16144,7 @@ impl OperationResultTr {
             Self::SetTrustLineFlags(_) => OperationType::SetTrustLineFlags,
             Self::LiquidityPoolDeposit(_) => OperationType::LiquidityPoolDeposit,
             Self::LiquidityPoolWithdraw(_) => OperationType::LiquidityPoolWithdraw,
+            Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
         }
     }
 }
@@ -15977,6 +16207,9 @@ impl ReadXdr for OperationResultTr {
             OperationType::LiquidityPoolWithdraw => {
                 Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawResult::read_xdr(r)?)
             }
+            OperationType::InvokeHostFunction => {
+                Self::InvokeHostFunction(InvokeHostFunctionResult::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -16014,6 +16247,7 @@ impl WriteXdr for OperationResultTr {
             Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
             Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
             Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+            Self::InvokeHostFunction(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -16074,6 +16308,8 @@ impl WriteXdr for OperationResultTr {
 //            LiquidityPoolDepositResult liquidityPoolDepositResult;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionResult invokeHostFunctionResult;
 //        }
 //        tr;
 //    case opBAD_AUTH:

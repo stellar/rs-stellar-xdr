@@ -7,7 +7,7 @@
 //  xdr/next/Stellar-types.x
 //  xdr/next/Stellar-contract.x
 
-#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 use core::{fmt, fmt::Debug, slice::Iter};
 
@@ -2012,7 +2012,9 @@ impl WriteXdr for ThresholdIndexes {
 //        OFFER = 2,
 //        DATA = 3,
 //        CLAIMABLE_BALANCE = 4,
-//        LIQUIDITY_POOL = 5
+//        LIQUIDITY_POOL = 5,
+//        CONTRACT_DATA = 6,
+//        CONFIG_SETTING = 7
 //    };
 //
 // enum
@@ -2025,6 +2027,8 @@ pub enum LedgerEntryType {
     Data = 3,
     ClaimableBalance = 4,
     LiquidityPool = 5,
+    ContractData = 6,
+    ConfigSetting = 7,
 }
 
 impl TryFrom<i32> for LedgerEntryType {
@@ -2038,6 +2042,8 @@ impl TryFrom<i32> for LedgerEntryType {
             3 => LedgerEntryType::Data,
             4 => LedgerEntryType::ClaimableBalance,
             5 => LedgerEntryType::LiquidityPool,
+            6 => LedgerEntryType::ContractData,
+            7 => LedgerEntryType::ConfigSetting,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -4270,6 +4276,289 @@ impl WriteXdr for LiquidityPoolEntry {
     }
 }
 
+// ContractDataEntry is an XDR Struct defines as:
+//
+//   struct ContractDataEntry {
+//        Hash contractID;
+//        SCVal key;
+//        SCVal val;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ContractDataEntry {
+    pub contract_id: Hash,
+    pub key: ScVal,
+    pub val: ScVal,
+}
+
+impl ReadXdr for ContractDataEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            contract_id: Hash::read_xdr(r)?,
+            key: ScVal::read_xdr(r)?,
+            val: ScVal::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ContractDataEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.contract_id.write_xdr(w)?;
+        self.key.write_xdr(w)?;
+        self.val.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ConfigSettingType is an XDR Enum defines as:
+//
+//   enum ConfigSettingType
+//    {
+//        CONFIG_SETTING_TYPE_UINT32 = 0
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ConfigSettingType {
+    ConfigSettingTypeUint32 = 0,
+}
+
+impl TryFrom<i32> for ConfigSettingType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ConfigSettingType::ConfigSettingTypeUint32,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ConfigSettingType> for i32 {
+    #[must_use]
+    fn from(e: ConfigSettingType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ConfigSettingType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ConfigSettingType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ConfigSetting is an XDR Union defines as:
+//
+//   union ConfigSetting switch (ConfigSettingType type)
+//    {
+//    case CONFIG_SETTING_TYPE_UINT32:
+//        uint32 uint32Val;
+//    };
+//
+// union with discriminant ConfigSettingType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ConfigSetting {
+    ConfigSettingTypeUint32(u32),
+}
+
+impl ConfigSetting {
+    #[must_use]
+    pub fn discriminant(&self) -> ConfigSettingType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ConfigSettingTypeUint32(_) => ConfigSettingType::ConfigSettingTypeUint32,
+        }
+    }
+}
+
+impl ReadXdr for ConfigSetting {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ConfigSettingType = <ConfigSettingType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ConfigSettingType::ConfigSettingTypeUint32 => {
+                Self::ConfigSettingTypeUint32(u32::read_xdr(r)?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ConfigSetting {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ConfigSettingTypeUint32(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ConfigSettingId is an XDR Enum defines as:
+//
+//   enum ConfigSettingID
+//    {
+//        CONFIG_SETTING_CONTRACT_MAX_SIZE = 0
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ConfigSettingId {
+    ConfigSettingContractMaxSize = 0,
+}
+
+impl TryFrom<i32> for ConfigSettingId {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ConfigSettingId::ConfigSettingContractMaxSize,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ConfigSettingId> for i32 {
+    #[must_use]
+    fn from(e: ConfigSettingId) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ConfigSettingId {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ConfigSettingId {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ConfigSettingEntryExt is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ConfigSettingEntryExt {
+    V0,
+}
+
+impl ConfigSettingEntryExt {
+    #[must_use]
+    pub fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => 0,
+        }
+    }
+}
+
+impl ReadXdr for ConfigSettingEntryExt {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            0 => Self::V0,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ConfigSettingEntryExt {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => ().write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ConfigSettingEntry is an XDR Struct defines as:
+//
+//   struct ConfigSettingEntry
+//    {
+//        union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//        ext;
+//
+//        ConfigSettingID configSettingID;
+//        ConfigSetting setting;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ConfigSettingEntry {
+    pub ext: ConfigSettingEntryExt,
+    pub config_setting_id: ConfigSettingId,
+    pub setting: ConfigSetting,
+}
+
+impl ReadXdr for ConfigSettingEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ext: ConfigSettingEntryExt::read_xdr(r)?,
+            config_setting_id: ConfigSettingId::read_xdr(r)?,
+            setting: ConfigSetting::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ext.write_xdr(w)?;
+        self.config_setting_id.write_xdr(w)?;
+        self.setting.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // LedgerEntryExtensionV1Ext is an XDR NestedUnion defines as:
 //
 //   union switch (int v)
@@ -4375,6 +4664,10 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 //            ClaimableBalanceEntry claimableBalance;
 //        case LIQUIDITY_POOL:
 //            LiquidityPoolEntry liquidityPool;
+//        case CONTRACT_DATA:
+//            ContractDataEntry contractData;
+//        case CONFIG_SETTING:
+//            ConfigSettingEntry configSetting;
 //        }
 //
 // union with discriminant LedgerEntryType
@@ -4386,6 +4679,8 @@ pub enum LedgerEntryData {
     Data(DataEntry),
     ClaimableBalance(ClaimableBalanceEntry),
     LiquidityPool(LiquidityPoolEntry),
+    ContractData(ContractDataEntry),
+    ConfigSetting(ConfigSettingEntry),
 }
 
 impl LedgerEntryData {
@@ -4399,6 +4694,8 @@ impl LedgerEntryData {
             Self::Data(_) => LedgerEntryType::Data,
             Self::ClaimableBalance(_) => LedgerEntryType::ClaimableBalance,
             Self::LiquidityPool(_) => LedgerEntryType::LiquidityPool,
+            Self::ContractData(_) => LedgerEntryType::ContractData,
+            Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
         }
     }
 }
@@ -4417,6 +4714,8 @@ impl ReadXdr for LedgerEntryData {
                 Self::ClaimableBalance(ClaimableBalanceEntry::read_xdr(r)?)
             }
             LedgerEntryType::LiquidityPool => Self::LiquidityPool(LiquidityPoolEntry::read_xdr(r)?),
+            LedgerEntryType::ContractData => Self::ContractData(ContractDataEntry::read_xdr(r)?),
+            LedgerEntryType::ConfigSetting => Self::ConfigSetting(ConfigSettingEntry::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -4436,6 +4735,8 @@ impl WriteXdr for LedgerEntryData {
             Self::Data(v) => v.write_xdr(w)?,
             Self::ClaimableBalance(v) => v.write_xdr(w)?,
             Self::LiquidityPool(v) => v.write_xdr(w)?,
+            Self::ContractData(v) => v.write_xdr(w)?,
+            Self::ConfigSetting(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -4517,6 +4818,10 @@ impl WriteXdr for LedgerEntryExt {
 //            ClaimableBalanceEntry claimableBalance;
 //        case LIQUIDITY_POOL:
 //            LiquidityPoolEntry liquidityPool;
+//        case CONTRACT_DATA:
+//            ContractDataEntry contractData;
+//        case CONFIG_SETTING:
+//            ConfigSettingEntry configSetting;
 //        }
 //        data;
 //
@@ -4745,6 +5050,68 @@ impl WriteXdr for LedgerKeyLiquidityPool {
     }
 }
 
+// LedgerKeyContractData is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash contractID;
+//            SCVal key;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerKeyContractData {
+    pub contract_id: Hash,
+    pub key: ScVal,
+}
+
+impl ReadXdr for LedgerKeyContractData {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            contract_id: Hash::read_xdr(r)?,
+            key: ScVal::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerKeyContractData {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.contract_id.write_xdr(w)?;
+        self.key.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// LedgerKeyConfigSetting is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            ConfigSettingID configSettingID;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerKeyConfigSetting {
+    pub config_setting_id: ConfigSettingId,
+}
+
+impl ReadXdr for LedgerKeyConfigSetting {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            config_setting_id: ConfigSettingId::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerKeyConfigSetting {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.config_setting_id.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // LedgerKey is an XDR Union defines as:
 //
 //   union LedgerKey switch (LedgerEntryType type)
@@ -4787,6 +5154,17 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 //        {
 //            PoolID liquidityPoolID;
 //        } liquidityPool;
+//    case CONTRACT_DATA:
+//        struct
+//        {
+//            Hash contractID;
+//            SCVal key;
+//        } contractData;
+//    case CONFIG_SETTING:
+//        struct
+//        {
+//            ConfigSettingID configSettingID;
+//        } configSetting;
 //    };
 //
 // union with discriminant LedgerEntryType
@@ -4798,6 +5176,8 @@ pub enum LedgerKey {
     Data(LedgerKeyData),
     ClaimableBalance(LedgerKeyClaimableBalance),
     LiquidityPool(LedgerKeyLiquidityPool),
+    ContractData(LedgerKeyContractData),
+    ConfigSetting(LedgerKeyConfigSetting),
 }
 
 impl LedgerKey {
@@ -4811,6 +5191,8 @@ impl LedgerKey {
             Self::Data(_) => LedgerEntryType::Data,
             Self::ClaimableBalance(_) => LedgerEntryType::ClaimableBalance,
             Self::LiquidityPool(_) => LedgerEntryType::LiquidityPool,
+            Self::ContractData(_) => LedgerEntryType::ContractData,
+            Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
         }
     }
 }
@@ -4831,6 +5213,12 @@ impl ReadXdr for LedgerKey {
             LedgerEntryType::LiquidityPool => {
                 Self::LiquidityPool(LedgerKeyLiquidityPool::read_xdr(r)?)
             }
+            LedgerEntryType::ContractData => {
+                Self::ContractData(LedgerKeyContractData::read_xdr(r)?)
+            }
+            LedgerEntryType::ConfigSetting => {
+                Self::ConfigSetting(LedgerKeyConfigSetting::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -4850,6 +5238,8 @@ impl WriteXdr for LedgerKey {
             Self::Data(v) => v.write_xdr(w)?,
             Self::ClaimableBalance(v) => v.write_xdr(w)?,
             Self::LiquidityPool(v) => v.write_xdr(w)?,
+            Self::ContractData(v) => v.write_xdr(w)?,
+            Self::ConfigSetting(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -5172,9 +5562,9 @@ impl WriteXdr for StellarValue {
 
 // MaskLedgerHeaderFlags is an XDR Const defines as:
 //
-//   const MASK_LEDGER_HEADER_FLAGS = 0x7;
+//   const MASK_LEDGER_HEADER_FLAGS = 0x7F;
 //
-pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
+pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7F;
 
 // LedgerHeaderFlags is an XDR Enum defines as:
 //
@@ -5182,16 +5572,24 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 //    {
 //        DISABLE_LIQUIDITY_POOL_TRADING_FLAG = 0x1,
 //        DISABLE_LIQUIDITY_POOL_DEPOSIT_FLAG = 0x2,
-//        DISABLE_LIQUIDITY_POOL_WITHDRAWAL_FLAG = 0x4
+//        DISABLE_LIQUIDITY_POOL_WITHDRAWAL_FLAG = 0x4,
+//        DISABLE_CONTRACT_CREATE = 0x8,
+//        DISABLE_CONTRACT_UPDATE = 0x10,
+//        DISABLE_CONTRACT_REMOVE = 0x20,
+//        DISABLE_CONTRACT_INVOKE = 0x40
 //    };
 //
 // enum
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum LedgerHeaderFlags {
-    TradingFlag = 1,
-    DepositFlag = 2,
-    WithdrawalFlag = 4,
+    LiquidityPoolTradingFlag = 1,
+    LiquidityPoolDepositFlag = 2,
+    LiquidityPoolWithdrawalFlag = 4,
+    ContractCreate = 8,
+    ContractUpdate = 16,
+    ContractRemove = 32,
+    ContractInvoke = 64,
 }
 
 impl TryFrom<i32> for LedgerHeaderFlags {
@@ -5199,9 +5597,13 @@ impl TryFrom<i32> for LedgerHeaderFlags {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            1 => LedgerHeaderFlags::TradingFlag,
-            2 => LedgerHeaderFlags::DepositFlag,
-            4 => LedgerHeaderFlags::WithdrawalFlag,
+            1 => LedgerHeaderFlags::LiquidityPoolTradingFlag,
+            2 => LedgerHeaderFlags::LiquidityPoolDepositFlag,
+            4 => LedgerHeaderFlags::LiquidityPoolWithdrawalFlag,
+            8 => LedgerHeaderFlags::ContractCreate,
+            16 => LedgerHeaderFlags::ContractUpdate,
+            32 => LedgerHeaderFlags::ContractRemove,
+            64 => LedgerHeaderFlags::ContractInvoke,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5492,7 +5894,8 @@ impl WriteXdr for LedgerHeader {
 //        LEDGER_UPGRADE_BASE_FEE = 2,
 //        LEDGER_UPGRADE_MAX_TX_SET_SIZE = 3,
 //        LEDGER_UPGRADE_BASE_RESERVE = 4,
-//        LEDGER_UPGRADE_FLAGS = 5
+//        LEDGER_UPGRADE_FLAGS = 5,
+//        LEDGER_UPGRADE_CONFIG = 6
 //    };
 //
 // enum
@@ -5504,6 +5907,7 @@ pub enum LedgerUpgradeType {
     MaxTxSetSize = 3,
     BaseReserve = 4,
     Flags = 5,
+    Config = 6,
 }
 
 impl TryFrom<i32> for LedgerUpgradeType {
@@ -5516,6 +5920,7 @@ impl TryFrom<i32> for LedgerUpgradeType {
             3 => LedgerUpgradeType::MaxTxSetSize,
             4 => LedgerUpgradeType::BaseReserve,
             5 => LedgerUpgradeType::Flags,
+            6 => LedgerUpgradeType::Config,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5547,6 +5952,39 @@ impl WriteXdr for LedgerUpgradeType {
     }
 }
 
+// LedgerUpgradeConfigSetting is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            ConfigSettingID id; // id to update
+//            ConfigSetting setting; // new value
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerUpgradeConfigSetting {
+    pub id: ConfigSettingId,
+    pub setting: ConfigSetting,
+}
+
+impl ReadXdr for LedgerUpgradeConfigSetting {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            id: ConfigSettingId::read_xdr(r)?,
+            setting: ConfigSetting::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerUpgradeConfigSetting {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.id.write_xdr(w)?;
+        self.setting.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // LedgerUpgrade is an XDR Union defines as:
 //
 //   union LedgerUpgrade switch (LedgerUpgradeType type)
@@ -5561,6 +5999,12 @@ impl WriteXdr for LedgerUpgradeType {
 //        uint32 newBaseReserve; // update baseReserve
 //    case LEDGER_UPGRADE_FLAGS:
 //        uint32 newFlags; // update flags
+//    case LEDGER_UPGRADE_CONFIG:
+//        struct
+//        {
+//            ConfigSettingID id; // id to update
+//            ConfigSetting setting; // new value
+//        } configSetting;
 //    };
 //
 // union with discriminant LedgerUpgradeType
@@ -5571,6 +6015,7 @@ pub enum LedgerUpgrade {
     MaxTxSetSize(u32),
     BaseReserve(u32),
     Flags(u32),
+    Config(LedgerUpgradeConfigSetting),
 }
 
 impl LedgerUpgrade {
@@ -5583,6 +6028,7 @@ impl LedgerUpgrade {
             Self::MaxTxSetSize(_) => LedgerUpgradeType::MaxTxSetSize,
             Self::BaseReserve(_) => LedgerUpgradeType::BaseReserve,
             Self::Flags(_) => LedgerUpgradeType::Flags,
+            Self::Config(_) => LedgerUpgradeType::Config,
         }
     }
 }
@@ -5598,6 +6044,7 @@ impl ReadXdr for LedgerUpgrade {
             LedgerUpgradeType::MaxTxSetSize => Self::MaxTxSetSize(u32::read_xdr(r)?),
             LedgerUpgradeType::BaseReserve => Self::BaseReserve(u32::read_xdr(r)?),
             LedgerUpgradeType::Flags => Self::Flags(u32::read_xdr(r)?),
+            LedgerUpgradeType::Config => Self::Config(LedgerUpgradeConfigSetting::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5616,6 +6063,7 @@ impl WriteXdr for LedgerUpgrade {
             Self::MaxTxSetSize(v) => v.write_xdr(w)?,
             Self::BaseReserve(v) => v.write_xdr(w)?,
             Self::Flags(v) => v.write_xdr(w)?,
+            Self::Config(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -8414,6 +8862,39 @@ impl WriteXdr for DecoratedSignature {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.hint.write_xdr(w)?;
         self.signature.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// LedgerFootprint is an XDR Struct defines as:
+//
+//   struct LedgerFootprint
+//    {
+//        LedgerKey readOnly<>;
+//        LedgerKey readWrite<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerFootprint {
+    pub read_only: VecM<LedgerKey>,
+    pub read_write: VecM<LedgerKey>,
+}
+
+impl ReadXdr for LedgerFootprint {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            read_only: VecM::<LedgerKey>::read_xdr(r)?,
+            read_write: VecM::<LedgerKey>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerFootprint {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.read_only.write_xdr(w)?;
+        self.read_write.write_xdr(w)?;
         Ok(())
     }
 }
@@ -17088,7 +17569,7 @@ pub type ScSymbol = VecM<u8, 10>;
 //
 //   enum SCValType
 //    {
-//        SCV_POS_I64 = 0,
+//        SCV_U63 = 0,
 //        SCV_U32 = 1,
 //        SCV_I32 = 2,
 //        SCV_STATIC = 3,
@@ -17102,7 +17583,7 @@ pub type ScSymbol = VecM<u8, 10>;
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScValType {
-    PosI64 = 0,
+    U63 = 0,
     U32 = 1,
     I32 = 2,
     Static = 3,
@@ -17117,7 +17598,7 @@ impl TryFrom<i32> for ScValType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScValType::PosI64,
+            0 => ScValType::U63,
             1 => ScValType::U32,
             2 => ScValType::I32,
             3 => ScValType::Static,
@@ -17162,7 +17643,8 @@ impl WriteXdr for ScValType {
 //    {
 //        SCS_VOID = 0,
 //        SCS_TRUE = 1,
-//        SCS_FALSE = 2
+//        SCS_FALSE = 2,
+//        SCS_LEDGER_KEY_CONTRACT_CODE_WASM = 3
 //    };
 //
 // enum
@@ -17172,6 +17654,7 @@ pub enum ScStatic {
     Void = 0,
     True = 1,
     False = 2,
+    LedgerKeyContractCodeWasm = 3,
 }
 
 impl TryFrom<i32> for ScStatic {
@@ -17182,6 +17665,7 @@ impl TryFrom<i32> for ScStatic {
             0 => ScStatic::Void,
             1 => ScStatic::True,
             2 => ScStatic::False,
+            3 => ScStatic::LedgerKeyContractCodeWasm,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17328,8 +17812,8 @@ impl WriteXdr for ScStatus {
 //
 //   union SCVal switch (SCValType type)
 //    {
-//    case SCV_POS_I64:
-//        int64 pos_i64;
+//    case SCV_U63:
+//        int64 u63;
 //    case SCV_U32:
 //        uint32 u32;
 //    case SCV_I32:
@@ -17349,11 +17833,11 @@ impl WriteXdr for ScStatus {
 // union with discriminant ScValType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ScVal {
-    PosI64(i64),
+    U63(i64),
     U32(u32),
     I32(i32),
     Static(ScStatic),
-    Object(Option<Box<ScObject>>),
+    Object(Option<ScObject>),
     Symbol(VecM<u8, 10>),
     Bitset(u64),
     Status(ScStatus),
@@ -17364,7 +17848,7 @@ impl ScVal {
     pub fn discriminant(&self) -> ScValType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::PosI64(_) => ScValType::PosI64,
+            Self::U63(_) => ScValType::U63,
             Self::U32(_) => ScValType::U32,
             Self::I32(_) => ScValType::I32,
             Self::Static(_) => ScValType::Static,
@@ -17382,11 +17866,11 @@ impl ReadXdr for ScVal {
         let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            ScValType::PosI64 => Self::PosI64(i64::read_xdr(r)?),
+            ScValType::U63 => Self::U63(i64::read_xdr(r)?),
             ScValType::U32 => Self::U32(u32::read_xdr(r)?),
             ScValType::I32 => Self::I32(i32::read_xdr(r)?),
             ScValType::Static => Self::Static(ScStatic::read_xdr(r)?),
-            ScValType::Object => Self::Object(Option::<Box<ScObject>>::read_xdr(r)?),
+            ScValType::Object => Self::Object(Option::<ScObject>::read_xdr(r)?),
             ScValType::Symbol => Self::Symbol(VecM::<u8, 10>::read_xdr(r)?),
             ScValType::Bitset => Self::Bitset(u64::read_xdr(r)?),
             ScValType::Status => Self::Status(ScStatus::read_xdr(r)?),
@@ -17403,7 +17887,7 @@ impl WriteXdr for ScVal {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::PosI64(v) => v.write_xdr(w)?,
+            Self::U63(v) => v.write_xdr(w)?,
             Self::U32(v) => v.write_xdr(w)?,
             Self::I32(v) => v.write_xdr(w)?,
             Self::Static(v) => v.write_xdr(w)?,
@@ -17423,12 +17907,11 @@ impl WriteXdr for ScVal {
 //        // We have a few objects that represent non-stellar-specific concepts
 //        // like general-purpose maps, vectors, numbers, blobs.
 //
-//        SCO_BOX = 0,
-//        SCO_VEC = 1,
-//        SCO_MAP = 2,
-//        SCO_U64 = 3,
-//        SCO_I64 = 4,
-//        SCO_BINARY = 5
+//        SCO_VEC = 0,
+//        SCO_MAP = 1,
+//        SCO_U64 = 2,
+//        SCO_I64 = 3,
+//        SCO_BINARY = 4
 //
 //        // TODO: add more
 //    };
@@ -17437,12 +17920,11 @@ impl WriteXdr for ScVal {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScObjectType {
-    Box = 0,
-    Vec = 1,
-    Map = 2,
-    U64 = 3,
-    I64 = 4,
-    Binary = 5,
+    Vec = 0,
+    Map = 1,
+    U64 = 2,
+    I64 = 3,
+    Binary = 4,
 }
 
 impl TryFrom<i32> for ScObjectType {
@@ -17450,12 +17932,11 @@ impl TryFrom<i32> for ScObjectType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScObjectType::Box,
-            1 => ScObjectType::Vec,
-            2 => ScObjectType::Map,
-            3 => ScObjectType::U64,
-            4 => ScObjectType::I64,
-            5 => ScObjectType::Binary,
+            0 => ScObjectType::Vec,
+            1 => ScObjectType::Map,
+            2 => ScObjectType::U64,
+            3 => ScObjectType::I64,
+            4 => ScObjectType::Binary,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17520,30 +18001,36 @@ impl WriteXdr for ScMapEntry {
     }
 }
 
+// ScvalLimit is an XDR Const defines as:
+//
+//   const SCVAL_LIMIT = 256000;
+//
+pub const SCVAL_LIMIT: u64 = 256000;
+
 // ScVec is an XDR Typedef defines as:
 //
-//   typedef SCVal SCVec<>;
+//   typedef SCVal SCVec<SCVAL_LIMIT>;
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScVec(pub VecM<ScVal>);
+pub struct ScVec(pub VecM<ScVal, 256000>);
 
-impl From<ScVec> for VecM<ScVal> {
+impl From<ScVec> for VecM<ScVal, 256000> {
     #[must_use]
     fn from(x: ScVec) -> Self {
         x.0
     }
 }
 
-impl From<VecM<ScVal>> for ScVec {
+impl From<VecM<ScVal, 256000>> for ScVec {
     #[must_use]
-    fn from(x: VecM<ScVal>) -> Self {
+    fn from(x: VecM<ScVal, 256000>) -> Self {
         ScVec(x)
     }
 }
 
-impl AsRef<VecM<ScVal>> for ScVec {
+impl AsRef<VecM<ScVal, 256000>> for ScVec {
     #[must_use]
-    fn as_ref(&self) -> &VecM<ScVal> {
+    fn as_ref(&self) -> &VecM<ScVal, 256000> {
         &self.0
     }
 }
@@ -17551,7 +18038,7 @@ impl AsRef<VecM<ScVal>> for ScVec {
 impl ReadXdr for ScVec {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<ScVal>::read_xdr(r)?;
+        let i = VecM::<ScVal, 256000>::read_xdr(r)?;
         let v = ScVec(i);
         Ok(v)
     }
@@ -17631,28 +18118,28 @@ impl AsRef<[ScVal]> for ScVec {
 
 // ScMap is an XDR Typedef defines as:
 //
-//   typedef SCMapEntry SCMap<>;
+//   typedef SCMapEntry SCMap<SCVAL_LIMIT>;
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ScMap(pub VecM<ScMapEntry>);
+pub struct ScMap(pub VecM<ScMapEntry, 256000>);
 
-impl From<ScMap> for VecM<ScMapEntry> {
+impl From<ScMap> for VecM<ScMapEntry, 256000> {
     #[must_use]
     fn from(x: ScMap) -> Self {
         x.0
     }
 }
 
-impl From<VecM<ScMapEntry>> for ScMap {
+impl From<VecM<ScMapEntry, 256000>> for ScMap {
     #[must_use]
-    fn from(x: VecM<ScMapEntry>) -> Self {
+    fn from(x: VecM<ScMapEntry, 256000>) -> Self {
         ScMap(x)
     }
 }
 
-impl AsRef<VecM<ScMapEntry>> for ScMap {
+impl AsRef<VecM<ScMapEntry, 256000>> for ScMap {
     #[must_use]
-    fn as_ref(&self) -> &VecM<ScMapEntry> {
+    fn as_ref(&self) -> &VecM<ScMapEntry, 256000> {
         &self.0
     }
 }
@@ -17660,7 +18147,7 @@ impl AsRef<VecM<ScMapEntry>> for ScMap {
 impl ReadXdr for ScMap {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<ScMapEntry>::read_xdr(r)?;
+        let i = VecM::<ScMapEntry, 256000>::read_xdr(r)?;
         let v = ScMap(i);
         Ok(v)
     }
@@ -17742,8 +18229,6 @@ impl AsRef<[ScMapEntry]> for ScMap {
 //
 //   union SCObject switch (SCObjectType type)
 //    {
-//    case SCO_BOX:
-//        SCVal box;
 //    case SCO_VEC:
 //        SCVec vec;
 //    case SCO_MAP:
@@ -17753,18 +18238,17 @@ impl AsRef<[ScMapEntry]> for ScMap {
 //    case SCO_I64:
 //        int64 i64;
 //    case SCO_BINARY:
-//        opaque bin<>;
+//        opaque bin<SCVAL_LIMIT>;
 //    };
 //
 // union with discriminant ScObjectType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ScObject {
-    Box(Box<ScVal>),
     Vec(ScVec),
     Map(ScMap),
     U64(u64),
     I64(i64),
-    Binary(VecM<u8>),
+    Binary(VecM<u8, 256000>),
 }
 
 impl ScObject {
@@ -17772,7 +18256,6 @@ impl ScObject {
     pub fn discriminant(&self) -> ScObjectType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Box(_) => ScObjectType::Box,
             Self::Vec(_) => ScObjectType::Vec,
             Self::Map(_) => ScObjectType::Map,
             Self::U64(_) => ScObjectType::U64,
@@ -17788,12 +18271,11 @@ impl ReadXdr for ScObject {
         let dv: ScObjectType = <ScObjectType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            ScObjectType::Box => Self::Box(Box::<ScVal>::read_xdr(r)?),
             ScObjectType::Vec => Self::Vec(ScVec::read_xdr(r)?),
             ScObjectType::Map => Self::Map(ScMap::read_xdr(r)?),
             ScObjectType::U64 => Self::U64(u64::read_xdr(r)?),
             ScObjectType::I64 => Self::I64(i64::read_xdr(r)?),
-            ScObjectType::Binary => Self::Binary(VecM::<u8>::read_xdr(r)?),
+            ScObjectType::Binary => Self::Binary(VecM::<u8, 256000>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17807,7 +18289,6 @@ impl WriteXdr for ScObject {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Box(v) => v.write_xdr(w)?,
             Self::Vec(v) => v.write_xdr(w)?,
             Self::Map(v) => v.write_xdr(w)?,
             Self::U64(v) => v.write_xdr(w)?,

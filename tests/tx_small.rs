@@ -8,17 +8,6 @@ use stellar_xdr::WriteXdr;
 
 #[cfg(feature = "std")]
 #[test]
-fn test_vecm_deref() -> Result<(), Error> {
-    use stellar_xdr::VecM;
-    let vecm: VecM<u32, 10> = [1, 2, 3].try_into()?;
-    let vec: &Vec<u32> = vecm.deref();
-    let contains = vec.contains(&2);
-    assert!(contains);
-    Ok(())
-}
-
-#[cfg(feature = "std")]
-#[test]
 fn test_build_small_tx_with_std() -> Result<(), Error> {
     let te = TransactionEnvelope::Tx(TransactionV1Envelope {
         tx: Transaction {

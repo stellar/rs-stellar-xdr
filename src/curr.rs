@@ -8,7 +8,7 @@
 
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
-use core::{fmt, fmt::Debug, slice::Iter};
+use core::{fmt, fmt::Debug, ops::Deref, slice::Iter};
 
 // When feature alloc is turned off use static lifetime Box and Vec types.
 #[cfg(not(feature = "alloc"))]
@@ -366,6 +366,14 @@ pub struct VecM<T, const MAX: u32 = { u32::MAX }>(Vec<T>);
 pub struct VecM<T, const MAX: u32 = { u32::MAX }>(Vec<T>)
 where
     T: 'static;
+
+impl<T, const MAX: u32> Deref for VecM<T, MAX> {
+    type Target = Vec<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl<T, const MAX: u32> VecM<T, MAX> {
     #[must_use]
@@ -6506,6 +6514,13 @@ impl WriteXdr for LedgerEntryChanges {
     }
 }
 
+impl Deref for LedgerEntryChanges {
+    type Target = Vec<LedgerEntryChange>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl LedgerEntryChanges {
     #[must_use]
     pub fn len(&self) -> usize {
@@ -7833,6 +7848,13 @@ impl WriteXdr for PeerStatList {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
+    }
+}
+
+impl Deref for PeerStatList {
+    type Target = Vec<PeerStats>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

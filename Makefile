@@ -18,7 +18,8 @@ XDR_FILES_NEXT= \
 	Stellar-overlay.x \
 	Stellar-transaction.x \
 	Stellar-types.x \
-	Stellar-contract.x
+	Stellar-contract.x \
+	Stellar-contract-spec.x
 XDR_FILES_LOCAL_NEXT=$(addprefix xdr/next/,$(XDR_FILES_NEXT))
 
 export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic

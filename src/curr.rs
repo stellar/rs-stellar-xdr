@@ -6515,7 +6515,7 @@ impl WriteXdr for LedgerEntryChanges {
 }
 
 impl Deref for LedgerEntryChanges {
-    type Target = Vec<LedgerEntryChange>;
+    type Target = VecM<LedgerEntryChange>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -7852,7 +7852,7 @@ impl WriteXdr for PeerStatList {
 }
 
 impl Deref for PeerStatList {
-    type Target = Vec<PeerStats>;
+    type Target = VecM<PeerStats, 25>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }

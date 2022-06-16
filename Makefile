@@ -55,7 +55,7 @@ src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 	touch $@
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
-		gem specific_install https://github.com/leighmcculloch/stellar--xdrgen.git -b rustvecmtypefix && \
+		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
 		xdrgen --language rust --namespace curr --output src/ $^ \
 		'
 	rustfmt $@
@@ -64,7 +64,7 @@ src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 	touch $@
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
-		gem specific_install https://github.com/leighmcculloch/stellar--xdrgen.git -b rustvecmtypefix && \
+		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
 		xdrgen --language rust --namespace next --output src/ $^ \
 		'
 	rustfmt $@

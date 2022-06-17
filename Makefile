@@ -52,7 +52,7 @@ watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 
 src/curr.rs: $(XDR_FILES_LOCAL_CURR)
-	touch $@
+	> $@
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
@@ -61,7 +61,7 @@ src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 	rustfmt $@
 
 src/next.rs: $(XDR_FILES_LOCAL_NEXT)
-	touch $@
+	> $@
 	docker run -it --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b master && \

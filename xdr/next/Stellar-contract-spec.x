@@ -29,6 +29,60 @@ enum SpecType
     SPEC_TYPE_UNION = 17
 };
 
+struct SpecTypeOption
+{
+    SpecTypeDef valueType;
+};
+
+struct SpecTypeResult
+{
+    SpecTypeDef okType;
+    SpecTypeDef errorType;
+};
+
+struct SpecTypeVec
+{
+    SpecTypeDef elementType;
+};
+
+struct SpecTypeMap
+{
+    SpecTypeDef keyType;
+    SpecTypeDef valueType;
+};
+
+struct SpecTypeSet
+{
+    SpecTypeDef elementType;
+};
+
+struct SpecTypeTuple
+{
+    SpecTypeDef valueTypes<12>;
+};
+
+struct SpecTypeStructField
+{
+    string name<30>;
+    SpecTypeDef type;
+};
+
+struct SpecTypeStruct
+{
+    SpecTypeStructField fields<40>;
+};
+
+struct SpecTypeUnionCase
+{
+    string name<60>;
+    SpecTypeDef type;
+};
+
+struct SpecTypeUnion
+{
+    SpecTypeUnionCase cases<50>;
+};
+
 union SpecTypeDef switch (SpecType type)
 {
 case SPEC_TYPE_UNIT:
@@ -43,41 +97,21 @@ case SPEC_TYPE_STATUS:
 case SPEC_TYPE_BINARY:
     void;
 case SPEC_TYPE_OPTION:
-    struct {
-        SpecTypeDef valueType;
-    } option;
+    SpecTypeOption option;
 case SPEC_TYPE_RESULT:
-    struct {
-        SpecTypeDef okType;
-        SpecTypeDef errorType;
-    } result;
+    SpecTypeResult result;
 case SPEC_TYPE_VEC:
-    struct {
-        SpecTypeDef elementType;
-    } vec;
+    SpecTypeVec vec;
 case SPEC_TYPE_MAP:
-    struct {
-        SpecTypeDef keyType;
-        SpecTypeDef valueType;
-    } map;
+    SpecTypeMap map;
+case SPEC_TYPE_SET:
+    SpecTypeSet set;
 case SPEC_TYPE_TUPLE:
-    struct {
-        SpecTypeDef valueType<12>;
-    } tuple;
+    SpecTypeTuple tuple;
 case SPEC_TYPE_STRUCT:
-    struct {
-        struct {
-            string name<60>;
-            SpecTypeDef typ;
-        } field<40>;
-    } struct;
+    SpecTypeStruct struct;
 case SPEC_TYPE_UNION:
-    struct {
-        struct {
-            string name<60>;
-            SpecTypeDef armType;
-        } case<40>;
-    } union;
+    SpecTypeUnion union;
 };
 
 union SpecEntryFunction switch (int v)

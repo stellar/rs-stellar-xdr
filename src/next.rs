@@ -9,7 +9,7 @@
 
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
-use core::{fmt, fmt::Debug, ops::Deref, slice::Iter};
+use core::{fmt, fmt::Debug, ops::Deref};
 
 // When feature alloc is turned off use static lifetime Box and Vec types.
 #[cfg(not(feature = "alloc"))]
@@ -377,14 +377,12 @@ impl<T, const MAX: u32> Deref for VecM<T, MAX> {
 }
 
 impl<T, const MAX: u32> VecM<T, MAX> {
-    #[must_use]
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
+    pub const MAX_LEN: usize = { MAX as usize };
 
     #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+    #[allow(clippy::unused_self)]
+    pub fn max_len(&self) -> usize {
+        Self::MAX_LEN
     }
 
     #[must_use]
@@ -395,15 +393,6 @@ impl<T, const MAX: u32> VecM<T, MAX> {
     #[must_use]
     pub fn as_vec(&self) -> &Vec<T> {
         self.as_ref()
-    }
-
-    #[must_use]
-    pub fn as_slice(&self) -> &[T] {
-        self.as_ref()
-    }
-
-    pub fn iter(&self) -> Iter<'_, T> {
-        self.0.iter()
     }
 }
 
@@ -733,6 +722,47 @@ impl WriteXdr for Value {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
+    }
+}
+
+impl Deref for Value {
+    type Target = VecM<u8>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<Value> for Vec<u8> {
+    #[must_use]
+    fn from(x: Value) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for Value {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(Value(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for Value {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for Value {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
     }
 }
 
@@ -1499,6 +1529,47 @@ impl WriteXdr for DataValue {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
+    }
+}
+
+impl Deref for DataValue {
+    type Target = VecM<u8, 64>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<DataValue> for Vec<u8> {
+    #[must_use]
+    fn from(x: DataValue) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for DataValue {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(DataValue(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for DataValue {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for DataValue {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
     }
 }
 
@@ -5369,6 +5440,47 @@ impl WriteXdr for UpgradeType {
     }
 }
 
+impl Deref for UpgradeType {
+    type Target = VecM<u8, 128>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<UpgradeType> for Vec<u8> {
+    #[must_use]
+    fn from(x: UpgradeType) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for UpgradeType {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(UpgradeType(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for UpgradeType {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for UpgradeType {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
+
 // StellarValueType is an XDR Enum defines as:
 //
 //   enum StellarValueType
@@ -6970,37 +7082,6 @@ impl Deref for LedgerEntryChanges {
     }
 }
 
-impl LedgerEntryChanges {
-    #[must_use]
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    #[must_use]
-    pub fn to_vec(self) -> Vec<LedgerEntryChange> {
-        self.into()
-    }
-
-    #[must_use]
-    pub fn as_vec(&self) -> &Vec<LedgerEntryChange> {
-        self.as_ref()
-    }
-
-    #[must_use]
-    pub fn as_slice(&self) -> &[LedgerEntryChange] {
-        self.as_ref()
-    }
-
-    pub fn iter(&self) -> Iter<'_, LedgerEntryChange> {
-        self.0.iter()
-    }
-}
-
 impl From<LedgerEntryChanges> for Vec<LedgerEntryChange> {
     #[must_use]
     fn from(x: LedgerEntryChanges) -> Self {
@@ -8091,6 +8172,47 @@ impl WriteXdr for EncryptedBody {
     }
 }
 
+impl Deref for EncryptedBody {
+    type Target = VecM<u8, 64000>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<EncryptedBody> for Vec<u8> {
+    #[must_use]
+    fn from(x: EncryptedBody) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for EncryptedBody {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(EncryptedBody(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for EncryptedBody {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for EncryptedBody {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
+
 // SurveyResponseMessage is an XDR Struct defines as:
 //
 //   struct SurveyResponseMessage
@@ -8304,37 +8426,6 @@ impl Deref for PeerStatList {
     type Target = VecM<PeerStats, 25>;
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-impl PeerStatList {
-    #[must_use]
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    #[must_use]
-    pub fn to_vec(self) -> Vec<PeerStats> {
-        self.into()
-    }
-
-    #[must_use]
-    pub fn as_vec(&self) -> &Vec<PeerStats> {
-        self.as_ref()
-    }
-
-    #[must_use]
-    pub fn as_slice(&self) -> &[PeerStats] {
-        self.as_ref()
-    }
-
-    pub fn iter(&self) -> Iter<'_, PeerStats> {
-        self.0.iter()
     }
 }
 
@@ -17377,6 +17468,47 @@ impl WriteXdr for Signature {
     }
 }
 
+impl Deref for Signature {
+    type Target = VecM<u8, 64>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<Signature> for Vec<u8> {
+    #[must_use]
+    fn from(x: Signature) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for Signature {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(Signature(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for Signature {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for Signature {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
+
 // SignatureHint is an XDR Typedef defines as:
 //
 //   typedef opaque SignatureHint[4];
@@ -18080,37 +18212,6 @@ impl Deref for ScVec {
     }
 }
 
-impl ScVec {
-    #[must_use]
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    #[must_use]
-    pub fn to_vec(self) -> Vec<ScVal> {
-        self.into()
-    }
-
-    #[must_use]
-    pub fn as_vec(&self) -> &Vec<ScVal> {
-        self.as_ref()
-    }
-
-    #[must_use]
-    pub fn as_slice(&self) -> &[ScVal] {
-        self.as_ref()
-    }
-
-    pub fn iter(&self) -> Iter<'_, ScVal> {
-        self.0.iter()
-    }
-}
-
 impl From<ScVec> for Vec<ScVal> {
     #[must_use]
     fn from(x: ScVec) -> Self {
@@ -18193,37 +18294,6 @@ impl Deref for ScMap {
     type Target = VecM<ScMapEntry, 256000>;
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-impl ScMap {
-    #[must_use]
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    #[must_use]
-    pub fn to_vec(self) -> Vec<ScMapEntry> {
-        self.into()
-    }
-
-    #[must_use]
-    pub fn as_vec(&self) -> &Vec<ScMapEntry> {
-        self.as_ref()
-    }
-
-    #[must_use]
-    pub fn as_slice(&self) -> &[ScMapEntry] {
-        self.as_ref()
-    }
-
-    pub fn iter(&self) -> Iter<'_, ScMapEntry> {
-        self.0.iter()
     }
 }
 

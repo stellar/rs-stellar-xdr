@@ -29,7 +29,14 @@ use noalloc::{boxed::Box, vec::Vec};
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
-use alloc::{borrow::ToOwned, boxed::Box, string::String, vec::Vec};
+use alloc::{
+    borrow::ToOwned,
+    boxed::Box,
+    string::{FromUtf8Error, String},
+    vec::Vec,
+};
+#[cfg(all(feature = "std"))]
+use std::string::FromUtf8Error;
 
 // TODO: Add support for read/write xdr fns when std not available.
 
@@ -82,6 +89,14 @@ impl From<core::str::Utf8Error> for Error {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl From<FromUtf8Error> for Error {
+    #[must_use]
+    fn from(e: FromUtf8Error) -> Self {
+        Error::Utf8Error(e.utf8_error())
+    }
+}
+
 #[cfg(feature = "std")]
 impl From<io::Error> for Error {
     #[must_use]
@@ -111,6 +126,13 @@ where
     }
 
     #[cfg(feature = "std")]
+    fn from_xdr<B: AsRef<[u8]>>(bytes: B) -> Result<Self> {
+        let mut cursor = Cursor::new(bytes.as_ref());
+        let t = Self::read_xdr(&mut cursor)?;
+        Ok(t)
+    }
+
+    #[cfg(feature = "std")]
     fn from_xdr_base64(b64: String) -> Result<Self> {
         let mut b64_reader = Cursor::new(b64);
         let mut dec = base64::read::DecoderReader::new(&mut b64_reader, base64::STANDARD);
@@ -122,6 +144,14 @@ where
 pub trait WriteXdr {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()>;
+
+    #[cfg(feature = "std")]
+    fn to_xdr(&self) -> Result<Vec<u8>> {
+        let mut cursor = Cursor::new(vec![]);
+        self.write_xdr(&mut cursor)?;
+        let bytes = cursor.into_inner();
+        Ok(bytes)
+    }
 
     #[cfg(feature = "std")]
     fn to_xdr_base64(&self) -> Result<String> {
@@ -515,13 +545,27 @@ where
 }
 
 #[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&String> for VecM<u8, MAX> {
+    type Error = Error;
+
+    fn try_from(v: &String) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(VecM(v.as_bytes().to_vec()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl<const MAX: u32> TryFrom<String> for VecM<u8, MAX> {
     type Error = Error;
 
     fn try_from(v: String) -> Result<Self> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
-            Ok(VecM(v.as_bytes().to_vec()))
+            Ok(VecM(v.into()))
         } else {
             Err(Error::LengthExceedsMax)
         }
@@ -533,6 +577,15 @@ impl<const MAX: u32> TryFrom<VecM<u8, MAX>> for String {
     type Error = Error;
 
     fn try_from(v: VecM<u8, MAX>) -> Result<Self> {
+        Ok(String::from_utf8(v.0)?)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&VecM<u8, MAX>> for String {
+    type Error = Error;
+
+    fn try_from(v: &VecM<u8, MAX>) -> Result<Self> {
         Ok(core::str::from_utf8(v.as_ref())?.to_owned())
     }
 }
@@ -544,7 +597,7 @@ impl<const MAX: u32> TryFrom<&str> for VecM<u8, MAX> {
     fn try_from(v: &str) -> Result<Self> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
         if len <= MAX {
-            Ok(VecM(v.as_bytes().to_vec()))
+            Ok(VecM(v.into()))
         } else {
             Err(Error::LengthExceedsMax)
         }

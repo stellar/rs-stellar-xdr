@@ -9,7 +9,7 @@ namespace stellar
 
 enum SpecType
 {
-    SPEC_TYPE_FUNCTION = 0,
+    SPEC_TYPE_UNIT = 0,
     SPEC_TYPE_U32 = 1,
     SPEC_TYPE_I32 = 2,
     SPEC_TYPE_U64 = 3,
@@ -19,20 +19,19 @@ enum SpecType
     SPEC_TYPE_BITSET = 7,
     SPEC_TYPE_STATUS = 8,
     SPEC_TYPE_BINARY = 9,
-    SPEC_TYPE_VEC = 10,
-    SPEC_TYPE_MAP = 11,
-    SPEC_TYPE_TUPLE = 12,
-    SPEC_TYPE_STRUCT = 13,
-    SPEC_TYPE_UNION = 14
+    SPEC_TYPE_OPTION = 10,
+    SPEC_TYPE_RESULT = 11,
+    SPEC_TYPE_VEC = 12,
+    SPEC_TYPE_MAP = 13,
+    SPEC_TYPE_SET = 14,
+    SPEC_TYPE_TUPLE = 15,
+    SPEC_TYPE_STRUCT = 16,
+    SPEC_TYPE_UNION = 17
 };
 
 union SpecTypeDef switch (SpecType type)
 {
-case SPEC_TYPE_FUNCTION:
-    struct {
-        SpecTypeDef argTypes<12>;
-        SpecTypeDef resultTypes<1>;
-    } function;
+case SPEC_TYPE_UNIT:
 case SPEC_TYPE_U64:
 case SPEC_TYPE_I64:
 case SPEC_TYPE_U32:
@@ -43,6 +42,15 @@ case SPEC_TYPE_BITSET:
 case SPEC_TYPE_STATUS:
 case SPEC_TYPE_BINARY:
     void;
+case SPEC_TYPE_OPTION:
+    struct {
+        SpecTypeDef valueType;
+    } option;
+case SPEC_TYPE_RESULT:
+    struct {
+        SpecTypeDef okType;
+        SpecTypeDef errorType;
+    } result;
 case SPEC_TYPE_VEC:
     struct {
         SpecTypeDef elementType;
@@ -59,29 +67,50 @@ case SPEC_TYPE_TUPLE:
 case SPEC_TYPE_STRUCT:
     struct {
         struct {
-            SCSymbol name;
+            string name<60>;
             SpecTypeDef typ;
-        } field<12>;
+        } field<40>;
     } struct;
 case SPEC_TYPE_UNION:
     struct {
-        SpecTypeDef discriminant;
-        SpecTypeDef caseTypes<12>;
+        struct {
+            string name<60>;
+            SpecTypeDef armType;
+        } cases<40>;
     } union;
 };
 
-enum SpecEntryType
+union SpecEntryFunction switch (int v)
 {
-    SPEC_ENTRY_V0 = 0
-};
-
-union SpecEntry switch (SpecEntryType type)
-{
-case SPEC_ENTRY_V0:
+case 0:
     struct {
         SCSymbol name;
+        SpecTypeDef inputTypes<10>;
+        SpecTypeDef outputTypes<1>;
+    } v0;
+};
+
+union SpecEntryType switch (int v)
+{
+case 0:
+    struct {
+        string name<60>;
         SpecTypeDef typ;
     } v0;
+};
+
+enum SpecEntryKind
+{
+    SPEC_ENTRY_FUNCTION = 0,
+    SPEC_ENTRY_TYPE = 1
+};
+
+union SpecEntry switch (SpecEntryKind kind)
+{
+case SPEC_ENTRY_FUNCTION:
+    SpecEntryFunction function;
+case SPEC_ENTRY_TYPE:
+    SpecEntryType type;
 };
 
 }

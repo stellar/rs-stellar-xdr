@@ -62,7 +62,7 @@ case SPEC_TYPE_MAP:
     } map;
 case SPEC_TYPE_TUPLE:
     struct {
-        SpecTypeDef valueTypes<12>;
+        SpecTypeDef valueType<12>;
     } tuple;
 case SPEC_TYPE_STRUCT:
     struct {
@@ -76,7 +76,7 @@ case SPEC_TYPE_UNION:
         struct {
             string name<60>;
             SpecTypeDef armType;
-        } cases<40>;
+        } case<40>;
     } union;
 };
 

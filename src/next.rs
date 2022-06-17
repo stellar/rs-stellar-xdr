@@ -18433,13 +18433,13 @@ impl WriteXdr for SpecType {
 //
 //   struct {
 //            SpecTypeDef argTypes<12>;
-//            SpecTypeDef *resultType;
+//            SpecTypeDef resultTypes<1>;
 //        }
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SpecTypeDefFunction {
     pub arg_types: VecM<SpecTypeDef, 12>,
-    pub result_type: Option<Box<SpecTypeDef>>,
+    pub result_types: VecM<SpecTypeDef, 1>,
 }
 
 impl ReadXdr for SpecTypeDefFunction {
@@ -18447,7 +18447,7 @@ impl ReadXdr for SpecTypeDefFunction {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             arg_types: VecM::<SpecTypeDef, 12>::read_xdr(r)?,
-            result_type: Option::<Box<SpecTypeDef>>::read_xdr(r)?,
+            result_types: VecM::<SpecTypeDef, 1>::read_xdr(r)?,
         })
     }
 }
@@ -18456,7 +18456,7 @@ impl WriteXdr for SpecTypeDefFunction {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.arg_types.write_xdr(w)?;
-        self.result_type.write_xdr(w)?;
+        self.result_types.write_xdr(w)?;
         Ok(())
     }
 }
@@ -18651,7 +18651,7 @@ impl WriteXdr for SpecTypeDefUnion {
 //    case SPEC_TYPE_FUNCTION:
 //        struct {
 //            SpecTypeDef argTypes<12>;
-//            SpecTypeDef *resultType;
+//            SpecTypeDef resultTypes<1>;
 //        } function;
 //    case SPEC_TYPE_U64:
 //    case SPEC_TYPE_I64:

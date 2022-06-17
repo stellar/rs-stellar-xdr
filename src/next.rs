@@ -29,7 +29,7 @@ use noalloc::{boxed::Box, vec::Vec};
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
-use alloc::{boxed::Box, vec::Vec};
+use alloc::{borrow::ToOwned, boxed::Box, string::String, vec::Vec};
 
 // TODO: Add support for read/write xdr fns when std not available.
 
@@ -45,6 +45,7 @@ pub enum Error {
     LengthExceedsMax,
     LengthMismatch,
     NonZeroPadding,
+    Utf8Error(core::str::Utf8Error),
     #[cfg(feature = "std")]
     IO(io::Error),
 }
@@ -67,9 +68,17 @@ impl fmt::Display for Error {
             Error::LengthExceedsMax => write!(f, "xdr value max length exceeded"),
             Error::LengthMismatch => write!(f, "xdr value length does not match"),
             Error::NonZeroPadding => write!(f, "xdr padding contains non-zero bytes"),
+            Error::Utf8Error(e) => write!(f, "{}", e),
             #[cfg(feature = "std")]
             Error::IO(e) => write!(f, "{}", e),
         }
+    }
+}
+
+impl From<core::str::Utf8Error> for Error {
+    #[must_use]
+    fn from(e: core::str::Utf8Error) -> Self {
+        Error::Utf8Error(e)
     }
 }
 
@@ -502,6 +511,65 @@ where
         } else {
             Err(Error::LengthExceedsMax)
         }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<String> for VecM<u8, MAX> {
+    type Error = Error;
+
+    fn try_from(v: String) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(VecM(v.as_bytes().to_vec()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<VecM<u8, MAX>> for String {
+    type Error = Error;
+
+    fn try_from(v: VecM<u8, MAX>) -> Result<Self> {
+        Ok(core::str::from_utf8(v.as_ref())?.to_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&str> for VecM<u8, MAX> {
+    type Error = Error;
+
+    fn try_from(v: &str) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(VecM(v.as_bytes().to_vec()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(not(feature = "alloc"))]
+impl<const MAX: u32> TryFrom<&'static str> for VecM<u8, MAX> {
+    type Error = Error;
+
+    fn try_from(v: &'static str) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(VecM(v.as_bytes()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+impl<'a, const MAX: u32> TryFrom<&'a VecM<u8, MAX>> for &'a str {
+    type Error = Error;
+
+    fn try_from(v: &'a VecM<u8, MAX>) -> Result<Self> {
+        Ok(core::str::from_utf8(v.as_ref())?)
     }
 }
 
@@ -16020,7 +16088,8 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 //   union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code)
 //    {
 //    case INVOKE_HOST_FUNCTION_SUCCESS:
-//        SCVal success;
+//        void;
+//    case INVOKE_HOST_FUNCTION_MALFORMED:
 //    case INVOKE_HOST_FUNCTION_TRAPPED:
 //        void;
 //    };
@@ -16028,7 +16097,8 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 // union with discriminant InvokeHostFunctionResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum InvokeHostFunctionResult {
-    Success(ScVal),
+    Success,
+    Malformed,
     Trapped,
 }
 
@@ -16037,7 +16107,8 @@ impl InvokeHostFunctionResult {
     pub fn discriminant(&self) -> InvokeHostFunctionResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Success(_) => InvokeHostFunctionResultCode::Success,
+            Self::Success => InvokeHostFunctionResultCode::Success,
+            Self::Malformed => InvokeHostFunctionResultCode::Malformed,
             Self::Trapped => InvokeHostFunctionResultCode::Trapped,
         }
     }
@@ -16050,7 +16121,8 @@ impl ReadXdr for InvokeHostFunctionResult {
             <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            InvokeHostFunctionResultCode::Success => Self::Success(ScVal::read_xdr(r)?),
+            InvokeHostFunctionResultCode::Success => Self::Success,
+            InvokeHostFunctionResultCode::Malformed => Self::Malformed,
             InvokeHostFunctionResultCode::Trapped => Self::Trapped,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -16065,7 +16137,8 @@ impl WriteXdr for InvokeHostFunctionResult {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Success(v) => v.write_xdr(w)?,
+            Self::Success => ().write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
             Self::Trapped => ().write_xdr(w)?,
         };
         Ok(())

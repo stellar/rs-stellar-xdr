@@ -31,7 +31,7 @@ union SpecTypeDef switch (SpecType type)
 case SPEC_TYPE_FUNCTION:
     struct {
         SpecTypeDef argTypes<12>;
-        SpecTypeDef resultType;
+        SpecTypeDef *resultType;
     } function;
 case SPEC_TYPE_U64:
 case SPEC_TYPE_I64:

@@ -18561,19 +18561,19 @@ impl WriteXdr for SpecTypeDefMap {
 // SpecTypeDefTuple is an XDR NestedStruct defines as:
 //
 //   struct {
-//            SpecTypeDef valueTypes<12>;
+//            SpecTypeDef valueType<12>;
 //        }
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SpecTypeDefTuple {
-    pub value_types: VecM<SpecTypeDef, 12>,
+    pub value_type: VecM<SpecTypeDef, 12>,
 }
 
 impl ReadXdr for SpecTypeDefTuple {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            value_types: VecM::<SpecTypeDef, 12>::read_xdr(r)?,
+            value_type: VecM::<SpecTypeDef, 12>::read_xdr(r)?,
         })
     }
 }
@@ -18581,7 +18581,7 @@ impl ReadXdr for SpecTypeDefTuple {
 impl WriteXdr for SpecTypeDefTuple {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.value_types.write_xdr(w)?;
+        self.value_type.write_xdr(w)?;
         Ok(())
     }
 }
@@ -18649,7 +18649,7 @@ impl WriteXdr for SpecTypeDefStruct {
     }
 }
 
-// SpecTypeDefUnionCases is an XDR NestedStruct defines as:
+// SpecTypeDefUnionCase is an XDR NestedStruct defines as:
 //
 //   struct {
 //                string name<60>;
@@ -18657,12 +18657,12 @@ impl WriteXdr for SpecTypeDefStruct {
 //            }
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SpecTypeDefUnionCases {
+pub struct SpecTypeDefUnionCase {
     pub name: VecM<u8, 60>,
     pub arm_type: Box<SpecTypeDef>,
 }
 
-impl ReadXdr for SpecTypeDefUnionCases {
+impl ReadXdr for SpecTypeDefUnionCase {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -18672,7 +18672,7 @@ impl ReadXdr for SpecTypeDefUnionCases {
     }
 }
 
-impl WriteXdr for SpecTypeDefUnionCases {
+impl WriteXdr for SpecTypeDefUnionCase {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.name.write_xdr(w)?;
@@ -18687,19 +18687,19 @@ impl WriteXdr for SpecTypeDefUnionCases {
 //            struct {
 //                string name<60>;
 //                SpecTypeDef armType;
-//            } cases<40>;
+//            } case<40>;
 //        }
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SpecTypeDefUnion {
-    pub cases: Box<SpecTypeDefUnionCases>,
+    pub case: Box<SpecTypeDefUnionCase>,
 }
 
 impl ReadXdr for SpecTypeDefUnion {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            cases: Box::<SpecTypeDefUnionCases>::read_xdr(r)?,
+            case: Box::<SpecTypeDefUnionCase>::read_xdr(r)?,
         })
     }
 }
@@ -18707,7 +18707,7 @@ impl ReadXdr for SpecTypeDefUnion {
 impl WriteXdr for SpecTypeDefUnion {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.cases.write_xdr(w)?;
+        self.case.write_xdr(w)?;
         Ok(())
     }
 }
@@ -18747,7 +18747,7 @@ impl WriteXdr for SpecTypeDefUnion {
 //        } map;
 //    case SPEC_TYPE_TUPLE:
 //        struct {
-//            SpecTypeDef valueTypes<12>;
+//            SpecTypeDef valueType<12>;
 //        } tuple;
 //    case SPEC_TYPE_STRUCT:
 //        struct {
@@ -18761,7 +18761,7 @@ impl WriteXdr for SpecTypeDefUnion {
 //            struct {
 //                string name<60>;
 //                SpecTypeDef armType;
-//            } cases<40>;
+//            } case<40>;
 //        } union;
 //    };
 //

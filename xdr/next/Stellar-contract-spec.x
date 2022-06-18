@@ -9,7 +9,6 @@ namespace stellar
 
 enum SpecType
 {
-    SPEC_TYPE_UNIT = 0,
     SPEC_TYPE_U32 = 1,
     SPEC_TYPE_I32 = 2,
     SPEC_TYPE_U64 = 3,
@@ -67,7 +66,6 @@ struct SpecTypeUDT
 
 union SpecTypeDef switch (SpecType type)
 {
-case SPEC_TYPE_UNIT:
 case SPEC_TYPE_U64:
 case SPEC_TYPE_I64:
 case SPEC_TYPE_U32:

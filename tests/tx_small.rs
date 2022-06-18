@@ -23,6 +23,16 @@ fn test_build_small_tx_with_std() -> Result<(), Error> {
     });
     let xdr = te.to_xdr_base64()?;
     assert_eq!(xdr, "AAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAB1N0ZWxsYXIAAAAAAAAAAAAAAAAA");
+    let xdr = te.to_xdr()?;
+    assert_eq!(
+        xdr,
+        vec![
+            0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+            0, 1, 0, 0, 0, 7, 83, 116, 101, 108, 108, 97, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0
+        ]
+    );
     Ok(())
 }
 

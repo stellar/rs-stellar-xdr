@@ -18,7 +18,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "26bb0772b1bf78bc1358a2d93820b01deac4ce472f8cd5e566bda46c9d723a32",
+        "4bb5fb1eddb25758103babeb6cf7a86ea5cb00602b1bbb4d2aa3f02cccddd63e",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -18836,7 +18836,6 @@ impl WriteXdr for ScObject {
 //
 //   enum SpecType
 //    {
-//        SPEC_TYPE_UNIT = 0,
 //        SPEC_TYPE_U32 = 1,
 //        SPEC_TYPE_I32 = 2,
 //        SPEC_TYPE_U64 = 3,
@@ -18859,7 +18858,6 @@ impl WriteXdr for ScObject {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum SpecType {
-    Unit = 0,
     U32 = 1,
     I32 = 2,
     U64 = 3,
@@ -18883,7 +18881,6 @@ impl TryFrom<i32> for SpecType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => SpecType::Unit,
             1 => SpecType::U32,
             2 => SpecType::I32,
             3 => SpecType::U64,
@@ -19146,7 +19143,6 @@ impl WriteXdr for SpecTypeUdt {
 //
 //   union SpecTypeDef switch (SpecType type)
 //    {
-//    case SPEC_TYPE_UNIT:
 //    case SPEC_TYPE_U64:
 //    case SPEC_TYPE_I64:
 //    case SPEC_TYPE_U32:
@@ -19176,7 +19172,6 @@ impl WriteXdr for SpecTypeUdt {
 // union with discriminant SpecType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SpecTypeDef {
-    Unit,
     U64,
     I64,
     U32,
@@ -19200,7 +19195,6 @@ impl SpecTypeDef {
     pub fn discriminant(&self) -> SpecType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Unit => SpecType::Unit,
             Self::U64 => SpecType::U64,
             Self::I64 => SpecType::I64,
             Self::U32 => SpecType::U32,
@@ -19227,7 +19221,6 @@ impl ReadXdr for SpecTypeDef {
         let dv: SpecType = <SpecType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            SpecType::Unit => Self::Unit,
             SpecType::U64 => Self::U64,
             SpecType::I64 => Self::I64,
             SpecType::U32 => Self::U32,
@@ -19257,7 +19250,6 @@ impl WriteXdr for SpecTypeDef {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Unit => ().write_xdr(w)?,
             Self::U64 => ().write_xdr(w)?,
             Self::I64 => ().write_xdr(w)?,
             Self::U32 => ().write_xdr(w)?,

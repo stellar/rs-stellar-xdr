@@ -1,13 +1,45 @@
 // Module  is generated from:
 //  xdr/next/Stellar-SCP.x
+//  xdr/next/Stellar-contract.x
 //  xdr/next/Stellar-ledger-entries.x
 //  xdr/next/Stellar-ledger.x
 //  xdr/next/Stellar-overlay.x
 //  xdr/next/Stellar-transaction.x
 //  xdr/next/Stellar-types.x
-//  xdr/next/Stellar-contract.x
 
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
+
+/// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
+pub const XDR_FILES_SHA256: [(&str, &str); 7] = [
+    (
+        "xdr/next/Stellar-SCP.x",
+        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+    ),
+    (
+        "xdr/next/Stellar-contract.x",
+        "2e83db4641554e8e99f809c4217984bf2266ca6fd41f79f04c57175b320c2ce5",
+    ),
+    (
+        "xdr/next/Stellar-ledger-entries.x",
+        "e6614f3fb3553d1eb79d20fc19c92b82088e8e4de35b132daf0a44993602e957",
+    ),
+    (
+        "xdr/next/Stellar-ledger.x",
+        "1573aea71199d7e5c8defb24633608811bf4f4dbf9c15170c9fc954003a1d2f9",
+    ),
+    (
+        "xdr/next/Stellar-overlay.x",
+        "8ecbc36d2a43103499a6416572c7cd7b4fd7638d1a2af515b81b463ce6909c51",
+    ),
+    (
+        "xdr/next/Stellar-transaction.x",
+        "d3edb00efac7e69405dbc5539c4e366f4d8c5c2e63c66a7bda187a1c5fd6b878",
+    ),
+    (
+        "xdr/next/Stellar-types.x",
+        "60b7588e573f5e5518766eb5e6b6ea42f0e53144663cbe557e485cceb6306c85",
+    ),
+];
 
 use core::{fmt, fmt::Debug, ops::Deref};
 

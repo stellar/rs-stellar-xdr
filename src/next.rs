@@ -18,7 +18,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "dbef52b73b9ba4d061debd8086d2313677c8777a9bcaba8d63852d48160c338e",
+        "26bb0772b1bf78bc1358a2d93820b01deac4ce472f8cd5e566bda46c9d723a32",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -18852,8 +18852,7 @@ impl WriteXdr for ScObject {
 //        SPEC_TYPE_MAP = 13,
 //        SPEC_TYPE_SET = 14,
 //        SPEC_TYPE_TUPLE = 15,
-//        SPEC_TYPE_STRUCT = 16,
-//        SPEC_TYPE_UNION = 17
+//        SPEC_TYPE_UDT = 16
 //    };
 //
 // enum
@@ -18876,8 +18875,7 @@ pub enum SpecType {
     Map = 13,
     Set = 14,
     Tuple = 15,
-    Struct = 16,
-    Union = 17,
+    Udt = 16,
 }
 
 impl TryFrom<i32> for SpecType {
@@ -18901,8 +18899,7 @@ impl TryFrom<i32> for SpecType {
             13 => SpecType::Map,
             14 => SpecType::Set,
             15 => SpecType::Tuple,
-            16 => SpecType::Struct,
-            17 => SpecType::Union,
+            16 => SpecType::Udt,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -19116,126 +19113,31 @@ impl WriteXdr for SpecTypeTuple {
     }
 }
 
-// SpecTypeStructField is an XDR Struct defines as:
+// SpecTypeUdt is an XDR Struct defines as:
 //
-//   struct SpecTypeStructField
-//    {
-//        string name<30>;
-//        SpecTypeDef type;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SpecTypeStructField {
-    pub name: VecM<u8, 30>,
-    pub type_: Box<SpecTypeDef>,
-}
-
-impl ReadXdr for SpecTypeStructField {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            name: VecM::<u8, 30>::read_xdr(r)?,
-            type_: Box::<SpecTypeDef>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for SpecTypeStructField {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.name.write_xdr(w)?;
-        self.type_.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// SpecTypeStruct is an XDR Struct defines as:
-//
-//   struct SpecTypeStruct
-//    {
-//        SpecTypeStructField fields<40>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SpecTypeStruct {
-    pub fields: VecM<SpecTypeStructField, 40>,
-}
-
-impl ReadXdr for SpecTypeStruct {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            fields: VecM::<SpecTypeStructField, 40>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for SpecTypeStruct {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.fields.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// SpecTypeUnionCase is an XDR Struct defines as:
-//
-//   struct SpecTypeUnionCase
+//   struct SpecTypeUDT
 //    {
 //        string name<60>;
-//        SpecTypeDef type;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SpecTypeUnionCase {
+pub struct SpecTypeUdt {
     pub name: VecM<u8, 60>,
-    pub type_: Box<SpecTypeDef>,
 }
 
-impl ReadXdr for SpecTypeUnionCase {
+impl ReadXdr for SpecTypeUdt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             name: VecM::<u8, 60>::read_xdr(r)?,
-            type_: Box::<SpecTypeDef>::read_xdr(r)?,
         })
     }
 }
 
-impl WriteXdr for SpecTypeUnionCase {
+impl WriteXdr for SpecTypeUdt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.name.write_xdr(w)?;
-        self.type_.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// SpecTypeUnion is an XDR Struct defines as:
-//
-//   struct SpecTypeUnion
-//    {
-//        SpecTypeUnionCase cases<50>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SpecTypeUnion {
-    pub cases: VecM<SpecTypeUnionCase, 50>,
-}
-
-impl ReadXdr for SpecTypeUnion {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            cases: VecM::<SpecTypeUnionCase, 50>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for SpecTypeUnion {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.cases.write_xdr(w)?;
         Ok(())
     }
 }
@@ -19267,10 +19169,8 @@ impl WriteXdr for SpecTypeUnion {
 //        SpecTypeSet set;
 //    case SPEC_TYPE_TUPLE:
 //        SpecTypeTuple tuple;
-//    case SPEC_TYPE_STRUCT:
-//        SpecTypeStruct struct;
-//    case SPEC_TYPE_UNION:
-//        SpecTypeUnion union;
+//    case SPEC_TYPE_UDT:
+//        SpecTypeUDT udt;
 //    };
 //
 // union with discriminant SpecType
@@ -19292,8 +19192,7 @@ pub enum SpecTypeDef {
     Map(Box<SpecTypeMap>),
     Set(Box<SpecTypeSet>),
     Tuple(Box<SpecTypeTuple>),
-    Struct(Box<SpecTypeStruct>),
-    Union(Box<SpecTypeUnion>),
+    Udt(SpecTypeUdt),
 }
 
 impl SpecTypeDef {
@@ -19317,8 +19216,7 @@ impl SpecTypeDef {
             Self::Map(_) => SpecType::Map,
             Self::Set(_) => SpecType::Set,
             Self::Tuple(_) => SpecType::Tuple,
-            Self::Struct(_) => SpecType::Struct,
-            Self::Union(_) => SpecType::Union,
+            Self::Udt(_) => SpecType::Udt,
         }
     }
 }
@@ -19345,8 +19243,7 @@ impl ReadXdr for SpecTypeDef {
             SpecType::Map => Self::Map(Box::<SpecTypeMap>::read_xdr(r)?),
             SpecType::Set => Self::Set(Box::<SpecTypeSet>::read_xdr(r)?),
             SpecType::Tuple => Self::Tuple(Box::<SpecTypeTuple>::read_xdr(r)?),
-            SpecType::Struct => Self::Struct(Box::<SpecTypeStruct>::read_xdr(r)?),
-            SpecType::Union => Self::Union(Box::<SpecTypeUnion>::read_xdr(r)?),
+            SpecType::Udt => Self::Udt(SpecTypeUdt::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -19376,6 +19273,239 @@ impl WriteXdr for SpecTypeDef {
             Self::Map(v) => v.write_xdr(w)?,
             Self::Set(v) => v.write_xdr(w)?,
             Self::Tuple(v) => v.write_xdr(w)?,
+            Self::Udt(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// SpecUdtType is an XDR Enum defines as:
+//
+//   enum SpecUDTType
+//    {
+//        SPEC_UDT_STRUCT = 0,
+//        SPEC_UDT_UNION = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum SpecUdtType {
+    Struct = 0,
+    Union = 1,
+}
+
+impl TryFrom<i32> for SpecUdtType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => SpecUdtType::Struct,
+            1 => SpecUdtType::Union,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<SpecUdtType> for i32 {
+    #[must_use]
+    fn from(e: SpecUdtType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for SpecUdtType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for SpecUdtType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// SpecUdtStructField is an XDR Struct defines as:
+//
+//   struct SpecUDTStructField
+//    {
+//        string name<30>;
+//        SpecTypeDef type;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SpecUdtStructField {
+    pub name: VecM<u8, 30>,
+    pub type_: SpecTypeDef,
+}
+
+impl ReadXdr for SpecUdtStructField {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            name: VecM::<u8, 30>::read_xdr(r)?,
+            type_: SpecTypeDef::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for SpecUdtStructField {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.name.write_xdr(w)?;
+        self.type_.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// SpecUdtStruct is an XDR Struct defines as:
+//
+//   struct SpecUDTStruct
+//    {
+//        SpecUDTStructField fields<40>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SpecUdtStruct {
+    pub fields: VecM<SpecUdtStructField, 40>,
+}
+
+impl ReadXdr for SpecUdtStruct {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            fields: VecM::<SpecUdtStructField, 40>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for SpecUdtStruct {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.fields.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// SpecUdtUnionCase is an XDR Struct defines as:
+//
+//   struct SpecUDTUnionCase
+//    {
+//        string name<60>;
+//        SpecTypeDef type;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SpecUdtUnionCase {
+    pub name: VecM<u8, 60>,
+    pub type_: SpecTypeDef,
+}
+
+impl ReadXdr for SpecUdtUnionCase {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            name: VecM::<u8, 60>::read_xdr(r)?,
+            type_: SpecTypeDef::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for SpecUdtUnionCase {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.name.write_xdr(w)?;
+        self.type_.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// SpecUdtUnion is an XDR Struct defines as:
+//
+//   struct SpecUDTUnion
+//    {
+//        SpecUDTUnionCase cases<50>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SpecUdtUnion {
+    pub cases: VecM<SpecUdtUnionCase, 50>,
+}
+
+impl ReadXdr for SpecUdtUnion {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            cases: VecM::<SpecUdtUnionCase, 50>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for SpecUdtUnion {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.cases.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// SpecUdtDef is an XDR Union defines as:
+//
+//   union SpecUDTDef switch (SpecUDTType type)
+//    {
+//    case SPEC_UDT_STRUCT:
+//        SpecUDTStruct struct;
+//    case SPEC_UDT_UNION:
+//        SpecUDTUnion union;
+//    };
+//
+// union with discriminant SpecUdtType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum SpecUdtDef {
+    Struct(SpecUdtStruct),
+    Union(SpecUdtUnion),
+}
+
+impl SpecUdtDef {
+    #[must_use]
+    pub fn discriminant(&self) -> SpecUdtType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Struct(_) => SpecUdtType::Struct,
+            Self::Union(_) => SpecUdtType::Union,
+        }
+    }
+}
+
+impl ReadXdr for SpecUdtDef {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: SpecUdtType = <SpecUdtType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            SpecUdtType::Struct => Self::Struct(SpecUdtStruct::read_xdr(r)?),
+            SpecUdtType::Union => Self::Union(SpecUdtUnion::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for SpecUdtDef {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
             Self::Struct(v) => v.write_xdr(w)?,
             Self::Union(v) => v.write_xdr(w)?,
         };
@@ -19473,30 +19603,30 @@ impl WriteXdr for SpecEntryFunction {
     }
 }
 
-// SpecEntryTypeV0 is an XDR NestedStruct defines as:
+// SpecEntryUdtV0 is an XDR NestedStruct defines as:
 //
 //   struct {
 //            string name<60>;
-//            SpecTypeDef typ;
+//            SpecUDTDef typ;
 //        }
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SpecEntryTypeV0 {
+pub struct SpecEntryUdtV0 {
     pub name: VecM<u8, 60>,
-    pub typ: SpecTypeDef,
+    pub typ: SpecUdtDef,
 }
 
-impl ReadXdr for SpecEntryTypeV0 {
+impl ReadXdr for SpecEntryUdtV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             name: VecM::<u8, 60>::read_xdr(r)?,
-            typ: SpecTypeDef::read_xdr(r)?,
+            typ: SpecUdtDef::read_xdr(r)?,
         })
     }
 }
 
-impl WriteXdr for SpecEntryTypeV0 {
+impl WriteXdr for SpecEntryUdtV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.name.write_xdr(w)?;
@@ -19505,24 +19635,24 @@ impl WriteXdr for SpecEntryTypeV0 {
     }
 }
 
-// SpecEntryType is an XDR Union defines as:
+// SpecEntryUdt is an XDR Union defines as:
 //
-//   union SpecEntryType switch (int v)
+//   union SpecEntryUDT switch (int v)
 //    {
 //    case 0:
 //        struct {
 //            string name<60>;
-//            SpecTypeDef typ;
+//            SpecUDTDef typ;
 //        } v0;
 //    };
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum SpecEntryType {
-    V0(SpecEntryTypeV0),
+pub enum SpecEntryUdt {
+    V0(SpecEntryUdtV0),
 }
 
-impl SpecEntryType {
+impl SpecEntryUdt {
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -19532,13 +19662,13 @@ impl SpecEntryType {
     }
 }
 
-impl ReadXdr for SpecEntryType {
+impl ReadXdr for SpecEntryUdt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            0 => Self::V0(SpecEntryTypeV0::read_xdr(r)?),
+            0 => Self::V0(SpecEntryUdtV0::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -19546,7 +19676,7 @@ impl ReadXdr for SpecEntryType {
     }
 }
 
-impl WriteXdr for SpecEntryType {
+impl WriteXdr for SpecEntryUdt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -19563,7 +19693,7 @@ impl WriteXdr for SpecEntryType {
 //   enum SpecEntryKind
 //    {
 //        SPEC_ENTRY_FUNCTION = 0,
-//        SPEC_ENTRY_TYPE = 1
+//        SPEC_ENTRY_UDT = 1
 //    };
 //
 // enum
@@ -19571,7 +19701,7 @@ impl WriteXdr for SpecEntryType {
 #[repr(i32)]
 pub enum SpecEntryKind {
     Function = 0,
-    Type = 1,
+    Udt = 1,
 }
 
 impl TryFrom<i32> for SpecEntryKind {
@@ -19580,7 +19710,7 @@ impl TryFrom<i32> for SpecEntryKind {
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
             0 => SpecEntryKind::Function,
-            1 => SpecEntryKind::Type,
+            1 => SpecEntryKind::Udt,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -19618,15 +19748,15 @@ impl WriteXdr for SpecEntryKind {
 //    {
 //    case SPEC_ENTRY_FUNCTION:
 //        SpecEntryFunction function;
-//    case SPEC_ENTRY_TYPE:
-//        SpecEntryType type;
+//    case SPEC_ENTRY_UDT:
+//        SpecEntryUDT udt;
 //    };
 //
 // union with discriminant SpecEntryKind
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SpecEntry {
     Function(SpecEntryFunction),
-    Type(SpecEntryType),
+    Udt(SpecEntryUdt),
 }
 
 impl SpecEntry {
@@ -19635,7 +19765,7 @@ impl SpecEntry {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Function(_) => SpecEntryKind::Function,
-            Self::Type(_) => SpecEntryKind::Type,
+            Self::Udt(_) => SpecEntryKind::Udt,
         }
     }
 }
@@ -19647,7 +19777,7 @@ impl ReadXdr for SpecEntry {
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             SpecEntryKind::Function => Self::Function(SpecEntryFunction::read_xdr(r)?),
-            SpecEntryKind::Type => Self::Type(SpecEntryType::read_xdr(r)?),
+            SpecEntryKind::Udt => Self::Udt(SpecEntryUdt::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -19662,7 +19792,7 @@ impl WriteXdr for SpecEntry {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Function(v) => v.write_xdr(w)?,
-            Self::Type(v) => v.write_xdr(w)?,
+            Self::Udt(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

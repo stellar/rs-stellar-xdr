@@ -8,6 +8,34 @@
 
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
+/// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
+pub const XDR_FILES_SHA256: [(&str, &str); 6] = [
+    (
+        "xdr/curr/Stellar-SCP.x",
+        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+    ),
+    (
+        "xdr/curr/Stellar-ledger-entries.x",
+        "3aa135c309c2d67883f165961739b4940c90df59240d8aeef55deced8d7708b5",
+    ),
+    (
+        "xdr/curr/Stellar-ledger.x",
+        "ef746ead6bb8ef9541599796804d672f2994e2599a6dc595ece099e166b49f10",
+    ),
+    (
+        "xdr/curr/Stellar-overlay.x",
+        "8ecbc36d2a43103499a6416572c7cd7b4fd7638d1a2af515b81b463ce6909c51",
+    ),
+    (
+        "xdr/curr/Stellar-transaction.x",
+        "45fdeb428e68d6b07e3e3157b6404567e0efb712c9d4c90a61a1035854c32b90",
+    ),
+    (
+        "xdr/curr/Stellar-types.x",
+        "60b7588e573f5e5518766eb5e6b6ea42f0e53144663cbe557e485cceb6306c85",
+    ),
+];
+
 use core::{fmt, fmt::Debug, ops::Deref};
 
 // When feature alloc is turned off use static lifetime Box and Vec types.

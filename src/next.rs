@@ -1000,6 +1000,25 @@ pub enum ScpStatementType {
     Nominate = 3,
 }
 
+impl ScpStatementType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Prepare => "Prepare",
+            Self::Confirm => "Confirm",
+            Self::Externalize => "Externalize",
+            Self::Nominate => "Nominate",
+        }
+    }
+}
+
+impl fmt::Display for ScpStatementType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ScpStatementType {
     type Error = Error;
 
@@ -1252,6 +1271,17 @@ pub enum ScpStatementPledges {
 }
 
 impl ScpStatementPledges {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Prepare(_) => "Prepare",
+            Self::Confirm(_) => "Confirm",
+            Self::Externalize(_) => "Externalize",
+            Self::Nominate(_) => "Nominate",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> ScpStatementType {
         #[allow(clippy::match_same_arms)]
@@ -1906,6 +1936,25 @@ pub enum AssetType {
     PoolShare = 3,
 }
 
+impl AssetType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Native => "Native",
+            Self::CreditAlphanum4 => "CreditAlphanum4",
+            Self::CreditAlphanum12 => "CreditAlphanum12",
+            Self::PoolShare => "PoolShare",
+        }
+    }
+}
+
+impl fmt::Display for AssetType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for AssetType {
     type Error = Error;
 
@@ -1967,6 +2016,15 @@ pub enum AssetCode {
 }
 
 impl AssetCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::CreditAlphanum4(_) => "CreditAlphanum4",
+            Self::CreditAlphanum12(_) => "CreditAlphanum12",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> AssetType {
         #[allow(clippy::match_same_arms)]
@@ -2097,6 +2155,16 @@ pub enum Asset {
 
 impl Asset {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Native => "Native",
+            Self::CreditAlphanum4(_) => "CreditAlphanum4",
+            Self::CreditAlphanum12(_) => "CreditAlphanum12",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> AssetType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -2223,6 +2291,25 @@ pub enum ThresholdIndexes {
     High = 3,
 }
 
+impl ThresholdIndexes {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::MasterWeight => "MasterWeight",
+            Self::Low => "Low",
+            Self::Med => "Med",
+            Self::High => "High",
+        }
+    }
+}
+
+impl fmt::Display for ThresholdIndexes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ThresholdIndexes {
     type Error = Error;
 
@@ -2289,6 +2376,29 @@ pub enum LedgerEntryType {
     LiquidityPool = 5,
     ContractData = 6,
     ConfigSetting = 7,
+}
+
+impl LedgerEntryType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Account => "Account",
+            Self::Trustline => "Trustline",
+            Self::Offer => "Offer",
+            Self::Data => "Data",
+            Self::ClaimableBalance => "ClaimableBalance",
+            Self::LiquidityPool => "LiquidityPool",
+            Self::ContractData => "ContractData",
+            Self::ConfigSetting => "ConfigSetting",
+        }
+    }
+}
+
+impl fmt::Display for LedgerEntryType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for LedgerEntryType {
@@ -2396,6 +2506,25 @@ pub enum AccountFlags {
     RevocableFlag = 2,
     ImmutableFlag = 4,
     ClawbackEnabledFlag = 8,
+}
+
+impl AccountFlags {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::RequiredFlag => "RequiredFlag",
+            Self::RevocableFlag => "RevocableFlag",
+            Self::ImmutableFlag => "ImmutableFlag",
+            Self::ClawbackEnabledFlag => "ClawbackEnabledFlag",
+        }
+    }
+}
+
+impl fmt::Display for AccountFlags {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for AccountFlags {
@@ -2562,6 +2691,15 @@ pub enum AccountEntryExtensionV2Ext {
 
 impl AccountEntryExtensionV2Ext {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+            Self::V3(_) => "V3",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -2667,6 +2805,15 @@ pub enum AccountEntryExtensionV1Ext {
 
 impl AccountEntryExtensionV1Ext {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+            Self::V2(_) => "V2",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -2763,6 +2910,15 @@ pub enum AccountEntryExt {
 }
 
 impl AccountEntryExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+            Self::V1(_) => "V1",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -2904,6 +3060,24 @@ pub enum TrustLineFlags {
     TrustlineClawbackEnabledFlag = 4,
 }
 
+impl TrustLineFlags {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::AuthorizedFlag => "AuthorizedFlag",
+            Self::AuthorizedToMaintainLiabilitiesFlag => "AuthorizedToMaintainLiabilitiesFlag",
+            Self::TrustlineClawbackEnabledFlag => "TrustlineClawbackEnabledFlag",
+        }
+    }
+}
+
+impl fmt::Display for TrustLineFlags {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for TrustLineFlags {
     type Error = Error;
 
@@ -2975,6 +3149,22 @@ pub enum LiquidityPoolType {
     LiquidityPoolConstantProduct = 0,
 }
 
+impl LiquidityPoolType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::LiquidityPoolConstantProduct => "LiquidityPoolConstantProduct",
+        }
+    }
+}
+
+impl fmt::Display for LiquidityPoolType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for LiquidityPoolType {
     type Error = Error;
 
@@ -3042,6 +3232,17 @@ pub enum TrustLineAsset {
 
 impl TrustLineAsset {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Native => "Native",
+            Self::CreditAlphanum4(_) => "CreditAlphanum4",
+            Self::CreditAlphanum12(_) => "CreditAlphanum12",
+            Self::PoolShare(_) => "PoolShare",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> AssetType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -3100,6 +3301,14 @@ pub enum TrustLineEntryExtensionV2Ext {
 }
 
 impl TrustLineEntryExtensionV2Ext {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -3192,6 +3401,15 @@ pub enum TrustLineEntryV1Ext {
 }
 
 impl TrustLineEntryV1Ext {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+            Self::V2(_) => "V2",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -3301,6 +3519,15 @@ pub enum TrustLineEntryExt {
 }
 
 impl TrustLineEntryExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+            Self::V1(_) => "V1",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -3427,6 +3654,22 @@ pub enum OfferEntryFlags {
     PassiveFlag = 1,
 }
 
+impl OfferEntryFlags {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::PassiveFlag => "PassiveFlag",
+        }
+    }
+}
+
+impl fmt::Display for OfferEntryFlags {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for OfferEntryFlags {
     type Error = Error;
 
@@ -3485,6 +3728,14 @@ pub enum OfferEntryExt {
 }
 
 impl OfferEntryExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -3606,6 +3857,14 @@ pub enum DataEntryExt {
 
 impl DataEntryExt {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -3712,6 +3971,27 @@ pub enum ClaimPredicateType {
     BeforeRelativeTime = 5,
 }
 
+impl ClaimPredicateType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Unconditional => "Unconditional",
+            Self::And => "And",
+            Self::Or => "Or",
+            Self::Not => "Not",
+            Self::BeforeAbsoluteTime => "BeforeAbsoluteTime",
+            Self::BeforeRelativeTime => "BeforeRelativeTime",
+        }
+    }
+}
+
+impl fmt::Display for ClaimPredicateType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ClaimPredicateType {
     type Error = Error;
 
@@ -3786,6 +4066,19 @@ pub enum ClaimPredicate {
 
 impl ClaimPredicate {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Unconditional => "Unconditional",
+            Self::And(_) => "And",
+            Self::Or(_) => "Or",
+            Self::Not(_) => "Not",
+            Self::BeforeAbsoluteTime(_) => "BeforeAbsoluteTime",
+            Self::BeforeRelativeTime(_) => "BeforeRelativeTime",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> ClaimPredicateType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -3847,6 +4140,22 @@ impl WriteXdr for ClaimPredicate {
 #[repr(i32)]
 pub enum ClaimantType {
     ClaimantTypeV0 = 0,
+}
+
+impl ClaimantType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ClaimantTypeV0 => "ClaimantTypeV0",
+        }
+    }
+}
+
+impl fmt::Display for ClaimantType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for ClaimantType {
@@ -3939,6 +4248,14 @@ pub enum Claimant {
 
 impl Claimant {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ClaimantTypeV0(_) => "ClaimantTypeV0",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> ClaimantType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -3985,6 +4302,22 @@ impl WriteXdr for Claimant {
 #[repr(i32)]
 pub enum ClaimableBalanceIdType {
     ClaimableBalanceIdTypeV0 = 0,
+}
+
+impl ClaimableBalanceIdType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ClaimableBalanceIdTypeV0 => "ClaimableBalanceIdTypeV0",
+        }
+    }
+}
+
+impl fmt::Display for ClaimableBalanceIdType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for ClaimableBalanceIdType {
@@ -4040,6 +4373,14 @@ pub enum ClaimableBalanceId {
 
 impl ClaimableBalanceId {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ClaimableBalanceIdTypeV0(_) => "ClaimableBalanceIdTypeV0",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> ClaimableBalanceIdType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -4090,6 +4431,22 @@ impl WriteXdr for ClaimableBalanceId {
 #[repr(i32)]
 pub enum ClaimableBalanceFlags {
     ClaimableBalanceClawbackEnabledFlag = 1,
+}
+
+impl ClaimableBalanceFlags {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ClaimableBalanceClawbackEnabledFlag => "ClaimableBalanceClawbackEnabledFlag",
+        }
+    }
+}
+
+impl fmt::Display for ClaimableBalanceFlags {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for ClaimableBalanceFlags {
@@ -4150,6 +4507,14 @@ pub enum ClaimableBalanceEntryExtensionV1Ext {
 }
 
 impl ClaimableBalanceEntryExtensionV1Ext {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -4242,6 +4607,15 @@ pub enum ClaimableBalanceEntryExt {
 }
 
 impl ClaimableBalanceEntryExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+            Self::V1(_) => "V1",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -4450,6 +4824,14 @@ pub enum LiquidityPoolEntryBody {
 
 impl LiquidityPoolEntryBody {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::LiquidityPoolConstantProduct(_) => "LiquidityPoolConstantProduct",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> LiquidityPoolType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -4586,6 +4968,22 @@ pub enum ConfigSettingType {
     ConfigSettingTypeUint32 = 0,
 }
 
+impl ConfigSettingType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ConfigSettingTypeUint32 => "ConfigSettingTypeUint32",
+        }
+    }
+}
+
+impl fmt::Display for ConfigSettingType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ConfigSettingType {
     type Error = Error;
 
@@ -4639,6 +5037,14 @@ pub enum ConfigSetting {
 
 impl ConfigSetting {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ConfigSettingTypeUint32(_) => "ConfigSettingTypeUint32",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> ConfigSettingType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -4687,6 +5093,22 @@ impl WriteXdr for ConfigSetting {
 #[repr(i32)]
 pub enum ConfigSettingId {
     ConfigSettingContractMaxSize = 0,
+}
+
+impl ConfigSettingId {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ConfigSettingContractMaxSize => "ConfigSettingContractMaxSize",
+        }
+    }
+}
+
+impl fmt::Display for ConfigSettingId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for ConfigSettingId {
@@ -4741,6 +5163,14 @@ pub enum ConfigSettingEntryExt {
 }
 
 impl ConfigSettingEntryExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -4834,6 +5264,14 @@ pub enum LedgerEntryExtensionV1Ext {
 }
 
 impl LedgerEntryExtensionV1Ext {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -4945,6 +5383,21 @@ pub enum LedgerEntryData {
 
 impl LedgerEntryData {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Account(_) => "Account",
+            Self::Trustline(_) => "Trustline",
+            Self::Offer(_) => "Offer",
+            Self::Data(_) => "Data",
+            Self::ClaimableBalance(_) => "ClaimableBalance",
+            Self::LiquidityPool(_) => "LiquidityPool",
+            Self::ContractData(_) => "ContractData",
+            Self::ConfigSetting(_) => "ConfigSetting",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> LedgerEntryType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -5020,6 +5473,15 @@ pub enum LedgerEntryExt {
 }
 
 impl LedgerEntryExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+            Self::V1(_) => "V1",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -5442,6 +5904,21 @@ pub enum LedgerKey {
 
 impl LedgerKey {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Account(_) => "Account",
+            Self::Trustline(_) => "Trustline",
+            Self::Offer(_) => "Offer",
+            Self::Data(_) => "Data",
+            Self::ClaimableBalance(_) => "ClaimableBalance",
+            Self::LiquidityPool(_) => "LiquidityPool",
+            Self::ContractData(_) => "ContractData",
+            Self::ConfigSetting(_) => "ConfigSetting",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> LedgerEntryType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -5531,6 +6008,29 @@ pub enum EnvelopeType {
     TxFeeBump = 5,
     OpId = 6,
     PoolRevokeOpId = 7,
+}
+
+impl EnvelopeType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TxV0 => "TxV0",
+            Self::Scp => "Scp",
+            Self::Tx => "Tx",
+            Self::Auth => "Auth",
+            Self::Scpvalue => "Scpvalue",
+            Self::TxFeeBump => "TxFeeBump",
+            Self::OpId => "OpId",
+            Self::PoolRevokeOpId => "PoolRevokeOpId",
+        }
+    }
+}
+
+impl fmt::Display for EnvelopeType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for EnvelopeType {
@@ -5678,6 +6178,23 @@ pub enum StellarValueType {
     Signed = 1,
 }
 
+impl StellarValueType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Basic => "Basic",
+            Self::Signed => "Signed",
+        }
+    }
+}
+
+impl fmt::Display for StellarValueType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for StellarValueType {
     type Error = Error;
 
@@ -5767,6 +6284,15 @@ pub enum StellarValueExt {
 }
 
 impl StellarValueExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Basic => "Basic",
+            Self::Signed(_) => "Signed",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> StellarValueType {
         #[allow(clippy::match_same_arms)]
@@ -5893,6 +6419,28 @@ pub enum LedgerHeaderFlags {
     ContractInvoke = 64,
 }
 
+impl LedgerHeaderFlags {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::LiquidityPoolTradingFlag => "LiquidityPoolTradingFlag",
+            Self::LiquidityPoolDepositFlag => "LiquidityPoolDepositFlag",
+            Self::LiquidityPoolWithdrawalFlag => "LiquidityPoolWithdrawalFlag",
+            Self::ContractCreate => "ContractCreate",
+            Self::ContractUpdate => "ContractUpdate",
+            Self::ContractRemove => "ContractRemove",
+            Self::ContractInvoke => "ContractInvoke",
+        }
+    }
+}
+
+impl fmt::Display for LedgerHeaderFlags {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for LedgerHeaderFlags {
     type Error = Error;
 
@@ -5951,6 +6499,14 @@ pub enum LedgerHeaderExtensionV1Ext {
 }
 
 impl LedgerHeaderExtensionV1Ext {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -6043,6 +6599,15 @@ pub enum LedgerHeaderExt {
 }
 
 impl LedgerHeaderExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+            Self::V1(_) => "V1",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -6211,6 +6776,27 @@ pub enum LedgerUpgradeType {
     Config = 6,
 }
 
+impl LedgerUpgradeType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Version => "Version",
+            Self::BaseFee => "BaseFee",
+            Self::MaxTxSetSize => "MaxTxSetSize",
+            Self::BaseReserve => "BaseReserve",
+            Self::Flags => "Flags",
+            Self::Config => "Config",
+        }
+    }
+}
+
+impl fmt::Display for LedgerUpgradeType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for LedgerUpgradeType {
     type Error = Error;
 
@@ -6321,6 +6907,19 @@ pub enum LedgerUpgrade {
 
 impl LedgerUpgrade {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Version(_) => "Version",
+            Self::BaseFee(_) => "BaseFee",
+            Self::MaxTxSetSize(_) => "MaxTxSetSize",
+            Self::BaseReserve(_) => "BaseReserve",
+            Self::Flags(_) => "Flags",
+            Self::Config(_) => "Config",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> LedgerUpgradeType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -6392,6 +6991,25 @@ pub enum BucketEntryType {
     Initentry = 2,
 }
 
+impl BucketEntryType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Metaentry => "Metaentry",
+            Self::Liveentry => "Liveentry",
+            Self::Deadentry => "Deadentry",
+            Self::Initentry => "Initentry",
+        }
+    }
+}
+
+impl fmt::Display for BucketEntryType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for BucketEntryType {
     type Error = Error;
 
@@ -6447,6 +7065,14 @@ pub enum BucketMetadataExt {
 }
 
 impl BucketMetadataExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -6547,6 +7173,17 @@ pub enum BucketEntry {
 }
 
 impl BucketEntry {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Liveentry(_) => "Liveentry",
+            Self::Initentry(_) => "Initentry",
+            Self::Deadentry(_) => "Deadentry",
+            Self::Metaentry(_) => "Metaentry",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> BucketEntryType {
         #[allow(clippy::match_same_arms)]
@@ -6702,6 +7339,14 @@ pub enum TransactionHistoryEntryExt {
 
 impl TransactionHistoryEntryExt {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -6796,6 +7441,14 @@ pub enum TransactionHistoryResultEntryExt {
 
 impl TransactionHistoryResultEntryExt {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -6889,6 +7542,14 @@ pub enum LedgerHeaderHistoryEntryExt {
 }
 
 impl LedgerHeaderHistoryEntryExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -7050,6 +7711,14 @@ pub enum ScpHistoryEntry {
 
 impl ScpHistoryEntry {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => "V0",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -7102,6 +7771,25 @@ pub enum LedgerEntryChangeType {
     Updated = 1,
     Removed = 2,
     State = 3,
+}
+
+impl LedgerEntryChangeType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Created => "Created",
+            Self::Updated => "Updated",
+            Self::Removed => "Removed",
+            Self::State => "State",
+        }
+    }
+}
+
+impl fmt::Display for LedgerEntryChangeType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for LedgerEntryChangeType {
@@ -7168,6 +7856,17 @@ pub enum LedgerEntryChange {
 }
 
 impl LedgerEntryChange {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Created(_) => "Created",
+            Self::Updated(_) => "Updated",
+            Self::Removed(_) => "Removed",
+            Self::State(_) => "State",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> LedgerEntryChangeType {
         #[allow(clippy::match_same_arms)]
@@ -7420,6 +8119,16 @@ pub enum TransactionMeta {
 
 impl TransactionMeta {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => "V0",
+            Self::V1(_) => "V1",
+            Self::V2(_) => "V2",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -7600,6 +8309,14 @@ pub enum LedgerCloseMeta {
 
 impl LedgerCloseMeta {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => "V0",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -7654,6 +8371,26 @@ pub enum ErrorCode {
     Conf = 2,
     Auth = 3,
     Load = 4,
+}
+
+impl ErrorCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Misc => "Misc",
+            Self::Data => "Data",
+            Self::Conf => "Conf",
+            Self::Auth => "Auth",
+            Self::Load => "Load",
+        }
+    }
+}
+
+impl fmt::Display for ErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for ErrorCode {
@@ -7904,6 +8641,23 @@ pub enum IpAddrType {
     IPv6 = 1,
 }
 
+impl IpAddrType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::IPv4 => "IPv4",
+            Self::IPv6 => "IPv6",
+        }
+    }
+}
+
+impl fmt::Display for IpAddrType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for IpAddrType {
     type Error = Error;
 
@@ -7960,6 +8714,15 @@ pub enum PeerAddressIp {
 }
 
 impl PeerAddressIp {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::IPv4(_) => "IPv4",
+            Self::IPv6(_) => "IPv6",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> IpAddrType {
         #[allow(clippy::match_same_arms)]
@@ -8095,6 +8858,37 @@ pub enum MessageType {
     SendMore = 16,
 }
 
+impl MessageType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ErrorMsg => "ErrorMsg",
+            Self::Auth => "Auth",
+            Self::DontHave => "DontHave",
+            Self::GetPeers => "GetPeers",
+            Self::Peers => "Peers",
+            Self::GetTxSet => "GetTxSet",
+            Self::TxSet => "TxSet",
+            Self::Transaction => "Transaction",
+            Self::GetScpQuorumset => "GetScpQuorumset",
+            Self::ScpQuorumset => "ScpQuorumset",
+            Self::ScpMessage => "ScpMessage",
+            Self::GetScpState => "GetScpState",
+            Self::Hello => "Hello",
+            Self::SurveyRequest => "SurveyRequest",
+            Self::SurveyResponse => "SurveyResponse",
+            Self::SendMore => "SendMore",
+        }
+    }
+}
+
+impl fmt::Display for MessageType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for MessageType {
     type Error = Error;
 
@@ -8192,6 +8986,22 @@ impl WriteXdr for DontHave {
 #[repr(i32)]
 pub enum SurveyMessageCommandType {
     SurveyTopology = 0,
+}
+
+impl SurveyMessageCommandType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SurveyTopology => "SurveyTopology",
+        }
+    }
+}
+
+impl fmt::Display for SurveyMessageCommandType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for SurveyMessageCommandType {
@@ -8702,6 +9512,14 @@ pub enum SurveyResponseBody {
 
 impl SurveyResponseBody {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SurveyTopology(_) => "SurveyTopology",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> SurveyMessageCommandType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -8804,6 +9622,29 @@ pub enum StellarMessage {
 }
 
 impl StellarMessage {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ErrorMsg(_) => "ErrorMsg",
+            Self::Hello(_) => "Hello",
+            Self::Auth(_) => "Auth",
+            Self::DontHave(_) => "DontHave",
+            Self::GetPeers => "GetPeers",
+            Self::Peers(_) => "Peers",
+            Self::GetTxSet(_) => "GetTxSet",
+            Self::TxSet(_) => "TxSet",
+            Self::Transaction(_) => "Transaction",
+            Self::SurveyRequest(_) => "SurveyRequest",
+            Self::SurveyResponse(_) => "SurveyResponse",
+            Self::GetScpQuorumset(_) => "GetScpQuorumset",
+            Self::ScpQuorumset(_) => "ScpQuorumset",
+            Self::ScpMessage(_) => "ScpMessage",
+            Self::GetScpState(_) => "GetScpState",
+            Self::SendMore(_) => "SendMore",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> MessageType {
         #[allow(clippy::match_same_arms)]
@@ -8946,6 +9787,14 @@ pub enum AuthenticatedMessage {
 
 impl AuthenticatedMessage {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => "V0",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> u32 {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -8995,6 +9844,14 @@ pub enum LiquidityPoolParameters {
 }
 
 impl LiquidityPoolParameters {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::LiquidityPoolConstantProduct(_) => "LiquidityPoolConstantProduct",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> LiquidityPoolType {
         #[allow(clippy::match_same_arms)]
@@ -9089,6 +9946,15 @@ pub enum MuxedAccount {
 }
 
 impl MuxedAccount {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Ed25519(_) => "Ed25519",
+            Self::MuxedEd25519(_) => "MuxedEd25519",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> CryptoKeyType {
         #[allow(clippy::match_same_arms)]
@@ -9253,6 +10119,46 @@ pub enum OperationType {
     LiquidityPoolDeposit = 22,
     LiquidityPoolWithdraw = 23,
     InvokeHostFunction = 24,
+}
+
+impl OperationType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::CreateAccount => "CreateAccount",
+            Self::Payment => "Payment",
+            Self::PathPaymentStrictReceive => "PathPaymentStrictReceive",
+            Self::ManageSellOffer => "ManageSellOffer",
+            Self::CreatePassiveSellOffer => "CreatePassiveSellOffer",
+            Self::SetOptions => "SetOptions",
+            Self::ChangeTrust => "ChangeTrust",
+            Self::AllowTrust => "AllowTrust",
+            Self::AccountMerge => "AccountMerge",
+            Self::Inflation => "Inflation",
+            Self::ManageData => "ManageData",
+            Self::BumpSequence => "BumpSequence",
+            Self::ManageBuyOffer => "ManageBuyOffer",
+            Self::PathPaymentStrictSend => "PathPaymentStrictSend",
+            Self::CreateClaimableBalance => "CreateClaimableBalance",
+            Self::ClaimClaimableBalance => "ClaimClaimableBalance",
+            Self::BeginSponsoringFutureReserves => "BeginSponsoringFutureReserves",
+            Self::EndSponsoringFutureReserves => "EndSponsoringFutureReserves",
+            Self::RevokeSponsorship => "RevokeSponsorship",
+            Self::Clawback => "Clawback",
+            Self::ClawbackClaimableBalance => "ClawbackClaimableBalance",
+            Self::SetTrustLineFlags => "SetTrustLineFlags",
+            Self::LiquidityPoolDeposit => "LiquidityPoolDeposit",
+            Self::LiquidityPoolWithdraw => "LiquidityPoolWithdraw",
+            Self::InvokeHostFunction => "InvokeHostFunction",
+        }
+    }
+}
+
+impl fmt::Display for OperationType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for OperationType {
@@ -9726,6 +10632,17 @@ pub enum ChangeTrustAsset {
 
 impl ChangeTrustAsset {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Native => "Native",
+            Self::CreditAlphanum4(_) => "CreditAlphanum4",
+            Self::CreditAlphanum12(_) => "CreditAlphanum12",
+            Self::PoolShare(_) => "PoolShare",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> AssetType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -10016,6 +10933,23 @@ pub enum RevokeSponsorshipType {
     Signer = 1,
 }
 
+impl RevokeSponsorshipType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::LedgerEntry => "LedgerEntry",
+            Self::Signer => "Signer",
+        }
+    }
+}
+
+impl fmt::Display for RevokeSponsorshipType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for RevokeSponsorshipType {
     type Error = Error;
 
@@ -10109,6 +11043,15 @@ pub enum RevokeSponsorshipOp {
 }
 
 impl RevokeSponsorshipOp {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::LedgerEntry(_) => "LedgerEntry",
+            Self::Signer(_) => "Signer",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> RevokeSponsorshipType {
         #[allow(clippy::match_same_arms)]
@@ -10363,6 +11306,23 @@ pub enum HostFunction {
     CreateContract = 1,
 }
 
+impl HostFunction {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Call => "Call",
+            Self::CreateContract => "CreateContract",
+        }
+    }
+}
+
+impl fmt::Display for HostFunction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for HostFunction {
     type Error = Error;
 
@@ -10530,6 +11490,38 @@ pub enum OperationBody {
 }
 
 impl OperationBody {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::CreateAccount(_) => "CreateAccount",
+            Self::Payment(_) => "Payment",
+            Self::PathPaymentStrictReceive(_) => "PathPaymentStrictReceive",
+            Self::ManageSellOffer(_) => "ManageSellOffer",
+            Self::CreatePassiveSellOffer(_) => "CreatePassiveSellOffer",
+            Self::SetOptions(_) => "SetOptions",
+            Self::ChangeTrust(_) => "ChangeTrust",
+            Self::AllowTrust(_) => "AllowTrust",
+            Self::AccountMerge(_) => "AccountMerge",
+            Self::Inflation => "Inflation",
+            Self::ManageData(_) => "ManageData",
+            Self::BumpSequence(_) => "BumpSequence",
+            Self::ManageBuyOffer(_) => "ManageBuyOffer",
+            Self::PathPaymentStrictSend(_) => "PathPaymentStrictSend",
+            Self::CreateClaimableBalance(_) => "CreateClaimableBalance",
+            Self::ClaimClaimableBalance(_) => "ClaimClaimableBalance",
+            Self::BeginSponsoringFutureReserves(_) => "BeginSponsoringFutureReserves",
+            Self::EndSponsoringFutureReserves => "EndSponsoringFutureReserves",
+            Self::RevokeSponsorship(_) => "RevokeSponsorship",
+            Self::Clawback(_) => "Clawback",
+            Self::ClawbackClaimableBalance(_) => "ClawbackClaimableBalance",
+            Self::SetTrustLineFlags(_) => "SetTrustLineFlags",
+            Self::LiquidityPoolDeposit(_) => "LiquidityPoolDeposit",
+            Self::LiquidityPoolWithdraw(_) => "LiquidityPoolWithdraw",
+            Self::InvokeHostFunction(_) => "InvokeHostFunction",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> OperationType {
         #[allow(clippy::match_same_arms)]
@@ -10866,6 +11858,15 @@ pub enum HashIdPreimage {
 
 impl HashIdPreimage {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::OpId(_) => "OpId",
+            Self::PoolRevokeOpId(_) => "PoolRevokeOpId",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -10925,6 +11926,26 @@ pub enum MemoType {
     Id = 2,
     Hash = 3,
     Return = 4,
+}
+
+impl MemoType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::None => "None",
+            Self::Text => "Text",
+            Self::Id => "Id",
+            Self::Hash => "Hash",
+            Self::Return => "Return",
+        }
+    }
+}
+
+impl fmt::Display for MemoType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for MemoType {
@@ -10995,6 +12016,18 @@ pub enum Memo {
 }
 
 impl Memo {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::None => "None",
+            Self::Text(_) => "Text",
+            Self::Id(_) => "Id",
+            Self::Hash(_) => "Hash",
+            Self::Return(_) => "Return",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> MemoType {
         #[allow(clippy::match_same_arms)]
@@ -11198,6 +12231,24 @@ pub enum PreconditionType {
     V2 = 2,
 }
 
+impl PreconditionType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::None => "None",
+            Self::Time => "Time",
+            Self::V2 => "V2",
+        }
+    }
+}
+
+impl fmt::Display for PreconditionType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for PreconditionType {
     type Error = Error;
 
@@ -11258,6 +12309,16 @@ pub enum Preconditions {
 }
 
 impl Preconditions {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::None => "None",
+            Self::Time(_) => "Time",
+            Self::V2(_) => "V2",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> PreconditionType {
         #[allow(clippy::match_same_arms)]
@@ -11320,6 +12381,14 @@ pub enum TransactionV0Ext {
 }
 
 impl TransactionV0Ext {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -11463,6 +12532,14 @@ pub enum TransactionExt {
 }
 
 impl TransactionExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -11618,6 +12695,14 @@ pub enum FeeBumpTransactionInnerTx {
 
 impl FeeBumpTransactionInnerTx {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Tx(_) => "Tx",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -11667,6 +12752,14 @@ pub enum FeeBumpTransactionExt {
 }
 
 impl FeeBumpTransactionExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -11810,6 +12903,16 @@ pub enum TransactionEnvelope {
 
 impl TransactionEnvelope {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TxV0(_) => "TxV0",
+            Self::Tx(_) => "Tx",
+            Self::TxFeeBump(_) => "TxFeeBump",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -11869,6 +12972,15 @@ pub enum TransactionSignaturePayloadTaggedTransaction {
 }
 
 impl TransactionSignaturePayloadTaggedTransaction {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Tx(_) => "Tx",
+            Self::TxFeeBump(_) => "TxFeeBump",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
@@ -11964,6 +13076,24 @@ pub enum ClaimAtomType {
     V0 = 0,
     OrderBook = 1,
     LiquidityPool = 2,
+}
+
+impl ClaimAtomType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+            Self::OrderBook => "OrderBook",
+            Self::LiquidityPool => "LiquidityPool",
+        }
+    }
+}
+
+impl fmt::Display for ClaimAtomType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for ClaimAtomType {
@@ -12184,6 +13314,16 @@ pub enum ClaimAtom {
 
 impl ClaimAtom {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => "V0",
+            Self::OrderBook(_) => "OrderBook",
+            Self::LiquidityPool(_) => "LiquidityPool",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> ClaimAtomType {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -12248,6 +13388,26 @@ pub enum CreateAccountResultCode {
     Underfunded = -2,
     LowReserve = -3,
     AlreadyExist = -4,
+}
+
+impl CreateAccountResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::Underfunded => "Underfunded",
+            Self::LowReserve => "LowReserve",
+            Self::AlreadyExist => "AlreadyExist",
+        }
+    }
+}
+
+impl fmt::Display for CreateAccountResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for CreateAccountResultCode {
@@ -12315,6 +13475,18 @@ pub enum CreateAccountResult {
 }
 
 impl CreateAccountResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::Underfunded => "Underfunded",
+            Self::LowReserve => "LowReserve",
+            Self::AlreadyExist => "AlreadyExist",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> CreateAccountResultCode {
         #[allow(clippy::match_same_arms)]
@@ -12397,6 +13569,31 @@ pub enum PaymentResultCode {
     NoIssuer = -9,
 }
 
+impl PaymentResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::Underfunded => "Underfunded",
+            Self::SrcNoTrust => "SrcNoTrust",
+            Self::SrcNotAuthorized => "SrcNotAuthorized",
+            Self::NoDestination => "NoDestination",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+            Self::LineFull => "LineFull",
+            Self::NoIssuer => "NoIssuer",
+        }
+    }
+}
+
+impl fmt::Display for PaymentResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for PaymentResultCode {
     type Error = Error;
 
@@ -12477,6 +13674,23 @@ pub enum PaymentResult {
 }
 
 impl PaymentResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::Underfunded => "Underfunded",
+            Self::SrcNoTrust => "SrcNoTrust",
+            Self::SrcNotAuthorized => "SrcNotAuthorized",
+            Self::NoDestination => "NoDestination",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+            Self::LineFull => "LineFull",
+            Self::NoIssuer => "NoIssuer",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> PaymentResultCode {
         #[allow(clippy::match_same_arms)]
@@ -12587,6 +13801,34 @@ pub enum PathPaymentStrictReceiveResultCode {
     TooFewOffers = -10,
     OfferCrossSelf = -11,
     OverSendmax = -12,
+}
+
+impl PathPaymentStrictReceiveResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::Underfunded => "Underfunded",
+            Self::SrcNoTrust => "SrcNoTrust",
+            Self::SrcNotAuthorized => "SrcNotAuthorized",
+            Self::NoDestination => "NoDestination",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+            Self::LineFull => "LineFull",
+            Self::NoIssuer => "NoIssuer",
+            Self::TooFewOffers => "TooFewOffers",
+            Self::OfferCrossSelf => "OfferCrossSelf",
+            Self::OverSendmax => "OverSendmax",
+        }
+    }
+}
+
+impl fmt::Display for PathPaymentStrictReceiveResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for PathPaymentStrictReceiveResultCode {
@@ -12756,6 +13998,26 @@ pub enum PathPaymentStrictReceiveResult {
 
 impl PathPaymentStrictReceiveResult {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => "Success",
+            Self::Malformed => "Malformed",
+            Self::Underfunded => "Underfunded",
+            Self::SrcNoTrust => "SrcNoTrust",
+            Self::SrcNotAuthorized => "SrcNotAuthorized",
+            Self::NoDestination => "NoDestination",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+            Self::LineFull => "LineFull",
+            Self::NoIssuer(_) => "NoIssuer",
+            Self::TooFewOffers => "TooFewOffers",
+            Self::OfferCrossSelf => "OfferCrossSelf",
+            Self::OverSendmax => "OverSendmax",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -12876,6 +14138,34 @@ pub enum PathPaymentStrictSendResultCode {
     TooFewOffers = -10,
     OfferCrossSelf = -11,
     UnderDestmin = -12,
+}
+
+impl PathPaymentStrictSendResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::Underfunded => "Underfunded",
+            Self::SrcNoTrust => "SrcNoTrust",
+            Self::SrcNotAuthorized => "SrcNotAuthorized",
+            Self::NoDestination => "NoDestination",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+            Self::LineFull => "LineFull",
+            Self::NoIssuer => "NoIssuer",
+            Self::TooFewOffers => "TooFewOffers",
+            Self::OfferCrossSelf => "OfferCrossSelf",
+            Self::UnderDestmin => "UnderDestmin",
+        }
+    }
+}
+
+impl fmt::Display for PathPaymentStrictSendResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for PathPaymentStrictSendResultCode {
@@ -13007,6 +14297,26 @@ pub enum PathPaymentStrictSendResult {
 
 impl PathPaymentStrictSendResult {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => "Success",
+            Self::Malformed => "Malformed",
+            Self::Underfunded => "Underfunded",
+            Self::SrcNoTrust => "SrcNoTrust",
+            Self::SrcNotAuthorized => "SrcNotAuthorized",
+            Self::NoDestination => "NoDestination",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+            Self::LineFull => "LineFull",
+            Self::NoIssuer(_) => "NoIssuer",
+            Self::TooFewOffers => "TooFewOffers",
+            Self::OfferCrossSelf => "OfferCrossSelf",
+            Self::UnderDestmin => "UnderDestmin",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> PathPaymentStrictSendResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -13128,6 +14438,34 @@ pub enum ManageSellOfferResultCode {
     LowReserve = -12,
 }
 
+impl ManageSellOfferResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::SellNoTrust => "SellNoTrust",
+            Self::BuyNoTrust => "BuyNoTrust",
+            Self::SellNotAuthorized => "SellNotAuthorized",
+            Self::BuyNotAuthorized => "BuyNotAuthorized",
+            Self::LineFull => "LineFull",
+            Self::Underfunded => "Underfunded",
+            Self::CrossSelf => "CrossSelf",
+            Self::SellNoIssuer => "SellNoIssuer",
+            Self::BuyNoIssuer => "BuyNoIssuer",
+            Self::NotFound => "NotFound",
+            Self::LowReserve => "LowReserve",
+        }
+    }
+}
+
+impl fmt::Display for ManageSellOfferResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ManageSellOfferResultCode {
     type Error = Error;
 
@@ -13195,6 +14533,24 @@ pub enum ManageOfferEffect {
     Deleted = 2,
 }
 
+impl ManageOfferEffect {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Created => "Created",
+            Self::Updated => "Updated",
+            Self::Deleted => "Deleted",
+        }
+    }
+}
+
+impl fmt::Display for ManageOfferEffect {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ManageOfferEffect {
     type Error = Error;
 
@@ -13254,6 +14610,16 @@ pub enum ManageOfferSuccessResultOffer {
 }
 
 impl ManageOfferSuccessResultOffer {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Created(_) => "Created",
+            Self::Updated(_) => "Updated",
+            Self::Deleted => "Deleted",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> ManageOfferEffect {
         #[allow(clippy::match_same_arms)]
@@ -13379,6 +14745,26 @@ pub enum ManageSellOfferResult {
 
 impl ManageSellOfferResult {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => "Success",
+            Self::Malformed => "Malformed",
+            Self::SellNoTrust => "SellNoTrust",
+            Self::BuyNoTrust => "BuyNoTrust",
+            Self::SellNotAuthorized => "SellNotAuthorized",
+            Self::BuyNotAuthorized => "BuyNotAuthorized",
+            Self::LineFull => "LineFull",
+            Self::Underfunded => "Underfunded",
+            Self::CrossSelf => "CrossSelf",
+            Self::SellNoIssuer => "SellNoIssuer",
+            Self::BuyNoIssuer => "BuyNoIssuer",
+            Self::NotFound => "NotFound",
+            Self::LowReserve => "LowReserve",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> ManageSellOfferResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -13496,6 +14882,34 @@ pub enum ManageBuyOfferResultCode {
     LowReserve = -12,
 }
 
+impl ManageBuyOfferResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::SellNoTrust => "SellNoTrust",
+            Self::BuyNoTrust => "BuyNoTrust",
+            Self::SellNotAuthorized => "SellNotAuthorized",
+            Self::BuyNotAuthorized => "BuyNotAuthorized",
+            Self::LineFull => "LineFull",
+            Self::Underfunded => "Underfunded",
+            Self::CrossSelf => "CrossSelf",
+            Self::SellNoIssuer => "SellNoIssuer",
+            Self::BuyNoIssuer => "BuyNoIssuer",
+            Self::NotFound => "NotFound",
+            Self::LowReserve => "LowReserve",
+        }
+    }
+}
+
+impl fmt::Display for ManageBuyOfferResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ManageBuyOfferResultCode {
     type Error = Error;
 
@@ -13585,6 +14999,26 @@ pub enum ManageBuyOfferResult {
 }
 
 impl ManageBuyOfferResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => "Success",
+            Self::Malformed => "Malformed",
+            Self::SellNoTrust => "SellNoTrust",
+            Self::BuyNoTrust => "BuyNoTrust",
+            Self::SellNotAuthorized => "SellNotAuthorized",
+            Self::BuyNotAuthorized => "BuyNotAuthorized",
+            Self::LineFull => "LineFull",
+            Self::Underfunded => "Underfunded",
+            Self::CrossSelf => "CrossSelf",
+            Self::SellNoIssuer => "SellNoIssuer",
+            Self::BuyNoIssuer => "BuyNoIssuer",
+            Self::NotFound => "NotFound",
+            Self::LowReserve => "LowReserve",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> ManageBuyOfferResultCode {
         #[allow(clippy::match_same_arms)]
@@ -13695,6 +15129,32 @@ pub enum SetOptionsResultCode {
     AuthRevocableRequired = -10,
 }
 
+impl SetOptionsResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::LowReserve => "LowReserve",
+            Self::TooManySigners => "TooManySigners",
+            Self::BadFlags => "BadFlags",
+            Self::InvalidInflation => "InvalidInflation",
+            Self::CantChange => "CantChange",
+            Self::UnknownFlag => "UnknownFlag",
+            Self::ThresholdOutOfRange => "ThresholdOutOfRange",
+            Self::BadSigner => "BadSigner",
+            Self::InvalidHomeDomain => "InvalidHomeDomain",
+            Self::AuthRevocableRequired => "AuthRevocableRequired",
+        }
+    }
+}
+
+impl fmt::Display for SetOptionsResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for SetOptionsResultCode {
     type Error = Error;
 
@@ -13778,6 +15238,24 @@ pub enum SetOptionsResult {
 }
 
 impl SetOptionsResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::LowReserve => "LowReserve",
+            Self::TooManySigners => "TooManySigners",
+            Self::BadFlags => "BadFlags",
+            Self::InvalidInflation => "InvalidInflation",
+            Self::CantChange => "CantChange",
+            Self::UnknownFlag => "UnknownFlag",
+            Self::ThresholdOutOfRange => "ThresholdOutOfRange",
+            Self::BadSigner => "BadSigner",
+            Self::InvalidHomeDomain => "InvalidHomeDomain",
+            Self::AuthRevocableRequired => "AuthRevocableRequired",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> SetOptionsResultCode {
         #[allow(clippy::match_same_arms)]
@@ -13879,6 +15357,30 @@ pub enum ChangeTrustResultCode {
     NotAuthMaintainLiabilities = -8,
 }
 
+impl ChangeTrustResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoIssuer => "NoIssuer",
+            Self::InvalidLimit => "InvalidLimit",
+            Self::LowReserve => "LowReserve",
+            Self::SelfNotAllowed => "SelfNotAllowed",
+            Self::TrustLineMissing => "TrustLineMissing",
+            Self::CannotDelete => "CannotDelete",
+            Self::NotAuthMaintainLiabilities => "NotAuthMaintainLiabilities",
+        }
+    }
+}
+
+impl fmt::Display for ChangeTrustResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ChangeTrustResultCode {
     type Error = Error;
 
@@ -13956,6 +15458,22 @@ pub enum ChangeTrustResult {
 }
 
 impl ChangeTrustResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoIssuer => "NoIssuer",
+            Self::InvalidLimit => "InvalidLimit",
+            Self::LowReserve => "LowReserve",
+            Self::SelfNotAllowed => "SelfNotAllowed",
+            Self::TrustLineMissing => "TrustLineMissing",
+            Self::CannotDelete => "CannotDelete",
+            Self::NotAuthMaintainLiabilities => "NotAuthMaintainLiabilities",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> ChangeTrustResultCode {
         #[allow(clippy::match_same_arms)]
@@ -14045,6 +15563,28 @@ pub enum AllowTrustResultCode {
     LowReserve = -6,
 }
 
+impl AllowTrustResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoTrustLine => "NoTrustLine",
+            Self::TrustNotRequired => "TrustNotRequired",
+            Self::CantRevoke => "CantRevoke",
+            Self::SelfNotAllowed => "SelfNotAllowed",
+            Self::LowReserve => "LowReserve",
+        }
+    }
+}
+
+impl fmt::Display for AllowTrustResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for AllowTrustResultCode {
     type Error = Error;
 
@@ -14116,6 +15656,20 @@ pub enum AllowTrustResult {
 }
 
 impl AllowTrustResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoTrustLine => "NoTrustLine",
+            Self::TrustNotRequired => "TrustNotRequired",
+            Self::CantRevoke => "CantRevoke",
+            Self::SelfNotAllowed => "SelfNotAllowed",
+            Self::LowReserve => "LowReserve",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> AllowTrustResultCode {
         #[allow(clippy::match_same_arms)]
@@ -14200,6 +15754,29 @@ pub enum AccountMergeResultCode {
     IsSponsor = -7,
 }
 
+impl AccountMergeResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoAccount => "NoAccount",
+            Self::ImmutableSet => "ImmutableSet",
+            Self::HasSubEntries => "HasSubEntries",
+            Self::SeqnumTooFar => "SeqnumTooFar",
+            Self::DestFull => "DestFull",
+            Self::IsSponsor => "IsSponsor",
+        }
+    }
+}
+
+impl fmt::Display for AccountMergeResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for AccountMergeResultCode {
     type Error = Error;
 
@@ -14275,6 +15852,21 @@ pub enum AccountMergeResult {
 
 impl AccountMergeResult {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoAccount => "NoAccount",
+            Self::ImmutableSet => "ImmutableSet",
+            Self::HasSubEntries => "HasSubEntries",
+            Self::SeqnumTooFar => "SeqnumTooFar",
+            Self::DestFull => "DestFull",
+            Self::IsSponsor => "IsSponsor",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> AccountMergeResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -14346,6 +15938,23 @@ impl WriteXdr for AccountMergeResult {
 pub enum InflationResultCode {
     Success = 0,
     NotTime = -1,
+}
+
+impl InflationResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::NotTime => "NotTime",
+        }
+    }
+}
+
+impl fmt::Display for InflationResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for InflationResultCode {
@@ -14438,6 +16047,15 @@ pub enum InflationResult {
 
 impl InflationResult {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => "Success",
+            Self::NotTime => "NotTime",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> InflationResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -14499,6 +16117,26 @@ pub enum ManageDataResultCode {
     NameNotFound = -2,
     LowReserve = -3,
     InvalidName = -4,
+}
+
+impl ManageDataResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::NotSupportedYet => "NotSupportedYet",
+            Self::NameNotFound => "NameNotFound",
+            Self::LowReserve => "LowReserve",
+            Self::InvalidName => "InvalidName",
+        }
+    }
+}
+
+impl fmt::Display for ManageDataResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for ManageDataResultCode {
@@ -14567,6 +16205,18 @@ pub enum ManageDataResult {
 
 impl ManageDataResult {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::NotSupportedYet => "NotSupportedYet",
+            Self::NameNotFound => "NameNotFound",
+            Self::LowReserve => "LowReserve",
+            Self::InvalidName => "InvalidName",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> ManageDataResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -14631,6 +16281,23 @@ pub enum BumpSequenceResultCode {
     BadSeq = -1,
 }
 
+impl BumpSequenceResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::BadSeq => "BadSeq",
+        }
+    }
+}
+
+impl fmt::Display for BumpSequenceResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for BumpSequenceResultCode {
     type Error = Error;
 
@@ -14687,6 +16354,15 @@ pub enum BumpSequenceResult {
 }
 
 impl BumpSequenceResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::BadSeq => "BadSeq",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> BumpSequenceResultCode {
         #[allow(clippy::match_same_arms)]
@@ -14747,6 +16423,27 @@ pub enum CreateClaimableBalanceResultCode {
     NoTrust = -3,
     NotAuthorized = -4,
     Underfunded = -5,
+}
+
+impl CreateClaimableBalanceResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::LowReserve => "LowReserve",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+            Self::Underfunded => "Underfunded",
+        }
+    }
+}
+
+impl fmt::Display for CreateClaimableBalanceResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for CreateClaimableBalanceResultCode {
@@ -14818,6 +16515,19 @@ pub enum CreateClaimableBalanceResult {
 }
 
 impl CreateClaimableBalanceResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => "Success",
+            Self::Malformed => "Malformed",
+            Self::LowReserve => "LowReserve",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+            Self::Underfunded => "Underfunded",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> CreateClaimableBalanceResultCode {
         #[allow(clippy::match_same_arms)]
@@ -14895,6 +16605,27 @@ pub enum ClaimClaimableBalanceResultCode {
     NotAuthorized = -5,
 }
 
+impl ClaimClaimableBalanceResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::DoesNotExist => "DoesNotExist",
+            Self::CannotClaim => "CannotClaim",
+            Self::LineFull => "LineFull",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+        }
+    }
+}
+
+impl fmt::Display for ClaimClaimableBalanceResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ClaimClaimableBalanceResultCode {
     type Error = Error;
 
@@ -14963,6 +16694,19 @@ pub enum ClaimClaimableBalanceResult {
 }
 
 impl ClaimClaimableBalanceResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::DoesNotExist => "DoesNotExist",
+            Self::CannotClaim => "CannotClaim",
+            Self::LineFull => "LineFull",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> ClaimClaimableBalanceResultCode {
         #[allow(clippy::match_same_arms)]
@@ -15037,6 +16781,25 @@ pub enum BeginSponsoringFutureReservesResultCode {
     Recursive = -3,
 }
 
+impl BeginSponsoringFutureReservesResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::AlreadySponsored => "AlreadySponsored",
+            Self::Recursive => "Recursive",
+        }
+    }
+}
+
+impl fmt::Display for BeginSponsoringFutureReservesResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for BeginSponsoringFutureReservesResultCode {
     type Error = Error;
 
@@ -15101,6 +16864,17 @@ pub enum BeginSponsoringFutureReservesResult {
 
 impl BeginSponsoringFutureReservesResult {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::AlreadySponsored => "AlreadySponsored",
+            Self::Recursive => "Recursive",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -15164,6 +16938,23 @@ pub enum EndSponsoringFutureReservesResultCode {
     NotSponsored = -1,
 }
 
+impl EndSponsoringFutureReservesResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::NotSponsored => "NotSponsored",
+        }
+    }
+}
+
+impl fmt::Display for EndSponsoringFutureReservesResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for EndSponsoringFutureReservesResultCode {
     type Error = Error;
 
@@ -15221,6 +17012,15 @@ pub enum EndSponsoringFutureReservesResult {
 }
 
 impl EndSponsoringFutureReservesResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::NotSponsored => "NotSponsored",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> EndSponsoringFutureReservesResultCode {
         #[allow(clippy::match_same_arms)]
@@ -15285,6 +17085,27 @@ pub enum RevokeSponsorshipResultCode {
     LowReserve = -3,
     OnlyTransferable = -4,
     Malformed = -5,
+}
+
+impl RevokeSponsorshipResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::DoesNotExist => "DoesNotExist",
+            Self::NotSponsor => "NotSponsor",
+            Self::LowReserve => "LowReserve",
+            Self::OnlyTransferable => "OnlyTransferable",
+            Self::Malformed => "Malformed",
+        }
+    }
+}
+
+impl fmt::Display for RevokeSponsorshipResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for RevokeSponsorshipResultCode {
@@ -15355,6 +17176,19 @@ pub enum RevokeSponsorshipResult {
 }
 
 impl RevokeSponsorshipResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::DoesNotExist => "DoesNotExist",
+            Self::NotSponsor => "NotSponsor",
+            Self::LowReserve => "LowReserve",
+            Self::OnlyTransferable => "OnlyTransferable",
+            Self::Malformed => "Malformed",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> RevokeSponsorshipResultCode {
         #[allow(clippy::match_same_arms)]
@@ -15431,6 +17265,26 @@ pub enum ClawbackResultCode {
     Underfunded = -4,
 }
 
+impl ClawbackResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NotClawbackEnabled => "NotClawbackEnabled",
+            Self::NoTrust => "NoTrust",
+            Self::Underfunded => "Underfunded",
+        }
+    }
+}
+
+impl fmt::Display for ClawbackResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ClawbackResultCode {
     type Error = Error;
 
@@ -15496,6 +17350,18 @@ pub enum ClawbackResult {
 }
 
 impl ClawbackResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NotClawbackEnabled => "NotClawbackEnabled",
+            Self::NoTrust => "NoTrust",
+            Self::Underfunded => "Underfunded",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> ClawbackResultCode {
         #[allow(clippy::match_same_arms)]
@@ -15566,6 +17432,25 @@ pub enum ClawbackClaimableBalanceResultCode {
     NotClawbackEnabled = -3,
 }
 
+impl ClawbackClaimableBalanceResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::DoesNotExist => "DoesNotExist",
+            Self::NotIssuer => "NotIssuer",
+            Self::NotClawbackEnabled => "NotClawbackEnabled",
+        }
+    }
+}
+
+impl fmt::Display for ClawbackClaimableBalanceResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ClawbackClaimableBalanceResultCode {
     type Error = Error;
 
@@ -15629,6 +17514,17 @@ pub enum ClawbackClaimableBalanceResult {
 }
 
 impl ClawbackClaimableBalanceResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::DoesNotExist => "DoesNotExist",
+            Self::NotIssuer => "NotIssuer",
+            Self::NotClawbackEnabled => "NotClawbackEnabled",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> ClawbackClaimableBalanceResultCode {
         #[allow(clippy::match_same_arms)]
@@ -15702,6 +17598,27 @@ pub enum SetTrustLineFlagsResultCode {
     LowReserve = -5,
 }
 
+impl SetTrustLineFlagsResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoTrustLine => "NoTrustLine",
+            Self::CantRevoke => "CantRevoke",
+            Self::InvalidState => "InvalidState",
+            Self::LowReserve => "LowReserve",
+        }
+    }
+}
+
+impl fmt::Display for SetTrustLineFlagsResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for SetTrustLineFlagsResultCode {
     type Error = Error;
 
@@ -15770,6 +17687,19 @@ pub enum SetTrustLineFlagsResult {
 }
 
 impl SetTrustLineFlagsResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoTrustLine => "NoTrustLine",
+            Self::CantRevoke => "CantRevoke",
+            Self::InvalidState => "InvalidState",
+            Self::LowReserve => "LowReserve",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> SetTrustLineFlagsResultCode {
         #[allow(clippy::match_same_arms)]
@@ -15856,6 +17786,29 @@ pub enum LiquidityPoolDepositResultCode {
     PoolFull = -7,
 }
 
+impl LiquidityPoolDepositResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+            Self::Underfunded => "Underfunded",
+            Self::LineFull => "LineFull",
+            Self::BadPrice => "BadPrice",
+            Self::PoolFull => "PoolFull",
+        }
+    }
+}
+
+impl fmt::Display for LiquidityPoolDepositResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for LiquidityPoolDepositResultCode {
     type Error = Error;
 
@@ -15930,6 +17883,21 @@ pub enum LiquidityPoolDepositResult {
 }
 
 impl LiquidityPoolDepositResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoTrust => "NoTrust",
+            Self::NotAuthorized => "NotAuthorized",
+            Self::Underfunded => "Underfunded",
+            Self::LineFull => "LineFull",
+            Self::BadPrice => "BadPrice",
+            Self::PoolFull => "PoolFull",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> LiquidityPoolDepositResultCode {
         #[allow(clippy::match_same_arms)]
@@ -16017,6 +17985,27 @@ pub enum LiquidityPoolWithdrawResultCode {
     UnderMinimum = -5,
 }
 
+impl LiquidityPoolWithdrawResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoTrust => "NoTrust",
+            Self::Underfunded => "Underfunded",
+            Self::LineFull => "LineFull",
+            Self::UnderMinimum => "UnderMinimum",
+        }
+    }
+}
+
+impl fmt::Display for LiquidityPoolWithdrawResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for LiquidityPoolWithdrawResultCode {
     type Error = Error;
 
@@ -16085,6 +18074,19 @@ pub enum LiquidityPoolWithdrawResult {
 }
 
 impl LiquidityPoolWithdrawResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::NoTrust => "NoTrust",
+            Self::Underfunded => "Underfunded",
+            Self::LineFull => "LineFull",
+            Self::UnderMinimum => "UnderMinimum",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> LiquidityPoolWithdrawResultCode {
         #[allow(clippy::match_same_arms)]
@@ -16157,6 +18159,24 @@ pub enum InvokeHostFunctionResultCode {
     Trapped = -2,
 }
 
+impl InvokeHostFunctionResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::Trapped => "Trapped",
+        }
+    }
+}
+
+impl fmt::Display for InvokeHostFunctionResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for InvokeHostFunctionResultCode {
     type Error = Error;
 
@@ -16216,6 +18236,16 @@ pub enum InvokeHostFunctionResult {
 }
 
 impl InvokeHostFunctionResult {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::Trapped => "Trapped",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> InvokeHostFunctionResultCode {
         #[allow(clippy::match_same_arms)]
@@ -16283,6 +18313,28 @@ pub enum OperationResultCode {
     OpTooManySubentries = -4,
     OpExceededWorkLimit = -5,
     OpTooManySponsoring = -6,
+}
+
+impl OperationResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::OpInner => "OpInner",
+            Self::OpBadAuth => "OpBadAuth",
+            Self::OpNoAccount => "OpNoAccount",
+            Self::OpNotSupported => "OpNotSupported",
+            Self::OpTooManySubentries => "OpTooManySubentries",
+            Self::OpExceededWorkLimit => "OpExceededWorkLimit",
+            Self::OpTooManySponsoring => "OpTooManySponsoring",
+        }
+    }
+}
+
+impl fmt::Display for OperationResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for OperationResultCode {
@@ -16415,6 +18467,38 @@ pub enum OperationResultTr {
 }
 
 impl OperationResultTr {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::CreateAccount(_) => "CreateAccount",
+            Self::Payment(_) => "Payment",
+            Self::PathPaymentStrictReceive(_) => "PathPaymentStrictReceive",
+            Self::ManageSellOffer(_) => "ManageSellOffer",
+            Self::CreatePassiveSellOffer(_) => "CreatePassiveSellOffer",
+            Self::SetOptions(_) => "SetOptions",
+            Self::ChangeTrust(_) => "ChangeTrust",
+            Self::AllowTrust(_) => "AllowTrust",
+            Self::AccountMerge(_) => "AccountMerge",
+            Self::Inflation(_) => "Inflation",
+            Self::ManageData(_) => "ManageData",
+            Self::BumpSequence(_) => "BumpSequence",
+            Self::ManageBuyOffer(_) => "ManageBuyOffer",
+            Self::PathPaymentStrictSend(_) => "PathPaymentStrictSend",
+            Self::CreateClaimableBalance(_) => "CreateClaimableBalance",
+            Self::ClaimClaimableBalance(_) => "ClaimClaimableBalance",
+            Self::BeginSponsoringFutureReserves(_) => "BeginSponsoringFutureReserves",
+            Self::EndSponsoringFutureReserves(_) => "EndSponsoringFutureReserves",
+            Self::RevokeSponsorship(_) => "RevokeSponsorship",
+            Self::Clawback(_) => "Clawback",
+            Self::ClawbackClaimableBalance(_) => "ClawbackClaimableBalance",
+            Self::SetTrustLineFlags(_) => "SetTrustLineFlags",
+            Self::LiquidityPoolDeposit(_) => "LiquidityPoolDeposit",
+            Self::LiquidityPoolWithdraw(_) => "LiquidityPoolWithdraw",
+            Self::InvokeHostFunction(_) => "InvokeHostFunction",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> OperationType {
         #[allow(clippy::match_same_arms)]
@@ -16634,6 +18718,20 @@ pub enum OperationResult {
 
 impl OperationResult {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::OpInner(_) => "OpInner",
+            Self::OpBadAuth => "OpBadAuth",
+            Self::OpNoAccount => "OpNoAccount",
+            Self::OpNotSupported => "OpNotSupported",
+            Self::OpTooManySubentries => "OpTooManySubentries",
+            Self::OpExceededWorkLimit => "OpExceededWorkLimit",
+            Self::OpTooManySponsoring => "OpTooManySponsoring",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> OperationResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -16739,6 +18837,39 @@ pub enum TransactionResultCode {
     TxMalformed = -16,
 }
 
+impl TransactionResultCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TxFeeBumpInnerSuccess => "TxFeeBumpInnerSuccess",
+            Self::TxSuccess => "TxSuccess",
+            Self::TxFailed => "TxFailed",
+            Self::TxTooEarly => "TxTooEarly",
+            Self::TxTooLate => "TxTooLate",
+            Self::TxMissingOperation => "TxMissingOperation",
+            Self::TxBadSeq => "TxBadSeq",
+            Self::TxBadAuth => "TxBadAuth",
+            Self::TxInsufficientBalance => "TxInsufficientBalance",
+            Self::TxNoAccount => "TxNoAccount",
+            Self::TxInsufficientFee => "TxInsufficientFee",
+            Self::TxBadAuthExtra => "TxBadAuthExtra",
+            Self::TxInternalError => "TxInternalError",
+            Self::TxNotSupported => "TxNotSupported",
+            Self::TxFeeBumpInnerFailed => "TxFeeBumpInnerFailed",
+            Self::TxBadSponsorship => "TxBadSponsorship",
+            Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
+            Self::TxMalformed => "TxMalformed",
+        }
+    }
+}
+
+impl fmt::Display for TransactionResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for TransactionResultCode {
     type Error = Error;
 
@@ -16842,6 +18973,29 @@ pub enum InnerTransactionResultResult {
 
 impl InnerTransactionResultResult {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TxSuccess(_) => "TxSuccess",
+            Self::TxFailed(_) => "TxFailed",
+            Self::TxTooEarly => "TxTooEarly",
+            Self::TxTooLate => "TxTooLate",
+            Self::TxMissingOperation => "TxMissingOperation",
+            Self::TxBadSeq => "TxBadSeq",
+            Self::TxBadAuth => "TxBadAuth",
+            Self::TxInsufficientBalance => "TxInsufficientBalance",
+            Self::TxNoAccount => "TxNoAccount",
+            Self::TxInsufficientFee => "TxInsufficientFee",
+            Self::TxBadAuthExtra => "TxBadAuthExtra",
+            Self::TxInternalError => "TxInternalError",
+            Self::TxNotSupported => "TxNotSupported",
+            Self::TxBadSponsorship => "TxBadSponsorship",
+            Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
+            Self::TxMalformed => "TxMalformed",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> TransactionResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -16940,6 +19094,14 @@ pub enum InnerTransactionResultExt {
 }
 
 impl InnerTransactionResultExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -17130,6 +19292,31 @@ pub enum TransactionResultResult {
 
 impl TransactionResultResult {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TxFeeBumpInnerSuccess(_) => "TxFeeBumpInnerSuccess",
+            Self::TxFeeBumpInnerFailed(_) => "TxFeeBumpInnerFailed",
+            Self::TxSuccess(_) => "TxSuccess",
+            Self::TxFailed(_) => "TxFailed",
+            Self::TxTooEarly => "TxTooEarly",
+            Self::TxTooLate => "TxTooLate",
+            Self::TxMissingOperation => "TxMissingOperation",
+            Self::TxBadSeq => "TxBadSeq",
+            Self::TxBadAuth => "TxBadAuth",
+            Self::TxInsufficientBalance => "TxInsufficientBalance",
+            Self::TxNoAccount => "TxNoAccount",
+            Self::TxInsufficientFee => "TxInsufficientFee",
+            Self::TxBadAuthExtra => "TxBadAuthExtra",
+            Self::TxInternalError => "TxInternalError",
+            Self::TxNotSupported => "TxNotSupported",
+            Self::TxBadSponsorship => "TxBadSponsorship",
+            Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
+            Self::TxMalformed => "TxMalformed",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> TransactionResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -17238,6 +19425,14 @@ pub enum TransactionResultExt {
 }
 
 impl TransactionResultExt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
@@ -17471,6 +19666,14 @@ pub enum ExtensionPoint {
 
 impl ExtensionPoint {
     #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
+    #[must_use]
     pub fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
@@ -17529,6 +19732,26 @@ pub enum CryptoKeyType {
     MuxedEd25519 = 256,
 }
 
+impl CryptoKeyType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Ed25519 => "Ed25519",
+            Self::PreAuthTx => "PreAuthTx",
+            Self::HashX => "HashX",
+            Self::Ed25519SignedPayload => "Ed25519SignedPayload",
+            Self::MuxedEd25519 => "MuxedEd25519",
+        }
+    }
+}
+
+impl fmt::Display for CryptoKeyType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for CryptoKeyType {
     type Error = Error;
 
@@ -17582,6 +19805,22 @@ impl WriteXdr for CryptoKeyType {
 #[repr(i32)]
 pub enum PublicKeyType {
     PublicKeyTypeEd25519 = 0,
+}
+
+impl PublicKeyType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::PublicKeyTypeEd25519 => "PublicKeyTypeEd25519",
+        }
+    }
+}
+
+impl fmt::Display for PublicKeyType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for PublicKeyType {
@@ -17641,6 +19880,25 @@ pub enum SignerKeyType {
     Ed25519SignedPayload = 3,
 }
 
+impl SignerKeyType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Ed25519 => "Ed25519",
+            Self::PreAuthTx => "PreAuthTx",
+            Self::HashX => "HashX",
+            Self::Ed25519SignedPayload => "Ed25519SignedPayload",
+        }
+    }
+}
+
+impl fmt::Display for SignerKeyType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for SignerKeyType {
     type Error = Error;
 
@@ -17696,6 +19954,14 @@ pub enum PublicKey {
 }
 
 impl PublicKey {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::PublicKeyTypeEd25519(_) => "PublicKeyTypeEd25519",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> PublicKeyType {
         #[allow(clippy::match_same_arms)]
@@ -17800,6 +20066,17 @@ pub enum SignerKey {
 }
 
 impl SignerKey {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Ed25519(_) => "Ed25519",
+            Self::PreAuthTx(_) => "PreAuthTx",
+            Self::HashX(_) => "HashX",
+            Self::Ed25519SignedPayload(_) => "Ed25519SignedPayload",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> SignerKeyType {
         #[allow(clippy::match_same_arms)]
@@ -18169,6 +20446,29 @@ pub enum ScValType {
     Status = 7,
 }
 
+impl ScValType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::U63 => "U63",
+            Self::U32 => "U32",
+            Self::I32 => "I32",
+            Self::Static => "Static",
+            Self::Object => "Object",
+            Self::Symbol => "Symbol",
+            Self::Bitset => "Bitset",
+            Self::Status => "Status",
+        }
+    }
+}
+
+impl fmt::Display for ScValType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ScValType {
     type Error = Error;
 
@@ -18233,6 +20533,25 @@ pub enum ScStatic {
     LedgerKeyContractCodeWasm = 3,
 }
 
+impl ScStatic {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Void => "Void",
+            Self::True => "True",
+            Self::False => "False",
+            Self::LedgerKeyContractCodeWasm => "LedgerKeyContractCodeWasm",
+        }
+    }
+}
+
+impl fmt::Display for ScStatic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
 impl TryFrom<i32> for ScStatic {
     type Error = Error;
 
@@ -18288,6 +20607,23 @@ impl WriteXdr for ScStatic {
 pub enum ScStatusType {
     Ok = 0,
     UnknownError = 1,
+}
+
+impl ScStatusType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Ok => "Ok",
+            Self::UnknownError => "UnknownError",
+        }
+    }
+}
+
+impl fmt::Display for ScStatusType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for ScStatusType {
@@ -18346,6 +20682,15 @@ pub enum ScStatus {
 }
 
 impl ScStatus {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Ok => "Ok",
+            Self::UnknownError(_) => "UnknownError",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> ScStatusType {
         #[allow(clippy::match_same_arms)]
@@ -18420,6 +20765,21 @@ pub enum ScVal {
 }
 
 impl ScVal {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::U63(_) => "U63",
+            Self::U32(_) => "U32",
+            Self::I32(_) => "I32",
+            Self::Static(_) => "Static",
+            Self::Object(_) => "Object",
+            Self::Symbol(_) => "Symbol",
+            Self::Bitset(_) => "Bitset",
+            Self::Status(_) => "Status",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> ScValType {
         #[allow(clippy::match_same_arms)]
@@ -18501,6 +20861,26 @@ pub enum ScObjectType {
     U64 = 2,
     I64 = 3,
     Binary = 4,
+}
+
+impl ScObjectType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Vec => "Vec",
+            Self::Map => "Map",
+            Self::U64 => "U64",
+            Self::I64 => "I64",
+            Self::Binary => "Binary",
+        }
+    }
+}
+
+impl fmt::Display for ScObjectType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 impl TryFrom<i32> for ScObjectType {
@@ -18780,6 +21160,18 @@ pub enum ScObject {
 }
 
 impl ScObject {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Vec(_) => "Vec",
+            Self::Map(_) => "Map",
+            Self::U64(_) => "U64",
+            Self::I64(_) => "I64",
+            Self::Binary(_) => "Binary",
+        }
+    }
+
     #[must_use]
     pub fn discriminant(&self) -> ScObjectType {
         #[allow(clippy::match_same_arms)]

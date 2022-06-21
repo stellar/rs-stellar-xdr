@@ -18,7 +18,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "4bb5fb1eddb25758103babeb6cf7a86ea5cb00602b1bbb4d2aa3f02cccddd63e",
+        "64917d9c9f4f068b6b729ccf070aa0ad14d82d97b3d2ba722d8e0cf9591a5c3e",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -21240,8 +21240,8 @@ impl WriteXdr for ScObject {
 //        SPEC_TYPE_OPTION = 10,
 //        SPEC_TYPE_RESULT = 11,
 //        SPEC_TYPE_VEC = 12,
-//        SPEC_TYPE_MAP = 13,
-//        SPEC_TYPE_SET = 14,
+//        SPEC_TYPE_SET = 13,
+//        SPEC_TYPE_MAP = 14,
 //        SPEC_TYPE_TUPLE = 15,
 //        SPEC_TYPE_UDT = 16
 //    };
@@ -21262,8 +21262,8 @@ pub enum SpecType {
     Option = 10,
     Result = 11,
     Vec = 12,
-    Map = 13,
-    Set = 14,
+    Set = 13,
+    Map = 14,
     Tuple = 15,
     Udt = 16,
 }
@@ -21285,8 +21285,8 @@ impl SpecType {
             Self::Option => "Option",
             Self::Result => "Result",
             Self::Vec => "Vec",
-            Self::Map => "Map",
             Self::Set => "Set",
+            Self::Map => "Map",
             Self::Tuple => "Tuple",
             Self::Udt => "Udt",
         }
@@ -21316,8 +21316,8 @@ impl TryFrom<i32> for SpecType {
             10 => SpecType::Option,
             11 => SpecType::Result,
             12 => SpecType::Vec,
-            13 => SpecType::Map,
-            14 => SpecType::Set,
+            13 => SpecType::Set,
+            14 => SpecType::Map,
             15 => SpecType::Tuple,
             16 => SpecType::Udt,
             #[allow(unreachable_patterns)]

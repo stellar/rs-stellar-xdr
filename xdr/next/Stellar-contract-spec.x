@@ -21,8 +21,8 @@ enum SpecType
     SPEC_TYPE_OPTION = 10,
     SPEC_TYPE_RESULT = 11,
     SPEC_TYPE_VEC = 12,
-    SPEC_TYPE_MAP = 13,
-    SPEC_TYPE_SET = 14,
+    SPEC_TYPE_SET = 13,
+    SPEC_TYPE_MAP = 14,
     SPEC_TYPE_TUPLE = 15,
     SPEC_TYPE_UDT = 16
 };

@@ -21156,14 +21156,143 @@ impl WriteXdr for ScHostContextErrorCode {
     }
 }
 
+// ScVmErrorCode is an XDR Enum defines as:
+//
+//   enum SCVmErrorCode {
+//        WASMI_UNKNOWN_ERROR = 0,
+//        WASMI_VALIDATION_ERROR = 1,
+//        WASMI_INSTANTIATION_ERROR = 2,
+//        WASMI_FUNCTION_ERROR = 3,
+//        WASMI_TABLE_ERROR = 4,
+//        WASMI_MEMORY_ERROR = 5,
+//        WASMI_GLOBAL_ERROR = 6,
+//        WASMI_VALUE_ERROR = 7,
+//        WASMI_TRAP_UNREACHABLE = 8,
+//        WASMI_TRAP_MEMORY_ACCESS_OUT_OF_BOUNDS = 9,
+//        WASMI_TRAP_TABLE_ACCESS_OUT_OF_BOUNDS = 10,
+//        WASMI_TRAP_ELEM_UNINITIALIZED = 11,
+//        WASMI_TRAP_DIVISION_BY_ZERO = 12,
+//        WASMI_TRAP_INTEGER_OVERFLOW = 13,
+//        WASMI_TRAP_INVALID_CONVERSION_TO_INT = 14,
+//        WASMI_TRAP_STACK_OVERFLOW = 15,
+//        WASMI_TRAP_UNEXPECTED_SIGNATURE = 16
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ScVmErrorCode {
+    UnknownError = 0,
+    ValidationError = 1,
+    InstantiationError = 2,
+    FunctionError = 3,
+    TableError = 4,
+    MemoryError = 5,
+    GlobalError = 6,
+    ValueError = 7,
+    TrapUnreachable = 8,
+    TrapMemoryAccessOutOfBounds = 9,
+    TrapTableAccessOutOfBounds = 10,
+    TrapElemUninitialized = 11,
+    TrapDivisionByZero = 12,
+    TrapIntegerOverflow = 13,
+    TrapInvalidConversionToInt = 14,
+    TrapStackOverflow = 15,
+    TrapUnexpectedSignature = 16,
+}
+
+impl ScVmErrorCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::ValidationError => "ValidationError",
+            Self::InstantiationError => "InstantiationError",
+            Self::FunctionError => "FunctionError",
+            Self::TableError => "TableError",
+            Self::MemoryError => "MemoryError",
+            Self::GlobalError => "GlobalError",
+            Self::ValueError => "ValueError",
+            Self::TrapUnreachable => "TrapUnreachable",
+            Self::TrapMemoryAccessOutOfBounds => "TrapMemoryAccessOutOfBounds",
+            Self::TrapTableAccessOutOfBounds => "TrapTableAccessOutOfBounds",
+            Self::TrapElemUninitialized => "TrapElemUninitialized",
+            Self::TrapDivisionByZero => "TrapDivisionByZero",
+            Self::TrapIntegerOverflow => "TrapIntegerOverflow",
+            Self::TrapInvalidConversionToInt => "TrapInvalidConversionToInt",
+            Self::TrapStackOverflow => "TrapStackOverflow",
+            Self::TrapUnexpectedSignature => "TrapUnexpectedSignature",
+        }
+    }
+}
+
+impl fmt::Display for ScVmErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScVmErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScVmErrorCode::UnknownError,
+            1 => ScVmErrorCode::ValidationError,
+            2 => ScVmErrorCode::InstantiationError,
+            3 => ScVmErrorCode::FunctionError,
+            4 => ScVmErrorCode::TableError,
+            5 => ScVmErrorCode::MemoryError,
+            6 => ScVmErrorCode::GlobalError,
+            7 => ScVmErrorCode::ValueError,
+            8 => ScVmErrorCode::TrapUnreachable,
+            9 => ScVmErrorCode::TrapMemoryAccessOutOfBounds,
+            10 => ScVmErrorCode::TrapTableAccessOutOfBounds,
+            11 => ScVmErrorCode::TrapElemUninitialized,
+            12 => ScVmErrorCode::TrapDivisionByZero,
+            13 => ScVmErrorCode::TrapIntegerOverflow,
+            14 => ScVmErrorCode::TrapInvalidConversionToInt,
+            15 => ScVmErrorCode::TrapStackOverflow,
+            16 => ScVmErrorCode::TrapUnexpectedSignature,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScVmErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScVmErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScVmErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScVmErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
 // ScUnknownErrorCode is an XDR Enum defines as:
 //
 //   enum SCUnknownErrorCode
 //    {
 //        UNKNOWN_GENERAL_ERROR = 0,
 //        UNKNOWN_XDR_ERROR = 1,
-//        UNKNOWN_WASMI_ERROR = 2,
-//        UNKNOWN_PARITY_WASMI_ELEMENTS_ERROR = 3
+//        UNKNOWN_PARITY_WASMI_ELEMENTS_ERROR = 2
 //    };
 //
 // enum
@@ -21172,8 +21301,7 @@ impl WriteXdr for ScHostContextErrorCode {
 pub enum ScUnknownErrorCode {
     GeneralError = 0,
     XdrError = 1,
-    WasmiError = 2,
-    ParityWasmiElementsError = 3,
+    ParityWasmiElementsError = 2,
 }
 
 impl ScUnknownErrorCode {
@@ -21183,7 +21311,6 @@ impl ScUnknownErrorCode {
         match self {
             Self::GeneralError => "GeneralError",
             Self::XdrError => "XdrError",
-            Self::WasmiError => "WasmiError",
             Self::ParityWasmiElementsError => "ParityWasmiElementsError",
         }
     }
@@ -21202,8 +21329,7 @@ impl TryFrom<i32> for ScUnknownErrorCode {
         let e = match i {
             0 => ScUnknownErrorCode::GeneralError,
             1 => ScUnknownErrorCode::XdrError,
-            2 => ScUnknownErrorCode::WasmiError,
-            3 => ScUnknownErrorCode::ParityWasmiElementsError,
+            2 => ScUnknownErrorCode::ParityWasmiElementsError,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -21254,7 +21380,7 @@ impl WriteXdr for ScUnknownErrorCode {
 //    case SST_HOST_CONTEXT_ERROR:
 //        SCHostContextErrorCode errorCode;
 //    case SST_VM_ERROR:
-//        uint32 errorCode;
+//        SCVmErrorCode errorCode;
 //    };
 //
 // union with discriminant ScStatusType
@@ -21267,7 +21393,7 @@ pub enum ScStatus {
     HostFunctionError(ScHostFnErrorCode),
     HostStorageError(ScHostStorageErrorCode),
     HostContextError(ScHostContextErrorCode),
-    VmError(u32),
+    VmError(ScVmErrorCode),
 }
 
 impl ScStatus {
@@ -21322,7 +21448,7 @@ impl ReadXdr for ScStatus {
             ScStatusType::HostContextError => {
                 Self::HostContextError(ScHostContextErrorCode::read_xdr(r)?)
             }
-            ScStatusType::VmError => Self::VmError(u32::read_xdr(r)?),
+            ScStatusType::VmError => Self::VmError(ScVmErrorCode::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

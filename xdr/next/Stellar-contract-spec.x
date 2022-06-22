@@ -9,6 +9,7 @@ namespace stellar
 
 enum SpecType
 {
+    // Types with no parameters.
     SPEC_TYPE_U32 = 1,
     SPEC_TYPE_I32 = 2,
     SPEC_TYPE_U64 = 3,
@@ -18,13 +19,18 @@ enum SpecType
     SPEC_TYPE_BITSET = 7,
     SPEC_TYPE_STATUS = 8,
     SPEC_TYPE_BINARY = 9,
-    SPEC_TYPE_OPTION = 10,
-    SPEC_TYPE_RESULT = 11,
-    SPEC_TYPE_VEC = 12,
-    SPEC_TYPE_SET = 13,
-    SPEC_TYPE_MAP = 14,
-    SPEC_TYPE_TUPLE = 15,
-    SPEC_TYPE_UDT = 16
+    SPEC_TYPE_BIGINT = 10,
+
+    // Types with parameters.
+    SPEC_TYPE_OPTION = 1000,
+    SPEC_TYPE_RESULT = 1001,
+    SPEC_TYPE_VEC = 1002,
+    SPEC_TYPE_SET = 1003,
+    SPEC_TYPE_MAP = 1004,
+    SPEC_TYPE_TUPLE = 1005,
+
+    // User defined types.
+    SPEC_TYPE_UDT = 2000
 };
 
 struct SpecTypeOption
@@ -75,6 +81,7 @@ case SPEC_TYPE_SYMBOL:
 case SPEC_TYPE_BITSET:
 case SPEC_TYPE_STATUS:
 case SPEC_TYPE_BINARY:
+case SPEC_TYPE_BIGINT:
     void;
 case SPEC_TYPE_OPTION:
     SpecTypeOption option;

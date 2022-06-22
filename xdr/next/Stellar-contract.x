@@ -71,8 +71,76 @@ enum SCStatic
 enum SCStatusType
 {
     SST_OK = 0,
-    SST_UNKNOWN_ERROR = 1
+    SST_UNKNOWN_ERROR = 1,
+    SST_HOST_VALUE_ERROR = 2,
+    SST_HOST_OBJECT_ERROR = 3,
+    SST_HOST_FUNCTION_ERROR = 4,
+    SST_HOST_STORAGE_ERROR = 5,
+    SST_HOST_CONTEXT_ERROR = 6,
+    SST_VM_ERROR = 7
     // TODO: add more
+};
+
+enum SCHostValErrorCode
+{
+    HOST_VALUE_UNKNOWN_ERROR = 0,
+    RESERVED_TAG_VALUE = 1,
+    UNEXPECTED_VAL_TYPE = 2,
+    U63_OUT_OF_RANGE = 3,
+    U32_OUT_OF_RANGE = 4,
+    STATIC_UNKNOWN = 5,
+    MISSING_OBJECT = 6,
+    SYMBOL_TOO_LONG = 7,
+    SYMBOL_BAD_CHAR = 8,
+    SYMBOL_CONTAINS_NON_UTF8 = 9,
+    BITSET_TOO_MANY_BITS = 10,
+    STATUS_UNKNOWN = 11
+};
+
+enum SCHostObjErrorCode
+{
+    HOST_OBJECT_UNKNOWN_ERROR = 0,
+    UNKNOWN_HOST_OBJECT_REFERENCE = 1,
+    UNEXPECTED_HOST_OBJECT_TYPE = 2,
+    OBJECT_HANDLE_EXCEEDS_U32_MAX = 3,
+    ACCESSING_HOST_OBJECT_OUT_OF_BOUND = 4,
+    VEC_INDEX_OUT_OF_BOUND = 5,
+    VEC_INDEX_OVERFLOW = 6,
+    VEC_VALUE_NOT_EXIST = 7,
+    INVALID_CONTRACT_HASH = 8
+};
+
+enum SCHostFnErrorCode
+{
+    HOST_FN_UNKNOWN_ERROR = 0,
+    UNEXPECTED_HOST_FUNCTION_ACTION = 1,
+    UNEXPECTED_ARGS = 2,
+    INVALID_ARGS = 3,
+    WRONG_INPUT_ARG_TYPE = 4
+};
+
+enum SCHostStorageErrorCode
+{
+    HOST_STORAGE_UNKNOWN_ERROR = 0,
+    EXPECT_CONTRACT_DATA = 1,
+    READWRITE_ACCESS_TO_READONLY_ENTRY = 2,
+    ACCESS_TO_UNKNOWN_ENTRY = 3,
+    MISSING_KEY_IN_GET = 4,
+    GET_ON_DELETED_KEY = 5
+};
+
+enum SCHostContextErrorCode
+{
+    HOST_CONTEXT_UNKNOWN_ERROR = 0,
+    NO_CONTRACT_RUNNING = 1
+};
+
+enum SCUnknownErrorCode
+{
+    UNKNOWN_GENERAL_ERROR = 0,
+    UNKNOWN_XDR_ERROR = 1,
+    UNKNOWN_WASMI_ERROR = 2,
+    UNKNOWN_PARITY_WASMI_ELEMENTS_ERROR = 3
 };
 
 union SCStatus switch (SCStatusType type)
@@ -80,7 +148,19 @@ union SCStatus switch (SCStatusType type)
 case SST_OK:
     void;
 case SST_UNKNOWN_ERROR:
-    uint32 unknownCode;
+    SCUnknownErrorCode unknownCode;
+case SST_HOST_VALUE_ERROR:
+    SCHostValErrorCode errorCode;
+case SST_HOST_OBJECT_ERROR:
+    SCHostObjErrorCode errorCode;
+case SST_HOST_FUNCTION_ERROR:
+    SCHostFnErrorCode errorCode;
+case SST_HOST_STORAGE_ERROR:
+    SCHostStorageErrorCode errorCode;
+case SST_HOST_CONTEXT_ERROR:
+    SCHostContextErrorCode errorCode;
+case SST_VM_ERROR:
+    uint32 errorCode;
 };
 
 union SCVal switch (SCValType type)

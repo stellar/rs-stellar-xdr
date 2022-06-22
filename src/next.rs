@@ -20710,24 +20710,24 @@ impl WriteXdr for ScStatusType {
 //   enum SCHostValErrorCode
 //    {
 //        HOST_VALUE_UNKNOWN_ERROR = 0,
-//        RESERVED_TAG_VALUE = 1,
-//        UNEXPECTED_VAL_TYPE = 2,
-//        U63_OUT_OF_RANGE = 3,
-//        U32_OUT_OF_RANGE = 4,
-//        STATIC_UNKNOWN = 5,
-//        MISSING_OBJECT = 6,
-//        SYMBOL_TOO_LONG = 7,
-//        SYMBOL_BAD_CHAR = 8,
-//        SYMBOL_CONTAINS_NON_UTF8 = 9,
-//        BITSET_TOO_MANY_BITS = 10,
-//        STATUS_UNKNOWN = 11
+//        HOST_VALUE_RESERVED_TAG_VALUE = 1,
+//        HOST_VALUE_UNEXPECTED_VAL_TYPE = 2,
+//        HOST_VALUE_U63_OUT_OF_RANGE = 3,
+//        HOST_VALUE_U32_OUT_OF_RANGE = 4,
+//        HOST_VALUE_STATIC_UNKNOWN = 5,
+//        HOST_VALUE_MISSING_OBJECT = 6,
+//        HOST_VALUE_SYMBOL_TOO_LONG = 7,
+//        HOST_VALUE_SYMBOL_BAD_CHAR = 8,
+//        HOST_VALUE_SYMBOL_CONTAINS_NON_UTF8 = 9,
+//        HOST_VALUE_BITSET_TOO_MANY_BITS = 10,
+//        HOST_VALUE_STATUS_UNKNOWN = 11
 //    };
 //
 // enum
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScHostValErrorCode {
-    HostValueUnknownError = 0,
+    UnknownError = 0,
     ReservedTagValue = 1,
     UnexpectedValType = 2,
     U63OutOfRange = 3,
@@ -20746,7 +20746,7 @@ impl ScHostValErrorCode {
     pub fn name(&self) -> &str {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::HostValueUnknownError => "HostValueUnknownError",
+            Self::UnknownError => "UnknownError",
             Self::ReservedTagValue => "ReservedTagValue",
             Self::UnexpectedValType => "UnexpectedValType",
             Self::U63OutOfRange => "U63OutOfRange",
@@ -20773,7 +20773,7 @@ impl TryFrom<i32> for ScHostValErrorCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScHostValErrorCode::HostValueUnknownError,
+            0 => ScHostValErrorCode::UnknownError,
             1 => ScHostValErrorCode::ReservedTagValue,
             2 => ScHostValErrorCode::UnexpectedValType,
             3 => ScHostValErrorCode::U63OutOfRange,
@@ -20821,25 +20821,25 @@ impl WriteXdr for ScHostValErrorCode {
 //   enum SCHostObjErrorCode
 //    {
 //        HOST_OBJECT_UNKNOWN_ERROR = 0,
-//        UNKNOWN_HOST_OBJECT_REFERENCE = 1,
-//        UNEXPECTED_HOST_OBJECT_TYPE = 2,
-//        OBJECT_HANDLE_EXCEEDS_U32_MAX = 3,
-//        ACCESSING_HOST_OBJECT_OUT_OF_BOUND = 4,
-//        VEC_INDEX_OUT_OF_BOUND = 5,
-//        VEC_INDEX_OVERFLOW = 6,
-//        VEC_VALUE_NOT_EXIST = 7,
-//        INVALID_CONTRACT_HASH = 8
+//        HOST_OBJECT_UNKNOWN_REFERENCE = 1,
+//        HOST_OBJECT_UNEXPECTED_TYPE = 2,
+//        HOST_OBJECT_HANDLE_EXCEEDS_U32_MAX = 3,
+//        HOST_OBJECT_ACCESSING_OUT_OF_BOUND = 4,
+//        HOST_OBJECT_VEC_INDEX_OUT_OF_BOUND = 5,
+//        HOST_OBJECT_VEC_INDEX_OVERFLOW = 6,
+//        HOST_OBJECT_VEC_VALUE_NOT_EXIST = 7,
+//        HOST_OBJECT_INVALID_CONTRACT_HASH = 8
 //    };
 //
 // enum
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScHostObjErrorCode {
-    HostObjectUnknownError = 0,
-    UnknownHostObjectReference = 1,
-    UnexpectedHostObjectType = 2,
-    ObjectHandleExceedsU32Max = 3,
-    AccessingHostObjectOutOfBound = 4,
+    UnknownError = 0,
+    UnknownReference = 1,
+    UnexpectedType = 2,
+    HandleExceedsU32Max = 3,
+    AccessingOutOfBound = 4,
     VecIndexOutOfBound = 5,
     VecIndexOverflow = 6,
     VecValueNotExist = 7,
@@ -20851,11 +20851,11 @@ impl ScHostObjErrorCode {
     pub fn name(&self) -> &str {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::HostObjectUnknownError => "HostObjectUnknownError",
-            Self::UnknownHostObjectReference => "UnknownHostObjectReference",
-            Self::UnexpectedHostObjectType => "UnexpectedHostObjectType",
-            Self::ObjectHandleExceedsU32Max => "ObjectHandleExceedsU32Max",
-            Self::AccessingHostObjectOutOfBound => "AccessingHostObjectOutOfBound",
+            Self::UnknownError => "UnknownError",
+            Self::UnknownReference => "UnknownReference",
+            Self::UnexpectedType => "UnexpectedType",
+            Self::HandleExceedsU32Max => "HandleExceedsU32Max",
+            Self::AccessingOutOfBound => "AccessingOutOfBound",
             Self::VecIndexOutOfBound => "VecIndexOutOfBound",
             Self::VecIndexOverflow => "VecIndexOverflow",
             Self::VecValueNotExist => "VecValueNotExist",
@@ -20875,11 +20875,11 @@ impl TryFrom<i32> for ScHostObjErrorCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScHostObjErrorCode::HostObjectUnknownError,
-            1 => ScHostObjErrorCode::UnknownHostObjectReference,
-            2 => ScHostObjErrorCode::UnexpectedHostObjectType,
-            3 => ScHostObjErrorCode::ObjectHandleExceedsU32Max,
-            4 => ScHostObjErrorCode::AccessingHostObjectOutOfBound,
+            0 => ScHostObjErrorCode::UnknownError,
+            1 => ScHostObjErrorCode::UnknownReference,
+            2 => ScHostObjErrorCode::UnexpectedType,
+            3 => ScHostObjErrorCode::HandleExceedsU32Max,
+            4 => ScHostObjErrorCode::AccessingOutOfBound,
             5 => ScHostObjErrorCode::VecIndexOutOfBound,
             6 => ScHostObjErrorCode::VecIndexOverflow,
             7 => ScHostObjErrorCode::VecValueNotExist,
@@ -20920,17 +20920,17 @@ impl WriteXdr for ScHostObjErrorCode {
 //   enum SCHostFnErrorCode
 //    {
 //        HOST_FN_UNKNOWN_ERROR = 0,
-//        UNEXPECTED_HOST_FUNCTION_ACTION = 1,
-//        UNEXPECTED_ARGS = 2,
-//        INVALID_ARGS = 3,
-//        WRONG_INPUT_ARG_TYPE = 4
+//        HOST_FN_UNEXPECTED_HOST_FUNCTION_ACTION = 1,
+//        HOST_FN_UNEXPECTED_ARGS = 2,
+//        HOST_FN_INVALID_ARGS = 3,
+//        HOST_FN_WRONG_INPUT_ARG_TYPE = 4
 //    };
 //
 // enum
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScHostFnErrorCode {
-    HostFnUnknownError = 0,
+    UnknownError = 0,
     UnexpectedHostFunctionAction = 1,
     UnexpectedArgs = 2,
     InvalidArgs = 3,
@@ -20942,7 +20942,7 @@ impl ScHostFnErrorCode {
     pub fn name(&self) -> &str {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::HostFnUnknownError => "HostFnUnknownError",
+            Self::UnknownError => "UnknownError",
             Self::UnexpectedHostFunctionAction => "UnexpectedHostFunctionAction",
             Self::UnexpectedArgs => "UnexpectedArgs",
             Self::InvalidArgs => "InvalidArgs",
@@ -20962,7 +20962,7 @@ impl TryFrom<i32> for ScHostFnErrorCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScHostFnErrorCode::HostFnUnknownError,
+            0 => ScHostFnErrorCode::UnknownError,
             1 => ScHostFnErrorCode::UnexpectedHostFunctionAction,
             2 => ScHostFnErrorCode::UnexpectedArgs,
             3 => ScHostFnErrorCode::InvalidArgs,
@@ -21003,18 +21003,18 @@ impl WriteXdr for ScHostFnErrorCode {
 //   enum SCHostStorageErrorCode
 //    {
 //        HOST_STORAGE_UNKNOWN_ERROR = 0,
-//        EXPECT_CONTRACT_DATA = 1,
-//        READWRITE_ACCESS_TO_READONLY_ENTRY = 2,
-//        ACCESS_TO_UNKNOWN_ENTRY = 3,
-//        MISSING_KEY_IN_GET = 4,
-//        GET_ON_DELETED_KEY = 5
+//        HOST_STORAGE_EXPECT_CONTRACT_DATA = 1,
+//        HOST_STORAGE_READWRITE_ACCESS_TO_READONLY_ENTRY = 2,
+//        HOST_STORAGE_ACCESS_TO_UNKNOWN_ENTRY = 3,
+//        HOST_STORAGE_MISSING_KEY_IN_GET = 4,
+//        HOST_STORAGE_GET_ON_DELETED_KEY = 5
 //    };
 //
 // enum
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScHostStorageErrorCode {
-    HostStorageUnknownError = 0,
+    UnknownError = 0,
     ExpectContractData = 1,
     ReadwriteAccessToReadonlyEntry = 2,
     AccessToUnknownEntry = 3,
@@ -21027,7 +21027,7 @@ impl ScHostStorageErrorCode {
     pub fn name(&self) -> &str {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::HostStorageUnknownError => "HostStorageUnknownError",
+            Self::UnknownError => "UnknownError",
             Self::ExpectContractData => "ExpectContractData",
             Self::ReadwriteAccessToReadonlyEntry => "ReadwriteAccessToReadonlyEntry",
             Self::AccessToUnknownEntry => "AccessToUnknownEntry",
@@ -21048,7 +21048,7 @@ impl TryFrom<i32> for ScHostStorageErrorCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScHostStorageErrorCode::HostStorageUnknownError,
+            0 => ScHostStorageErrorCode::UnknownError,
             1 => ScHostStorageErrorCode::ExpectContractData,
             2 => ScHostStorageErrorCode::ReadwriteAccessToReadonlyEntry,
             3 => ScHostStorageErrorCode::AccessToUnknownEntry,
@@ -21090,14 +21090,14 @@ impl WriteXdr for ScHostStorageErrorCode {
 //   enum SCHostContextErrorCode
 //    {
 //        HOST_CONTEXT_UNKNOWN_ERROR = 0,
-//        NO_CONTRACT_RUNNING = 1
+//        HOST_CONTEXT_NO_CONTRACT_RUNNING = 1
 //    };
 //
 // enum
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScHostContextErrorCode {
-    HostContextUnknownError = 0,
+    UnknownError = 0,
     NoContractRunning = 1,
 }
 
@@ -21106,7 +21106,7 @@ impl ScHostContextErrorCode {
     pub fn name(&self) -> &str {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::HostContextUnknownError => "HostContextUnknownError",
+            Self::UnknownError => "UnknownError",
             Self::NoContractRunning => "NoContractRunning",
         }
     }
@@ -21123,7 +21123,7 @@ impl TryFrom<i32> for ScHostContextErrorCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScHostContextErrorCode::HostContextUnknownError,
+            0 => ScHostContextErrorCode::UnknownError,
             1 => ScHostContextErrorCode::NoContractRunning,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -21159,14 +21159,14 @@ impl WriteXdr for ScHostContextErrorCode {
 // ScVmErrorCode is an XDR Enum defines as:
 //
 //   enum SCVmErrorCode {
-//        WASMI_UNKNOWN_ERROR = 0,
-//        WASMI_VALIDATION_ERROR = 1,
-//        WASMI_INSTANTIATION_ERROR = 2,
-//        WASMI_FUNCTION_ERROR = 3,
-//        WASMI_TABLE_ERROR = 4,
-//        WASMI_MEMORY_ERROR = 5,
-//        WASMI_GLOBAL_ERROR = 6,
-//        WASMI_VALUE_ERROR = 7,
+//        WASMI_ERROR_UNKNOWN = 0,
+//        WASMI_ERROR_VALIDATION = 1,
+//        WASMI_ERROR_INSTANTIATION = 2,
+//        WASMI_ERROR_FUNCTION = 3,
+//        WASMI_ERROR_TABLE = 4,
+//        WASMI_ERROR_MEMORY = 5,
+//        WASMI_ERROR_GLOBAL = 6,
+//        WASMI_ERROR_VALUE = 7,
 //        WASMI_TRAP_UNREACHABLE = 8,
 //        WASMI_TRAP_MEMORY_ACCESS_OUT_OF_BOUNDS = 9,
 //        WASMI_TRAP_TABLE_ACCESS_OUT_OF_BOUNDS = 10,
@@ -21182,14 +21182,14 @@ impl WriteXdr for ScHostContextErrorCode {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScVmErrorCode {
-    UnknownError = 0,
-    ValidationError = 1,
-    InstantiationError = 2,
-    FunctionError = 3,
-    TableError = 4,
-    MemoryError = 5,
-    GlobalError = 6,
-    ValueError = 7,
+    ErrorUnknown = 0,
+    ErrorValidation = 1,
+    ErrorInstantiation = 2,
+    ErrorFunction = 3,
+    ErrorTable = 4,
+    ErrorMemory = 5,
+    ErrorGlobal = 6,
+    ErrorValue = 7,
     TrapUnreachable = 8,
     TrapMemoryAccessOutOfBounds = 9,
     TrapTableAccessOutOfBounds = 10,
@@ -21206,14 +21206,14 @@ impl ScVmErrorCode {
     pub fn name(&self) -> &str {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::UnknownError => "UnknownError",
-            Self::ValidationError => "ValidationError",
-            Self::InstantiationError => "InstantiationError",
-            Self::FunctionError => "FunctionError",
-            Self::TableError => "TableError",
-            Self::MemoryError => "MemoryError",
-            Self::GlobalError => "GlobalError",
-            Self::ValueError => "ValueError",
+            Self::ErrorUnknown => "ErrorUnknown",
+            Self::ErrorValidation => "ErrorValidation",
+            Self::ErrorInstantiation => "ErrorInstantiation",
+            Self::ErrorFunction => "ErrorFunction",
+            Self::ErrorTable => "ErrorTable",
+            Self::ErrorMemory => "ErrorMemory",
+            Self::ErrorGlobal => "ErrorGlobal",
+            Self::ErrorValue => "ErrorValue",
             Self::TrapUnreachable => "TrapUnreachable",
             Self::TrapMemoryAccessOutOfBounds => "TrapMemoryAccessOutOfBounds",
             Self::TrapTableAccessOutOfBounds => "TrapTableAccessOutOfBounds",
@@ -21238,14 +21238,14 @@ impl TryFrom<i32> for ScVmErrorCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScVmErrorCode::UnknownError,
-            1 => ScVmErrorCode::ValidationError,
-            2 => ScVmErrorCode::InstantiationError,
-            3 => ScVmErrorCode::FunctionError,
-            4 => ScVmErrorCode::TableError,
-            5 => ScVmErrorCode::MemoryError,
-            6 => ScVmErrorCode::GlobalError,
-            7 => ScVmErrorCode::ValueError,
+            0 => ScVmErrorCode::ErrorUnknown,
+            1 => ScVmErrorCode::ErrorValidation,
+            2 => ScVmErrorCode::ErrorInstantiation,
+            3 => ScVmErrorCode::ErrorFunction,
+            4 => ScVmErrorCode::ErrorTable,
+            5 => ScVmErrorCode::ErrorMemory,
+            6 => ScVmErrorCode::ErrorGlobal,
+            7 => ScVmErrorCode::ErrorValue,
             8 => ScVmErrorCode::TrapUnreachable,
             9 => ScVmErrorCode::TrapMemoryAccessOutOfBounds,
             10 => ScVmErrorCode::TrapTableAccessOutOfBounds,
@@ -21290,18 +21290,18 @@ impl WriteXdr for ScVmErrorCode {
 //
 //   enum SCUnknownErrorCode
 //    {
-//        UNKNOWN_GENERAL_ERROR = 0,
-//        UNKNOWN_XDR_ERROR = 1,
-//        UNKNOWN_PARITY_WASMI_ELEMENTS_ERROR = 2
+//        UNKNOWN_ERROR_GENERAL = 0,
+//        UNKNOWN_ERROR_XDR = 1,
+//        UNKNOWN_ERROR_PARITY_WASMI_ELEMENTS = 2
 //    };
 //
 // enum
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScUnknownErrorCode {
-    GeneralError = 0,
-    XdrError = 1,
-    ParityWasmiElementsError = 2,
+    General = 0,
+    Xdr = 1,
+    ParityWasmiElements = 2,
 }
 
 impl ScUnknownErrorCode {
@@ -21309,9 +21309,9 @@ impl ScUnknownErrorCode {
     pub fn name(&self) -> &str {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::GeneralError => "GeneralError",
-            Self::XdrError => "XdrError",
-            Self::ParityWasmiElementsError => "ParityWasmiElementsError",
+            Self::General => "General",
+            Self::Xdr => "Xdr",
+            Self::ParityWasmiElements => "ParityWasmiElements",
         }
     }
 }
@@ -21327,9 +21327,9 @@ impl TryFrom<i32> for ScUnknownErrorCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScUnknownErrorCode::GeneralError,
-            1 => ScUnknownErrorCode::XdrError,
-            2 => ScUnknownErrorCode::ParityWasmiElementsError,
+            0 => ScUnknownErrorCode::General,
+            1 => ScUnknownErrorCode::Xdr,
+            2 => ScUnknownErrorCode::ParityWasmiElements,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

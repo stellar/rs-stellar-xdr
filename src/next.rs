@@ -48,6 +48,9 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
 
 use core::{fmt, fmt::Debug, ops::Deref};
 
+#[cfg(feature = "std")]
+use core::marker::PhantomData;
+
 // When feature alloc is turned off use static lifetime Box and Vec types.
 #[cfg(not(feature = "alloc"))]
 mod noalloc {
@@ -91,7 +94,7 @@ pub enum Error {
     NonZeroPadding,
     Utf8Error(core::str::Utf8Error),
     #[cfg(feature = "std")]
-    IO(io::Error),
+    Io(io::Error),
 }
 
 #[cfg(feature = "std")]
@@ -99,7 +102,7 @@ impl error::Error for Error {
     #[must_use]
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Self::IO(e) => Some(e),
+            Self::Io(e) => Some(e),
             _ => None,
         }
     }
@@ -114,7 +117,7 @@ impl fmt::Display for Error {
             Error::NonZeroPadding => write!(f, "xdr padding contains non-zero bytes"),
             Error::Utf8Error(e) => write!(f, "{}", e),
             #[cfg(feature = "std")]
-            Error::IO(e) => write!(f, "{}", e),
+            Error::Io(e) => write!(f, "{}", e),
         }
     }
 }
@@ -138,7 +141,7 @@ impl From<FromUtf8Error> for Error {
 impl From<io::Error> for Error {
     #[must_use]
     fn from(e: io::Error) -> Self {
-        Error::IO(e)
+        Error::Io(e)
     }
 }
 
@@ -148,6 +151,39 @@ impl From<Error> for () {
 
 #[allow(dead_code)]
 type Result<T> = core::result::Result<T, Error>;
+
+#[cfg(feature = "std")]
+pub struct ReadXdrIter<'r, R: Read, S: ReadXdr> {
+    r: &'r mut R,
+    _s: PhantomData<S>,
+}
+
+#[cfg(feature = "std")]
+impl<'r, R: Read, S: ReadXdr> ReadXdrIter<'r, R, S> {
+    fn new(r: &'r mut R) -> Self {
+        Self { r, _s: PhantomData }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'r, R: Read, S: ReadXdr> Iterator for ReadXdrIter<'r, R, S> {
+    type Item = Result<S>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match S::read_xdr(&mut self.r) {
+            Ok(s) => Some(Ok(s)),
+            // TODO: Distinguish between EOF and EOF-with-a-partial-fill. An EOF
+            // that occurs at teh end of an item indicates the end of a stream
+            // and should end iteration. An EOF that occurs whilst reading an
+            // item indicates a corrupt stream and should cause an error. The
+            // xdr types use the `std::io::Read::read_exact` method that
+            // unfortunately doesn't distinguish between these two extremely
+            // different events.
+            Err(Error::Io(e)) if e.kind() == io::ErrorKind::UnexpectedEof => None,
+            Err(e) => Some(Err(e)),
+        }
+    }
+}
 
 pub trait ReadXdr
 where
@@ -160,6 +196,11 @@ where
     fn read_xdr_into(&mut self, r: &mut impl Read) -> Result<()> {
         *self = Self::read_xdr(r)?;
         Ok(())
+    }
+
+    #[cfg(feature = "std")]
+    fn read_xdr_iter<R: Read>(r: &mut R) -> ReadXdrIter<R, Self> {
+        ReadXdrIter::new(r)
     }
 
     #[cfg(feature = "std")]
@@ -785,7 +826,7 @@ mod tests {
         let mut buf = Cursor::new(vec![0, 0, 0, 1, 2, 0, 0]);
         let res = VecM::<u8, 8>::read_xdr(&mut buf);
         match res {
-            Err(Error::IO(_)) => (),
+            Err(Error::Io(_)) => (),
             _ => panic!("expected IO error got {:?}", res),
         }
     }
@@ -835,7 +876,7 @@ mod tests {
         let mut buf = Cursor::new(vec![2, 0, 0]);
         let res = <[u8; 1]>::read_xdr(&mut buf);
         match res {
-            Err(Error::IO(_)) => (),
+            Err(Error::Io(_)) => (),
             _ => panic!("expected IO error got {:?}", res),
         }
     }

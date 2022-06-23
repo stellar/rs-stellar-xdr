@@ -19,7 +19,7 @@ enum SpecType
     SPEC_TYPE_BITSET = 7,
     SPEC_TYPE_STATUS = 8,
     SPEC_TYPE_BINARY = 9,
-    SPEC_TYPE_BIGINT = 10,
+    SPEC_TYPE_BIG_INT = 10,
 
     // Types with parameters.
     SPEC_TYPE_OPTION = 1000,
@@ -81,7 +81,7 @@ case SPEC_TYPE_SYMBOL:
 case SPEC_TYPE_BITSET:
 case SPEC_TYPE_STATUS:
 case SPEC_TYPE_BINARY:
-case SPEC_TYPE_BIGINT:
+case SPEC_TYPE_BIG_INT:
     void;
 case SPEC_TYPE_OPTION:
     SpecTypeOption option;

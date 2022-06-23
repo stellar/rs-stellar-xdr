@@ -18,7 +18,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "5be24f435562f96e80fd1495e52c324714098297b81156255d43230aa3e5f100",
+        "9ac6b20a3f05712e59614f4fb17d041e188f9d6ed1aff7bc845d4fc9c6d6cd99",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -21297,7 +21297,7 @@ impl WriteXdr for ScObject {
 //        SPEC_TYPE_BITSET = 7,
 //        SPEC_TYPE_STATUS = 8,
 //        SPEC_TYPE_BINARY = 9,
-//        SPEC_TYPE_BIGINT = 10,
+//        SPEC_TYPE_BIG_INT = 10,
 //
 //        // Types with parameters.
 //        SPEC_TYPE_OPTION = 1000,
@@ -21324,7 +21324,7 @@ pub enum SpecType {
     Bitset = 7,
     Status = 8,
     Binary = 9,
-    Bigint = 10,
+    BigInt = 10,
     Option = 1000,
     Result = 1001,
     Vec = 1002,
@@ -21348,7 +21348,7 @@ impl SpecType {
             Self::Bitset => "Bitset",
             Self::Status => "Status",
             Self::Binary => "Binary",
-            Self::Bigint => "Bigint",
+            Self::BigInt => "BigInt",
             Self::Option => "Option",
             Self::Result => "Result",
             Self::Vec => "Vec",
@@ -21380,7 +21380,7 @@ impl TryFrom<i32> for SpecType {
             7 => SpecType::Bitset,
             8 => SpecType::Status,
             9 => SpecType::Binary,
-            10 => SpecType::Bigint,
+            10 => SpecType::BigInt,
             1000 => SpecType::Option,
             1001 => SpecType::Result,
             1002 => SpecType::Vec,
@@ -21643,7 +21643,7 @@ impl WriteXdr for SpecTypeUdt {
 //    case SPEC_TYPE_BITSET:
 //    case SPEC_TYPE_STATUS:
 //    case SPEC_TYPE_BINARY:
-//    case SPEC_TYPE_BIGINT:
+//    case SPEC_TYPE_BIG_INT:
 //        void;
 //    case SPEC_TYPE_OPTION:
 //        SpecTypeOption option;
@@ -21673,7 +21673,7 @@ pub enum SpecTypeDef {
     Bitset,
     Status,
     Binary,
-    Bigint,
+    BigInt,
     Option(Box<SpecTypeOption>),
     Result(Box<SpecTypeResult>),
     Vec(Box<SpecTypeVec>),
@@ -21697,7 +21697,7 @@ impl SpecTypeDef {
             Self::Bitset => "Bitset",
             Self::Status => "Status",
             Self::Binary => "Binary",
-            Self::Bigint => "Bigint",
+            Self::BigInt => "BigInt",
             Self::Option(_) => "Option",
             Self::Result(_) => "Result",
             Self::Vec(_) => "Vec",
@@ -21721,7 +21721,7 @@ impl SpecTypeDef {
             Self::Bitset => SpecType::Bitset,
             Self::Status => SpecType::Status,
             Self::Binary => SpecType::Binary,
-            Self::Bigint => SpecType::Bigint,
+            Self::BigInt => SpecType::BigInt,
             Self::Option(_) => SpecType::Option,
             Self::Result(_) => SpecType::Result,
             Self::Vec(_) => SpecType::Vec,
@@ -21748,7 +21748,7 @@ impl ReadXdr for SpecTypeDef {
             SpecType::Bitset => Self::Bitset,
             SpecType::Status => Self::Status,
             SpecType::Binary => Self::Binary,
-            SpecType::Bigint => Self::Bigint,
+            SpecType::BigInt => Self::BigInt,
             SpecType::Option => Self::Option(Box::<SpecTypeOption>::read_xdr(r)?),
             SpecType::Result => Self::Result(Box::<SpecTypeResult>::read_xdr(r)?),
             SpecType::Vec => Self::Vec(Box::<SpecTypeVec>::read_xdr(r)?),
@@ -21778,7 +21778,7 @@ impl WriteXdr for SpecTypeDef {
             Self::Bitset => ().write_xdr(w)?,
             Self::Status => ().write_xdr(w)?,
             Self::Binary => ().write_xdr(w)?,
-            Self::Bigint => ().write_xdr(w)?,
+            Self::BigInt => ().write_xdr(w)?,
             Self::Option(v) => v.write_xdr(w)?,
             Self::Result(v) => v.write_xdr(w)?,
             Self::Vec(v) => v.write_xdr(w)?,

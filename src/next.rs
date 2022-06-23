@@ -17,7 +17,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 7] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "b2732062cf28648246ae09d60a967c53bb4d2c1c563e92e74c3e2881fe6fe633",
+        "784911fa52608064553092772763b87e65ae85352b1776b4aee31d20dd6ac245",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -21440,7 +21440,7 @@ impl WriteXdr for ScHash {
 //    case SCO_BINARY:
 //        opaque bin<SCVAL_LIMIT>;
 //    case SCO_BIG_INT:
-//        SCBigInt bi;
+//        SCBigInt bigInt;
 //    case SCO_HASH:
 //        SCHash hash;
 //    case SCO_PUBLIC_KEY:

@@ -43,6 +43,9 @@ pub const XDR_FILES_SHA256: [(&str, &str); 7] = [
 
 use core::{fmt, fmt::Debug, ops::Deref};
 
+#[cfg(feature = "std")]
+use core::marker::PhantomData;
+
 // When feature alloc is turned off use static lifetime Box and Vec types.
 #[cfg(not(feature = "alloc"))]
 mod noalloc {
@@ -75,7 +78,7 @@ use std::string::FromUtf8Error;
 #[cfg(feature = "std")]
 use std::{
     error, io,
-    io::{Cursor, Read, Write},
+    io::{BufRead, BufReader, Cursor, Read, Write},
 };
 
 #[derive(Debug)]
@@ -86,7 +89,7 @@ pub enum Error {
     NonZeroPadding,
     Utf8Error(core::str::Utf8Error),
     #[cfg(feature = "std")]
-    IO(io::Error),
+    Io(io::Error),
 }
 
 #[cfg(feature = "std")]
@@ -94,7 +97,7 @@ impl error::Error for Error {
     #[must_use]
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Self::IO(e) => Some(e),
+            Self::Io(e) => Some(e),
             _ => None,
         }
     }
@@ -109,7 +112,7 @@ impl fmt::Display for Error {
             Error::NonZeroPadding => write!(f, "xdr padding contains non-zero bytes"),
             Error::Utf8Error(e) => write!(f, "{}", e),
             #[cfg(feature = "std")]
-            Error::IO(e) => write!(f, "{}", e),
+            Error::Io(e) => write!(f, "{}", e),
         }
     }
 }
@@ -133,7 +136,7 @@ impl From<FromUtf8Error> for Error {
 impl From<io::Error> for Error {
     #[must_use]
     fn from(e: io::Error) -> Self {
-        Error::IO(e)
+        Error::Io(e)
     }
 }
 
@@ -143,6 +146,57 @@ impl From<Error> for () {
 
 #[allow(dead_code)]
 type Result<T> = core::result::Result<T, Error>;
+
+#[cfg(feature = "std")]
+pub struct ReadXdrIter<'r, R: Read, S: ReadXdr> {
+    reader: BufReader<&'r mut R>,
+    _s: PhantomData<S>,
+}
+
+#[cfg(feature = "std")]
+impl<'r, R: Read, S: ReadXdr> ReadXdrIter<'r, R, S> {
+    fn new(r: &'r mut R) -> Self {
+        Self {
+            reader: BufReader::new(r),
+            _s: PhantomData,
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'r, R: Read, S: ReadXdr> Iterator for ReadXdrIter<'r, R, S> {
+    type Item = Result<S>;
+
+    // Next reads the internal reader and XDR decodes it into the Self type. If
+    // the EOF is reached without reading any new bytes `None` is returned. If
+    // EOF is reached after reading some bytes a truncated entry is assumed an
+    // an `Error::Io` containing an `UnexpectedEof`. If any other IO error
+    // occurs it is returned. Iteration of this iterator stops naturally when
+    // `None` is returned, but not when a `Some(Err(...))` is returned. The
+    // caller is responsible for checking each Result.
+    fn next(&mut self) -> Option<Self::Item> {
+        // Try to fill the buffer to see if the EOF has been reached or not.
+        // This happens to effectively peek to see if the stream has finished
+        // and there are no more items.  It is necessary to do this because the
+        // xdr types in this crate heavily use the `std::io::Read::read_exact`
+        // method that doesn't distinguish between an EOF at the beginning of a
+        // read and an EOF after a partial fill of a read_exact.
+        match self.reader.fill_buf() {
+            // If the reader has no more data and is unable to fill any new data
+            // into its internal buf, then the EOF has been reached.
+            Ok([]) => return None,
+            // If an error occurs filling the buffer, treat that as an error and stop.
+            Err(e) => return Some(Err(Error::Io(e))),
+            // If there is data in the buf available for reading, continue.
+            Ok([..]) => (),
+        };
+        // Read the buf into the type.
+        match S::read_xdr(&mut self.reader) {
+            Ok(s) => Some(Ok(s)),
+            Err(e) => Some(Err(e)),
+        }
+    }
+}
 
 pub trait ReadXdr
 where
@@ -155,6 +209,11 @@ where
     fn read_xdr_into(&mut self, r: &mut impl Read) -> Result<()> {
         *self = Self::read_xdr(r)?;
         Ok(())
+    }
+
+    #[cfg(feature = "std")]
+    fn read_xdr_iter<R: Read>(r: &mut R) -> ReadXdrIter<R, Self> {
+        ReadXdrIter::new(r)
     }
 
     #[cfg(feature = "std")]
@@ -780,7 +839,7 @@ mod tests {
         let mut buf = Cursor::new(vec![0, 0, 0, 1, 2, 0, 0]);
         let res = VecM::<u8, 8>::read_xdr(&mut buf);
         match res {
-            Err(Error::IO(_)) => (),
+            Err(Error::Io(_)) => (),
             _ => panic!("expected IO error got {:?}", res),
         }
     }
@@ -830,7 +889,7 @@ mod tests {
         let mut buf = Cursor::new(vec![2, 0, 0]);
         let res = <[u8; 1]>::read_xdr(&mut buf);
         match res {
-            Err(Error::IO(_)) => (),
+            Err(Error::Io(_)) => (),
             _ => panic!("expected IO error got {:?}", res),
         }
     }

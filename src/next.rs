@@ -17,7 +17,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 7] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "e3154a99f847471c540c7b80d7d7f0f532c1fb6a17831e3509199dda3475cec7",
+        "b2732062cf28648246ae09d60a967c53bb4d2c1c563e92e74c3e2881fe6fe633",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -20858,7 +20858,7 @@ impl WriteXdr for ScVal {
 //        SCO_U64 = 2,
 //        SCO_I64 = 3,
 //        SCO_BINARY = 4,
-//        SCO_BIGINT = 5,
+//        SCO_BIG_INT = 5,
 //        SCO_HASH = 6,
 //        SCO_PUBLIC_KEY = 7
 //
@@ -20874,7 +20874,7 @@ pub enum ScObjectType {
     U64 = 2,
     I64 = 3,
     Binary = 4,
-    Bigint = 5,
+    BigInt = 5,
     Hash = 6,
     PublicKey = 7,
 }
@@ -20888,7 +20888,7 @@ impl ScObjectType {
             Self::U64 => "U64",
             Self::I64 => "I64",
             Self::Binary => "Binary",
-            Self::Bigint => "Bigint",
+            Self::BigInt => "BigInt",
             Self::Hash => "Hash",
             Self::PublicKey => "PublicKey",
         }
@@ -20911,7 +20911,7 @@ impl TryFrom<i32> for ScObjectType {
             2 => ScObjectType::U64,
             3 => ScObjectType::I64,
             4 => ScObjectType::Binary,
-            5 => ScObjectType::Bigint,
+            5 => ScObjectType::BigInt,
             6 => ScObjectType::Hash,
             7 => ScObjectType::PublicKey,
             #[allow(unreachable_patterns)]
@@ -21439,7 +21439,7 @@ impl WriteXdr for ScHash {
 //        int64 i64;
 //    case SCO_BINARY:
 //        opaque bin<SCVAL_LIMIT>;
-//    case SCO_BIGINT:
+//    case SCO_BIG_INT:
 //        SCBigInt bi;
 //    case SCO_HASH:
 //        SCHash hash;
@@ -21455,7 +21455,7 @@ pub enum ScObject {
     U64(u64),
     I64(i64),
     Binary(VecM<u8, 256000>),
-    Bigint(ScBigInt),
+    BigInt(ScBigInt),
     Hash(ScHash),
     PublicKey(PublicKey),
 }
@@ -21469,7 +21469,7 @@ impl ScObject {
             Self::U64(_) => "U64",
             Self::I64(_) => "I64",
             Self::Binary(_) => "Binary",
-            Self::Bigint(_) => "Bigint",
+            Self::BigInt(_) => "BigInt",
             Self::Hash(_) => "Hash",
             Self::PublicKey(_) => "PublicKey",
         }
@@ -21484,7 +21484,7 @@ impl ScObject {
             Self::U64(_) => ScObjectType::U64,
             Self::I64(_) => ScObjectType::I64,
             Self::Binary(_) => ScObjectType::Binary,
-            Self::Bigint(_) => ScObjectType::Bigint,
+            Self::BigInt(_) => ScObjectType::BigInt,
             Self::Hash(_) => ScObjectType::Hash,
             Self::PublicKey(_) => ScObjectType::PublicKey,
         }
@@ -21502,7 +21502,7 @@ impl ReadXdr for ScObject {
             ScObjectType::U64 => Self::U64(u64::read_xdr(r)?),
             ScObjectType::I64 => Self::I64(i64::read_xdr(r)?),
             ScObjectType::Binary => Self::Binary(VecM::<u8, 256000>::read_xdr(r)?),
-            ScObjectType::Bigint => Self::Bigint(ScBigInt::read_xdr(r)?),
+            ScObjectType::BigInt => Self::BigInt(ScBigInt::read_xdr(r)?),
             ScObjectType::Hash => Self::Hash(ScHash::read_xdr(r)?),
             ScObjectType::PublicKey => Self::PublicKey(PublicKey::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -21523,7 +21523,7 @@ impl WriteXdr for ScObject {
             Self::U64(v) => v.write_xdr(w)?,
             Self::I64(v) => v.write_xdr(w)?,
             Self::Binary(v) => v.write_xdr(w)?,
-            Self::Bigint(v) => v.write_xdr(w)?,
+            Self::BigInt(v) => v.write_xdr(w)?,
             Self::Hash(v) => v.write_xdr(w)?,
             Self::PublicKey(v) => v.write_xdr(w)?,
         };

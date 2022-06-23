@@ -113,7 +113,7 @@ enum SCObjectType
     SCO_U64 = 2,
     SCO_I64 = 3,
     SCO_BINARY = 4,
-    SCO_BIGINT = 5,
+    SCO_BIG_INT = 5,
     SCO_HASH = 6,
     SCO_PUBLIC_KEY = 7
 
@@ -170,7 +170,7 @@ case SCO_I64:
     int64 i64;
 case SCO_BINARY:
     opaque bin<SCVAL_LIMIT>;
-case SCO_BIGINT:
+case SCO_BIG_INT:
     SCBigInt bi;
 case SCO_HASH:
     SCHash hash;

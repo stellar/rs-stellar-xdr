@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "8597f1ec4f4b9586d0f0de752b89e0a32585ff4731f69f9b198a7eb5abdf9fa8",
+        "da1e0ef87bc3ef916e6716570ada8a24c3b2e4a056a2365f242e446df62d64f5",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -20826,8 +20826,7 @@ impl WriteXdr for ScHostValErrorCode {
 //        HOST_OBJECT_OBJECT_COUNT_EXCEEDS_U32_MAX = 3,
 //        HOST_OBJECT_OBJECT_NOT_EXIST = 4,
 //        HOST_OBJECT_VEC_INDEX_OUT_OF_BOUND = 5,
-//        HOST_OBJECT_VEC_ELEMENT_NOT_EXIST = 6,
-//        HOST_OBJECT_CONTRACT_HASH_WRONG_LENGTH = 7
+//        HOST_OBJECT_CONTRACT_HASH_WRONG_LENGTH = 6
 //    };
 //
 // enum
@@ -20840,8 +20839,7 @@ pub enum ScHostObjErrorCode {
     ObjectCountExceedsU32Max = 3,
     ObjectNotExist = 4,
     VecIndexOutOfBound = 5,
-    VecElementNotExist = 6,
-    ContractHashWrongLength = 7,
+    ContractHashWrongLength = 6,
 }
 
 impl ScHostObjErrorCode {
@@ -20855,7 +20853,6 @@ impl ScHostObjErrorCode {
             Self::ObjectCountExceedsU32Max => "ObjectCountExceedsU32Max",
             Self::ObjectNotExist => "ObjectNotExist",
             Self::VecIndexOutOfBound => "VecIndexOutOfBound",
-            Self::VecElementNotExist => "VecElementNotExist",
             Self::ContractHashWrongLength => "ContractHashWrongLength",
         }
     }
@@ -20878,8 +20875,7 @@ impl TryFrom<i32> for ScHostObjErrorCode {
             3 => ScHostObjErrorCode::ObjectCountExceedsU32Max,
             4 => ScHostObjErrorCode::ObjectNotExist,
             5 => ScHostObjErrorCode::VecIndexOutOfBound,
-            6 => ScHostObjErrorCode::VecElementNotExist,
-            7 => ScHostObjErrorCode::ContractHashWrongLength,
+            6 => ScHostObjErrorCode::ContractHashWrongLength,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

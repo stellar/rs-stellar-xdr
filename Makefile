@@ -69,14 +69,17 @@ src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 		'
 	rustfmt $@
 
+clean:
+	rm -f src/curr.rs
+	rm -f src/next.rs
+	cargo clean
+
 $(XDR_FILES_LOCAL_CURR):
 	curl -L -o $@ $(XDR_BASE_URL_CURR)/$(notdir $@)
 
 $(XDR_FILES_LOCAL_NEXT):
 	curl -L -o $@ $(XDR_BASE_URL_NEXT)/$(notdir $@)
 
-clean:
+reset-xdr-to-stellar-core:
 	rm -f xdr/*/*.x
-	rm -f src/curr.rs
-	rm -f src/next.rs
-	cargo clean
+	$(MAKE) build

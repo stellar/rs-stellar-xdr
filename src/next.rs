@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "784911fa52608064553092772763b87e65ae85352b1776b4aee31d20dd6ac245",
+        "5ffc33078a213adf2d6314f850e8aabd26b4cfffc345498dc019e3eb71cae826",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -20823,12 +20823,11 @@ impl WriteXdr for ScHostValErrorCode {
 //        HOST_OBJECT_UNKNOWN_ERROR = 0,
 //        HOST_OBJECT_UNKNOWN_REFERENCE = 1,
 //        HOST_OBJECT_UNEXPECTED_TYPE = 2,
-//        HOST_OBJECT_HANDLE_EXCEEDS_U32_MAX = 3,
-//        HOST_OBJECT_ACCESSING_OUT_OF_BOUND = 4,
+//        HOST_OBJECT_OBJECT_COUNT_EXCEEDS_U32_MAX = 3,
+//        HOST_OBJECT_OBJECT_NOT_EXIST = 4,
 //        HOST_OBJECT_VEC_INDEX_OUT_OF_BOUND = 5,
-//        HOST_OBJECT_VEC_INDEX_OVERFLOW = 6,
-//        HOST_OBJECT_VEC_VALUE_NOT_EXIST = 7,
-//        HOST_OBJECT_INVALID_CONTRACT_HASH = 8
+//        HOST_OBJECT_VEC_ELEMENT_NOT_EXIST = 6,
+//        HOST_OBJECT_CONTRACT_HASH_WRONG_LENGTH = 7
 //    };
 //
 // enum
@@ -20838,12 +20837,11 @@ pub enum ScHostObjErrorCode {
     UnknownError = 0,
     UnknownReference = 1,
     UnexpectedType = 2,
-    HandleExceedsU32Max = 3,
-    AccessingOutOfBound = 4,
+    ObjectCountExceedsU32Max = 3,
+    ObjectNotExist = 4,
     VecIndexOutOfBound = 5,
-    VecIndexOverflow = 6,
-    VecValueNotExist = 7,
-    InvalidContractHash = 8,
+    VecElementNotExist = 6,
+    ContractHashWrongLength = 7,
 }
 
 impl ScHostObjErrorCode {
@@ -20854,12 +20852,11 @@ impl ScHostObjErrorCode {
             Self::UnknownError => "UnknownError",
             Self::UnknownReference => "UnknownReference",
             Self::UnexpectedType => "UnexpectedType",
-            Self::HandleExceedsU32Max => "HandleExceedsU32Max",
-            Self::AccessingOutOfBound => "AccessingOutOfBound",
+            Self::ObjectCountExceedsU32Max => "ObjectCountExceedsU32Max",
+            Self::ObjectNotExist => "ObjectNotExist",
             Self::VecIndexOutOfBound => "VecIndexOutOfBound",
-            Self::VecIndexOverflow => "VecIndexOverflow",
-            Self::VecValueNotExist => "VecValueNotExist",
-            Self::InvalidContractHash => "InvalidContractHash",
+            Self::VecElementNotExist => "VecElementNotExist",
+            Self::ContractHashWrongLength => "ContractHashWrongLength",
         }
     }
 }
@@ -20878,12 +20875,11 @@ impl TryFrom<i32> for ScHostObjErrorCode {
             0 => ScHostObjErrorCode::UnknownError,
             1 => ScHostObjErrorCode::UnknownReference,
             2 => ScHostObjErrorCode::UnexpectedType,
-            3 => ScHostObjErrorCode::HandleExceedsU32Max,
-            4 => ScHostObjErrorCode::AccessingOutOfBound,
+            3 => ScHostObjErrorCode::ObjectCountExceedsU32Max,
+            4 => ScHostObjErrorCode::ObjectNotExist,
             5 => ScHostObjErrorCode::VecIndexOutOfBound,
-            6 => ScHostObjErrorCode::VecIndexOverflow,
-            7 => ScHostObjErrorCode::VecValueNotExist,
-            8 => ScHostObjErrorCode::InvalidContractHash,
+            6 => ScHostObjErrorCode::VecElementNotExist,
+            7 => ScHostObjErrorCode::ContractHashWrongLength,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -20921,9 +20917,9 @@ impl WriteXdr for ScHostObjErrorCode {
 //    {
 //        HOST_FN_UNKNOWN_ERROR = 0,
 //        HOST_FN_UNEXPECTED_HOST_FUNCTION_ACTION = 1,
-//        HOST_FN_UNEXPECTED_ARGS = 2,
-//        HOST_FN_INVALID_ARGS = 3,
-//        HOST_FN_WRONG_INPUT_ARG_TYPE = 4
+//        HOST_FN_INPUT_ARGS_WRONG_LENGTH = 2,
+//        HOST_FN_INPUT_ARGS_WRONG_TYPE = 3,
+//        HOST_FN_INPUT_ARGS_INVALID = 4
 //    };
 //
 // enum
@@ -20932,9 +20928,9 @@ impl WriteXdr for ScHostObjErrorCode {
 pub enum ScHostFnErrorCode {
     UnknownError = 0,
     UnexpectedHostFunctionAction = 1,
-    UnexpectedArgs = 2,
-    InvalidArgs = 3,
-    WrongInputArgType = 4,
+    InputArgsWrongLength = 2,
+    InputArgsWrongType = 3,
+    InputArgsInvalid = 4,
 }
 
 impl ScHostFnErrorCode {
@@ -20944,9 +20940,9 @@ impl ScHostFnErrorCode {
         match self {
             Self::UnknownError => "UnknownError",
             Self::UnexpectedHostFunctionAction => "UnexpectedHostFunctionAction",
-            Self::UnexpectedArgs => "UnexpectedArgs",
-            Self::InvalidArgs => "InvalidArgs",
-            Self::WrongInputArgType => "WrongInputArgType",
+            Self::InputArgsWrongLength => "InputArgsWrongLength",
+            Self::InputArgsWrongType => "InputArgsWrongType",
+            Self::InputArgsInvalid => "InputArgsInvalid",
         }
     }
 }
@@ -20964,9 +20960,9 @@ impl TryFrom<i32> for ScHostFnErrorCode {
         let e = match i {
             0 => ScHostFnErrorCode::UnknownError,
             1 => ScHostFnErrorCode::UnexpectedHostFunctionAction,
-            2 => ScHostFnErrorCode::UnexpectedArgs,
-            3 => ScHostFnErrorCode::InvalidArgs,
-            4 => ScHostFnErrorCode::WrongInputArgType,
+            2 => ScHostFnErrorCode::InputArgsWrongLength,
+            3 => ScHostFnErrorCode::InputArgsWrongType,
+            4 => ScHostFnErrorCode::InputArgsInvalid,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

@@ -135,7 +135,7 @@ enum SCNumSign
 {
     NEGATIVE = -1,
     ZERO = 0,
-    POSITIVE = 1,
+    POSITIVE = 1
 };
 
 union SCBigInt switch (SCNumSign sign)
@@ -149,7 +149,7 @@ case NEGATIVE:
 
 enum SCHashType
 {
-    SCHASH_SHA256 = 0,
+    SCHASH_SHA256 = 0
 };
 
 union SCHash switch (SCHashType type)

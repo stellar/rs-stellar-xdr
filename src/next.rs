@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "5ffc33078a213adf2d6314f850e8aabd26b4cfffc345498dc019e3eb71cae826",
+        "8597f1ec4f4b9586d0f0de752b89e0a32585ff4731f69f9b198a7eb5abdf9fa8",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -21163,29 +21163,29 @@ impl WriteXdr for ScHostContextErrorCode {
 //        WASMI_ERROR_MEMORY = 5,
 //        WASMI_ERROR_GLOBAL = 6,
 //        WASMI_ERROR_VALUE = 7,
-//        WASMI_TRAP_UNREACHABLE = 8,
-//        WASMI_TRAP_MEMORY_ACCESS_OUT_OF_BOUNDS = 9,
-//        WASMI_TRAP_TABLE_ACCESS_OUT_OF_BOUNDS = 10,
-//        WASMI_TRAP_ELEM_UNINITIALIZED = 11,
-//        WASMI_TRAP_DIVISION_BY_ZERO = 12,
-//        WASMI_TRAP_INTEGER_OVERFLOW = 13,
-//        WASMI_TRAP_INVALID_CONVERSION_TO_INT = 14,
-//        WASMI_TRAP_STACK_OVERFLOW = 15,
-//        WASMI_TRAP_UNEXPECTED_SIGNATURE = 16
+//        WASMI_ERROR_TRAP_UNREACHABLE = 8,
+//        WASMI_ERROR_TRAP_MEMORY_ACCESS_OUT_OF_BOUNDS = 9,
+//        WASMI_ERROR_TRAP_TABLE_ACCESS_OUT_OF_BOUNDS = 10,
+//        WASMI_ERROR_TRAP_ELEM_UNINITIALIZED = 11,
+//        WASMI_ERROR_TRAP_DIVISION_BY_ZERO = 12,
+//        WASMI_ERROR_TRAP_INTEGER_OVERFLOW = 13,
+//        WASMI_ERROR_TRAP_INVALID_CONVERSION_TO_INT = 14,
+//        WASMI_ERROR_TRAP_STACK_OVERFLOW = 15,
+//        WASMI_ERROR_TRAP_UNEXPECTED_SIGNATURE = 16
 //    };
 //
 // enum
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum ScVmErrorCode {
-    ErrorUnknown = 0,
-    ErrorValidation = 1,
-    ErrorInstantiation = 2,
-    ErrorFunction = 3,
-    ErrorTable = 4,
-    ErrorMemory = 5,
-    ErrorGlobal = 6,
-    ErrorValue = 7,
+    Unknown = 0,
+    Validation = 1,
+    Instantiation = 2,
+    Function = 3,
+    Table = 4,
+    Memory = 5,
+    Global = 6,
+    Value = 7,
     TrapUnreachable = 8,
     TrapMemoryAccessOutOfBounds = 9,
     TrapTableAccessOutOfBounds = 10,
@@ -21202,14 +21202,14 @@ impl ScVmErrorCode {
     pub fn name(&self) -> &str {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::ErrorUnknown => "ErrorUnknown",
-            Self::ErrorValidation => "ErrorValidation",
-            Self::ErrorInstantiation => "ErrorInstantiation",
-            Self::ErrorFunction => "ErrorFunction",
-            Self::ErrorTable => "ErrorTable",
-            Self::ErrorMemory => "ErrorMemory",
-            Self::ErrorGlobal => "ErrorGlobal",
-            Self::ErrorValue => "ErrorValue",
+            Self::Unknown => "Unknown",
+            Self::Validation => "Validation",
+            Self::Instantiation => "Instantiation",
+            Self::Function => "Function",
+            Self::Table => "Table",
+            Self::Memory => "Memory",
+            Self::Global => "Global",
+            Self::Value => "Value",
             Self::TrapUnreachable => "TrapUnreachable",
             Self::TrapMemoryAccessOutOfBounds => "TrapMemoryAccessOutOfBounds",
             Self::TrapTableAccessOutOfBounds => "TrapTableAccessOutOfBounds",
@@ -21234,14 +21234,14 @@ impl TryFrom<i32> for ScVmErrorCode {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScVmErrorCode::ErrorUnknown,
-            1 => ScVmErrorCode::ErrorValidation,
-            2 => ScVmErrorCode::ErrorInstantiation,
-            3 => ScVmErrorCode::ErrorFunction,
-            4 => ScVmErrorCode::ErrorTable,
-            5 => ScVmErrorCode::ErrorMemory,
-            6 => ScVmErrorCode::ErrorGlobal,
-            7 => ScVmErrorCode::ErrorValue,
+            0 => ScVmErrorCode::Unknown,
+            1 => ScVmErrorCode::Validation,
+            2 => ScVmErrorCode::Instantiation,
+            3 => ScVmErrorCode::Function,
+            4 => ScVmErrorCode::Table,
+            5 => ScVmErrorCode::Memory,
+            6 => ScVmErrorCode::Global,
+            7 => ScVmErrorCode::Value,
             8 => ScVmErrorCode::TrapUnreachable,
             9 => ScVmErrorCode::TrapMemoryAccessOutOfBounds,
             10 => ScVmErrorCode::TrapTableAccessOutOfBounds,

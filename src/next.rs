@@ -17,7 +17,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 7] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "2e83db4641554e8e99f809c4217984bf2266ca6fd41f79f04c57175b320c2ce5",
+        "784911fa52608064553092772763b87e65ae85352b1776b4aee31d20dd6ac245",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -20857,7 +20857,10 @@ impl WriteXdr for ScVal {
 //        SCO_MAP = 1,
 //        SCO_U64 = 2,
 //        SCO_I64 = 3,
-//        SCO_BINARY = 4
+//        SCO_BINARY = 4,
+//        SCO_BIG_INT = 5,
+//        SCO_HASH = 6,
+//        SCO_PUBLIC_KEY = 7
 //
 //        // TODO: add more
 //    };
@@ -20871,6 +20874,9 @@ pub enum ScObjectType {
     U64 = 2,
     I64 = 3,
     Binary = 4,
+    BigInt = 5,
+    Hash = 6,
+    PublicKey = 7,
 }
 
 impl ScObjectType {
@@ -20882,6 +20888,9 @@ impl ScObjectType {
             Self::U64 => "U64",
             Self::I64 => "I64",
             Self::Binary => "Binary",
+            Self::BigInt => "BigInt",
+            Self::Hash => "Hash",
+            Self::PublicKey => "PublicKey",
         }
     }
 }
@@ -20902,6 +20911,9 @@ impl TryFrom<i32> for ScObjectType {
             2 => ScObjectType::U64,
             3 => ScObjectType::I64,
             4 => ScObjectType::Binary,
+            5 => ScObjectType::BigInt,
+            6 => ScObjectType::Hash,
+            7 => ScObjectType::PublicKey,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -21142,6 +21154,277 @@ impl AsRef<[ScMapEntry]> for ScMap {
     }
 }
 
+// ScNumSign is an XDR Enum defines as:
+//
+//   enum SCNumSign
+//    {
+//        NEGATIVE = -1,
+//        ZERO = 0,
+//        POSITIVE = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ScNumSign {
+    Negative = -1,
+    Zero = 0,
+    Positive = 1,
+}
+
+impl ScNumSign {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Negative => "Negative",
+            Self::Zero => "Zero",
+            Self::Positive => "Positive",
+        }
+    }
+}
+
+impl fmt::Display for ScNumSign {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScNumSign {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            -1 => ScNumSign::Negative,
+            0 => ScNumSign::Zero,
+            1 => ScNumSign::Positive,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScNumSign> for i32 {
+    #[must_use]
+    fn from(e: ScNumSign) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScNumSign {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScNumSign {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScBigInt is an XDR Union defines as:
+//
+//   union SCBigInt switch (SCNumSign sign)
+//    {
+//    case ZERO:
+//        void;
+//    case POSITIVE:
+//    case NEGATIVE:
+//        opaque magnitude<256000>;
+//    };
+//
+// union with discriminant ScNumSign
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ScBigInt {
+    Zero,
+    Positive(VecM<u8, 256000>),
+    Negative(VecM<u8, 256000>),
+}
+
+impl ScBigInt {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Zero => "Zero",
+            Self::Positive(_) => "Positive",
+            Self::Negative(_) => "Negative",
+        }
+    }
+
+    #[must_use]
+    pub fn discriminant(&self) -> ScNumSign {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Zero => ScNumSign::Zero,
+            Self::Positive(_) => ScNumSign::Positive,
+            Self::Negative(_) => ScNumSign::Negative,
+        }
+    }
+}
+
+impl ReadXdr for ScBigInt {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScNumSign = <ScNumSign as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScNumSign::Zero => Self::Zero,
+            ScNumSign::Positive => Self::Positive(VecM::<u8, 256000>::read_xdr(r)?),
+            ScNumSign::Negative => Self::Negative(VecM::<u8, 256000>::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScBigInt {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Zero => ().write_xdr(w)?,
+            Self::Positive(v) => v.write_xdr(w)?,
+            Self::Negative(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ScHashType is an XDR Enum defines as:
+//
+//   enum SCHashType
+//    {
+//        SCHASH_SHA256 = 0
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ScHashType {
+    SchashSha256 = 0,
+}
+
+impl ScHashType {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SchashSha256 => "SchashSha256",
+        }
+    }
+}
+
+impl fmt::Display for ScHashType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHashType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHashType::SchashSha256,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHashType> for i32 {
+    #[must_use]
+    fn from(e: ScHashType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHashType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHashType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScHash is an XDR Union defines as:
+//
+//   union SCHash switch (SCHashType type)
+//    {
+//    case SCHASH_SHA256:
+//        Hash sha256;
+//    };
+//
+// union with discriminant ScHashType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ScHash {
+    SchashSha256(Hash),
+}
+
+impl ScHash {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SchashSha256(_) => "SchashSha256",
+        }
+    }
+
+    #[must_use]
+    pub fn discriminant(&self) -> ScHashType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SchashSha256(_) => ScHashType::SchashSha256,
+        }
+    }
+}
+
+impl ReadXdr for ScHash {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScHashType = <ScHashType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScHashType::SchashSha256 => Self::SchashSha256(Hash::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHash {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SchashSha256(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
 // ScObject is an XDR Union defines as:
 //
 //   union SCObject switch (SCObjectType type)
@@ -21156,6 +21439,12 @@ impl AsRef<[ScMapEntry]> for ScMap {
 //        int64 i64;
 //    case SCO_BINARY:
 //        opaque bin<SCVAL_LIMIT>;
+//    case SCO_BIG_INT:
+//        SCBigInt bigInt;
+//    case SCO_HASH:
+//        SCHash hash;
+//    case SCO_PUBLIC_KEY:
+//        PublicKey publicKey;
 //    };
 //
 // union with discriminant ScObjectType
@@ -21166,6 +21455,9 @@ pub enum ScObject {
     U64(u64),
     I64(i64),
     Binary(VecM<u8, 256000>),
+    BigInt(ScBigInt),
+    Hash(ScHash),
+    PublicKey(PublicKey),
 }
 
 impl ScObject {
@@ -21177,6 +21469,9 @@ impl ScObject {
             Self::U64(_) => "U64",
             Self::I64(_) => "I64",
             Self::Binary(_) => "Binary",
+            Self::BigInt(_) => "BigInt",
+            Self::Hash(_) => "Hash",
+            Self::PublicKey(_) => "PublicKey",
         }
     }
 
@@ -21189,6 +21484,9 @@ impl ScObject {
             Self::U64(_) => ScObjectType::U64,
             Self::I64(_) => ScObjectType::I64,
             Self::Binary(_) => ScObjectType::Binary,
+            Self::BigInt(_) => ScObjectType::BigInt,
+            Self::Hash(_) => ScObjectType::Hash,
+            Self::PublicKey(_) => ScObjectType::PublicKey,
         }
     }
 }
@@ -21204,6 +21502,9 @@ impl ReadXdr for ScObject {
             ScObjectType::U64 => Self::U64(u64::read_xdr(r)?),
             ScObjectType::I64 => Self::I64(i64::read_xdr(r)?),
             ScObjectType::Binary => Self::Binary(VecM::<u8, 256000>::read_xdr(r)?),
+            ScObjectType::BigInt => Self::BigInt(ScBigInt::read_xdr(r)?),
+            ScObjectType::Hash => Self::Hash(ScHash::read_xdr(r)?),
+            ScObjectType::PublicKey => Self::PublicKey(PublicKey::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -21222,6 +21523,9 @@ impl WriteXdr for ScObject {
             Self::U64(v) => v.write_xdr(w)?,
             Self::I64(v) => v.write_xdr(w)?,
             Self::Binary(v) => v.write_xdr(w)?,
+            Self::BigInt(v) => v.write_xdr(w)?,
+            Self::Hash(v) => v.write_xdr(w)?,
+            Self::PublicKey(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

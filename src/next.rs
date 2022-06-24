@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "da1e0ef87bc3ef916e6716570ada8a24c3b2e4a056a2365f242e446df62d64f5",
+        "193bd4971c45f97e50b43326ec9fba283d82b91ddc6620ee3736c5d6e8e13d00",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -20744,7 +20744,6 @@ pub enum ScHostValErrorCode {
 impl ScHostValErrorCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::UnknownError => "UnknownError",
             Self::ReservedTagValue => "ReservedTagValue",
@@ -20845,7 +20844,6 @@ pub enum ScHostObjErrorCode {
 impl ScHostObjErrorCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::UnknownError => "UnknownError",
             Self::UnknownReference => "UnknownReference",
@@ -20932,7 +20930,6 @@ pub enum ScHostFnErrorCode {
 impl ScHostFnErrorCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::UnknownError => "UnknownError",
             Self::UnexpectedHostFunctionAction => "UnexpectedHostFunctionAction",
@@ -21017,7 +21014,6 @@ pub enum ScHostStorageErrorCode {
 impl ScHostStorageErrorCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::UnknownError => "UnknownError",
             Self::ExpectContractData => "ExpectContractData",
@@ -21096,7 +21092,6 @@ pub enum ScHostContextErrorCode {
 impl ScHostContextErrorCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::UnknownError => "UnknownError",
             Self::NoContractRunning => "NoContractRunning",
@@ -21167,7 +21162,9 @@ impl WriteXdr for ScHostContextErrorCode {
 //        WASMI_ERROR_TRAP_INTEGER_OVERFLOW = 13,
 //        WASMI_ERROR_TRAP_INVALID_CONVERSION_TO_INT = 14,
 //        WASMI_ERROR_TRAP_STACK_OVERFLOW = 15,
-//        WASMI_ERROR_TRAP_UNEXPECTED_SIGNATURE = 16
+//        WASMI_ERROR_TRAP_UNEXPECTED_SIGNATURE = 16,
+//        WASMI_ERROR_TRAP_MEM_LIMIT_EXCEEDED = 17,
+//        WASMI_ERROR_TRAP_CPU_LIMIT_EXCEEDED = 18
 //    };
 //
 // enum
@@ -21191,12 +21188,13 @@ pub enum ScVmErrorCode {
     TrapInvalidConversionToInt = 14,
     TrapStackOverflow = 15,
     TrapUnexpectedSignature = 16,
+    TrapMemLimitExceeded = 17,
+    TrapCpuLimitExceeded = 18,
 }
 
 impl ScVmErrorCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Unknown => "Unknown",
             Self::Validation => "Validation",
@@ -21215,6 +21213,8 @@ impl ScVmErrorCode {
             Self::TrapInvalidConversionToInt => "TrapInvalidConversionToInt",
             Self::TrapStackOverflow => "TrapStackOverflow",
             Self::TrapUnexpectedSignature => "TrapUnexpectedSignature",
+            Self::TrapMemLimitExceeded => "TrapMemLimitExceeded",
+            Self::TrapCpuLimitExceeded => "TrapCpuLimitExceeded",
         }
     }
 }
@@ -21247,6 +21247,8 @@ impl TryFrom<i32> for ScVmErrorCode {
             14 => ScVmErrorCode::TrapInvalidConversionToInt,
             15 => ScVmErrorCode::TrapStackOverflow,
             16 => ScVmErrorCode::TrapUnexpectedSignature,
+            17 => ScVmErrorCode::TrapMemLimitExceeded,
+            18 => ScVmErrorCode::TrapCpuLimitExceeded,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -21299,7 +21301,6 @@ pub enum ScUnknownErrorCode {
 impl ScUnknownErrorCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::General => "General",
             Self::Xdr => "Xdr",

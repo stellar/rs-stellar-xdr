@@ -120,7 +120,7 @@ struct SpecUDTStruct
 struct SpecUDTUnionCase
 {
     string name<60>;
-    SpecTypeDef type;
+    SpecTypeDef *type;
 };
 
 struct SpecUDTUnion

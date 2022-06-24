@@ -18,7 +18,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "a49add02f0f1a3b815945df133ddcd5f8fc2b4ee40618842402d759c7907f02d",
+        "8899796c5813e3d4944305baba80f4bc62b176aabb05da2e936942e4babc5985",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -22033,13 +22033,13 @@ impl WriteXdr for SpecUdtStruct {
 //   struct SpecUDTUnionCase
 //    {
 //        string name<60>;
-//        SpecTypeDef type;
+//        SpecTypeDef *type;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SpecUdtUnionCase {
     pub name: VecM<u8, 60>,
-    pub type_: Box<SpecTypeDef>,
+    pub type_: Option<Box<SpecTypeDef>>,
 }
 
 impl ReadXdr for SpecUdtUnionCase {
@@ -22047,7 +22047,7 @@ impl ReadXdr for SpecUdtUnionCase {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             name: VecM::<u8, 60>::read_xdr(r)?,
-            type_: Box::<SpecTypeDef>::read_xdr(r)?,
+            type_: Option::<Box<SpecTypeDef>>::read_xdr(r)?,
         })
     }
 }

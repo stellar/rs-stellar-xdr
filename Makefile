@@ -33,7 +33,7 @@ test:
 	cargo test --no-default-features --features 'next,alloc'
 	cargo test --no-default-features --features 'next'
 
-build: src/curr.rs src/next.rs
+build: generate
 	cargo clippy --all-targets --no-default-features --features 'std'
 	cargo clippy --all-targets --no-default-features --features 'alloc'
 	cargo clippy --all-targets --no-default-features --features ''
@@ -50,6 +50,8 @@ build: src/curr.rs src/next.rs
 
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
+
+generate: src/curr.rs src/next.rs
 
 src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 	> $@

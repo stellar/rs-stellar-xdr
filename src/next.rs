@@ -506,6 +506,12 @@ impl<T, const MAX: u32> Deref for VecM<T, MAX> {
     }
 }
 
+impl<T, const MAX: u32> Default for VecM<T, MAX> {
+    fn default() -> Self {
+        Self(Vec::default())
+    }
+}
+
 impl<T, const MAX: u32> VecM<T, MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
@@ -925,7 +931,7 @@ mod tests {
 //
 //   typedef opaque Value<>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Value(pub VecM<u8>);
 
 impl From<Value> for VecM<u8> {
@@ -1062,7 +1068,6 @@ pub enum ScpStatementType {
 impl ScpStatementType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Prepare => "Prepare",
             Self::Confirm => "Confirm",
@@ -1332,7 +1337,6 @@ pub enum ScpStatementPledges {
 impl ScpStatementPledges {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Prepare(_) => "Prepare",
             Self::Confirm(_) => "Confirm",
@@ -1762,7 +1766,7 @@ impl WriteXdr for Duration {
 //
 //   typedef opaque DataValue<64>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct DataValue(pub VecM<u8, 64>);
 
 impl From<DataValue> for VecM<u8, 64> {
@@ -1998,7 +2002,6 @@ pub enum AssetType {
 impl AssetType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => "Native",
             Self::CreditAlphanum4 => "CreditAlphanum4",
@@ -2077,7 +2080,6 @@ pub enum AssetCode {
 impl AssetCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::CreditAlphanum4(_) => "CreditAlphanum4",
             Self::CreditAlphanum12(_) => "CreditAlphanum12",
@@ -2215,7 +2217,6 @@ pub enum Asset {
 impl Asset {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => "Native",
             Self::CreditAlphanum4(_) => "CreditAlphanum4",
@@ -2353,7 +2354,6 @@ pub enum ThresholdIndexes {
 impl ThresholdIndexes {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::MasterWeight => "MasterWeight",
             Self::Low => "Low",
@@ -2440,7 +2440,6 @@ pub enum LedgerEntryType {
 impl LedgerEntryType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Account => "Account",
             Self::Trustline => "Trustline",
@@ -2570,7 +2569,6 @@ pub enum AccountFlags {
 impl AccountFlags {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::RequiredFlag => "RequiredFlag",
             Self::RevocableFlag => "RevocableFlag",
@@ -2751,7 +2749,6 @@ pub enum AccountEntryExtensionV2Ext {
 impl AccountEntryExtensionV2Ext {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
             Self::V3(_) => "V3",
@@ -2865,7 +2862,6 @@ pub enum AccountEntryExtensionV1Ext {
 impl AccountEntryExtensionV1Ext {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
             Self::V2(_) => "V2",
@@ -2971,7 +2967,6 @@ pub enum AccountEntryExt {
 impl AccountEntryExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
@@ -3122,7 +3117,6 @@ pub enum TrustLineFlags {
 impl TrustLineFlags {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::AuthorizedFlag => "AuthorizedFlag",
             Self::AuthorizedToMaintainLiabilitiesFlag => "AuthorizedToMaintainLiabilitiesFlag",
@@ -3211,7 +3205,6 @@ pub enum LiquidityPoolType {
 impl LiquidityPoolType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::LiquidityPoolConstantProduct => "LiquidityPoolConstantProduct",
         }
@@ -3292,7 +3285,6 @@ pub enum TrustLineAsset {
 impl TrustLineAsset {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => "Native",
             Self::CreditAlphanum4(_) => "CreditAlphanum4",
@@ -3362,7 +3354,6 @@ pub enum TrustLineEntryExtensionV2Ext {
 impl TrustLineEntryExtensionV2Ext {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -3462,7 +3453,6 @@ pub enum TrustLineEntryV1Ext {
 impl TrustLineEntryV1Ext {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
             Self::V2(_) => "V2",
@@ -3580,7 +3570,6 @@ pub enum TrustLineEntryExt {
 impl TrustLineEntryExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
@@ -3716,7 +3705,6 @@ pub enum OfferEntryFlags {
 impl OfferEntryFlags {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::PassiveFlag => "PassiveFlag",
         }
@@ -3789,7 +3777,6 @@ pub enum OfferEntryExt {
 impl OfferEntryExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -3917,7 +3904,6 @@ pub enum DataEntryExt {
 impl DataEntryExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -4033,7 +4019,6 @@ pub enum ClaimPredicateType {
 impl ClaimPredicateType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Unconditional => "Unconditional",
             Self::And => "And",
@@ -4126,7 +4111,6 @@ pub enum ClaimPredicate {
 impl ClaimPredicate {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Unconditional => "Unconditional",
             Self::And(_) => "And",
@@ -4204,7 +4188,6 @@ pub enum ClaimantType {
 impl ClaimantType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::ClaimantTypeV0 => "ClaimantTypeV0",
         }
@@ -4308,7 +4291,6 @@ pub enum Claimant {
 impl Claimant {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::ClaimantTypeV0(_) => "ClaimantTypeV0",
         }
@@ -4366,7 +4348,6 @@ pub enum ClaimableBalanceIdType {
 impl ClaimableBalanceIdType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::ClaimableBalanceIdTypeV0 => "ClaimableBalanceIdTypeV0",
         }
@@ -4433,7 +4414,6 @@ pub enum ClaimableBalanceId {
 impl ClaimableBalanceId {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::ClaimableBalanceIdTypeV0(_) => "ClaimableBalanceIdTypeV0",
         }
@@ -4495,7 +4475,6 @@ pub enum ClaimableBalanceFlags {
 impl ClaimableBalanceFlags {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::ClaimableBalanceClawbackEnabledFlag => "ClaimableBalanceClawbackEnabledFlag",
         }
@@ -4568,7 +4547,6 @@ pub enum ClaimableBalanceEntryExtensionV1Ext {
 impl ClaimableBalanceEntryExtensionV1Ext {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -4668,7 +4646,6 @@ pub enum ClaimableBalanceEntryExt {
 impl ClaimableBalanceEntryExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
@@ -4884,7 +4861,6 @@ pub enum LiquidityPoolEntryBody {
 impl LiquidityPoolEntryBody {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::LiquidityPoolConstantProduct(_) => "LiquidityPoolConstantProduct",
         }
@@ -5030,7 +5006,6 @@ pub enum ConfigSettingType {
 impl ConfigSettingType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::ConfigSettingTypeUint32 => "ConfigSettingTypeUint32",
         }
@@ -5097,7 +5072,6 @@ pub enum ConfigSetting {
 impl ConfigSetting {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::ConfigSettingTypeUint32(_) => "ConfigSettingTypeUint32",
         }
@@ -5157,7 +5131,6 @@ pub enum ConfigSettingId {
 impl ConfigSettingId {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::ConfigSettingContractMaxSize => "ConfigSettingContractMaxSize",
         }
@@ -5224,7 +5197,6 @@ pub enum ConfigSettingEntryExt {
 impl ConfigSettingEntryExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -5325,7 +5297,6 @@ pub enum LedgerEntryExtensionV1Ext {
 impl LedgerEntryExtensionV1Ext {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -5443,7 +5414,6 @@ pub enum LedgerEntryData {
 impl LedgerEntryData {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Account(_) => "Account",
             Self::Trustline(_) => "Trustline",
@@ -5534,7 +5504,6 @@ pub enum LedgerEntryExt {
 impl LedgerEntryExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
@@ -5964,7 +5933,6 @@ pub enum LedgerKey {
 impl LedgerKey {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Account(_) => "Account",
             Self::Trustline(_) => "Trustline",
@@ -6076,7 +6044,6 @@ pub enum EnvelopeType {
 impl EnvelopeType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::TxV0 => "TxV0",
             Self::Scp => "Scp",
@@ -6148,7 +6115,7 @@ impl WriteXdr for EnvelopeType {
 //
 //   typedef opaque UpgradeType<128>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct UpgradeType(pub VecM<u8, 128>);
 
 impl From<UpgradeType> for VecM<u8, 128> {
@@ -6248,7 +6215,6 @@ pub enum StellarValueType {
 impl StellarValueType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Basic => "Basic",
             Self::Signed => "Signed",
@@ -6353,7 +6319,6 @@ pub enum StellarValueExt {
 impl StellarValueExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Basic => "Basic",
             Self::Signed(_) => "Signed",
@@ -6489,7 +6454,6 @@ pub enum LedgerHeaderFlags {
 impl LedgerHeaderFlags {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::LiquidityPoolTradingFlag => "LiquidityPoolTradingFlag",
             Self::LiquidityPoolDepositFlag => "LiquidityPoolDepositFlag",
@@ -6568,7 +6532,6 @@ pub enum LedgerHeaderExtensionV1Ext {
 impl LedgerHeaderExtensionV1Ext {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -6668,7 +6631,6 @@ pub enum LedgerHeaderExt {
 impl LedgerHeaderExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
@@ -6846,7 +6808,6 @@ pub enum LedgerUpgradeType {
 impl LedgerUpgradeType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Version => "Version",
             Self::BaseFee => "BaseFee",
@@ -6975,7 +6936,6 @@ pub enum LedgerUpgrade {
 impl LedgerUpgrade {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Version(_) => "Version",
             Self::BaseFee(_) => "BaseFee",
@@ -7061,7 +7021,6 @@ pub enum BucketEntryType {
 impl BucketEntryType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Metaentry => "Metaentry",
             Self::Liveentry => "Liveentry",
@@ -7134,7 +7093,6 @@ pub enum BucketMetadataExt {
 impl BucketMetadataExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -7242,7 +7200,6 @@ pub enum BucketEntry {
 impl BucketEntry {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Liveentry(_) => "Liveentry",
             Self::Initentry(_) => "Initentry",
@@ -7407,7 +7364,6 @@ pub enum TransactionHistoryEntryExt {
 impl TransactionHistoryEntryExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -7509,7 +7465,6 @@ pub enum TransactionHistoryResultEntryExt {
 impl TransactionHistoryResultEntryExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -7611,7 +7566,6 @@ pub enum LedgerHeaderHistoryEntryExt {
 impl LedgerHeaderHistoryEntryExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -7779,7 +7733,6 @@ pub enum ScpHistoryEntry {
 impl ScpHistoryEntry {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => "V0",
         }
@@ -7843,7 +7796,6 @@ pub enum LedgerEntryChangeType {
 impl LedgerEntryChangeType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Created => "Created",
             Self::Updated => "Updated",
@@ -7925,7 +7877,6 @@ pub enum LedgerEntryChange {
 impl LedgerEntryChange {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Created(_) => "Created",
             Self::Updated(_) => "Updated",
@@ -7982,7 +7933,7 @@ impl WriteXdr for LedgerEntryChange {
 //
 //   typedef LedgerEntryChange LedgerEntryChanges<>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct LedgerEntryChanges(pub VecM<LedgerEntryChange>);
 
 impl From<LedgerEntryChanges> for VecM<LedgerEntryChange> {
@@ -8187,7 +8138,6 @@ pub enum TransactionMeta {
 impl TransactionMeta {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
@@ -8377,7 +8327,6 @@ pub enum LedgerCloseMeta {
 impl LedgerCloseMeta {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => "V0",
         }
@@ -8443,7 +8392,6 @@ pub enum ErrorCode {
 impl ErrorCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Misc => "Misc",
             Self::Data => "Data",
@@ -8711,7 +8659,6 @@ pub enum IpAddrType {
 impl IpAddrType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::IPv4 => "IPv4",
             Self::IPv6 => "IPv6",
@@ -8783,7 +8730,6 @@ pub enum PeerAddressIp {
 impl PeerAddressIp {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::IPv4(_) => "IPv4",
             Self::IPv6(_) => "IPv6",
@@ -8928,7 +8874,6 @@ pub enum MessageType {
 impl MessageType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::ErrorMsg => "ErrorMsg",
             Self::Auth => "Auth",
@@ -9058,7 +9003,6 @@ pub enum SurveyMessageCommandType {
 impl SurveyMessageCommandType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::SurveyTopology => "SurveyTopology",
         }
@@ -9190,7 +9134,7 @@ impl WriteXdr for SignedSurveyRequestMessage {
 //
 //   typedef opaque EncryptedBody<64000>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct EncryptedBody(pub VecM<u8, 64000>);
 
 impl From<EncryptedBody> for VecM<u8, 64000> {
@@ -9440,7 +9384,7 @@ impl WriteXdr for PeerStats {
 //
 //   typedef PeerStats PeerStatList<25>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct PeerStatList(pub VecM<PeerStats, 25>);
 
 impl From<PeerStatList> for VecM<PeerStats, 25> {
@@ -9580,7 +9524,6 @@ pub enum SurveyResponseBody {
 impl SurveyResponseBody {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::SurveyTopology(_) => "SurveyTopology",
         }
@@ -9691,7 +9634,6 @@ pub enum StellarMessage {
 impl StellarMessage {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::ErrorMsg(_) => "ErrorMsg",
             Self::Hello(_) => "Hello",
@@ -9855,7 +9797,6 @@ pub enum AuthenticatedMessage {
 impl AuthenticatedMessage {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => "V0",
         }
@@ -9913,7 +9854,6 @@ pub enum LiquidityPoolParameters {
 impl LiquidityPoolParameters {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::LiquidityPoolConstantProduct(_) => "LiquidityPoolConstantProduct",
         }
@@ -10015,7 +9955,6 @@ pub enum MuxedAccount {
 impl MuxedAccount {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ed25519(_) => "Ed25519",
             Self::MuxedEd25519(_) => "MuxedEd25519",
@@ -10191,7 +10130,6 @@ pub enum OperationType {
 impl OperationType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::CreateAccount => "CreateAccount",
             Self::Payment => "Payment",
@@ -10700,7 +10638,6 @@ pub enum ChangeTrustAsset {
 impl ChangeTrustAsset {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => "Native",
             Self::CreditAlphanum4(_) => "CreditAlphanum4",
@@ -11003,7 +10940,6 @@ pub enum RevokeSponsorshipType {
 impl RevokeSponsorshipType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::LedgerEntry => "LedgerEntry",
             Self::Signer => "Signer",
@@ -11112,7 +11048,6 @@ pub enum RevokeSponsorshipOp {
 impl RevokeSponsorshipOp {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::LedgerEntry(_) => "LedgerEntry",
             Self::Signer(_) => "Signer",
@@ -11376,7 +11311,6 @@ pub enum HostFunction {
 impl HostFunction {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Call => "Call",
             Self::CreateContract => "CreateContract",
@@ -11559,7 +11493,6 @@ pub enum OperationBody {
 impl OperationBody {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::CreateAccount(_) => "CreateAccount",
             Self::Payment(_) => "Payment",
@@ -12006,7 +11939,6 @@ pub enum HashIdPreimage {
 impl HashIdPreimage {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::OpId(_) => "OpId",
             Self::PoolRevokeOpId(_) => "PoolRevokeOpId",
@@ -12090,7 +12022,6 @@ pub enum MemoType {
 impl MemoType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::None => "None",
             Self::Text => "Text",
@@ -12177,7 +12108,6 @@ pub enum Memo {
 impl Memo {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::None => "None",
             Self::Text(_) => "Text",
@@ -12393,7 +12323,6 @@ pub enum PreconditionType {
 impl PreconditionType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::None => "None",
             Self::Time => "Time",
@@ -12470,7 +12399,6 @@ pub enum Preconditions {
 impl Preconditions {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::None => "None",
             Self::Time(_) => "Time",
@@ -12542,7 +12470,6 @@ pub enum TransactionV0Ext {
 impl TransactionV0Ext {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -12693,7 +12620,6 @@ pub enum TransactionExt {
 impl TransactionExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -12855,7 +12781,6 @@ pub enum FeeBumpTransactionInnerTx {
 impl FeeBumpTransactionInnerTx {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Tx(_) => "Tx",
         }
@@ -12913,7 +12838,6 @@ pub enum FeeBumpTransactionExt {
 impl FeeBumpTransactionExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -13063,7 +12987,6 @@ pub enum TransactionEnvelope {
 impl TransactionEnvelope {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::TxV0(_) => "TxV0",
             Self::Tx(_) => "Tx",
@@ -13133,7 +13056,6 @@ pub enum TransactionSignaturePayloadTaggedTransaction {
 impl TransactionSignaturePayloadTaggedTransaction {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Tx(_) => "Tx",
             Self::TxFeeBump(_) => "TxFeeBump",
@@ -13240,7 +13162,6 @@ pub enum ClaimAtomType {
 impl ClaimAtomType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
             Self::OrderBook => "OrderBook",
@@ -13474,7 +13395,6 @@ pub enum ClaimAtom {
 impl ClaimAtom {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => "V0",
             Self::OrderBook(_) => "OrderBook",
@@ -13552,7 +13472,6 @@ pub enum CreateAccountResultCode {
 impl CreateAccountResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -13636,7 +13555,6 @@ pub enum CreateAccountResult {
 impl CreateAccountResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -13731,7 +13649,6 @@ pub enum PaymentResultCode {
 impl PaymentResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -13835,7 +13752,6 @@ pub enum PaymentResult {
 impl PaymentResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -13965,7 +13881,6 @@ pub enum PathPaymentStrictReceiveResultCode {
 impl PathPaymentStrictReceiveResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -14158,7 +14073,6 @@ pub enum PathPaymentStrictReceiveResult {
 impl PathPaymentStrictReceiveResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -14302,7 +14216,6 @@ pub enum PathPaymentStrictSendResultCode {
 impl PathPaymentStrictSendResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -14457,7 +14370,6 @@ pub enum PathPaymentStrictSendResult {
 impl PathPaymentStrictSendResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -14600,7 +14512,6 @@ pub enum ManageSellOfferResultCode {
 impl ManageSellOfferResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -14695,7 +14606,6 @@ pub enum ManageOfferEffect {
 impl ManageOfferEffect {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Created => "Created",
             Self::Updated => "Updated",
@@ -14771,7 +14681,6 @@ pub enum ManageOfferSuccessResultOffer {
 impl ManageOfferSuccessResultOffer {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Created(_) => "Created",
             Self::Updated(_) => "Updated",
@@ -14905,7 +14814,6 @@ pub enum ManageSellOfferResult {
 impl ManageSellOfferResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -15044,7 +14952,6 @@ pub enum ManageBuyOfferResultCode {
 impl ManageBuyOfferResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -15160,7 +15067,6 @@ pub enum ManageBuyOfferResult {
 impl ManageBuyOfferResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -15291,7 +15197,6 @@ pub enum SetOptionsResultCode {
 impl SetOptionsResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::LowReserve => "LowReserve",
@@ -15399,7 +15304,6 @@ pub enum SetOptionsResult {
 impl SetOptionsResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::LowReserve => "LowReserve",
@@ -15519,7 +15423,6 @@ pub enum ChangeTrustResultCode {
 impl ChangeTrustResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -15619,7 +15522,6 @@ pub enum ChangeTrustResult {
 impl ChangeTrustResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -15725,7 +15627,6 @@ pub enum AllowTrustResultCode {
 impl AllowTrustResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -15817,7 +15718,6 @@ pub enum AllowTrustResult {
 impl AllowTrustResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -15916,7 +15816,6 @@ pub enum AccountMergeResultCode {
 impl AccountMergeResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -16012,7 +15911,6 @@ pub enum AccountMergeResult {
 impl AccountMergeResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -16102,7 +16000,6 @@ pub enum InflationResultCode {
 impl InflationResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::NotTime => "NotTime",
@@ -16207,7 +16104,6 @@ pub enum InflationResult {
 impl InflationResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => "Success",
             Self::NotTime => "NotTime",
@@ -16281,7 +16177,6 @@ pub enum ManageDataResultCode {
 impl ManageDataResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::NotSupportedYet => "NotSupportedYet",
@@ -16365,7 +16260,6 @@ pub enum ManageDataResult {
 impl ManageDataResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::NotSupportedYet => "NotSupportedYet",
@@ -16443,7 +16337,6 @@ pub enum BumpSequenceResultCode {
 impl BumpSequenceResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::BadSeq => "BadSeq",
@@ -16515,7 +16408,6 @@ pub enum BumpSequenceResult {
 impl BumpSequenceResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::BadSeq => "BadSeq",
@@ -16587,7 +16479,6 @@ pub enum CreateClaimableBalanceResultCode {
 impl CreateClaimableBalanceResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -16676,7 +16567,6 @@ pub enum CreateClaimableBalanceResult {
 impl CreateClaimableBalanceResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -16767,7 +16657,6 @@ pub enum ClaimClaimableBalanceResultCode {
 impl ClaimClaimableBalanceResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -16855,7 +16744,6 @@ pub enum ClaimClaimableBalanceResult {
 impl ClaimClaimableBalanceResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -16943,7 +16831,6 @@ pub enum BeginSponsoringFutureReservesResultCode {
 impl BeginSponsoringFutureReservesResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17024,7 +16911,6 @@ pub enum BeginSponsoringFutureReservesResult {
 impl BeginSponsoringFutureReservesResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17100,7 +16986,6 @@ pub enum EndSponsoringFutureReservesResultCode {
 impl EndSponsoringFutureReservesResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::NotSponsored => "NotSponsored",
@@ -17173,7 +17058,6 @@ pub enum EndSponsoringFutureReservesResult {
 impl EndSponsoringFutureReservesResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::NotSponsored => "NotSponsored",
@@ -17249,7 +17133,6 @@ pub enum RevokeSponsorshipResultCode {
 impl RevokeSponsorshipResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -17337,7 +17220,6 @@ pub enum RevokeSponsorshipResult {
 impl RevokeSponsorshipResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -17427,7 +17309,6 @@ pub enum ClawbackResultCode {
 impl ClawbackResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17511,7 +17392,6 @@ pub enum ClawbackResult {
 impl ClawbackResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17594,7 +17474,6 @@ pub enum ClawbackClaimableBalanceResultCode {
 impl ClawbackClaimableBalanceResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -17675,7 +17554,6 @@ pub enum ClawbackClaimableBalanceResult {
 impl ClawbackClaimableBalanceResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -17760,7 +17638,6 @@ pub enum SetTrustLineFlagsResultCode {
 impl SetTrustLineFlagsResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17848,7 +17725,6 @@ pub enum SetTrustLineFlagsResult {
 impl SetTrustLineFlagsResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17948,7 +17824,6 @@ pub enum LiquidityPoolDepositResultCode {
 impl LiquidityPoolDepositResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -18044,7 +17919,6 @@ pub enum LiquidityPoolDepositResult {
 impl LiquidityPoolDepositResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -18147,7 +18021,6 @@ pub enum LiquidityPoolWithdrawResultCode {
 impl LiquidityPoolWithdrawResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -18235,7 +18108,6 @@ pub enum LiquidityPoolWithdrawResult {
 impl LiquidityPoolWithdrawResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -18321,7 +18193,6 @@ pub enum InvokeHostFunctionResultCode {
 impl InvokeHostFunctionResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -18397,7 +18268,6 @@ pub enum InvokeHostFunctionResult {
 impl InvokeHostFunctionResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -18477,7 +18347,6 @@ pub enum OperationResultCode {
 impl OperationResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::OpInner => "OpInner",
             Self::OpBadAuth => "OpBadAuth",
@@ -18628,7 +18497,6 @@ pub enum OperationResultTr {
 impl OperationResultTr {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::CreateAccount(_) => "CreateAccount",
             Self::Payment(_) => "Payment",
@@ -18878,7 +18746,6 @@ pub enum OperationResult {
 impl OperationResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::OpInner(_) => "OpInner",
             Self::OpBadAuth => "OpBadAuth",
@@ -18999,7 +18866,6 @@ pub enum TransactionResultCode {
 impl TransactionResultCode {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::TxFeeBumpInnerSuccess => "TxFeeBumpInnerSuccess",
             Self::TxSuccess => "TxSuccess",
@@ -19133,7 +18999,6 @@ pub enum InnerTransactionResultResult {
 impl InnerTransactionResultResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::TxSuccess(_) => "TxSuccess",
             Self::TxFailed(_) => "TxFailed",
@@ -19255,7 +19120,6 @@ pub enum InnerTransactionResultExt {
 impl InnerTransactionResultExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -19452,7 +19316,6 @@ pub enum TransactionResultResult {
 impl TransactionResultResult {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::TxFeeBumpInnerSuccess(_) => "TxFeeBumpInnerSuccess",
             Self::TxFeeBumpInnerFailed(_) => "TxFeeBumpInnerFailed",
@@ -19586,7 +19449,6 @@ pub enum TransactionResultExt {
 impl TransactionResultExt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -19826,7 +19688,6 @@ pub enum ExtensionPoint {
 impl ExtensionPoint {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => "V0",
         }
@@ -19894,7 +19755,6 @@ pub enum CryptoKeyType {
 impl CryptoKeyType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ed25519 => "Ed25519",
             Self::PreAuthTx => "PreAuthTx",
@@ -19969,7 +19829,6 @@ pub enum PublicKeyType {
 impl PublicKeyType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::PublicKeyTypeEd25519 => "PublicKeyTypeEd25519",
         }
@@ -20042,7 +19901,6 @@ pub enum SignerKeyType {
 impl SignerKeyType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ed25519 => "Ed25519",
             Self::PreAuthTx => "PreAuthTx",
@@ -20115,7 +19973,6 @@ pub enum PublicKey {
 impl PublicKey {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::PublicKeyTypeEd25519(_) => "PublicKeyTypeEd25519",
         }
@@ -20227,7 +20084,6 @@ pub enum SignerKey {
 impl SignerKey {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ed25519(_) => "Ed25519",
             Self::PreAuthTx(_) => "PreAuthTx",
@@ -20286,7 +20142,7 @@ impl WriteXdr for SignerKey {
 //
 //   typedef opaque Signature<64>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Signature(pub VecM<u8, 64>);
 
 impl From<Signature> for VecM<u8, 64> {
@@ -20608,7 +20464,6 @@ pub enum ScValType {
 impl ScValType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::U63 => "U63",
             Self::U32 => "U32",
@@ -20695,7 +20550,6 @@ pub enum ScStatic {
 impl ScStatic {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Void => "Void",
             Self::True => "True",
@@ -20771,7 +20625,6 @@ pub enum ScStatusType {
 impl ScStatusType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ok => "Ok",
             Self::UnknownError => "UnknownError",
@@ -20843,7 +20696,6 @@ pub enum ScStatus {
 impl ScStatus {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Ok => "Ok",
             Self::UnknownError(_) => "UnknownError",
@@ -20926,7 +20778,6 @@ pub enum ScVal {
 impl ScVal {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::U63(_) => "U63",
             Self::U32(_) => "U32",
@@ -21025,7 +20876,6 @@ pub enum ScObjectType {
 impl ScObjectType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Vec => "Vec",
             Self::Map => "Map",
@@ -21126,7 +20976,7 @@ pub const SCVAL_LIMIT: u64 = 256000;
 //
 //   typedef SCVal SCVec<SCVAL_LIMIT>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct ScVec(pub VecM<ScVal, 256000>);
 
 impl From<ScVec> for VecM<ScVal, 256000> {
@@ -21211,7 +21061,7 @@ impl AsRef<[ScVal]> for ScVec {
 //
 //   typedef SCMapEntry SCMap<SCVAL_LIMIT>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct ScMap(pub VecM<ScMapEntry, 256000>);
 
 impl From<ScMap> for VecM<ScMapEntry, 256000> {
@@ -21321,7 +21171,6 @@ pub enum ScObject {
 impl ScObject {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Vec(_) => "Vec",
             Self::Map(_) => "Map",

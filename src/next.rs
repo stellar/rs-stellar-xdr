@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "193bd4971c45f97e50b43326ec9fba283d82b91ddc6620ee3736c5d6e8e13d00",
+        "6bbe2a822c6cc69d99bd5332876337c36557403df90abd790b88b13d61a29129",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -21146,25 +21146,25 @@ impl WriteXdr for ScHostContextErrorCode {
 // ScVmErrorCode is an XDR Enum defines as:
 //
 //   enum SCVmErrorCode {
-//        WASMI_ERROR_UNKNOWN = 0,
-//        WASMI_ERROR_VALIDATION = 1,
-//        WASMI_ERROR_INSTANTIATION = 2,
-//        WASMI_ERROR_FUNCTION = 3,
-//        WASMI_ERROR_TABLE = 4,
-//        WASMI_ERROR_MEMORY = 5,
-//        WASMI_ERROR_GLOBAL = 6,
-//        WASMI_ERROR_VALUE = 7,
-//        WASMI_ERROR_TRAP_UNREACHABLE = 8,
-//        WASMI_ERROR_TRAP_MEMORY_ACCESS_OUT_OF_BOUNDS = 9,
-//        WASMI_ERROR_TRAP_TABLE_ACCESS_OUT_OF_BOUNDS = 10,
-//        WASMI_ERROR_TRAP_ELEM_UNINITIALIZED = 11,
-//        WASMI_ERROR_TRAP_DIVISION_BY_ZERO = 12,
-//        WASMI_ERROR_TRAP_INTEGER_OVERFLOW = 13,
-//        WASMI_ERROR_TRAP_INVALID_CONVERSION_TO_INT = 14,
-//        WASMI_ERROR_TRAP_STACK_OVERFLOW = 15,
-//        WASMI_ERROR_TRAP_UNEXPECTED_SIGNATURE = 16,
-//        WASMI_ERROR_TRAP_MEM_LIMIT_EXCEEDED = 17,
-//        WASMI_ERROR_TRAP_CPU_LIMIT_EXCEEDED = 18
+//        VM_UNKNOWN = 0,
+//        VM_VALIDATION = 1,
+//        VM_INSTANTIATION = 2,
+//        VM_FUNCTION = 3,
+//        VM_TABLE = 4,
+//        VM_MEMORY = 5,
+//        VM_GLOBAL = 6,
+//        VM_VALUE = 7,
+//        VM_TRAP_UNREACHABLE = 8,
+//        VM_TRAP_MEMORY_ACCESS_OUT_OF_BOUNDS = 9,
+//        VM_TRAP_TABLE_ACCESS_OUT_OF_BOUNDS = 10,
+//        VM_TRAP_ELEM_UNINITIALIZED = 11,
+//        VM_TRAP_DIVISION_BY_ZERO = 12,
+//        VM_TRAP_INTEGER_OVERFLOW = 13,
+//        VM_TRAP_INVALID_CONVERSION_TO_INT = 14,
+//        VM_TRAP_STACK_OVERFLOW = 15,
+//        VM_TRAP_UNEXPECTED_SIGNATURE = 16,
+//        VM_TRAP_MEM_LIMIT_EXCEEDED = 17,
+//        VM_TRAP_CPU_LIMIT_EXCEEDED = 18
 //    };
 //
 // enum
@@ -21285,8 +21285,7 @@ impl WriteXdr for ScVmErrorCode {
 //   enum SCUnknownErrorCode
 //    {
 //        UNKNOWN_ERROR_GENERAL = 0,
-//        UNKNOWN_ERROR_XDR = 1,
-//        UNKNOWN_ERROR_PARITY_WASMI_ELEMENTS = 2
+//        UNKNOWN_ERROR_XDR = 1
 //    };
 //
 // enum
@@ -21295,7 +21294,6 @@ impl WriteXdr for ScVmErrorCode {
 pub enum ScUnknownErrorCode {
     General = 0,
     Xdr = 1,
-    ParityWasmiElements = 2,
 }
 
 impl ScUnknownErrorCode {
@@ -21304,7 +21302,6 @@ impl ScUnknownErrorCode {
         match self {
             Self::General => "General",
             Self::Xdr => "Xdr",
-            Self::ParityWasmiElements => "ParityWasmiElements",
         }
     }
 }
@@ -21322,7 +21319,6 @@ impl TryFrom<i32> for ScUnknownErrorCode {
         let e = match i {
             0 => ScUnknownErrorCode::General,
             1 => ScUnknownErrorCode::Xdr,
-            2 => ScUnknownErrorCode::ParityWasmiElements,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

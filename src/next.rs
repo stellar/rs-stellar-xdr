@@ -21175,7 +21175,6 @@ pub enum ScNumSign {
 impl ScNumSign {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Negative => "Negative",
             Self::Zero => "Zero",
@@ -21251,7 +21250,6 @@ pub enum ScBigInt {
 impl ScBigInt {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::Zero => "Zero",
             Self::Positive(_) => "Positive",
@@ -21317,7 +21315,6 @@ pub enum ScHashType {
 impl ScHashType {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::SchashSha256 => "SchashSha256",
         }
@@ -21384,7 +21381,6 @@ pub enum ScHash {
 impl ScHash {
     #[must_use]
     pub fn name(&self) -> &str {
-        #[allow(clippy::match_same_arms)]
         match self {
             Self::SchashSha256(_) => "SchashSha256",
         }

@@ -68,6 +68,7 @@ struct SpecTypeTuple
 struct SpecTypeUDT
 {
     string name<60>;
+    SpecUDTDef *udtDef;
 };
 
 union SpecTypeDef switch (SpecType type)

@@ -18,7 +18,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "9ac6b20a3f05712e59614f4fb17d041e188f9d6ed1aff7bc845d4fc9c6d6cd99",
+        "a49add02f0f1a3b815945df133ddcd5f8fc2b4ee40618842402d759c7907f02d",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -21706,11 +21706,13 @@ impl WriteXdr for SpecTypeTuple {
 //   struct SpecTypeUDT
 //    {
 //        string name<60>;
+//        SpecUDTDef *udtDef;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SpecTypeUdt {
     pub name: VecM<u8, 60>,
+    pub udt_def: Option<Box<SpecUdtDef>>,
 }
 
 impl ReadXdr for SpecTypeUdt {
@@ -21718,6 +21720,7 @@ impl ReadXdr for SpecTypeUdt {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             name: VecM::<u8, 60>::read_xdr(r)?,
+            udt_def: Option::<Box<SpecUdtDef>>::read_xdr(r)?,
         })
     }
 }
@@ -21726,6 +21729,7 @@ impl WriteXdr for SpecTypeUdt {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.name.write_xdr(w)?;
+        self.udt_def.write_xdr(w)?;
         Ok(())
     }
 }
@@ -21780,7 +21784,7 @@ pub enum SpecTypeDef {
     Map(Box<SpecTypeMap>),
     Set(Box<SpecTypeSet>),
     Tuple(Box<SpecTypeTuple>),
-    Udt(SpecTypeUdt),
+    Udt(Box<SpecTypeUdt>),
 }
 
 impl SpecTypeDef {
@@ -21855,7 +21859,7 @@ impl ReadXdr for SpecTypeDef {
             SpecType::Map => Self::Map(Box::<SpecTypeMap>::read_xdr(r)?),
             SpecType::Set => Self::Set(Box::<SpecTypeSet>::read_xdr(r)?),
             SpecType::Tuple => Self::Tuple(Box::<SpecTypeTuple>::read_xdr(r)?),
-            SpecType::Udt => Self::Udt(SpecTypeUdt::read_xdr(r)?),
+            SpecType::Udt => Self::Udt(Box::<SpecTypeUdt>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -21973,7 +21977,7 @@ impl WriteXdr for SpecUdtType {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SpecUdtStructField {
     pub name: VecM<u8, 30>,
-    pub type_: SpecTypeDef,
+    pub type_: Box<SpecTypeDef>,
 }
 
 impl ReadXdr for SpecUdtStructField {
@@ -21981,7 +21985,7 @@ impl ReadXdr for SpecUdtStructField {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             name: VecM::<u8, 30>::read_xdr(r)?,
-            type_: SpecTypeDef::read_xdr(r)?,
+            type_: Box::<SpecTypeDef>::read_xdr(r)?,
         })
     }
 }
@@ -22035,7 +22039,7 @@ impl WriteXdr for SpecUdtStruct {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SpecUdtUnionCase {
     pub name: VecM<u8, 60>,
-    pub type_: SpecTypeDef,
+    pub type_: Box<SpecTypeDef>,
 }
 
 impl ReadXdr for SpecUdtUnionCase {
@@ -22043,7 +22047,7 @@ impl ReadXdr for SpecUdtUnionCase {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             name: VecM::<u8, 60>::read_xdr(r)?,
-            type_: SpecTypeDef::read_xdr(r)?,
+            type_: Box::<SpecTypeDef>::read_xdr(r)?,
         })
     }
 }
@@ -22099,8 +22103,8 @@ impl WriteXdr for SpecUdtUnion {
 // union with discriminant SpecUdtType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SpecUdtDef {
-    Struct(SpecUdtStruct),
-    Union(SpecUdtUnion),
+    Struct(Box<SpecUdtStruct>),
+    Union(Box<SpecUdtUnion>),
 }
 
 impl SpecUdtDef {
@@ -22129,8 +22133,8 @@ impl ReadXdr for SpecUdtDef {
         let dv: SpecUdtType = <SpecUdtType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            SpecUdtType::Struct => Self::Struct(SpecUdtStruct::read_xdr(r)?),
-            SpecUdtType::Union => Self::Union(SpecUdtUnion::read_xdr(r)?),
+            SpecUdtType::Struct => Self::Struct(Box::<SpecUdtStruct>::read_xdr(r)?),
+            SpecUdtType::Union => Self::Union(Box::<SpecUdtUnion>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

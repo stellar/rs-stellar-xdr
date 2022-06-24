@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "784911fa52608064553092772763b87e65ae85352b1776b4aee31d20dd6ac245",
+        "6bbe2a822c6cc69d99bd5332876337c36557403df90abd790b88b13d61a29129",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -20615,7 +20615,13 @@ impl WriteXdr for ScStatic {
 //   enum SCStatusType
 //    {
 //        SST_OK = 0,
-//        SST_UNKNOWN_ERROR = 1
+//        SST_UNKNOWN_ERROR = 1,
+//        SST_HOST_VALUE_ERROR = 2,
+//        SST_HOST_OBJECT_ERROR = 3,
+//        SST_HOST_FUNCTION_ERROR = 4,
+//        SST_HOST_STORAGE_ERROR = 5,
+//        SST_HOST_CONTEXT_ERROR = 6,
+//        SST_VM_ERROR = 7
 //        // TODO: add more
 //    };
 //
@@ -20625,6 +20631,12 @@ impl WriteXdr for ScStatic {
 pub enum ScStatusType {
     Ok = 0,
     UnknownError = 1,
+    HostValueError = 2,
+    HostObjectError = 3,
+    HostFunctionError = 4,
+    HostStorageError = 5,
+    HostContextError = 6,
+    VmError = 7,
 }
 
 impl ScStatusType {
@@ -20633,6 +20645,12 @@ impl ScStatusType {
         match self {
             Self::Ok => "Ok",
             Self::UnknownError => "UnknownError",
+            Self::HostValueError => "HostValueError",
+            Self::HostObjectError => "HostObjectError",
+            Self::HostFunctionError => "HostFunctionError",
+            Self::HostStorageError => "HostStorageError",
+            Self::HostContextError => "HostContextError",
+            Self::VmError => "VmError",
         }
     }
 }
@@ -20650,6 +20668,12 @@ impl TryFrom<i32> for ScStatusType {
         let e = match i {
             0 => ScStatusType::Ok,
             1 => ScStatusType::UnknownError,
+            2 => ScStatusType::HostValueError,
+            3 => ScStatusType::HostObjectError,
+            4 => ScStatusType::HostFunctionError,
+            5 => ScStatusType::HostStorageError,
+            6 => ScStatusType::HostContextError,
+            7 => ScStatusType::VmError,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -20681,6 +20705,651 @@ impl WriteXdr for ScStatusType {
     }
 }
 
+// ScHostValErrorCode is an XDR Enum defines as:
+//
+//   enum SCHostValErrorCode
+//    {
+//        HOST_VALUE_UNKNOWN_ERROR = 0,
+//        HOST_VALUE_RESERVED_TAG_VALUE = 1,
+//        HOST_VALUE_UNEXPECTED_VAL_TYPE = 2,
+//        HOST_VALUE_U63_OUT_OF_RANGE = 3,
+//        HOST_VALUE_U32_OUT_OF_RANGE = 4,
+//        HOST_VALUE_STATIC_UNKNOWN = 5,
+//        HOST_VALUE_MISSING_OBJECT = 6,
+//        HOST_VALUE_SYMBOL_TOO_LONG = 7,
+//        HOST_VALUE_SYMBOL_BAD_CHAR = 8,
+//        HOST_VALUE_SYMBOL_CONTAINS_NON_UTF8 = 9,
+//        HOST_VALUE_BITSET_TOO_MANY_BITS = 10,
+//        HOST_VALUE_STATUS_UNKNOWN = 11
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ScHostValErrorCode {
+    UnknownError = 0,
+    ReservedTagValue = 1,
+    UnexpectedValType = 2,
+    U63OutOfRange = 3,
+    U32OutOfRange = 4,
+    StaticUnknown = 5,
+    MissingObject = 6,
+    SymbolTooLong = 7,
+    SymbolBadChar = 8,
+    SymbolContainsNonUtf8 = 9,
+    BitsetTooManyBits = 10,
+    StatusUnknown = 11,
+}
+
+impl ScHostValErrorCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::ReservedTagValue => "ReservedTagValue",
+            Self::UnexpectedValType => "UnexpectedValType",
+            Self::U63OutOfRange => "U63OutOfRange",
+            Self::U32OutOfRange => "U32OutOfRange",
+            Self::StaticUnknown => "StaticUnknown",
+            Self::MissingObject => "MissingObject",
+            Self::SymbolTooLong => "SymbolTooLong",
+            Self::SymbolBadChar => "SymbolBadChar",
+            Self::SymbolContainsNonUtf8 => "SymbolContainsNonUtf8",
+            Self::BitsetTooManyBits => "BitsetTooManyBits",
+            Self::StatusUnknown => "StatusUnknown",
+        }
+    }
+}
+
+impl fmt::Display for ScHostValErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHostValErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHostValErrorCode::UnknownError,
+            1 => ScHostValErrorCode::ReservedTagValue,
+            2 => ScHostValErrorCode::UnexpectedValType,
+            3 => ScHostValErrorCode::U63OutOfRange,
+            4 => ScHostValErrorCode::U32OutOfRange,
+            5 => ScHostValErrorCode::StaticUnknown,
+            6 => ScHostValErrorCode::MissingObject,
+            7 => ScHostValErrorCode::SymbolTooLong,
+            8 => ScHostValErrorCode::SymbolBadChar,
+            9 => ScHostValErrorCode::SymbolContainsNonUtf8,
+            10 => ScHostValErrorCode::BitsetTooManyBits,
+            11 => ScHostValErrorCode::StatusUnknown,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHostValErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScHostValErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHostValErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHostValErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScHostObjErrorCode is an XDR Enum defines as:
+//
+//   enum SCHostObjErrorCode
+//    {
+//        HOST_OBJECT_UNKNOWN_ERROR = 0,
+//        HOST_OBJECT_UNKNOWN_REFERENCE = 1,
+//        HOST_OBJECT_UNEXPECTED_TYPE = 2,
+//        HOST_OBJECT_OBJECT_COUNT_EXCEEDS_U32_MAX = 3,
+//        HOST_OBJECT_OBJECT_NOT_EXIST = 4,
+//        HOST_OBJECT_VEC_INDEX_OUT_OF_BOUND = 5,
+//        HOST_OBJECT_CONTRACT_HASH_WRONG_LENGTH = 6
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ScHostObjErrorCode {
+    UnknownError = 0,
+    UnknownReference = 1,
+    UnexpectedType = 2,
+    ObjectCountExceedsU32Max = 3,
+    ObjectNotExist = 4,
+    VecIndexOutOfBound = 5,
+    ContractHashWrongLength = 6,
+}
+
+impl ScHostObjErrorCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::UnknownReference => "UnknownReference",
+            Self::UnexpectedType => "UnexpectedType",
+            Self::ObjectCountExceedsU32Max => "ObjectCountExceedsU32Max",
+            Self::ObjectNotExist => "ObjectNotExist",
+            Self::VecIndexOutOfBound => "VecIndexOutOfBound",
+            Self::ContractHashWrongLength => "ContractHashWrongLength",
+        }
+    }
+}
+
+impl fmt::Display for ScHostObjErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHostObjErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHostObjErrorCode::UnknownError,
+            1 => ScHostObjErrorCode::UnknownReference,
+            2 => ScHostObjErrorCode::UnexpectedType,
+            3 => ScHostObjErrorCode::ObjectCountExceedsU32Max,
+            4 => ScHostObjErrorCode::ObjectNotExist,
+            5 => ScHostObjErrorCode::VecIndexOutOfBound,
+            6 => ScHostObjErrorCode::ContractHashWrongLength,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHostObjErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScHostObjErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHostObjErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHostObjErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScHostFnErrorCode is an XDR Enum defines as:
+//
+//   enum SCHostFnErrorCode
+//    {
+//        HOST_FN_UNKNOWN_ERROR = 0,
+//        HOST_FN_UNEXPECTED_HOST_FUNCTION_ACTION = 1,
+//        HOST_FN_INPUT_ARGS_WRONG_LENGTH = 2,
+//        HOST_FN_INPUT_ARGS_WRONG_TYPE = 3,
+//        HOST_FN_INPUT_ARGS_INVALID = 4
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ScHostFnErrorCode {
+    UnknownError = 0,
+    UnexpectedHostFunctionAction = 1,
+    InputArgsWrongLength = 2,
+    InputArgsWrongType = 3,
+    InputArgsInvalid = 4,
+}
+
+impl ScHostFnErrorCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::UnexpectedHostFunctionAction => "UnexpectedHostFunctionAction",
+            Self::InputArgsWrongLength => "InputArgsWrongLength",
+            Self::InputArgsWrongType => "InputArgsWrongType",
+            Self::InputArgsInvalid => "InputArgsInvalid",
+        }
+    }
+}
+
+impl fmt::Display for ScHostFnErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHostFnErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHostFnErrorCode::UnknownError,
+            1 => ScHostFnErrorCode::UnexpectedHostFunctionAction,
+            2 => ScHostFnErrorCode::InputArgsWrongLength,
+            3 => ScHostFnErrorCode::InputArgsWrongType,
+            4 => ScHostFnErrorCode::InputArgsInvalid,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHostFnErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScHostFnErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHostFnErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHostFnErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScHostStorageErrorCode is an XDR Enum defines as:
+//
+//   enum SCHostStorageErrorCode
+//    {
+//        HOST_STORAGE_UNKNOWN_ERROR = 0,
+//        HOST_STORAGE_EXPECT_CONTRACT_DATA = 1,
+//        HOST_STORAGE_READWRITE_ACCESS_TO_READONLY_ENTRY = 2,
+//        HOST_STORAGE_ACCESS_TO_UNKNOWN_ENTRY = 3,
+//        HOST_STORAGE_MISSING_KEY_IN_GET = 4,
+//        HOST_STORAGE_GET_ON_DELETED_KEY = 5
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ScHostStorageErrorCode {
+    UnknownError = 0,
+    ExpectContractData = 1,
+    ReadwriteAccessToReadonlyEntry = 2,
+    AccessToUnknownEntry = 3,
+    MissingKeyInGet = 4,
+    GetOnDeletedKey = 5,
+}
+
+impl ScHostStorageErrorCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::ExpectContractData => "ExpectContractData",
+            Self::ReadwriteAccessToReadonlyEntry => "ReadwriteAccessToReadonlyEntry",
+            Self::AccessToUnknownEntry => "AccessToUnknownEntry",
+            Self::MissingKeyInGet => "MissingKeyInGet",
+            Self::GetOnDeletedKey => "GetOnDeletedKey",
+        }
+    }
+}
+
+impl fmt::Display for ScHostStorageErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHostStorageErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHostStorageErrorCode::UnknownError,
+            1 => ScHostStorageErrorCode::ExpectContractData,
+            2 => ScHostStorageErrorCode::ReadwriteAccessToReadonlyEntry,
+            3 => ScHostStorageErrorCode::AccessToUnknownEntry,
+            4 => ScHostStorageErrorCode::MissingKeyInGet,
+            5 => ScHostStorageErrorCode::GetOnDeletedKey,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHostStorageErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScHostStorageErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHostStorageErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHostStorageErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScHostContextErrorCode is an XDR Enum defines as:
+//
+//   enum SCHostContextErrorCode
+//    {
+//        HOST_CONTEXT_UNKNOWN_ERROR = 0,
+//        HOST_CONTEXT_NO_CONTRACT_RUNNING = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ScHostContextErrorCode {
+    UnknownError = 0,
+    NoContractRunning = 1,
+}
+
+impl ScHostContextErrorCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::NoContractRunning => "NoContractRunning",
+        }
+    }
+}
+
+impl fmt::Display for ScHostContextErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHostContextErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHostContextErrorCode::UnknownError,
+            1 => ScHostContextErrorCode::NoContractRunning,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHostContextErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScHostContextErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHostContextErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHostContextErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScVmErrorCode is an XDR Enum defines as:
+//
+//   enum SCVmErrorCode {
+//        VM_UNKNOWN = 0,
+//        VM_VALIDATION = 1,
+//        VM_INSTANTIATION = 2,
+//        VM_FUNCTION = 3,
+//        VM_TABLE = 4,
+//        VM_MEMORY = 5,
+//        VM_GLOBAL = 6,
+//        VM_VALUE = 7,
+//        VM_TRAP_UNREACHABLE = 8,
+//        VM_TRAP_MEMORY_ACCESS_OUT_OF_BOUNDS = 9,
+//        VM_TRAP_TABLE_ACCESS_OUT_OF_BOUNDS = 10,
+//        VM_TRAP_ELEM_UNINITIALIZED = 11,
+//        VM_TRAP_DIVISION_BY_ZERO = 12,
+//        VM_TRAP_INTEGER_OVERFLOW = 13,
+//        VM_TRAP_INVALID_CONVERSION_TO_INT = 14,
+//        VM_TRAP_STACK_OVERFLOW = 15,
+//        VM_TRAP_UNEXPECTED_SIGNATURE = 16,
+//        VM_TRAP_MEM_LIMIT_EXCEEDED = 17,
+//        VM_TRAP_CPU_LIMIT_EXCEEDED = 18
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ScVmErrorCode {
+    Unknown = 0,
+    Validation = 1,
+    Instantiation = 2,
+    Function = 3,
+    Table = 4,
+    Memory = 5,
+    Global = 6,
+    Value = 7,
+    TrapUnreachable = 8,
+    TrapMemoryAccessOutOfBounds = 9,
+    TrapTableAccessOutOfBounds = 10,
+    TrapElemUninitialized = 11,
+    TrapDivisionByZero = 12,
+    TrapIntegerOverflow = 13,
+    TrapInvalidConversionToInt = 14,
+    TrapStackOverflow = 15,
+    TrapUnexpectedSignature = 16,
+    TrapMemLimitExceeded = 17,
+    TrapCpuLimitExceeded = 18,
+}
+
+impl ScVmErrorCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        match self {
+            Self::Unknown => "Unknown",
+            Self::Validation => "Validation",
+            Self::Instantiation => "Instantiation",
+            Self::Function => "Function",
+            Self::Table => "Table",
+            Self::Memory => "Memory",
+            Self::Global => "Global",
+            Self::Value => "Value",
+            Self::TrapUnreachable => "TrapUnreachable",
+            Self::TrapMemoryAccessOutOfBounds => "TrapMemoryAccessOutOfBounds",
+            Self::TrapTableAccessOutOfBounds => "TrapTableAccessOutOfBounds",
+            Self::TrapElemUninitialized => "TrapElemUninitialized",
+            Self::TrapDivisionByZero => "TrapDivisionByZero",
+            Self::TrapIntegerOverflow => "TrapIntegerOverflow",
+            Self::TrapInvalidConversionToInt => "TrapInvalidConversionToInt",
+            Self::TrapStackOverflow => "TrapStackOverflow",
+            Self::TrapUnexpectedSignature => "TrapUnexpectedSignature",
+            Self::TrapMemLimitExceeded => "TrapMemLimitExceeded",
+            Self::TrapCpuLimitExceeded => "TrapCpuLimitExceeded",
+        }
+    }
+}
+
+impl fmt::Display for ScVmErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScVmErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScVmErrorCode::Unknown,
+            1 => ScVmErrorCode::Validation,
+            2 => ScVmErrorCode::Instantiation,
+            3 => ScVmErrorCode::Function,
+            4 => ScVmErrorCode::Table,
+            5 => ScVmErrorCode::Memory,
+            6 => ScVmErrorCode::Global,
+            7 => ScVmErrorCode::Value,
+            8 => ScVmErrorCode::TrapUnreachable,
+            9 => ScVmErrorCode::TrapMemoryAccessOutOfBounds,
+            10 => ScVmErrorCode::TrapTableAccessOutOfBounds,
+            11 => ScVmErrorCode::TrapElemUninitialized,
+            12 => ScVmErrorCode::TrapDivisionByZero,
+            13 => ScVmErrorCode::TrapIntegerOverflow,
+            14 => ScVmErrorCode::TrapInvalidConversionToInt,
+            15 => ScVmErrorCode::TrapStackOverflow,
+            16 => ScVmErrorCode::TrapUnexpectedSignature,
+            17 => ScVmErrorCode::TrapMemLimitExceeded,
+            18 => ScVmErrorCode::TrapCpuLimitExceeded,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScVmErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScVmErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScVmErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScVmErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScUnknownErrorCode is an XDR Enum defines as:
+//
+//   enum SCUnknownErrorCode
+//    {
+//        UNKNOWN_ERROR_GENERAL = 0,
+//        UNKNOWN_ERROR_XDR = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum ScUnknownErrorCode {
+    General = 0,
+    Xdr = 1,
+}
+
+impl ScUnknownErrorCode {
+    #[must_use]
+    pub fn name(&self) -> &str {
+        match self {
+            Self::General => "General",
+            Self::Xdr => "Xdr",
+        }
+    }
+}
+
+impl fmt::Display for ScUnknownErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScUnknownErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScUnknownErrorCode::General,
+            1 => ScUnknownErrorCode::Xdr,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScUnknownErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScUnknownErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScUnknownErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScUnknownErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
 // ScStatus is an XDR Union defines as:
 //
 //   union SCStatus switch (SCStatusType type)
@@ -20688,14 +21357,32 @@ impl WriteXdr for ScStatusType {
 //    case SST_OK:
 //        void;
 //    case SST_UNKNOWN_ERROR:
-//        uint32 unknownCode;
+//        SCUnknownErrorCode unknownCode;
+//    case SST_HOST_VALUE_ERROR:
+//        SCHostValErrorCode errorCode;
+//    case SST_HOST_OBJECT_ERROR:
+//        SCHostObjErrorCode errorCode;
+//    case SST_HOST_FUNCTION_ERROR:
+//        SCHostFnErrorCode errorCode;
+//    case SST_HOST_STORAGE_ERROR:
+//        SCHostStorageErrorCode errorCode;
+//    case SST_HOST_CONTEXT_ERROR:
+//        SCHostContextErrorCode errorCode;
+//    case SST_VM_ERROR:
+//        SCVmErrorCode errorCode;
 //    };
 //
 // union with discriminant ScStatusType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ScStatus {
     Ok,
-    UnknownError(u32),
+    UnknownError(ScUnknownErrorCode),
+    HostValueError(ScHostValErrorCode),
+    HostObjectError(ScHostObjErrorCode),
+    HostFunctionError(ScHostFnErrorCode),
+    HostStorageError(ScHostStorageErrorCode),
+    HostContextError(ScHostContextErrorCode),
+    VmError(ScVmErrorCode),
 }
 
 impl ScStatus {
@@ -20704,6 +21391,12 @@ impl ScStatus {
         match self {
             Self::Ok => "Ok",
             Self::UnknownError(_) => "UnknownError",
+            Self::HostValueError(_) => "HostValueError",
+            Self::HostObjectError(_) => "HostObjectError",
+            Self::HostFunctionError(_) => "HostFunctionError",
+            Self::HostStorageError(_) => "HostStorageError",
+            Self::HostContextError(_) => "HostContextError",
+            Self::VmError(_) => "VmError",
         }
     }
 
@@ -20713,6 +21406,12 @@ impl ScStatus {
         match self {
             Self::Ok => ScStatusType::Ok,
             Self::UnknownError(_) => ScStatusType::UnknownError,
+            Self::HostValueError(_) => ScStatusType::HostValueError,
+            Self::HostObjectError(_) => ScStatusType::HostObjectError,
+            Self::HostFunctionError(_) => ScStatusType::HostFunctionError,
+            Self::HostStorageError(_) => ScStatusType::HostStorageError,
+            Self::HostContextError(_) => ScStatusType::HostContextError,
+            Self::VmError(_) => ScStatusType::VmError,
         }
     }
 }
@@ -20724,7 +21423,21 @@ impl ReadXdr for ScStatus {
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             ScStatusType::Ok => Self::Ok,
-            ScStatusType::UnknownError => Self::UnknownError(u32::read_xdr(r)?),
+            ScStatusType::UnknownError => Self::UnknownError(ScUnknownErrorCode::read_xdr(r)?),
+            ScStatusType::HostValueError => Self::HostValueError(ScHostValErrorCode::read_xdr(r)?),
+            ScStatusType::HostObjectError => {
+                Self::HostObjectError(ScHostObjErrorCode::read_xdr(r)?)
+            }
+            ScStatusType::HostFunctionError => {
+                Self::HostFunctionError(ScHostFnErrorCode::read_xdr(r)?)
+            }
+            ScStatusType::HostStorageError => {
+                Self::HostStorageError(ScHostStorageErrorCode::read_xdr(r)?)
+            }
+            ScStatusType::HostContextError => {
+                Self::HostContextError(ScHostContextErrorCode::read_xdr(r)?)
+            }
+            ScStatusType::VmError => Self::VmError(ScVmErrorCode::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -20740,6 +21453,12 @@ impl WriteXdr for ScStatus {
         match self {
             Self::Ok => ().write_xdr(w)?,
             Self::UnknownError(v) => v.write_xdr(w)?,
+            Self::HostValueError(v) => v.write_xdr(w)?,
+            Self::HostObjectError(v) => v.write_xdr(w)?,
+            Self::HostFunctionError(v) => v.write_xdr(w)?,
+            Self::HostStorageError(v) => v.write_xdr(w)?,
+            Self::HostContextError(v) => v.write_xdr(w)?,
+            Self::VmError(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

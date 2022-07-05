@@ -152,6 +152,26 @@ impl From<Error> for () {
 #[allow(dead_code)]
 type Result<T> = core::result::Result<T, Error>;
 
+/// Name defines types that assign a static name to their value, such as the
+/// name given to an identifier in an XDR enum, or the name given to the case in
+/// a union.
+pub trait Name {
+    fn name(&self) -> &'static str;
+}
+
+/// Discriminant defines types that may contain a one-of value determined
+/// according to the discriminant, and exposes the value of the discriminant for
+/// that type, such as in an XDR union.
+pub trait Discriminant<D> {
+    fn discriminant(&self) -> D;
+}
+
+// Enum defines a type that is represented as an XDR enumeration when encoded.
+pub trait Enum: Name {}
+
+// Union defines a type that is represented as an XDR union when encoded.
+pub trait Union<D>: Name + Discriminant<D> {}
+
 #[cfg(feature = "std")]
 pub struct ReadXdrIter<'r, R: Read, S: ReadXdr> {
     reader: BufReader<&'r mut R>,
@@ -658,10 +678,7 @@ impl<T: Clone, const N: usize, const MAX: u32> TryFrom<&[T; N]> for VecM<T, MAX>
 }
 
 #[cfg(not(feature = "alloc"))]
-impl<T: Clone, const N: usize, const MAX: u32> TryFrom<&'static [T; N]> for VecM<T, MAX>
-where
-    T: 'static,
-{
+impl<T: Clone, const N: usize, const MAX: u32> TryFrom<&'static [T; N]> for VecM<T, MAX> {
     type Error = Error;
 
     fn try_from(v: &'static [T; N]) -> Result<Self> {
@@ -1072,7 +1089,7 @@ pub enum ScpStatementType {
 
 impl ScpStatementType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Prepare => "Prepare",
             Self::Confirm => "Confirm",
@@ -1081,6 +1098,15 @@ impl ScpStatementType {
         }
     }
 }
+
+impl Name for ScpStatementType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScpStatementType {}
 
 impl fmt::Display for ScpStatementType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1341,7 +1367,7 @@ pub enum ScpStatementPledges {
 
 impl ScpStatementPledges {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Prepare(_) => "Prepare",
             Self::Confirm(_) => "Confirm",
@@ -1351,7 +1377,7 @@ impl ScpStatementPledges {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ScpStatementType {
+    pub const fn discriminant(&self) -> ScpStatementType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Prepare(_) => ScpStatementType::Prepare,
@@ -1361,6 +1387,22 @@ impl ScpStatementPledges {
         }
     }
 }
+
+impl Name for ScpStatementPledges {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScpStatementType> for ScpStatementPledges {
+    #[must_use]
+    fn discriminant(&self) -> ScpStatementType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ScpStatementType> for ScpStatementPledges {}
 
 impl ReadXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
@@ -2006,7 +2048,7 @@ pub enum AssetType {
 
 impl AssetType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Native => "Native",
             Self::CreditAlphanum4 => "CreditAlphanum4",
@@ -2015,6 +2057,15 @@ impl AssetType {
         }
     }
 }
+
+impl Name for AssetType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for AssetType {}
 
 impl fmt::Display for AssetType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -2084,7 +2135,7 @@ pub enum AssetCode {
 
 impl AssetCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::CreditAlphanum4(_) => "CreditAlphanum4",
             Self::CreditAlphanum12(_) => "CreditAlphanum12",
@@ -2092,7 +2143,7 @@ impl AssetCode {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> AssetType {
+    pub const fn discriminant(&self) -> AssetType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::CreditAlphanum4(_) => AssetType::CreditAlphanum4,
@@ -2100,6 +2151,22 @@ impl AssetCode {
         }
     }
 }
+
+impl Name for AssetCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<AssetType> for AssetCode {
+    #[must_use]
+    fn discriminant(&self) -> AssetType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<AssetType> for AssetCode {}
 
 impl ReadXdr for AssetCode {
     #[cfg(feature = "std")]
@@ -2221,7 +2288,7 @@ pub enum Asset {
 
 impl Asset {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Native => "Native",
             Self::CreditAlphanum4(_) => "CreditAlphanum4",
@@ -2230,7 +2297,7 @@ impl Asset {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> AssetType {
+    pub const fn discriminant(&self) -> AssetType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => AssetType::Native,
@@ -2239,6 +2306,22 @@ impl Asset {
         }
     }
 }
+
+impl Name for Asset {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<AssetType> for Asset {
+    #[must_use]
+    fn discriminant(&self) -> AssetType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<AssetType> for Asset {}
 
 impl ReadXdr for Asset {
     #[cfg(feature = "std")]
@@ -2358,7 +2441,7 @@ pub enum ThresholdIndexes {
 
 impl ThresholdIndexes {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::MasterWeight => "MasterWeight",
             Self::Low => "Low",
@@ -2367,6 +2450,15 @@ impl ThresholdIndexes {
         }
     }
 }
+
+impl Name for ThresholdIndexes {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ThresholdIndexes {}
 
 impl fmt::Display for ThresholdIndexes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -2444,7 +2536,7 @@ pub enum LedgerEntryType {
 
 impl LedgerEntryType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Account => "Account",
             Self::Trustline => "Trustline",
@@ -2457,6 +2549,15 @@ impl LedgerEntryType {
         }
     }
 }
+
+impl Name for LedgerEntryType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for LedgerEntryType {}
 
 impl fmt::Display for LedgerEntryType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -2573,7 +2674,7 @@ pub enum AccountFlags {
 
 impl AccountFlags {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::RequiredFlag => "RequiredFlag",
             Self::RevocableFlag => "RevocableFlag",
@@ -2582,6 +2683,15 @@ impl AccountFlags {
         }
     }
 }
+
+impl Name for AccountFlags {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for AccountFlags {}
 
 impl fmt::Display for AccountFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -2753,7 +2863,7 @@ pub enum AccountEntryExtensionV2Ext {
 
 impl AccountEntryExtensionV2Ext {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V3(_) => "V3",
@@ -2761,7 +2871,7 @@ impl AccountEntryExtensionV2Ext {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
@@ -2769,6 +2879,22 @@ impl AccountEntryExtensionV2Ext {
         }
     }
 }
+
+impl Name for AccountEntryExtensionV2Ext {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for AccountEntryExtensionV2Ext {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for AccountEntryExtensionV2Ext {}
 
 impl ReadXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
@@ -2866,7 +2992,7 @@ pub enum AccountEntryExtensionV1Ext {
 
 impl AccountEntryExtensionV1Ext {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V2(_) => "V2",
@@ -2874,7 +3000,7 @@ impl AccountEntryExtensionV1Ext {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
@@ -2882,6 +3008,22 @@ impl AccountEntryExtensionV1Ext {
         }
     }
 }
+
+impl Name for AccountEntryExtensionV1Ext {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for AccountEntryExtensionV1Ext {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for AccountEntryExtensionV1Ext {}
 
 impl ReadXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
@@ -2971,7 +3113,7 @@ pub enum AccountEntryExt {
 
 impl AccountEntryExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
@@ -2979,7 +3121,7 @@ impl AccountEntryExt {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
@@ -2987,6 +3129,22 @@ impl AccountEntryExt {
         }
     }
 }
+
+impl Name for AccountEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for AccountEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for AccountEntryExt {}
 
 impl ReadXdr for AccountEntryExt {
     #[cfg(feature = "std")]
@@ -3121,7 +3279,7 @@ pub enum TrustLineFlags {
 
 impl TrustLineFlags {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::AuthorizedFlag => "AuthorizedFlag",
             Self::AuthorizedToMaintainLiabilitiesFlag => "AuthorizedToMaintainLiabilitiesFlag",
@@ -3129,6 +3287,15 @@ impl TrustLineFlags {
         }
     }
 }
+
+impl Name for TrustLineFlags {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for TrustLineFlags {}
 
 impl fmt::Display for TrustLineFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -3209,12 +3376,21 @@ pub enum LiquidityPoolType {
 
 impl LiquidityPoolType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::LiquidityPoolConstantProduct => "LiquidityPoolConstantProduct",
         }
     }
 }
+
+impl Name for LiquidityPoolType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for LiquidityPoolType {}
 
 impl fmt::Display for LiquidityPoolType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -3289,7 +3465,7 @@ pub enum TrustLineAsset {
 
 impl TrustLineAsset {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Native => "Native",
             Self::CreditAlphanum4(_) => "CreditAlphanum4",
@@ -3299,7 +3475,7 @@ impl TrustLineAsset {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> AssetType {
+    pub const fn discriminant(&self) -> AssetType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => AssetType::Native,
@@ -3309,6 +3485,22 @@ impl TrustLineAsset {
         }
     }
 }
+
+impl Name for TrustLineAsset {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<AssetType> for TrustLineAsset {
+    #[must_use]
+    fn discriminant(&self) -> AssetType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<AssetType> for TrustLineAsset {}
 
 impl ReadXdr for TrustLineAsset {
     #[cfg(feature = "std")]
@@ -3358,20 +3550,36 @@ pub enum TrustLineEntryExtensionV2Ext {
 
 impl TrustLineEntryExtensionV2Ext {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for TrustLineEntryExtensionV2Ext {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TrustLineEntryExtensionV2Ext {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for TrustLineEntryExtensionV2Ext {}
 
 impl ReadXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
@@ -3457,7 +3665,7 @@ pub enum TrustLineEntryV1Ext {
 
 impl TrustLineEntryV1Ext {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V2(_) => "V2",
@@ -3465,7 +3673,7 @@ impl TrustLineEntryV1Ext {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
@@ -3473,6 +3681,22 @@ impl TrustLineEntryV1Ext {
         }
     }
 }
+
+impl Name for TrustLineEntryV1Ext {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TrustLineEntryV1Ext {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for TrustLineEntryV1Ext {}
 
 impl ReadXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
@@ -3574,7 +3798,7 @@ pub enum TrustLineEntryExt {
 
 impl TrustLineEntryExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
@@ -3582,7 +3806,7 @@ impl TrustLineEntryExt {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
@@ -3590,6 +3814,22 @@ impl TrustLineEntryExt {
         }
     }
 }
+
+impl Name for TrustLineEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TrustLineEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for TrustLineEntryExt {}
 
 impl ReadXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
@@ -3709,12 +3949,21 @@ pub enum OfferEntryFlags {
 
 impl OfferEntryFlags {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::PassiveFlag => "PassiveFlag",
         }
     }
 }
+
+impl Name for OfferEntryFlags {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for OfferEntryFlags {}
 
 impl fmt::Display for OfferEntryFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -3781,20 +4030,36 @@ pub enum OfferEntryExt {
 
 impl OfferEntryExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for OfferEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for OfferEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for OfferEntryExt {}
 
 impl ReadXdr for OfferEntryExt {
     #[cfg(feature = "std")]
@@ -3908,20 +4173,36 @@ pub enum DataEntryExt {
 
 impl DataEntryExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for DataEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for DataEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for DataEntryExt {}
 
 impl ReadXdr for DataEntryExt {
     #[cfg(feature = "std")]
@@ -4023,7 +4304,7 @@ pub enum ClaimPredicateType {
 
 impl ClaimPredicateType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Unconditional => "Unconditional",
             Self::And => "And",
@@ -4034,6 +4315,15 @@ impl ClaimPredicateType {
         }
     }
 }
+
+impl Name for ClaimPredicateType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ClaimPredicateType {}
 
 impl fmt::Display for ClaimPredicateType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -4115,7 +4405,7 @@ pub enum ClaimPredicate {
 
 impl ClaimPredicate {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Unconditional => "Unconditional",
             Self::And(_) => "And",
@@ -4127,7 +4417,7 @@ impl ClaimPredicate {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ClaimPredicateType {
+    pub const fn discriminant(&self) -> ClaimPredicateType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Unconditional => ClaimPredicateType::Unconditional,
@@ -4139,6 +4429,22 @@ impl ClaimPredicate {
         }
     }
 }
+
+impl Name for ClaimPredicate {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ClaimPredicateType> for ClaimPredicate {
+    #[must_use]
+    fn discriminant(&self) -> ClaimPredicateType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ClaimPredicateType> for ClaimPredicate {}
 
 impl ReadXdr for ClaimPredicate {
     #[cfg(feature = "std")]
@@ -4192,12 +4498,21 @@ pub enum ClaimantType {
 
 impl ClaimantType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::ClaimantTypeV0 => "ClaimantTypeV0",
         }
     }
 }
+
+impl Name for ClaimantType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ClaimantType {}
 
 impl fmt::Display for ClaimantType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -4295,20 +4610,36 @@ pub enum Claimant {
 
 impl Claimant {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::ClaimantTypeV0(_) => "ClaimantTypeV0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ClaimantType {
+    pub const fn discriminant(&self) -> ClaimantType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::ClaimantTypeV0(_) => ClaimantType::ClaimantTypeV0,
         }
     }
 }
+
+impl Name for Claimant {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ClaimantType> for Claimant {
+    #[must_use]
+    fn discriminant(&self) -> ClaimantType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ClaimantType> for Claimant {}
 
 impl ReadXdr for Claimant {
     #[cfg(feature = "std")]
@@ -4352,12 +4683,21 @@ pub enum ClaimableBalanceIdType {
 
 impl ClaimableBalanceIdType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::ClaimableBalanceIdTypeV0 => "ClaimableBalanceIdTypeV0",
         }
     }
 }
+
+impl Name for ClaimableBalanceIdType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ClaimableBalanceIdType {}
 
 impl fmt::Display for ClaimableBalanceIdType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -4418,20 +4758,36 @@ pub enum ClaimableBalanceId {
 
 impl ClaimableBalanceId {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::ClaimableBalanceIdTypeV0(_) => "ClaimableBalanceIdTypeV0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ClaimableBalanceIdType {
+    pub const fn discriminant(&self) -> ClaimableBalanceIdType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::ClaimableBalanceIdTypeV0(_) => ClaimableBalanceIdType::ClaimableBalanceIdTypeV0,
         }
     }
 }
+
+impl Name for ClaimableBalanceId {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ClaimableBalanceIdType> for ClaimableBalanceId {
+    #[must_use]
+    fn discriminant(&self) -> ClaimableBalanceIdType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ClaimableBalanceIdType> for ClaimableBalanceId {}
 
 impl ReadXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
@@ -4479,12 +4835,21 @@ pub enum ClaimableBalanceFlags {
 
 impl ClaimableBalanceFlags {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::ClaimableBalanceClawbackEnabledFlag => "ClaimableBalanceClawbackEnabledFlag",
         }
     }
 }
+
+impl Name for ClaimableBalanceFlags {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ClaimableBalanceFlags {}
 
 impl fmt::Display for ClaimableBalanceFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -4551,20 +4916,36 @@ pub enum ClaimableBalanceEntryExtensionV1Ext {
 
 impl ClaimableBalanceEntryExtensionV1Ext {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for ClaimableBalanceEntryExtensionV1Ext {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for ClaimableBalanceEntryExtensionV1Ext {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for ClaimableBalanceEntryExtensionV1Ext {}
 
 impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
@@ -4650,7 +5031,7 @@ pub enum ClaimableBalanceEntryExt {
 
 impl ClaimableBalanceEntryExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
@@ -4658,7 +5039,7 @@ impl ClaimableBalanceEntryExt {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
@@ -4666,6 +5047,22 @@ impl ClaimableBalanceEntryExt {
         }
     }
 }
+
+impl Name for ClaimableBalanceEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for ClaimableBalanceEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for ClaimableBalanceEntryExt {}
 
 impl ReadXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
@@ -4865,14 +5262,14 @@ pub enum LiquidityPoolEntryBody {
 
 impl LiquidityPoolEntryBody {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::LiquidityPoolConstantProduct(_) => "LiquidityPoolConstantProduct",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> LiquidityPoolType {
+    pub const fn discriminant(&self) -> LiquidityPoolType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::LiquidityPoolConstantProduct(_) => {
@@ -4881,6 +5278,22 @@ impl LiquidityPoolEntryBody {
         }
     }
 }
+
+impl Name for LiquidityPoolEntryBody {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<LiquidityPoolType> for LiquidityPoolEntryBody {
+    #[must_use]
+    fn discriminant(&self) -> LiquidityPoolType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<LiquidityPoolType> for LiquidityPoolEntryBody {}
 
 impl ReadXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
@@ -5010,12 +5423,21 @@ pub enum ConfigSettingType {
 
 impl ConfigSettingType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::ConfigSettingTypeUint32 => "ConfigSettingTypeUint32",
         }
     }
 }
+
+impl Name for ConfigSettingType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ConfigSettingType {}
 
 impl fmt::Display for ConfigSettingType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -5076,20 +5498,36 @@ pub enum ConfigSetting {
 
 impl ConfigSetting {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::ConfigSettingTypeUint32(_) => "ConfigSettingTypeUint32",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ConfigSettingType {
+    pub const fn discriminant(&self) -> ConfigSettingType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::ConfigSettingTypeUint32(_) => ConfigSettingType::ConfigSettingTypeUint32,
         }
     }
 }
+
+impl Name for ConfigSetting {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ConfigSettingType> for ConfigSetting {
+    #[must_use]
+    fn discriminant(&self) -> ConfigSettingType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ConfigSettingType> for ConfigSetting {}
 
 impl ReadXdr for ConfigSetting {
     #[cfg(feature = "std")]
@@ -5135,12 +5573,21 @@ pub enum ConfigSettingId {
 
 impl ConfigSettingId {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::ConfigSettingContractMaxSize => "ConfigSettingContractMaxSize",
         }
     }
 }
+
+impl Name for ConfigSettingId {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ConfigSettingId {}
 
 impl fmt::Display for ConfigSettingId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -5201,20 +5648,36 @@ pub enum ConfigSettingEntryExt {
 
 impl ConfigSettingEntryExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for ConfigSettingEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for ConfigSettingEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for ConfigSettingEntryExt {}
 
 impl ReadXdr for ConfigSettingEntryExt {
     #[cfg(feature = "std")]
@@ -5301,20 +5764,36 @@ pub enum LedgerEntryExtensionV1Ext {
 
 impl LedgerEntryExtensionV1Ext {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for LedgerEntryExtensionV1Ext {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for LedgerEntryExtensionV1Ext {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for LedgerEntryExtensionV1Ext {}
 
 impl ReadXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
@@ -5418,7 +5897,7 @@ pub enum LedgerEntryData {
 
 impl LedgerEntryData {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Account(_) => "Account",
             Self::Trustline(_) => "Trustline",
@@ -5432,7 +5911,7 @@ impl LedgerEntryData {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> LedgerEntryType {
+    pub const fn discriminant(&self) -> LedgerEntryType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Account(_) => LedgerEntryType::Account,
@@ -5446,6 +5925,22 @@ impl LedgerEntryData {
         }
     }
 }
+
+impl Name for LedgerEntryData {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<LedgerEntryType> for LedgerEntryData {
+    #[must_use]
+    fn discriminant(&self) -> LedgerEntryType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<LedgerEntryType> for LedgerEntryData {}
 
 impl ReadXdr for LedgerEntryData {
     #[cfg(feature = "std")]
@@ -5508,7 +6003,7 @@ pub enum LedgerEntryExt {
 
 impl LedgerEntryExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
@@ -5516,7 +6011,7 @@ impl LedgerEntryExt {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
@@ -5524,6 +6019,22 @@ impl LedgerEntryExt {
         }
     }
 }
+
+impl Name for LedgerEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for LedgerEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for LedgerEntryExt {}
 
 impl ReadXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
@@ -5937,7 +6448,7 @@ pub enum LedgerKey {
 
 impl LedgerKey {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Account(_) => "Account",
             Self::Trustline(_) => "Trustline",
@@ -5951,7 +6462,7 @@ impl LedgerKey {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> LedgerEntryType {
+    pub const fn discriminant(&self) -> LedgerEntryType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Account(_) => LedgerEntryType::Account,
@@ -5965,6 +6476,22 @@ impl LedgerKey {
         }
     }
 }
+
+impl Name for LedgerKey {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<LedgerEntryType> for LedgerKey {
+    #[must_use]
+    fn discriminant(&self) -> LedgerEntryType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<LedgerEntryType> for LedgerKey {}
 
 impl ReadXdr for LedgerKey {
     #[cfg(feature = "std")]
@@ -6048,7 +6575,7 @@ pub enum EnvelopeType {
 
 impl EnvelopeType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::TxV0 => "TxV0",
             Self::Scp => "Scp",
@@ -6063,6 +6590,15 @@ impl EnvelopeType {
         }
     }
 }
+
+impl Name for EnvelopeType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for EnvelopeType {}
 
 impl fmt::Display for EnvelopeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -6219,13 +6755,22 @@ pub enum StellarValueType {
 
 impl StellarValueType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Basic => "Basic",
             Self::Signed => "Signed",
         }
     }
 }
+
+impl Name for StellarValueType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for StellarValueType {}
 
 impl fmt::Display for StellarValueType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -6323,7 +6868,7 @@ pub enum StellarValueExt {
 
 impl StellarValueExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Basic => "Basic",
             Self::Signed(_) => "Signed",
@@ -6331,7 +6876,7 @@ impl StellarValueExt {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> StellarValueType {
+    pub const fn discriminant(&self) -> StellarValueType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Basic => StellarValueType::Basic,
@@ -6339,6 +6884,22 @@ impl StellarValueExt {
         }
     }
 }
+
+impl Name for StellarValueExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<StellarValueType> for StellarValueExt {
+    #[must_use]
+    fn discriminant(&self) -> StellarValueType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<StellarValueType> for StellarValueExt {}
 
 impl ReadXdr for StellarValueExt {
     #[cfg(feature = "std")]
@@ -6458,7 +7019,7 @@ pub enum LedgerHeaderFlags {
 
 impl LedgerHeaderFlags {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::LiquidityPoolTradingFlag => "LiquidityPoolTradingFlag",
             Self::LiquidityPoolDepositFlag => "LiquidityPoolDepositFlag",
@@ -6470,6 +7031,15 @@ impl LedgerHeaderFlags {
         }
     }
 }
+
+impl Name for LedgerHeaderFlags {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for LedgerHeaderFlags {}
 
 impl fmt::Display for LedgerHeaderFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -6536,20 +7106,36 @@ pub enum LedgerHeaderExtensionV1Ext {
 
 impl LedgerHeaderExtensionV1Ext {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for LedgerHeaderExtensionV1Ext {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for LedgerHeaderExtensionV1Ext {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for LedgerHeaderExtensionV1Ext {}
 
 impl ReadXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
@@ -6635,7 +7221,7 @@ pub enum LedgerHeaderExt {
 
 impl LedgerHeaderExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
@@ -6643,7 +7229,7 @@ impl LedgerHeaderExt {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
@@ -6651,6 +7237,22 @@ impl LedgerHeaderExt {
         }
     }
 }
+
+impl Name for LedgerHeaderExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for LedgerHeaderExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for LedgerHeaderExt {}
 
 impl ReadXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
@@ -6812,7 +7414,7 @@ pub enum LedgerUpgradeType {
 
 impl LedgerUpgradeType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Version => "Version",
             Self::BaseFee => "BaseFee",
@@ -6823,6 +7425,15 @@ impl LedgerUpgradeType {
         }
     }
 }
+
+impl Name for LedgerUpgradeType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for LedgerUpgradeType {}
 
 impl fmt::Display for LedgerUpgradeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -6940,7 +7551,7 @@ pub enum LedgerUpgrade {
 
 impl LedgerUpgrade {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Version(_) => "Version",
             Self::BaseFee(_) => "BaseFee",
@@ -6952,7 +7563,7 @@ impl LedgerUpgrade {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> LedgerUpgradeType {
+    pub const fn discriminant(&self) -> LedgerUpgradeType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Version(_) => LedgerUpgradeType::Version,
@@ -6964,6 +7575,22 @@ impl LedgerUpgrade {
         }
     }
 }
+
+impl Name for LedgerUpgrade {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<LedgerUpgradeType> for LedgerUpgrade {
+    #[must_use]
+    fn discriminant(&self) -> LedgerUpgradeType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<LedgerUpgradeType> for LedgerUpgrade {}
 
 impl ReadXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
@@ -7025,7 +7652,7 @@ pub enum BucketEntryType {
 
 impl BucketEntryType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Metaentry => "Metaentry",
             Self::Liveentry => "Liveentry",
@@ -7034,6 +7661,15 @@ impl BucketEntryType {
         }
     }
 }
+
+impl Name for BucketEntryType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for BucketEntryType {}
 
 impl fmt::Display for BucketEntryType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -7097,20 +7733,36 @@ pub enum BucketMetadataExt {
 
 impl BucketMetadataExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for BucketMetadataExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for BucketMetadataExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for BucketMetadataExt {}
 
 impl ReadXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
@@ -7204,7 +7856,7 @@ pub enum BucketEntry {
 
 impl BucketEntry {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Liveentry(_) => "Liveentry",
             Self::Initentry(_) => "Initentry",
@@ -7214,7 +7866,7 @@ impl BucketEntry {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> BucketEntryType {
+    pub const fn discriminant(&self) -> BucketEntryType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Liveentry(_) => BucketEntryType::Liveentry,
@@ -7224,6 +7876,22 @@ impl BucketEntry {
         }
     }
 }
+
+impl Name for BucketEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<BucketEntryType> for BucketEntry {
+    #[must_use]
+    fn discriminant(&self) -> BucketEntryType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<BucketEntryType> for BucketEntry {}
 
 impl ReadXdr for BucketEntry {
     #[cfg(feature = "std")]
@@ -7368,20 +8036,36 @@ pub enum TransactionHistoryEntryExt {
 
 impl TransactionHistoryEntryExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for TransactionHistoryEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TransactionHistoryEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for TransactionHistoryEntryExt {}
 
 impl ReadXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
@@ -7469,20 +8153,36 @@ pub enum TransactionHistoryResultEntryExt {
 
 impl TransactionHistoryResultEntryExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for TransactionHistoryResultEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TransactionHistoryResultEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for TransactionHistoryResultEntryExt {}
 
 impl ReadXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
@@ -7570,20 +8270,36 @@ pub enum LedgerHeaderHistoryEntryExt {
 
 impl LedgerHeaderHistoryEntryExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for LedgerHeaderHistoryEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for LedgerHeaderHistoryEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for LedgerHeaderHistoryEntryExt {}
 
 impl ReadXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
@@ -7737,20 +8453,36 @@ pub enum ScpHistoryEntry {
 
 impl ScpHistoryEntry {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
         }
     }
 }
+
+impl Name for ScpHistoryEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for ScpHistoryEntry {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for ScpHistoryEntry {}
 
 impl ReadXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
@@ -7800,7 +8532,7 @@ pub enum LedgerEntryChangeType {
 
 impl LedgerEntryChangeType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Created => "Created",
             Self::Updated => "Updated",
@@ -7809,6 +8541,15 @@ impl LedgerEntryChangeType {
         }
     }
 }
+
+impl Name for LedgerEntryChangeType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for LedgerEntryChangeType {}
 
 impl fmt::Display for LedgerEntryChangeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -7881,7 +8622,7 @@ pub enum LedgerEntryChange {
 
 impl LedgerEntryChange {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Created(_) => "Created",
             Self::Updated(_) => "Updated",
@@ -7891,7 +8632,7 @@ impl LedgerEntryChange {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> LedgerEntryChangeType {
+    pub const fn discriminant(&self) -> LedgerEntryChangeType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Created(_) => LedgerEntryChangeType::Created,
@@ -7901,6 +8642,22 @@ impl LedgerEntryChange {
         }
     }
 }
+
+impl Name for LedgerEntryChange {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<LedgerEntryChangeType> for LedgerEntryChange {
+    #[must_use]
+    fn discriminant(&self) -> LedgerEntryChangeType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<LedgerEntryChangeType> for LedgerEntryChange {}
 
 impl ReadXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
@@ -8142,7 +8899,7 @@ pub enum TransactionMeta {
 
 impl TransactionMeta {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
@@ -8151,7 +8908,7 @@ impl TransactionMeta {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
@@ -8160,6 +8917,22 @@ impl TransactionMeta {
         }
     }
 }
+
+impl Name for TransactionMeta {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TransactionMeta {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for TransactionMeta {}
 
 impl ReadXdr for TransactionMeta {
     #[cfg(feature = "std")]
@@ -8331,20 +9104,36 @@ pub enum LedgerCloseMeta {
 
 impl LedgerCloseMeta {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
         }
     }
 }
+
+impl Name for LedgerCloseMeta {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for LedgerCloseMeta {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for LedgerCloseMeta {}
 
 impl ReadXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
@@ -8396,7 +9185,7 @@ pub enum ErrorCode {
 
 impl ErrorCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Misc => "Misc",
             Self::Data => "Data",
@@ -8406,6 +9195,15 @@ impl ErrorCode {
         }
     }
 }
+
+impl Name for ErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ErrorCode {}
 
 impl fmt::Display for ErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -8663,13 +9461,22 @@ pub enum IpAddrType {
 
 impl IpAddrType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::IPv4 => "IPv4",
             Self::IPv6 => "IPv6",
         }
     }
 }
+
+impl Name for IpAddrType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for IpAddrType {}
 
 impl fmt::Display for IpAddrType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -8734,7 +9541,7 @@ pub enum PeerAddressIp {
 
 impl PeerAddressIp {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::IPv4(_) => "IPv4",
             Self::IPv6(_) => "IPv6",
@@ -8742,7 +9549,7 @@ impl PeerAddressIp {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> IpAddrType {
+    pub const fn discriminant(&self) -> IpAddrType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::IPv4(_) => IpAddrType::IPv4,
@@ -8750,6 +9557,22 @@ impl PeerAddressIp {
         }
     }
 }
+
+impl Name for PeerAddressIp {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<IpAddrType> for PeerAddressIp {
+    #[must_use]
+    fn discriminant(&self) -> IpAddrType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<IpAddrType> for PeerAddressIp {}
 
 impl ReadXdr for PeerAddressIp {
     #[cfg(feature = "std")]
@@ -8878,7 +9701,7 @@ pub enum MessageType {
 
 impl MessageType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::ErrorMsg => "ErrorMsg",
             Self::Auth => "Auth",
@@ -8899,6 +9722,15 @@ impl MessageType {
         }
     }
 }
+
+impl Name for MessageType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for MessageType {}
 
 impl fmt::Display for MessageType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -9007,12 +9839,21 @@ pub enum SurveyMessageCommandType {
 
 impl SurveyMessageCommandType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::SurveyTopology => "SurveyTopology",
         }
     }
 }
+
+impl Name for SurveyMessageCommandType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for SurveyMessageCommandType {}
 
 impl fmt::Display for SurveyMessageCommandType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -9528,20 +10369,36 @@ pub enum SurveyResponseBody {
 
 impl SurveyResponseBody {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::SurveyTopology(_) => "SurveyTopology",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> SurveyMessageCommandType {
+    pub const fn discriminant(&self) -> SurveyMessageCommandType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::SurveyTopology(_) => SurveyMessageCommandType::SurveyTopology,
         }
     }
 }
+
+impl Name for SurveyResponseBody {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<SurveyMessageCommandType> for SurveyResponseBody {
+    #[must_use]
+    fn discriminant(&self) -> SurveyMessageCommandType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<SurveyMessageCommandType> for SurveyResponseBody {}
 
 impl ReadXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
@@ -9638,7 +10495,7 @@ pub enum StellarMessage {
 
 impl StellarMessage {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::ErrorMsg(_) => "ErrorMsg",
             Self::Hello(_) => "Hello",
@@ -9660,7 +10517,7 @@ impl StellarMessage {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> MessageType {
+    pub const fn discriminant(&self) -> MessageType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::ErrorMsg(_) => MessageType::ErrorMsg,
@@ -9682,6 +10539,22 @@ impl StellarMessage {
         }
     }
 }
+
+impl Name for StellarMessage {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<MessageType> for StellarMessage {
+    #[must_use]
+    fn discriminant(&self) -> MessageType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<MessageType> for StellarMessage {}
 
 impl ReadXdr for StellarMessage {
     #[cfg(feature = "std")]
@@ -9801,20 +10674,36 @@ pub enum AuthenticatedMessage {
 
 impl AuthenticatedMessage {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> u32 {
+    pub const fn discriminant(&self) -> u32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
         }
     }
 }
+
+impl Name for AuthenticatedMessage {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<u32> for AuthenticatedMessage {
+    #[must_use]
+    fn discriminant(&self) -> u32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<u32> for AuthenticatedMessage {}
 
 impl ReadXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
@@ -9858,14 +10747,14 @@ pub enum LiquidityPoolParameters {
 
 impl LiquidityPoolParameters {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::LiquidityPoolConstantProduct(_) => "LiquidityPoolConstantProduct",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> LiquidityPoolType {
+    pub const fn discriminant(&self) -> LiquidityPoolType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::LiquidityPoolConstantProduct(_) => {
@@ -9874,6 +10763,22 @@ impl LiquidityPoolParameters {
         }
     }
 }
+
+impl Name for LiquidityPoolParameters {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<LiquidityPoolType> for LiquidityPoolParameters {
+    #[must_use]
+    fn discriminant(&self) -> LiquidityPoolType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<LiquidityPoolType> for LiquidityPoolParameters {}
 
 impl ReadXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
@@ -9959,7 +10864,7 @@ pub enum MuxedAccount {
 
 impl MuxedAccount {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Ed25519(_) => "Ed25519",
             Self::MuxedEd25519(_) => "MuxedEd25519",
@@ -9967,7 +10872,7 @@ impl MuxedAccount {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> CryptoKeyType {
+    pub const fn discriminant(&self) -> CryptoKeyType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Ed25519(_) => CryptoKeyType::Ed25519,
@@ -9975,6 +10880,22 @@ impl MuxedAccount {
         }
     }
 }
+
+impl Name for MuxedAccount {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<CryptoKeyType> for MuxedAccount {
+    #[must_use]
+    fn discriminant(&self) -> CryptoKeyType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<CryptoKeyType> for MuxedAccount {}
 
 impl ReadXdr for MuxedAccount {
     #[cfg(feature = "std")]
@@ -10134,7 +11055,7 @@ pub enum OperationType {
 
 impl OperationType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::CreateAccount => "CreateAccount",
             Self::Payment => "Payment",
@@ -10164,6 +11085,15 @@ impl OperationType {
         }
     }
 }
+
+impl Name for OperationType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for OperationType {}
 
 impl fmt::Display for OperationType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -10642,7 +11572,7 @@ pub enum ChangeTrustAsset {
 
 impl ChangeTrustAsset {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Native => "Native",
             Self::CreditAlphanum4(_) => "CreditAlphanum4",
@@ -10652,7 +11582,7 @@ impl ChangeTrustAsset {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> AssetType {
+    pub const fn discriminant(&self) -> AssetType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Native => AssetType::Native,
@@ -10662,6 +11592,22 @@ impl ChangeTrustAsset {
         }
     }
 }
+
+impl Name for ChangeTrustAsset {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<AssetType> for ChangeTrustAsset {
+    #[must_use]
+    fn discriminant(&self) -> AssetType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<AssetType> for ChangeTrustAsset {}
 
 impl ReadXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
@@ -10944,13 +11890,22 @@ pub enum RevokeSponsorshipType {
 
 impl RevokeSponsorshipType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::LedgerEntry => "LedgerEntry",
             Self::Signer => "Signer",
         }
     }
 }
+
+impl Name for RevokeSponsorshipType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for RevokeSponsorshipType {}
 
 impl fmt::Display for RevokeSponsorshipType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -11052,7 +12007,7 @@ pub enum RevokeSponsorshipOp {
 
 impl RevokeSponsorshipOp {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::LedgerEntry(_) => "LedgerEntry",
             Self::Signer(_) => "Signer",
@@ -11060,7 +12015,7 @@ impl RevokeSponsorshipOp {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> RevokeSponsorshipType {
+    pub const fn discriminant(&self) -> RevokeSponsorshipType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::LedgerEntry(_) => RevokeSponsorshipType::LedgerEntry,
@@ -11068,6 +12023,22 @@ impl RevokeSponsorshipOp {
         }
     }
 }
+
+impl Name for RevokeSponsorshipOp {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<RevokeSponsorshipType> for RevokeSponsorshipOp {
+    #[must_use]
+    fn discriminant(&self) -> RevokeSponsorshipType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<RevokeSponsorshipType> for RevokeSponsorshipOp {}
 
 impl ReadXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
@@ -11315,13 +12286,22 @@ pub enum HostFunction {
 
 impl HostFunction {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Call => "Call",
             Self::CreateContract => "CreateContract",
         }
     }
 }
+
+impl Name for HostFunction {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for HostFunction {}
 
 impl fmt::Display for HostFunction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -11497,7 +12477,7 @@ pub enum OperationBody {
 
 impl OperationBody {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::CreateAccount(_) => "CreateAccount",
             Self::Payment(_) => "Payment",
@@ -11528,7 +12508,7 @@ impl OperationBody {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> OperationType {
+    pub const fn discriminant(&self) -> OperationType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::CreateAccount(_) => OperationType::CreateAccount,
@@ -11559,6 +12539,22 @@ impl OperationBody {
         }
     }
 }
+
+impl Name for OperationBody {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<OperationType> for OperationBody {
+    #[must_use]
+    fn discriminant(&self) -> OperationType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<OperationType> for OperationBody {}
 
 impl ReadXdr for OperationBody {
     #[cfg(feature = "std")]
@@ -11943,7 +12939,7 @@ pub enum HashIdPreimage {
 
 impl HashIdPreimage {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::OpId(_) => "OpId",
             Self::PoolRevokeOpId(_) => "PoolRevokeOpId",
@@ -11953,7 +12949,7 @@ impl HashIdPreimage {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> EnvelopeType {
+    pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::OpId(_) => EnvelopeType::OpId,
@@ -11963,6 +12959,22 @@ impl HashIdPreimage {
         }
     }
 }
+
+impl Name for HashIdPreimage {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<EnvelopeType> for HashIdPreimage {
+    #[must_use]
+    fn discriminant(&self) -> EnvelopeType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<EnvelopeType> for HashIdPreimage {}
 
 impl ReadXdr for HashIdPreimage {
     #[cfg(feature = "std")]
@@ -12026,7 +13038,7 @@ pub enum MemoType {
 
 impl MemoType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::None => "None",
             Self::Text => "Text",
@@ -12036,6 +13048,15 @@ impl MemoType {
         }
     }
 }
+
+impl Name for MemoType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for MemoType {}
 
 impl fmt::Display for MemoType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -12112,7 +13133,7 @@ pub enum Memo {
 
 impl Memo {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::None => "None",
             Self::Text(_) => "Text",
@@ -12123,7 +13144,7 @@ impl Memo {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> MemoType {
+    pub const fn discriminant(&self) -> MemoType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::None => MemoType::None,
@@ -12134,6 +13155,22 @@ impl Memo {
         }
     }
 }
+
+impl Name for Memo {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<MemoType> for Memo {
+    #[must_use]
+    fn discriminant(&self) -> MemoType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<MemoType> for Memo {}
 
 impl ReadXdr for Memo {
     #[cfg(feature = "std")]
@@ -12327,7 +13364,7 @@ pub enum PreconditionType {
 
 impl PreconditionType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::None => "None",
             Self::Time => "Time",
@@ -12335,6 +13372,15 @@ impl PreconditionType {
         }
     }
 }
+
+impl Name for PreconditionType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for PreconditionType {}
 
 impl fmt::Display for PreconditionType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -12403,7 +13449,7 @@ pub enum Preconditions {
 
 impl Preconditions {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::None => "None",
             Self::Time(_) => "Time",
@@ -12412,7 +13458,7 @@ impl Preconditions {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> PreconditionType {
+    pub const fn discriminant(&self) -> PreconditionType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::None => PreconditionType::None,
@@ -12421,6 +13467,22 @@ impl Preconditions {
         }
     }
 }
+
+impl Name for Preconditions {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<PreconditionType> for Preconditions {
+    #[must_use]
+    fn discriminant(&self) -> PreconditionType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<PreconditionType> for Preconditions {}
 
 impl ReadXdr for Preconditions {
     #[cfg(feature = "std")]
@@ -12474,20 +13536,36 @@ pub enum TransactionV0Ext {
 
 impl TransactionV0Ext {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for TransactionV0Ext {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TransactionV0Ext {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for TransactionV0Ext {}
 
 impl ReadXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
@@ -12624,20 +13702,36 @@ pub enum TransactionExt {
 
 impl TransactionExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for TransactionExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TransactionExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for TransactionExt {}
 
 impl ReadXdr for TransactionExt {
     #[cfg(feature = "std")]
@@ -12785,20 +13879,36 @@ pub enum FeeBumpTransactionInnerTx {
 
 impl FeeBumpTransactionInnerTx {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Tx(_) => "Tx",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> EnvelopeType {
+    pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Tx(_) => EnvelopeType::Tx,
         }
     }
 }
+
+impl Name for FeeBumpTransactionInnerTx {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<EnvelopeType> for FeeBumpTransactionInnerTx {
+    #[must_use]
+    fn discriminant(&self) -> EnvelopeType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<EnvelopeType> for FeeBumpTransactionInnerTx {}
 
 impl ReadXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
@@ -12842,20 +13952,36 @@ pub enum FeeBumpTransactionExt {
 
 impl FeeBumpTransactionExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for FeeBumpTransactionExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for FeeBumpTransactionExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for FeeBumpTransactionExt {}
 
 impl ReadXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
@@ -12991,7 +14117,7 @@ pub enum TransactionEnvelope {
 
 impl TransactionEnvelope {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::TxV0(_) => "TxV0",
             Self::Tx(_) => "Tx",
@@ -13000,7 +14126,7 @@ impl TransactionEnvelope {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> EnvelopeType {
+    pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::TxV0(_) => EnvelopeType::TxV0,
@@ -13009,6 +14135,22 @@ impl TransactionEnvelope {
         }
     }
 }
+
+impl Name for TransactionEnvelope {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<EnvelopeType> for TransactionEnvelope {
+    #[must_use]
+    fn discriminant(&self) -> EnvelopeType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<EnvelopeType> for TransactionEnvelope {}
 
 impl ReadXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
@@ -13060,7 +14202,7 @@ pub enum TransactionSignaturePayloadTaggedTransaction {
 
 impl TransactionSignaturePayloadTaggedTransaction {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Tx(_) => "Tx",
             Self::TxFeeBump(_) => "TxFeeBump",
@@ -13068,7 +14210,7 @@ impl TransactionSignaturePayloadTaggedTransaction {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> EnvelopeType {
+    pub const fn discriminant(&self) -> EnvelopeType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Tx(_) => EnvelopeType::Tx,
@@ -13076,6 +14218,22 @@ impl TransactionSignaturePayloadTaggedTransaction {
         }
     }
 }
+
+impl Name for TransactionSignaturePayloadTaggedTransaction {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {
+    #[must_use]
+    fn discriminant(&self) -> EnvelopeType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {}
 
 impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
@@ -13166,7 +14324,7 @@ pub enum ClaimAtomType {
 
 impl ClaimAtomType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::OrderBook => "OrderBook",
@@ -13174,6 +14332,15 @@ impl ClaimAtomType {
         }
     }
 }
+
+impl Name for ClaimAtomType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ClaimAtomType {}
 
 impl fmt::Display for ClaimAtomType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -13399,7 +14566,7 @@ pub enum ClaimAtom {
 
 impl ClaimAtom {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
             Self::OrderBook(_) => "OrderBook",
@@ -13408,7 +14575,7 @@ impl ClaimAtom {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ClaimAtomType {
+    pub const fn discriminant(&self) -> ClaimAtomType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => ClaimAtomType::V0,
@@ -13417,6 +14584,22 @@ impl ClaimAtom {
         }
     }
 }
+
+impl Name for ClaimAtom {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ClaimAtomType> for ClaimAtom {
+    #[must_use]
+    fn discriminant(&self) -> ClaimAtomType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ClaimAtomType> for ClaimAtom {}
 
 impl ReadXdr for ClaimAtom {
     #[cfg(feature = "std")]
@@ -13476,7 +14659,7 @@ pub enum CreateAccountResultCode {
 
 impl CreateAccountResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -13486,6 +14669,15 @@ impl CreateAccountResultCode {
         }
     }
 }
+
+impl Name for CreateAccountResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for CreateAccountResultCode {}
 
 impl fmt::Display for CreateAccountResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -13559,7 +14751,7 @@ pub enum CreateAccountResult {
 
 impl CreateAccountResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -13570,7 +14762,7 @@ impl CreateAccountResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> CreateAccountResultCode {
+    pub const fn discriminant(&self) -> CreateAccountResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => CreateAccountResultCode::Success,
@@ -13581,6 +14773,22 @@ impl CreateAccountResult {
         }
     }
 }
+
+impl Name for CreateAccountResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<CreateAccountResultCode> for CreateAccountResult {
+    #[must_use]
+    fn discriminant(&self) -> CreateAccountResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<CreateAccountResultCode> for CreateAccountResult {}
 
 impl ReadXdr for CreateAccountResult {
     #[cfg(feature = "std")]
@@ -13653,7 +14861,7 @@ pub enum PaymentResultCode {
 
 impl PaymentResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -13668,6 +14876,15 @@ impl PaymentResultCode {
         }
     }
 }
+
+impl Name for PaymentResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for PaymentResultCode {}
 
 impl fmt::Display for PaymentResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -13756,7 +14973,7 @@ pub enum PaymentResult {
 
 impl PaymentResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -13772,7 +14989,7 @@ impl PaymentResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> PaymentResultCode {
+    pub const fn discriminant(&self) -> PaymentResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => PaymentResultCode::Success,
@@ -13788,6 +15005,22 @@ impl PaymentResult {
         }
     }
 }
+
+impl Name for PaymentResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<PaymentResultCode> for PaymentResult {
+    #[must_use]
+    fn discriminant(&self) -> PaymentResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<PaymentResultCode> for PaymentResult {}
 
 impl ReadXdr for PaymentResult {
     #[cfg(feature = "std")]
@@ -13885,7 +15118,7 @@ pub enum PathPaymentStrictReceiveResultCode {
 
 impl PathPaymentStrictReceiveResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -13903,6 +15136,15 @@ impl PathPaymentStrictReceiveResultCode {
         }
     }
 }
+
+impl Name for PathPaymentStrictReceiveResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for PathPaymentStrictReceiveResultCode {}
 
 impl fmt::Display for PathPaymentStrictReceiveResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -14077,7 +15319,7 @@ pub enum PathPaymentStrictReceiveResult {
 
 impl PathPaymentStrictReceiveResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -14096,7 +15338,7 @@ impl PathPaymentStrictReceiveResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
+    pub const fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => PathPaymentStrictReceiveResultCode::Success,
@@ -14115,6 +15357,22 @@ impl PathPaymentStrictReceiveResult {
         }
     }
 }
+
+impl Name for PathPaymentStrictReceiveResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResult {
+    #[must_use]
+    fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResult {}
 
 impl ReadXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
@@ -14220,7 +15478,7 @@ pub enum PathPaymentStrictSendResultCode {
 
 impl PathPaymentStrictSendResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -14238,6 +15496,15 @@ impl PathPaymentStrictSendResultCode {
         }
     }
 }
+
+impl Name for PathPaymentStrictSendResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for PathPaymentStrictSendResultCode {}
 
 impl fmt::Display for PathPaymentStrictSendResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -14374,7 +15641,7 @@ pub enum PathPaymentStrictSendResult {
 
 impl PathPaymentStrictSendResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -14393,7 +15660,7 @@ impl PathPaymentStrictSendResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> PathPaymentStrictSendResultCode {
+    pub const fn discriminant(&self) -> PathPaymentStrictSendResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => PathPaymentStrictSendResultCode::Success,
@@ -14412,6 +15679,22 @@ impl PathPaymentStrictSendResult {
         }
     }
 }
+
+impl Name for PathPaymentStrictSendResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {
+    #[must_use]
+    fn discriminant(&self) -> PathPaymentStrictSendResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {}
 
 impl ReadXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
@@ -14516,7 +15799,7 @@ pub enum ManageSellOfferResultCode {
 
 impl ManageSellOfferResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -14534,6 +15817,15 @@ impl ManageSellOfferResultCode {
         }
     }
 }
+
+impl Name for ManageSellOfferResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ManageSellOfferResultCode {}
 
 impl fmt::Display for ManageSellOfferResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -14610,7 +15902,7 @@ pub enum ManageOfferEffect {
 
 impl ManageOfferEffect {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Created => "Created",
             Self::Updated => "Updated",
@@ -14618,6 +15910,15 @@ impl ManageOfferEffect {
         }
     }
 }
+
+impl Name for ManageOfferEffect {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ManageOfferEffect {}
 
 impl fmt::Display for ManageOfferEffect {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -14685,7 +15986,7 @@ pub enum ManageOfferSuccessResultOffer {
 
 impl ManageOfferSuccessResultOffer {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Created(_) => "Created",
             Self::Updated(_) => "Updated",
@@ -14694,7 +15995,7 @@ impl ManageOfferSuccessResultOffer {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ManageOfferEffect {
+    pub const fn discriminant(&self) -> ManageOfferEffect {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Created(_) => ManageOfferEffect::Created,
@@ -14703,6 +16004,22 @@ impl ManageOfferSuccessResultOffer {
         }
     }
 }
+
+impl Name for ManageOfferSuccessResultOffer {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ManageOfferEffect> for ManageOfferSuccessResultOffer {
+    #[must_use]
+    fn discriminant(&self) -> ManageOfferEffect {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ManageOfferEffect> for ManageOfferSuccessResultOffer {}
 
 impl ReadXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
@@ -14818,7 +16135,7 @@ pub enum ManageSellOfferResult {
 
 impl ManageSellOfferResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -14837,7 +16154,7 @@ impl ManageSellOfferResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ManageSellOfferResultCode {
+    pub const fn discriminant(&self) -> ManageSellOfferResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => ManageSellOfferResultCode::Success,
@@ -14856,6 +16173,22 @@ impl ManageSellOfferResult {
         }
     }
 }
+
+impl Name for ManageSellOfferResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ManageSellOfferResultCode> for ManageSellOfferResult {
+    #[must_use]
+    fn discriminant(&self) -> ManageSellOfferResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ManageSellOfferResultCode> for ManageSellOfferResult {}
 
 impl ReadXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
@@ -14956,7 +16289,7 @@ pub enum ManageBuyOfferResultCode {
 
 impl ManageBuyOfferResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -14974,6 +16307,15 @@ impl ManageBuyOfferResultCode {
         }
     }
 }
+
+impl Name for ManageBuyOfferResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ManageBuyOfferResultCode {}
 
 impl fmt::Display for ManageBuyOfferResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -15071,7 +16413,7 @@ pub enum ManageBuyOfferResult {
 
 impl ManageBuyOfferResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -15090,7 +16432,7 @@ impl ManageBuyOfferResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ManageBuyOfferResultCode {
+    pub const fn discriminant(&self) -> ManageBuyOfferResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => ManageBuyOfferResultCode::Success,
@@ -15109,6 +16451,22 @@ impl ManageBuyOfferResult {
         }
     }
 }
+
+impl Name for ManageBuyOfferResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ManageBuyOfferResultCode> for ManageBuyOfferResult {
+    #[must_use]
+    fn discriminant(&self) -> ManageBuyOfferResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ManageBuyOfferResultCode> for ManageBuyOfferResult {}
 
 impl ReadXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
@@ -15201,7 +16559,7 @@ pub enum SetOptionsResultCode {
 
 impl SetOptionsResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::LowReserve => "LowReserve",
@@ -15217,6 +16575,15 @@ impl SetOptionsResultCode {
         }
     }
 }
+
+impl Name for SetOptionsResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for SetOptionsResultCode {}
 
 impl fmt::Display for SetOptionsResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -15308,7 +16675,7 @@ pub enum SetOptionsResult {
 
 impl SetOptionsResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::LowReserve => "LowReserve",
@@ -15325,7 +16692,7 @@ impl SetOptionsResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> SetOptionsResultCode {
+    pub const fn discriminant(&self) -> SetOptionsResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => SetOptionsResultCode::Success,
@@ -15342,6 +16709,22 @@ impl SetOptionsResult {
         }
     }
 }
+
+impl Name for SetOptionsResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<SetOptionsResultCode> for SetOptionsResult {
+    #[must_use]
+    fn discriminant(&self) -> SetOptionsResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<SetOptionsResultCode> for SetOptionsResult {}
 
 impl ReadXdr for SetOptionsResult {
     #[cfg(feature = "std")]
@@ -15427,7 +16810,7 @@ pub enum ChangeTrustResultCode {
 
 impl ChangeTrustResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -15441,6 +16824,15 @@ impl ChangeTrustResultCode {
         }
     }
 }
+
+impl Name for ChangeTrustResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ChangeTrustResultCode {}
 
 impl fmt::Display for ChangeTrustResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -15526,7 +16918,7 @@ pub enum ChangeTrustResult {
 
 impl ChangeTrustResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -15541,7 +16933,7 @@ impl ChangeTrustResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ChangeTrustResultCode {
+    pub const fn discriminant(&self) -> ChangeTrustResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ChangeTrustResultCode::Success,
@@ -15556,6 +16948,22 @@ impl ChangeTrustResult {
         }
     }
 }
+
+impl Name for ChangeTrustResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ChangeTrustResultCode> for ChangeTrustResult {
+    #[must_use]
+    fn discriminant(&self) -> ChangeTrustResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ChangeTrustResultCode> for ChangeTrustResult {}
 
 impl ReadXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
@@ -15631,7 +17039,7 @@ pub enum AllowTrustResultCode {
 
 impl AllowTrustResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -15643,6 +17051,15 @@ impl AllowTrustResultCode {
         }
     }
 }
+
+impl Name for AllowTrustResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for AllowTrustResultCode {}
 
 impl fmt::Display for AllowTrustResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -15722,7 +17139,7 @@ pub enum AllowTrustResult {
 
 impl AllowTrustResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -15735,7 +17152,7 @@ impl AllowTrustResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> AllowTrustResultCode {
+    pub const fn discriminant(&self) -> AllowTrustResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => AllowTrustResultCode::Success,
@@ -15748,6 +17165,22 @@ impl AllowTrustResult {
         }
     }
 }
+
+impl Name for AllowTrustResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<AllowTrustResultCode> for AllowTrustResult {
+    #[must_use]
+    fn discriminant(&self) -> AllowTrustResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<AllowTrustResultCode> for AllowTrustResult {}
 
 impl ReadXdr for AllowTrustResult {
     #[cfg(feature = "std")]
@@ -15820,7 +17253,7 @@ pub enum AccountMergeResultCode {
 
 impl AccountMergeResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -15833,6 +17266,15 @@ impl AccountMergeResultCode {
         }
     }
 }
+
+impl Name for AccountMergeResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for AccountMergeResultCode {}
 
 impl fmt::Display for AccountMergeResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -15915,7 +17357,7 @@ pub enum AccountMergeResult {
 
 impl AccountMergeResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -15929,7 +17371,7 @@ impl AccountMergeResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> AccountMergeResultCode {
+    pub const fn discriminant(&self) -> AccountMergeResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => AccountMergeResultCode::Success,
@@ -15943,6 +17385,22 @@ impl AccountMergeResult {
         }
     }
 }
+
+impl Name for AccountMergeResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<AccountMergeResultCode> for AccountMergeResult {
+    #[must_use]
+    fn discriminant(&self) -> AccountMergeResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<AccountMergeResultCode> for AccountMergeResult {}
 
 impl ReadXdr for AccountMergeResult {
     #[cfg(feature = "std")]
@@ -16004,13 +17462,22 @@ pub enum InflationResultCode {
 
 impl InflationResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::NotTime => "NotTime",
         }
     }
 }
+
+impl Name for InflationResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for InflationResultCode {}
 
 impl fmt::Display for InflationResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -16108,7 +17575,7 @@ pub enum InflationResult {
 
 impl InflationResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success(_) => "Success",
             Self::NotTime => "NotTime",
@@ -16116,7 +17583,7 @@ impl InflationResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> InflationResultCode {
+    pub const fn discriminant(&self) -> InflationResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => InflationResultCode::Success,
@@ -16124,6 +17591,22 @@ impl InflationResult {
         }
     }
 }
+
+impl Name for InflationResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<InflationResultCode> for InflationResult {
+    #[must_use]
+    fn discriminant(&self) -> InflationResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<InflationResultCode> for InflationResult {}
 
 impl ReadXdr for InflationResult {
     #[cfg(feature = "std")]
@@ -16181,7 +17664,7 @@ pub enum ManageDataResultCode {
 
 impl ManageDataResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::NotSupportedYet => "NotSupportedYet",
@@ -16191,6 +17674,15 @@ impl ManageDataResultCode {
         }
     }
 }
+
+impl Name for ManageDataResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ManageDataResultCode {}
 
 impl fmt::Display for ManageDataResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -16264,7 +17756,7 @@ pub enum ManageDataResult {
 
 impl ManageDataResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::NotSupportedYet => "NotSupportedYet",
@@ -16275,7 +17767,7 @@ impl ManageDataResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ManageDataResultCode {
+    pub const fn discriminant(&self) -> ManageDataResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ManageDataResultCode::Success,
@@ -16286,6 +17778,22 @@ impl ManageDataResult {
         }
     }
 }
+
+impl Name for ManageDataResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ManageDataResultCode> for ManageDataResult {
+    #[must_use]
+    fn discriminant(&self) -> ManageDataResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ManageDataResultCode> for ManageDataResult {}
 
 impl ReadXdr for ManageDataResult {
     #[cfg(feature = "std")]
@@ -16341,13 +17849,22 @@ pub enum BumpSequenceResultCode {
 
 impl BumpSequenceResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::BadSeq => "BadSeq",
         }
     }
 }
+
+impl Name for BumpSequenceResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for BumpSequenceResultCode {}
 
 impl fmt::Display for BumpSequenceResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -16412,7 +17929,7 @@ pub enum BumpSequenceResult {
 
 impl BumpSequenceResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::BadSeq => "BadSeq",
@@ -16420,7 +17937,7 @@ impl BumpSequenceResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> BumpSequenceResultCode {
+    pub const fn discriminant(&self) -> BumpSequenceResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => BumpSequenceResultCode::Success,
@@ -16428,6 +17945,22 @@ impl BumpSequenceResult {
         }
     }
 }
+
+impl Name for BumpSequenceResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<BumpSequenceResultCode> for BumpSequenceResult {
+    #[must_use]
+    fn discriminant(&self) -> BumpSequenceResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<BumpSequenceResultCode> for BumpSequenceResult {}
 
 impl ReadXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
@@ -16483,7 +18016,7 @@ pub enum CreateClaimableBalanceResultCode {
 
 impl CreateClaimableBalanceResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -16494,6 +18027,15 @@ impl CreateClaimableBalanceResultCode {
         }
     }
 }
+
+impl Name for CreateClaimableBalanceResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for CreateClaimableBalanceResultCode {}
 
 impl fmt::Display for CreateClaimableBalanceResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -16571,7 +18113,7 @@ pub enum CreateClaimableBalanceResult {
 
 impl CreateClaimableBalanceResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
@@ -16583,7 +18125,7 @@ impl CreateClaimableBalanceResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> CreateClaimableBalanceResultCode {
+    pub const fn discriminant(&self) -> CreateClaimableBalanceResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success(_) => CreateClaimableBalanceResultCode::Success,
@@ -16595,6 +18137,22 @@ impl CreateClaimableBalanceResult {
         }
     }
 }
+
+impl Name for CreateClaimableBalanceResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResult {
+    #[must_use]
+    fn discriminant(&self) -> CreateClaimableBalanceResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResult {}
 
 impl ReadXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
@@ -16661,7 +18219,7 @@ pub enum ClaimClaimableBalanceResultCode {
 
 impl ClaimClaimableBalanceResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -16672,6 +18230,15 @@ impl ClaimClaimableBalanceResultCode {
         }
     }
 }
+
+impl Name for ClaimClaimableBalanceResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ClaimClaimableBalanceResultCode {}
 
 impl fmt::Display for ClaimClaimableBalanceResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -16748,7 +18315,7 @@ pub enum ClaimClaimableBalanceResult {
 
 impl ClaimClaimableBalanceResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -16760,7 +18327,7 @@ impl ClaimClaimableBalanceResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ClaimClaimableBalanceResultCode {
+    pub const fn discriminant(&self) -> ClaimClaimableBalanceResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ClaimClaimableBalanceResultCode::Success,
@@ -16772,6 +18339,22 @@ impl ClaimClaimableBalanceResult {
         }
     }
 }
+
+impl Name for ClaimClaimableBalanceResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {
+    #[must_use]
+    fn discriminant(&self) -> ClaimClaimableBalanceResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {}
 
 impl ReadXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
@@ -16835,7 +18418,7 @@ pub enum BeginSponsoringFutureReservesResultCode {
 
 impl BeginSponsoringFutureReservesResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -16844,6 +18427,15 @@ impl BeginSponsoringFutureReservesResultCode {
         }
     }
 }
+
+impl Name for BeginSponsoringFutureReservesResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for BeginSponsoringFutureReservesResultCode {}
 
 impl fmt::Display for BeginSponsoringFutureReservesResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -16915,7 +18507,7 @@ pub enum BeginSponsoringFutureReservesResult {
 
 impl BeginSponsoringFutureReservesResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -16925,7 +18517,7 @@ impl BeginSponsoringFutureReservesResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
+    pub const fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => BeginSponsoringFutureReservesResultCode::Success,
@@ -16935,6 +18527,22 @@ impl BeginSponsoringFutureReservesResult {
         }
     }
 }
+
+impl Name for BeginSponsoringFutureReservesResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureReservesResult {
+    #[must_use]
+    fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureReservesResult {}
 
 impl ReadXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
@@ -16990,13 +18598,22 @@ pub enum EndSponsoringFutureReservesResultCode {
 
 impl EndSponsoringFutureReservesResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::NotSponsored => "NotSponsored",
         }
     }
 }
+
+impl Name for EndSponsoringFutureReservesResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for EndSponsoringFutureReservesResultCode {}
 
 impl fmt::Display for EndSponsoringFutureReservesResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -17062,7 +18679,7 @@ pub enum EndSponsoringFutureReservesResult {
 
 impl EndSponsoringFutureReservesResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::NotSponsored => "NotSponsored",
@@ -17070,7 +18687,7 @@ impl EndSponsoringFutureReservesResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> EndSponsoringFutureReservesResultCode {
+    pub const fn discriminant(&self) -> EndSponsoringFutureReservesResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => EndSponsoringFutureReservesResultCode::Success,
@@ -17078,6 +18695,22 @@ impl EndSponsoringFutureReservesResult {
         }
     }
 }
+
+impl Name for EndSponsoringFutureReservesResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReservesResult {
+    #[must_use]
+    fn discriminant(&self) -> EndSponsoringFutureReservesResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReservesResult {}
 
 impl ReadXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
@@ -17137,7 +18770,7 @@ pub enum RevokeSponsorshipResultCode {
 
 impl RevokeSponsorshipResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -17148,6 +18781,15 @@ impl RevokeSponsorshipResultCode {
         }
     }
 }
+
+impl Name for RevokeSponsorshipResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for RevokeSponsorshipResultCode {}
 
 impl fmt::Display for RevokeSponsorshipResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -17224,7 +18866,7 @@ pub enum RevokeSponsorshipResult {
 
 impl RevokeSponsorshipResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -17236,7 +18878,7 @@ impl RevokeSponsorshipResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> RevokeSponsorshipResultCode {
+    pub const fn discriminant(&self) -> RevokeSponsorshipResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => RevokeSponsorshipResultCode::Success,
@@ -17248,6 +18890,22 @@ impl RevokeSponsorshipResult {
         }
     }
 }
+
+impl Name for RevokeSponsorshipResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {
+    #[must_use]
+    fn discriminant(&self) -> RevokeSponsorshipResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {}
 
 impl ReadXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
@@ -17313,7 +18971,7 @@ pub enum ClawbackResultCode {
 
 impl ClawbackResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17323,6 +18981,15 @@ impl ClawbackResultCode {
         }
     }
 }
+
+impl Name for ClawbackResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ClawbackResultCode {}
 
 impl fmt::Display for ClawbackResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -17396,7 +19063,7 @@ pub enum ClawbackResult {
 
 impl ClawbackResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17407,7 +19074,7 @@ impl ClawbackResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ClawbackResultCode {
+    pub const fn discriminant(&self) -> ClawbackResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ClawbackResultCode::Success,
@@ -17418,6 +19085,22 @@ impl ClawbackResult {
         }
     }
 }
+
+impl Name for ClawbackResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ClawbackResultCode> for ClawbackResult {
+    #[must_use]
+    fn discriminant(&self) -> ClawbackResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ClawbackResultCode> for ClawbackResult {}
 
 impl ReadXdr for ClawbackResult {
     #[cfg(feature = "std")]
@@ -17478,7 +19161,7 @@ pub enum ClawbackClaimableBalanceResultCode {
 
 impl ClawbackClaimableBalanceResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -17487,6 +19170,15 @@ impl ClawbackClaimableBalanceResultCode {
         }
     }
 }
+
+impl Name for ClawbackClaimableBalanceResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ClawbackClaimableBalanceResultCode {}
 
 impl fmt::Display for ClawbackClaimableBalanceResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -17558,7 +19250,7 @@ pub enum ClawbackClaimableBalanceResult {
 
 impl ClawbackClaimableBalanceResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::DoesNotExist => "DoesNotExist",
@@ -17568,7 +19260,7 @@ impl ClawbackClaimableBalanceResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ClawbackClaimableBalanceResultCode {
+    pub const fn discriminant(&self) -> ClawbackClaimableBalanceResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => ClawbackClaimableBalanceResultCode::Success,
@@ -17578,6 +19270,22 @@ impl ClawbackClaimableBalanceResult {
         }
     }
 }
+
+impl Name for ClawbackClaimableBalanceResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResult {
+    #[must_use]
+    fn discriminant(&self) -> ClawbackClaimableBalanceResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResult {}
 
 impl ReadXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
@@ -17642,7 +19350,7 @@ pub enum SetTrustLineFlagsResultCode {
 
 impl SetTrustLineFlagsResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17653,6 +19361,15 @@ impl SetTrustLineFlagsResultCode {
         }
     }
 }
+
+impl Name for SetTrustLineFlagsResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for SetTrustLineFlagsResultCode {}
 
 impl fmt::Display for SetTrustLineFlagsResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -17729,7 +19446,7 @@ pub enum SetTrustLineFlagsResult {
 
 impl SetTrustLineFlagsResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17741,7 +19458,7 @@ impl SetTrustLineFlagsResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> SetTrustLineFlagsResultCode {
+    pub const fn discriminant(&self) -> SetTrustLineFlagsResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => SetTrustLineFlagsResultCode::Success,
@@ -17753,6 +19470,22 @@ impl SetTrustLineFlagsResult {
         }
     }
 }
+
+impl Name for SetTrustLineFlagsResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {
+    #[must_use]
+    fn discriminant(&self) -> SetTrustLineFlagsResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {}
 
 impl ReadXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
@@ -17828,7 +19561,7 @@ pub enum LiquidityPoolDepositResultCode {
 
 impl LiquidityPoolDepositResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17841,6 +19574,15 @@ impl LiquidityPoolDepositResultCode {
         }
     }
 }
+
+impl Name for LiquidityPoolDepositResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for LiquidityPoolDepositResultCode {}
 
 impl fmt::Display for LiquidityPoolDepositResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -17923,7 +19665,7 @@ pub enum LiquidityPoolDepositResult {
 
 impl LiquidityPoolDepositResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -17937,7 +19679,7 @@ impl LiquidityPoolDepositResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> LiquidityPoolDepositResultCode {
+    pub const fn discriminant(&self) -> LiquidityPoolDepositResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => LiquidityPoolDepositResultCode::Success,
@@ -17951,6 +19693,22 @@ impl LiquidityPoolDepositResult {
         }
     }
 }
+
+impl Name for LiquidityPoolDepositResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {
+    #[must_use]
+    fn discriminant(&self) -> LiquidityPoolDepositResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {}
 
 impl ReadXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
@@ -18025,7 +19783,7 @@ pub enum LiquidityPoolWithdrawResultCode {
 
 impl LiquidityPoolWithdrawResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -18036,6 +19794,15 @@ impl LiquidityPoolWithdrawResultCode {
         }
     }
 }
+
+impl Name for LiquidityPoolWithdrawResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for LiquidityPoolWithdrawResultCode {}
 
 impl fmt::Display for LiquidityPoolWithdrawResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -18112,7 +19879,7 @@ pub enum LiquidityPoolWithdrawResult {
 
 impl LiquidityPoolWithdrawResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -18124,7 +19891,7 @@ impl LiquidityPoolWithdrawResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> LiquidityPoolWithdrawResultCode {
+    pub const fn discriminant(&self) -> LiquidityPoolWithdrawResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => LiquidityPoolWithdrawResultCode::Success,
@@ -18136,6 +19903,22 @@ impl LiquidityPoolWithdrawResult {
         }
     }
 }
+
+impl Name for LiquidityPoolWithdrawResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {
+    #[must_use]
+    fn discriminant(&self) -> LiquidityPoolWithdrawResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {}
 
 impl ReadXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
@@ -18197,7 +19980,7 @@ pub enum InvokeHostFunctionResultCode {
 
 impl InvokeHostFunctionResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -18205,6 +19988,15 @@ impl InvokeHostFunctionResultCode {
         }
     }
 }
+
+impl Name for InvokeHostFunctionResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for InvokeHostFunctionResultCode {}
 
 impl fmt::Display for InvokeHostFunctionResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -18272,7 +20064,7 @@ pub enum InvokeHostFunctionResult {
 
 impl InvokeHostFunctionResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
@@ -18281,7 +20073,7 @@ impl InvokeHostFunctionResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> InvokeHostFunctionResultCode {
+    pub const fn discriminant(&self) -> InvokeHostFunctionResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Success => InvokeHostFunctionResultCode::Success,
@@ -18290,6 +20082,22 @@ impl InvokeHostFunctionResult {
         }
     }
 }
+
+impl Name for InvokeHostFunctionResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {
+    #[must_use]
+    fn discriminant(&self) -> InvokeHostFunctionResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {}
 
 impl ReadXdr for InvokeHostFunctionResult {
     #[cfg(feature = "std")]
@@ -18351,7 +20159,7 @@ pub enum OperationResultCode {
 
 impl OperationResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::OpInner => "OpInner",
             Self::OpBadAuth => "OpBadAuth",
@@ -18363,6 +20171,15 @@ impl OperationResultCode {
         }
     }
 }
+
+impl Name for OperationResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for OperationResultCode {}
 
 impl fmt::Display for OperationResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -18501,7 +20318,7 @@ pub enum OperationResultTr {
 
 impl OperationResultTr {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::CreateAccount(_) => "CreateAccount",
             Self::Payment(_) => "Payment",
@@ -18532,7 +20349,7 @@ impl OperationResultTr {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> OperationType {
+    pub const fn discriminant(&self) -> OperationType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::CreateAccount(_) => OperationType::CreateAccount,
@@ -18563,6 +20380,22 @@ impl OperationResultTr {
         }
     }
 }
+
+impl Name for OperationResultTr {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<OperationType> for OperationResultTr {
+    #[must_use]
+    fn discriminant(&self) -> OperationType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<OperationType> for OperationResultTr {}
 
 impl ReadXdr for OperationResultTr {
     #[cfg(feature = "std")]
@@ -18750,7 +20583,7 @@ pub enum OperationResult {
 
 impl OperationResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::OpInner(_) => "OpInner",
             Self::OpBadAuth => "OpBadAuth",
@@ -18763,7 +20596,7 @@ impl OperationResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> OperationResultCode {
+    pub const fn discriminant(&self) -> OperationResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::OpInner(_) => OperationResultCode::OpInner,
@@ -18776,6 +20609,22 @@ impl OperationResult {
         }
     }
 }
+
+impl Name for OperationResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<OperationResultCode> for OperationResult {
+    #[must_use]
+    fn discriminant(&self) -> OperationResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<OperationResultCode> for OperationResult {}
 
 impl ReadXdr for OperationResult {
     #[cfg(feature = "std")]
@@ -18870,7 +20719,7 @@ pub enum TransactionResultCode {
 
 impl TransactionResultCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::TxFeeBumpInnerSuccess => "TxFeeBumpInnerSuccess",
             Self::TxSuccess => "TxSuccess",
@@ -18893,6 +20742,15 @@ impl TransactionResultCode {
         }
     }
 }
+
+impl Name for TransactionResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for TransactionResultCode {}
 
 impl fmt::Display for TransactionResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -19003,7 +20861,7 @@ pub enum InnerTransactionResultResult {
 
 impl InnerTransactionResultResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::TxSuccess(_) => "TxSuccess",
             Self::TxFailed(_) => "TxFailed",
@@ -19025,7 +20883,7 @@ impl InnerTransactionResultResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> TransactionResultCode {
+    pub const fn discriminant(&self) -> TransactionResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::TxSuccess(_) => TransactionResultCode::TxSuccess,
@@ -19047,6 +20905,22 @@ impl InnerTransactionResultResult {
         }
     }
 }
+
+impl Name for InnerTransactionResultResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<TransactionResultCode> for InnerTransactionResultResult {
+    #[must_use]
+    fn discriminant(&self) -> TransactionResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<TransactionResultCode> for InnerTransactionResultResult {}
 
 impl ReadXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
@@ -19124,20 +20998,36 @@ pub enum InnerTransactionResultExt {
 
 impl InnerTransactionResultExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for InnerTransactionResultExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for InnerTransactionResultExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for InnerTransactionResultExt {}
 
 impl ReadXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
@@ -19320,7 +21210,7 @@ pub enum TransactionResultResult {
 
 impl TransactionResultResult {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::TxFeeBumpInnerSuccess(_) => "TxFeeBumpInnerSuccess",
             Self::TxFeeBumpInnerFailed(_) => "TxFeeBumpInnerFailed",
@@ -19344,7 +21234,7 @@ impl TransactionResultResult {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> TransactionResultCode {
+    pub const fn discriminant(&self) -> TransactionResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::TxFeeBumpInnerSuccess(_) => TransactionResultCode::TxFeeBumpInnerSuccess,
@@ -19368,6 +21258,22 @@ impl TransactionResultResult {
         }
     }
 }
+
+impl Name for TransactionResultResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<TransactionResultCode> for TransactionResultResult {
+    #[must_use]
+    fn discriminant(&self) -> TransactionResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<TransactionResultCode> for TransactionResultResult {}
 
 impl ReadXdr for TransactionResultResult {
     #[cfg(feature = "std")]
@@ -19453,20 +21359,36 @@ pub enum TransactionResultExt {
 
 impl TransactionResultExt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for TransactionResultExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TransactionResultExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for TransactionResultExt {}
 
 impl ReadXdr for TransactionResultExt {
     #[cfg(feature = "std")]
@@ -19692,20 +21614,36 @@ pub enum ExtensionPoint {
 
 impl ExtensionPoint {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
         }
     }
 }
+
+impl Name for ExtensionPoint {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for ExtensionPoint {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for ExtensionPoint {}
 
 impl ReadXdr for ExtensionPoint {
     #[cfg(feature = "std")]
@@ -19759,7 +21697,7 @@ pub enum CryptoKeyType {
 
 impl CryptoKeyType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Ed25519 => "Ed25519",
             Self::PreAuthTx => "PreAuthTx",
@@ -19769,6 +21707,15 @@ impl CryptoKeyType {
         }
     }
 }
+
+impl Name for CryptoKeyType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for CryptoKeyType {}
 
 impl fmt::Display for CryptoKeyType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -19833,12 +21780,21 @@ pub enum PublicKeyType {
 
 impl PublicKeyType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::PublicKeyTypeEd25519 => "PublicKeyTypeEd25519",
         }
     }
 }
+
+impl Name for PublicKeyType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for PublicKeyType {}
 
 impl fmt::Display for PublicKeyType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -19905,7 +21861,7 @@ pub enum SignerKeyType {
 
 impl SignerKeyType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Ed25519 => "Ed25519",
             Self::PreAuthTx => "PreAuthTx",
@@ -19914,6 +21870,15 @@ impl SignerKeyType {
         }
     }
 }
+
+impl Name for SignerKeyType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for SignerKeyType {}
 
 impl fmt::Display for SignerKeyType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -19977,20 +21942,36 @@ pub enum PublicKey {
 
 impl PublicKey {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::PublicKeyTypeEd25519(_) => "PublicKeyTypeEd25519",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> PublicKeyType {
+    pub const fn discriminant(&self) -> PublicKeyType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::PublicKeyTypeEd25519(_) => PublicKeyType::PublicKeyTypeEd25519,
         }
     }
 }
+
+impl Name for PublicKey {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<PublicKeyType> for PublicKey {
+    #[must_use]
+    fn discriminant(&self) -> PublicKeyType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<PublicKeyType> for PublicKey {}
 
 impl ReadXdr for PublicKey {
     #[cfg(feature = "std")]
@@ -20088,7 +22069,7 @@ pub enum SignerKey {
 
 impl SignerKey {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Ed25519(_) => "Ed25519",
             Self::PreAuthTx(_) => "PreAuthTx",
@@ -20098,7 +22079,7 @@ impl SignerKey {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> SignerKeyType {
+    pub const fn discriminant(&self) -> SignerKeyType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Ed25519(_) => SignerKeyType::Ed25519,
@@ -20108,6 +22089,22 @@ impl SignerKey {
         }
     }
 }
+
+impl Name for SignerKey {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<SignerKeyType> for SignerKey {
+    #[must_use]
+    fn discriminant(&self) -> SignerKeyType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<SignerKeyType> for SignerKey {}
 
 impl ReadXdr for SignerKey {
     #[cfg(feature = "std")]
@@ -20468,7 +22465,7 @@ pub enum ScValType {
 
 impl ScValType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::U63 => "U63",
             Self::U32 => "U32",
@@ -20481,6 +22478,15 @@ impl ScValType {
         }
     }
 }
+
+impl Name for ScValType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScValType {}
 
 impl fmt::Display for ScValType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -20554,7 +22560,7 @@ pub enum ScStatic {
 
 impl ScStatic {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Void => "Void",
             Self::True => "True",
@@ -20563,6 +22569,15 @@ impl ScStatic {
         }
     }
 }
+
+impl Name for ScStatic {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScStatic {}
 
 impl fmt::Display for ScStatic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -20641,7 +22656,7 @@ pub enum ScStatusType {
 
 impl ScStatusType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Ok => "Ok",
             Self::UnknownError => "UnknownError",
@@ -20654,6 +22669,15 @@ impl ScStatusType {
         }
     }
 }
+
+impl Name for ScStatusType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScStatusType {}
 
 impl fmt::Display for ScStatusType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -20743,7 +22767,7 @@ pub enum ScHostValErrorCode {
 
 impl ScHostValErrorCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::UnknownError => "UnknownError",
             Self::ReservedTagValue => "ReservedTagValue",
@@ -20760,6 +22784,15 @@ impl ScHostValErrorCode {
         }
     }
 }
+
+impl Name for ScHostValErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScHostValErrorCode {}
 
 impl fmt::Display for ScHostValErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -20843,7 +22876,7 @@ pub enum ScHostObjErrorCode {
 
 impl ScHostObjErrorCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::UnknownError => "UnknownError",
             Self::UnknownReference => "UnknownReference",
@@ -20855,6 +22888,15 @@ impl ScHostObjErrorCode {
         }
     }
 }
+
+impl Name for ScHostObjErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScHostObjErrorCode {}
 
 impl fmt::Display for ScHostObjErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -20929,7 +22971,7 @@ pub enum ScHostFnErrorCode {
 
 impl ScHostFnErrorCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::UnknownError => "UnknownError",
             Self::UnexpectedHostFunctionAction => "UnexpectedHostFunctionAction",
@@ -20939,6 +22981,15 @@ impl ScHostFnErrorCode {
         }
     }
 }
+
+impl Name for ScHostFnErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScHostFnErrorCode {}
 
 impl fmt::Display for ScHostFnErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -21013,7 +23064,7 @@ pub enum ScHostStorageErrorCode {
 
 impl ScHostStorageErrorCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::UnknownError => "UnknownError",
             Self::ExpectContractData => "ExpectContractData",
@@ -21024,6 +23075,15 @@ impl ScHostStorageErrorCode {
         }
     }
 }
+
+impl Name for ScHostStorageErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScHostStorageErrorCode {}
 
 impl fmt::Display for ScHostStorageErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -21091,13 +23151,22 @@ pub enum ScHostContextErrorCode {
 
 impl ScHostContextErrorCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::UnknownError => "UnknownError",
             Self::NoContractRunning => "NoContractRunning",
         }
     }
 }
+
+impl Name for ScHostContextErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScHostContextErrorCode {}
 
 impl fmt::Display for ScHostContextErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -21194,7 +23263,7 @@ pub enum ScVmErrorCode {
 
 impl ScVmErrorCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Unknown => "Unknown",
             Self::Validation => "Validation",
@@ -21218,6 +23287,15 @@ impl ScVmErrorCode {
         }
     }
 }
+
+impl Name for ScVmErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScVmErrorCode {}
 
 impl fmt::Display for ScVmErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -21298,13 +23376,22 @@ pub enum ScUnknownErrorCode {
 
 impl ScUnknownErrorCode {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::General => "General",
             Self::Xdr => "Xdr",
         }
     }
 }
+
+impl Name for ScUnknownErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScUnknownErrorCode {}
 
 impl fmt::Display for ScUnknownErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -21387,7 +23474,7 @@ pub enum ScStatus {
 
 impl ScStatus {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Ok => "Ok",
             Self::UnknownError(_) => "UnknownError",
@@ -21401,7 +23488,7 @@ impl ScStatus {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ScStatusType {
+    pub const fn discriminant(&self) -> ScStatusType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Ok => ScStatusType::Ok,
@@ -21415,6 +23502,22 @@ impl ScStatus {
         }
     }
 }
+
+impl Name for ScStatus {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScStatusType> for ScStatus {
+    #[must_use]
+    fn discriminant(&self) -> ScStatusType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ScStatusType> for ScStatus {}
 
 impl ReadXdr for ScStatus {
     #[cfg(feature = "std")]
@@ -21501,7 +23604,7 @@ pub enum ScVal {
 
 impl ScVal {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::U63(_) => "U63",
             Self::U32(_) => "U32",
@@ -21515,7 +23618,7 @@ impl ScVal {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ScValType {
+    pub const fn discriminant(&self) -> ScValType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::U63(_) => ScValType::U63,
@@ -21529,6 +23632,22 @@ impl ScVal {
         }
     }
 }
+
+impl Name for ScVal {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScValType> for ScVal {
+    #[must_use]
+    fn discriminant(&self) -> ScValType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ScValType> for ScVal {}
 
 impl ReadXdr for ScVal {
     #[cfg(feature = "std")]
@@ -21605,7 +23724,7 @@ pub enum ScObjectType {
 
 impl ScObjectType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Vec => "Vec",
             Self::Map => "Map",
@@ -21618,6 +23737,15 @@ impl ScObjectType {
         }
     }
 }
+
+impl Name for ScObjectType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScObjectType {}
 
 impl fmt::Display for ScObjectType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -21898,7 +24026,7 @@ pub enum ScNumSign {
 
 impl ScNumSign {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Negative => "Negative",
             Self::Zero => "Zero",
@@ -21906,6 +24034,15 @@ impl ScNumSign {
         }
     }
 }
+
+impl Name for ScNumSign {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScNumSign {}
 
 impl fmt::Display for ScNumSign {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -21973,7 +24110,7 @@ pub enum ScBigInt {
 
 impl ScBigInt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Zero => "Zero",
             Self::Positive(_) => "Positive",
@@ -21982,7 +24119,7 @@ impl ScBigInt {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ScNumSign {
+    pub const fn discriminant(&self) -> ScNumSign {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Zero => ScNumSign::Zero,
@@ -21991,6 +24128,22 @@ impl ScBigInt {
         }
     }
 }
+
+impl Name for ScBigInt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScNumSign> for ScBigInt {
+    #[must_use]
+    fn discriminant(&self) -> ScNumSign {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ScNumSign> for ScBigInt {}
 
 impl ReadXdr for ScBigInt {
     #[cfg(feature = "std")]
@@ -22038,12 +24191,21 @@ pub enum ScHashType {
 
 impl ScHashType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::SchashSha256 => "SchashSha256",
         }
     }
 }
+
+impl Name for ScHashType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScHashType {}
 
 impl fmt::Display for ScHashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -22104,20 +24266,36 @@ pub enum ScHash {
 
 impl ScHash {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::SchashSha256(_) => "SchashSha256",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ScHashType {
+    pub const fn discriminant(&self) -> ScHashType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::SchashSha256(_) => ScHashType::SchashSha256,
         }
     }
 }
+
+impl Name for ScHash {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScHashType> for ScHash {
+    #[must_use]
+    fn discriminant(&self) -> ScHashType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ScHashType> for ScHash {}
 
 impl ReadXdr for ScHash {
     #[cfg(feature = "std")]
@@ -22182,7 +24360,7 @@ pub enum ScObject {
 
 impl ScObject {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Vec(_) => "Vec",
             Self::Map(_) => "Map",
@@ -22196,7 +24374,7 @@ impl ScObject {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> ScObjectType {
+    pub const fn discriminant(&self) -> ScObjectType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Vec(_) => ScObjectType::Vec,
@@ -22210,6 +24388,22 @@ impl ScObject {
         }
     }
 }
+
+impl Name for ScObject {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScObjectType> for ScObject {
+    #[must_use]
+    fn discriminant(&self) -> ScObjectType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ScObjectType> for ScObject {}
 
 impl ReadXdr for ScObject {
     #[cfg(feature = "std")]
@@ -22304,7 +24498,7 @@ pub enum SpecType {
 
 impl SpecType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::U32 => "U32",
             Self::I32 => "I32",
@@ -22326,6 +24520,15 @@ impl SpecType {
         }
     }
 }
+
+impl Name for SpecType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for SpecType {}
 
 impl fmt::Display for SpecType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -22656,7 +24859,7 @@ pub enum SpecTypeDef {
 
 impl SpecTypeDef {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::U64 => "U64",
             Self::I64 => "I64",
@@ -22679,7 +24882,7 @@ impl SpecTypeDef {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> SpecType {
+    pub const fn discriminant(&self) -> SpecType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::U64 => SpecType::U64,
@@ -22702,6 +24905,22 @@ impl SpecTypeDef {
         }
     }
 }
+
+impl Name for SpecTypeDef {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<SpecType> for SpecTypeDef {
+    #[must_use]
+    fn discriminant(&self) -> SpecType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<SpecType> for SpecTypeDef {}
 
 impl ReadXdr for SpecTypeDef {
     #[cfg(feature = "std")]
@@ -22779,13 +24998,22 @@ pub enum SpecUdtType {
 
 impl SpecUdtType {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Struct => "Struct",
             Self::Union => "Union",
         }
     }
 }
+
+impl Name for SpecUdtType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for SpecUdtType {}
 
 impl fmt::Display for SpecUdtType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -22974,7 +25202,7 @@ pub enum SpecUdtDef {
 
 impl SpecUdtDef {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Struct(_) => "Struct",
             Self::Union(_) => "Union",
@@ -22982,7 +25210,7 @@ impl SpecUdtDef {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> SpecUdtType {
+    pub const fn discriminant(&self) -> SpecUdtType {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Struct(_) => SpecUdtType::Struct,
@@ -22990,6 +25218,22 @@ impl SpecUdtDef {
         }
     }
 }
+
+impl Name for SpecUdtDef {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<SpecUdtType> for SpecUdtDef {
+    #[must_use]
+    fn discriminant(&self) -> SpecUdtType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<SpecUdtType> for SpecUdtDef {}
 
 impl ReadXdr for SpecUdtDef {
     #[cfg(feature = "std")]
@@ -23075,20 +25319,36 @@ pub enum SpecEntryFunction {
 
 impl SpecEntryFunction {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
         }
     }
 }
+
+impl Name for SpecEntryFunction {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for SpecEntryFunction {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for SpecEntryFunction {}
 
 impl ReadXdr for SpecEntryFunction {
     #[cfg(feature = "std")]
@@ -23167,20 +25427,36 @@ pub enum SpecEntryUdt {
 
 impl SpecEntryUdt {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
         }
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> i32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
         }
     }
 }
+
+impl Name for SpecEntryUdt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for SpecEntryUdt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for SpecEntryUdt {}
 
 impl ReadXdr for SpecEntryUdt {
     #[cfg(feature = "std")]
@@ -23226,13 +25502,22 @@ pub enum SpecEntryKind {
 
 impl SpecEntryKind {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Function => "Function",
             Self::Udt => "Udt",
         }
     }
 }
+
+impl Name for SpecEntryKind {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for SpecEntryKind {}
 
 impl fmt::Display for SpecEntryKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -23297,7 +25582,7 @@ pub enum SpecEntry {
 
 impl SpecEntry {
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Self::Function(_) => "Function",
             Self::Udt(_) => "Udt",
@@ -23305,7 +25590,7 @@ impl SpecEntry {
     }
 
     #[must_use]
-    pub fn discriminant(&self) -> SpecEntryKind {
+    pub const fn discriminant(&self) -> SpecEntryKind {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Function(_) => SpecEntryKind::Function,
@@ -23313,6 +25598,22 @@ impl SpecEntry {
         }
     }
 }
+
+impl Name for SpecEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<SpecEntryKind> for SpecEntry {
+    #[must_use]
+    fn discriminant(&self) -> SpecEntryKind {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<SpecEntryKind> for SpecEntry {}
 
 impl ReadXdr for SpecEntry {
     #[cfg(feature = "std")]

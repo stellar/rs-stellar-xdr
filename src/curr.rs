@@ -36,7 +36,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 6] = [
     ),
 ];
 
-use core::{fmt, fmt::Debug, ops::Deref};
+use core::{array::TryFromSliceError, fmt, fmt::Debug, ops::Deref};
 
 #[cfg(feature = "std")]
 use core::marker::PhantomData;
@@ -109,6 +109,12 @@ impl fmt::Display for Error {
             #[cfg(feature = "std")]
             Error::Io(e) => write!(f, "{}", e),
         }
+    }
+}
+
+impl From<TryFromSliceError> for Error {
+    fn from(_: TryFromSliceError) -> Error {
+        Error::LengthMismatch
     }
 }
 
@@ -603,6 +609,15 @@ impl<T, const MAX: u32> AsRef<Vec<T>> for VecM<T, MAX> {
 }
 
 #[cfg(feature = "alloc")]
+impl<T: Clone, const MAX: u32> TryFrom<&Vec<T>> for VecM<T, MAX> {
+    type Error = Error;
+
+    fn try_from(v: &Vec<T>) -> Result<Self> {
+        v.as_slice().try_into()
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl<T: Clone, const MAX: u32> TryFrom<&[T]> for VecM<T, MAX> {
     type Error = Error;
 
@@ -1000,6 +1015,14 @@ impl From<Value> for Vec<u8> {
 impl TryFrom<Vec<u8>> for Value {
     type Error = Error;
     fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(Value(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for Value {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
         Ok(Value(x.try_into()?))
     }
 }
@@ -1655,6 +1678,36 @@ impl WriteXdr for Thresholds {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl TryFrom<Vec<u8>> for Thresholds {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for Thresholds {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+impl TryFrom<&[u8]> for Thresholds {
+    type Error = Error;
+    fn try_from(x: &[u8]) -> Result<Self> {
+        Ok(Thresholds(x.try_into()?))
+    }
+}
+
+impl AsRef<[u8]> for Thresholds {
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 // String32 is an XDR Typedef defines as:
 //
 //   typedef string string32<32>;
@@ -1864,6 +1917,14 @@ impl TryFrom<Vec<u8>> for DataValue {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for DataValue {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(DataValue(x.try_into()?))
+    }
+}
+
 impl AsRef<Vec<u8>> for DataValue {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
@@ -1972,6 +2033,36 @@ impl WriteXdr for AssetCode4 {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl TryFrom<Vec<u8>> for AssetCode4 {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for AssetCode4 {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+impl TryFrom<&[u8]> for AssetCode4 {
+    type Error = Error;
+    fn try_from(x: &[u8]) -> Result<Self> {
+        Ok(AssetCode4(x.try_into()?))
+    }
+}
+
+impl AsRef<[u8]> for AssetCode4 {
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 // AssetCode12 is an XDR Typedef defines as:
 //
 //   typedef opaque AssetCode12[12];
@@ -2013,6 +2104,36 @@ impl WriteXdr for AssetCode12 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<Vec<u8>> for AssetCode12 {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for AssetCode12 {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+impl TryFrom<&[u8]> for AssetCode12 {
+    type Error = Error;
+    fn try_from(x: &[u8]) -> Result<Self> {
+        Ok(AssetCode12(x.try_into()?))
+    }
+}
+
+impl AsRef<[u8]> for AssetCode12 {
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }
 
@@ -6209,6 +6330,14 @@ impl TryFrom<Vec<u8>> for UpgradeType {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for UpgradeType {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(UpgradeType(x.try_into()?))
+    }
+}
+
 impl AsRef<Vec<u8>> for UpgradeType {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
@@ -8184,6 +8313,14 @@ impl TryFrom<Vec<LedgerEntryChange>> for LedgerEntryChanges {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<LedgerEntryChange>> for LedgerEntryChanges {
+    type Error = Error;
+    fn try_from(x: &Vec<LedgerEntryChange>) -> Result<Self> {
+        Ok(LedgerEntryChanges(x.try_into()?))
+    }
+}
+
 impl AsRef<Vec<LedgerEntryChange>> for LedgerEntryChanges {
     #[must_use]
     fn as_ref(&self) -> &Vec<LedgerEntryChange> {
@@ -9469,6 +9606,14 @@ impl TryFrom<Vec<u8>> for EncryptedBody {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for EncryptedBody {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(EncryptedBody(x.try_into()?))
+    }
+}
+
 impl AsRef<Vec<u8>> for EncryptedBody {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
@@ -9715,6 +9860,14 @@ impl From<PeerStatList> for Vec<PeerStats> {
 impl TryFrom<Vec<PeerStats>> for PeerStatList {
     type Error = Error;
     fn try_from(x: Vec<PeerStats>) -> Result<Self> {
+        Ok(PeerStatList(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<PeerStats>> for PeerStatList {
+    type Error = Error;
+    fn try_from(x: &Vec<PeerStats>) -> Result<Self> {
         Ok(PeerStatList(x.try_into()?))
     }
 }
@@ -20513,6 +20666,36 @@ impl WriteXdr for Hash {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl TryFrom<Vec<u8>> for Hash {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for Hash {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+impl TryFrom<&[u8]> for Hash {
+    type Error = Error;
+    fn try_from(x: &[u8]) -> Result<Self> {
+        Ok(Hash(x.try_into()?))
+    }
+}
+
+impl AsRef<[u8]> for Hash {
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 // Uint256 is an XDR Typedef defines as:
 //
 //   typedef opaque uint256[32];
@@ -20554,6 +20737,36 @@ impl WriteXdr for Uint256 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<Vec<u8>> for Uint256 {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for Uint256 {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+impl TryFrom<&[u8]> for Uint256 {
+    type Error = Error;
+    fn try_from(x: &[u8]) -> Result<Self> {
+        Ok(Uint256(x.try_into()?))
+    }
+}
+
+impl AsRef<[u8]> for Uint256 {
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }
 
@@ -21188,6 +21401,14 @@ impl TryFrom<Vec<u8>> for Signature {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for Signature {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(Signature(x.try_into()?))
+    }
+}
+
 impl AsRef<Vec<u8>> for Signature {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
@@ -21249,6 +21470,36 @@ impl WriteXdr for SignatureHint {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<Vec<u8>> for SignatureHint {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for SignatureHint {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        x.as_slice().try_into()
+    }
+}
+
+impl TryFrom<&[u8]> for SignatureHint {
+    type Error = Error;
+    fn try_from(x: &[u8]) -> Result<Self> {
+        Ok(SignatureHint(x.try_into()?))
+    }
+}
+
+impl AsRef<[u8]> for SignatureHint {
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }
 

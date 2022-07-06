@@ -1688,6 +1688,13 @@ impl WriteXdr for Thresholds {
     }
 }
 
+impl Thresholds {
+    #[must_use]
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for Thresholds {
     type Error = Error;
@@ -2043,6 +2050,13 @@ impl WriteXdr for AssetCode4 {
     }
 }
 
+impl AssetCode4 {
+    #[must_use]
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for AssetCode4 {
     type Error = Error;
@@ -2114,6 +2128,13 @@ impl WriteXdr for AssetCode12 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
+    }
+}
+
+impl AssetCode12 {
+    #[must_use]
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
     }
 }
 
@@ -21683,6 +21704,13 @@ impl WriteXdr for Hash {
     }
 }
 
+impl Hash {
+    #[must_use]
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for Hash {
     type Error = Error;
@@ -21754,6 +21782,13 @@ impl WriteXdr for Uint256 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
+    }
+}
+
+impl Uint256 {
+    #[must_use]
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
     }
 }
 
@@ -22487,6 +22522,13 @@ impl WriteXdr for SignatureHint {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
+    }
+}
+
+impl SignatureHint {
+    #[must_use]
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
     }
 }
 

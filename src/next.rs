@@ -18,7 +18,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "d90de113bd630712338d9afe9ca8fdf6625881eaa2bee54cf21a8400409aae20",
+        "da89773aa27729463c6e79ba08b2cc423bb2df2e4c48206a4f4408e0865a2dcf",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -25669,13 +25669,14 @@ impl WriteXdr for SpecUdtDef {
     }
 }
 
-// SpecEntryFunctionV0 is an XDR NestedStruct defines as:
+// SpecEntryFunctionV0 is an XDR Struct defines as:
 //
-//   struct {
-//            SCSymbol name;
-//            SpecTypeDef inputTypes<10>;
-//            SpecTypeDef outputTypes<1>;
-//        }
+//   struct SpecEntryFunctionV0
+//    {
+//        SCSymbol name;
+//        SpecTypeDef inputTypes<10>;
+//        SpecTypeDef outputTypes<1>;
+//    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SpecEntryFunctionV0 {
@@ -25705,98 +25706,21 @@ impl WriteXdr for SpecEntryFunctionV0 {
     }
 }
 
-// SpecEntryFunction is an XDR Union defines as:
+// SpecEntryUdtv0 is an XDR Struct defines as:
 //
-//   union SpecEntryFunction switch (int v)
+//   struct SpecEntryUDTV0
 //    {
-//    case 0:
-//        struct {
-//            SCSymbol name;
-//            SpecTypeDef inputTypes<10>;
-//            SpecTypeDef outputTypes<1>;
-//        } v0;
+//        string name<60>;
+//        SpecUDTDef typ;
 //    };
 //
-// union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[allow(clippy::large_enum_variant)]
-pub enum SpecEntryFunction {
-    V0(SpecEntryFunctionV0),
-}
-
-impl SpecEntryFunction {
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::V0(_) => "V0",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> i32 {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(_) => 0,
-        }
-    }
-}
-
-impl Name for SpecEntryFunction {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<i32> for SpecEntryFunction {
-    #[must_use]
-    fn discriminant(&self) -> i32 {
-        Self::discriminant(self)
-    }
-}
-
-impl Union<i32> for SpecEntryFunction {}
-
-impl ReadXdr for SpecEntryFunction {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0(SpecEntryFunctionV0::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
-    }
-}
-
-impl WriteXdr for SpecEntryFunction {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(v) => v.write_xdr(w)?,
-        };
-        Ok(())
-    }
-}
-
-// SpecEntryUdtV0 is an XDR NestedStruct defines as:
-//
-//   struct {
-//            string name<60>;
-//            SpecUDTDef typ;
-//        }
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SpecEntryUdtV0 {
+pub struct SpecEntryUdtv0 {
     pub name: VecM<u8, 60>,
     pub typ: SpecUdtDef,
 }
 
-impl ReadXdr for SpecEntryUdtV0 {
+impl ReadXdr for SpecEntryUdtv0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -25806,7 +25730,7 @@ impl ReadXdr for SpecEntryUdtV0 {
     }
 }
 
-impl WriteXdr for SpecEntryUdtV0 {
+impl WriteXdr for SpecEntryUdtv0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.name.write_xdr(w)?;
@@ -25815,105 +25739,28 @@ impl WriteXdr for SpecEntryUdtV0 {
     }
 }
 
-// SpecEntryUdt is an XDR Union defines as:
-//
-//   union SpecEntryUDT switch (int v)
-//    {
-//    case 0:
-//        struct {
-//            string name<60>;
-//            SpecUDTDef typ;
-//        } v0;
-//    };
-//
-// union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[allow(clippy::large_enum_variant)]
-pub enum SpecEntryUdt {
-    V0(SpecEntryUdtV0),
-}
-
-impl SpecEntryUdt {
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::V0(_) => "V0",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> i32 {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(_) => 0,
-        }
-    }
-}
-
-impl Name for SpecEntryUdt {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<i32> for SpecEntryUdt {
-    #[must_use]
-    fn discriminant(&self) -> i32 {
-        Self::discriminant(self)
-    }
-}
-
-impl Union<i32> for SpecEntryUdt {}
-
-impl ReadXdr for SpecEntryUdt {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0(SpecEntryUdtV0::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
-    }
-}
-
-impl WriteXdr for SpecEntryUdt {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(v) => v.write_xdr(w)?,
-        };
-        Ok(())
-    }
-}
-
 // SpecEntryKind is an XDR Enum defines as:
 //
 //   enum SpecEntryKind
 //    {
-//        SPEC_ENTRY_FUNCTION = 0,
-//        SPEC_ENTRY_UDT = 1
+//        SPEC_ENTRY_FUNCTION_V0 = 0,
+//        SPEC_ENTRY_UDT_V0 = 1
 //    };
 //
 // enum
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i32)]
 pub enum SpecEntryKind {
-    Function = 0,
-    Udt = 1,
+    FunctionV0 = 0,
+    UdtV0 = 1,
 }
 
 impl SpecEntryKind {
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::Function => "Function",
-            Self::Udt => "Udt",
+            Self::FunctionV0 => "FunctionV0",
+            Self::UdtV0 => "UdtV0",
         }
     }
 }
@@ -25938,8 +25785,8 @@ impl TryFrom<i32> for SpecEntryKind {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => SpecEntryKind::Function,
-            1 => SpecEntryKind::Udt,
+            0 => SpecEntryKind::FunctionV0,
+            1 => SpecEntryKind::UdtV0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -25975,26 +25822,26 @@ impl WriteXdr for SpecEntryKind {
 //
 //   union SpecEntry switch (SpecEntryKind kind)
 //    {
-//    case SPEC_ENTRY_FUNCTION:
-//        SpecEntryFunction function;
-//    case SPEC_ENTRY_UDT:
-//        SpecEntryUDT udt;
+//    case SPEC_ENTRY_FUNCTION_V0:
+//        SpecEntryFunctionV0 functionV0;
+//    case SPEC_ENTRY_UDT_V0:
+//        SpecEntryUDTV0 udtV0;
 //    };
 //
 // union with discriminant SpecEntryKind
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(clippy::large_enum_variant)]
 pub enum SpecEntry {
-    Function(SpecEntryFunction),
-    Udt(SpecEntryUdt),
+    FunctionV0(SpecEntryFunctionV0),
+    UdtV0(SpecEntryUdtv0),
 }
 
 impl SpecEntry {
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::Function(_) => "Function",
-            Self::Udt(_) => "Udt",
+            Self::FunctionV0(_) => "FunctionV0",
+            Self::UdtV0(_) => "UdtV0",
         }
     }
 
@@ -26002,8 +25849,8 @@ impl SpecEntry {
     pub const fn discriminant(&self) -> SpecEntryKind {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Function(_) => SpecEntryKind::Function,
-            Self::Udt(_) => SpecEntryKind::Udt,
+            Self::FunctionV0(_) => SpecEntryKind::FunctionV0,
+            Self::UdtV0(_) => SpecEntryKind::UdtV0,
         }
     }
 }
@@ -26030,8 +25877,8 @@ impl ReadXdr for SpecEntry {
         let dv: SpecEntryKind = <SpecEntryKind as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            SpecEntryKind::Function => Self::Function(SpecEntryFunction::read_xdr(r)?),
-            SpecEntryKind::Udt => Self::Udt(SpecEntryUdt::read_xdr(r)?),
+            SpecEntryKind::FunctionV0 => Self::FunctionV0(SpecEntryFunctionV0::read_xdr(r)?),
+            SpecEntryKind::UdtV0 => Self::UdtV0(SpecEntryUdtv0::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -26045,8 +25892,8 @@ impl WriteXdr for SpecEntry {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Function(v) => v.write_xdr(w)?,
-            Self::Udt(v) => v.write_xdr(w)?,
+            Self::FunctionV0(v) => v.write_xdr(w)?,
+            Self::UdtV0(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

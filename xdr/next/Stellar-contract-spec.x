@@ -139,37 +139,31 @@ case SPEC_UDT_UNION:
     SpecUDTUnion union;
 };
 
-union SpecEntryFunction switch (int v)
+struct SpecEntryFunctionV0
 {
-case 0:
-    struct {
-        SCSymbol name;
-        SpecTypeDef inputTypes<10>;
-        SpecTypeDef outputTypes<1>;
-    } v0;
+    SCSymbol name;
+    SpecTypeDef inputTypes<10>;
+    SpecTypeDef outputTypes<1>;
 };
 
-union SpecEntryUDT switch (int v)
+struct SpecEntryUDTV0
 {
-case 0:
-    struct {
-        string name<60>;
-        SpecUDTDef typ;
-    } v0;
+    string name<60>;
+    SpecUDTDef typ;
 };
 
 enum SpecEntryKind
 {
-    SPEC_ENTRY_FUNCTION = 0,
-    SPEC_ENTRY_UDT = 1
+    SPEC_ENTRY_FUNCTION_V0 = 0,
+    SPEC_ENTRY_UDT_V0 = 1
 };
 
 union SpecEntry switch (SpecEntryKind kind)
 {
-case SPEC_ENTRY_FUNCTION:
-    SpecEntryFunction function;
-case SPEC_ENTRY_UDT:
-    SpecEntryUDT udt;
+case SPEC_ENTRY_FUNCTION_V0:
+    SpecEntryFunctionV0 functionV0;
+case SPEC_ENTRY_UDT_V0:
+    SpecEntryUDTV0 udtV0;
 };
 
 }

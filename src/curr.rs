@@ -1371,6 +1371,7 @@ impl WriteXdr for ScpStatementExternalize {
 //
 // union with discriminant ScpStatementType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ScpStatementPledges {
     Prepare(ScpStatementPrepare),
     Confirm(ScpStatementConfirm),
@@ -2260,6 +2261,7 @@ impl WriteXdr for AssetType {
 //
 // union with discriminant AssetType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum AssetCode {
     CreditAlphanum4(AssetCode4),
     CreditAlphanum12(AssetCode12),
@@ -2412,6 +2414,7 @@ impl WriteXdr for AlphaNum12 {
 //
 // union with discriminant AssetType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum Asset {
     Native,
     CreditAlphanum4(AlphaNum4),
@@ -2980,6 +2983,7 @@ impl WriteXdr for AccountEntryExtensionV3 {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExtensionV2Ext {
     V0,
     V3(AccountEntryExtensionV3),
@@ -3109,6 +3113,7 @@ impl WriteXdr for AccountEntryExtensionV2 {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExtensionV1Ext {
     V0,
     V2(AccountEntryExtensionV2),
@@ -3230,6 +3235,7 @@ impl WriteXdr for AccountEntryExtensionV1 {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExt {
     V0,
     V1(AccountEntryExtensionV1),
@@ -3580,6 +3586,7 @@ impl WriteXdr for LiquidityPoolType {
 //
 // union with discriminant AssetType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TrustLineAsset {
     Native,
     CreditAlphanum4(AlphaNum4),
@@ -3668,6 +3675,7 @@ impl WriteXdr for TrustLineAsset {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryExtensionV2Ext {
     V0,
 }
@@ -3782,6 +3790,7 @@ impl WriteXdr for TrustLineEntryExtensionV2 {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryV1Ext {
     V0,
     V2(TrustLineEntryExtensionV2),
@@ -3915,6 +3924,7 @@ impl WriteXdr for TrustLineEntryV1 {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryExt {
     V0,
     V1(TrustLineEntryV1),
@@ -4148,6 +4158,7 @@ pub const MASK_OFFERENTRY_FLAGS: u64 = 1;
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum OfferEntryExt {
     V0,
 }
@@ -4291,6 +4302,7 @@ impl WriteXdr for OfferEntry {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum DataEntryExt {
     V0,
 }
@@ -4518,6 +4530,7 @@ impl WriteXdr for ClaimPredicateType {
 //
 // union with discriminant ClaimPredicateType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ClaimPredicate {
     Unconditional,
     And(VecM<ClaimPredicate, 2>),
@@ -4728,6 +4741,7 @@ impl WriteXdr for ClaimantV0 {
 //
 // union with discriminant ClaimantType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum Claimant {
     ClaimantTypeV0(ClaimantV0),
 }
@@ -4876,6 +4890,7 @@ impl WriteXdr for ClaimableBalanceIdType {
 //
 // union with discriminant ClaimableBalanceIdType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceId {
     ClaimableBalanceIdTypeV0(Hash),
 }
@@ -5034,6 +5049,7 @@ pub const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceEntryExtensionV1Ext {
     V0,
 }
@@ -5148,6 +5164,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceEntryExt {
     V0,
     V1(ClaimableBalanceEntryExtensionV1),
@@ -5380,6 +5397,7 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
 //
 // union with discriminant LiquidityPoolType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolEntryBody {
     LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct),
 }
@@ -5505,6 +5523,7 @@ impl WriteXdr for LiquidityPoolEntry {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryExtensionV1Ext {
     V0,
 }
@@ -5627,6 +5646,7 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 //
 // union with discriminant LedgerEntryType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryData {
     Account(AccountEntry),
     Trustline(TrustLineEntry),
@@ -5729,6 +5749,7 @@ impl WriteXdr for LedgerEntryData {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryExt {
     V0,
     V1(LedgerEntryExtensionV1),
@@ -6091,6 +6112,7 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 //
 // union with discriminant LedgerEntryType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LedgerKey {
     Account(LedgerKeyAccount),
     Trustline(LedgerKeyTrustLine),
@@ -6503,6 +6525,7 @@ impl WriteXdr for LedgerCloseValueSignature {
 //
 // union with discriminant StellarValueType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum StellarValueExt {
     Basic,
     Signed(LedgerCloseValueSignature),
@@ -6726,6 +6749,7 @@ impl WriteXdr for LedgerHeaderFlags {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderExtensionV1Ext {
     V0,
 }
@@ -6840,6 +6864,7 @@ impl WriteXdr for LedgerHeaderExtensionV1 {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderExt {
     V0,
     V1(LedgerHeaderExtensionV1),
@@ -7123,6 +7148,7 @@ impl WriteXdr for LedgerUpgradeType {
 //
 // union with discriminant LedgerUpgradeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LedgerUpgrade {
     Version(u32),
     BaseFee(u32),
@@ -7305,6 +7331,7 @@ impl WriteXdr for BucketEntryType {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum BucketMetadataExt {
     V0,
 }
@@ -7425,6 +7452,7 @@ impl WriteXdr for BucketMetadata {
 //
 // union with discriminant BucketEntryType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum BucketEntry {
     Liveentry(LedgerEntry),
     Initentry(LedgerEntry),
@@ -7608,6 +7636,7 @@ impl WriteXdr for TransactionResultSet {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryEntryExt {
     V0,
 }
@@ -7725,6 +7754,7 @@ impl WriteXdr for TransactionHistoryEntry {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryResultEntryExt {
     V0,
 }
@@ -7842,6 +7872,7 @@ impl WriteXdr for TransactionHistoryResultEntry {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderHistoryEntryExt {
     V0,
 }
@@ -8025,6 +8056,7 @@ impl WriteXdr for ScpHistoryEntryV0 {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ScpHistoryEntry {
     V0(ScpHistoryEntryV0),
 }
@@ -8191,6 +8223,7 @@ impl WriteXdr for LedgerEntryChangeType {
 //
 // union with discriminant LedgerEntryChangeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryChange {
     Created(LedgerEntry),
     Updated(LedgerEntry),
@@ -8477,6 +8510,7 @@ impl WriteXdr for TransactionMetaV2 {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TransactionMeta {
     V0(VecM<OperationMeta>),
     V1(TransactionMetaV1),
@@ -8684,6 +8718,7 @@ impl WriteXdr for LedgerCloseMetaV0 {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
 }
@@ -9120,6 +9155,7 @@ impl WriteXdr for IpAddrType {
 //
 // union with discriminant IpAddrType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum PeerAddressIp {
     IPv4([u8; 4]),
     IPv6([u8; 16]),
@@ -9965,6 +10001,7 @@ impl WriteXdr for TopologyResponseBody {
 //
 // union with discriminant SurveyMessageCommandType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum SurveyResponseBody {
     SurveyTopology(TopologyResponseBody),
 }
@@ -10076,6 +10113,7 @@ impl WriteXdr for SurveyResponseBody {
 //
 // union with discriminant MessageType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum StellarMessage {
     ErrorMsg(SError),
     Hello(Hello),
@@ -10270,6 +10308,7 @@ impl WriteXdr for AuthenticatedMessageV0 {
 //
 // union with discriminant u32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum AuthenticatedMessage {
     V0(AuthenticatedMessageV0),
 }
@@ -10343,6 +10382,7 @@ impl WriteXdr for AuthenticatedMessage {
 //
 // union with discriminant LiquidityPoolType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolParameters {
     LiquidityPoolConstantProduct(LiquidityPoolConstantProductParameters),
 }
@@ -10459,6 +10499,7 @@ impl WriteXdr for MuxedAccountMed25519 {
 //
 // union with discriminant CryptoKeyType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum MuxedAccount {
     Ed25519(Uint256),
     MuxedEd25519(MuxedAccountMed25519),
@@ -11128,6 +11169,7 @@ impl WriteXdr for SetOptionsOp {
 //
 // union with discriminant AssetType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ChangeTrustAsset {
     Native,
     CreditAlphanum4(AlphaNum4),
@@ -11565,6 +11607,7 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
 //
 // union with discriminant RevokeSponsorshipType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum RevokeSponsorshipOp {
     LedgerEntry(LedgerKey),
     Signer(RevokeSponsorshipOpSigner),
@@ -11889,6 +11932,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 //
 // union with discriminant OperationType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum OperationBody {
     CreateAccount(CreateAccountOp),
     Payment(PaymentOp),
@@ -12285,6 +12329,7 @@ impl WriteXdr for HashIdPreimageRevokeId {
 //
 // union with discriminant EnvelopeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum HashIdPreimage {
     OpId(HashIdPreimageOperationId),
     PoolRevokeOpId(HashIdPreimageRevokeId),
@@ -12464,6 +12509,7 @@ impl WriteXdr for MemoType {
 //
 // union with discriminant MemoType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum Memo {
     None,
     Text(VecM<u8, 28>),
@@ -12782,6 +12828,7 @@ impl WriteXdr for PreconditionType {
 //
 // union with discriminant PreconditionType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum Preconditions {
     None,
     Time(TimeBounds),
@@ -12871,6 +12918,7 @@ pub const MAX_OPS_PER_TX: u64 = 100;
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TransactionV0Ext {
     V0,
 }
@@ -13037,6 +13085,7 @@ impl WriteXdr for TransactionV0Envelope {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TransactionExt {
     V0,
 }
@@ -13214,6 +13263,7 @@ impl WriteXdr for TransactionV1Envelope {
 //
 // union with discriminant EnvelopeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum FeeBumpTransactionInnerTx {
     Tx(TransactionV1Envelope),
 }
@@ -13287,6 +13337,7 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum FeeBumpTransactionExt {
     V0,
 }
@@ -13450,6 +13501,7 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
 //
 // union with discriminant EnvelopeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TransactionEnvelope {
     TxV0(TransactionV0Envelope),
     Tx(TransactionV1Envelope),
@@ -13536,6 +13588,7 @@ impl WriteXdr for TransactionEnvelope {
 //
 // union with discriminant EnvelopeType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TransactionSignaturePayloadTaggedTransaction {
     Tx(Transaction),
     TxFeeBump(FeeBumpTransaction),
@@ -13899,6 +13952,7 @@ impl WriteXdr for ClaimLiquidityAtom {
 //
 // union with discriminant ClaimAtomType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ClaimAtom {
     V0(ClaimOfferAtomV0),
     OrderBook(ClaimOfferAtom),
@@ -14082,6 +14136,7 @@ impl WriteXdr for CreateAccountResultCode {
 //
 // union with discriminant CreateAccountResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum CreateAccountResult {
     Success,
     Malformed,
@@ -14299,6 +14354,7 @@ impl WriteXdr for PaymentResultCode {
 //
 // union with discriminant PaymentResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum PaymentResult {
     Success,
     Malformed,
@@ -14642,6 +14698,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
 //
 // union with discriminant PathPaymentStrictReceiveResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum PathPaymentStrictReceiveResult {
     Success(PathPaymentStrictReceiveResultSuccess),
     Malformed,
@@ -14964,6 +15021,7 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
 //
 // union with discriminant PathPaymentStrictSendResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum PathPaymentStrictSendResult {
     Success(PathPaymentStrictSendResultSuccess),
     Malformed,
@@ -15319,6 +15377,7 @@ impl WriteXdr for ManageOfferEffect {
 //
 // union with discriminant ManageOfferEffect
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ManageOfferSuccessResultOffer {
     Created(OfferEntry),
     Updated(OfferEntry),
@@ -15458,6 +15517,7 @@ impl WriteXdr for ManageOfferSuccessResult {
 //
 // union with discriminant ManageSellOfferResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ManageSellOfferResult {
     Success(ManageOfferSuccessResult),
     Malformed,
@@ -15736,6 +15796,7 @@ impl WriteXdr for ManageBuyOfferResultCode {
 //
 // union with discriminant ManageBuyOfferResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ManageBuyOfferResult {
     Success(ManageOfferSuccessResult),
     Malformed,
@@ -16000,6 +16061,7 @@ impl WriteXdr for SetOptionsResultCode {
 //
 // union with discriminant SetOptionsResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum SetOptionsResult {
     Success,
     LowReserve,
@@ -16245,6 +16307,7 @@ impl WriteXdr for ChangeTrustResultCode {
 //
 // union with discriminant ChangeTrustResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ChangeTrustResult {
     Success,
     Malformed,
@@ -16468,6 +16531,7 @@ impl WriteXdr for AllowTrustResultCode {
 //
 // union with discriminant AllowTrustResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum AllowTrustResult {
     Success,
     Malformed,
@@ -16685,6 +16749,7 @@ impl WriteXdr for AccountMergeResultCode {
 //
 // union with discriminant AccountMergeResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum AccountMergeResult {
     Success(i64),
     Malformed,
@@ -16909,6 +16974,7 @@ impl WriteXdr for InflationPayout {
 //
 // union with discriminant InflationResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum InflationResult {
     Success(VecM<InflationPayout>),
     NotTime,
@@ -17087,6 +17153,7 @@ impl WriteXdr for ManageDataResultCode {
 //
 // union with discriminant ManageDataResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ManageDataResult {
     Success,
     NotSupportedYet,
@@ -17263,6 +17330,7 @@ impl WriteXdr for BumpSequenceResultCode {
 //
 // union with discriminant BumpSequenceResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum BumpSequenceResult {
     Success,
     BadSeq,
@@ -17443,6 +17511,7 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
 //
 // union with discriminant CreateClaimableBalanceResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum CreateClaimableBalanceResult {
     Success(ClaimableBalanceId),
     Malformed,
@@ -17645,6 +17714,7 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
 //
 // union with discriminant ClaimClaimableBalanceResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ClaimClaimableBalanceResult {
     Success,
     DoesNotExist,
@@ -17839,6 +17909,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
 //
 // union with discriminant BeginSponsoringFutureReservesResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum BeginSponsoringFutureReservesResult {
     Success,
     Malformed,
@@ -18013,6 +18084,7 @@ impl WriteXdr for EndSponsoringFutureReservesResultCode {
 //
 // union with discriminant EndSponsoringFutureReservesResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum EndSponsoringFutureReservesResult {
     Success,
     NotSponsored,
@@ -18196,6 +18268,7 @@ impl WriteXdr for RevokeSponsorshipResultCode {
 //
 // union with discriminant RevokeSponsorshipResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum RevokeSponsorshipResult {
     Success,
     DoesNotExist,
@@ -18394,6 +18467,7 @@ impl WriteXdr for ClawbackResultCode {
 //
 // union with discriminant ClawbackResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ClawbackResult {
     Success,
     Malformed,
@@ -18582,6 +18656,7 @@ impl WriteXdr for ClawbackClaimableBalanceResultCode {
 //
 // union with discriminant ClawbackClaimableBalanceResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ClawbackClaimableBalanceResult {
     Success,
     DoesNotExist,
@@ -18776,6 +18851,7 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
 //
 // union with discriminant SetTrustLineFlagsResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum SetTrustLineFlagsResult {
     Success,
     Malformed,
@@ -18993,6 +19069,7 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
 //
 // union with discriminant LiquidityPoolDepositResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolDepositResult {
     Success,
     Malformed,
@@ -19209,6 +19286,7 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
 //
 // union with discriminant LiquidityPoolWithdrawResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolWithdrawResult {
     Success,
     Malformed,
@@ -19454,6 +19532,7 @@ impl WriteXdr for OperationResultCode {
 //
 // union with discriminant OperationType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum OperationResultTr {
     CreateAccount(CreateAccountResult),
     Payment(PaymentResult),
@@ -19728,6 +19807,7 @@ impl WriteXdr for OperationResultTr {
 //
 // union with discriminant OperationResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum OperationResult {
     OpInner(OperationResultTr),
     OpBadAuth,
@@ -19997,6 +20077,7 @@ impl WriteXdr for TransactionResultCode {
 //
 // union with discriminant TransactionResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum InnerTransactionResultResult {
     TxSuccess(VecM<OperationResult>),
     TxFailed(VecM<OperationResult>),
@@ -20149,6 +20230,7 @@ impl WriteXdr for InnerTransactionResultResult {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum InnerTransactionResultExt {
     V0,
 }
@@ -20344,6 +20426,7 @@ impl WriteXdr for InnerTransactionResultPair {
 //
 // union with discriminant TransactionResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TransactionResultResult {
     TxFeeBumpInnerSuccess(InnerTransactionResultPair),
     TxFeeBumpInnerFailed(InnerTransactionResultPair),
@@ -20510,6 +20593,7 @@ impl WriteXdr for TransactionResultResult {
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum TransactionResultExt {
     V0,
 }
@@ -20839,6 +20923,7 @@ pub type Int64 = i64;
 //
 // union with discriminant i32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum ExtensionPoint {
     V0,
 }
@@ -21167,6 +21252,7 @@ impl WriteXdr for SignerKeyType {
 //
 // union with discriminant PublicKeyType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum PublicKey {
     PublicKeyTypeEd25519(Uint256),
 }
@@ -21291,6 +21377,7 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
 //
 // union with discriminant SignerKeyType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
 pub enum SignerKey {
     Ed25519(Uint256),
     PreAuthTx(Uint256),

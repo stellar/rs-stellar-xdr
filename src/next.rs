@@ -30,11 +30,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "1573aea71199d7e5c8defb24633608811bf4f4dbf9c15170c9fc954003a1d2f9",
+        "ee0efe28be5864ac7716fafb0e5a76dec312d890ac7ea3572db351831c23ff1c",
     ),
     (
         "xdr/next/Stellar-overlay.x",
-        "8ecbc36d2a43103499a6416572c7cd7b4fd7638d1a2af515b81b463ce6909c51",
+        "468a1bc101a0434ecf240b48808516921f904cfc7c4ddb7147de3ecdaf4e3a12",
     ),
     (
         "xdr/next/Stellar-transaction.x",
@@ -8105,6 +8105,274 @@ impl WriteXdr for BucketEntry {
     }
 }
 
+// TxSetComponentType is an XDR Enum defines as:
+//
+//   enum TxSetComponentType
+//    {
+//      // txs with effective fee <= bid derived from a base fee (if any).
+//      // If base fee is not specified, no discount is applied.
+//      TXSET_COMP_TXS_MAYBE_DISCOUNTED_FEE = 0
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(i32)]
+pub enum TxSetComponentType {
+    TxsetCompTxsMaybeDiscountedFee = 0,
+}
+
+impl TxSetComponentType {
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::TxsetCompTxsMaybeDiscountedFee => "TxsetCompTxsMaybeDiscountedFee",
+        }
+    }
+}
+
+impl Name for TxSetComponentType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for TxSetComponentType {}
+
+impl fmt::Display for TxSetComponentType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for TxSetComponentType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => TxSetComponentType::TxsetCompTxsMaybeDiscountedFee,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<TxSetComponentType> for i32 {
+    #[must_use]
+    fn from(e: TxSetComponentType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for TxSetComponentType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for TxSetComponentType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// TxSetComponentTxsMaybeDiscountedFee is an XDR NestedStruct defines as:
+//
+//   struct
+//      {
+//        int64* baseFee;
+//        TransactionEnvelope txs<>;
+//      }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TxSetComponentTxsMaybeDiscountedFee {
+    pub base_fee: Option<i64>,
+    pub txs: VecM<TransactionEnvelope>,
+}
+
+impl ReadXdr for TxSetComponentTxsMaybeDiscountedFee {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            base_fee: Option::<i64>::read_xdr(r)?,
+            txs: VecM::<TransactionEnvelope>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.base_fee.write_xdr(w)?;
+        self.txs.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// TxSetComponent is an XDR Union defines as:
+//
+//   union TxSetComponent switch (TxSetComponentType type)
+//    {
+//    case TXSET_COMP_TXS_MAYBE_DISCOUNTED_FEE:
+//      struct
+//      {
+//        int64* baseFee;
+//        TransactionEnvelope txs<>;
+//      } txsMaybeDiscountedFee;
+//    };
+//
+// union with discriminant TxSetComponentType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum TxSetComponent {
+    TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee),
+}
+
+impl TxSetComponent {
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::TxsetCompTxsMaybeDiscountedFee(_) => "TxsetCompTxsMaybeDiscountedFee",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> TxSetComponentType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TxsetCompTxsMaybeDiscountedFee(_) => {
+                TxSetComponentType::TxsetCompTxsMaybeDiscountedFee
+            }
+        }
+    }
+}
+
+impl Name for TxSetComponent {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<TxSetComponentType> for TxSetComponent {
+    #[must_use]
+    fn discriminant(&self) -> TxSetComponentType {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<TxSetComponentType> for TxSetComponent {}
+
+impl ReadXdr for TxSetComponent {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: TxSetComponentType = <TxSetComponentType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            TxSetComponentType::TxsetCompTxsMaybeDiscountedFee => {
+                Self::TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee::read_xdr(
+                    r,
+                )?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for TxSetComponent {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TxsetCompTxsMaybeDiscountedFee(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// TransactionPhase is an XDR Union defines as:
+//
+//   union TransactionPhase switch (int v)
+//    {
+//    case 0:
+//        TxSetComponent v0Components<>;
+//    };
+//
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum TransactionPhase {
+    V0(VecM<TxSetComponent>),
+}
+
+impl TransactionPhase {
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0(_) => "V0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => 0,
+        }
+    }
+}
+
+impl Name for TransactionPhase {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TransactionPhase {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for TransactionPhase {}
+
+impl ReadXdr for TransactionPhase {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            0 => Self::V0(VecM::<TxSetComponent>::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for TransactionPhase {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
 // TransactionSet is an XDR Struct defines as:
 //
 //   struct TransactionSet
@@ -8134,6 +8402,114 @@ impl WriteXdr for TransactionSet {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.previous_ledger_hash.write_xdr(w)?;
         self.txs.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// TransactionSetV1 is an XDR Struct defines as:
+//
+//   struct TransactionSetV1
+//    {
+//        Hash previousLedgerHash;
+//        TransactionPhase phases<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransactionSetV1 {
+    pub previous_ledger_hash: Hash,
+    pub phases: VecM<TransactionPhase>,
+}
+
+impl ReadXdr for TransactionSetV1 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            previous_ledger_hash: Hash::read_xdr(r)?,
+            phases: VecM::<TransactionPhase>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionSetV1 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.previous_ledger_hash.write_xdr(w)?;
+        self.phases.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// GeneralizedTransactionSet is an XDR Union defines as:
+//
+//   union GeneralizedTransactionSet switch (int v)
+//    {
+//    // We consider the legacy TransactionSet to be v0.
+//    case 1:
+//        TransactionSetV1 v1TxSet;
+//    };
+//
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[allow(clippy::large_enum_variant)]
+pub enum GeneralizedTransactionSet {
+    V1(TransactionSetV1),
+}
+
+impl GeneralizedTransactionSet {
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V1(_) => "V1",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V1(_) => 1,
+        }
+    }
+}
+
+impl Name for GeneralizedTransactionSet {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for GeneralizedTransactionSet {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<i32> for GeneralizedTransactionSet {}
+
+impl ReadXdr for GeneralizedTransactionSet {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            1 => Self::V1(TransactionSetV1::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for GeneralizedTransactionSet {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V1(v) => v.write_xdr(w)?,
+        };
         Ok(())
     }
 }
@@ -8206,6 +8582,8 @@ impl WriteXdr for TransactionResultSet {
 //        {
 //        case 0:
 //            void;
+//        case 1:
+//            GeneralizedTransactionSet generalizedTxSet;
 //        }
 //
 // union with discriminant i32
@@ -8213,6 +8591,7 @@ impl WriteXdr for TransactionResultSet {
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryEntryExt {
     V0,
+    V1(GeneralizedTransactionSet),
 }
 
 impl TransactionHistoryEntryExt {
@@ -8220,6 +8599,7 @@ impl TransactionHistoryEntryExt {
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
+            Self::V1(_) => "V1",
         }
     }
 
@@ -8228,6 +8608,7 @@ impl TransactionHistoryEntryExt {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
+            Self::V1(_) => 1,
         }
     }
 }
@@ -8255,6 +8636,7 @@ impl ReadXdr for TransactionHistoryEntryExt {
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0,
+            1 => Self::V1(GeneralizedTransactionSet::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -8269,6 +8651,7 @@ impl WriteXdr for TransactionHistoryEntryExt {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => ().write_xdr(w)?,
+            Self::V1(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -8281,11 +8664,13 @@ impl WriteXdr for TransactionHistoryEntryExt {
 //        uint32 ledgerSeq;
 //        TransactionSet txSet;
 //
-//        // reserved for future use
+//        // when v != 0, txSet must be empty
 //        union switch (int v)
 //        {
 //        case 0:
 //            void;
+//        case 1:
+//            GeneralizedTransactionSet generalizedTxSet;
 //        }
 //        ext;
 //    };
@@ -9282,12 +9667,68 @@ impl WriteXdr for LedgerCloseMetaV0 {
     }
 }
 
+// LedgerCloseMetaV1 is an XDR Struct defines as:
+//
+//   struct LedgerCloseMetaV1
+//    {
+//        LedgerHeaderHistoryEntry ledgerHeader;
+//
+//        GeneralizedTransactionSet txSet;
+//
+//        // NB: transactions are sorted in apply order here
+//        // fees for all transactions are processed first
+//        // followed by applying transactions
+//        TransactionResultMeta txProcessing<>;
+//
+//        // upgrades are applied last
+//        UpgradeEntryMeta upgradesProcessing<>;
+//
+//        // other misc information attached to the ledger close
+//        SCPHistoryEntry scpInfo<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LedgerCloseMetaV1 {
+    pub ledger_header: LedgerHeaderHistoryEntry,
+    pub tx_set: GeneralizedTransactionSet,
+    pub tx_processing: VecM<TransactionResultMeta>,
+    pub upgrades_processing: VecM<UpgradeEntryMeta>,
+    pub scp_info: VecM<ScpHistoryEntry>,
+}
+
+impl ReadXdr for LedgerCloseMetaV1 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
+            tx_set: GeneralizedTransactionSet::read_xdr(r)?,
+            tx_processing: VecM::<TransactionResultMeta>::read_xdr(r)?,
+            upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
+            scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerCloseMetaV1 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_header.write_xdr(w)?;
+        self.tx_set.write_xdr(w)?;
+        self.tx_processing.write_xdr(w)?;
+        self.upgrades_processing.write_xdr(w)?;
+        self.scp_info.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // LedgerCloseMeta is an XDR Union defines as:
 //
 //   union LedgerCloseMeta switch (int v)
 //    {
 //    case 0:
 //        LedgerCloseMetaV0 v0;
+//    case 1:
+//        LedgerCloseMetaV1 v1;
 //    };
 //
 // union with discriminant i32
@@ -9295,6 +9736,7 @@ impl WriteXdr for LedgerCloseMetaV0 {
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
+    V1(LedgerCloseMetaV1),
 }
 
 impl LedgerCloseMeta {
@@ -9302,6 +9744,7 @@ impl LedgerCloseMeta {
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
+            Self::V1(_) => "V1",
         }
     }
 
@@ -9310,6 +9753,7 @@ impl LedgerCloseMeta {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
+            Self::V1(_) => 1,
         }
     }
 }
@@ -9337,6 +9781,7 @@ impl ReadXdr for LedgerCloseMeta {
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
+            1 => Self::V1(LedgerCloseMetaV1::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -9351,6 +9796,7 @@ impl WriteXdr for LedgerCloseMeta {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(v) => v.write_xdr(w)?,
+            Self::V1(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -9855,6 +10301,7 @@ impl WriteXdr for PeerAddress {
 //
 //        GET_TX_SET = 6, // gets a particular txset by hash
 //        TX_SET = 7,
+//        GENERALIZED_TX_SET = 17,
 //
 //        TRANSACTION = 8, // pass on a tx you have heard about
 //
@@ -9884,6 +10331,7 @@ pub enum MessageType {
     Peers = 5,
     GetTxSet = 6,
     TxSet = 7,
+    GeneralizedTxSet = 17,
     Transaction = 8,
     GetScpQuorumset = 9,
     ScpQuorumset = 10,
@@ -9906,6 +10354,7 @@ impl MessageType {
             Self::Peers => "Peers",
             Self::GetTxSet => "GetTxSet",
             Self::TxSet => "TxSet",
+            Self::GeneralizedTxSet => "GeneralizedTxSet",
             Self::Transaction => "Transaction",
             Self::GetScpQuorumset => "GetScpQuorumset",
             Self::ScpQuorumset => "ScpQuorumset",
@@ -9946,6 +10395,7 @@ impl TryFrom<i32> for MessageType {
             5 => MessageType::Peers,
             6 => MessageType::GetTxSet,
             7 => MessageType::TxSet,
+            17 => MessageType::GeneralizedTxSet,
             8 => MessageType::Transaction,
             9 => MessageType::GetScpQuorumset,
             10 => MessageType::ScpQuorumset,
@@ -10662,6 +11112,8 @@ impl WriteXdr for SurveyResponseBody {
 //        uint256 txSetHash;
 //    case TX_SET:
 //        TransactionSet txSet;
+//    case GENERALIZED_TX_SET:
+//        GeneralizedTransactionSet generalizedTxSet;
 //
 //    case TRANSACTION:
 //        TransactionEnvelope transaction;
@@ -10697,6 +11149,7 @@ pub enum StellarMessage {
     Peers(VecM<PeerAddress, 100>),
     GetTxSet(Uint256),
     TxSet(TransactionSet),
+    GeneralizedTxSet(GeneralizedTransactionSet),
     Transaction(TransactionEnvelope),
     SurveyRequest(SignedSurveyRequestMessage),
     SurveyResponse(SignedSurveyResponseMessage),
@@ -10719,6 +11172,7 @@ impl StellarMessage {
             Self::Peers(_) => "Peers",
             Self::GetTxSet(_) => "GetTxSet",
             Self::TxSet(_) => "TxSet",
+            Self::GeneralizedTxSet(_) => "GeneralizedTxSet",
             Self::Transaction(_) => "Transaction",
             Self::SurveyRequest(_) => "SurveyRequest",
             Self::SurveyResponse(_) => "SurveyResponse",
@@ -10742,6 +11196,7 @@ impl StellarMessage {
             Self::Peers(_) => MessageType::Peers,
             Self::GetTxSet(_) => MessageType::GetTxSet,
             Self::TxSet(_) => MessageType::TxSet,
+            Self::GeneralizedTxSet(_) => MessageType::GeneralizedTxSet,
             Self::Transaction(_) => MessageType::Transaction,
             Self::SurveyRequest(_) => MessageType::SurveyRequest,
             Self::SurveyResponse(_) => MessageType::SurveyResponse,
@@ -10784,6 +11239,9 @@ impl ReadXdr for StellarMessage {
             MessageType::Peers => Self::Peers(VecM::<PeerAddress, 100>::read_xdr(r)?),
             MessageType::GetTxSet => Self::GetTxSet(Uint256::read_xdr(r)?),
             MessageType::TxSet => Self::TxSet(TransactionSet::read_xdr(r)?),
+            MessageType::GeneralizedTxSet => {
+                Self::GeneralizedTxSet(GeneralizedTransactionSet::read_xdr(r)?)
+            }
             MessageType::Transaction => Self::Transaction(TransactionEnvelope::read_xdr(r)?),
             MessageType::SurveyRequest => {
                 Self::SurveyRequest(SignedSurveyRequestMessage::read_xdr(r)?)
@@ -10817,6 +11275,7 @@ impl WriteXdr for StellarMessage {
             Self::Peers(v) => v.write_xdr(w)?,
             Self::GetTxSet(v) => v.write_xdr(w)?,
             Self::TxSet(v) => v.write_xdr(w)?,
+            Self::GeneralizedTxSet(v) => v.write_xdr(w)?,
             Self::Transaction(v) => v.write_xdr(w)?,
             Self::SurveyRequest(v) => v.write_xdr(w)?,
             Self::SurveyResponse(v) => v.write_xdr(w)?,

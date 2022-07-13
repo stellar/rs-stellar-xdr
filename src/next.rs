@@ -1,5 +1,6 @@
 // Module  is generated from:
 //  xdr/next/Stellar-SCP.x
+//  xdr/next/Stellar-contract-env-meta.x
 //  xdr/next/Stellar-contract-spec.x
 //  xdr/next/Stellar-contract.x
 //  xdr/next/Stellar-ledger-entries.x
@@ -11,10 +12,14 @@
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
-pub const XDR_FILES_SHA256: [(&str, &str); 8] = [
+pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     (
         "xdr/next/Stellar-SCP.x",
         "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+    ),
+    (
+        "xdr/next/Stellar-contract-env-meta.x",
+        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
@@ -26944,6 +26949,167 @@ impl WriteXdr for ScObject {
             Self::BigInt(v) => v.write_xdr(w)?,
             Self::Hash(v) => v.write_xdr(w)?,
             Self::PublicKey(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ScEnvMetaKind is an XDR Enum defines as:
+//
+//   enum SCEnvMetaKind
+//    {
+//        SC_ENV_META_KIND_INTERFACE_VERSION = 0
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+#[repr(i32)]
+pub enum ScEnvMetaKind {
+    ScEnvMetaKindInterfaceVersion = 0,
+}
+
+impl ScEnvMetaKind {
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ScEnvMetaKindInterfaceVersion => "ScEnvMetaKindInterfaceVersion",
+        }
+    }
+}
+
+impl Name for ScEnvMetaKind {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Enum for ScEnvMetaKind {}
+
+impl fmt::Display for ScEnvMetaKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScEnvMetaKind {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScEnvMetaKind::ScEnvMetaKindInterfaceVersion,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScEnvMetaKind> for i32 {
+    #[must_use]
+    fn from(e: ScEnvMetaKind) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScEnvMetaKind {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScEnvMetaKind {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScEnvMetaEntry is an XDR Union defines as:
+//
+//   union SCEnvMetaEntry switch (SCEnvMetaKind kind)
+//    {
+//    case SC_ENV_META_KIND_INTERFACE_VERSION:
+//        uint64 interfaceVersion;
+//    };
+//
+// union with discriminant ScEnvMetaKind
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScEnvMetaEntry {
+    ScEnvMetaKindInterfaceVersion(u64),
+}
+
+impl ScEnvMetaEntry {
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ScEnvMetaKindInterfaceVersion(_) => "ScEnvMetaKindInterfaceVersion",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScEnvMetaKind {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ScEnvMetaKindInterfaceVersion(_) => ScEnvMetaKind::ScEnvMetaKindInterfaceVersion,
+        }
+    }
+}
+
+impl Name for ScEnvMetaEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScEnvMetaKind> for ScEnvMetaEntry {
+    #[must_use]
+    fn discriminant(&self) -> ScEnvMetaKind {
+        Self::discriminant(self)
+    }
+}
+
+impl Union<ScEnvMetaKind> for ScEnvMetaEntry {}
+
+impl ReadXdr for ScEnvMetaEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScEnvMetaKind = <ScEnvMetaKind as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScEnvMetaKind::ScEnvMetaKindInterfaceVersion => {
+                Self::ScEnvMetaKindInterfaceVersion(u64::read_xdr(r)?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScEnvMetaEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ScEnvMetaKindInterfaceVersion(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

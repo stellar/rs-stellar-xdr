@@ -19,6 +19,7 @@ XDR_FILES_NEXT= \
 	Stellar-transaction.x \
 	Stellar-types.x \
 	Stellar-contract.x \
+	Stellar-contract-env-meta.x \
 	Stellar-contract-spec.x
 XDR_FILES_LOCAL_NEXT=$(addprefix xdr/next/,$(XDR_FILES_NEXT))
 
@@ -83,6 +84,6 @@ $(XDR_FILES_LOCAL_CURR):
 $(XDR_FILES_LOCAL_NEXT):
 	curl -L -o $@ $(XDR_BASE_URL_NEXT)/$(notdir $@)
 
-reset-xdr-to-stellar-core:
+reset-xdr:
 	rm -f xdr/*/*.x
 	$(MAKE) build

@@ -83,6 +83,6 @@ $(XDR_FILES_LOCAL_CURR):
 $(XDR_FILES_LOCAL_NEXT):
 	curl -L -o $@ $(XDR_BASE_URL_NEXT)/$(notdir $@)
 
-reset-xdr-to-stellar-core:
+reset-xdr:
 	rm -f xdr/*/*.x
 	$(MAKE) build

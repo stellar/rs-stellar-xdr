@@ -5,11 +5,11 @@ edition = "2021"
 
 [dependencies]
 base64 = "0.13.0"
-serde = {version = "1.0.137", features = ["derive"] }
+serde = {version = "1.0.139", features = ["derive"], optional = true }
 
 [features]
 default = ["std"]
 std = ["alloc", "base64/std"]
+serde = ["alloc", "dep:serde"]
 alloc = []
 next = []
-serde = ["alloc"]

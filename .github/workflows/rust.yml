@@ -74,6 +74,7 @@ jobs:
         restore-keys: |
           target-${{ strategy.job-index }}
           target-
+    - run: cargo install --locked --version 0.5.14 cargo-hack
     - run: >
         cargo hack --feature-powerset
         clippy

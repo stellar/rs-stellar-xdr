@@ -76,13 +76,13 @@ jobs:
           target-
     - run: cargo install --locked --version 0.5.14 cargo-hack
     - run: >
-        cargo hack --feature-powerset
+        cargo hack --feature-powerset --optional-deps
         clippy
         --profile ${{ matrix.profile }}
         --target ${{ matrix.sys.target }}
         --all-targets
     - if: matrix.sys.test
       run: >
-        cargo hack --feature-powerset
+        cargo hack --feature-powerset --optional-deps
         test
         --profile ${{ matrix.profile }}

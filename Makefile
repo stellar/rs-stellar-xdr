@@ -27,28 +27,18 @@ export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
 all: build test
 
+# TODO: Remove the `--optional-deps` usage once weak dependencies are recognized
+# by cargo-hack https://github.com/taiki-e/cargo-hack/issues/147 and once the
+# bug with first-class features that have the same name as an optional
+# dependency not being seen as a feature to test
+# https://github.com/taiki-e/cargo-hack/issues/153.
+
 test:
-	cargo test --no-default-features --features 'std'
-	cargo test --no-default-features --features 'alloc'
-	cargo test --no-default-features --features ''
-	cargo test --no-default-features --features 'next,std'
-	cargo test --no-default-features --features 'next,alloc'
-	cargo test --no-default-features --features 'next'
+	cargo hack test --feature-powerset --optional-deps
 
 build: generate
-	cargo clippy --all-targets --no-default-features --features 'std'
-	cargo clippy --all-targets --no-default-features --features 'alloc'
-	cargo clippy --all-targets --no-default-features --features ''
-	cargo clippy --all-targets --no-default-features --features 'std' --release --target wasm32-unknown-unknown
-	cargo clippy --all-targets --no-default-features --features 'alloc' --release --target wasm32-unknown-unknown
-	cargo clippy --all-targets --no-default-features --features '' --release --target wasm32-unknown-unknown
-
-	cargo clippy --all-targets --no-default-features --features 'next,std'
-	cargo clippy --all-targets --no-default-features --features 'next,alloc'
-	cargo clippy --all-targets --no-default-features --features 'next'
-	cargo clippy --all-targets --no-default-features --features 'next,std' --release --target wasm32-unknown-unknown
-	cargo clippy --all-targets --no-default-features --features 'next,alloc' --release --target wasm32-unknown-unknown
-	cargo clippy --all-targets --no-default-features --features 'next' --release --target wasm32-unknown-unknown
+	cargo hack clippy --feature-powerset --optional-deps --all-targets
+	cargo hack clippy --feature-powerset --optional-deps --all-targets --release --target wasm32-unknown-unknown
 
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'

@@ -37,7 +37,6 @@ jobs:
   cargo:
     strategy:
       matrix:
-        features: ['', 'alloc', 'std', 'next', 'next,alloc', 'next,std']
         profile: [dev, release]
         sys:
         - os: ubuntu-latest
@@ -75,17 +74,13 @@ jobs:
         restore-keys: |
           target-${{ strategy.job-index }}
           target-
+    - run: cargo install --locked --version 0.5.14 cargo-hack
     - run: >
-        cargo clippy
+        cargo hack clippy --feature-powerset --optional-deps
         --profile ${{ matrix.profile }}
         --target ${{ matrix.sys.target }}
-        --no-default-features
-        --features='${{ matrix.features }}'
         --all-targets
     - if: matrix.sys.test
       run: >
-        cargo test
+        cargo hack test --feature-powerset --optional-deps
         --profile ${{ matrix.profile }}
-        --target ${{ matrix.sys.target }}
-        --no-default-features
-        --features='${{ matrix.features }}'

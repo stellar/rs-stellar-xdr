@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 base64 = "0.13.0"
-serde = {version = "1.0.137", features = ["derive"] }
+serde_crate = {package = "serde", version = "1.0.137", features = ["derive"] }
 
 [features]
 default = ["std"]

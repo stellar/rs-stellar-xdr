@@ -51,7 +51,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
 ];
 
-use core::{array::TryFromSliceError, fmt, fmt::Debug, ops::Deref};
+use core::{array::TryFromSliceError, fmt, fmt::Debug, marker::Sized, ops::Deref, slice};
 
 #[cfg(feature = "std")]
 use core::marker::PhantomData;
@@ -177,11 +177,22 @@ pub trait Discriminant<D> {
     fn discriminant(&self) -> D;
 }
 
+/// Iter defines types that have variants that can be iterated.
+pub trait Variants<V> {
+    fn variants() -> slice::Iter<'static, V>
+    where
+        V: Sized;
+}
+
 // Enum defines a type that is represented as an XDR enumeration when encoded.
-pub trait Enum: Name {}
+pub trait Enum: Name + Variants<Self> + Sized {}
 
 // Union defines a type that is represented as an XDR union when encoded.
-pub trait Union<D>: Name + Discriminant<D> {}
+pub trait Union<D>: Name + Discriminant<D> + Variants<D>
+where
+    D: Sized,
+{
+}
 
 #[cfg(feature = "std")]
 pub struct ReadXdrIter<'r, R: Read, S: ReadXdr> {
@@ -1141,12 +1152,30 @@ impl ScpStatementType {
             Self::Nominate => "Nominate",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScpStatementType; 4] {
+        const VARIANTS: [ScpStatementType; 4] = [
+            ScpStatementType::Prepare,
+            ScpStatementType::Confirm,
+            ScpStatementType::Externalize,
+            ScpStatementType::Nominate,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScpStatementType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScpStatementType> for ScpStatementType {
+    fn variants() -> slice::Iter<'static, ScpStatementType> {
+        const VARIANTS: [ScpStatementType; 4] = ScpStatementType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -1456,6 +1485,17 @@ impl ScpStatementPledges {
             Self::Nominate(_) => ScpStatementType::Nominate,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScpStatementType; 4] {
+        const VARIANTS: [ScpStatementType; 4] = [
+            ScpStatementType::Prepare,
+            ScpStatementType::Confirm,
+            ScpStatementType::Externalize,
+            ScpStatementType::Nominate,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScpStatementPledges {
@@ -1469,6 +1509,13 @@ impl Discriminant<ScpStatementType> for ScpStatementPledges {
     #[must_use]
     fn discriminant(&self) -> ScpStatementType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ScpStatementType> for ScpStatementPledges {
+    fn variants() -> slice::Iter<'static, ScpStatementType> {
+        const VARIANTS: [ScpStatementType; 4] = ScpStatementPledges::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -2310,12 +2357,30 @@ impl AssetType {
             Self::PoolShare => "PoolShare",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [AssetType; 4] {
+        const VARIANTS: [AssetType; 4] = [
+            AssetType::Native,
+            AssetType::CreditAlphanum4,
+            AssetType::CreditAlphanum12,
+            AssetType::PoolShare,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for AssetType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<AssetType> for AssetType {
+    fn variants() -> slice::Iter<'static, AssetType> {
+        const VARIANTS: [AssetType; 4] = AssetType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -2410,6 +2475,12 @@ impl AssetCode {
             Self::CreditAlphanum12(_) => AssetType::CreditAlphanum12,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [AssetType; 2] {
+        const VARIANTS: [AssetType; 2] = [AssetType::CreditAlphanum4, AssetType::CreditAlphanum12];
+        VARIANTS
+    }
 }
 
 impl Name for AssetCode {
@@ -2423,6 +2494,13 @@ impl Discriminant<AssetType> for AssetCode {
     #[must_use]
     fn discriminant(&self) -> AssetType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<AssetType> for AssetCode {
+    fn variants() -> slice::Iter<'static, AssetType> {
+        const VARIANTS: [AssetType; 2] = AssetCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -2581,6 +2659,16 @@ impl Asset {
             Self::CreditAlphanum12(_) => AssetType::CreditAlphanum12,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [AssetType; 3] {
+        const VARIANTS: [AssetType; 3] = [
+            AssetType::Native,
+            AssetType::CreditAlphanum4,
+            AssetType::CreditAlphanum12,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for Asset {
@@ -2594,6 +2682,13 @@ impl Discriminant<AssetType> for Asset {
     #[must_use]
     fn discriminant(&self) -> AssetType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<AssetType> for Asset {
+    fn variants() -> slice::Iter<'static, AssetType> {
+        const VARIANTS: [AssetType; 3] = Asset::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -2740,12 +2835,30 @@ impl ThresholdIndexes {
             Self::High => "High",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ThresholdIndexes; 4] {
+        const VARIANTS: [ThresholdIndexes; 4] = [
+            ThresholdIndexes::MasterWeight,
+            ThresholdIndexes::Low,
+            ThresholdIndexes::Med,
+            ThresholdIndexes::High,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ThresholdIndexes {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ThresholdIndexes> for ThresholdIndexes {
+    fn variants() -> slice::Iter<'static, ThresholdIndexes> {
+        const VARIANTS: [ThresholdIndexes; 4] = ThresholdIndexes::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -2844,12 +2957,34 @@ impl LedgerEntryType {
             Self::ConfigSetting => "ConfigSetting",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LedgerEntryType; 8] {
+        const VARIANTS: [LedgerEntryType; 8] = [
+            LedgerEntryType::Account,
+            LedgerEntryType::Trustline,
+            LedgerEntryType::Offer,
+            LedgerEntryType::Data,
+            LedgerEntryType::ClaimableBalance,
+            LedgerEntryType::LiquidityPool,
+            LedgerEntryType::ContractData,
+            LedgerEntryType::ConfigSetting,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerEntryType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<LedgerEntryType> for LedgerEntryType {
+    fn variants() -> slice::Iter<'static, LedgerEntryType> {
+        const VARIANTS: [LedgerEntryType; 8] = LedgerEntryType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -2988,12 +3123,30 @@ impl AccountFlags {
             Self::ClawbackEnabledFlag => "ClawbackEnabledFlag",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [AccountFlags; 4] {
+        const VARIANTS: [AccountFlags; 4] = [
+            AccountFlags::RequiredFlag,
+            AccountFlags::RevocableFlag,
+            AccountFlags::ImmutableFlag,
+            AccountFlags::ClawbackEnabledFlag,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for AccountFlags {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<AccountFlags> for AccountFlags {
+    fn variants() -> slice::Iter<'static, AccountFlags> {
+        const VARIANTS: [AccountFlags; 4] = AccountFlags::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -3200,6 +3353,12 @@ impl AccountEntryExtensionV2Ext {
             Self::V3(_) => 3,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        const VARIANTS: [i32; 2] = [0, 3];
+        VARIANTS
+    }
 }
 
 impl Name for AccountEntryExtensionV2Ext {
@@ -3213,6 +3372,13 @@ impl Discriminant<i32> for AccountEntryExtensionV2Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for AccountEntryExtensionV2Ext {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 2] = AccountEntryExtensionV2Ext::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -3340,6 +3506,12 @@ impl AccountEntryExtensionV1Ext {
             Self::V2(_) => 2,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        const VARIANTS: [i32; 2] = [0, 2];
+        VARIANTS
+    }
 }
 
 impl Name for AccountEntryExtensionV1Ext {
@@ -3353,6 +3525,13 @@ impl Discriminant<i32> for AccountEntryExtensionV1Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for AccountEntryExtensionV1Ext {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 2] = AccountEntryExtensionV1Ext::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -3472,6 +3651,12 @@ impl AccountEntryExt {
             Self::V1(_) => 1,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        const VARIANTS: [i32; 2] = [0, 1];
+        VARIANTS
+    }
 }
 
 impl Name for AccountEntryExt {
@@ -3485,6 +3670,13 @@ impl Discriminant<i32> for AccountEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for AccountEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 2] = AccountEntryExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -3640,12 +3832,29 @@ impl TrustLineFlags {
             Self::TrustlineClawbackEnabledFlag => "TrustlineClawbackEnabledFlag",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [TrustLineFlags; 3] {
+        const VARIANTS: [TrustLineFlags; 3] = [
+            TrustLineFlags::AuthorizedFlag,
+            TrustLineFlags::AuthorizedToMaintainLiabilitiesFlag,
+            TrustLineFlags::TrustlineClawbackEnabledFlag,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for TrustLineFlags {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<TrustLineFlags> for TrustLineFlags {
+    fn variants() -> slice::Iter<'static, TrustLineFlags> {
+        const VARIANTS: [TrustLineFlags; 3] = TrustLineFlags::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -3740,12 +3949,25 @@ impl LiquidityPoolType {
             Self::LiquidityPoolConstantProduct => "LiquidityPoolConstantProduct",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LiquidityPoolType; 1] {
+        const VARIANTS: [LiquidityPoolType; 1] = [LiquidityPoolType::LiquidityPoolConstantProduct];
+        VARIANTS
+    }
 }
 
 impl Name for LiquidityPoolType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<LiquidityPoolType> for LiquidityPoolType {
+    fn variants() -> slice::Iter<'static, LiquidityPoolType> {
+        const VARIANTS: [LiquidityPoolType; 1] = LiquidityPoolType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -3849,6 +4071,17 @@ impl TrustLineAsset {
             Self::PoolShare(_) => AssetType::PoolShare,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [AssetType; 4] {
+        const VARIANTS: [AssetType; 4] = [
+            AssetType::Native,
+            AssetType::CreditAlphanum4,
+            AssetType::CreditAlphanum12,
+            AssetType::PoolShare,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for TrustLineAsset {
@@ -3862,6 +4095,13 @@ impl Discriminant<AssetType> for TrustLineAsset {
     #[must_use]
     fn discriminant(&self) -> AssetType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<AssetType> for TrustLineAsset {
+    fn variants() -> slice::Iter<'static, AssetType> {
+        const VARIANTS: [AssetType; 4] = TrustLineAsset::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -3934,6 +4174,12 @@ impl TrustLineEntryExtensionV2Ext {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for TrustLineEntryExtensionV2Ext {
@@ -3947,6 +4193,13 @@ impl Discriminant<i32> for TrustLineEntryExtensionV2Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TrustLineEntryExtensionV2Ext {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = TrustLineEntryExtensionV2Ext::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -4062,6 +4315,12 @@ impl TrustLineEntryV1Ext {
             Self::V2(_) => 2,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        const VARIANTS: [i32; 2] = [0, 2];
+        VARIANTS
+    }
 }
 
 impl Name for TrustLineEntryV1Ext {
@@ -4075,6 +4334,13 @@ impl Discriminant<i32> for TrustLineEntryV1Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TrustLineEntryV1Ext {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 2] = TrustLineEntryV1Ext::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -4206,6 +4472,12 @@ impl TrustLineEntryExt {
             Self::V1(_) => 1,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        const VARIANTS: [i32; 2] = [0, 1];
+        VARIANTS
+    }
 }
 
 impl Name for TrustLineEntryExt {
@@ -4219,6 +4491,13 @@ impl Discriminant<i32> for TrustLineEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TrustLineEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 2] = TrustLineEntryExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -4357,12 +4636,25 @@ impl OfferEntryFlags {
             Self::PassiveFlag => "PassiveFlag",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [OfferEntryFlags; 1] {
+        const VARIANTS: [OfferEntryFlags; 1] = [OfferEntryFlags::PassiveFlag];
+        VARIANTS
+    }
 }
 
 impl Name for OfferEntryFlags {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<OfferEntryFlags> for OfferEntryFlags {
+    fn variants() -> slice::Iter<'static, OfferEntryFlags> {
+        const VARIANTS: [OfferEntryFlags; 1] = OfferEntryFlags::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -4452,6 +4744,12 @@ impl OfferEntryExt {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for OfferEntryExt {
@@ -4465,6 +4763,13 @@ impl Discriminant<i32> for OfferEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for OfferEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = OfferEntryExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -4606,6 +4911,12 @@ impl DataEntryExt {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for DataEntryExt {
@@ -4619,6 +4930,13 @@ impl Discriminant<i32> for DataEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for DataEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = DataEntryExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -4744,12 +5062,32 @@ impl ClaimPredicateType {
             Self::BeforeRelativeTime => "BeforeRelativeTime",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimPredicateType; 6] {
+        const VARIANTS: [ClaimPredicateType; 6] = [
+            ClaimPredicateType::Unconditional,
+            ClaimPredicateType::And,
+            ClaimPredicateType::Or,
+            ClaimPredicateType::Not,
+            ClaimPredicateType::BeforeAbsoluteTime,
+            ClaimPredicateType::BeforeRelativeTime,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimPredicateType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ClaimPredicateType> for ClaimPredicateType {
+    fn variants() -> slice::Iter<'static, ClaimPredicateType> {
+        const VARIANTS: [ClaimPredicateType; 6] = ClaimPredicateType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -4864,6 +5202,19 @@ impl ClaimPredicate {
             Self::BeforeRelativeTime(_) => ClaimPredicateType::BeforeRelativeTime,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimPredicateType; 6] {
+        const VARIANTS: [ClaimPredicateType; 6] = [
+            ClaimPredicateType::Unconditional,
+            ClaimPredicateType::And,
+            ClaimPredicateType::Or,
+            ClaimPredicateType::Not,
+            ClaimPredicateType::BeforeAbsoluteTime,
+            ClaimPredicateType::BeforeRelativeTime,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimPredicate {
@@ -4877,6 +5228,13 @@ impl Discriminant<ClaimPredicateType> for ClaimPredicate {
     #[must_use]
     fn discriminant(&self) -> ClaimPredicateType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ClaimPredicateType> for ClaimPredicate {
+    fn variants() -> slice::Iter<'static, ClaimPredicateType> {
+        const VARIANTS: [ClaimPredicateType; 6] = ClaimPredicate::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -4944,12 +5302,25 @@ impl ClaimantType {
             Self::ClaimantTypeV0 => "ClaimantTypeV0",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimantType; 1] {
+        const VARIANTS: [ClaimantType; 1] = [ClaimantType::ClaimantTypeV0];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimantType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ClaimantType> for ClaimantType {
+    fn variants() -> slice::Iter<'static, ClaimantType> {
+        const VARIANTS: [ClaimantType; 1] = ClaimantType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -5075,6 +5446,12 @@ impl Claimant {
             Self::ClaimantTypeV0(_) => ClaimantType::ClaimantTypeV0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimantType; 1] {
+        const VARIANTS: [ClaimantType; 1] = [ClaimantType::ClaimantTypeV0];
+        VARIANTS
+    }
 }
 
 impl Name for Claimant {
@@ -5088,6 +5465,13 @@ impl Discriminant<ClaimantType> for Claimant {
     #[must_use]
     fn discriminant(&self) -> ClaimantType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ClaimantType> for Claimant {
+    fn variants() -> slice::Iter<'static, ClaimantType> {
+        const VARIANTS: [ClaimantType; 1] = Claimant::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -5145,12 +5529,26 @@ impl ClaimableBalanceIdType {
             Self::ClaimableBalanceIdTypeV0 => "ClaimableBalanceIdTypeV0",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimableBalanceIdType; 1] {
+        const VARIANTS: [ClaimableBalanceIdType; 1] =
+            [ClaimableBalanceIdType::ClaimableBalanceIdTypeV0];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimableBalanceIdType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ClaimableBalanceIdType> for ClaimableBalanceIdType {
+    fn variants() -> slice::Iter<'static, ClaimableBalanceIdType> {
+        const VARIANTS: [ClaimableBalanceIdType; 1] = ClaimableBalanceIdType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -5234,6 +5632,13 @@ impl ClaimableBalanceId {
             Self::ClaimableBalanceIdTypeV0(_) => ClaimableBalanceIdType::ClaimableBalanceIdTypeV0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimableBalanceIdType; 1] {
+        const VARIANTS: [ClaimableBalanceIdType; 1] =
+            [ClaimableBalanceIdType::ClaimableBalanceIdTypeV0];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimableBalanceId {
@@ -5247,6 +5652,13 @@ impl Discriminant<ClaimableBalanceIdType> for ClaimableBalanceId {
     #[must_use]
     fn discriminant(&self) -> ClaimableBalanceIdType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ClaimableBalanceIdType> for ClaimableBalanceId {
+    fn variants() -> slice::Iter<'static, ClaimableBalanceIdType> {
+        const VARIANTS: [ClaimableBalanceIdType; 1] = ClaimableBalanceId::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -5308,12 +5720,26 @@ impl ClaimableBalanceFlags {
             Self::ClaimableBalanceClawbackEnabledFlag => "ClaimableBalanceClawbackEnabledFlag",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimableBalanceFlags; 1] {
+        const VARIANTS: [ClaimableBalanceFlags; 1] =
+            [ClaimableBalanceFlags::ClaimableBalanceClawbackEnabledFlag];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimableBalanceFlags {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ClaimableBalanceFlags> for ClaimableBalanceFlags {
+    fn variants() -> slice::Iter<'static, ClaimableBalanceFlags> {
+        const VARIANTS: [ClaimableBalanceFlags; 1] = ClaimableBalanceFlags::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -5403,6 +5829,12 @@ impl ClaimableBalanceEntryExtensionV1Ext {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimableBalanceEntryExtensionV1Ext {
@@ -5416,6 +5848,13 @@ impl Discriminant<i32> for ClaimableBalanceEntryExtensionV1Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for ClaimableBalanceEntryExtensionV1Ext {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = ClaimableBalanceEntryExtensionV1Ext::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -5531,6 +5970,12 @@ impl ClaimableBalanceEntryExt {
             Self::V1(_) => 1,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        const VARIANTS: [i32; 2] = [0, 1];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimableBalanceEntryExt {
@@ -5544,6 +5989,13 @@ impl Discriminant<i32> for ClaimableBalanceEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for ClaimableBalanceEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 2] = ClaimableBalanceEntryExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -5783,6 +6235,12 @@ impl LiquidityPoolEntryBody {
             }
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LiquidityPoolType; 1] {
+        const VARIANTS: [LiquidityPoolType; 1] = [LiquidityPoolType::LiquidityPoolConstantProduct];
+        VARIANTS
+    }
 }
 
 impl Name for LiquidityPoolEntryBody {
@@ -5796,6 +6254,13 @@ impl Discriminant<LiquidityPoolType> for LiquidityPoolEntryBody {
     #[must_use]
     fn discriminant(&self) -> LiquidityPoolType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<LiquidityPoolType> for LiquidityPoolEntryBody {
+    fn variants() -> slice::Iter<'static, LiquidityPoolType> {
+        const VARIANTS: [LiquidityPoolType; 1] = LiquidityPoolEntryBody::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -5949,12 +6414,25 @@ impl ConfigSettingType {
             Self::ConfigSettingTypeUint32 => "ConfigSettingTypeUint32",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ConfigSettingType; 1] {
+        const VARIANTS: [ConfigSettingType; 1] = [ConfigSettingType::ConfigSettingTypeUint32];
+        VARIANTS
+    }
 }
 
 impl Name for ConfigSettingType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ConfigSettingType> for ConfigSettingType {
+    fn variants() -> slice::Iter<'static, ConfigSettingType> {
+        const VARIANTS: [ConfigSettingType; 1] = ConfigSettingType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -6038,6 +6516,12 @@ impl ConfigSetting {
             Self::ConfigSettingTypeUint32(_) => ConfigSettingType::ConfigSettingTypeUint32,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ConfigSettingType; 1] {
+        const VARIANTS: [ConfigSettingType; 1] = [ConfigSettingType::ConfigSettingTypeUint32];
+        VARIANTS
+    }
 }
 
 impl Name for ConfigSetting {
@@ -6051,6 +6535,13 @@ impl Discriminant<ConfigSettingType> for ConfigSetting {
     #[must_use]
     fn discriminant(&self) -> ConfigSettingType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ConfigSettingType> for ConfigSetting {
+    fn variants() -> slice::Iter<'static, ConfigSettingType> {
+        const VARIANTS: [ConfigSettingType; 1] = ConfigSetting::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -6110,12 +6601,25 @@ impl ConfigSettingId {
             Self::ConfigSettingContractMaxSize => "ConfigSettingContractMaxSize",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ConfigSettingId; 1] {
+        const VARIANTS: [ConfigSettingId; 1] = [ConfigSettingId::ConfigSettingContractMaxSize];
+        VARIANTS
+    }
 }
 
 impl Name for ConfigSettingId {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ConfigSettingId> for ConfigSettingId {
+    fn variants() -> slice::Iter<'static, ConfigSettingId> {
+        const VARIANTS: [ConfigSettingId; 1] = ConfigSettingId::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -6199,6 +6703,12 @@ impl ConfigSettingEntryExt {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for ConfigSettingEntryExt {
@@ -6212,6 +6722,13 @@ impl Discriminant<i32> for ConfigSettingEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for ConfigSettingEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = ConfigSettingEntryExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -6326,6 +6843,12 @@ impl LedgerEntryExtensionV1Ext {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerEntryExtensionV1Ext {
@@ -6339,6 +6862,13 @@ impl Discriminant<i32> for LedgerEntryExtensionV1Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for LedgerEntryExtensionV1Ext {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = LedgerEntryExtensionV1Ext::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -6484,6 +7014,21 @@ impl LedgerEntryData {
             Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LedgerEntryType; 8] {
+        const VARIANTS: [LedgerEntryType; 8] = [
+            LedgerEntryType::Account,
+            LedgerEntryType::Trustline,
+            LedgerEntryType::Offer,
+            LedgerEntryType::Data,
+            LedgerEntryType::ClaimableBalance,
+            LedgerEntryType::LiquidityPool,
+            LedgerEntryType::ContractData,
+            LedgerEntryType::ConfigSetting,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerEntryData {
@@ -6497,6 +7042,13 @@ impl Discriminant<LedgerEntryType> for LedgerEntryData {
     #[must_use]
     fn discriminant(&self) -> LedgerEntryType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<LedgerEntryType> for LedgerEntryData {
+    fn variants() -> slice::Iter<'static, LedgerEntryType> {
+        const VARIANTS: [LedgerEntryType; 8] = LedgerEntryData::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -6584,6 +7136,12 @@ impl LedgerEntryExt {
             Self::V1(_) => 1,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        const VARIANTS: [i32; 2] = [0, 1];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerEntryExt {
@@ -6597,6 +7155,13 @@ impl Discriminant<i32> for LedgerEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for LedgerEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 2] = LedgerEntryExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -7092,6 +7657,21 @@ impl LedgerKey {
             Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LedgerEntryType; 8] {
+        const VARIANTS: [LedgerEntryType; 8] = [
+            LedgerEntryType::Account,
+            LedgerEntryType::Trustline,
+            LedgerEntryType::Offer,
+            LedgerEntryType::Data,
+            LedgerEntryType::ClaimableBalance,
+            LedgerEntryType::LiquidityPool,
+            LedgerEntryType::ContractData,
+            LedgerEntryType::ConfigSetting,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerKey {
@@ -7105,6 +7685,13 @@ impl Discriminant<LedgerEntryType> for LedgerKey {
     #[must_use]
     fn discriminant(&self) -> LedgerEntryType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<LedgerEntryType> for LedgerKey {
+    fn variants() -> slice::Iter<'static, LedgerEntryType> {
+        const VARIANTS: [LedgerEntryType; 8] = LedgerKey::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -7211,12 +7798,36 @@ impl EnvelopeType {
             Self::ContractIdFromContract => "ContractIdFromContract",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [EnvelopeType; 10] {
+        const VARIANTS: [EnvelopeType; 10] = [
+            EnvelopeType::TxV0,
+            EnvelopeType::Scp,
+            EnvelopeType::Tx,
+            EnvelopeType::Auth,
+            EnvelopeType::Scpvalue,
+            EnvelopeType::TxFeeBump,
+            EnvelopeType::OpId,
+            EnvelopeType::PoolRevokeOpId,
+            EnvelopeType::ContractIdFromEd25519,
+            EnvelopeType::ContractIdFromContract,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for EnvelopeType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<EnvelopeType> for EnvelopeType {
+    fn variants() -> slice::Iter<'static, EnvelopeType> {
+        const VARIANTS: [EnvelopeType; 10] = EnvelopeType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -7401,12 +8012,25 @@ impl StellarValueType {
             Self::Signed => "Signed",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [StellarValueType; 2] {
+        const VARIANTS: [StellarValueType; 2] = [StellarValueType::Basic, StellarValueType::Signed];
+        VARIANTS
+    }
 }
 
 impl Name for StellarValueType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<StellarValueType> for StellarValueType {
+    fn variants() -> slice::Iter<'static, StellarValueType> {
+        const VARIANTS: [StellarValueType; 2] = StellarValueType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -7534,6 +8158,12 @@ impl StellarValueExt {
             Self::Signed(_) => StellarValueType::Signed,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [StellarValueType; 2] {
+        const VARIANTS: [StellarValueType; 2] = [StellarValueType::Basic, StellarValueType::Signed];
+        VARIANTS
+    }
 }
 
 impl Name for StellarValueExt {
@@ -7547,6 +8177,13 @@ impl Discriminant<StellarValueType> for StellarValueExt {
     #[must_use]
     fn discriminant(&self) -> StellarValueType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<StellarValueType> for StellarValueExt {
+    fn variants() -> slice::Iter<'static, StellarValueType> {
+        const VARIANTS: [StellarValueType; 2] = StellarValueExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -7691,12 +8328,33 @@ impl LedgerHeaderFlags {
             Self::ContractInvoke => "ContractInvoke",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LedgerHeaderFlags; 7] {
+        const VARIANTS: [LedgerHeaderFlags; 7] = [
+            LedgerHeaderFlags::LiquidityPoolTradingFlag,
+            LedgerHeaderFlags::LiquidityPoolDepositFlag,
+            LedgerHeaderFlags::LiquidityPoolWithdrawalFlag,
+            LedgerHeaderFlags::ContractCreate,
+            LedgerHeaderFlags::ContractUpdate,
+            LedgerHeaderFlags::ContractRemove,
+            LedgerHeaderFlags::ContractInvoke,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerHeaderFlags {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<LedgerHeaderFlags> for LedgerHeaderFlags {
+    fn variants() -> slice::Iter<'static, LedgerHeaderFlags> {
+        const VARIANTS: [LedgerHeaderFlags; 7] = LedgerHeaderFlags::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -7786,6 +8444,12 @@ impl LedgerHeaderExtensionV1Ext {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerHeaderExtensionV1Ext {
@@ -7799,6 +8463,13 @@ impl Discriminant<i32> for LedgerHeaderExtensionV1Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for LedgerHeaderExtensionV1Ext {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = LedgerHeaderExtensionV1Ext::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -7914,6 +8585,12 @@ impl LedgerHeaderExt {
             Self::V1(_) => 1,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        const VARIANTS: [i32; 2] = [0, 1];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerHeaderExt {
@@ -7927,6 +8604,13 @@ impl Discriminant<i32> for LedgerHeaderExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for LedgerHeaderExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 2] = LedgerHeaderExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -8112,12 +8796,32 @@ impl LedgerUpgradeType {
             Self::Config => "Config",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LedgerUpgradeType; 6] {
+        const VARIANTS: [LedgerUpgradeType; 6] = [
+            LedgerUpgradeType::Version,
+            LedgerUpgradeType::BaseFee,
+            LedgerUpgradeType::MaxTxSetSize,
+            LedgerUpgradeType::BaseReserve,
+            LedgerUpgradeType::Flags,
+            LedgerUpgradeType::Config,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerUpgradeType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<LedgerUpgradeType> for LedgerUpgradeType {
+    fn variants() -> slice::Iter<'static, LedgerUpgradeType> {
+        const VARIANTS: [LedgerUpgradeType; 6] = LedgerUpgradeType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -8273,6 +8977,19 @@ impl LedgerUpgrade {
             Self::Config(_) => LedgerUpgradeType::Config,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LedgerUpgradeType; 6] {
+        const VARIANTS: [LedgerUpgradeType; 6] = [
+            LedgerUpgradeType::Version,
+            LedgerUpgradeType::BaseFee,
+            LedgerUpgradeType::MaxTxSetSize,
+            LedgerUpgradeType::BaseReserve,
+            LedgerUpgradeType::Flags,
+            LedgerUpgradeType::Config,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerUpgrade {
@@ -8286,6 +9003,13 @@ impl Discriminant<LedgerUpgradeType> for LedgerUpgrade {
     #[must_use]
     fn discriminant(&self) -> LedgerUpgradeType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<LedgerUpgradeType> for LedgerUpgrade {
+    fn variants() -> slice::Iter<'static, LedgerUpgradeType> {
+        const VARIANTS: [LedgerUpgradeType; 6] = LedgerUpgrade::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -8364,12 +9088,30 @@ impl BucketEntryType {
             Self::Initentry => "Initentry",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [BucketEntryType; 4] {
+        const VARIANTS: [BucketEntryType; 4] = [
+            BucketEntryType::Metaentry,
+            BucketEntryType::Liveentry,
+            BucketEntryType::Deadentry,
+            BucketEntryType::Initentry,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for BucketEntryType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<BucketEntryType> for BucketEntryType {
+    fn variants() -> slice::Iter<'static, BucketEntryType> {
+        const VARIANTS: [BucketEntryType; 4] = BucketEntryType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -8456,6 +9198,12 @@ impl BucketMetadataExt {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for BucketMetadataExt {
@@ -8469,6 +9217,13 @@ impl Discriminant<i32> for BucketMetadataExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for BucketMetadataExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = BucketMetadataExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -8596,6 +9351,17 @@ impl BucketEntry {
             Self::Metaentry(_) => BucketEntryType::Metaentry,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [BucketEntryType; 4] {
+        const VARIANTS: [BucketEntryType; 4] = [
+            BucketEntryType::Liveentry,
+            BucketEntryType::Initentry,
+            BucketEntryType::Deadentry,
+            BucketEntryType::Metaentry,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for BucketEntry {
@@ -8609,6 +9375,13 @@ impl Discriminant<BucketEntryType> for BucketEntry {
     #[must_use]
     fn discriminant(&self) -> BucketEntryType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<BucketEntryType> for BucketEntry {
+    fn variants() -> slice::Iter<'static, BucketEntryType> {
+        const VARIANTS: [BucketEntryType; 4] = BucketEntry::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -8674,12 +9447,26 @@ impl TxSetComponentType {
             Self::TxsetCompTxsMaybeDiscountedFee => "TxsetCompTxsMaybeDiscountedFee",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [TxSetComponentType; 1] {
+        const VARIANTS: [TxSetComponentType; 1] =
+            [TxSetComponentType::TxsetCompTxsMaybeDiscountedFee];
+        VARIANTS
+    }
 }
 
 impl Name for TxSetComponentType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<TxSetComponentType> for TxSetComponentType {
+    fn variants() -> slice::Iter<'static, TxSetComponentType> {
+        const VARIANTS: [TxSetComponentType; 1] = TxSetComponentType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -8807,6 +9594,13 @@ impl TxSetComponent {
             }
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [TxSetComponentType; 1] {
+        const VARIANTS: [TxSetComponentType; 1] =
+            [TxSetComponentType::TxsetCompTxsMaybeDiscountedFee];
+        VARIANTS
+    }
 }
 
 impl Name for TxSetComponent {
@@ -8820,6 +9614,13 @@ impl Discriminant<TxSetComponentType> for TxSetComponent {
     #[must_use]
     fn discriminant(&self) -> TxSetComponentType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<TxSetComponentType> for TxSetComponent {
+    fn variants() -> slice::Iter<'static, TxSetComponentType> {
+        const VARIANTS: [TxSetComponentType; 1] = TxSetComponent::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -8890,6 +9691,12 @@ impl TransactionPhase {
             Self::V0(_) => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for TransactionPhase {
@@ -8903,6 +9710,13 @@ impl Discriminant<i32> for TransactionPhase {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TransactionPhase {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = TransactionPhase::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -9046,6 +9860,12 @@ impl GeneralizedTransactionSet {
             Self::V1(_) => 1,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [1];
+        VARIANTS
+    }
 }
 
 impl Name for GeneralizedTransactionSet {
@@ -9059,6 +9879,13 @@ impl Discriminant<i32> for GeneralizedTransactionSet {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for GeneralizedTransactionSet {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = GeneralizedTransactionSet::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -9202,6 +10029,12 @@ impl TransactionHistoryEntryExt {
             Self::V1(_) => 1,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        const VARIANTS: [i32; 2] = [0, 1];
+        VARIANTS
+    }
 }
 
 impl Name for TransactionHistoryEntryExt {
@@ -9215,6 +10048,13 @@ impl Discriminant<i32> for TransactionHistoryEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TransactionHistoryEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 2] = TransactionHistoryEntryExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -9334,6 +10174,12 @@ impl TransactionHistoryResultEntryExt {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for TransactionHistoryResultEntryExt {
@@ -9347,6 +10193,13 @@ impl Discriminant<i32> for TransactionHistoryResultEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TransactionHistoryResultEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = TransactionHistoryResultEntryExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -9462,6 +10315,12 @@ impl LedgerHeaderHistoryEntryExt {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerHeaderHistoryEntryExt {
@@ -9475,6 +10334,13 @@ impl Discriminant<i32> for LedgerHeaderHistoryEntryExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for LedgerHeaderHistoryEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = LedgerHeaderHistoryEntryExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -9666,6 +10532,12 @@ impl ScpHistoryEntry {
             Self::V0(_) => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for ScpHistoryEntry {
@@ -9679,6 +10551,13 @@ impl Discriminant<i32> for ScpHistoryEntry {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for ScpHistoryEntry {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = ScpHistoryEntry::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -9745,12 +10624,30 @@ impl LedgerEntryChangeType {
             Self::State => "State",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LedgerEntryChangeType; 4] {
+        const VARIANTS: [LedgerEntryChangeType; 4] = [
+            LedgerEntryChangeType::Created,
+            LedgerEntryChangeType::Updated,
+            LedgerEntryChangeType::Removed,
+            LedgerEntryChangeType::State,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerEntryChangeType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<LedgerEntryChangeType> for LedgerEntryChangeType {
+    fn variants() -> slice::Iter<'static, LedgerEntryChangeType> {
+        const VARIANTS: [LedgerEntryChangeType; 4] = LedgerEntryChangeType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -9852,6 +10749,17 @@ impl LedgerEntryChange {
             Self::State(_) => LedgerEntryChangeType::State,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LedgerEntryChangeType; 4] {
+        const VARIANTS: [LedgerEntryChangeType; 4] = [
+            LedgerEntryChangeType::Created,
+            LedgerEntryChangeType::Updated,
+            LedgerEntryChangeType::Removed,
+            LedgerEntryChangeType::State,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerEntryChange {
@@ -9865,6 +10773,13 @@ impl Discriminant<LedgerEntryChangeType> for LedgerEntryChange {
     #[must_use]
     fn discriminant(&self) -> LedgerEntryChangeType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<LedgerEntryChangeType> for LedgerEntryChange {
+    fn variants() -> slice::Iter<'static, LedgerEntryChangeType> {
+        const VARIANTS: [LedgerEntryChangeType; 4] = LedgerEntryChange::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -10161,6 +11076,12 @@ impl TransactionMeta {
             Self::V2(_) => 2,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 3] {
+        const VARIANTS: [i32; 3] = [0, 1, 2];
+        VARIANTS
+    }
 }
 
 impl Name for TransactionMeta {
@@ -10174,6 +11095,13 @@ impl Discriminant<i32> for TransactionMeta {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TransactionMeta {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 3] = TransactionMeta::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -10447,6 +11375,12 @@ impl LedgerCloseMeta {
             Self::V1(_) => 1,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        const VARIANTS: [i32; 2] = [0, 1];
+        VARIANTS
+    }
 }
 
 impl Name for LedgerCloseMeta {
@@ -10460,6 +11394,13 @@ impl Discriminant<i32> for LedgerCloseMeta {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for LedgerCloseMeta {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 2] = LedgerCloseMeta::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -10531,12 +11472,31 @@ impl ErrorCode {
             Self::Load => "Load",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ErrorCode; 5] {
+        const VARIANTS: [ErrorCode; 5] = [
+            ErrorCode::Misc,
+            ErrorCode::Data,
+            ErrorCode::Conf,
+            ErrorCode::Auth,
+            ErrorCode::Load,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ErrorCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ErrorCode> for ErrorCode {
+    fn variants() -> slice::Iter<'static, ErrorCode> {
+        const VARIANTS: [ErrorCode; 5] = ErrorCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -10834,12 +11794,25 @@ impl IpAddrType {
             Self::IPv6 => "IPv6",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [IpAddrType; 2] {
+        const VARIANTS: [IpAddrType; 2] = [IpAddrType::IPv4, IpAddrType::IPv6];
+        VARIANTS
+    }
 }
 
 impl Name for IpAddrType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<IpAddrType> for IpAddrType {
+    fn variants() -> slice::Iter<'static, IpAddrType> {
+        const VARIANTS: [IpAddrType; 2] = IpAddrType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -10929,6 +11902,12 @@ impl PeerAddressIp {
             Self::IPv6(_) => IpAddrType::IPv6,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [IpAddrType; 2] {
+        const VARIANTS: [IpAddrType; 2] = [IpAddrType::IPv4, IpAddrType::IPv6];
+        VARIANTS
+    }
 }
 
 impl Name for PeerAddressIp {
@@ -10942,6 +11921,13 @@ impl Discriminant<IpAddrType> for PeerAddressIp {
     #[must_use]
     fn discriminant(&self) -> IpAddrType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<IpAddrType> for PeerAddressIp {
+    fn variants() -> slice::Iter<'static, IpAddrType> {
+        const VARIANTS: [IpAddrType; 2] = PeerAddressIp::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -11107,12 +12093,43 @@ impl MessageType {
             Self::SendMore => "SendMore",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [MessageType; 17] {
+        const VARIANTS: [MessageType; 17] = [
+            MessageType::ErrorMsg,
+            MessageType::Auth,
+            MessageType::DontHave,
+            MessageType::GetPeers,
+            MessageType::Peers,
+            MessageType::GetTxSet,
+            MessageType::TxSet,
+            MessageType::GeneralizedTxSet,
+            MessageType::Transaction,
+            MessageType::GetScpQuorumset,
+            MessageType::ScpQuorumset,
+            MessageType::ScpMessage,
+            MessageType::GetScpState,
+            MessageType::Hello,
+            MessageType::SurveyRequest,
+            MessageType::SurveyResponse,
+            MessageType::SendMore,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for MessageType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<MessageType> for MessageType {
+    fn variants() -> slice::Iter<'static, MessageType> {
+        const VARIANTS: [MessageType; 17] = MessageType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -11241,12 +12258,25 @@ impl SurveyMessageCommandType {
             Self::SurveyTopology => "SurveyTopology",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [SurveyMessageCommandType; 1] {
+        const VARIANTS: [SurveyMessageCommandType; 1] = [SurveyMessageCommandType::SurveyTopology];
+        VARIANTS
+    }
 }
 
 impl Name for SurveyMessageCommandType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<SurveyMessageCommandType> for SurveyMessageCommandType {
+    fn variants() -> slice::Iter<'static, SurveyMessageCommandType> {
+        const VARIANTS: [SurveyMessageCommandType; 1] = SurveyMessageCommandType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -11841,6 +12871,12 @@ impl SurveyResponseBody {
             Self::SurveyTopology(_) => SurveyMessageCommandType::SurveyTopology,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [SurveyMessageCommandType; 1] {
+        const VARIANTS: [SurveyMessageCommandType; 1] = [SurveyMessageCommandType::SurveyTopology];
+        VARIANTS
+    }
 }
 
 impl Name for SurveyResponseBody {
@@ -11854,6 +12890,13 @@ impl Discriminant<SurveyMessageCommandType> for SurveyResponseBody {
     #[must_use]
     fn discriminant(&self) -> SurveyMessageCommandType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<SurveyMessageCommandType> for SurveyResponseBody {
+    fn variants() -> slice::Iter<'static, SurveyMessageCommandType> {
+        const VARIANTS: [SurveyMessageCommandType; 1] = SurveyResponseBody::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -12008,6 +13051,30 @@ impl StellarMessage {
             Self::SendMore(_) => MessageType::SendMore,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [MessageType; 17] {
+        const VARIANTS: [MessageType; 17] = [
+            MessageType::ErrorMsg,
+            MessageType::Hello,
+            MessageType::Auth,
+            MessageType::DontHave,
+            MessageType::GetPeers,
+            MessageType::Peers,
+            MessageType::GetTxSet,
+            MessageType::TxSet,
+            MessageType::GeneralizedTxSet,
+            MessageType::Transaction,
+            MessageType::SurveyRequest,
+            MessageType::SurveyResponse,
+            MessageType::GetScpQuorumset,
+            MessageType::ScpQuorumset,
+            MessageType::ScpMessage,
+            MessageType::GetScpState,
+            MessageType::SendMore,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for StellarMessage {
@@ -12021,6 +13088,13 @@ impl Discriminant<MessageType> for StellarMessage {
     #[must_use]
     fn discriminant(&self) -> MessageType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<MessageType> for StellarMessage {
+    fn variants() -> slice::Iter<'static, MessageType> {
+        const VARIANTS: [MessageType; 17] = StellarMessage::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -12172,6 +13246,12 @@ impl AuthenticatedMessage {
             Self::V0(_) => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [u32; 1] {
+        const VARIANTS: [u32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for AuthenticatedMessage {
@@ -12185,6 +13265,13 @@ impl Discriminant<u32> for AuthenticatedMessage {
     #[must_use]
     fn discriminant(&self) -> u32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<u32> for AuthenticatedMessage {
+    fn variants() -> slice::Iter<'static, u32> {
+        const VARIANTS: [u32; 1] = AuthenticatedMessage::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -12253,6 +13340,12 @@ impl LiquidityPoolParameters {
             }
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LiquidityPoolType; 1] {
+        const VARIANTS: [LiquidityPoolType; 1] = [LiquidityPoolType::LiquidityPoolConstantProduct];
+        VARIANTS
+    }
 }
 
 impl Name for LiquidityPoolParameters {
@@ -12266,6 +13359,13 @@ impl Discriminant<LiquidityPoolType> for LiquidityPoolParameters {
     #[must_use]
     fn discriminant(&self) -> LiquidityPoolType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<LiquidityPoolType> for LiquidityPoolParameters {
+    fn variants() -> slice::Iter<'static, LiquidityPoolType> {
+        const VARIANTS: [LiquidityPoolType; 1] = LiquidityPoolParameters::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -12381,6 +13481,12 @@ impl MuxedAccount {
             Self::MuxedEd25519(_) => CryptoKeyType::MuxedEd25519,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [CryptoKeyType; 2] {
+        const VARIANTS: [CryptoKeyType; 2] = [CryptoKeyType::Ed25519, CryptoKeyType::MuxedEd25519];
+        VARIANTS
+    }
 }
 
 impl Name for MuxedAccount {
@@ -12394,6 +13500,13 @@ impl Discriminant<CryptoKeyType> for MuxedAccount {
     #[must_use]
     fn discriminant(&self) -> CryptoKeyType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<CryptoKeyType> for MuxedAccount {
+    fn variants() -> slice::Iter<'static, CryptoKeyType> {
+        const VARIANTS: [CryptoKeyType; 2] = MuxedAccount::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -12601,12 +13714,51 @@ impl OperationType {
             Self::InvokeHostFunction => "InvokeHostFunction",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [OperationType; 25] {
+        const VARIANTS: [OperationType; 25] = [
+            OperationType::CreateAccount,
+            OperationType::Payment,
+            OperationType::PathPaymentStrictReceive,
+            OperationType::ManageSellOffer,
+            OperationType::CreatePassiveSellOffer,
+            OperationType::SetOptions,
+            OperationType::ChangeTrust,
+            OperationType::AllowTrust,
+            OperationType::AccountMerge,
+            OperationType::Inflation,
+            OperationType::ManageData,
+            OperationType::BumpSequence,
+            OperationType::ManageBuyOffer,
+            OperationType::PathPaymentStrictSend,
+            OperationType::CreateClaimableBalance,
+            OperationType::ClaimClaimableBalance,
+            OperationType::BeginSponsoringFutureReserves,
+            OperationType::EndSponsoringFutureReserves,
+            OperationType::RevokeSponsorship,
+            OperationType::Clawback,
+            OperationType::ClawbackClaimableBalance,
+            OperationType::SetTrustLineFlags,
+            OperationType::LiquidityPoolDeposit,
+            OperationType::LiquidityPoolWithdraw,
+            OperationType::InvokeHostFunction,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for OperationType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<OperationType> for OperationType {
+    fn variants() -> slice::Iter<'static, OperationType> {
+        const VARIANTS: [OperationType; 25] = OperationType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -13154,6 +14306,17 @@ impl ChangeTrustAsset {
             Self::PoolShare(_) => AssetType::PoolShare,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [AssetType; 4] {
+        const VARIANTS: [AssetType; 4] = [
+            AssetType::Native,
+            AssetType::CreditAlphanum4,
+            AssetType::CreditAlphanum12,
+            AssetType::PoolShare,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ChangeTrustAsset {
@@ -13167,6 +14330,13 @@ impl Discriminant<AssetType> for ChangeTrustAsset {
     #[must_use]
     fn discriminant(&self) -> AssetType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<AssetType> for ChangeTrustAsset {
+    fn variants() -> slice::Iter<'static, AssetType> {
+        const VARIANTS: [AssetType; 4] = ChangeTrustAsset::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -13499,12 +14669,28 @@ impl RevokeSponsorshipType {
             Self::Signer => "Signer",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [RevokeSponsorshipType; 2] {
+        const VARIANTS: [RevokeSponsorshipType; 2] = [
+            RevokeSponsorshipType::LedgerEntry,
+            RevokeSponsorshipType::Signer,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for RevokeSponsorshipType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<RevokeSponsorshipType> for RevokeSponsorshipType {
+    fn variants() -> slice::Iter<'static, RevokeSponsorshipType> {
+        const VARIANTS: [RevokeSponsorshipType; 2] = RevokeSponsorshipType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -13636,6 +14822,15 @@ impl RevokeSponsorshipOp {
             Self::Signer(_) => RevokeSponsorshipType::Signer,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [RevokeSponsorshipType; 2] {
+        const VARIANTS: [RevokeSponsorshipType; 2] = [
+            RevokeSponsorshipType::LedgerEntry,
+            RevokeSponsorshipType::Signer,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for RevokeSponsorshipOp {
@@ -13649,6 +14844,13 @@ impl Discriminant<RevokeSponsorshipType> for RevokeSponsorshipOp {
     #[must_use]
     fn discriminant(&self) -> RevokeSponsorshipType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<RevokeSponsorshipType> for RevokeSponsorshipOp {
+    fn variants() -> slice::Iter<'static, RevokeSponsorshipType> {
+        const VARIANTS: [RevokeSponsorshipType; 2] = RevokeSponsorshipOp::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -13936,12 +15138,25 @@ impl HostFunction {
             Self::CreateContract => "CreateContract",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [HostFunction; 2] {
+        const VARIANTS: [HostFunction; 2] = [HostFunction::Call, HostFunction::CreateContract];
+        VARIANTS
+    }
 }
 
 impl Name for HostFunction {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<HostFunction> for HostFunction {
+    fn variants() -> slice::Iter<'static, HostFunction> {
+        const VARIANTS: [HostFunction; 2] = HostFunction::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -14193,6 +15408,38 @@ impl OperationBody {
             Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [OperationType; 25] {
+        const VARIANTS: [OperationType; 25] = [
+            OperationType::CreateAccount,
+            OperationType::Payment,
+            OperationType::PathPaymentStrictReceive,
+            OperationType::ManageSellOffer,
+            OperationType::CreatePassiveSellOffer,
+            OperationType::SetOptions,
+            OperationType::ChangeTrust,
+            OperationType::AllowTrust,
+            OperationType::AccountMerge,
+            OperationType::Inflation,
+            OperationType::ManageData,
+            OperationType::BumpSequence,
+            OperationType::ManageBuyOffer,
+            OperationType::PathPaymentStrictSend,
+            OperationType::CreateClaimableBalance,
+            OperationType::ClaimClaimableBalance,
+            OperationType::BeginSponsoringFutureReserves,
+            OperationType::EndSponsoringFutureReserves,
+            OperationType::RevokeSponsorship,
+            OperationType::Clawback,
+            OperationType::ClawbackClaimableBalance,
+            OperationType::SetTrustLineFlags,
+            OperationType::LiquidityPoolDeposit,
+            OperationType::LiquidityPoolWithdraw,
+            OperationType::InvokeHostFunction,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for OperationBody {
@@ -14206,6 +15453,13 @@ impl Discriminant<OperationType> for OperationBody {
     #[must_use]
     fn discriminant(&self) -> OperationType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<OperationType> for OperationBody {
+    fn variants() -> slice::Iter<'static, OperationType> {
+        const VARIANTS: [OperationType; 25] = OperationBody::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -14644,6 +15898,17 @@ impl HashIdPreimage {
             Self::ContractIdFromContract(_) => EnvelopeType::ContractIdFromContract,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [EnvelopeType; 4] {
+        const VARIANTS: [EnvelopeType; 4] = [
+            EnvelopeType::OpId,
+            EnvelopeType::PoolRevokeOpId,
+            EnvelopeType::ContractIdFromEd25519,
+            EnvelopeType::ContractIdFromContract,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for HashIdPreimage {
@@ -14657,6 +15922,13 @@ impl Discriminant<EnvelopeType> for HashIdPreimage {
     #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<EnvelopeType> for HashIdPreimage {
+    fn variants() -> slice::Iter<'static, EnvelopeType> {
+        const VARIANTS: [EnvelopeType; 4] = HashIdPreimage::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -14738,12 +16010,31 @@ impl MemoType {
             Self::Return => "Return",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [MemoType; 5] {
+        const VARIANTS: [MemoType; 5] = [
+            MemoType::None,
+            MemoType::Text,
+            MemoType::Id,
+            MemoType::Hash,
+            MemoType::Return,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for MemoType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<MemoType> for MemoType {
+    fn variants() -> slice::Iter<'static, MemoType> {
+        const VARIANTS: [MemoType; 5] = MemoType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -14851,6 +16142,18 @@ impl Memo {
             Self::Return(_) => MemoType::Return,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [MemoType; 5] {
+        const VARIANTS: [MemoType; 5] = [
+            MemoType::None,
+            MemoType::Text,
+            MemoType::Id,
+            MemoType::Hash,
+            MemoType::Return,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for Memo {
@@ -14864,6 +16167,13 @@ impl Discriminant<MemoType> for Memo {
     #[must_use]
     fn discriminant(&self) -> MemoType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<MemoType> for Memo {
+    fn variants() -> slice::Iter<'static, MemoType> {
+        const VARIANTS: [MemoType; 5] = Memo::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -15088,12 +16398,29 @@ impl PreconditionType {
             Self::V2 => "V2",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [PreconditionType; 3] {
+        const VARIANTS: [PreconditionType; 3] = [
+            PreconditionType::None,
+            PreconditionType::Time,
+            PreconditionType::V2,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for PreconditionType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<PreconditionType> for PreconditionType {
+    fn variants() -> slice::Iter<'static, PreconditionType> {
+        const VARIANTS: [PreconditionType; 3] = PreconditionType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -15189,6 +16516,16 @@ impl Preconditions {
             Self::V2(_) => PreconditionType::V2,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [PreconditionType; 3] {
+        const VARIANTS: [PreconditionType; 3] = [
+            PreconditionType::None,
+            PreconditionType::Time,
+            PreconditionType::V2,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for Preconditions {
@@ -15202,6 +16539,13 @@ impl Discriminant<PreconditionType> for Preconditions {
     #[must_use]
     fn discriminant(&self) -> PreconditionType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<PreconditionType> for Preconditions {
+    fn variants() -> slice::Iter<'static, PreconditionType> {
+        const VARIANTS: [PreconditionType; 3] = Preconditions::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -15278,6 +16622,12 @@ impl TransactionV0Ext {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for TransactionV0Ext {
@@ -15291,6 +16641,13 @@ impl Discriminant<i32> for TransactionV0Ext {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TransactionV0Ext {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = TransactionV0Ext::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -15460,6 +16817,12 @@ impl TransactionExt {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for TransactionExt {
@@ -15473,6 +16836,13 @@ impl Discriminant<i32> for TransactionExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TransactionExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = TransactionExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -15653,6 +17023,12 @@ impl FeeBumpTransactionInnerTx {
             Self::Tx(_) => EnvelopeType::Tx,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [EnvelopeType; 1] {
+        const VARIANTS: [EnvelopeType; 1] = [EnvelopeType::Tx];
+        VARIANTS
+    }
 }
 
 impl Name for FeeBumpTransactionInnerTx {
@@ -15666,6 +17042,13 @@ impl Discriminant<EnvelopeType> for FeeBumpTransactionInnerTx {
     #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<EnvelopeType> for FeeBumpTransactionInnerTx {
+    fn variants() -> slice::Iter<'static, EnvelopeType> {
+        const VARIANTS: [EnvelopeType; 1] = FeeBumpTransactionInnerTx::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -15732,6 +17115,12 @@ impl FeeBumpTransactionExt {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for FeeBumpTransactionExt {
@@ -15745,6 +17134,13 @@ impl Discriminant<i32> for FeeBumpTransactionExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for FeeBumpTransactionExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = FeeBumpTransactionExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -15917,6 +17313,16 @@ impl TransactionEnvelope {
             Self::TxFeeBump(_) => EnvelopeType::TxFeeBump,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [EnvelopeType; 3] {
+        const VARIANTS: [EnvelopeType; 3] = [
+            EnvelopeType::TxV0,
+            EnvelopeType::Tx,
+            EnvelopeType::TxFeeBump,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for TransactionEnvelope {
@@ -15930,6 +17336,13 @@ impl Discriminant<EnvelopeType> for TransactionEnvelope {
     #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<EnvelopeType> for TransactionEnvelope {
+    fn variants() -> slice::Iter<'static, EnvelopeType> {
+        const VARIANTS: [EnvelopeType; 3] = TransactionEnvelope::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -16006,6 +17419,12 @@ impl TransactionSignaturePayloadTaggedTransaction {
             Self::TxFeeBump(_) => EnvelopeType::TxFeeBump,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [EnvelopeType; 2] {
+        const VARIANTS: [EnvelopeType; 2] = [EnvelopeType::Tx, EnvelopeType::TxFeeBump];
+        VARIANTS
+    }
 }
 
 impl Name for TransactionSignaturePayloadTaggedTransaction {
@@ -16019,6 +17438,14 @@ impl Discriminant<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction
     #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {
+    fn variants() -> slice::Iter<'static, EnvelopeType> {
+        const VARIANTS: [EnvelopeType; 2] =
+            TransactionSignaturePayloadTaggedTransaction::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -16130,12 +17557,29 @@ impl ClaimAtomType {
             Self::LiquidityPool => "LiquidityPool",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimAtomType; 3] {
+        const VARIANTS: [ClaimAtomType; 3] = [
+            ClaimAtomType::V0,
+            ClaimAtomType::OrderBook,
+            ClaimAtomType::LiquidityPool,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimAtomType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ClaimAtomType> for ClaimAtomType {
+    fn variants() -> slice::Iter<'static, ClaimAtomType> {
+        const VARIANTS: [ClaimAtomType; 3] = ClaimAtomType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -16403,6 +17847,16 @@ impl ClaimAtom {
             Self::LiquidityPool(_) => ClaimAtomType::LiquidityPool,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimAtomType; 3] {
+        const VARIANTS: [ClaimAtomType; 3] = [
+            ClaimAtomType::V0,
+            ClaimAtomType::OrderBook,
+            ClaimAtomType::LiquidityPool,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimAtom {
@@ -16416,6 +17870,13 @@ impl Discriminant<ClaimAtomType> for ClaimAtom {
     #[must_use]
     fn discriminant(&self) -> ClaimAtomType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ClaimAtomType> for ClaimAtom {
+    fn variants() -> slice::Iter<'static, ClaimAtomType> {
+        const VARIANTS: [ClaimAtomType; 3] = ClaimAtom::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -16493,12 +17954,31 @@ impl CreateAccountResultCode {
             Self::AlreadyExist => "AlreadyExist",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [CreateAccountResultCode; 5] {
+        const VARIANTS: [CreateAccountResultCode; 5] = [
+            CreateAccountResultCode::Success,
+            CreateAccountResultCode::Malformed,
+            CreateAccountResultCode::Underfunded,
+            CreateAccountResultCode::LowReserve,
+            CreateAccountResultCode::AlreadyExist,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for CreateAccountResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<CreateAccountResultCode> for CreateAccountResultCode {
+    fn variants() -> slice::Iter<'static, CreateAccountResultCode> {
+        const VARIANTS: [CreateAccountResultCode; 5] = CreateAccountResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -16603,6 +18083,18 @@ impl CreateAccountResult {
             Self::AlreadyExist => CreateAccountResultCode::AlreadyExist,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [CreateAccountResultCode; 5] {
+        const VARIANTS: [CreateAccountResultCode; 5] = [
+            CreateAccountResultCode::Success,
+            CreateAccountResultCode::Malformed,
+            CreateAccountResultCode::Underfunded,
+            CreateAccountResultCode::LowReserve,
+            CreateAccountResultCode::AlreadyExist,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for CreateAccountResult {
@@ -16616,6 +18108,13 @@ impl Discriminant<CreateAccountResultCode> for CreateAccountResult {
     #[must_use]
     fn discriminant(&self) -> CreateAccountResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<CreateAccountResultCode> for CreateAccountResult {
+    fn variants() -> slice::Iter<'static, CreateAccountResultCode> {
+        const VARIANTS: [CreateAccountResultCode; 5] = CreateAccountResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -16711,12 +18210,36 @@ impl PaymentResultCode {
             Self::NoIssuer => "NoIssuer",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [PaymentResultCode; 10] {
+        const VARIANTS: [PaymentResultCode; 10] = [
+            PaymentResultCode::Success,
+            PaymentResultCode::Malformed,
+            PaymentResultCode::Underfunded,
+            PaymentResultCode::SrcNoTrust,
+            PaymentResultCode::SrcNotAuthorized,
+            PaymentResultCode::NoDestination,
+            PaymentResultCode::NoTrust,
+            PaymentResultCode::NotAuthorized,
+            PaymentResultCode::LineFull,
+            PaymentResultCode::NoIssuer,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for PaymentResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<PaymentResultCode> for PaymentResultCode {
+    fn variants() -> slice::Iter<'static, PaymentResultCode> {
+        const VARIANTS: [PaymentResultCode; 10] = PaymentResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -16846,6 +18369,23 @@ impl PaymentResult {
             Self::NoIssuer => PaymentResultCode::NoIssuer,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [PaymentResultCode; 10] {
+        const VARIANTS: [PaymentResultCode; 10] = [
+            PaymentResultCode::Success,
+            PaymentResultCode::Malformed,
+            PaymentResultCode::Underfunded,
+            PaymentResultCode::SrcNoTrust,
+            PaymentResultCode::SrcNotAuthorized,
+            PaymentResultCode::NoDestination,
+            PaymentResultCode::NoTrust,
+            PaymentResultCode::NotAuthorized,
+            PaymentResultCode::LineFull,
+            PaymentResultCode::NoIssuer,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for PaymentResult {
@@ -16859,6 +18399,13 @@ impl Discriminant<PaymentResultCode> for PaymentResult {
     #[must_use]
     fn discriminant(&self) -> PaymentResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<PaymentResultCode> for PaymentResult {
+    fn variants() -> slice::Iter<'static, PaymentResultCode> {
+        const VARIANTS: [PaymentResultCode; 10] = PaymentResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -16982,12 +18529,40 @@ impl PathPaymentStrictReceiveResultCode {
             Self::OverSendmax => "OverSendmax",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [PathPaymentStrictReceiveResultCode; 13] {
+        const VARIANTS: [PathPaymentStrictReceiveResultCode; 13] = [
+            PathPaymentStrictReceiveResultCode::Success,
+            PathPaymentStrictReceiveResultCode::Malformed,
+            PathPaymentStrictReceiveResultCode::Underfunded,
+            PathPaymentStrictReceiveResultCode::SrcNoTrust,
+            PathPaymentStrictReceiveResultCode::SrcNotAuthorized,
+            PathPaymentStrictReceiveResultCode::NoDestination,
+            PathPaymentStrictReceiveResultCode::NoTrust,
+            PathPaymentStrictReceiveResultCode::NotAuthorized,
+            PathPaymentStrictReceiveResultCode::LineFull,
+            PathPaymentStrictReceiveResultCode::NoIssuer,
+            PathPaymentStrictReceiveResultCode::TooFewOffers,
+            PathPaymentStrictReceiveResultCode::OfferCrossSelf,
+            PathPaymentStrictReceiveResultCode::OverSendmax,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for PathPaymentStrictReceiveResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResultCode {
+    fn variants() -> slice::Iter<'static, PathPaymentStrictReceiveResultCode> {
+        const VARIANTS: [PathPaymentStrictReceiveResultCode; 13] =
+            PathPaymentStrictReceiveResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -17219,6 +18794,26 @@ impl PathPaymentStrictReceiveResult {
             Self::OverSendmax => PathPaymentStrictReceiveResultCode::OverSendmax,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [PathPaymentStrictReceiveResultCode; 13] {
+        const VARIANTS: [PathPaymentStrictReceiveResultCode; 13] = [
+            PathPaymentStrictReceiveResultCode::Success,
+            PathPaymentStrictReceiveResultCode::Malformed,
+            PathPaymentStrictReceiveResultCode::Underfunded,
+            PathPaymentStrictReceiveResultCode::SrcNoTrust,
+            PathPaymentStrictReceiveResultCode::SrcNotAuthorized,
+            PathPaymentStrictReceiveResultCode::NoDestination,
+            PathPaymentStrictReceiveResultCode::NoTrust,
+            PathPaymentStrictReceiveResultCode::NotAuthorized,
+            PathPaymentStrictReceiveResultCode::LineFull,
+            PathPaymentStrictReceiveResultCode::NoIssuer,
+            PathPaymentStrictReceiveResultCode::TooFewOffers,
+            PathPaymentStrictReceiveResultCode::OfferCrossSelf,
+            PathPaymentStrictReceiveResultCode::OverSendmax,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for PathPaymentStrictReceiveResult {
@@ -17232,6 +18827,14 @@ impl Discriminant<PathPaymentStrictReceiveResultCode> for PathPaymentStrictRecei
     #[must_use]
     fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResult {
+    fn variants() -> slice::Iter<'static, PathPaymentStrictReceiveResultCode> {
+        const VARIANTS: [PathPaymentStrictReceiveResultCode; 13] =
+            PathPaymentStrictReceiveResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -17363,12 +18966,40 @@ impl PathPaymentStrictSendResultCode {
             Self::UnderDestmin => "UnderDestmin",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [PathPaymentStrictSendResultCode; 13] {
+        const VARIANTS: [PathPaymentStrictSendResultCode; 13] = [
+            PathPaymentStrictSendResultCode::Success,
+            PathPaymentStrictSendResultCode::Malformed,
+            PathPaymentStrictSendResultCode::Underfunded,
+            PathPaymentStrictSendResultCode::SrcNoTrust,
+            PathPaymentStrictSendResultCode::SrcNotAuthorized,
+            PathPaymentStrictSendResultCode::NoDestination,
+            PathPaymentStrictSendResultCode::NoTrust,
+            PathPaymentStrictSendResultCode::NotAuthorized,
+            PathPaymentStrictSendResultCode::LineFull,
+            PathPaymentStrictSendResultCode::NoIssuer,
+            PathPaymentStrictSendResultCode::TooFewOffers,
+            PathPaymentStrictSendResultCode::OfferCrossSelf,
+            PathPaymentStrictSendResultCode::UnderDestmin,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for PathPaymentStrictSendResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResultCode {
+    fn variants() -> slice::Iter<'static, PathPaymentStrictSendResultCode> {
+        const VARIANTS: [PathPaymentStrictSendResultCode; 13] =
+            PathPaymentStrictSendResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -17557,6 +19188,26 @@ impl PathPaymentStrictSendResult {
             Self::UnderDestmin => PathPaymentStrictSendResultCode::UnderDestmin,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [PathPaymentStrictSendResultCode; 13] {
+        const VARIANTS: [PathPaymentStrictSendResultCode; 13] = [
+            PathPaymentStrictSendResultCode::Success,
+            PathPaymentStrictSendResultCode::Malformed,
+            PathPaymentStrictSendResultCode::Underfunded,
+            PathPaymentStrictSendResultCode::SrcNoTrust,
+            PathPaymentStrictSendResultCode::SrcNotAuthorized,
+            PathPaymentStrictSendResultCode::NoDestination,
+            PathPaymentStrictSendResultCode::NoTrust,
+            PathPaymentStrictSendResultCode::NotAuthorized,
+            PathPaymentStrictSendResultCode::LineFull,
+            PathPaymentStrictSendResultCode::NoIssuer,
+            PathPaymentStrictSendResultCode::TooFewOffers,
+            PathPaymentStrictSendResultCode::OfferCrossSelf,
+            PathPaymentStrictSendResultCode::UnderDestmin,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for PathPaymentStrictSendResult {
@@ -17570,6 +19221,14 @@ impl Discriminant<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResu
     #[must_use]
     fn discriminant(&self) -> PathPaymentStrictSendResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {
+    fn variants() -> slice::Iter<'static, PathPaymentStrictSendResultCode> {
+        const VARIANTS: [PathPaymentStrictSendResultCode; 13] =
+            PathPaymentStrictSendResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -17700,12 +19359,39 @@ impl ManageSellOfferResultCode {
             Self::LowReserve => "LowReserve",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ManageSellOfferResultCode; 13] {
+        const VARIANTS: [ManageSellOfferResultCode; 13] = [
+            ManageSellOfferResultCode::Success,
+            ManageSellOfferResultCode::Malformed,
+            ManageSellOfferResultCode::SellNoTrust,
+            ManageSellOfferResultCode::BuyNoTrust,
+            ManageSellOfferResultCode::SellNotAuthorized,
+            ManageSellOfferResultCode::BuyNotAuthorized,
+            ManageSellOfferResultCode::LineFull,
+            ManageSellOfferResultCode::Underfunded,
+            ManageSellOfferResultCode::CrossSelf,
+            ManageSellOfferResultCode::SellNoIssuer,
+            ManageSellOfferResultCode::BuyNoIssuer,
+            ManageSellOfferResultCode::NotFound,
+            ManageSellOfferResultCode::LowReserve,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ManageSellOfferResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ManageSellOfferResultCode> for ManageSellOfferResultCode {
+    fn variants() -> slice::Iter<'static, ManageSellOfferResultCode> {
+        const VARIANTS: [ManageSellOfferResultCode; 13] = ManageSellOfferResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -17798,12 +19484,29 @@ impl ManageOfferEffect {
             Self::Deleted => "Deleted",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ManageOfferEffect; 3] {
+        const VARIANTS: [ManageOfferEffect; 3] = [
+            ManageOfferEffect::Created,
+            ManageOfferEffect::Updated,
+            ManageOfferEffect::Deleted,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ManageOfferEffect {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ManageOfferEffect> for ManageOfferEffect {
+    fn variants() -> slice::Iter<'static, ManageOfferEffect> {
+        const VARIANTS: [ManageOfferEffect; 3] = ManageOfferEffect::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -17898,6 +19601,16 @@ impl ManageOfferSuccessResultOffer {
             Self::Deleted => ManageOfferEffect::Deleted,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ManageOfferEffect; 3] {
+        const VARIANTS: [ManageOfferEffect; 3] = [
+            ManageOfferEffect::Created,
+            ManageOfferEffect::Updated,
+            ManageOfferEffect::Deleted,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ManageOfferSuccessResultOffer {
@@ -17911,6 +19624,13 @@ impl Discriminant<ManageOfferEffect> for ManageOfferSuccessResultOffer {
     #[must_use]
     fn discriminant(&self) -> ManageOfferEffect {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ManageOfferEffect> for ManageOfferSuccessResultOffer {
+    fn variants() -> slice::Iter<'static, ManageOfferEffect> {
+        const VARIANTS: [ManageOfferEffect; 3] = ManageOfferSuccessResultOffer::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -18078,6 +19798,26 @@ impl ManageSellOfferResult {
             Self::LowReserve => ManageSellOfferResultCode::LowReserve,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ManageSellOfferResultCode; 13] {
+        const VARIANTS: [ManageSellOfferResultCode; 13] = [
+            ManageSellOfferResultCode::Success,
+            ManageSellOfferResultCode::Malformed,
+            ManageSellOfferResultCode::SellNoTrust,
+            ManageSellOfferResultCode::BuyNoTrust,
+            ManageSellOfferResultCode::SellNotAuthorized,
+            ManageSellOfferResultCode::BuyNotAuthorized,
+            ManageSellOfferResultCode::LineFull,
+            ManageSellOfferResultCode::Underfunded,
+            ManageSellOfferResultCode::CrossSelf,
+            ManageSellOfferResultCode::SellNoIssuer,
+            ManageSellOfferResultCode::BuyNoIssuer,
+            ManageSellOfferResultCode::NotFound,
+            ManageSellOfferResultCode::LowReserve,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ManageSellOfferResult {
@@ -18091,6 +19831,13 @@ impl Discriminant<ManageSellOfferResultCode> for ManageSellOfferResult {
     #[must_use]
     fn discriminant(&self) -> ManageSellOfferResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ManageSellOfferResultCode> for ManageSellOfferResult {
+    fn variants() -> slice::Iter<'static, ManageSellOfferResultCode> {
+        const VARIANTS: [ManageSellOfferResultCode; 13] = ManageSellOfferResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -18217,12 +19964,39 @@ impl ManageBuyOfferResultCode {
             Self::LowReserve => "LowReserve",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ManageBuyOfferResultCode; 13] {
+        const VARIANTS: [ManageBuyOfferResultCode; 13] = [
+            ManageBuyOfferResultCode::Success,
+            ManageBuyOfferResultCode::Malformed,
+            ManageBuyOfferResultCode::SellNoTrust,
+            ManageBuyOfferResultCode::BuyNoTrust,
+            ManageBuyOfferResultCode::SellNotAuthorized,
+            ManageBuyOfferResultCode::BuyNotAuthorized,
+            ManageBuyOfferResultCode::LineFull,
+            ManageBuyOfferResultCode::Underfunded,
+            ManageBuyOfferResultCode::CrossSelf,
+            ManageBuyOfferResultCode::SellNoIssuer,
+            ManageBuyOfferResultCode::BuyNoIssuer,
+            ManageBuyOfferResultCode::NotFound,
+            ManageBuyOfferResultCode::LowReserve,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ManageBuyOfferResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ManageBuyOfferResultCode> for ManageBuyOfferResultCode {
+    fn variants() -> slice::Iter<'static, ManageBuyOfferResultCode> {
+        const VARIANTS: [ManageBuyOfferResultCode; 13] = ManageBuyOfferResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -18367,6 +20141,26 @@ impl ManageBuyOfferResult {
             Self::LowReserve => ManageBuyOfferResultCode::LowReserve,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ManageBuyOfferResultCode; 13] {
+        const VARIANTS: [ManageBuyOfferResultCode; 13] = [
+            ManageBuyOfferResultCode::Success,
+            ManageBuyOfferResultCode::Malformed,
+            ManageBuyOfferResultCode::SellNoTrust,
+            ManageBuyOfferResultCode::BuyNoTrust,
+            ManageBuyOfferResultCode::SellNotAuthorized,
+            ManageBuyOfferResultCode::BuyNotAuthorized,
+            ManageBuyOfferResultCode::LineFull,
+            ManageBuyOfferResultCode::Underfunded,
+            ManageBuyOfferResultCode::CrossSelf,
+            ManageBuyOfferResultCode::SellNoIssuer,
+            ManageBuyOfferResultCode::BuyNoIssuer,
+            ManageBuyOfferResultCode::NotFound,
+            ManageBuyOfferResultCode::LowReserve,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ManageBuyOfferResult {
@@ -18380,6 +20174,13 @@ impl Discriminant<ManageBuyOfferResultCode> for ManageBuyOfferResult {
     #[must_use]
     fn discriminant(&self) -> ManageBuyOfferResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ManageBuyOfferResultCode> for ManageBuyOfferResult {
+    fn variants() -> slice::Iter<'static, ManageBuyOfferResultCode> {
+        const VARIANTS: [ManageBuyOfferResultCode; 13] = ManageBuyOfferResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -18496,12 +20297,37 @@ impl SetOptionsResultCode {
             Self::AuthRevocableRequired => "AuthRevocableRequired",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [SetOptionsResultCode; 11] {
+        const VARIANTS: [SetOptionsResultCode; 11] = [
+            SetOptionsResultCode::Success,
+            SetOptionsResultCode::LowReserve,
+            SetOptionsResultCode::TooManySigners,
+            SetOptionsResultCode::BadFlags,
+            SetOptionsResultCode::InvalidInflation,
+            SetOptionsResultCode::CantChange,
+            SetOptionsResultCode::UnknownFlag,
+            SetOptionsResultCode::ThresholdOutOfRange,
+            SetOptionsResultCode::BadSigner,
+            SetOptionsResultCode::InvalidHomeDomain,
+            SetOptionsResultCode::AuthRevocableRequired,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for SetOptionsResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<SetOptionsResultCode> for SetOptionsResultCode {
+    fn variants() -> slice::Iter<'static, SetOptionsResultCode> {
+        const VARIANTS: [SetOptionsResultCode; 11] = SetOptionsResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -18636,6 +20462,24 @@ impl SetOptionsResult {
             Self::AuthRevocableRequired => SetOptionsResultCode::AuthRevocableRequired,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [SetOptionsResultCode; 11] {
+        const VARIANTS: [SetOptionsResultCode; 11] = [
+            SetOptionsResultCode::Success,
+            SetOptionsResultCode::LowReserve,
+            SetOptionsResultCode::TooManySigners,
+            SetOptionsResultCode::BadFlags,
+            SetOptionsResultCode::InvalidInflation,
+            SetOptionsResultCode::CantChange,
+            SetOptionsResultCode::UnknownFlag,
+            SetOptionsResultCode::ThresholdOutOfRange,
+            SetOptionsResultCode::BadSigner,
+            SetOptionsResultCode::InvalidHomeDomain,
+            SetOptionsResultCode::AuthRevocableRequired,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for SetOptionsResult {
@@ -18649,6 +20493,13 @@ impl Discriminant<SetOptionsResultCode> for SetOptionsResult {
     #[must_use]
     fn discriminant(&self) -> SetOptionsResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<SetOptionsResultCode> for SetOptionsResult {
+    fn variants() -> slice::Iter<'static, SetOptionsResultCode> {
+        const VARIANTS: [SetOptionsResultCode; 11] = SetOptionsResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -18756,12 +20607,35 @@ impl ChangeTrustResultCode {
             Self::NotAuthMaintainLiabilities => "NotAuthMaintainLiabilities",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ChangeTrustResultCode; 9] {
+        const VARIANTS: [ChangeTrustResultCode; 9] = [
+            ChangeTrustResultCode::Success,
+            ChangeTrustResultCode::Malformed,
+            ChangeTrustResultCode::NoIssuer,
+            ChangeTrustResultCode::InvalidLimit,
+            ChangeTrustResultCode::LowReserve,
+            ChangeTrustResultCode::SelfNotAllowed,
+            ChangeTrustResultCode::TrustLineMissing,
+            ChangeTrustResultCode::CannotDelete,
+            ChangeTrustResultCode::NotAuthMaintainLiabilities,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ChangeTrustResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ChangeTrustResultCode> for ChangeTrustResultCode {
+    fn variants() -> slice::Iter<'static, ChangeTrustResultCode> {
+        const VARIANTS: [ChangeTrustResultCode; 9] = ChangeTrustResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -18886,6 +20760,22 @@ impl ChangeTrustResult {
             Self::NotAuthMaintainLiabilities => ChangeTrustResultCode::NotAuthMaintainLiabilities,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ChangeTrustResultCode; 9] {
+        const VARIANTS: [ChangeTrustResultCode; 9] = [
+            ChangeTrustResultCode::Success,
+            ChangeTrustResultCode::Malformed,
+            ChangeTrustResultCode::NoIssuer,
+            ChangeTrustResultCode::InvalidLimit,
+            ChangeTrustResultCode::LowReserve,
+            ChangeTrustResultCode::SelfNotAllowed,
+            ChangeTrustResultCode::TrustLineMissing,
+            ChangeTrustResultCode::CannotDelete,
+            ChangeTrustResultCode::NotAuthMaintainLiabilities,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ChangeTrustResult {
@@ -18899,6 +20789,13 @@ impl Discriminant<ChangeTrustResultCode> for ChangeTrustResult {
     #[must_use]
     fn discriminant(&self) -> ChangeTrustResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ChangeTrustResultCode> for ChangeTrustResult {
+    fn variants() -> slice::Iter<'static, ChangeTrustResultCode> {
+        const VARIANTS: [ChangeTrustResultCode; 9] = ChangeTrustResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -18994,12 +20891,33 @@ impl AllowTrustResultCode {
             Self::LowReserve => "LowReserve",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [AllowTrustResultCode; 7] {
+        const VARIANTS: [AllowTrustResultCode; 7] = [
+            AllowTrustResultCode::Success,
+            AllowTrustResultCode::Malformed,
+            AllowTrustResultCode::NoTrustLine,
+            AllowTrustResultCode::TrustNotRequired,
+            AllowTrustResultCode::CantRevoke,
+            AllowTrustResultCode::SelfNotAllowed,
+            AllowTrustResultCode::LowReserve,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for AllowTrustResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<AllowTrustResultCode> for AllowTrustResultCode {
+    fn variants() -> slice::Iter<'static, AllowTrustResultCode> {
+        const VARIANTS: [AllowTrustResultCode; 7] = AllowTrustResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -19114,6 +21032,20 @@ impl AllowTrustResult {
             Self::LowReserve => AllowTrustResultCode::LowReserve,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [AllowTrustResultCode; 7] {
+        const VARIANTS: [AllowTrustResultCode; 7] = [
+            AllowTrustResultCode::Success,
+            AllowTrustResultCode::Malformed,
+            AllowTrustResultCode::NoTrustLine,
+            AllowTrustResultCode::TrustNotRequired,
+            AllowTrustResultCode::CantRevoke,
+            AllowTrustResultCode::SelfNotAllowed,
+            AllowTrustResultCode::LowReserve,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for AllowTrustResult {
@@ -19127,6 +21059,13 @@ impl Discriminant<AllowTrustResultCode> for AllowTrustResult {
     #[must_use]
     fn discriminant(&self) -> AllowTrustResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<AllowTrustResultCode> for AllowTrustResult {
+    fn variants() -> slice::Iter<'static, AllowTrustResultCode> {
+        const VARIANTS: [AllowTrustResultCode; 7] = AllowTrustResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -19220,12 +21159,34 @@ impl AccountMergeResultCode {
             Self::IsSponsor => "IsSponsor",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [AccountMergeResultCode; 8] {
+        const VARIANTS: [AccountMergeResultCode; 8] = [
+            AccountMergeResultCode::Success,
+            AccountMergeResultCode::Malformed,
+            AccountMergeResultCode::NoAccount,
+            AccountMergeResultCode::ImmutableSet,
+            AccountMergeResultCode::HasSubEntries,
+            AccountMergeResultCode::SeqnumTooFar,
+            AccountMergeResultCode::DestFull,
+            AccountMergeResultCode::IsSponsor,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for AccountMergeResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<AccountMergeResultCode> for AccountMergeResultCode {
+    fn variants() -> slice::Iter<'static, AccountMergeResultCode> {
+        const VARIANTS: [AccountMergeResultCode; 8] = AccountMergeResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -19345,6 +21306,21 @@ impl AccountMergeResult {
             Self::IsSponsor => AccountMergeResultCode::IsSponsor,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [AccountMergeResultCode; 8] {
+        const VARIANTS: [AccountMergeResultCode; 8] = [
+            AccountMergeResultCode::Success,
+            AccountMergeResultCode::Malformed,
+            AccountMergeResultCode::NoAccount,
+            AccountMergeResultCode::ImmutableSet,
+            AccountMergeResultCode::HasSubEntries,
+            AccountMergeResultCode::SeqnumTooFar,
+            AccountMergeResultCode::DestFull,
+            AccountMergeResultCode::IsSponsor,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for AccountMergeResult {
@@ -19358,6 +21334,13 @@ impl Discriminant<AccountMergeResultCode> for AccountMergeResult {
     #[must_use]
     fn discriminant(&self) -> AccountMergeResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<AccountMergeResultCode> for AccountMergeResult {
+    fn variants() -> slice::Iter<'static, AccountMergeResultCode> {
+        const VARIANTS: [AccountMergeResultCode; 8] = AccountMergeResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -19434,12 +21417,26 @@ impl InflationResultCode {
             Self::NotTime => "NotTime",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [InflationResultCode; 2] {
+        const VARIANTS: [InflationResultCode; 2] =
+            [InflationResultCode::Success, InflationResultCode::NotTime];
+        VARIANTS
+    }
 }
 
 impl Name for InflationResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<InflationResultCode> for InflationResultCode {
+    fn variants() -> slice::Iter<'static, InflationResultCode> {
+        const VARIANTS: [InflationResultCode; 2] = InflationResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -19567,6 +21564,13 @@ impl InflationResult {
             Self::NotTime => InflationResultCode::NotTime,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [InflationResultCode; 2] {
+        const VARIANTS: [InflationResultCode; 2] =
+            [InflationResultCode::Success, InflationResultCode::NotTime];
+        VARIANTS
+    }
 }
 
 impl Name for InflationResult {
@@ -19580,6 +21584,13 @@ impl Discriminant<InflationResultCode> for InflationResult {
     #[must_use]
     fn discriminant(&self) -> InflationResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<InflationResultCode> for InflationResult {
+    fn variants() -> slice::Iter<'static, InflationResultCode> {
+        const VARIANTS: [InflationResultCode; 2] = InflationResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -19655,12 +21666,31 @@ impl ManageDataResultCode {
             Self::InvalidName => "InvalidName",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ManageDataResultCode; 5] {
+        const VARIANTS: [ManageDataResultCode; 5] = [
+            ManageDataResultCode::Success,
+            ManageDataResultCode::NotSupportedYet,
+            ManageDataResultCode::NameNotFound,
+            ManageDataResultCode::LowReserve,
+            ManageDataResultCode::InvalidName,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ManageDataResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ManageDataResultCode> for ManageDataResultCode {
+    fn variants() -> slice::Iter<'static, ManageDataResultCode> {
+        const VARIANTS: [ManageDataResultCode; 5] = ManageDataResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -19765,6 +21795,18 @@ impl ManageDataResult {
             Self::InvalidName => ManageDataResultCode::InvalidName,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ManageDataResultCode; 5] {
+        const VARIANTS: [ManageDataResultCode; 5] = [
+            ManageDataResultCode::Success,
+            ManageDataResultCode::NotSupportedYet,
+            ManageDataResultCode::NameNotFound,
+            ManageDataResultCode::LowReserve,
+            ManageDataResultCode::InvalidName,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ManageDataResult {
@@ -19778,6 +21820,13 @@ impl Discriminant<ManageDataResultCode> for ManageDataResult {
     #[must_use]
     fn discriminant(&self) -> ManageDataResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ManageDataResultCode> for ManageDataResult {
+    fn variants() -> slice::Iter<'static, ManageDataResultCode> {
+        const VARIANTS: [ManageDataResultCode; 5] = ManageDataResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -19848,12 +21897,28 @@ impl BumpSequenceResultCode {
             Self::BadSeq => "BadSeq",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [BumpSequenceResultCode; 2] {
+        const VARIANTS: [BumpSequenceResultCode; 2] = [
+            BumpSequenceResultCode::Success,
+            BumpSequenceResultCode::BadSeq,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for BumpSequenceResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<BumpSequenceResultCode> for BumpSequenceResultCode {
+    fn variants() -> slice::Iter<'static, BumpSequenceResultCode> {
+        const VARIANTS: [BumpSequenceResultCode; 2] = BumpSequenceResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -19943,6 +22008,15 @@ impl BumpSequenceResult {
             Self::BadSeq => BumpSequenceResultCode::BadSeq,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [BumpSequenceResultCode; 2] {
+        const VARIANTS: [BumpSequenceResultCode; 2] = [
+            BumpSequenceResultCode::Success,
+            BumpSequenceResultCode::BadSeq,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for BumpSequenceResult {
@@ -19956,6 +22030,13 @@ impl Discriminant<BumpSequenceResultCode> for BumpSequenceResult {
     #[must_use]
     fn discriminant(&self) -> BumpSequenceResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<BumpSequenceResultCode> for BumpSequenceResult {
+    fn variants() -> slice::Iter<'static, BumpSequenceResultCode> {
+        const VARIANTS: [BumpSequenceResultCode; 2] = BumpSequenceResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -20030,12 +22111,33 @@ impl CreateClaimableBalanceResultCode {
             Self::Underfunded => "Underfunded",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [CreateClaimableBalanceResultCode; 6] {
+        const VARIANTS: [CreateClaimableBalanceResultCode; 6] = [
+            CreateClaimableBalanceResultCode::Success,
+            CreateClaimableBalanceResultCode::Malformed,
+            CreateClaimableBalanceResultCode::LowReserve,
+            CreateClaimableBalanceResultCode::NoTrust,
+            CreateClaimableBalanceResultCode::NotAuthorized,
+            CreateClaimableBalanceResultCode::Underfunded,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for CreateClaimableBalanceResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResultCode {
+    fn variants() -> slice::Iter<'static, CreateClaimableBalanceResultCode> {
+        const VARIANTS: [CreateClaimableBalanceResultCode; 6] =
+            CreateClaimableBalanceResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -20146,6 +22248,19 @@ impl CreateClaimableBalanceResult {
             Self::Underfunded => CreateClaimableBalanceResultCode::Underfunded,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [CreateClaimableBalanceResultCode; 6] {
+        const VARIANTS: [CreateClaimableBalanceResultCode; 6] = [
+            CreateClaimableBalanceResultCode::Success,
+            CreateClaimableBalanceResultCode::Malformed,
+            CreateClaimableBalanceResultCode::LowReserve,
+            CreateClaimableBalanceResultCode::NoTrust,
+            CreateClaimableBalanceResultCode::NotAuthorized,
+            CreateClaimableBalanceResultCode::Underfunded,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for CreateClaimableBalanceResult {
@@ -20159,6 +22274,14 @@ impl Discriminant<CreateClaimableBalanceResultCode> for CreateClaimableBalanceRe
     #[must_use]
     fn discriminant(&self) -> CreateClaimableBalanceResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResult {
+    fn variants() -> slice::Iter<'static, CreateClaimableBalanceResultCode> {
+        const VARIANTS: [CreateClaimableBalanceResultCode; 6] =
+            CreateClaimableBalanceResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -20244,12 +22367,33 @@ impl ClaimClaimableBalanceResultCode {
             Self::NotAuthorized => "NotAuthorized",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimClaimableBalanceResultCode; 6] {
+        const VARIANTS: [ClaimClaimableBalanceResultCode; 6] = [
+            ClaimClaimableBalanceResultCode::Success,
+            ClaimClaimableBalanceResultCode::DoesNotExist,
+            ClaimClaimableBalanceResultCode::CannotClaim,
+            ClaimClaimableBalanceResultCode::LineFull,
+            ClaimClaimableBalanceResultCode::NoTrust,
+            ClaimClaimableBalanceResultCode::NotAuthorized,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimClaimableBalanceResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResultCode {
+    fn variants() -> slice::Iter<'static, ClaimClaimableBalanceResultCode> {
+        const VARIANTS: [ClaimClaimableBalanceResultCode; 6] =
+            ClaimClaimableBalanceResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -20359,6 +22503,19 @@ impl ClaimClaimableBalanceResult {
             Self::NotAuthorized => ClaimClaimableBalanceResultCode::NotAuthorized,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimClaimableBalanceResultCode; 6] {
+        const VARIANTS: [ClaimClaimableBalanceResultCode; 6] = [
+            ClaimClaimableBalanceResultCode::Success,
+            ClaimClaimableBalanceResultCode::DoesNotExist,
+            ClaimClaimableBalanceResultCode::CannotClaim,
+            ClaimClaimableBalanceResultCode::LineFull,
+            ClaimClaimableBalanceResultCode::NoTrust,
+            ClaimClaimableBalanceResultCode::NotAuthorized,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ClaimClaimableBalanceResult {
@@ -20372,6 +22529,14 @@ impl Discriminant<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResu
     #[must_use]
     fn discriminant(&self) -> ClaimClaimableBalanceResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {
+    fn variants() -> slice::Iter<'static, ClaimClaimableBalanceResultCode> {
+        const VARIANTS: [ClaimClaimableBalanceResultCode; 6] =
+            ClaimClaimableBalanceResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -20452,12 +22617,31 @@ impl BeginSponsoringFutureReservesResultCode {
             Self::Recursive => "Recursive",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [BeginSponsoringFutureReservesResultCode; 4] {
+        const VARIANTS: [BeginSponsoringFutureReservesResultCode; 4] = [
+            BeginSponsoringFutureReservesResultCode::Success,
+            BeginSponsoringFutureReservesResultCode::Malformed,
+            BeginSponsoringFutureReservesResultCode::AlreadySponsored,
+            BeginSponsoringFutureReservesResultCode::Recursive,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for BeginSponsoringFutureReservesResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureReservesResultCode {
+    fn variants() -> slice::Iter<'static, BeginSponsoringFutureReservesResultCode> {
+        const VARIANTS: [BeginSponsoringFutureReservesResultCode; 4] =
+            BeginSponsoringFutureReservesResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -20558,6 +22742,17 @@ impl BeginSponsoringFutureReservesResult {
             Self::Recursive => BeginSponsoringFutureReservesResultCode::Recursive,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [BeginSponsoringFutureReservesResultCode; 4] {
+        const VARIANTS: [BeginSponsoringFutureReservesResultCode; 4] = [
+            BeginSponsoringFutureReservesResultCode::Success,
+            BeginSponsoringFutureReservesResultCode::Malformed,
+            BeginSponsoringFutureReservesResultCode::AlreadySponsored,
+            BeginSponsoringFutureReservesResultCode::Recursive,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for BeginSponsoringFutureReservesResult {
@@ -20571,6 +22766,14 @@ impl Discriminant<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFu
     #[must_use]
     fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureReservesResult {
+    fn variants() -> slice::Iter<'static, BeginSponsoringFutureReservesResultCode> {
+        const VARIANTS: [BeginSponsoringFutureReservesResultCode; 4] =
+            BeginSponsoringFutureReservesResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -20641,12 +22844,29 @@ impl EndSponsoringFutureReservesResultCode {
             Self::NotSponsored => "NotSponsored",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [EndSponsoringFutureReservesResultCode; 2] {
+        const VARIANTS: [EndSponsoringFutureReservesResultCode; 2] = [
+            EndSponsoringFutureReservesResultCode::Success,
+            EndSponsoringFutureReservesResultCode::NotSponsored,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for EndSponsoringFutureReservesResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReservesResultCode {
+    fn variants() -> slice::Iter<'static, EndSponsoringFutureReservesResultCode> {
+        const VARIANTS: [EndSponsoringFutureReservesResultCode; 2] =
+            EndSponsoringFutureReservesResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -20737,6 +22957,15 @@ impl EndSponsoringFutureReservesResult {
             Self::NotSponsored => EndSponsoringFutureReservesResultCode::NotSponsored,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [EndSponsoringFutureReservesResultCode; 2] {
+        const VARIANTS: [EndSponsoringFutureReservesResultCode; 2] = [
+            EndSponsoringFutureReservesResultCode::Success,
+            EndSponsoringFutureReservesResultCode::NotSponsored,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for EndSponsoringFutureReservesResult {
@@ -20750,6 +22979,14 @@ impl Discriminant<EndSponsoringFutureReservesResultCode> for EndSponsoringFuture
     #[must_use]
     fn discriminant(&self) -> EndSponsoringFutureReservesResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReservesResult {
+    fn variants() -> slice::Iter<'static, EndSponsoringFutureReservesResultCode> {
+        const VARIANTS: [EndSponsoringFutureReservesResultCode; 2] =
+            EndSponsoringFutureReservesResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -20828,12 +23065,32 @@ impl RevokeSponsorshipResultCode {
             Self::Malformed => "Malformed",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [RevokeSponsorshipResultCode; 6] {
+        const VARIANTS: [RevokeSponsorshipResultCode; 6] = [
+            RevokeSponsorshipResultCode::Success,
+            RevokeSponsorshipResultCode::DoesNotExist,
+            RevokeSponsorshipResultCode::NotSponsor,
+            RevokeSponsorshipResultCode::LowReserve,
+            RevokeSponsorshipResultCode::OnlyTransferable,
+            RevokeSponsorshipResultCode::Malformed,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for RevokeSponsorshipResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<RevokeSponsorshipResultCode> for RevokeSponsorshipResultCode {
+    fn variants() -> slice::Iter<'static, RevokeSponsorshipResultCode> {
+        const VARIANTS: [RevokeSponsorshipResultCode; 6] = RevokeSponsorshipResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -20943,6 +23200,19 @@ impl RevokeSponsorshipResult {
             Self::Malformed => RevokeSponsorshipResultCode::Malformed,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [RevokeSponsorshipResultCode; 6] {
+        const VARIANTS: [RevokeSponsorshipResultCode; 6] = [
+            RevokeSponsorshipResultCode::Success,
+            RevokeSponsorshipResultCode::DoesNotExist,
+            RevokeSponsorshipResultCode::NotSponsor,
+            RevokeSponsorshipResultCode::LowReserve,
+            RevokeSponsorshipResultCode::OnlyTransferable,
+            RevokeSponsorshipResultCode::Malformed,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for RevokeSponsorshipResult {
@@ -20956,6 +23226,13 @@ impl Discriminant<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {
     #[must_use]
     fn discriminant(&self) -> RevokeSponsorshipResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {
+    fn variants() -> slice::Iter<'static, RevokeSponsorshipResultCode> {
+        const VARIANTS: [RevokeSponsorshipResultCode; 6] = RevokeSponsorshipResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -21039,12 +23316,31 @@ impl ClawbackResultCode {
             Self::Underfunded => "Underfunded",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClawbackResultCode; 5] {
+        const VARIANTS: [ClawbackResultCode; 5] = [
+            ClawbackResultCode::Success,
+            ClawbackResultCode::Malformed,
+            ClawbackResultCode::NotClawbackEnabled,
+            ClawbackResultCode::NoTrust,
+            ClawbackResultCode::Underfunded,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ClawbackResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ClawbackResultCode> for ClawbackResultCode {
+    fn variants() -> slice::Iter<'static, ClawbackResultCode> {
+        const VARIANTS: [ClawbackResultCode; 5] = ClawbackResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -21149,6 +23445,18 @@ impl ClawbackResult {
             Self::Underfunded => ClawbackResultCode::Underfunded,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClawbackResultCode; 5] {
+        const VARIANTS: [ClawbackResultCode; 5] = [
+            ClawbackResultCode::Success,
+            ClawbackResultCode::Malformed,
+            ClawbackResultCode::NotClawbackEnabled,
+            ClawbackResultCode::NoTrust,
+            ClawbackResultCode::Underfunded,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ClawbackResult {
@@ -21162,6 +23470,13 @@ impl Discriminant<ClawbackResultCode> for ClawbackResult {
     #[must_use]
     fn discriminant(&self) -> ClawbackResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ClawbackResultCode> for ClawbackResult {
+    fn variants() -> slice::Iter<'static, ClawbackResultCode> {
+        const VARIANTS: [ClawbackResultCode; 5] = ClawbackResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -21239,12 +23554,31 @@ impl ClawbackClaimableBalanceResultCode {
             Self::NotClawbackEnabled => "NotClawbackEnabled",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClawbackClaimableBalanceResultCode; 4] {
+        const VARIANTS: [ClawbackClaimableBalanceResultCode; 4] = [
+            ClawbackClaimableBalanceResultCode::Success,
+            ClawbackClaimableBalanceResultCode::DoesNotExist,
+            ClawbackClaimableBalanceResultCode::NotIssuer,
+            ClawbackClaimableBalanceResultCode::NotClawbackEnabled,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ClawbackClaimableBalanceResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResultCode {
+    fn variants() -> slice::Iter<'static, ClawbackClaimableBalanceResultCode> {
+        const VARIANTS: [ClawbackClaimableBalanceResultCode; 4] =
+            ClawbackClaimableBalanceResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -21345,6 +23679,17 @@ impl ClawbackClaimableBalanceResult {
             Self::NotClawbackEnabled => ClawbackClaimableBalanceResultCode::NotClawbackEnabled,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ClawbackClaimableBalanceResultCode; 4] {
+        const VARIANTS: [ClawbackClaimableBalanceResultCode; 4] = [
+            ClawbackClaimableBalanceResultCode::Success,
+            ClawbackClaimableBalanceResultCode::DoesNotExist,
+            ClawbackClaimableBalanceResultCode::NotIssuer,
+            ClawbackClaimableBalanceResultCode::NotClawbackEnabled,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ClawbackClaimableBalanceResult {
@@ -21358,6 +23703,14 @@ impl Discriminant<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalan
     #[must_use]
     fn discriminant(&self) -> ClawbackClaimableBalanceResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResult {
+    fn variants() -> slice::Iter<'static, ClawbackClaimableBalanceResultCode> {
+        const VARIANTS: [ClawbackClaimableBalanceResultCode; 4] =
+            ClawbackClaimableBalanceResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -21441,12 +23794,32 @@ impl SetTrustLineFlagsResultCode {
             Self::LowReserve => "LowReserve",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [SetTrustLineFlagsResultCode; 6] {
+        const VARIANTS: [SetTrustLineFlagsResultCode; 6] = [
+            SetTrustLineFlagsResultCode::Success,
+            SetTrustLineFlagsResultCode::Malformed,
+            SetTrustLineFlagsResultCode::NoTrustLine,
+            SetTrustLineFlagsResultCode::CantRevoke,
+            SetTrustLineFlagsResultCode::InvalidState,
+            SetTrustLineFlagsResultCode::LowReserve,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for SetTrustLineFlagsResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResultCode {
+    fn variants() -> slice::Iter<'static, SetTrustLineFlagsResultCode> {
+        const VARIANTS: [SetTrustLineFlagsResultCode; 6] = SetTrustLineFlagsResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -21556,6 +23929,19 @@ impl SetTrustLineFlagsResult {
             Self::LowReserve => SetTrustLineFlagsResultCode::LowReserve,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [SetTrustLineFlagsResultCode; 6] {
+        const VARIANTS: [SetTrustLineFlagsResultCode; 6] = [
+            SetTrustLineFlagsResultCode::Success,
+            SetTrustLineFlagsResultCode::Malformed,
+            SetTrustLineFlagsResultCode::NoTrustLine,
+            SetTrustLineFlagsResultCode::CantRevoke,
+            SetTrustLineFlagsResultCode::InvalidState,
+            SetTrustLineFlagsResultCode::LowReserve,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for SetTrustLineFlagsResult {
@@ -21569,6 +23955,13 @@ impl Discriminant<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {
     #[must_use]
     fn discriminant(&self) -> SetTrustLineFlagsResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {
+    fn variants() -> slice::Iter<'static, SetTrustLineFlagsResultCode> {
+        const VARIANTS: [SetTrustLineFlagsResultCode; 6] = SetTrustLineFlagsResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -21665,12 +24058,35 @@ impl LiquidityPoolDepositResultCode {
             Self::PoolFull => "PoolFull",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LiquidityPoolDepositResultCode; 8] {
+        const VARIANTS: [LiquidityPoolDepositResultCode; 8] = [
+            LiquidityPoolDepositResultCode::Success,
+            LiquidityPoolDepositResultCode::Malformed,
+            LiquidityPoolDepositResultCode::NoTrust,
+            LiquidityPoolDepositResultCode::NotAuthorized,
+            LiquidityPoolDepositResultCode::Underfunded,
+            LiquidityPoolDepositResultCode::LineFull,
+            LiquidityPoolDepositResultCode::BadPrice,
+            LiquidityPoolDepositResultCode::PoolFull,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LiquidityPoolDepositResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResultCode {
+    fn variants() -> slice::Iter<'static, LiquidityPoolDepositResultCode> {
+        const VARIANTS: [LiquidityPoolDepositResultCode; 8] =
+            LiquidityPoolDepositResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -21790,6 +24206,21 @@ impl LiquidityPoolDepositResult {
             Self::PoolFull => LiquidityPoolDepositResultCode::PoolFull,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LiquidityPoolDepositResultCode; 8] {
+        const VARIANTS: [LiquidityPoolDepositResultCode; 8] = [
+            LiquidityPoolDepositResultCode::Success,
+            LiquidityPoolDepositResultCode::Malformed,
+            LiquidityPoolDepositResultCode::NoTrust,
+            LiquidityPoolDepositResultCode::NotAuthorized,
+            LiquidityPoolDepositResultCode::Underfunded,
+            LiquidityPoolDepositResultCode::LineFull,
+            LiquidityPoolDepositResultCode::BadPrice,
+            LiquidityPoolDepositResultCode::PoolFull,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LiquidityPoolDepositResult {
@@ -21803,6 +24234,14 @@ impl Discriminant<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult
     #[must_use]
     fn discriminant(&self) -> LiquidityPoolDepositResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {
+    fn variants() -> slice::Iter<'static, LiquidityPoolDepositResultCode> {
+        const VARIANTS: [LiquidityPoolDepositResultCode; 8] =
+            LiquidityPoolDepositResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -21896,12 +24335,33 @@ impl LiquidityPoolWithdrawResultCode {
             Self::UnderMinimum => "UnderMinimum",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LiquidityPoolWithdrawResultCode; 6] {
+        const VARIANTS: [LiquidityPoolWithdrawResultCode; 6] = [
+            LiquidityPoolWithdrawResultCode::Success,
+            LiquidityPoolWithdrawResultCode::Malformed,
+            LiquidityPoolWithdrawResultCode::NoTrust,
+            LiquidityPoolWithdrawResultCode::Underfunded,
+            LiquidityPoolWithdrawResultCode::LineFull,
+            LiquidityPoolWithdrawResultCode::UnderMinimum,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LiquidityPoolWithdrawResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResultCode {
+    fn variants() -> slice::Iter<'static, LiquidityPoolWithdrawResultCode> {
+        const VARIANTS: [LiquidityPoolWithdrawResultCode; 6] =
+            LiquidityPoolWithdrawResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -22011,6 +24471,19 @@ impl LiquidityPoolWithdrawResult {
             Self::UnderMinimum => LiquidityPoolWithdrawResultCode::UnderMinimum,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [LiquidityPoolWithdrawResultCode; 6] {
+        const VARIANTS: [LiquidityPoolWithdrawResultCode; 6] = [
+            LiquidityPoolWithdrawResultCode::Success,
+            LiquidityPoolWithdrawResultCode::Malformed,
+            LiquidityPoolWithdrawResultCode::NoTrust,
+            LiquidityPoolWithdrawResultCode::Underfunded,
+            LiquidityPoolWithdrawResultCode::LineFull,
+            LiquidityPoolWithdrawResultCode::UnderMinimum,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for LiquidityPoolWithdrawResult {
@@ -22024,6 +24497,14 @@ impl Discriminant<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResu
     #[must_use]
     fn discriminant(&self) -> LiquidityPoolWithdrawResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {
+    fn variants() -> slice::Iter<'static, LiquidityPoolWithdrawResultCode> {
+        const VARIANTS: [LiquidityPoolWithdrawResultCode; 6] =
+            LiquidityPoolWithdrawResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -22101,12 +24582,30 @@ impl InvokeHostFunctionResultCode {
             Self::Trapped => "Trapped",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 3] {
+        const VARIANTS: [InvokeHostFunctionResultCode; 3] = [
+            InvokeHostFunctionResultCode::Success,
+            InvokeHostFunctionResultCode::Malformed,
+            InvokeHostFunctionResultCode::Trapped,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for InvokeHostFunctionResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<InvokeHostFunctionResultCode> for InvokeHostFunctionResultCode {
+    fn variants() -> slice::Iter<'static, InvokeHostFunctionResultCode> {
+        const VARIANTS: [InvokeHostFunctionResultCode; 3] =
+            InvokeHostFunctionResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -22201,6 +24700,16 @@ impl InvokeHostFunctionResult {
             Self::Trapped => InvokeHostFunctionResultCode::Trapped,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 3] {
+        const VARIANTS: [InvokeHostFunctionResultCode; 3] = [
+            InvokeHostFunctionResultCode::Success,
+            InvokeHostFunctionResultCode::Malformed,
+            InvokeHostFunctionResultCode::Trapped,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for InvokeHostFunctionResult {
@@ -22214,6 +24723,13 @@ impl Discriminant<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {
     #[must_use]
     fn discriminant(&self) -> InvokeHostFunctionResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {
+    fn variants() -> slice::Iter<'static, InvokeHostFunctionResultCode> {
+        const VARIANTS: [InvokeHostFunctionResultCode; 3] = InvokeHostFunctionResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -22295,12 +24811,33 @@ impl OperationResultCode {
             Self::OpTooManySponsoring => "OpTooManySponsoring",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [OperationResultCode; 7] {
+        const VARIANTS: [OperationResultCode; 7] = [
+            OperationResultCode::OpInner,
+            OperationResultCode::OpBadAuth,
+            OperationResultCode::OpNoAccount,
+            OperationResultCode::OpNotSupported,
+            OperationResultCode::OpTooManySubentries,
+            OperationResultCode::OpExceededWorkLimit,
+            OperationResultCode::OpTooManySponsoring,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for OperationResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<OperationResultCode> for OperationResultCode {
+    fn variants() -> slice::Iter<'static, OperationResultCode> {
+        const VARIANTS: [OperationResultCode; 7] = OperationResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -22510,6 +25047,38 @@ impl OperationResultTr {
             Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [OperationType; 25] {
+        const VARIANTS: [OperationType; 25] = [
+            OperationType::CreateAccount,
+            OperationType::Payment,
+            OperationType::PathPaymentStrictReceive,
+            OperationType::ManageSellOffer,
+            OperationType::CreatePassiveSellOffer,
+            OperationType::SetOptions,
+            OperationType::ChangeTrust,
+            OperationType::AllowTrust,
+            OperationType::AccountMerge,
+            OperationType::Inflation,
+            OperationType::ManageData,
+            OperationType::BumpSequence,
+            OperationType::ManageBuyOffer,
+            OperationType::PathPaymentStrictSend,
+            OperationType::CreateClaimableBalance,
+            OperationType::ClaimClaimableBalance,
+            OperationType::BeginSponsoringFutureReserves,
+            OperationType::EndSponsoringFutureReserves,
+            OperationType::RevokeSponsorship,
+            OperationType::Clawback,
+            OperationType::ClawbackClaimableBalance,
+            OperationType::SetTrustLineFlags,
+            OperationType::LiquidityPoolDeposit,
+            OperationType::LiquidityPoolWithdraw,
+            OperationType::InvokeHostFunction,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for OperationResultTr {
@@ -22523,6 +25092,13 @@ impl Discriminant<OperationType> for OperationResultTr {
     #[must_use]
     fn discriminant(&self) -> OperationType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<OperationType> for OperationResultTr {
+    fn variants() -> slice::Iter<'static, OperationType> {
+        const VARIANTS: [OperationType; 25] = OperationResultTr::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -22745,6 +25321,20 @@ impl OperationResult {
             Self::OpTooManySponsoring => OperationResultCode::OpTooManySponsoring,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [OperationResultCode; 7] {
+        const VARIANTS: [OperationResultCode; 7] = [
+            OperationResultCode::OpInner,
+            OperationResultCode::OpBadAuth,
+            OperationResultCode::OpNoAccount,
+            OperationResultCode::OpNotSupported,
+            OperationResultCode::OpTooManySubentries,
+            OperationResultCode::OpExceededWorkLimit,
+            OperationResultCode::OpTooManySponsoring,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for OperationResult {
@@ -22758,6 +25348,13 @@ impl Discriminant<OperationResultCode> for OperationResult {
     #[must_use]
     fn discriminant(&self) -> OperationResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<OperationResultCode> for OperationResult {
+    fn variants() -> slice::Iter<'static, OperationResultCode> {
+        const VARIANTS: [OperationResultCode; 7] = OperationResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -22883,12 +25480,44 @@ impl TransactionResultCode {
             Self::TxMalformed => "TxMalformed",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [TransactionResultCode; 18] {
+        const VARIANTS: [TransactionResultCode; 18] = [
+            TransactionResultCode::TxFeeBumpInnerSuccess,
+            TransactionResultCode::TxSuccess,
+            TransactionResultCode::TxFailed,
+            TransactionResultCode::TxTooEarly,
+            TransactionResultCode::TxTooLate,
+            TransactionResultCode::TxMissingOperation,
+            TransactionResultCode::TxBadSeq,
+            TransactionResultCode::TxBadAuth,
+            TransactionResultCode::TxInsufficientBalance,
+            TransactionResultCode::TxNoAccount,
+            TransactionResultCode::TxInsufficientFee,
+            TransactionResultCode::TxBadAuthExtra,
+            TransactionResultCode::TxInternalError,
+            TransactionResultCode::TxNotSupported,
+            TransactionResultCode::TxFeeBumpInnerFailed,
+            TransactionResultCode::TxBadSponsorship,
+            TransactionResultCode::TxBadMinSeqAgeOrGap,
+            TransactionResultCode::TxMalformed,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for TransactionResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<TransactionResultCode> for TransactionResultCode {
+    fn variants() -> slice::Iter<'static, TransactionResultCode> {
+        const VARIANTS: [TransactionResultCode; 18] = TransactionResultCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -23052,6 +25681,29 @@ impl InnerTransactionResultResult {
             Self::TxMalformed => TransactionResultCode::TxMalformed,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [TransactionResultCode; 16] {
+        const VARIANTS: [TransactionResultCode; 16] = [
+            TransactionResultCode::TxSuccess,
+            TransactionResultCode::TxFailed,
+            TransactionResultCode::TxTooEarly,
+            TransactionResultCode::TxTooLate,
+            TransactionResultCode::TxMissingOperation,
+            TransactionResultCode::TxBadSeq,
+            TransactionResultCode::TxBadAuth,
+            TransactionResultCode::TxInsufficientBalance,
+            TransactionResultCode::TxNoAccount,
+            TransactionResultCode::TxInsufficientFee,
+            TransactionResultCode::TxBadAuthExtra,
+            TransactionResultCode::TxInternalError,
+            TransactionResultCode::TxNotSupported,
+            TransactionResultCode::TxBadSponsorship,
+            TransactionResultCode::TxBadMinSeqAgeOrGap,
+            TransactionResultCode::TxMalformed,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for InnerTransactionResultResult {
@@ -23065,6 +25717,13 @@ impl Discriminant<TransactionResultCode> for InnerTransactionResultResult {
     #[must_use]
     fn discriminant(&self) -> TransactionResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<TransactionResultCode> for InnerTransactionResultResult {
+    fn variants() -> slice::Iter<'static, TransactionResultCode> {
+        const VARIANTS: [TransactionResultCode; 16] = InnerTransactionResultResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -23165,6 +25824,12 @@ impl InnerTransactionResultExt {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for InnerTransactionResultExt {
@@ -23178,6 +25843,13 @@ impl Discriminant<i32> for InnerTransactionResultExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for InnerTransactionResultExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = InnerTransactionResultExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -23427,6 +26099,31 @@ impl TransactionResultResult {
             Self::TxMalformed => TransactionResultCode::TxMalformed,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [TransactionResultCode; 18] {
+        const VARIANTS: [TransactionResultCode; 18] = [
+            TransactionResultCode::TxFeeBumpInnerSuccess,
+            TransactionResultCode::TxFeeBumpInnerFailed,
+            TransactionResultCode::TxSuccess,
+            TransactionResultCode::TxFailed,
+            TransactionResultCode::TxTooEarly,
+            TransactionResultCode::TxTooLate,
+            TransactionResultCode::TxMissingOperation,
+            TransactionResultCode::TxBadSeq,
+            TransactionResultCode::TxBadAuth,
+            TransactionResultCode::TxInsufficientBalance,
+            TransactionResultCode::TxNoAccount,
+            TransactionResultCode::TxInsufficientFee,
+            TransactionResultCode::TxBadAuthExtra,
+            TransactionResultCode::TxInternalError,
+            TransactionResultCode::TxNotSupported,
+            TransactionResultCode::TxBadSponsorship,
+            TransactionResultCode::TxBadMinSeqAgeOrGap,
+            TransactionResultCode::TxMalformed,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for TransactionResultResult {
@@ -23440,6 +26137,13 @@ impl Discriminant<TransactionResultCode> for TransactionResultResult {
     #[must_use]
     fn discriminant(&self) -> TransactionResultCode {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<TransactionResultCode> for TransactionResultResult {
+    fn variants() -> slice::Iter<'static, TransactionResultCode> {
+        const VARIANTS: [TransactionResultCode; 18] = TransactionResultResult::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -23548,6 +26252,12 @@ impl TransactionResultExt {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for TransactionResultExt {
@@ -23561,6 +26271,13 @@ impl Discriminant<i32> for TransactionResultExt {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TransactionResultExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = TransactionResultExt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -23898,6 +26615,12 @@ impl ExtensionPoint {
             Self::V0 => 0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
 }
 
 impl Name for ExtensionPoint {
@@ -23911,6 +26634,13 @@ impl Discriminant<i32> for ExtensionPoint {
     #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for ExtensionPoint {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = ExtensionPoint::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -23982,12 +26712,31 @@ impl CryptoKeyType {
             Self::MuxedEd25519 => "MuxedEd25519",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [CryptoKeyType; 5] {
+        const VARIANTS: [CryptoKeyType; 5] = [
+            CryptoKeyType::Ed25519,
+            CryptoKeyType::PreAuthTx,
+            CryptoKeyType::HashX,
+            CryptoKeyType::Ed25519SignedPayload,
+            CryptoKeyType::MuxedEd25519,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for CryptoKeyType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<CryptoKeyType> for CryptoKeyType {
+    fn variants() -> slice::Iter<'static, CryptoKeyType> {
+        const VARIANTS: [CryptoKeyType; 5] = CryptoKeyType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -24066,12 +26815,25 @@ impl PublicKeyType {
             Self::PublicKeyTypeEd25519 => "PublicKeyTypeEd25519",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [PublicKeyType; 1] {
+        const VARIANTS: [PublicKeyType; 1] = [PublicKeyType::PublicKeyTypeEd25519];
+        VARIANTS
+    }
 }
 
 impl Name for PublicKeyType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<PublicKeyType> for PublicKeyType {
+    fn variants() -> slice::Iter<'static, PublicKeyType> {
+        const VARIANTS: [PublicKeyType; 1] = PublicKeyType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -24155,12 +26917,30 @@ impl SignerKeyType {
             Self::Ed25519SignedPayload => "Ed25519SignedPayload",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [SignerKeyType; 4] {
+        const VARIANTS: [SignerKeyType; 4] = [
+            SignerKeyType::Ed25519,
+            SignerKeyType::PreAuthTx,
+            SignerKeyType::HashX,
+            SignerKeyType::Ed25519SignedPayload,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for SignerKeyType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<SignerKeyType> for SignerKeyType {
+    fn variants() -> slice::Iter<'static, SignerKeyType> {
+        const VARIANTS: [SignerKeyType; 4] = SignerKeyType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -24247,6 +27027,12 @@ impl PublicKey {
             Self::PublicKeyTypeEd25519(_) => PublicKeyType::PublicKeyTypeEd25519,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [PublicKeyType; 1] {
+        const VARIANTS: [PublicKeyType; 1] = [PublicKeyType::PublicKeyTypeEd25519];
+        VARIANTS
+    }
 }
 
 impl Name for PublicKey {
@@ -24260,6 +27046,13 @@ impl Discriminant<PublicKeyType> for PublicKey {
     #[must_use]
     fn discriminant(&self) -> PublicKeyType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<PublicKeyType> for PublicKey {
+    fn variants() -> slice::Iter<'static, PublicKeyType> {
+        const VARIANTS: [PublicKeyType; 1] = PublicKey::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -24391,6 +27184,17 @@ impl SignerKey {
             Self::Ed25519SignedPayload(_) => SignerKeyType::Ed25519SignedPayload,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [SignerKeyType; 4] {
+        const VARIANTS: [SignerKeyType; 4] = [
+            SignerKeyType::Ed25519,
+            SignerKeyType::PreAuthTx,
+            SignerKeyType::HashX,
+            SignerKeyType::Ed25519SignedPayload,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for SignerKey {
@@ -24404,6 +27208,13 @@ impl Discriminant<SignerKeyType> for SignerKey {
     #[must_use]
     fn discriminant(&self) -> SignerKeyType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<SignerKeyType> for SignerKey {
+    fn variants() -> slice::Iter<'static, SignerKeyType> {
+        const VARIANTS: [SignerKeyType; 4] = SignerKey::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -24865,12 +27676,34 @@ impl ScValType {
             Self::Status => "Status",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScValType; 8] {
+        const VARIANTS: [ScValType; 8] = [
+            ScValType::U63,
+            ScValType::U32,
+            ScValType::I32,
+            ScValType::Static,
+            ScValType::Object,
+            ScValType::Symbol,
+            ScValType::Bitset,
+            ScValType::Status,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScValType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScValType> for ScValType {
+    fn variants() -> slice::Iter<'static, ScValType> {
+        const VARIANTS: [ScValType; 8] = ScValType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -24961,12 +27794,30 @@ impl ScStatic {
             Self::LedgerKeyContractCodeWasm => "LedgerKeyContractCodeWasm",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScStatic; 4] {
+        const VARIANTS: [ScStatic; 4] = [
+            ScStatic::Void,
+            ScStatic::True,
+            ScStatic::False,
+            ScStatic::LedgerKeyContractCodeWasm,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScStatic {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScStatic> for ScStatic {
+    fn variants() -> slice::Iter<'static, ScStatic> {
+        const VARIANTS: [ScStatic; 4] = ScStatic::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -25066,12 +27917,34 @@ impl ScStatusType {
             Self::VmError => "VmError",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScStatusType; 8] {
+        const VARIANTS: [ScStatusType; 8] = [
+            ScStatusType::Ok,
+            ScStatusType::UnknownError,
+            ScStatusType::HostValueError,
+            ScStatusType::HostObjectError,
+            ScStatusType::HostFunctionError,
+            ScStatusType::HostStorageError,
+            ScStatusType::HostContextError,
+            ScStatusType::VmError,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScStatusType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScStatusType> for ScStatusType {
+    fn variants() -> slice::Iter<'static, ScStatusType> {
+        const VARIANTS: [ScStatusType; 8] = ScStatusType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -25186,12 +28059,38 @@ impl ScHostValErrorCode {
             Self::StatusUnknown => "StatusUnknown",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScHostValErrorCode; 12] {
+        const VARIANTS: [ScHostValErrorCode; 12] = [
+            ScHostValErrorCode::UnknownError,
+            ScHostValErrorCode::ReservedTagValue,
+            ScHostValErrorCode::UnexpectedValType,
+            ScHostValErrorCode::U63OutOfRange,
+            ScHostValErrorCode::U32OutOfRange,
+            ScHostValErrorCode::StaticUnknown,
+            ScHostValErrorCode::MissingObject,
+            ScHostValErrorCode::SymbolTooLong,
+            ScHostValErrorCode::SymbolBadChar,
+            ScHostValErrorCode::SymbolContainsNonUtf8,
+            ScHostValErrorCode::BitsetTooManyBits,
+            ScHostValErrorCode::StatusUnknown,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScHostValErrorCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScHostValErrorCode> for ScHostValErrorCode {
+    fn variants() -> slice::Iter<'static, ScHostValErrorCode> {
+        const VARIANTS: [ScHostValErrorCode; 12] = ScHostValErrorCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -25295,12 +28194,33 @@ impl ScHostObjErrorCode {
             Self::ContractHashWrongLength => "ContractHashWrongLength",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScHostObjErrorCode; 7] {
+        const VARIANTS: [ScHostObjErrorCode; 7] = [
+            ScHostObjErrorCode::UnknownError,
+            ScHostObjErrorCode::UnknownReference,
+            ScHostObjErrorCode::UnexpectedType,
+            ScHostObjErrorCode::ObjectCountExceedsU32Max,
+            ScHostObjErrorCode::ObjectNotExist,
+            ScHostObjErrorCode::VecIndexOutOfBound,
+            ScHostObjErrorCode::ContractHashWrongLength,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScHostObjErrorCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScHostObjErrorCode> for ScHostObjErrorCode {
+    fn variants() -> slice::Iter<'static, ScHostObjErrorCode> {
+        const VARIANTS: [ScHostObjErrorCode; 7] = ScHostObjErrorCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -25393,12 +28313,31 @@ impl ScHostFnErrorCode {
             Self::InputArgsInvalid => "InputArgsInvalid",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScHostFnErrorCode; 5] {
+        const VARIANTS: [ScHostFnErrorCode; 5] = [
+            ScHostFnErrorCode::UnknownError,
+            ScHostFnErrorCode::UnexpectedHostFunctionAction,
+            ScHostFnErrorCode::InputArgsWrongLength,
+            ScHostFnErrorCode::InputArgsWrongType,
+            ScHostFnErrorCode::InputArgsInvalid,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScHostFnErrorCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScHostFnErrorCode> for ScHostFnErrorCode {
+    fn variants() -> slice::Iter<'static, ScHostFnErrorCode> {
+        const VARIANTS: [ScHostFnErrorCode; 5] = ScHostFnErrorCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -25492,12 +28431,32 @@ impl ScHostStorageErrorCode {
             Self::GetOnDeletedKey => "GetOnDeletedKey",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScHostStorageErrorCode; 6] {
+        const VARIANTS: [ScHostStorageErrorCode; 6] = [
+            ScHostStorageErrorCode::UnknownError,
+            ScHostStorageErrorCode::ExpectContractData,
+            ScHostStorageErrorCode::ReadwriteAccessToReadonlyEntry,
+            ScHostStorageErrorCode::AccessToUnknownEntry,
+            ScHostStorageErrorCode::MissingKeyInGet,
+            ScHostStorageErrorCode::GetOnDeletedKey,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScHostStorageErrorCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScHostStorageErrorCode> for ScHostStorageErrorCode {
+    fn variants() -> slice::Iter<'static, ScHostStorageErrorCode> {
+        const VARIANTS: [ScHostStorageErrorCode; 6] = ScHostStorageErrorCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -25580,12 +28539,28 @@ impl ScHostContextErrorCode {
             Self::NoContractRunning => "NoContractRunning",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScHostContextErrorCode; 2] {
+        const VARIANTS: [ScHostContextErrorCode; 2] = [
+            ScHostContextErrorCode::UnknownError,
+            ScHostContextErrorCode::NoContractRunning,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScHostContextErrorCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScHostContextErrorCode> for ScHostContextErrorCode {
+    fn variants() -> slice::Iter<'static, ScHostContextErrorCode> {
+        const VARIANTS: [ScHostContextErrorCode; 2] = ScHostContextErrorCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -25714,12 +28689,45 @@ impl ScVmErrorCode {
             Self::TrapCpuLimitExceeded => "TrapCpuLimitExceeded",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScVmErrorCode; 19] {
+        const VARIANTS: [ScVmErrorCode; 19] = [
+            ScVmErrorCode::Unknown,
+            ScVmErrorCode::Validation,
+            ScVmErrorCode::Instantiation,
+            ScVmErrorCode::Function,
+            ScVmErrorCode::Table,
+            ScVmErrorCode::Memory,
+            ScVmErrorCode::Global,
+            ScVmErrorCode::Value,
+            ScVmErrorCode::TrapUnreachable,
+            ScVmErrorCode::TrapMemoryAccessOutOfBounds,
+            ScVmErrorCode::TrapTableAccessOutOfBounds,
+            ScVmErrorCode::TrapElemUninitialized,
+            ScVmErrorCode::TrapDivisionByZero,
+            ScVmErrorCode::TrapIntegerOverflow,
+            ScVmErrorCode::TrapInvalidConversionToInt,
+            ScVmErrorCode::TrapStackOverflow,
+            ScVmErrorCode::TrapUnexpectedSignature,
+            ScVmErrorCode::TrapMemLimitExceeded,
+            ScVmErrorCode::TrapCpuLimitExceeded,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScVmErrorCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScVmErrorCode> for ScVmErrorCode {
+    fn variants() -> slice::Iter<'static, ScVmErrorCode> {
+        const VARIANTS: [ScVmErrorCode; 19] = ScVmErrorCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -25815,12 +28823,26 @@ impl ScUnknownErrorCode {
             Self::Xdr => "Xdr",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScUnknownErrorCode; 2] {
+        const VARIANTS: [ScUnknownErrorCode; 2] =
+            [ScUnknownErrorCode::General, ScUnknownErrorCode::Xdr];
+        VARIANTS
+    }
 }
 
 impl Name for ScUnknownErrorCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScUnknownErrorCode> for ScUnknownErrorCode {
+    fn variants() -> slice::Iter<'static, ScUnknownErrorCode> {
+        const VARIANTS: [ScUnknownErrorCode; 2] = ScUnknownErrorCode::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -25940,6 +28962,21 @@ impl ScStatus {
             Self::VmError(_) => ScStatusType::VmError,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScStatusType; 8] {
+        const VARIANTS: [ScStatusType; 8] = [
+            ScStatusType::Ok,
+            ScStatusType::UnknownError,
+            ScStatusType::HostValueError,
+            ScStatusType::HostObjectError,
+            ScStatusType::HostFunctionError,
+            ScStatusType::HostStorageError,
+            ScStatusType::HostContextError,
+            ScStatusType::VmError,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScStatus {
@@ -25953,6 +28990,13 @@ impl Discriminant<ScStatusType> for ScStatus {
     #[must_use]
     fn discriminant(&self) -> ScStatusType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ScStatusType> for ScStatus {
+    fn variants() -> slice::Iter<'static, ScStatusType> {
+        const VARIANTS: [ScStatusType; 8] = ScStatus::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -26076,6 +29120,21 @@ impl ScVal {
             Self::Status(_) => ScValType::Status,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScValType; 8] {
+        const VARIANTS: [ScValType; 8] = [
+            ScValType::U63,
+            ScValType::U32,
+            ScValType::I32,
+            ScValType::Static,
+            ScValType::Object,
+            ScValType::Symbol,
+            ScValType::Bitset,
+            ScValType::Status,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScVal {
@@ -26089,6 +29148,13 @@ impl Discriminant<ScValType> for ScVal {
     #[must_use]
     fn discriminant(&self) -> ScValType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ScValType> for ScVal {
+    fn variants() -> slice::Iter<'static, ScValType> {
+        const VARIANTS: [ScValType; 8] = ScVal::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -26186,12 +29252,34 @@ impl ScObjectType {
             Self::PublicKey => "PublicKey",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScObjectType; 8] {
+        const VARIANTS: [ScObjectType; 8] = [
+            ScObjectType::Vec,
+            ScObjectType::Map,
+            ScObjectType::U64,
+            ScObjectType::I64,
+            ScObjectType::Binary,
+            ScObjectType::BigInt,
+            ScObjectType::Hash,
+            ScObjectType::PublicKey,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScObjectType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScObjectType> for ScObjectType {
+    fn variants() -> slice::Iter<'static, ScObjectType> {
+        const VARIANTS: [ScObjectType; 8] = ScObjectType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -26519,12 +29607,26 @@ impl ScNumSign {
             Self::Positive => "Positive",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScNumSign; 3] {
+        const VARIANTS: [ScNumSign; 3] =
+            [ScNumSign::Negative, ScNumSign::Zero, ScNumSign::Positive];
+        VARIANTS
+    }
 }
 
 impl Name for ScNumSign {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScNumSign> for ScNumSign {
+    fn variants() -> slice::Iter<'static, ScNumSign> {
+        const VARIANTS: [ScNumSign; 3] = ScNumSign::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -26619,6 +29721,13 @@ impl ScBigInt {
             Self::Negative(_) => ScNumSign::Negative,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScNumSign; 3] {
+        const VARIANTS: [ScNumSign; 3] =
+            [ScNumSign::Zero, ScNumSign::Positive, ScNumSign::Negative];
+        VARIANTS
+    }
 }
 
 impl Name for ScBigInt {
@@ -26632,6 +29741,13 @@ impl Discriminant<ScNumSign> for ScBigInt {
     #[must_use]
     fn discriminant(&self) -> ScNumSign {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ScNumSign> for ScBigInt {
+    fn variants() -> slice::Iter<'static, ScNumSign> {
+        const VARIANTS: [ScNumSign; 3] = ScBigInt::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -26693,12 +29809,25 @@ impl ScHashType {
             Self::SchashSha256 => "SchashSha256",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScHashType; 1] {
+        const VARIANTS: [ScHashType; 1] = [ScHashType::SchashSha256];
+        VARIANTS
+    }
 }
 
 impl Name for ScHashType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScHashType> for ScHashType {
+    fn variants() -> slice::Iter<'static, ScHashType> {
+        const VARIANTS: [ScHashType; 1] = ScHashType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -26782,6 +29911,12 @@ impl ScHash {
             Self::SchashSha256(_) => ScHashType::SchashSha256,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScHashType; 1] {
+        const VARIANTS: [ScHashType; 1] = [ScHashType::SchashSha256];
+        VARIANTS
+    }
 }
 
 impl Name for ScHash {
@@ -26795,6 +29930,13 @@ impl Discriminant<ScHashType> for ScHash {
     #[must_use]
     fn discriminant(&self) -> ScHashType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ScHashType> for ScHash {
+    fn variants() -> slice::Iter<'static, ScHashType> {
+        const VARIANTS: [ScHashType; 1] = ScHash::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -26896,6 +30038,21 @@ impl ScObject {
             Self::PublicKey(_) => ScObjectType::PublicKey,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScObjectType; 8] {
+        const VARIANTS: [ScObjectType; 8] = [
+            ScObjectType::Vec,
+            ScObjectType::Map,
+            ScObjectType::U64,
+            ScObjectType::I64,
+            ScObjectType::Binary,
+            ScObjectType::BigInt,
+            ScObjectType::Hash,
+            ScObjectType::PublicKey,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScObject {
@@ -26909,6 +30066,13 @@ impl Discriminant<ScObjectType> for ScObject {
     #[must_use]
     fn discriminant(&self) -> ScObjectType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ScObjectType> for ScObject {
+    fn variants() -> slice::Iter<'static, ScObjectType> {
+        const VARIANTS: [ScObjectType; 8] = ScObject::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -26980,12 +30144,25 @@ impl ScEnvMetaKind {
             Self::ScEnvMetaKindInterfaceVersion => "ScEnvMetaKindInterfaceVersion",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScEnvMetaKind; 1] {
+        const VARIANTS: [ScEnvMetaKind; 1] = [ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
+        VARIANTS
+    }
 }
 
 impl Name for ScEnvMetaKind {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScEnvMetaKind> for ScEnvMetaKind {
+    fn variants() -> slice::Iter<'static, ScEnvMetaKind> {
+        const VARIANTS: [ScEnvMetaKind; 1] = ScEnvMetaKind::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -27069,6 +30246,12 @@ impl ScEnvMetaEntry {
             Self::ScEnvMetaKindInterfaceVersion(_) => ScEnvMetaKind::ScEnvMetaKindInterfaceVersion,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScEnvMetaKind; 1] {
+        const VARIANTS: [ScEnvMetaKind; 1] = [ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
+        VARIANTS
+    }
 }
 
 impl Name for ScEnvMetaEntry {
@@ -27082,6 +30265,13 @@ impl Discriminant<ScEnvMetaKind> for ScEnvMetaEntry {
     #[must_use]
     fn discriminant(&self) -> ScEnvMetaKind {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ScEnvMetaKind> for ScEnvMetaEntry {
+    fn variants() -> slice::Iter<'static, ScEnvMetaKind> {
+        const VARIANTS: [ScEnvMetaKind; 1] = ScEnvMetaEntry::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -27194,12 +30384,43 @@ impl ScSpecType {
             Self::Udt => "Udt",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecType; 17] {
+        const VARIANTS: [ScSpecType; 17] = [
+            ScSpecType::U32,
+            ScSpecType::I32,
+            ScSpecType::U64,
+            ScSpecType::I64,
+            ScSpecType::Bool,
+            ScSpecType::Symbol,
+            ScSpecType::Bitset,
+            ScSpecType::Status,
+            ScSpecType::Binary,
+            ScSpecType::BigInt,
+            ScSpecType::Option,
+            ScSpecType::Result,
+            ScSpecType::Vec,
+            ScSpecType::Set,
+            ScSpecType::Map,
+            ScSpecType::Tuple,
+            ScSpecType::Udt,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScSpecType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScSpecType> for ScSpecType {
+    fn variants() -> slice::Iter<'static, ScSpecType> {
+        const VARIANTS: [ScSpecType; 17] = ScSpecType::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -27616,6 +30837,30 @@ impl ScSpecTypeDef {
             Self::Udt(_) => ScSpecType::Udt,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecType; 17] {
+        const VARIANTS: [ScSpecType; 17] = [
+            ScSpecType::U64,
+            ScSpecType::I64,
+            ScSpecType::U32,
+            ScSpecType::I32,
+            ScSpecType::Bool,
+            ScSpecType::Symbol,
+            ScSpecType::Bitset,
+            ScSpecType::Status,
+            ScSpecType::Binary,
+            ScSpecType::BigInt,
+            ScSpecType::Option,
+            ScSpecType::Result,
+            ScSpecType::Vec,
+            ScSpecType::Map,
+            ScSpecType::Set,
+            ScSpecType::Tuple,
+            ScSpecType::Udt,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScSpecTypeDef {
@@ -27629,6 +30874,13 @@ impl Discriminant<ScSpecType> for ScSpecTypeDef {
     #[must_use]
     fn discriminant(&self) -> ScSpecType {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ScSpecType> for ScSpecTypeDef {
+    fn variants() -> slice::Iter<'static, ScSpecType> {
+        const VARIANTS: [ScSpecType; 17] = ScSpecTypeDef::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -27918,12 +31170,29 @@ impl ScSpecEntryKind {
             Self::UdtUnionV0 => "UdtUnionV0",
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecEntryKind; 3] {
+        const VARIANTS: [ScSpecEntryKind; 3] = [
+            ScSpecEntryKind::FunctionV0,
+            ScSpecEntryKind::UdtStructV0,
+            ScSpecEntryKind::UdtUnionV0,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScSpecEntryKind {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
+    }
+}
+
+impl Variants<ScSpecEntryKind> for ScSpecEntryKind {
+    fn variants() -> slice::Iter<'static, ScSpecEntryKind> {
+        const VARIANTS: [ScSpecEntryKind; 3] = ScSpecEntryKind::variants();
+        VARIANTS.iter()
     }
 }
 
@@ -28019,6 +31288,16 @@ impl ScSpecEntry {
             Self::UdtUnionV0(_) => ScSpecEntryKind::UdtUnionV0,
         }
     }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecEntryKind; 3] {
+        const VARIANTS: [ScSpecEntryKind; 3] = [
+            ScSpecEntryKind::FunctionV0,
+            ScSpecEntryKind::UdtStructV0,
+            ScSpecEntryKind::UdtUnionV0,
+        ];
+        VARIANTS
+    }
 }
 
 impl Name for ScSpecEntry {
@@ -28032,6 +31311,13 @@ impl Discriminant<ScSpecEntryKind> for ScSpecEntry {
     #[must_use]
     fn discriminant(&self) -> ScSpecEntryKind {
         Self::discriminant(self)
+    }
+}
+
+impl Variants<ScSpecEntryKind> for ScSpecEntry {
+    fn variants() -> slice::Iter<'static, ScSpecEntryKind> {
+        const VARIANTS: [ScSpecEntryKind; 3] = ScSpecEntry::variants();
+        VARIANTS.iter()
     }
 }
 

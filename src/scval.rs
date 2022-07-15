@@ -1,4 +1,4 @@
-use crate::{Hash, ScHash, PublicKey, ScObject, ScStatic, ScStatus, ScVal};
+use crate::{Hash, PublicKey, ScHash, ScObject, ScStatic, ScStatus, ScVal};
 
 impl From<ScStatic> for ScVal {
     fn from(v: ScStatic) -> Self {
@@ -112,32 +112,44 @@ impl From<PublicKey> for ScVal {
     }
 }
 
-// Vec(ScVec),
-// Map(ScMap),
-// Binary(VecM<u8, 256000>),
-// BigInt(ScBigInt),
+#[cfg(feature = "alloc")]
+impl TryFrom<&str> for ScVal {
+    type Error = ();
+    fn try_from(v: &str) -> Result<Self, Self::Error> {
+        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+    }
+}
 
-// impl ToScVal for &str {
-//     fn to_scval(&self) -> Result<ScVal, ()> {
-//         let bytes: Vec<u8> = self.as_bytes().iter().cloned().collect();
-//         Ok(ScVal::Symbol(bytes.try_into().map_err(|_| ())?))
-//     }
-// }
+#[cfg(not(feature = "alloc"))]
+impl TryFrom<&'static str> for ScVal {
+    type Error = ();
+    fn try_from(v: &'static str) -> Result<Self, Self::Error> {
+        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+    }
+}
 
-// impl FromScVal<bool> for ScVal {
-//     fn from_scval(&self) -> Result<bool, ()> {
-//         match self {
-//             ScVal::Static(ScStatic::False) => Ok(false),
-//             ScVal::Static(ScStatic::True) => Ok(true),
-//             _ => Err(()),
-//         }
-//     }
-// }
+#[cfg(feature = "alloc")]
+impl TryFrom<String> for ScVal {
+    type Error = ();
+    fn try_from(v: String) -> Result<Self, Self::Error> {
+        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+    }
+}
 
-impl<T> From<Option<T>> for ScVal
-where
-    T: Into<ScVal>,
-{
+#[cfg(feature = "alloc")]
+impl TryFrom<&String> for ScVal {
+    type Error = ();
+    fn try_from(v: &String) -> Result<Self, Self::Error> {
+        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+    }
+}
+
+// TODO: Vec(ScVec),
+// TODO: Map(ScMap),
+// TODO: Binary(VecM<u8, 256000>),
+// TODO: BigInt(ScBigInt),
+
+impl<T: Into<ScVal>> From<Option<T>> for ScVal {
     fn from(v: Option<T>) -> Self {
         match v {
             Some(v) => v.into(),

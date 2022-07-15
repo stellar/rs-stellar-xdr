@@ -77,3 +77,6 @@ $(XDR_FILES_LOCAL_NEXT):
 reset-xdr:
 	rm -f xdr/*/*.x
 	$(MAKE) build
+
+fmt:
+	cargo fmt --all

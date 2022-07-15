@@ -10,3 +10,8 @@ pub use curr::*;
 mod next;
 #[cfg(feature = "next")]
 pub use next::*;
+
+#[cfg(feature = "next")]
+mod scval;
+#[cfg(feature = "next")]
+pub use scval::*;

@@ -158,10 +158,26 @@ impl TryFrom<Vec<u8>> for ScObject {
 }
 
 #[cfg(feature = "alloc")]
+impl TryFrom<Vec<u8>> for ScVal {
+    type Error = ();
+    fn try_from(v: Vec<u8>) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for ScObject {
     type Error = ();
     fn try_from(v: &Vec<u8>) -> Result<Self, Self::Error> {
         Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for ScVal {
+    type Error = ();
+    fn try_from(v: &Vec<u8>) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
     }
 }
 
@@ -173,11 +189,27 @@ impl TryFrom<&[u8]> for ScObject {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl TryFrom<&[u8]> for ScVal {
+    type Error = ();
+    fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
+    }
+}
+
 #[cfg(not(feature = "alloc"))]
 impl TryFrom<&'static [u8]> for ScObject {
     type Error = ();
     fn try_from(v: &'static [u8]) -> Result<Self, Self::Error> {
         Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+    }
+}
+
+#[cfg(not(feature = "alloc"))]
+impl TryFrom<&'static [u8]> for ScVal {
+    type Error = ();
+    fn try_from(v: &'static [u8]) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
     }
 }
 

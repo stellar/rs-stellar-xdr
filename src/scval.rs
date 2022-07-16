@@ -22,7 +22,16 @@ impl From<ScObject> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => ScObject.
+impl TryFrom<ScVal> for ScObject {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(o)) = v {
+            Ok(o)
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<ScStatus> for ScVal {
     fn from(v: ScStatus) -> Self {

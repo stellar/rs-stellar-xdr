@@ -58,14 +58,6 @@ impl From<i64> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => i64.
-
-impl From<u64> for ScVal {
-    fn from(v: u64) -> ScVal {
-        ScObject::U64(v).into()
-    }
-}
-
 // TODO: Reverse conditions for ScVal/etc => u64.
 
 impl From<()> for ScVal {

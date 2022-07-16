@@ -394,10 +394,10 @@ impl From<ScBigInt> for BigInt {
 
 #[cfg(feature = "num-bigint")]
 impl TryFrom<ScObject> for BigInt {
-    type Error = <ScBigInt as TryInto<BigInt>>::Error;
+    type Error = ();
     fn try_from(v: ScObject) -> Result<Self, Self::Error> {
         if let ScObject::BigInt(b) = v {
-            <_ as TryInto<BigInt>>::try_into(b)
+            Ok(<_ as TryInto<BigInt>>::try_into(b).map_err(|_| ())?)
         } else {
             Err(())
         }
@@ -406,10 +406,10 @@ impl TryFrom<ScObject> for BigInt {
 
 #[cfg(feature = "num-bigint")]
 impl TryFrom<ScVal> for BigInt {
-    type Error = <ScObject as TryInto<BigInt>>::Error;
+    type Error = ();
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
         if let ScVal::Object(Some(o)) = v {
-            <_ as TryInto<BigInt>>::try_into(o)
+            Ok(<_ as TryInto<BigInt>>::try_into(o).map_err(|_| ())?)
         } else {
             Err(())
         }

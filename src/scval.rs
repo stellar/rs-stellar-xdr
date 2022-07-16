@@ -307,8 +307,8 @@ impl From<ScMap> for ScObject {
     }
 }
 
-impl From<ScMMapap for ScVal {
-    fn from(v: ScMMapap -> Self {
+impl From<ScMap> for ScVal {
+    fn from(v: ScMap) -> Self {
         Ok(<_ as TryInto<ScObject>>::into(v).into())
     }
 }

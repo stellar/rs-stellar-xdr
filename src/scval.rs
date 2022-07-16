@@ -1,8 +1,5 @@
 use crate::{Hash, PublicKey, ScHash, ScObject, ScStatic, ScStatus, ScVal};
 
-#[cfg(not(feature = "alloc"))]
-use crate::ScVec;
-
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
@@ -216,6 +213,18 @@ impl TryFrom<&'static [u8]> for ScVal {
     }
 }
 
+impl From<ScVec> for ScObject {
+    fn from(v: ScVec) -> Self {
+        ScObject::Vec(v)
+    }
+}
+
+impl From<ScVec> for ScVal {
+    fn from(v: ScVec) -> Self {
+        Ok(<_ as TryInto<ScObject>>::into(v).into())
+    }
+}
+
 #[cfg(feature = "alloc")]
 impl<T: Into<ScVal>> TryFrom<Vec<T>> for ScObject {
     type Error = ();
@@ -289,6 +298,18 @@ where
         Ok(<_ as TryInto<ScObject>>::try_into(v)
             .map_err(|_| ())?
             .into())
+    }
+}
+
+impl From<ScMap> for ScObject {
+    fn from(v: ScMap) -> Self {
+        ScObject::Map(v)
+    }
+}
+
+impl From<ScMMapap for ScVal {
+    fn from(v: ScMMapap -> Self {
+        Ok(<_ as TryInto<ScObject>>::into(v).into())
     }
 }
 

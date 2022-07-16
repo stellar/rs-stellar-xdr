@@ -14,11 +14,15 @@ impl From<ScStatic> for ScVal {
     }
 }
 
+// TODO: Reverse conditions for ScVal/etc => ScStatic.
+
 impl From<ScObject> for ScVal {
     fn from(v: ScObject) -> Self {
         ScVal::Object(Some(v))
     }
 }
+
+// TODO: Reverse conditions for ScVal/etc => ScObject.
 
 impl From<ScStatus> for ScVal {
     fn from(v: ScStatus) -> Self {
@@ -26,17 +30,23 @@ impl From<ScStatus> for ScVal {
     }
 }
 
+// TODO: Reverse conditions for ScVal/etc => ScStatus.
+
 impl From<i32> for ScVal {
     fn from(v: i32) -> ScVal {
         ScVal::I32(v)
     }
 }
 
+// TODO: Reverse conditions for ScVal/etc => i32.
+
 impl From<u32> for ScVal {
     fn from(v: u32) -> ScVal {
         ScVal::U32(v)
     }
 }
+
+// TODO: Reverse conditions for ScVal/etc => u32.
 
 impl From<i64> for ScVal {
     fn from(v: i64) -> ScVal {
@@ -48,11 +58,15 @@ impl From<i64> for ScVal {
     }
 }
 
+// TODO: Reverse conditions for ScVal/etc => i64.
+
 impl From<u64> for ScVal {
     fn from(v: u64) -> ScVal {
         ScObject::U64(v).into()
     }
 }
+
+// TODO: Reverse conditions for ScVal/etc => u64.
 
 impl From<()> for ScVal {
     fn from(_: ()) -> Self {
@@ -60,11 +74,15 @@ impl From<()> for ScVal {
     }
 }
 
+// TODO: Reverse conditions for ScVal/etc => ().
+
 impl From<bool> for ScVal {
     fn from(v: bool) -> Self {
         if v { ScStatic::True } else { ScStatic::False }.into()
     }
 }
+
+// TODO: Reverse conditions for ScVal/etc => bool.
 
 impl From<i64> for ScObject {
     fn from(v: i64) -> ScObject {
@@ -72,11 +90,15 @@ impl From<i64> for ScObject {
     }
 }
 
+// TODO: Reverse conditions for ScVal/etc => i64.
+
 impl From<u64> for ScObject {
     fn from(v: u64) -> ScObject {
         ScObject::U64(v)
     }
 }
+
+// TODO: Reverse conditions for ScVal/etc => u64.
 
 impl From<ScHash> for ScObject {
     fn from(v: ScHash) -> Self {

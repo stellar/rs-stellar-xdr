@@ -1,9 +1,12 @@
-use crate::{Hash, PublicKey, ScHash, ScMap, ScObject, ScStatic, ScStatus, ScVal, ScVec};
+use crate::{Hash, PublicKey, ScBigInt, ScHash, ScMap, ScObject, ScStatic, ScStatus, ScVal, ScVec};
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::{string::String, vec::Vec};
+
+#[cfg(feature = "num-bigint")]
+use num_bigint::{BigInt, Sign};
 
 impl From<ScStatic> for ScVal {
     fn from(v: ScStatic) -> Self {
@@ -313,10 +316,83 @@ impl From<ScMap> for ScVal {
     }
 }
 
-// TODO: Map(ScMap),
-// TODO: BigInt(ScBigInt),
+// TODO: Add conversions from std::collections::HashMap, im_rcOrdMap, and other
+// popular map types to ScMap.
 
-// TODO: Reverse conversions for all types above.
+impl From<ScBigInt> for ScObject {
+    fn from(v: ScBigInt) -> Self {
+        ScObject::BigInt(v)
+    }
+}
+
+impl From<ScBigInt> for ScVal {
+    fn from(v: ScBigInt) -> Self {
+        <_ as Into<ScObject>>::into(v).into()
+    }
+}
+
+#[cfg(feature = "num-bigint")]
+impl TryFrom<BigInt> for ScBigInt {
+    type Error = ();
+    fn try_from(v: BigInt) -> Result<Self, Self::Error> {
+        Ok(match v.to_bytes_be() {
+            (Sign::NoSign, _) => ScBigInt::Zero,
+            (Sign::Plus, bytes) => ScBigInt::Positive(bytes.try_into().map_err(|_| ())?),
+            (Sign::Minus, bytes) => ScBigInt::Negative(bytes.try_into().map_err(|_| ())?),
+        })
+    }
+}
+
+#[cfg(feature = "num-bigint")]
+impl TryFrom<BigInt> for ScObject {
+    type Error = ();
+    fn try_from(v: BigInt) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScBigInt>>::try_into(v)?.into())
+    }
+}
+
+#[cfg(feature = "num-bigint")]
+impl TryFrom<BigInt> for ScVal {
+    type Error = ();
+    fn try_from(v: BigInt) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
+    }
+}
+
+#[cfg(feature = "num-bigint")]
+impl From<ScBigInt> for BigInt {
+    fn from(v: ScBigInt) -> Self {
+        match v {
+            ScBigInt::Zero => 0u32.into(),
+            ScBigInt::Positive(bytes) => BigInt::from_bytes_be(Sign::Plus, &bytes),
+            ScBigInt::Negative(bytes) => BigInt::from_bytes_be(Sign::Minus, &bytes),
+        }
+    }
+}
+
+#[cfg(feature = "num-bigint")]
+impl TryFrom<ScObject> for BigInt {
+    type Error = ();
+    fn try_from(v: ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::BigInt(b) = v {
+            Ok(<_ as TryInto<BigInt>>::try_into(b).map_err(|_| ())?)
+        } else {
+            Err(())
+        }
+    }
+}
+
+#[cfg(feature = "num-bigint")]
+impl TryFrom<ScVal> for BigInt {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(o)) = v {
+            Ok(<_ as TryInto<BigInt>>::try_into(o).map_err(|_| ())?)
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl<T: Into<ScVal>> From<Option<T>> for ScVal {
     fn from(v: Option<T>) -> Self {
@@ -326,3 +402,5 @@ impl<T: Into<ScVal>> From<Option<T>> for ScVal {
         }
     }
 }
+
+// TODO: Add reverse conversions for all types above.

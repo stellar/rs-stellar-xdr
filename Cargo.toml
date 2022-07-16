@@ -13,5 +13,7 @@ default = ["std"]
 std = ["alloc", "base64/std", "num-bigint?/std"]
 alloc = []
 next = []
+
+# Features dependent on optional dependencies.
 serde = ["alloc", "dep:serde"]
 num-bigint = ["alloc", "dep:num-bigint"]

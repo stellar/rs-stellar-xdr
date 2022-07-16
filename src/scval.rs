@@ -48,7 +48,16 @@ impl From<ScStatus> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => ScStatus.
+impl TryFrom<ScVal> for ScStatus {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Status(s) = v {
+            Ok(s)
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<i32> for ScVal {
     fn from(v: i32) -> ScVal {

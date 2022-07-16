@@ -8,6 +8,8 @@ use alloc::{string::String, vec::Vec};
 #[cfg(feature = "num-bigint")]
 use num_bigint::{BigInt, Sign};
 
+// TODO: Add borrow conversions as well.
+
 impl From<ScStatic> for ScVal {
     fn from(v: ScStatic) -> Self {
         Self::Static(v)
@@ -347,7 +349,19 @@ impl TryFrom<&'static str> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => String/&str/etc.
+#[cfg(feature = "alloc")]
+impl TryFrom<ScVal> for String {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Symbol(s) = v {
+            // TODO: It might be worth distinguishing the error case where this
+            // is an invalid symbol with invalid characters.
+            Ok(s.into_string().map_err(|_| ())?)
+        } else {
+            Err(())
+        }
+    }
+}
 
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for ScObject {

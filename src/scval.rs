@@ -65,7 +65,16 @@ impl From<i32> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => i32.
+impl TryFrom<ScVal> for i32 {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::I32(i) = v {
+            Ok(i)
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<u32> for ScVal {
     fn from(v: u32) -> ScVal {

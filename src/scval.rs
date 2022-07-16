@@ -14,7 +14,16 @@ impl From<ScStatic> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => ScStatic.
+impl TryFrom<ScVal> for ScStatic {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Static(s) = v {
+            Ok(s)
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<ScObject> for ScVal {
     fn from(v: ScObject) -> Self {

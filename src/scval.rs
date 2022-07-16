@@ -108,6 +108,8 @@ impl From<Hash> for ScVal {
     }
 }
 
+// TODO: Reverse conditions for ScVal/etc => ScHash/Hash.
+
 impl From<PublicKey> for ScObject {
     fn from(v: PublicKey) -> Self {
         ScObject::PublicKey(v)
@@ -119,6 +121,8 @@ impl From<PublicKey> for ScVal {
         <_ as Into<ScObject>>::into(v).into()
     }
 }
+
+// TODO: Reverse conditions for ScVal/etc => PublicKey.
 
 #[cfg(feature = "alloc")]
 impl TryFrom<String> for ScVal {
@@ -151,6 +155,8 @@ impl TryFrom<&'static str> for ScVal {
         Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
     }
 }
+
+// TODO: Reverse conditions for ScVal/etc => String/&str/etc.
 
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for ScObject {
@@ -215,6 +221,8 @@ impl TryFrom<&'static [u8]> for ScVal {
         Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
     }
 }
+
+// TODO: Reverse conditions for ScVal/etc => Binary/etc.
 
 impl From<ScVec> for ScObject {
     fn from(v: ScVec) -> Self {
@@ -303,6 +311,8 @@ where
             .into())
     }
 }
+
+// TODO: Reverse conditions for ScVal/etc => Vec/etc.
 
 impl From<ScMap> for ScObject {
     fn from(v: ScMap) -> Self {

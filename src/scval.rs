@@ -82,7 +82,16 @@ impl From<u32> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => u32.
+impl TryFrom<ScVal> for u32 {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::U32(i) = v {
+            Ok(i)
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<i64> for ScVal {
     fn from(v: i64) -> ScVal {
@@ -94,7 +103,16 @@ impl From<i64> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => u64.
+impl TryFrom<ScVal> for i64 {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::U63(i) | ScVal::Object(Some(ScObject::I64(i))) = v {
+            Ok(i)
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<()> for ScVal {
     fn from(_: ()) -> Self {
@@ -102,7 +120,16 @@ impl From<()> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => ().
+impl TryFrom<ScVal> for () {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Static(ScStatic::Void) = v {
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<bool> for ScVal {
     fn from(v: bool) -> Self {
@@ -110,7 +137,16 @@ impl From<bool> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => bool.
+impl TryFrom<ScVal> for bool {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        match v {
+            ScVal::Static(ScStatic::False) => Ok(false),
+            ScVal::Static(ScStatic::True) => Ok(true),
+            _ => Err(()),
+        }
+    }
+}
 
 impl From<i64> for ScObject {
     fn from(v: i64) -> Self {
@@ -118,7 +154,16 @@ impl From<i64> for ScObject {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => i64.
+impl TryFrom<ScObject> for i64 {
+    type Error = ();
+    fn try_from(v: ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::I64(i) = v {
+            Ok(i)
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<u64> for ScObject {
     fn from(v: u64) -> Self {
@@ -132,7 +177,27 @@ impl From<u64> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => u64.
+impl TryFrom<ScObject> for u64 {
+    type Error = ();
+    fn try_from(v: ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::U64(i) = v {
+            Ok(i)
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryFrom<ScVal> for u64 {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::U64() = v {
+            Ok(i)
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<ScHash> for ScObject {
     fn from(v: ScHash) -> Self {

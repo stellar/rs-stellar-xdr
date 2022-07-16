@@ -316,6 +316,28 @@ impl From<ScMap> for ScVal {
     }
 }
 
+impl TryFrom<ScObject> for ScMap {
+    type Error = ();
+    fn try_from(v: ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::Map(m) = v {
+            Ok(m)
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryFrom<ScVal> for ScMap {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(o)) = v {
+            <_ as TryInto<ScMap>>::try_into(o)
+        } else {
+            Err(())
+        }
+    }
+}
+
 // TODO: Add conversions from std::collections::HashMap, im_rcOrdMap, and other
 // popular map types to ScMap.
 
@@ -372,10 +394,10 @@ impl From<ScBigInt> for BigInt {
 
 #[cfg(feature = "num-bigint")]
 impl TryFrom<ScObject> for BigInt {
-    type Error = ();
+    type Error = <ScBigInt as TryInto<BigInt>>::Error;
     fn try_from(v: ScObject) -> Result<Self, Self::Error> {
         if let ScObject::BigInt(b) = v {
-            Ok(<_ as TryInto<BigInt>>::try_into(b).map_err(|_| ())?)
+            <_ as TryInto<BigInt>>::try_into(b)
         } else {
             Err(())
         }
@@ -384,10 +406,10 @@ impl TryFrom<ScObject> for BigInt {
 
 #[cfg(feature = "num-bigint")]
 impl TryFrom<ScVal> for BigInt {
-    type Error = ();
+    type Error = <ScObject as TryInto<BigInt>>::Error;
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
         if let ScVal::Object(Some(o)) = v {
-            Ok(<_ as TryInto<BigInt>>::try_into(o).map_err(|_| ())?)
+            <_ as TryInto<BigInt>>::try_into(o)
         } else {
             Err(())
         }
@@ -402,5 +424,16 @@ impl<T: Into<ScVal>> From<Option<T>> for ScVal {
         }
     }
 }
+
+// TODO: Is there a way to provide this conversion without recursion?
+// impl<T: TryFrom<ScVal>> TryFrom<ScVal> for Option<T> {
+//     type Error = T::Error;
+//     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+//         match v {
+//             ScVal::Static(ScStatic::Void) => Ok(None),
+//             _ => <_ as TryFrom<ScVal>>::try_from(v),
+//         }
+//     }
+// }
 
 // TODO: Add reverse conversions for all types above.

@@ -293,7 +293,27 @@ impl From<PublicKey> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => PublicKey.
+impl TryFrom<ScObject> for PublicKey {
+    type Error = ();
+    fn try_from(v: ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::PublicKey(k) = v {
+            Ok(k)
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryFrom<ScVal> for PublicKey {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(ScObject::PublicKey(k))) = v {
+            Ok(k)
+        } else {
+            Err(())
+        }
+    }
+}
 
 #[cfg(feature = "alloc")]
 impl TryFrom<String> for ScVal {

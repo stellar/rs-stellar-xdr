@@ -191,7 +191,7 @@ impl TryFrom<ScObject> for u64 {
 impl TryFrom<ScVal> for u64 {
     type Error = ();
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
-        if let ScVal::U64() = v {
+        if let ScVal::Object(Some(ScObject::U64(i))) = v {
             Ok(i)
         } else {
             Err(())
@@ -229,7 +229,57 @@ impl From<Hash> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => ScHash/Hash.
+impl TryFrom<ScObject> for ScHash {
+    type Error = ();
+    fn try_from(v: ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::Hash(h) = v {
+            Ok(h)
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryFrom<ScVal> for ScHash {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(ScObject::Hash(h))) = v {
+            Ok(h)
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryFrom<ScHash> for Hash {
+    type Error = ();
+    fn try_from(v: ScHash) -> Result<Self, Self::Error> {
+        let ScHash::SchashSha256(h) = v;
+        Ok(h)
+    }
+}
+
+impl TryFrom<ScObject> for Hash {
+    type Error = ();
+    fn try_from(v: ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::Hash(ScHash::SchashSha256(h)) = v {
+            Ok(h)
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryFrom<ScVal> for Hash {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(ScObject::Hash(ScHash::SchashSha256(h)))) = v {
+            Ok(h)
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<PublicKey> for ScObject {
     fn from(v: PublicKey) -> Self {

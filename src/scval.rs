@@ -445,5 +445,3 @@ impl<T: Into<ScVal>> From<Option<T>> for ScVal {
 //         }
 //     }
 // }
-
-// TODO: Add reverse conversions for all types above.

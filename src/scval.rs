@@ -1,4 +1,4 @@
-use crate::{Hash, PublicKey, ScHash, ScObject, ScStatic, ScStatus, ScVal};
+use crate::{Hash, PublicKey, ScHash, ScMap, ScObject, ScStatic, ScStatus, ScVal, ScVec};
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
@@ -221,7 +221,7 @@ impl From<ScVec> for ScObject {
 
 impl From<ScVec> for ScVal {
     fn from(v: ScVec) -> Self {
-        Ok(<_ as TryInto<ScObject>>::into(v).into())
+        <_ as Into<ScObject>>::into(v).into()
     }
 }
 
@@ -309,7 +309,7 @@ impl From<ScMap> for ScObject {
 
 impl From<ScMap> for ScVal {
     fn from(v: ScMap) -> Self {
-        Ok(<_ as TryInto<ScObject>>::into(v).into())
+        <_ as Into<ScObject>>::into(v).into()
     }
 }
 

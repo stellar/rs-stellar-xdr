@@ -27,12 +27,6 @@ export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
 all: build test
 
-# TODO: Remove the `--optional-deps` usage once weak dependencies are recognized
-# by cargo-hack https://github.com/taiki-e/cargo-hack/issues/147 and once the
-# bug with first-class features that have the same name as an optional
-# dependency not being seen as a feature to test
-# https://github.com/taiki-e/cargo-hack/issues/153.
-
 test:
 	cargo hack test --feature-powerset
 

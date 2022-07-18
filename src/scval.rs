@@ -326,7 +326,8 @@ impl From<ScSymbol> for ScVal {
 }
 
 impl TryFrom<ScVal> for ScSymbol {
-    fn from(v: ScSymbol) -> Self {
+    type Error = ();
+    fn try_from(v: ScSymbol) -> Result<Self, Self::Error> {
         if let ScVal::Symbol(s) = v {
             Ok(s)
         } else {

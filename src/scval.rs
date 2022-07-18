@@ -383,10 +383,10 @@ impl TryFrom<ScVal> for String {
 }
 
 #[cfg(feature = "alloc")]
-impl TryFrom<Vec<u8>> for ScVal {
+impl TryFrom<Vec<u8>> for ScObject {
     type Error = ();
     fn try_from(v: Vec<u8>) -> Result<Self, Self::Error> {
-        Ok(<_ as TryInto<ScObject>>::try_into(&v)?.into())
+        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
     }
 }
 
@@ -395,6 +395,14 @@ impl TryFrom<&Vec<u8>> for ScObject {
     type Error = ();
     fn try_from(v: &Vec<u8>) -> Result<Self, Self::Error> {
         Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<Vec<u8>> for ScVal {
+    type Error = ();
+    fn try_from(v: Vec<u8>) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScObject>>::try_into(&v)?.into())
     }
 }
 
@@ -574,7 +582,37 @@ where
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => Vec/etc.
+#[cfg(feature = "alloc")]
+impl<T> TryFrom<ScObject> for Vec<T>
+where
+    for<'a> T: TryFrom<&'a ScVal>,
+{
+    type Error = ();
+    fn try_from(v: ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::Vec(v) = v {
+            v.iter()
+                .map(|t| T::try_from(t).map_err(|_| ()))
+                .collect::<Result<Vec<T>, _>>()
+        } else {
+            Err(())
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<T> TryFrom<ScVal> for Vec<T>
+where
+    for<'a> T: TryFrom<&'a ScVal>,
+{
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(o)) = v {
+            <_ as TryInto<Self>>::try_into(o)
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<ScMap> for ScObject {
     fn from(v: ScMap) -> Self {

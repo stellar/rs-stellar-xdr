@@ -16,6 +16,12 @@ impl From<ScStatic> for ScVal {
     }
 }
 
+impl From<&ScStatic> for ScVal {
+    fn from(v: &ScStatic) -> Self {
+        Self::Static(*v)
+    }
+}
+
 impl TryFrom<ScVal> for ScStatic {
     type Error = ();
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
@@ -90,6 +96,12 @@ impl From<u32> for ScVal {
     }
 }
 
+impl From<&u32> for ScVal {
+    fn from(v: &u32) -> ScVal {
+        ScVal::U32(*v)
+    }
+}
+
 impl TryFrom<ScVal> for u32 {
     type Error = ();
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
@@ -111,6 +123,12 @@ impl From<i64> for ScVal {
     }
 }
 
+impl From<&i64> for ScVal {
+    fn from(v: &i64) -> ScVal {
+        <_ as Into<ScVal>>::into(*v)
+    }
+}
+
 impl TryFrom<ScVal> for i64 {
     type Error = ();
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
@@ -125,6 +143,12 @@ impl TryFrom<ScVal> for i64 {
 impl From<()> for ScVal {
     fn from(_: ()) -> Self {
         ScStatic::Void.into()
+    }
+}
+
+impl From<&()> for ScVal {
+    fn from(_: &()) -> Self {
+        <_ as Into<ScVal>>::into(*v)
     }
 }
 
@@ -145,6 +169,12 @@ impl From<bool> for ScVal {
     }
 }
 
+impl From<&bool> for ScVal {
+    fn from(v: &bool) -> Self {
+        <_ as Into<ScVal>>::into(*v)
+    }
+}
+
 impl TryFrom<ScVal> for bool {
     type Error = ();
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
@@ -162,6 +192,12 @@ impl From<i64> for ScObject {
     }
 }
 
+impl From<&i64> for ScObject {
+    fn from(v: &i64) -> Self {
+        ScObject::I64(*v)
+    }
+}
+
 impl TryFrom<ScObject> for i64 {
     type Error = ();
     fn try_from(v: ScObject) -> Result<Self, Self::Error> {
@@ -176,6 +212,12 @@ impl TryFrom<ScObject> for i64 {
 impl From<u64> for ScObject {
     fn from(v: u64) -> Self {
         ScObject::U64(v)
+    }
+}
+
+impl From<&u64> for ScObject {
+    fn from(v: &u64) -> Self {
+        ScObject::U64(*v)
     }
 }
 

@@ -796,14 +796,11 @@ mod test {
     #[cfg(feature = "alloc")]
     #[test]
     fn vec() {
+        extern crate alloc;
+        use alloc::vec;
+        use alloc::vec::Vec;
         let v = vec![1, 2, 3, 4, 5];
         let val: ScVal = v.clone().try_into().unwrap();
-        assert_eq!(
-            val,
-            ScVal::Object(Some(ScObject::Vec(
-                vec![1, 2, 3, 4, 5].try_into().unwrap()
-            )))
-        );
         let roundtrip: Vec<i32> = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
     }

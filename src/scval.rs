@@ -734,14 +734,3 @@ impl<T: Into<ScVal>> From<Option<T>> for ScVal {
         }
     }
 }
-
-// TODO: Is there a way to provide this conversion without recursion?
-// impl<T: TryFrom<ScVal>> TryFrom<ScVal> for Option<T> {
-//     type Error = T::Error;
-//     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
-//         match v {
-//             ScVal::Static(ScStatic::Void) => Ok(None),
-//             _ => <_ as TryFrom<ScVal>>::try_from(v),
-//         }
-//     }
-// }

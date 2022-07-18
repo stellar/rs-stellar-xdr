@@ -10,8 +10,6 @@ use alloc::{string::String, vec::Vec};
 #[cfg(feature = "num-bigint")]
 use num_bigint::{BigInt, Sign};
 
-// TODO: Add borrow conversions as well.
-
 impl From<ScStatic> for ScVal {
     fn from(v: ScStatic) -> Self {
         Self::Static(v)
@@ -583,15 +581,12 @@ where
 }
 
 #[cfg(feature = "alloc")]
-impl<T> TryFrom<ScObject> for Vec<T>
-where
-    for<'a> T: TryFrom<&'a ScVal>,
-{
+impl<T: TryFrom<ScVal> + Clone> TryFrom<ScObject> for Vec<T> {
     type Error = ();
     fn try_from(v: ScObject) -> Result<Self, Self::Error> {
         if let ScObject::Vec(v) = v {
             v.iter()
-                .map(|t| T::try_from(t).map_err(|_| ()))
+                .map(|t| T::try_from(t.clone()).map_err(|_| ()))
                 .collect::<Result<Vec<T>, _>>()
         } else {
             Err(())
@@ -600,10 +595,7 @@ where
 }
 
 #[cfg(feature = "alloc")]
-impl<T> TryFrom<ScVal> for Vec<T>
-where
-    for<'a> T: TryFrom<&'a ScVal>,
-{
+impl<T: TryFrom<ScVal> + Clone> TryFrom<ScVal> for Vec<T> {
     type Error = ();
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
         if let ScVal::Object(Some(o)) = v {

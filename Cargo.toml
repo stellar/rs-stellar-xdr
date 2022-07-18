@@ -5,11 +5,15 @@ edition = "2021"
 
 [dependencies]
 base64 = "0.13.0"
-serde = {version = "1.0.139", features = ["derive"], optional = true }
+serde = { version = "1.0.139", features = ["derive"], optional = true }
+num-bigint = { version = "0.4.3", optional = true }
 
 [features]
 default = ["std"]
-std = ["alloc", "base64/std"]
-serde = ["alloc", "dep:serde"]
+std = ["alloc", "base64/std", "num-bigint?/std"]
 alloc = []
 next = []
+
+# Features dependent on optional dependencies.
+serde = ["alloc", "dep:serde"]
+num-bigint = ["alloc", "dep:num-bigint"]

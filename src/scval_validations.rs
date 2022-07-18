@@ -58,7 +58,6 @@ impl Validate for ScVal {
                 ScObject::Vec(_)
                 | ScObject::U64(_)
                 | ScObject::I64(_)
-                | ScObject::I64(_)
                 | ScObject::Binary(_)
                 | ScObject::BigInt(_)
                 | ScObject::Hash(_)
@@ -68,5 +67,33 @@ impl Validate for ScVal {
             // Other variants of ScVal are always valid.
             ScVal::U32(_) | ScVal::I32(_) | ScVal::Static(_) | ScVal::Status(_) => Ok(()),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{ScVal, Validate};
+
+    #[test]
+    fn u63() {
+        assert_eq!(ScVal::U63(0).validate(), Ok(()));
+        assert_eq!(ScVal::U63(1).validate(), Ok(()));
+        assert_eq!(ScVal::U63(i64::MAX).validate(), Ok(()));
+        assert_eq!(ScVal::U63(-1).validate(), Err(()));
+    }
+
+    #[test]
+    fn symbol() {
+        assert_eq!(ScVal::Symbol("".try_into().unwrap()).validate(), Ok(()));
+        assert_eq!(ScVal::Symbol("a0A_".try_into().unwrap()).validate(), Ok(()));
+        assert_eq!(ScVal::Symbol("]".try_into().unwrap()).validate(), Err(()));
+    }
+
+    #[test]
+    fn bitset() {
+        assert_eq!(ScVal::Bitset(0x0000_0000_0000_0000).validate(), Ok(()));
+        assert_eq!(ScVal::Bitset(0x0fff_ffff_ffff_ffff).validate(), Ok(()));
+        assert_eq!(ScVal::Bitset(0x1000_0000_0000_0000).validate(), Err(()));
+        assert_eq!(ScVal::Bitset(0x1fff_ffff_ffff_ffff).validate(), Err(()));
     }
 }

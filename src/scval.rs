@@ -147,7 +147,7 @@ impl From<()> for ScVal {
 }
 
 impl From<&()> for ScVal {
-    fn from(_: &()) -> Self {
+    fn from(v: &()) -> Self {
         <_ as Into<ScVal>>::into(*v)
     }
 }

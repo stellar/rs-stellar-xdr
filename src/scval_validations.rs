@@ -30,7 +30,7 @@ impl Validate for ScVal {
             }
             ScVal::Bitset(b) => {
                 // Bitset is defined as valid per https://github.com/stellar/rs-stellar-contract-env/blob/94c1717516c8fad4ad65caa148183b9fcbc408db/stellar-contract-env-common/src/bitset.rs#L53-L60.
-                if b & 0x0fff_ffff_ffff_ffff == b {
+                if b & 0x0fff_ffff_ffff_ffff == *b {
                     Ok(())
                 } else {
                     Err(())

@@ -67,6 +67,12 @@ impl From<i32> for ScVal {
     }
 }
 
+impl From<&i32> for ScVal {
+    fn from(v: &i32) -> ScVal {
+        ScVal::I32(*v)
+    }
+}
+
 impl TryFrom<ScVal> for i32 {
     type Error = ();
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
@@ -724,5 +730,81 @@ impl<T: Into<ScVal>> From<Option<T>> for ScVal {
             Some(v) => v.into(),
             None => ().into(),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{ScObject, ScVal};
+
+    #[test]
+    fn i32_pos() {
+        let v = 5;
+        let val: ScVal = v.try_into().unwrap();
+        assert_eq!(val, ScVal::I32(5));
+        let roundtrip: i32 = val.try_into().unwrap();
+        assert_eq!(v, roundtrip);
+    }
+
+    #[test]
+    fn i32_neg() {
+        let v = -5;
+        let val: ScVal = v.try_into().unwrap();
+        assert_eq!(val, ScVal::I32(-5));
+        let roundtrip: i32 = val.try_into().unwrap();
+        assert_eq!(v, roundtrip);
+    }
+
+    #[test]
+    fn u32() {
+        use crate::ScVal;
+
+        let v = 5u32;
+        let val: ScVal = v.try_into().unwrap();
+        assert_eq!(val, ScVal::U32(5));
+        let roundtrip: u32 = val.try_into().unwrap();
+        assert_eq!(v, roundtrip);
+    }
+
+    #[test]
+    fn i64_pos() {
+        let v = 5i64;
+        let val: ScVal = v.try_into().unwrap();
+        assert_eq!(val, ScVal::U63(5));
+        let roundtrip: i64 = val.try_into().unwrap();
+        assert_eq!(v, roundtrip);
+    }
+
+    #[test]
+    fn i64_neg() {
+        let v = -5i64;
+        let val: ScVal = v.try_into().unwrap();
+        assert_eq!(val, ScVal::Object(Some(ScObject::I64(-5))));
+        let roundtrip: i64 = val.try_into().unwrap();
+        assert_eq!(v, roundtrip);
+    }
+
+    #[test]
+    fn u64() {
+        let v = 5u64;
+        let val: ScVal = v.try_into().unwrap();
+        assert_eq!(val, ScVal::Object(Some(ScObject::U64(5))));
+        let roundtrip: u64 = val.try_into().unwrap();
+        assert_eq!(v, roundtrip);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn vec() {
+        let v = vec![1, 2, 3, 4, 5];
+        let val: ScVal = v.clone().try_into().unwrap();
+        assert_eq!(
+            val,
+            ScVal::Object(Some(ScObject::Vec(
+                vec![1, 2, 3, 4, 5].try_into().unwrap()
+            )))
+        );
+        let roundtrip: Vec<i32> = val.try_into().unwrap();
+        assert_eq!(v, roundtrip);
     }
 }

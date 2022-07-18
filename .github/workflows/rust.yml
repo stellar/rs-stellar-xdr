@@ -74,13 +74,13 @@ jobs:
         restore-keys: |
           target-${{ strategy.job-index }}
           target-
-    - run: cargo install --locked --version 0.5.14 cargo-hack
+    - run: cargo install --locked --version 0.5.15 cargo-hack
     - run: >
-        cargo hack clippy --feature-powerset --optional-deps
+        cargo hack clippy --feature-powerset
         --profile ${{ matrix.profile }}
         --target ${{ matrix.sys.target }}
         --all-targets
     - if: matrix.sys.test
       run: >
-        cargo hack test --feature-powerset --optional-deps
+        cargo hack test --feature-powerset
         --profile ${{ matrix.profile }}

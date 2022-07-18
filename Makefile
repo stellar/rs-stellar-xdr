@@ -34,11 +34,11 @@ all: build test
 # https://github.com/taiki-e/cargo-hack/issues/153.
 
 test:
-	cargo hack test --feature-powerset --optional-deps
+	cargo hack test --feature-powerset
 
 build: generate
-	cargo hack clippy --feature-powerset --optional-deps --all-targets
-	cargo hack clippy --feature-powerset --optional-deps --all-targets --release --target wasm32-unknown-unknown
+	cargo hack clippy --feature-powerset --all-targets
+	cargo hack clippy --feature-powerset --all-targets --release --target wasm32-unknown-unknown
 
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'

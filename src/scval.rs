@@ -1,4 +1,6 @@
-use crate::{Hash, PublicKey, ScBigInt, ScHash, ScMap, ScObject, ScStatic, ScStatus, ScVal, ScVec};
+use crate::{
+    Hash, PublicKey, ScBigInt, ScHash, ScMap, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec,
+};
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
@@ -317,6 +319,22 @@ impl TryFrom<ScVal> for PublicKey {
     }
 }
 
+impl From<ScSymbol> for ScVal {
+    fn from(v: ScSymbol) -> Self {
+        ScVal::Symbol(v)
+    }
+}
+
+impl TryFrom<ScVal> for ScSymbol {
+    fn from(v: ScSymbol) -> Self {
+        if let ScVal::Symbol(s) = v {
+            Ok(s)
+        } else {
+            Err(())
+        }
+    }
+}
+
 #[cfg(feature = "alloc")]
 impl TryFrom<String> for ScVal {
     type Error = ();
@@ -364,18 +382,10 @@ impl TryFrom<ScVal> for String {
 }
 
 #[cfg(feature = "alloc")]
-impl TryFrom<Vec<u8>> for ScObject {
-    type Error = ();
-    fn try_from(v: Vec<u8>) -> Result<Self, Self::Error> {
-        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
-    }
-}
-
-#[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for ScVal {
     type Error = ();
     fn try_from(v: Vec<u8>) -> Result<Self, Self::Error> {
-        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
+        Ok(<_ as TryInto<ScObject>>::try_into(&v)?.into())
     }
 }
 
@@ -427,7 +437,53 @@ impl TryFrom<&'static [u8]> for ScVal {
     }
 }
 
-// TODO: Reverse conditions for ScVal/etc => Binary/etc.
+#[cfg(feature = "alloc")]
+impl TryFrom<ScObject> for Vec<u8> {
+    type Error = ();
+    fn try_from(v: ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::Binary(b) = v {
+            Ok(b.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&ScObject> for Vec<u8> {
+    type Error = ();
+    fn try_from(v: &ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::Binary(b) = v {
+            Ok(b.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<ScVal> for Vec<u8> {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(ScObject::Binary(b))) = v {
+            Ok(b.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&ScVal> for Vec<u8> {
+    type Error = ();
+    fn try_from(v: &ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(ScObject::Binary(b))) = v {
+            Ok(b.into())
+        } else {
+            Err(())
+        }
+    }
+}
 
 impl From<ScVec> for ScObject {
     fn from(v: ScVec) -> Self {

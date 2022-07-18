@@ -3,12 +3,11 @@ use stellar_xdr::{
     TransactionExt, TransactionV1Envelope, Uint256,
 };
 
-#[cfg(feature = "std")]
-use stellar_xdr::WriteXdr;
-
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "base64"))]
 #[test]
 fn test_build_small_tx_with_std() -> Result<(), Error> {
+    use stellar_xdr::WriteXdr;
+
     let te = TransactionEnvelope::Tx(TransactionV1Envelope {
         tx: Transaction {
             source_account: MuxedAccount::Ed25519(Uint256([0; 32])),

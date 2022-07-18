@@ -1,7 +1,7 @@
-#[cfg(feature = "std")]
+#![cfg(all(feature = "std", feature = "base64"))]
+
 use stellar_xdr::{Error, OperationBody, ReadXdr, SequenceNumber, TransactionEnvelope};
 
-#[cfg(feature = "std")]
 #[test]
 fn test_parse_pubnet_v18_tx() -> Result<(), Error> {
     let xdr = "AAAAAgAAAAA/ESDPPSBIB8pWPGt/zZ3dSJhShRxziDdkmLQXrdytCQAPQkAACMblAAAABQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAABB90WssODNIgi6BHveqzxTRmIpvAFRyVNM+Hm2GVuCcAAAAAAAAAAAtDSg//ZfvJXgv2/0yiA7QUDWdXpKYhdjYEWkN4yVm+AAAABdIdugAAAAAAAAAAAKt3K0JAAAAQC3/n83fG/BCSRaIQjuqL2i1koiCHChxt1aagXn2ABCRP9IL83u5zldxuUaDBklKOHEdy4cOvl2BhPNbjs7w0QSGVuCcAAAAQKxHSgHZgZY7AMlPumIt0iZvtkbsRAtt6BYahJdnxrqm3+JuCVv/1ijWi1kM85uLfo7NAITi1TbdLg0gVFO16wM=";

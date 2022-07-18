@@ -3,7 +3,6 @@
 
 #[cfg(not(feature = "next"))]
 mod curr;
-mod scval_validations;
 #[cfg(not(feature = "next"))]
 pub use curr::*;
 
@@ -16,3 +15,8 @@ pub use next::*;
 mod scval_conversions;
 #[cfg(feature = "next")]
 pub use scval_conversions::*;
+
+#[cfg(feature = "next")]
+mod scval_validations;
+#[cfg(feature = "next")]
+pub use scval_validations::*;

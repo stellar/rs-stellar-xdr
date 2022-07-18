@@ -1,6 +1,5 @@
 use crate::{
-    Hash, PublicKey, ScBigInt, ScBinary, ScHash, ScMap, ScObject, ScStatic, ScStatus, ScSymbol,
-    ScVal, ScVec,
+    Hash, PublicKey, ScBigInt, ScHash, ScMap, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec,
 };
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
@@ -328,7 +327,7 @@ impl From<ScSymbol> for ScVal {
 
 impl TryFrom<ScVal> for ScSymbol {
     type Error = ();
-    fn try_from(v: ScSymbol) -> Result<Self, Self::Error> {
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
         if let ScVal::Symbol(s) = v {
             Ok(s)
         } else {
@@ -377,40 +376,6 @@ impl TryFrom<ScVal> for String {
             // TODO: It might be worth distinguishing the error case where this
             // is an invalid symbol with invalid characters.
             Ok(s.into_string().map_err(|_| ())?)
-        } else {
-            Err(())
-        }
-    }
-}
-
-impl From<ScBinary> for ScObject {
-    fn from(v: ScBinary) -> Self {
-        ScObject::Binary(v)
-    }
-}
-
-impl TryFrom<ScObject> for ScBinary {
-    type Error = ();
-    fn try_from(v: ScBinary) -> Result<Self, Self::Error> {
-        if let ScObject::Binary(b) = v {
-            Ok(b)
-        } else {
-            Err(())
-        }
-    }
-}
-
-impl From<ScBinary> for ScVal {
-    fn from(v: ScBinary) -> Self {
-        ScVal::Object(Some(ScObject::Binary(v)))
-    }
-}
-
-impl TryFrom<ScVal> for ScBinary {
-    type Error = ();
-    fn try_from(v: ScBinary) -> Result<Self, Self::Error> {
-        if let ScVal::Object(Some(ScObject::Binary(b))) = v {
-            Ok(b)
         } else {
             Err(())
         }

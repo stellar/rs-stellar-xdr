@@ -147,7 +147,7 @@ impl From<()> for ScVal {
 }
 
 impl From<&()> for ScVal {
-    fn from(v: &()) -> Self {
+    fn from(_: &()) -> Self {
         ScStatic::Void.into()
     }
 }

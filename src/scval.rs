@@ -846,4 +846,16 @@ mod test {
         let roundtrip: Vec<i32> = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
     }
+
+    #[cfg(feature = "num-bigint")]
+    #[test]
+    fn bigint() {
+        use core::str::FromStr;
+        use num_bigint::BigInt;
+
+        let v = BigInt::from_str("18446744073709551616").unwrap();
+        let val: ScVal = v.clone().try_into().unwrap();
+        let roundtrip: BigInt = val.try_into().unwrap();
+        assert_eq!(v, roundtrip);
+    }
 }

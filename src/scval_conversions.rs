@@ -816,6 +816,8 @@ macro_rules! impl_for_tuple {
 
         impl<$($typ),*> TryFrom<ScVec> for ($($typ,)*)
         where
+            // TODO: Consider removing the Clone constraint by changing the
+            // try_from to use a reference.
             $($typ: TryFrom<ScVal> + Clone),*
         {
             type Error = ();

@@ -12,6 +12,11 @@ mod next;
 pub use next::*;
 
 #[cfg(feature = "next")]
-mod scval;
+mod scval_conversions;
 #[cfg(feature = "next")]
-pub use scval::*;
+pub use scval_conversions::*;
+
+#[cfg(feature = "next")]
+mod scval_validations;
+#[cfg(feature = "next")]
+pub use scval_validations::*;

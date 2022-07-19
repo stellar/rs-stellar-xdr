@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc)]
+
 use crate::{ScMap, ScObject, ScVal};
 
 pub trait Validate {

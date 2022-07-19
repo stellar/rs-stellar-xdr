@@ -11,7 +11,6 @@ impl Validate for ScVal {
     type Error = ();
 
     fn validate(&self) -> Result<(), Self::Error> {
-        // u63, bitset, symbol, obj has to be some, ScMap
         match self {
             ScVal::U63(i) => {
                 // U63 is defined as valid per https://stellar.org/protocol/cap-46#comparison.
@@ -82,9 +81,7 @@ impl Validate for ScMap {
 
 #[cfg(test)]
 mod test {
-    extern crate alloc;
-    use crate::{ScMap, ScMapEntry, ScObject, ScVal, Validate};
-    use alloc::vec;
+    use crate::{ScVal, Validate};
 
     #[test]
     fn u63() {

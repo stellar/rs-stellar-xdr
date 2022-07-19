@@ -5,15 +5,6 @@ pub trait Validate {
     fn validate(&self) -> Result<(), Self::Error>;
 }
 
-impl Validate for ScMap {
-    type Error = ();
-
-    fn validate(&self) -> Result<(), Self::Error> {
-        // TODO: Validate that the map is sorted and has no duplicates, or find a way to guarantee this to be the case.
-        todo!()
-    }
-}
-
 impl Validate for ScVal {
     type Error = ();
 
@@ -70,9 +61,23 @@ impl Validate for ScVal {
     }
 }
 
+impl Validate for ScMap {
+    type Error = ();
+
+    fn validate(&self) -> Result<(), Self::Error> {
+        // Check the map is sorted by key, and there are no keys that are
+        // duplicates.
+        if self.windows(2).all(|w| w[0].key < w[1].key) {
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::{ScVal, Validate};
+    use crate::{ScMap, ScMapEntry, ScObject, ScVal, Validate};
 
     #[test]
     fn u63() {
@@ -95,5 +100,63 @@ mod test {
         assert_eq!(ScVal::Bitset(0x0fff_ffff_ffff_ffff).validate(), Ok(()));
         assert_eq!(ScVal::Bitset(0x1000_0000_0000_0000).validate(), Err(()));
         assert_eq!(ScVal::Bitset(0x1fff_ffff_ffff_ffff).validate(), Err(()));
+    }
+
+    #[test]
+    fn map() {
+        assert_eq!(
+            ScVal::Object(Some(ScObject::Map(ScMap(
+                vec![
+                    ScMapEntry {
+                        key: ScVal::U63(0),
+                        val: ScVal::U63(1),
+                    },
+                    ScMapEntry {
+                        key: ScVal::U63(1),
+                        val: ScVal::U63(1),
+                    }
+                ]
+                .try_into()
+                .unwrap()
+            ))))
+            .validate(),
+            Ok(())
+        );
+        assert_eq!(
+            ScVal::Object(Some(ScObject::Map(ScMap(
+                vec![
+                    ScMapEntry {
+                        key: ScVal::U63(2),
+                        val: ScVal::U63(1),
+                    },
+                    ScMapEntry {
+                        key: ScVal::U63(1),
+                        val: ScVal::U63(1),
+                    }
+                ]
+                .try_into()
+                .unwrap()
+            ))))
+            .validate(),
+            Err(())
+        );
+        assert_eq!(
+            ScVal::Object(Some(ScObject::Map(ScMap(
+                vec![
+                    ScMapEntry {
+                        key: ScVal::U32(1),
+                        val: ScVal::U63(1),
+                    },
+                    ScMapEntry {
+                        key: ScVal::U63(2),
+                        val: ScVal::U63(1),
+                    },
+                ]
+                .try_into()
+                .unwrap()
+            ))))
+            .validate(),
+            Err(())
+        );
     }
 }

@@ -32,7 +32,7 @@ test:
 
 build: generate
 	cargo hack clippy --feature-powerset --all-targets
-	cargo hack clippy --feature-powerset --all-targets --release --target wasm32-unknown-unknown
+	cargo hack clippy --feature-powerset --exclude-features 'base64 serde num-bigint ed25519' --all-targets --release --target wasm32-unknown-unknown
 
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'

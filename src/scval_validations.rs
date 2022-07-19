@@ -76,9 +76,6 @@ impl Validate for ScMap {
 mod test {
     use crate::{ScVal, Validate};
 
-    // TODO: Write tests to validate the statements in CAP-46.
-    // https://stellar.org/protocol/cap-46#comparison
-
     #[test]
     fn u63() {
         assert_eq!(ScVal::U63(0).validate(), Ok(()));

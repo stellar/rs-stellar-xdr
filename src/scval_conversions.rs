@@ -778,39 +778,36 @@ impl<T: Into<ScVal>> From<Option<T>> for ScVal {
 macro_rules! impl_for_tuple {
     ( $count:literal $($typ:ident $idx:tt)+ ) => {
         #[cfg(feature = "alloc")]
-        impl<$($typ),*> From<($($typ,)*)> for ScVec
+        impl<$($typ),*> TryFrom<($($typ,)*)> for ScVec
         where
-            $($typ: Into<ScVal>),*
+            $($typ: TryInto<ScVal>),*
         {
-            fn from(v: ($($typ,)*)) -> ScVec {
-                let vec: Vec<ScVal> = vec![$(v.$idx.into()),+];
-                // The number of entries in a tuple supported by this conversion
-                // should always be less than the number of entries allowed in
-                // an ScVec, so the following expectation should be stable.
-                ScVec(
-                    vec.try_into()
-                        .expect("tuple has more entries than are supported by ScVec")
-                )
+            type Error = ();
+            fn try_from(v: ($($typ,)*)) -> Result<Self, Self::Error> {
+                let vec: Vec<ScVal> = vec![$(v.$idx.try_into().map_err(|_| ())?),+];
+                Ok(ScVec(vec.try_into()?))
             }
         }
 
         #[cfg(feature = "alloc")]
-        impl<$($typ),*> From<($($typ,)*)> for ScObject
+        impl<$($typ),*> TryFrom<($($typ,)*)> for ScObject
         where
-            $($typ: Into<ScVal>),*
+            $($typ: TryInto<ScVal>),*
         {
-            fn from(v: ($($typ,)*)) -> ScObject {
-                ScObject::Vec(<_ as Into<ScVec>>::into(v))
+            type Error = ();
+            fn try_from(v: ($($typ,)*)) -> Result<Self, Self::Error> {
+                Ok(ScObject::Vec(<_ as TryInto<ScVec>>::try_into(v)?))
             }
         }
 
         #[cfg(feature = "alloc")]
-        impl<$($typ),*> From<($($typ,)*)> for ScVal
+        impl<$($typ),*> TryFrom<($($typ,)*)> for ScVal
         where
-            $($typ: Into<ScVal>),*
+            $($typ: TryInto<ScVal>),*
         {
-            fn from(v: ($($typ,)*)) -> ScVal {
-                ScVal::Object(Some(<_ as Into<ScObject>>::into(v)))
+            type Error = ();
+            fn try_from(v: ($($typ,)*)) -> Result<Self, Self::Error> {
+                Ok(ScVal::Object(Some(<_ as TryInto<ScObject>>::try_into(v)?)))
             }
         }
 
@@ -960,7 +957,7 @@ mod test {
         use alloc::vec;
         use alloc::vec::Vec;
         let v = (1i32, 2i64, vec![true, false]);
-        let val: ScVal = v.clone().into();
+        let val: ScVal = v.clone().try_into().unwrap();
         let roundtrip: (i32, i64, Vec<bool>) = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
     }

@@ -14,7 +14,7 @@ impl Validate for ScVal {
         // u63, bitset, symbol, obj has to be some, ScMap
         match self {
             ScVal::U63(i) => {
-                // U63 is defined as valid per https://github.com/stellar/stellar-protocol/blob/master/core/cap-0046.md#host-value-type.
+                // U63 is defined as valid per https://stellar.org/protocol/cap-46#comparison.
                 if *i >= 0 {
                     Ok(())
                 } else {

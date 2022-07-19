@@ -7,15 +7,6 @@ pub trait Validate {
     fn validate(&self) -> Result<(), Self::Error>;
 }
 
-impl Validate for ScMap {
-    type Error = ();
-
-    fn validate(&self) -> Result<(), Self::Error> {
-        // TODO: Validate that the map is sorted and has no duplicates, or find a way to guarantee this to be the case.
-        todo!()
-    }
-}
-
 impl Validate for ScVal {
     type Error = ();
 
@@ -69,6 +60,15 @@ impl Validate for ScVal {
             // Other variants of ScVal are always valid.
             ScVal::U32(_) | ScVal::I32(_) | ScVal::Static(_) | ScVal::Status(_) => Ok(()),
         }
+    }
+}
+
+impl Validate for ScMap {
+    type Error = ();
+
+    fn validate(&self) -> Result<(), Self::Error> {
+        // TODO: Validate that the map is sorted and has no duplicates, or find a way to guarantee this to be the case.
+        todo!()
     }
 }
 

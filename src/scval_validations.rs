@@ -11,7 +11,6 @@ impl Validate for ScVal {
     type Error = ();
 
     fn validate(&self) -> Result<(), Self::Error> {
-        // u63, bitset, symbol, obj has to be some, ScMap
         match self {
             ScVal::U63(i) => {
                 // U63 is defined as valid per https://stellar.org/protocol/cap-46#comparison.
@@ -67,7 +66,8 @@ impl Validate for ScMap {
     type Error = ();
 
     fn validate(&self) -> Result<(), Self::Error> {
-        // TODO: Validate that the map is sorted and has no duplicates, or find a way to guarantee this to be the case.
+        // TODO: Validate that the map is sorted and has no duplicates, or find
+        // a way to guarantee this to be the case.
         todo!()
     }
 }

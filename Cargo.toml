@@ -9,6 +9,9 @@ serde = { version = "1.0.139", features = ["derive"], optional = true }
 num-bigint = { version = "0.4.3", optional = true }
 ed25519-dalek = { version = "1.0.1", optional = true }
 
+[dev-dependencies]
+hex = "0.4.3"
+
 [features]
 default = ["std"]
 std = ["alloc"]

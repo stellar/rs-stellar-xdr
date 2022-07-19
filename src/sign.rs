@@ -63,4 +63,31 @@ pub mod ed25519 {
             Ok(self.try_sign(&buf)?.to_bytes())
         }
     }
+
+    #[cfg(test)]
+    mod test {
+        use ed25519_dalek::{Keypair, PublicKey, SecretKey};
+
+        use crate::sign::Sign;
+
+        #[test]
+        fn sign() {
+            let sk = SecretKey::from_bytes(
+                &hex::decode("5acc7253295dfc356c046297925a369f3d2762d00afdf2583ecbe92180b07c37")
+                    .unwrap(),
+            )
+            .unwrap();
+            let pk = PublicKey::from(&sk);
+            let kp = Keypair {
+                secret: sk,
+                public: pk,
+            };
+            let sig = kp.sign(128u64).unwrap();
+            assert_eq!(
+                sig,
+                // Verified with https://go.dev/play/p/UimGhCOj231.
+                hex::decode("d69f462c8b8a283abc5e0060fd89b93f1741a8c1b0507866a41cea95f753a71ba0dec93dce822703401134758400ed20d75b655fe5098bfbf4b6c41687d40c0e").unwrap().as_slice()
+            );
+        }
+    }
 }

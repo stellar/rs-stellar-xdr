@@ -65,6 +65,9 @@ impl Validate for ScMap {
     type Error = ();
 
     fn validate(&self) -> Result<(), Self::Error> {
+        // TODO: Is this sufficient? Is this sufficient for all future variants
+        // of ScVal? Should instead we serialize keys to XDR bytes and compare
+        // those?
         // Check the map is sorted by key, and there are no keys that are
         // duplicates.
         if self.windows(2).all(|w| w[0].key < w[1].key) {

@@ -835,6 +835,36 @@ macro_rules! impl_for_tuple {
                 ))
             }
         }
+
+        impl<$($typ),*> TryFrom<ScObject> for ($($typ,)*)
+        where
+            $($typ: TryFrom<ScVal> + Clone),*
+        {
+            type Error = ();
+
+            fn try_from(obj: ScObject) -> Result<Self, Self::Error> {
+                if let ScObject::Vec(vec) = obj {
+                    <_ as TryFrom<ScVec>>::try_from(vec)
+                } else {
+                    Err(())
+                }
+            }
+        }
+
+        impl<$($typ),*> TryFrom<ScVal> for ($($typ,)*)
+        where
+            $($typ: TryFrom<ScVal> + Clone),*
+        {
+            type Error = ();
+
+            fn try_from(val: ScVal) -> Result<Self, Self::Error> {
+                if let ScVal::Object(Some(obj)) = val {
+                    <_ as TryFrom<ScObject>>::try_from(obj)
+                } else {
+                    Err(())
+                }
+            }
+        }
     };
 }
 

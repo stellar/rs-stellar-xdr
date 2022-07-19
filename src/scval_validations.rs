@@ -82,7 +82,9 @@ impl Validate for ScMap {
 
 #[cfg(test)]
 mod test {
+    extern crate alloc;
     use crate::{ScMap, ScMapEntry, ScObject, ScVal, Validate};
+    use alloc::vec;
 
     #[test]
     fn u63() {

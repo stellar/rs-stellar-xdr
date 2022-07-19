@@ -5,7 +5,7 @@ use crate::{
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
-use alloc::{string::String, vec::Vec};
+use alloc::{string::String, vec, vec::Vec};
 
 #[cfg(feature = "num-bigint")]
 use num_bigint::{BigInt, Sign};
@@ -774,6 +774,60 @@ impl<T: Into<ScVal>> From<Option<T>> for ScVal {
         }
     }
 }
+
+macro_rules! impl_for_tuple {
+    ( $count:literal $($typ:ident $idx:tt)+ ) => {
+        #[cfg(feature = "alloc")]
+        impl<$($typ),*> From<($($typ,)*)> for ScVec
+        where
+            $($typ: Into<ScVal>),*
+        {
+            fn from(v: ($($typ,)*)) -> ScVec {
+                let vec: Vec<ScVal> = vec![$(v.$idx.into()),+];
+                // The number of entries in a tuple supported by this conversion
+                // should always be less than the number of entries allowed in
+                // an ScVec, so the following expectation should be stable.
+                ScVec(
+                    vec.try_into()
+                        .expect("tuple has more entries than are supported by ScVec")
+                )
+            }
+        }
+
+        #[cfg(feature = "alloc")]
+        impl<$($typ),*> From<($($typ,)*)> for ScObject
+        where
+            $($typ: Into<ScVal>),*
+        {
+            fn from(v: ($($typ,)*)) -> ScObject {
+                ScObject::Vec(<_ as Into<ScVec>>::into(v))
+            }
+        }
+
+        #[cfg(feature = "alloc")]
+        impl<$($typ),*> From<($($typ,)*)> for ScVal
+        where
+            $($typ: Into<ScVal>),*
+        {
+            fn from(v: ($($typ,)*)) -> ScVal {
+                ScVal::Object(Some(<_ as Into<ScObject>>::into(v)))
+            }
+        }
+    };
+}
+
+impl_for_tuple! {  1_u32 T0 0 }
+impl_for_tuple! {  2_u32 T0 0 T1 1 }
+impl_for_tuple! {  3_u32 T0 0 T1 1 T2 2 }
+impl_for_tuple! {  4_u32 T0 0 T1 1 T2 2 T3 3 }
+impl_for_tuple! {  5_u32 T0 0 T1 1 T2 2 T3 3 T4 4 }
+impl_for_tuple! {  6_u32 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 }
+impl_for_tuple! {  7_u32 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 }
+impl_for_tuple! {  8_u32 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 }
+impl_for_tuple! {  9_u32 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 }
+impl_for_tuple! { 10_u32 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 }
+impl_for_tuple! { 11_u32 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 T10 10 }
+impl_for_tuple! { 12_u32 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 T10 10 T11 11 }
 
 #[cfg(test)]
 mod test {

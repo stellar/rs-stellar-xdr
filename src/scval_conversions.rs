@@ -953,6 +953,18 @@ mod test {
         assert_eq!(v, roundtrip);
     }
 
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn tuple() {
+        extern crate alloc;
+        use alloc::vec;
+        use alloc::vec::Vec;
+        let v = (1i32, 2i64, vec![true, false]);
+        let val: ScVal = v.clone().into();
+        let roundtrip: (i32, i64, Vec<bool>) = val.try_into().unwrap();
+        assert_eq!(v, roundtrip);
+    }
+
     #[cfg(feature = "num-bigint")]
     #[test]
     fn bigint() {

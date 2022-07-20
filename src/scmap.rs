@@ -8,6 +8,7 @@ use alloc::vec::Vec;
 impl ScMap {
     pub fn sorted_from_entries<I: Iterator<Item = ScMapEntry>>(entries: I) -> Result<ScMap, ()> {
         let mut v: Vec<ScMapEntry> = entries.collect();
+        // TODO: Add tests that prove order consistency of ScVal with RawVal. https://github.com/stellar/rs-stellar-xdr/issues/117
         v.sort_by(|a, b| a.key.cmp(&b.key));
         let m = ScMap(v.try_into()?);
         // `validate` here will further check that there are no duplicates.

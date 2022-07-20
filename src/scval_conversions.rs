@@ -5,7 +5,7 @@ use crate::{
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
-use alloc::{string::String, vec::Vec};
+use alloc::{string::String, vec, vec::Vec};
 
 #[cfg(feature = "num-bigint")]
 use num_bigint::{BigInt, Sign};
@@ -775,6 +775,109 @@ impl<T: Into<ScVal>> From<Option<T>> for ScVal {
     }
 }
 
+macro_rules! impl_for_tuple {
+    ( $count:literal $($typ:ident $idx:tt)+ ) => {
+        #[cfg(feature = "alloc")]
+        impl<$($typ),*> TryFrom<($($typ,)*)> for ScVec
+        where
+            $($typ: TryInto<ScVal>),*
+        {
+            type Error = ();
+            fn try_from(v: ($($typ,)*)) -> Result<Self, Self::Error> {
+                let vec: Vec<ScVal> = vec![$(v.$idx.try_into().map_err(|_| ())?),+];
+                Ok(ScVec(vec.try_into()?))
+            }
+        }
+
+        #[cfg(feature = "alloc")]
+        impl<$($typ),*> TryFrom<($($typ,)*)> for ScObject
+        where
+            $($typ: TryInto<ScVal>),*
+        {
+            type Error = ();
+            fn try_from(v: ($($typ,)*)) -> Result<Self, Self::Error> {
+                Ok(ScObject::Vec(<_ as TryInto<ScVec>>::try_into(v)?))
+            }
+        }
+
+        #[cfg(feature = "alloc")]
+        impl<$($typ),*> TryFrom<($($typ,)*)> for ScVal
+        where
+            $($typ: TryInto<ScVal>),*
+        {
+            type Error = ();
+            fn try_from(v: ($($typ,)*)) -> Result<Self, Self::Error> {
+                Ok(ScVal::Object(Some(<_ as TryInto<ScObject>>::try_into(v)?)))
+            }
+        }
+
+        impl<$($typ),*> TryFrom<ScVec> for ($($typ,)*)
+        where
+            // TODO: Consider removing the Clone constraint by changing the
+            // try_from to use a reference.
+            $($typ: TryFrom<ScVal> + Clone),*
+        {
+            type Error = ();
+
+            fn try_from(vec: ScVec) -> Result<Self, Self::Error> {
+                if vec.len() != $count {
+                    return Err(());
+                }
+                Ok((
+                    $({
+                        let idx: usize = $idx;
+                        let val = vec[idx].clone();
+                        $typ::try_from(val).map_err(|_| ())?
+                    },)*
+                ))
+            }
+        }
+
+        impl<$($typ),*> TryFrom<ScObject> for ($($typ,)*)
+        where
+            $($typ: TryFrom<ScVal> + Clone),*
+        {
+            type Error = ();
+
+            fn try_from(obj: ScObject) -> Result<Self, Self::Error> {
+                if let ScObject::Vec(vec) = obj {
+                    <_ as TryFrom<ScVec>>::try_from(vec)
+                } else {
+                    Err(())
+                }
+            }
+        }
+
+        impl<$($typ),*> TryFrom<ScVal> for ($($typ,)*)
+        where
+            $($typ: TryFrom<ScVal> + Clone),*
+        {
+            type Error = ();
+
+            fn try_from(val: ScVal) -> Result<Self, Self::Error> {
+                if let ScVal::Object(Some(obj)) = val {
+                    <_ as TryFrom<ScObject>>::try_from(obj)
+                } else {
+                    Err(())
+                }
+            }
+        }
+    };
+}
+
+impl_for_tuple! {  1 T0 0 }
+impl_for_tuple! {  2 T0 0 T1 1 }
+impl_for_tuple! {  3 T0 0 T1 1 T2 2 }
+impl_for_tuple! {  4 T0 0 T1 1 T2 2 T3 3 }
+impl_for_tuple! {  5 T0 0 T1 1 T2 2 T3 3 T4 4 }
+impl_for_tuple! {  6 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 }
+impl_for_tuple! {  7 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 }
+impl_for_tuple! {  8 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 }
+impl_for_tuple! {  9 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 }
+impl_for_tuple! { 10 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 }
+impl_for_tuple! { 11 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 T10 10 }
+impl_for_tuple! { 12 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 T10 10 T11 11 }
+
 #[cfg(test)]
 mod test {
     use crate::{ScObject, ScStatic, ScVal};
@@ -844,6 +947,18 @@ mod test {
         let v = vec![1, 2, 3, 4, 5];
         let val: ScVal = v.clone().try_into().unwrap();
         let roundtrip: Vec<i32> = val.try_into().unwrap();
+        assert_eq!(v, roundtrip);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn tuple() {
+        extern crate alloc;
+        use alloc::vec;
+        use alloc::vec::Vec;
+        let v = (1i32, 2i64, vec![true, false]);
+        let val: ScVal = v.clone().try_into().unwrap();
+        let roundtrip: (i32, i64, Vec<bool>) = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
     }
 

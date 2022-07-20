@@ -553,13 +553,14 @@ impl From<ScVec> for ScVal {
 }
 
 #[cfg(feature = "alloc")]
-impl<T: Into<ScVal>> TryFrom<Vec<T>> for ScObject {
+impl<T: TryInto<ScVal>> TryFrom<Vec<T>> for ScObject {
     type Error = ();
     fn try_from(v: Vec<T>) -> Result<Self, Self::Error> {
         Ok(ScObject::Vec(
             v.into_iter()
-                .map(|t| <_ as Into<ScVal>>::into(t))
-                .collect::<Vec<_>>() // TODO: Impl conversion from Iterator to VecM in xdrgen generated code.
+                .map(|t| <_ as TryInto<ScVal>>::try_into(t))
+                .collect::<Result<Vec<_>, _>>() // TODO: Impl conversion from Iterator to VecM in xdrgen generated code.
+                .map_err(|_| ())?
                 .try_into()
                 .map_err(|_| ())?,
         ))
@@ -567,7 +568,7 @@ impl<T: Into<ScVal>> TryFrom<Vec<T>> for ScObject {
 }
 
 #[cfg(feature = "alloc")]
-impl<T: Into<ScVal>> TryFrom<Vec<T>> for ScVal {
+impl<T: TryInto<ScVal>> TryFrom<Vec<T>> for ScVal {
     type Error = ();
     fn try_from(v: Vec<T>) -> Result<Self, Self::Error> {
         Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
@@ -575,13 +576,14 @@ impl<T: Into<ScVal>> TryFrom<Vec<T>> for ScVal {
 }
 
 #[cfg(feature = "alloc")]
-impl<T: Into<ScVal> + Clone> TryFrom<&Vec<T>> for ScObject {
+impl<T: TryInto<ScVal> + Clone> TryFrom<&Vec<T>> for ScObject {
     type Error = ();
     fn try_from(v: &Vec<T>) -> Result<Self, Self::Error> {
         Ok(ScObject::Vec(
             v.iter()
-                .map(|t| <_ as Into<ScVal>>::into(t.clone()))
-                .collect::<Vec<_>>() // TODO: Impl conversion from Iterator to VecM in xdrgen generated code.
+                .map(|t| <_ as TryInto<ScVal>>::try_into(t.clone()))
+                .collect::<Result<Vec<_>, _>>() // TODO: Impl conversion from Iterator to VecM in xdrgen generated code.
+                .map_err(|_| ())?
                 .try_into()
                 .map_err(|_| ())?,
         ))
@@ -589,7 +591,7 @@ impl<T: Into<ScVal> + Clone> TryFrom<&Vec<T>> for ScObject {
 }
 
 #[cfg(feature = "alloc")]
-impl<'a, T: Into<ScVal>> TryFrom<&'a Vec<T>> for ScVal
+impl<'a, T: TryInto<ScVal>> TryFrom<&'a Vec<T>> for ScVal
 where
     ScObject: TryFrom<&'a Vec<T>>,
 {
@@ -602,13 +604,14 @@ where
 }
 
 #[cfg(feature = "alloc")]
-impl<T: Into<ScVal> + Clone> TryFrom<&[T]> for ScObject {
+impl<T: TryInto<ScVal> + Clone> TryFrom<&[T]> for ScObject {
     type Error = ();
     fn try_from(v: &[T]) -> Result<Self, Self::Error> {
         Ok(ScObject::Vec(
             v.iter()
-                .map(|t| <_ as Into<ScVal>>::into(t.clone()))
-                .collect::<Vec<_>>() // TODO: Impl conversion from Iterator to VecM in xdrgen generated code.
+                .map(|t| <_ as TryInto<ScVal>>::try_into(t.clone()))
+                .collect::<Result<Vec<_>, _>>() // TODO: Impl conversion from Iterator to VecM in xdrgen generated code.
+                .map_err(|_| ())?
                 .try_into()
                 .map_err(|_| ())?,
         ))
@@ -616,7 +619,7 @@ impl<T: Into<ScVal> + Clone> TryFrom<&[T]> for ScObject {
 }
 
 #[cfg(feature = "alloc")]
-impl<'a, T: Into<ScVal>> TryFrom<&'a [T]> for ScVal
+impl<'a, T: TryInto<ScVal>> TryFrom<&'a [T]> for ScVal
 where
     ScObject: TryFrom<&'a [T]>,
 {
@@ -944,9 +947,15 @@ mod test {
         extern crate alloc;
         use alloc::vec;
         use alloc::vec::Vec;
+
         let v = vec![1, 2, 3, 4, 5];
         let val: ScVal = v.clone().try_into().unwrap();
         let roundtrip: Vec<i32> = val.try_into().unwrap();
+        assert_eq!(v, roundtrip);
+
+        let v = vec![vec![true], vec![false]];
+        let val: ScVal = v.clone().try_into().unwrap();
+        let roundtrip: Vec<Vec<bool>> = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
     }
 

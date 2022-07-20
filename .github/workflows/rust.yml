@@ -37,7 +37,6 @@ jobs:
   cargo:
     strategy:
       matrix:
-        profile: [dev, release]
         sys:
         - os: ubuntu-latest
           target: wasm32-unknown-unknown
@@ -79,10 +78,8 @@ jobs:
     - run: cargo install --locked --version 0.5.15 cargo-hack
     - run: >
         cargo hack clippy --feature-powerset
-        --profile ${{ matrix.profile }}
         --target ${{ matrix.sys.target }}
         --all-targets
     - if: matrix.sys.test
       run: >
         cargo hack test --feature-powerset
-        --profile ${{ matrix.profile }}

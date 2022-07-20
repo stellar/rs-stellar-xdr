@@ -1022,6 +1022,31 @@ mod test {
 
     #[cfg(feature = "alloc")]
     #[test]
+    fn binary() {
+        extern crate alloc;
+        use alloc::vec;
+
+        let v = [1, 2, 3, 4, 5];
+        let val: ScVal = v.try_into().unwrap();
+        assert_eq!(
+            val,
+            ScVal::Object(Some(ScObject::Binary(
+                vec![1, 2, 3, 4, 5].try_into().unwrap()
+            )))
+        );
+
+        let v = &[1, 2, 3, 4, 5];
+        let val: ScVal = v.try_into().unwrap();
+        assert_eq!(
+            val,
+            ScVal::Object(Some(ScObject::Binary(
+                vec![1, 2, 3, 4, 5].try_into().unwrap()
+            )))
+        );
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
     fn vec() {
         extern crate alloc;
         use alloc::vec;

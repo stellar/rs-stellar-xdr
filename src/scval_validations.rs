@@ -1,6 +1,6 @@
 #![allow(clippy::missing_errors_doc)]
 
-use crate::{ScMap, ScObject, ScVal};
+use crate::{ScMap, ScObject, ScVal, Error};
 
 pub trait Validate {
     type Error;
@@ -8,7 +8,7 @@ pub trait Validate {
 }
 
 impl Validate for ScVal {
-    type Error = ();
+    type Error = Error;
 
     fn validate(&self) -> Result<(), Self::Error> {
         match self {
@@ -17,7 +17,7 @@ impl Validate for ScVal {
                 if *i >= 0 {
                     Ok(())
                 } else {
-                    Err(())
+                    Err(Error::Invalid)
                 }
             }
 
@@ -28,7 +28,7 @@ impl Validate for ScVal {
                 {
                     Ok(())
                 } else {
-                    Err(())
+                    Err(Error::Invalid)
                 }
             }
 
@@ -37,11 +37,11 @@ impl Validate for ScVal {
                 if b & 0x0fff_ffff_ffff_ffff == *b {
                     Ok(())
                 } else {
-                    Err(())
+                    Err(Error::Invalid)
                 }
             }
 
-            ScVal::Object(None) => Err(()),
+            ScVal::Object(None) => Err(Error::Invalid),
 
             ScVal::Object(Some(o)) => match o {
                 ScObject::Map(m) => m.validate(),
@@ -63,7 +63,7 @@ impl Validate for ScVal {
 }
 
 impl Validate for ScMap {
-    type Error = ();
+    type Error = Error;
 
     fn validate(&self) -> Result<(), Self::Error> {
         // Check the map is sorted by key, and there are no keys that are
@@ -71,36 +71,36 @@ impl Validate for ScMap {
         if self.windows(2).all(|w| w[0].key < w[1].key) {
             Ok(())
         } else {
-            Err(())
+            Err(Error::Invalid)
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{ScVal, Validate};
+    use crate::{ScVal, Validate, Error};
 
     #[test]
     fn u63() {
         assert_eq!(ScVal::U63(0).validate(), Ok(()));
         assert_eq!(ScVal::U63(1).validate(), Ok(()));
         assert_eq!(ScVal::U63(i64::MAX).validate(), Ok(()));
-        assert_eq!(ScVal::U63(-1).validate(), Err(()));
+        assert_eq!(ScVal::U63(-1).validate(), Err(Error::Invalid));
     }
 
     #[test]
     fn symbol() {
         assert_eq!(ScVal::Symbol("".try_into().unwrap()).validate(), Ok(()));
         assert_eq!(ScVal::Symbol("a0A_".try_into().unwrap()).validate(), Ok(()));
-        assert_eq!(ScVal::Symbol("]".try_into().unwrap()).validate(), Err(()));
+        assert_eq!(ScVal::Symbol("]".try_into().unwrap()).validate(), Err(Error::Invalid));
     }
 
     #[test]
     fn bitset() {
         assert_eq!(ScVal::Bitset(0x0000_0000_0000_0000).validate(), Ok(()));
         assert_eq!(ScVal::Bitset(0x0fff_ffff_ffff_ffff).validate(), Ok(()));
-        assert_eq!(ScVal::Bitset(0x1000_0000_0000_0000).validate(), Err(()));
-        assert_eq!(ScVal::Bitset(0x1fff_ffff_ffff_ffff).validate(), Err(()));
+        assert_eq!(ScVal::Bitset(0x1000_0000_0000_0000).validate(), Err(Error::Invalid));
+        assert_eq!(ScVal::Bitset(0x1fff_ffff_ffff_ffff).validate(), Err(Error::Invalid));
     }
 
     #[test]
@@ -163,7 +163,7 @@ mod test {
                 .unwrap()
             ))))
             .validate(),
-            Err(())
+            Err(Error::Invalid)
         );
         assert_eq!(
             ScVal::Object(Some(ScObject::Map(ScMap(
@@ -181,7 +181,7 @@ mod test {
                 .unwrap()
             ))))
             .validate(),
-            Err(())
+            Err(Error::Invalid)
         );
     }
 }

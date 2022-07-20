@@ -1,12 +1,11 @@
-#![allow(clippy::result_unit_err)]
 #![allow(clippy::missing_errors_doc)]
 
-use crate::{ScMap, ScMapEntry, ScVal, Validate};
+use crate::{ScMap, ScMapEntry, ScVal, Validate, Error};
 extern crate alloc;
 use alloc::vec::Vec;
 
 impl ScMap {
-    pub fn sorted_from_entries<I>(entries: I) -> Result<ScMap, ()>
+    pub fn sorted_from_entries<I>(entries: I) -> Result<ScMap, Error>
     where
         I: Iterator<Item = ScMapEntry>,
     {
@@ -19,7 +18,7 @@ impl ScMap {
         Ok(m)
     }
 
-    pub fn sorted_from_pairs<K, V, I>(pairs: I) -> Result<ScMap, ()>
+    pub fn sorted_from_pairs<K, V, I>(pairs: I) -> Result<ScMap, Error>
     where
         K: Into<ScVal>,
         V: Into<ScVal>,
@@ -31,7 +30,7 @@ impl ScMap {
         }))
     }
 
-    pub fn sorted_from<K, V, I>(src: I) -> Result<ScMap, ()>
+    pub fn sorted_from<K, V, I>(src: I) -> Result<ScMap, Error>
     where
         K: Into<ScVal>,
         V: Into<ScVal>,

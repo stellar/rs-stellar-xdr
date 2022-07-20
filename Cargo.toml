@@ -14,10 +14,7 @@ std = ["alloc"]
 alloc = []
 next = []
 
-# Extensions enables non-core behavior that are useful to some applications.
-extensions = [
-    "std",
-    "dep:base64",
-    "dep:serde",
-    "dep:num-bigint",
-]
+# Features dependent on optional dependencies.
+base64 = ["std", "dep:base64"]
+serde = ["alloc", "dep:serde"]
+num-bigint = ["alloc", "dep:num-bigint"]

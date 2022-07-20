@@ -25,7 +25,7 @@ XDR_FILES_LOCAL_NEXT=$(addprefix xdr/next/,$(XDR_FILES_NEXT))
 
 export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
-CARGO_HACK_ARGS=--feature-powerset --group-features base64,serde,num-bigint
+CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,num-bigint
 
 all: build test
 

@@ -28,11 +28,11 @@ export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 all: build test
 
 test:
-	cargo hack test --feature-powerset
+	cargo hack test --feature-powerset --group-features 'base64 serde num-bigint'
 
 build: generate
-	cargo hack clippy --feature-powerset --all-targets
-	cargo hack clippy --feature-powerset --all-targets --release --target wasm32-unknown-unknown
+	cargo hack clippy --feature-powerset --group-features 'base64 serde num-bigint' --all-targets
+	cargo hack clippy --feature-powerset --group-features 'base64 serde num-bigint' --all-targets --release --target wasm32-unknown-unknown
 
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'

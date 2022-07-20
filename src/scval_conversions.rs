@@ -880,7 +880,7 @@ impl_for_tuple! { 12 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 T10 10 T1
 
 #[cfg(test)]
 mod test {
-    use crate::{ScObject, ScVal};
+    use crate::{ScObject, ScStatic, ScVal};
 
     #[test]
     fn i32_pos() {
@@ -972,5 +972,16 @@ mod test {
         let val: ScVal = v.clone().try_into().unwrap();
         let roundtrip: BigInt = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
+    }
+
+    #[test]
+    fn option() {
+        let v: Option<i64> = Some(1);
+        let val: ScVal = v.into();
+        assert_eq!(val, ScVal::U63(1));
+
+        let v: Option<i64> = None;
+        let val: ScVal = v.into();
+        assert_eq!(val, ScVal::Static(ScStatic::Void));
     }
 }

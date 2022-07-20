@@ -469,9 +469,41 @@ impl TryFrom<&[u8]> for ScObject {
 }
 
 #[cfg(feature = "alloc")]
+impl<const N: usize> TryFrom<[u8; N]> for ScObject {
+    type Error = ();
+    fn try_from(v: [u8; N]) -> Result<Self, Self::Error> {
+        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize> TryFrom<&[u8; N]> for ScObject {
+    type Error = ();
+    fn try_from(v: &[u8; N]) -> Result<Self, Self::Error> {
+        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl TryFrom<&[u8]> for ScVal {
     type Error = ();
     fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize> TryFrom<[u8; N]> for ScVal {
+    type Error = ();
+    fn try_from(v: [u8; N]) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize> TryFrom<&[u8; N]> for ScVal {
+    type Error = ();
+    fn try_from(v: &[u8; N]) -> Result<Self, Self::Error> {
         Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
     }
 }
@@ -707,9 +739,9 @@ impl From<ScBigInt> for ScVal {
 }
 
 #[cfg(feature = "num-bigint")]
-impl TryFrom<BigInt> for ScBigInt {
+impl TryFrom<&BigInt> for ScBigInt {
     type Error = ();
-    fn try_from(v: BigInt) -> Result<Self, Self::Error> {
+    fn try_from(v: &BigInt) -> Result<Self, Self::Error> {
         Ok(match v.to_bytes_be() {
             (Sign::NoSign, _) => ScBigInt::Zero,
             (Sign::Plus, bytes) => ScBigInt::Positive(bytes.try_into().map_err(|_| ())?),
@@ -719,10 +751,34 @@ impl TryFrom<BigInt> for ScBigInt {
 }
 
 #[cfg(feature = "num-bigint")]
+impl TryFrom<BigInt> for ScBigInt {
+    type Error = ();
+    fn try_from(v: BigInt) -> Result<Self, Self::Error> {
+        (&v).try_into()
+    }
+}
+
+#[cfg(feature = "num-bigint")]
+impl TryFrom<&BigInt> for ScObject {
+    type Error = ();
+    fn try_from(v: &BigInt) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScBigInt>>::try_into(v)?.into())
+    }
+}
+
+#[cfg(feature = "num-bigint")]
 impl TryFrom<BigInt> for ScObject {
     type Error = ();
     fn try_from(v: BigInt) -> Result<Self, Self::Error> {
-        Ok(<_ as TryInto<ScBigInt>>::try_into(v)?.into())
+        (&v).try_into()
+    }
+}
+
+#[cfg(feature = "num-bigint")]
+impl TryFrom<&BigInt> for ScVal {
+    type Error = ();
+    fn try_from(v: &BigInt) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
     }
 }
 
@@ -730,17 +786,36 @@ impl TryFrom<BigInt> for ScObject {
 impl TryFrom<BigInt> for ScVal {
     type Error = ();
     fn try_from(v: BigInt) -> Result<Self, Self::Error> {
-        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
+        (&v).try_into()
+    }
+}
+
+#[cfg(feature = "num-bigint")]
+impl From<&ScBigInt> for BigInt {
+    fn from(v: &ScBigInt) -> Self {
+        match v {
+            ScBigInt::Zero => 0u32.into(),
+            ScBigInt::Positive(bytes) => BigInt::from_bytes_be(Sign::Plus, bytes),
+            ScBigInt::Negative(bytes) => BigInt::from_bytes_be(Sign::Minus, bytes),
+        }
     }
 }
 
 #[cfg(feature = "num-bigint")]
 impl From<ScBigInt> for BigInt {
     fn from(v: ScBigInt) -> Self {
-        match v {
-            ScBigInt::Zero => 0u32.into(),
-            ScBigInt::Positive(bytes) => BigInt::from_bytes_be(Sign::Plus, &bytes),
-            ScBigInt::Negative(bytes) => BigInt::from_bytes_be(Sign::Minus, &bytes),
+        (&v).into()
+    }
+}
+
+#[cfg(feature = "num-bigint")]
+impl TryFrom<&ScObject> for BigInt {
+    type Error = ();
+    fn try_from(v: &ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::BigInt(b) = v {
+            Ok(<_ as TryInto<BigInt>>::try_into(b).map_err(|_| ())?)
+        } else {
+            Err(())
         }
     }
 }
@@ -749,8 +824,16 @@ impl From<ScBigInt> for BigInt {
 impl TryFrom<ScObject> for BigInt {
     type Error = ();
     fn try_from(v: ScObject) -> Result<Self, Self::Error> {
-        if let ScObject::BigInt(b) = v {
-            Ok(<_ as TryInto<BigInt>>::try_into(b).map_err(|_| ())?)
+        (&v).try_into()
+    }
+}
+
+#[cfg(feature = "num-bigint")]
+impl TryFrom<&ScVal> for BigInt {
+    type Error = ();
+    fn try_from(v: &ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(o)) = v {
+            Ok(<_ as TryInto<BigInt>>::try_into(o).map_err(|_| ())?)
         } else {
             Err(())
         }
@@ -761,11 +844,7 @@ impl TryFrom<ScObject> for BigInt {
 impl TryFrom<ScVal> for BigInt {
     type Error = ();
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
-        if let ScVal::Object(Some(o)) = v {
-            Ok(<_ as TryInto<BigInt>>::try_into(o).map_err(|_| ())?)
-        } else {
-            Err(())
-        }
+        (&v).try_into()
     }
 }
 
@@ -939,6 +1018,31 @@ mod test {
         assert_eq!(val, ScVal::Object(Some(ScObject::U64(5))));
         let roundtrip: u64 = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn binary() {
+        extern crate alloc;
+        use alloc::vec;
+
+        let v = [1, 2, 3, 4, 5];
+        let val: ScVal = v.try_into().unwrap();
+        assert_eq!(
+            val,
+            ScVal::Object(Some(ScObject::Binary(
+                vec![1, 2, 3, 4, 5].try_into().unwrap()
+            )))
+        );
+
+        let v = &[1, 2, 3, 4, 5];
+        let val: ScVal = v.try_into().unwrap();
+        assert_eq!(
+            val,
+            ScVal::Object(Some(ScObject::Binary(
+                vec![1, 2, 3, 4, 5].try_into().unwrap()
+            )))
+        );
     }
 
     #[cfg(feature = "alloc")]

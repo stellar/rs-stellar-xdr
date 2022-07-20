@@ -14,7 +14,7 @@ impl ScMap {
         // TODO: Add tests that prove order consistency of ScVal with RawVal. https://github.com/stellar/rs-stellar-xdr/issues/117
         v.sort_by(|a, b| a.key.cmp(&b.key));
         let m = ScMap(v.try_into()?);
-        // `validate` here will further check that there are no duplicates.
+        // `validate` will further check that there are no duplicates.
         m.validate()?;
         Ok(m)
     }

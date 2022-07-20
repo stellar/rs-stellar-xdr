@@ -777,7 +777,7 @@ impl<T: Into<ScVal>> From<Option<T>> for ScVal {
 
 #[cfg(test)]
 mod test {
-    use crate::{ScObject, ScVal};
+    use crate::{ScObject, ScStatic, ScVal};
 
     #[test]
     fn i32_pos() {
@@ -857,5 +857,16 @@ mod test {
         let val: ScVal = v.clone().try_into().unwrap();
         let roundtrip: BigInt = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
+    }
+
+    #[test]
+    fn option() {
+        let v: Option<i64> = Some(1);
+        let val: ScVal = v.into();
+        assert_eq!(val, ScVal::U63(1));
+
+        let v: Option<i64> = None;
+        let val: ScVal = v.into();
+        assert_eq!(val, ScVal::Static(ScStatic::Void));
     }
 }

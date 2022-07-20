@@ -77,9 +77,9 @@ jobs:
     #       target-${{ strategy.job-index }}
     #       target-
     - run: cargo install --locked --version 0.5.15 cargo-hack
-    - if: github.ref_protected
+    - if: "github.ref_protected"
       run: echo "CARGO_HACK_ARGS=--feature-powerset" >> $GITHUB_ENV
-    - if: \!github.ref_protected
+    - if: "!github.ref_protected"
       run: echo "CARGO_HACK_ARGS=--feature-powerset --group-features 'base64 serde num-bigint'" >> $GITHUB_ENV
     - run: >
         cargo hack clippy $CARGO_HACK_ARGS

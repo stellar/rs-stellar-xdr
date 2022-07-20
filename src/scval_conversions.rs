@@ -469,9 +469,41 @@ impl TryFrom<&[u8]> for ScObject {
 }
 
 #[cfg(feature = "alloc")]
+impl<const N: usize> TryFrom<[u8; N]> for ScObject {
+    type Error = ();
+    fn try_from(v: [u8; N]) -> Result<Self, Self::Error> {
+        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize> TryFrom<&[u8; N]> for ScObject {
+    type Error = ();
+    fn try_from(v: &[u8; N]) -> Result<Self, Self::Error> {
+        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+    }
+}
+
+#[cfg(feature = "alloc")]
 impl TryFrom<&[u8]> for ScVal {
     type Error = ();
     fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize> TryFrom<[u8; N]> for ScVal {
+    type Error = ();
+    fn try_from(v: [u8; N]) -> Result<Self, Self::Error> {
+        Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize> TryFrom<&[u8; N]> for ScVal {
+    type Error = ();
+    fn try_from(v: &[u8; N]) -> Result<Self, Self::Error> {
         Ok(<_ as TryInto<ScObject>>::try_into(v)?.into())
     }
 }

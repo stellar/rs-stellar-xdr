@@ -6,7 +6,10 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 impl ScMap {
-    pub fn sorted_from_entries<I: Iterator<Item = ScMapEntry>>(entries: I) -> Result<ScMap, ()> {
+    pub fn sorted_from_entries<I>(entries: I) -> Result<ScMap, ()>
+    where
+        I: Iterator<Item = ScMapEntry>,
+    {
         let mut v: Vec<ScMapEntry> = entries.collect();
         // TODO: Add tests that prove order consistency of ScVal with RawVal. https://github.com/stellar/rs-stellar-xdr/issues/117
         v.sort_by(|a, b| a.key.cmp(&b.key));
@@ -16,9 +19,11 @@ impl ScMap {
         Ok(m)
     }
 
-    pub fn sorted_from_pairs<K, V, I: Iterator<Item = (K, V)>>(pairs: I) -> Result<ScMap, ()>
+    pub fn sorted_from_pairs<K, V, I>(pairs: I) -> Result<ScMap, ()>
     where
-        ScVal: From<K> + From<V>,
+        K: Into<ScVal>,
+        V: Into<ScVal>,
+        I: Iterator<Item = (K, V)>,
     {
         Self::sorted_from_entries(pairs.map(|(key, val)| ScMapEntry {
             key: key.into(),
@@ -26,9 +31,11 @@ impl ScMap {
         }))
     }
 
-    pub fn sorted_from<K, V, II: IntoIterator<Item = (K, V)>>(src: II) -> Result<ScMap, ()>
+    pub fn sorted_from<K, V, I>(src: I) -> Result<ScMap, ()>
     where
-        ScVal: From<K> + From<V>,
+        K: Into<ScVal>,
+        V: Into<ScVal>,
+        I: IntoIterator<Item = (K, V)>,
     {
         Self::sorted_from_pairs(src.into_iter())
     }

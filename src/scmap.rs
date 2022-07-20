@@ -60,7 +60,7 @@ mod test {
     }
 
     #[test]
-    fn scmap_from_bad_pairs() {
+    fn scmap_from_pairs_containing_duplicate_keys() {
         let pairs: Vec<(u32, u32)> = vec![(3, 4), (3, 5), (5, 6), (1, 2)];
         let scm = ScMap::sorted_from(pairs);
         assert!(scm.is_err());

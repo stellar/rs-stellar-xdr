@@ -37,7 +37,6 @@ jobs:
   cargo:
     strategy:
       matrix:
-        profile: [dev, release]
         sys:
         - os: ubuntu-latest
           target: wasm32-unknown-unknown
@@ -45,12 +44,13 @@ jobs:
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
           test: true
-        - os: macos-latest
-          target: x86_64-apple-darwin
-          test: true
-        - os: macos-latest
-          target: aarch64-apple-darwin
-          test: false
+        # TODO: Address GitHub Actions concurrency limits and re-enable.
+        # - os: macos-latest
+        #   target: x86_64-apple-darwin
+        #   test: true
+        # - os: macos-latest
+        #   target: aarch64-apple-darwin
+        #   test: false
         # TODO: Address disk space usage problems and re-enable.
         # - os: windows-latest
         #   target: x86_64-pc-windows-msvc
@@ -60,28 +60,31 @@ jobs:
     - uses: actions/checkout@v3
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
-    - uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-        key: cargo-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: cargo-
-    - uses: actions/cache@v3
-      with:
-        path: target/
-        key: target-${{ strategy.job-index }}-${{ github.sha }}
-        restore-keys: |
-          target-${{ strategy.job-index }}
-          target-
+    # TODO: Investigate cache bloat and re-enable.
+    # - uses: actions/cache@v3
+    #   with:
+    #     path: |
+    #       ~/.cargo/registry/index/
+    #       ~/.cargo/registry/cache/
+    #       ~/.cargo/git/db/
+    #     key: cargo-${{ hashFiles('**/Cargo.lock') }}
+    #     restore-keys: cargo-
+    # - uses: actions/cache@v3
+    #   with:
+    #     path: target/
+    #     key: target-${{ strategy.job-index }}-${{ github.sha }}
+    #     restore-keys: |
+    #       target-${{ strategy.job-index }}
+    #       target-
     - run: cargo install --locked --version 0.5.15 cargo-hack
+    - if: "github.ref_protected"
+      run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
+    - if: "!github.ref_protected"
+      run: echo 'CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,num-bigint' >> $GITHUB_ENV
     - run: >
-        cargo hack clippy --feature-powerset
-        --profile ${{ matrix.profile }}
+        cargo hack clippy $CARGO_HACK_ARGS
         --target ${{ matrix.sys.target }}
         --all-targets
     - if: matrix.sys.test
       run: >
-        cargo hack test --feature-powerset
-        --profile ${{ matrix.profile }}
+        cargo hack test $CARGO_HACK_ARGS

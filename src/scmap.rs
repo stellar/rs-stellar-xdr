@@ -31,13 +31,12 @@ impl ScMap {
         Self::sorted_from_entries(pairs)
     }
 
-    pub fn sorted_from<K, V, I>(src: I) -> Result<ScMap, Error>
+    pub fn sorted_from<I, E>(src: I) -> Result<ScMap, Error>
     where
-        K: Into<ScVal>,
-        V: Into<ScVal>,
-        I: IntoIterator<Item = (K, V)>,
+        E: TryInto<ScMapEntry>,
+        I: IntoIterator<Item = E>,
     {
-        Self::sorted_from_pairs(src.into_iter())
+        Self::sorted_from_entries(src.into_iter())
     }
 }
 

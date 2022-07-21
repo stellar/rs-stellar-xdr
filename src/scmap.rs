@@ -1,6 +1,6 @@
 #![allow(clippy::missing_errors_doc)]
 
-use crate::{ScMap, ScMapEntry, ScVal, Validate, Error};
+use crate::{Error, ScMap, ScMapEntry, ScVal, Validate};
 extern crate alloc;
 use alloc::vec::Vec;
 
@@ -20,14 +20,15 @@ impl ScMap {
 
     pub fn sorted_from_pairs<K, V, I>(pairs: I) -> Result<ScMap, Error>
     where
-        K: Into<ScVal>,
-        V: Into<ScVal>,
+        K: TryInto<ScVal>,
+        V: TryInto<ScVal>,
         I: Iterator<Item = (K, V)>,
     {
-        Self::sorted_from_entries(pairs.map(|(key, val)| ScMapEntry {
-            key: key.into(),
-            val: val.into(),
-        }))
+        let entries = pairs
+            .map(<_ as TryInto<ScMapEntry>>::try_into)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| Error::Invalid)?;
+        Self::sorted_from_entries(entries.into_iter())
     }
 
     pub fn sorted_from<K, V, I>(src: I) -> Result<ScMap, Error>

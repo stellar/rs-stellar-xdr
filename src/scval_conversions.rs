@@ -1,5 +1,6 @@
 use crate::{
-    Hash, PublicKey, ScBigInt, ScHash, ScMap, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec,
+    Hash, PublicKey, ScBigInt, ScHash, ScMap, ScMapEntry, ScObject, ScStatic, ScStatus, ScSymbol,
+    ScVal, ScVec,
 };
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
@@ -720,6 +721,21 @@ impl TryFrom<ScVal> for ScMap {
         } else {
             Err(())
         }
+    }
+}
+
+impl<K, V> TryFrom<(K, V)> for ScMapEntry
+where
+    K: TryInto<ScVal>,
+    V: TryInto<ScVal>,
+{
+    type Error = ();
+
+    fn try_from(v: (K, V)) -> Result<Self, Self::Error> {
+        Ok(ScMapEntry {
+            key: v.0.try_into().map_err(|_| ())?,
+            val: v.1.try_into().map_err(|_| ())?,
+        })
     }
 }
 

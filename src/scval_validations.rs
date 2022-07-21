@@ -1,6 +1,6 @@
 #![allow(clippy::missing_errors_doc)]
 
-use crate::{ScMap, ScObject, ScVal, Error};
+use crate::{Error, ScMap, ScObject, ScVal};
 
 pub trait Validate {
     type Error;
@@ -78,7 +78,7 @@ impl Validate for ScMap {
 
 #[cfg(test)]
 mod test {
-    use crate::{ScVal, Validate, Error};
+    use crate::{Error, ScVal, Validate};
 
     #[test]
     fn u63() {
@@ -92,15 +92,24 @@ mod test {
     fn symbol() {
         assert_eq!(ScVal::Symbol("".try_into().unwrap()).validate(), Ok(()));
         assert_eq!(ScVal::Symbol("a0A_".try_into().unwrap()).validate(), Ok(()));
-        assert_eq!(ScVal::Symbol("]".try_into().unwrap()).validate(), Err(Error::Invalid));
+        assert_eq!(
+            ScVal::Symbol("]".try_into().unwrap()).validate(),
+            Err(Error::Invalid)
+        );
     }
 
     #[test]
     fn bitset() {
         assert_eq!(ScVal::Bitset(0x0000_0000_0000_0000).validate(), Ok(()));
         assert_eq!(ScVal::Bitset(0x0fff_ffff_ffff_ffff).validate(), Ok(()));
-        assert_eq!(ScVal::Bitset(0x1000_0000_0000_0000).validate(), Err(Error::Invalid));
-        assert_eq!(ScVal::Bitset(0x1fff_ffff_ffff_ffff).validate(), Err(Error::Invalid));
+        assert_eq!(
+            ScVal::Bitset(0x1000_0000_0000_0000).validate(),
+            Err(Error::Invalid)
+        );
+        assert_eq!(
+            ScVal::Bitset(0x1fff_ffff_ffff_ffff).validate(),
+            Err(Error::Invalid)
+        );
     }
 
     #[test]

@@ -20,3 +20,8 @@ pub use scval_conversions::*;
 mod scval_validations;
 #[cfg(feature = "next")]
 pub use scval_validations::*;
+
+#[cfg(all(feature = "alloc", feature = "next"))]
+mod scmap;
+#[cfg(all(feature = "alloc", feature = "next"))]
+pub use scmap::*;

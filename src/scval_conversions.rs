@@ -1,5 +1,6 @@
 use crate::{
-    Hash, PublicKey, ScBigInt, ScHash, ScMap, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec,
+    Hash, PublicKey, ScBigInt, ScHash, ScMap, ScMapEntry, ScObject, ScStatic, ScStatus, ScSymbol,
+    ScVal, ScVec,
 };
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
@@ -9,6 +10,8 @@ use alloc::{string::String, vec, vec::Vec};
 
 #[cfg(feature = "num-bigint")]
 use num_bigint::{BigInt, Sign};
+
+// TODO: Use the Error type for conversions in this file.
 
 impl From<ScStatic> for ScVal {
     fn from(v: ScStatic) -> Self {
@@ -720,6 +723,21 @@ impl TryFrom<ScVal> for ScMap {
         } else {
             Err(())
         }
+    }
+}
+
+impl<K, V> TryFrom<(K, V)> for ScMapEntry
+where
+    K: TryInto<ScVal>,
+    V: TryInto<ScVal>,
+{
+    type Error = ();
+
+    fn try_from(v: (K, V)) -> Result<Self, Self::Error> {
+        Ok(ScMapEntry {
+            key: v.0.try_into().map_err(|_| ())?,
+            val: v.1.try_into().map_err(|_| ())?,
+        })
     }
 }
 

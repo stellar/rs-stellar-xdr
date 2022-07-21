@@ -11,6 +11,8 @@ use alloc::{string::String, vec, vec::Vec};
 #[cfg(feature = "num-bigint")]
 use num_bigint::{BigInt, Sign};
 
+// TODO: Use the Error type for conversions in this file.
+
 impl From<ScStatic> for ScVal {
     fn from(v: ScStatic) -> Self {
         Self::Static(v)

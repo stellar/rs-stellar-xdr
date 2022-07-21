@@ -5,11 +5,15 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 impl ScMap {
-    pub fn sorted_from_entries<I>(entries: I) -> Result<ScMap, Error>
+    pub fn sorted_from_entries<I, E>(entries: I) -> Result<ScMap, Error>
     where
-        I: Iterator<Item = ScMapEntry>,
+        E: TryInto<ScMapEntry>,
+        I: Iterator<Item = E>,
     {
-        let mut v: Vec<ScMapEntry> = entries.collect();
+        let mut v = entries
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| Error::Invalid)?;
         // TODO: Add tests that prove order consistency of ScVal with RawVal. https://github.com/stellar/rs-stellar-xdr/issues/117
         v.sort_by(|a, b| a.key.cmp(&b.key));
         let m = ScMap(v.try_into()?);
@@ -24,11 +28,7 @@ impl ScMap {
         V: TryInto<ScVal>,
         I: Iterator<Item = (K, V)>,
     {
-        let entries = pairs
-            .map(<_ as TryInto<ScMapEntry>>::try_into)
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| Error::Invalid)?;
-        Self::sorted_from_entries(entries.into_iter())
+        Self::sorted_from_entries(pairs)
     }
 
     pub fn sorted_from<K, V, I>(src: I) -> Result<ScMap, Error>

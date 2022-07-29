@@ -76,3 +76,10 @@ reset-xdr:
 
 fmt:
 	cargo fmt --all
+
+publish-dry-run:
+	cargo +stable hack --feature-powerset publish --locked --dry-run
+	cargo +stable hack --feature-powerset publish --locked --dry-run --target wasm32-unknown-unknown
+
+publish: publish-dry-run
+	cargo +stable publish --locked --no-verify

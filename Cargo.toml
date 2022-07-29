@@ -1,5 +1,10 @@
 [package]
 name = "stellar-xdr"
+description = "Stellar XDR types, encoding, and decoding."
+homepage = "https://github.com/stellar/rs-stellar-xdr"
+repository = "https://github.com/stellar/rs-stellar-xdr"
+authors = ["Stellar Development Foundation <info@stellar.org>"]
+license = "Apache-2.0"
 version = "0.0.0"
 edition = "2021"
 

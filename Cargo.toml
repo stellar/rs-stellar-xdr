@@ -23,3 +23,6 @@ next = []
 base64 = ["std", "dep:base64"]
 serde = ["alloc", "dep:serde"]
 num-bigint = ["alloc", "dep:num-bigint"]
+
+[package.metadata.docs.rs]
+all-features = true

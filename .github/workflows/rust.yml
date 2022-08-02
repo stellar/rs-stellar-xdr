@@ -77,7 +77,7 @@ jobs:
           ${{ github.job }}-target-
     - if: github.ref_protected
       run: rm -fr target
-    - run: cargo install --locked --version 0.5.16 cargo-hack
+    - run: cargo install --locked --version 0.5.15 cargo-hack
     - if: "github.ref_protected"
       run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
     - if: "!github.ref_protected"

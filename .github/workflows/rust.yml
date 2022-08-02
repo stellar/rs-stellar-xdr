@@ -11,14 +11,10 @@ env:
 jobs:
 
   complete:
-    # if: always()
     needs: [generate, fmt, cargo]
     runs-on: ubuntu-latest
     steps:
     - run: exit 0
-    # steps:
-    # - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-    #   run: exit 1
 
   generate:
     runs-on: ubuntu-latest

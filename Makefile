@@ -30,7 +30,7 @@ CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features b
 all: build test
 
 test:
-	cargo hack nextest run $(CARGO_HACK_ARGS)
+	cargo hack test $(CARGO_HACK_ARGS)
 
 build: generate
 	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets

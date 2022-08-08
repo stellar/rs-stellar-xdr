@@ -50,7 +50,7 @@ impl Validate for ScVal {
                 ScObject::Vec(_)
                 | ScObject::U64(_)
                 | ScObject::I64(_)
-                | ScObject::Binary(_)
+                | ScObject::Bytes(_)
                 | ScObject::BigInt(_)
                 | ScObject::Hash(_)
                 | ScObject::PublicKey(_) => Ok(()),

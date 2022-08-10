@@ -24,7 +24,7 @@ next = []
 base64 = ["std", "dep:base64"]
 serde = ["alloc", "dep:serde"]
 num-bigint = ["alloc", "dep:num-bigint"]
-arbitrary = ["dep:arbitrary"]
+arbitrary = ["std", "dep:arbitrary"]
 
 [package.metadata.docs.rs]
 all-features = true

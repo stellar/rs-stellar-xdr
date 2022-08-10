@@ -1,3 +1,5 @@
+#![cfg(all(feature = "next", feature = "arbitrary"))]
+
 use arbitrary::{Arbitrary, Unstructured};
 use stellar_xdr::ScMap;
 
@@ -7,6 +9,6 @@ fn arb() {
     let mut unstructured = Unstructured::new(&bytes);
     for _ in 1..10 {
         let x: ScMap = ScMap::arbitrary(&mut unstructured).unwrap();
-        eprintln!("{:?}", x);    
+        eprintln!("{:?}", x);
     }
 }

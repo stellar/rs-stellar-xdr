@@ -51,7 +51,6 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
 ];
 
-use arbitrary::Arbitrary;
 use core::{array::TryFromSliceError, fmt, fmt::Debug, marker::Sized, ops::Deref, slice};
 
 #[cfg(feature = "std")]
@@ -83,6 +82,9 @@ use alloc::{
 };
 #[cfg(all(feature = "std"))]
 use std::string::FromUtf8Error;
+
+#[cfg(feature = "arbitrary")]
+use arbitrary::Arbitrary;
 
 // TODO: Add support for read/write xdr fns when std not available.
 
@@ -557,12 +559,14 @@ impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
 }
 
 #[cfg(feature = "alloc")]
-#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct VecM<T, const MAX: u32 = { u32::MAX }>(Vec<T>);
 
 #[cfg(not(feature = "alloc"))]
-#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct VecM<T, const MAX: u32 = { u32::MAX }>(Vec<T>)
 where
     T: 'static;
@@ -1006,7 +1010,9 @@ mod tests {
 //
 //   typedef opaque Value<>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1108,7 +1114,8 @@ impl AsRef<[u8]> for Value {
 //        Value value;    // x
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1149,7 +1156,8 @@ impl WriteXdr for ScpBallot {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1257,7 +1265,8 @@ impl WriteXdr for ScpStatementType {
 //        Value accepted<>;   // Y
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1302,7 +1311,8 @@ impl WriteXdr for ScpNomination {
 //                uint32 nH;                // h.n
 //            }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1355,7 +1365,8 @@ impl WriteXdr for ScpStatementPrepare {
 //                Hash quorumSetHash; // D
 //            }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1403,7 +1414,8 @@ impl WriteXdr for ScpStatementConfirm {
 //                Hash commitQuorumSetHash; // D used before EXTERNALIZE
 //            }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1471,7 +1483,8 @@ impl WriteXdr for ScpStatementExternalize {
 //        }
 //
 // union with discriminant ScpStatementType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1617,7 +1630,8 @@ impl WriteXdr for ScpStatementPledges {
 //        pledges;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1658,7 +1672,8 @@ impl WriteXdr for ScpStatement {
 //        Signature signature;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1697,7 +1712,8 @@ impl WriteXdr for ScpEnvelope {
 //        SCPQuorumSet innerSets<>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1734,7 +1750,8 @@ impl WriteXdr for ScpQuorumSet {
 //
 //   typedef PublicKey AccountID;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1783,7 +1800,8 @@ impl WriteXdr for AccountId {
 //
 //   typedef opaque Thresholds[4];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1881,7 +1899,8 @@ pub type String64 = VecM<u8, 64>;
 //
 //   typedef int64 SequenceNumber;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1930,7 +1949,8 @@ impl WriteXdr for SequenceNumber {
 //
 //   typedef uint64 TimePoint;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -1979,7 +1999,8 @@ impl WriteXdr for TimePoint {
 //
 //   typedef uint64 Duration;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2028,7 +2049,9 @@ impl WriteXdr for Duration {
 //
 //   typedef opaque DataValue<64>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2126,7 +2149,8 @@ impl AsRef<[u8]> for DataValue {
 //
 //   typedef Hash PoolID;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2175,7 +2199,8 @@ impl WriteXdr for PoolId {
 //
 //   typedef opaque AssetCode4[4];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2261,7 +2286,8 @@ impl AsRef<[u8]> for AssetCode4 {
 //
 //   typedef opaque AssetCode12[12];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2354,7 +2380,8 @@ impl AsRef<[u8]> for AssetCode12 {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2467,7 +2494,8 @@ impl WriteXdr for AssetType {
 //    };
 //
 // union with discriminant AssetType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2563,7 +2591,8 @@ impl WriteXdr for AssetCode {
 //        AccountID issuer;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2601,7 +2630,8 @@ impl WriteXdr for AlphaNum4 {
 //        AccountID issuer;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2648,7 +2678,8 @@ impl WriteXdr for AlphaNum12 {
 //    };
 //
 // union with discriminant AssetType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2753,7 +2784,8 @@ impl WriteXdr for Asset {
 //        int32 d; // denominator
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2791,7 +2823,8 @@ impl WriteXdr for Price {
 //        int64 selling;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2832,7 +2865,8 @@ impl WriteXdr for Liabilities {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2946,7 +2980,8 @@ impl WriteXdr for ThresholdIndexes {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3069,7 +3104,8 @@ impl WriteXdr for LedgerEntryType {
 //        uint32 weight; // really only need 1 byte
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3120,7 +3156,8 @@ impl WriteXdr for Signer {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3241,7 +3278,8 @@ pub const MAX_SIGNERS: u64 = 20;
 //
 //   typedef AccountID* SponsorshipDescriptor;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3301,7 +3339,8 @@ impl WriteXdr for SponsorshipDescriptor {
 //        TimePoint seqTime;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3345,7 +3384,8 @@ impl WriteXdr for AccountEntryExtensionV3 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3451,7 +3491,8 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3498,7 +3539,8 @@ impl WriteXdr for AccountEntryExtensionV2 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3602,7 +3644,8 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3643,7 +3686,8 @@ impl WriteXdr for AccountEntryExtensionV1 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3762,7 +3806,8 @@ impl WriteXdr for AccountEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3831,7 +3876,8 @@ impl WriteXdr for AccountEntry {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -3952,7 +3998,8 @@ pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4057,7 +4104,8 @@ impl WriteXdr for LiquidityPoolType {
 //    };
 //
 // union with discriminant AssetType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4169,7 +4217,8 @@ impl WriteXdr for TrustLineAsset {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4266,7 +4315,8 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4307,7 +4357,8 @@ impl WriteXdr for TrustLineEntryExtensionV2 {
 //                }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4411,7 +4462,8 @@ impl WriteXdr for TrustLineEntryV1Ext {
 //                ext;
 //            }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4464,7 +4516,8 @@ impl WriteXdr for TrustLineEntryV1 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4587,7 +4640,8 @@ impl WriteXdr for TrustLineEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4639,7 +4693,8 @@ impl WriteXdr for TrustLineEntry {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4739,7 +4794,8 @@ pub const MASK_OFFERENTRY_FLAGS: u64 = 1;
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4849,7 +4905,8 @@ impl WriteXdr for OfferEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4906,7 +4963,8 @@ impl WriteXdr for OfferEntry {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5006,7 +5064,8 @@ impl WriteXdr for DataEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5055,7 +5114,8 @@ impl WriteXdr for DataEntry {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5182,7 +5242,8 @@ impl WriteXdr for ClaimPredicateType {
 //    };
 //
 // union with discriminant ClaimPredicateType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5305,7 +5366,8 @@ impl WriteXdr for ClaimPredicate {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5398,7 +5460,8 @@ impl WriteXdr for ClaimantType {
 //            ClaimPredicate predicate; // Claimable if predicate is true
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5441,7 +5504,8 @@ impl WriteXdr for ClaimantV0 {
 //    };
 //
 // union with discriminant ClaimantType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5532,7 +5596,8 @@ impl WriteXdr for Claimant {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5627,7 +5692,8 @@ impl WriteXdr for ClaimableBalanceIdType {
 //    };
 //
 // union with discriminant ClaimableBalanceIdType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5723,7 +5789,8 @@ impl WriteXdr for ClaimableBalanceId {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5824,7 +5891,8 @@ pub const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5921,7 +5989,8 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
 //        uint32 flags; // see ClaimableBalanceFlags
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -5962,7 +6031,8 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6077,7 +6147,8 @@ impl WriteXdr for ClaimableBalanceEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6125,7 +6196,8 @@ impl WriteXdr for ClaimableBalanceEntry {
 //        int32 fee; // Fee is in basis points, so the actual rate is (fee/100)%
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6171,7 +6243,8 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
 //                                                // associated pool shares
 //            }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6228,7 +6301,8 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
 //        }
 //
 // union with discriminant LiquidityPoolType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6338,7 +6412,8 @@ impl WriteXdr for LiquidityPoolEntryBody {
 //        body;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6376,7 +6451,8 @@ impl WriteXdr for LiquidityPoolEntry {
 //        SCVal val;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6417,7 +6493,8 @@ impl WriteXdr for ContractDataEntry {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6511,7 +6588,8 @@ impl WriteXdr for ConfigSettingType {
 //    };
 //
 // union with discriminant ConfigSettingType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6604,7 +6682,8 @@ impl WriteXdr for ConfigSetting {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6698,7 +6777,8 @@ impl WriteXdr for ConfigSettingId {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6796,7 +6876,8 @@ impl WriteXdr for ConfigSettingEntryExt {
 //        ConfigSetting setting;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6838,7 +6919,8 @@ impl WriteXdr for ConfigSettingEntry {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6935,7 +7017,8 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -6988,7 +7071,8 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 //        }
 //
 // union with discriminant LedgerEntryType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7128,7 +7212,8 @@ impl WriteXdr for LedgerEntryData {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7254,7 +7339,8 @@ impl WriteXdr for LedgerEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7294,7 +7380,8 @@ impl WriteXdr for LedgerEntry {
 //            AccountID accountID;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7329,7 +7416,8 @@ impl WriteXdr for LedgerKeyAccount {
 //            TrustLineAsset asset;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7367,7 +7455,8 @@ impl WriteXdr for LedgerKeyTrustLine {
 //            int64 offerID;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7405,7 +7494,8 @@ impl WriteXdr for LedgerKeyOffer {
 //            string64 dataName;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7442,7 +7532,8 @@ impl WriteXdr for LedgerKeyData {
 //            ClaimableBalanceID balanceID;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7476,7 +7567,8 @@ impl WriteXdr for LedgerKeyClaimableBalance {
 //            PoolID liquidityPoolID;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7511,7 +7603,8 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 //            SCVal key;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7548,7 +7641,8 @@ impl WriteXdr for LedgerKeyContractData {
 //            ConfigSettingID configSettingID;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7631,7 +7725,8 @@ impl WriteXdr for LedgerKeyConfigSetting {
 //    };
 //
 // union with discriminant LedgerEntryType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7783,7 +7878,8 @@ impl WriteXdr for LedgerKey {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -7910,7 +8006,9 @@ impl WriteXdr for EnvelopeType {
 //
 //   typedef opaque UpgradeType<128>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8013,7 +8111,8 @@ impl AsRef<[u8]> for UpgradeType {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8109,7 +8208,8 @@ impl WriteXdr for StellarValueType {
 //        Signature signature; // nodeID's signature
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8150,7 +8250,8 @@ impl WriteXdr for LedgerCloseValueSignature {
 //        }
 //
 // union with discriminant StellarValueType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8263,7 +8364,8 @@ impl WriteXdr for StellarValueExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8319,7 +8421,8 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7F;
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8439,7 +8542,8 @@ impl WriteXdr for LedgerHeaderFlags {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8536,7 +8640,8 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8577,7 +8682,8 @@ impl WriteXdr for LedgerHeaderExtensionV1 {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8707,7 +8813,8 @@ impl WriteXdr for LedgerHeaderExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8789,7 +8896,8 @@ impl WriteXdr for LedgerHeader {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8904,7 +9012,8 @@ impl WriteXdr for LedgerUpgradeType {
 //            ConfigSetting setting; // new value
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -8957,7 +9066,8 @@ impl WriteXdr for LedgerUpgradeConfigSetting {
 //    };
 //
 // union with discriminant LedgerUpgradeType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9085,7 +9195,8 @@ impl WriteXdr for LedgerUpgrade {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9193,7 +9304,8 @@ impl WriteXdr for BucketEntryType {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9292,7 +9404,8 @@ impl WriteXdr for BucketMetadataExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9337,7 +9450,8 @@ impl WriteXdr for BucketMetadata {
 //    };
 //
 // union with discriminant BucketEntryType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9450,7 +9564,8 @@ impl WriteXdr for BucketEntry {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9544,7 +9659,8 @@ impl WriteXdr for TxSetComponentType {
 //        TransactionEnvelope txs<>;
 //      }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9587,7 +9703,8 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
 //    };
 //
 // union with discriminant TxSetComponentType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9686,7 +9803,8 @@ impl WriteXdr for TxSetComponent {
 //    };
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9777,7 +9895,8 @@ impl WriteXdr for TransactionPhase {
 //        TransactionEnvelope txs<>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9815,7 +9934,8 @@ impl WriteXdr for TransactionSet {
 //        TransactionPhase phases<>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9855,7 +9975,8 @@ impl WriteXdr for TransactionSetV1 {
 //    };
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9946,7 +10067,8 @@ impl WriteXdr for GeneralizedTransactionSet {
 //        TransactionResult result; // result for the transaction
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -9983,7 +10105,8 @@ impl WriteXdr for TransactionResultPair {
 //        TransactionResultPair results<>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10021,7 +10144,8 @@ impl WriteXdr for TransactionResultSet {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10127,7 +10251,8 @@ impl WriteXdr for TransactionHistoryEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10169,7 +10294,8 @@ impl WriteXdr for TransactionHistoryEntry {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10268,7 +10394,8 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10310,7 +10437,8 @@ impl WriteXdr for TransactionHistoryResultEntry {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10409,7 +10537,8 @@ impl WriteXdr for LedgerHeaderHistoryEntryExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10450,7 +10579,8 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
 //        SCPEnvelope messages<>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10488,7 +10618,8 @@ impl WriteXdr for LedgerScpMessages {
 //        LedgerSCPMessages ledgerMessages;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10527,7 +10658,8 @@ impl WriteXdr for ScpHistoryEntryV0 {
 //    };
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10621,7 +10753,8 @@ impl WriteXdr for ScpHistoryEntry {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10735,7 +10868,8 @@ impl WriteXdr for LedgerEntryChangeType {
 //    };
 //
 // union with discriminant LedgerEntryChangeType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10842,7 +10976,9 @@ impl WriteXdr for LedgerEntryChange {
 //
 //   typedef LedgerEntryChange LedgerEntryChanges<>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10943,7 +11079,8 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
 //        LedgerEntryChanges changes;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -10978,7 +11115,8 @@ impl WriteXdr for OperationMeta {
 //        OperationMeta operations<>;   // meta for each operation
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11019,7 +11157,8 @@ impl WriteXdr for TransactionMetaV1 {
 //                                            // applied if any
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11065,7 +11204,8 @@ impl WriteXdr for TransactionMetaV2 {
 //    };
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11167,7 +11307,8 @@ impl WriteXdr for TransactionMeta {
 //        TransactionMeta txApplyProcessing;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11208,7 +11349,8 @@ impl WriteXdr for TransactionResultMeta {
 //        LedgerEntryChanges changes;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11258,7 +11400,8 @@ impl WriteXdr for UpgradeEntryMeta {
 //        SCPHistoryEntry scpInfo<>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11317,7 +11460,8 @@ impl WriteXdr for LedgerCloseMetaV0 {
 //        SCPHistoryEntry scpInfo<>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11367,7 +11511,8 @@ impl WriteXdr for LedgerCloseMetaV1 {
 //    };
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11467,7 +11612,8 @@ impl WriteXdr for LedgerCloseMeta {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11578,7 +11724,8 @@ impl WriteXdr for ErrorCode {
 //        string msg<100>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11615,7 +11762,8 @@ impl WriteXdr for SError {
 //        uint32 numMessages;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11651,7 +11799,8 @@ impl WriteXdr for SendMore {
 //        Signature sig;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11699,7 +11848,8 @@ impl WriteXdr for AuthCert {
 //        uint256 nonce;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11759,7 +11909,8 @@ impl WriteXdr for Hello {
 //        int unused;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11795,7 +11946,8 @@ impl WriteXdr for Auth {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11894,7 +12046,8 @@ impl WriteXdr for IpAddrType {
 //        }
 //
 // union with discriminant IpAddrType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -11998,7 +12151,8 @@ impl WriteXdr for PeerAddressIp {
 //        uint32 numFailures;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12064,7 +12218,8 @@ impl WriteXdr for PeerAddress {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12223,7 +12378,8 @@ impl WriteXdr for MessageType {
 //        uint256 reqHash;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12261,7 +12417,8 @@ impl WriteXdr for DontHave {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12357,7 +12514,8 @@ impl WriteXdr for SurveyMessageCommandType {
 //        SurveyMessageCommandType commandType;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12404,7 +12562,8 @@ impl WriteXdr for SurveyRequestMessage {
 //        SurveyRequestMessage request;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12438,7 +12597,9 @@ impl WriteXdr for SignedSurveyRequestMessage {
 //
 //   typedef opaque EncryptedBody<64000>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12543,7 +12704,8 @@ impl AsRef<[u8]> for EncryptedBody {
 //        EncryptedBody encryptedBody;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12590,7 +12752,8 @@ impl WriteXdr for SurveyResponseMessage {
 //        SurveyResponseMessage response;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12643,7 +12806,8 @@ impl WriteXdr for SignedSurveyResponseMessage {
 //        uint64 duplicateFetchMessageRecv;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12716,7 +12880,9 @@ impl WriteXdr for PeerStats {
 //
 //   typedef PeerStats PeerStatList<25>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12821,7 +12987,8 @@ impl AsRef<[PeerStats]> for PeerStatList {
 //        uint32 totalOutboundPeerCount;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12866,7 +13033,8 @@ impl WriteXdr for TopologyResponseBody {
 //    };
 //
 // union with discriminant SurveyMessageCommandType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12998,7 +13166,8 @@ impl WriteXdr for SurveyResponseBody {
 //    };
 //
 // union with discriminant MessageType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -13194,7 +13363,8 @@ impl WriteXdr for StellarMessage {
 //            HmacSha256Mac mac;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -13241,7 +13411,8 @@ impl WriteXdr for AuthenticatedMessageV0 {
 //    };
 //
 // union with discriminant u32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -13333,7 +13504,8 @@ impl WriteXdr for AuthenticatedMessage {
 //    };
 //
 // union with discriminant LiquidityPoolType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -13428,7 +13600,8 @@ impl WriteXdr for LiquidityPoolParameters {
 //            uint256 ed25519;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -13473,7 +13646,8 @@ impl WriteXdr for MuxedAccountMed25519 {
 //    };
 //
 // union with discriminant CryptoKeyType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -13569,7 +13743,8 @@ impl WriteXdr for MuxedAccount {
 //        Signature signature; // actual signature
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -13607,7 +13782,8 @@ impl WriteXdr for DecoratedSignature {
 //        LedgerKey readWrite<>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -13669,7 +13845,8 @@ impl WriteXdr for LedgerFootprint {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -13860,7 +14037,8 @@ impl WriteXdr for OperationType {
 //        int64 startingBalance; // amount they end up with
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -13899,7 +14077,8 @@ impl WriteXdr for CreateAccountOp {
 //        int64 amount;             // amount they end up with
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -13948,7 +14127,8 @@ impl WriteXdr for PaymentOp {
 //        Asset path<5>; // additional hops it must go through to get there
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14006,7 +14186,8 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
 //        Asset path<5>; // additional hops it must go through to get there
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14061,7 +14242,8 @@ impl WriteXdr for PathPaymentStrictSendOp {
 //        int64 offerID;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14114,7 +14296,8 @@ impl WriteXdr for ManageSellOfferOp {
 //        int64 offerID;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14163,7 +14346,8 @@ impl WriteXdr for ManageBuyOfferOp {
 //        Price price;   // cost of A in terms of B
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14221,7 +14405,8 @@ impl WriteXdr for CreatePassiveSellOfferOp {
 //        Signer* signer;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14292,7 +14477,8 @@ impl WriteXdr for SetOptionsOp {
 //    };
 //
 // union with discriminant AssetType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14405,7 +14591,8 @@ impl WriteXdr for ChangeTrustAsset {
 //        int64 limit;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14446,7 +14633,8 @@ impl WriteXdr for ChangeTrustOp {
 //        uint32 authorize;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14487,7 +14675,8 @@ impl WriteXdr for AllowTrustOp {
 //        DataValue* dataValue; // set to null to clear
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14524,7 +14713,8 @@ impl WriteXdr for ManageDataOp {
 //        SequenceNumber bumpTo;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14560,7 +14750,8 @@ impl WriteXdr for BumpSequenceOp {
 //        Claimant claimants<10>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14600,7 +14791,8 @@ impl WriteXdr for CreateClaimableBalanceOp {
 //        ClaimableBalanceID balanceID;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14634,7 +14826,8 @@ impl WriteXdr for ClaimClaimableBalanceOp {
 //        AccountID sponsoredID;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14670,7 +14863,8 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14769,7 +14963,8 @@ impl WriteXdr for RevokeSponsorshipType {
 //            SignerKey signerKey;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14814,7 +15009,8 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
 //    };
 //
 // union with discriminant RevokeSponsorshipType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14914,7 +15110,8 @@ impl WriteXdr for RevokeSponsorshipOp {
 //        int64 amount;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14954,7 +15151,8 @@ impl WriteXdr for ClawbackOp {
 //        ClaimableBalanceID balanceID;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14992,7 +15190,8 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
 //        uint32 setFlags;   // which flags to set
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15045,7 +15244,8 @@ pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
 //        Price maxPrice;   // maximum depositA/depositB
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15094,7 +15294,8 @@ impl WriteXdr for LiquidityPoolDepositOp {
 //        int64 minAmountB; // minimum amount of second asset to withdraw
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15139,7 +15340,8 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15241,7 +15443,8 @@ impl WriteXdr for HostFunction {
 //        LedgerFootprint footprint;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15331,7 +15534,8 @@ impl WriteXdr for InvokeHostFunctionOp {
 //        }
 //
 // union with discriminant OperationType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15651,7 +15855,8 @@ impl WriteXdr for OperationBody {
 //        body;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15690,7 +15895,8 @@ impl WriteXdr for Operation {
 //            uint32 opNum;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15734,7 +15940,8 @@ impl WriteXdr for HashIdPreimageOperationId {
 //            Asset asset;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15781,7 +15988,8 @@ impl WriteXdr for HashIdPreimageRevokeId {
 //            uint256 salt;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15819,7 +16027,8 @@ impl WriteXdr for HashIdPreimageEd25519ContractId {
 //            uint256 salt;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15884,7 +16093,8 @@ impl WriteXdr for HashIdPreimageContractId {
 //    };
 //
 // union with discriminant EnvelopeType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16005,7 +16215,8 @@ impl WriteXdr for HashIdPreimage {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16125,7 +16336,8 @@ impl WriteXdr for MemoType {
 //    };
 //
 // union with discriminant MemoType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16242,7 +16454,8 @@ impl WriteXdr for Memo {
 //        TimePoint maxTime; // 0 here means no maxTime
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16280,7 +16493,8 @@ impl WriteXdr for TimeBounds {
 //        uint32 maxLedger; // 0 here means no maxLedger
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16345,7 +16559,8 @@ impl WriteXdr for LedgerBounds {
 //        SignerKey extraSigners<2>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16397,7 +16612,8 @@ impl WriteXdr for PreconditionsV2 {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16505,7 +16721,8 @@ impl WriteXdr for PreconditionType {
 //    };
 //
 // union with discriminant PreconditionType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16617,7 +16834,8 @@ pub const MAX_OPS_PER_TX: u64 = 100;
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16718,7 +16936,8 @@ impl WriteXdr for TransactionV0Ext {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16773,7 +16992,8 @@ impl WriteXdr for TransactionV0 {
 //        DecoratedSignature signatures<20>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16812,7 +17032,8 @@ impl WriteXdr for TransactionV0Envelope {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16924,7 +17145,8 @@ impl WriteXdr for TransactionExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -16979,7 +17201,8 @@ impl WriteXdr for Transaction {
 //        DecoratedSignature signatures<20>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17018,7 +17241,8 @@ impl WriteXdr for TransactionV1Envelope {
 //        }
 //
 // union with discriminant EnvelopeType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17110,7 +17334,8 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17213,7 +17438,8 @@ impl WriteXdr for FeeBumpTransactionExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17259,7 +17485,8 @@ impl WriteXdr for FeeBumpTransaction {
 //        DecoratedSignature signatures<20>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17302,7 +17529,8 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
 //    };
 //
 // union with discriminant EnvelopeType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17411,7 +17639,8 @@ impl WriteXdr for TransactionEnvelope {
 //        }
 //
 // union with discriminant EnvelopeType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17516,7 +17745,8 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
 //        taggedTransaction;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17556,7 +17786,8 @@ impl WriteXdr for TransactionSignaturePayload {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17668,7 +17899,8 @@ impl WriteXdr for ClaimAtomType {
 //        int64 amountBought;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17727,7 +17959,8 @@ impl WriteXdr for ClaimOfferAtomV0 {
 //        int64 amountBought;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17784,7 +18017,8 @@ impl WriteXdr for ClaimOfferAtom {
 //        int64 amountBought;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17836,7 +18070,8 @@ impl WriteXdr for ClaimLiquidityAtom {
 //    };
 //
 // union with discriminant ClaimAtomType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -17949,7 +18184,8 @@ impl WriteXdr for ClaimAtom {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -18066,7 +18302,8 @@ impl WriteXdr for CreateAccountResultCode {
 //    };
 //
 // union with discriminant CreateAccountResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -18195,7 +18432,8 @@ impl WriteXdr for CreateAccountResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -18337,7 +18575,8 @@ impl WriteXdr for PaymentResultCode {
 //    };
 //
 // union with discriminant PaymentResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -18508,7 +18747,8 @@ impl WriteXdr for PaymentResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -18653,7 +18893,8 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
 //        int64 amount;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -18694,7 +18935,8 @@ impl WriteXdr for SimplePaymentResult {
 //            SimplePaymentResult last;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -18753,7 +18995,8 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
 //    };
 //
 // union with discriminant PathPaymentStrictReceiveResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -18945,7 +19188,8 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -19089,7 +19333,8 @@ impl WriteXdr for PathPaymentStrictSendResultCode {
 //            SimplePaymentResult last;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -19147,7 +19392,8 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
 //    };
 //
 // union with discriminant PathPaymentStrictSendResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -19338,7 +19584,8 @@ impl WriteXdr for PathPaymentStrictSendResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -19483,7 +19730,8 @@ impl WriteXdr for ManageSellOfferResultCode {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -19590,7 +19838,8 @@ impl WriteXdr for ManageOfferEffect {
 //        }
 //
 // union with discriminant ManageOfferEffect
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -19705,7 +19954,8 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
 //        offer;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -19757,7 +20007,8 @@ impl WriteXdr for ManageOfferSuccessResult {
 //    };
 //
 // union with discriminant ManageSellOfferResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -19943,7 +20194,8 @@ impl WriteXdr for ManageSellOfferResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -20100,7 +20352,8 @@ impl WriteXdr for ManageBuyOfferResultCode {
 //    };
 //
 // union with discriminant ManageBuyOfferResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -20280,7 +20533,8 @@ impl WriteXdr for ManageBuyOfferResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -20427,7 +20681,8 @@ impl WriteXdr for SetOptionsResultCode {
 //    };
 //
 // union with discriminant SetOptionsResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -20594,7 +20849,8 @@ impl WriteXdr for SetOptionsResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -20731,7 +20987,8 @@ impl WriteXdr for ChangeTrustResultCode {
 //    };
 //
 // union with discriminant ChangeTrustResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -20882,7 +21139,8 @@ impl WriteXdr for ChangeTrustResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -21009,7 +21267,8 @@ impl WriteXdr for AllowTrustResultCode {
 //    };
 //
 // union with discriminant AllowTrustResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -21148,7 +21407,8 @@ impl WriteXdr for AllowTrustResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -21280,7 +21540,8 @@ impl WriteXdr for AccountMergeResultCode {
 //    };
 //
 // union with discriminant AccountMergeResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -21418,7 +21679,8 @@ impl WriteXdr for AccountMergeResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -21515,7 +21777,8 @@ impl WriteXdr for InflationResultCode {
 //        int64 amount;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -21556,7 +21819,8 @@ impl WriteXdr for InflationPayout {
 //    };
 //
 // union with discriminant InflationResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -21661,7 +21925,8 @@ impl WriteXdr for InflationResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -21778,7 +22043,8 @@ impl WriteXdr for ManageDataResultCode {
 //    };
 //
 // union with discriminant ManageDataResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -21898,7 +22164,8 @@ impl WriteXdr for ManageDataResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -22000,7 +22267,8 @@ impl WriteXdr for BumpSequenceResultCode {
 //    };
 //
 // union with discriminant BumpSequenceResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -22104,7 +22372,8 @@ impl WriteXdr for BumpSequenceResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -22228,7 +22497,8 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
 //    };
 //
 // union with discriminant CreateClaimableBalanceResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -22360,7 +22630,8 @@ impl WriteXdr for CreateClaimableBalanceResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -22483,7 +22754,8 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
 //    };
 //
 // union with discriminant ClaimClaimableBalanceResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -22614,7 +22886,8 @@ impl WriteXdr for ClaimClaimableBalanceResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -22728,7 +23001,8 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
 //    };
 //
 // union with discriminant BeginSponsoringFutureReservesResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -22845,7 +23119,8 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -22949,7 +23224,8 @@ impl WriteXdr for EndSponsoringFutureReservesResultCode {
 //    };
 //
 // union with discriminant EndSponsoringFutureReservesResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -23058,7 +23334,8 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -23180,7 +23457,8 @@ impl WriteXdr for RevokeSponsorshipResultCode {
 //    };
 //
 // union with discriminant RevokeSponsorshipResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -23311,7 +23589,8 @@ impl WriteXdr for RevokeSponsorshipResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -23428,7 +23707,8 @@ impl WriteXdr for ClawbackResultCode {
 //    };
 //
 // union with discriminant ClawbackResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -23551,7 +23831,8 @@ impl WriteXdr for ClawbackResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -23665,7 +23946,8 @@ impl WriteXdr for ClawbackClaimableBalanceResultCode {
 //    };
 //
 // union with discriminant ClawbackClaimableBalanceResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -23787,7 +24069,8 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -23909,7 +24192,8 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
 //    };
 //
 // union with discriminant SetTrustLineFlagsResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -24047,7 +24331,8 @@ impl WriteXdr for SetTrustLineFlagsResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -24180,7 +24465,8 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
 //    };
 //
 // union with discriminant LiquidityPoolDepositResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -24328,7 +24614,8 @@ impl WriteXdr for LiquidityPoolDepositResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -24451,7 +24738,8 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
 //    };
 //
 // union with discriminant LiquidityPoolWithdrawResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -24581,7 +24869,8 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -24689,7 +24978,8 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 //    };
 //
 // union with discriminant InvokeHostFunctionResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -24802,7 +25092,8 @@ impl WriteXdr for InvokeHostFunctionResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -24970,7 +25261,8 @@ impl WriteXdr for OperationResultCode {
 //        }
 //
 // union with discriminant OperationType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -25298,7 +25590,8 @@ impl WriteXdr for OperationResultTr {
 //    };
 //
 // union with discriminant OperationResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -25449,7 +25742,8 @@ impl WriteXdr for OperationResult {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -25631,7 +25925,8 @@ impl WriteXdr for TransactionResultCode {
 //        }
 //
 // union with discriminant TransactionResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -25819,7 +26114,8 @@ impl WriteXdr for InnerTransactionResultResult {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -25943,7 +26239,8 @@ impl WriteXdr for InnerTransactionResultExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -25984,7 +26281,8 @@ impl WriteXdr for InnerTransactionResult {
 //        InnerTransactionResult result; // result for the inner transaction
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -26043,7 +26341,8 @@ impl WriteXdr for InnerTransactionResultPair {
 //        }
 //
 // union with discriminant TransactionResultCode
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -26247,7 +26546,8 @@ impl WriteXdr for TransactionResultResult {
 //        }
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -26372,7 +26672,8 @@ impl WriteXdr for TransactionResultExt {
 //        ext;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -26409,7 +26710,8 @@ impl WriteXdr for TransactionResult {
 //
 //   typedef opaque Hash[32];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -26495,7 +26797,8 @@ impl AsRef<[u8]> for Hash {
 //
 //   typedef opaque uint256[32];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -26610,7 +26913,8 @@ pub type Int64 = i64;
 //    };
 //
 // union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -26707,7 +27011,8 @@ impl WriteXdr for ExtensionPoint {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -26818,7 +27123,8 @@ impl WriteXdr for CryptoKeyType {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -26914,7 +27220,8 @@ impl WriteXdr for PublicKeyType {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27022,7 +27329,8 @@ impl WriteXdr for SignerKeyType {
 //    };
 //
 // union with discriminant PublicKeyType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27117,7 +27425,8 @@ impl WriteXdr for PublicKey {
 //            opaque payload<64>;
 //        }
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27170,7 +27479,8 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
 //    };
 //
 // union with discriminant SignerKeyType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27279,7 +27589,9 @@ impl WriteXdr for SignerKey {
 //
 //   typedef opaque Signature<64>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27377,7 +27689,8 @@ impl AsRef<[u8]> for Signature {
 //
 //   typedef opaque SignatureHint[4];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27463,7 +27776,8 @@ impl AsRef<[u8]> for SignatureHint {
 //
 //   typedef PublicKey NodeID;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27515,7 +27829,8 @@ impl WriteXdr for NodeId {
 //        opaque key[32];
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27549,7 +27864,8 @@ impl WriteXdr for Curve25519Secret {
 //        opaque key[32];
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27583,7 +27899,8 @@ impl WriteXdr for Curve25519Public {
 //        opaque key[32];
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27617,7 +27934,8 @@ impl WriteXdr for HmacSha256Key {
 //        opaque mac[32];
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27665,7 +27983,8 @@ pub type ScSymbol = VecM<u8, 10>;
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27791,7 +28110,8 @@ impl WriteXdr for ScValType {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -27906,7 +28226,8 @@ impl WriteXdr for ScStatic {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -28040,7 +28361,8 @@ impl WriteXdr for ScStatusType {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -28185,7 +28507,8 @@ impl WriteXdr for ScHostValErrorCode {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -28308,7 +28631,8 @@ impl WriteXdr for ScHostObjErrorCode {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -28424,7 +28748,8 @@ impl WriteXdr for ScHostFnErrorCode {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -28540,7 +28865,8 @@ impl WriteXdr for ScHostStorageErrorCode {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -28656,7 +28982,8 @@ impl WriteXdr for ScHostContextErrorCode {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -28824,7 +29151,8 @@ impl WriteXdr for ScVmErrorCode {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -28936,7 +29264,8 @@ impl WriteXdr for ScUnknownErrorCode {
 //    };
 //
 // union with discriminant ScStatusType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -29094,7 +29423,8 @@ impl WriteXdr for ScStatus {
 //    };
 //
 // union with discriminant ScValType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -29241,7 +29571,8 @@ impl WriteXdr for ScVal {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -29364,7 +29695,8 @@ impl WriteXdr for ScObjectType {
 //        SCVal val;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -29404,7 +29736,9 @@ pub const SCVAL_LIMIT: u64 = 256000;
 //
 //   typedef SCVal SCVec<SCVAL_LIMIT>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -29502,7 +29836,9 @@ impl AsRef<[ScVal]> for ScVec {
 //
 //   typedef SCMapEntry SCMap<SCVAL_LIMIT>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -29606,7 +29942,8 @@ impl AsRef<[ScMapEntry]> for ScMap {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -29710,7 +30047,8 @@ impl WriteXdr for ScNumSign {
 //    };
 //
 // union with discriminant ScNumSign
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -29812,7 +30150,8 @@ impl WriteXdr for ScBigInt {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -29906,7 +30245,8 @@ impl WriteXdr for ScHashType {
 //    };
 //
 // union with discriminant ScHashType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30012,7 +30352,8 @@ impl WriteXdr for ScHash {
 //    };
 //
 // union with discriminant ScObjectType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30147,7 +30488,8 @@ impl WriteXdr for ScObject {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30241,7 +30583,8 @@ impl WriteXdr for ScEnvMetaKind {
 //    };
 //
 // union with discriminant ScEnvMetaKind
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30355,7 +30698,8 @@ impl WriteXdr for ScEnvMetaEntry {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30513,7 +30857,8 @@ impl WriteXdr for ScSpecType {
 //        SCSpecTypeDef valueType;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30548,7 +30893,8 @@ impl WriteXdr for ScSpecTypeOption {
 //        SCSpecTypeDef errorType;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30585,7 +30931,8 @@ impl WriteXdr for ScSpecTypeResult {
 //        SCSpecTypeDef elementType;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30620,7 +30967,8 @@ impl WriteXdr for ScSpecTypeVec {
 //        SCSpecTypeDef valueType;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30657,7 +31005,8 @@ impl WriteXdr for ScSpecTypeMap {
 //        SCSpecTypeDef elementType;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30691,7 +31040,8 @@ impl WriteXdr for ScSpecTypeSet {
 //        SCSpecTypeDef valueTypes<12>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30725,7 +31075,8 @@ impl WriteXdr for ScSpecTypeTuple {
 //        string name<60>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30784,7 +31135,8 @@ impl WriteXdr for ScSpecTypeUdt {
 //    };
 //
 // union with discriminant ScSpecType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30973,7 +31325,8 @@ impl WriteXdr for ScSpecTypeDef {
 //        SCSpecTypeDef type;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -31011,7 +31364,8 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
 //        SCSpecUDTStructFieldV0 fields<40>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -31049,7 +31403,8 @@ impl WriteXdr for ScSpecUdtStructV0 {
 //        SCSpecTypeDef *type;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -31087,7 +31442,8 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
 //        SCSpecUDTUnionCaseV0 cases<50>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -31126,7 +31482,8 @@ impl WriteXdr for ScSpecUdtUnionV0 {
 //        SCSpecTypeDef outputTypes<1>;
 //    };
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -31169,7 +31526,8 @@ impl WriteXdr for ScSpecFunctionV0 {
 //    };
 //
 // enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -31277,7 +31635,8 @@ impl WriteXdr for ScSpecEntryKind {
 //    };
 //
 // union with discriminant ScSpecEntryKind
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Arbitrary)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),

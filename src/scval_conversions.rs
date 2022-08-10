@@ -435,7 +435,7 @@ impl TryFrom<ScVal> for String {
 impl TryFrom<Vec<u8>> for ScObject {
     type Error = ();
     fn try_from(v: Vec<u8>) -> Result<Self, Self::Error> {
-        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+        Ok(ScObject::Bytes(v.try_into().map_err(|_| ())?))
     }
 }
 
@@ -443,7 +443,7 @@ impl TryFrom<Vec<u8>> for ScObject {
 impl TryFrom<&Vec<u8>> for ScObject {
     type Error = ();
     fn try_from(v: &Vec<u8>) -> Result<Self, Self::Error> {
-        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+        Ok(ScObject::Bytes(v.try_into().map_err(|_| ())?))
     }
 }
 
@@ -467,7 +467,7 @@ impl TryFrom<&Vec<u8>> for ScVal {
 impl TryFrom<&[u8]> for ScObject {
     type Error = ();
     fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
-        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+        Ok(ScObject::Bytes(v.try_into().map_err(|_| ())?))
     }
 }
 
@@ -475,7 +475,7 @@ impl TryFrom<&[u8]> for ScObject {
 impl<const N: usize> TryFrom<[u8; N]> for ScObject {
     type Error = ();
     fn try_from(v: [u8; N]) -> Result<Self, Self::Error> {
-        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+        Ok(ScObject::Bytes(v.try_into().map_err(|_| ())?))
     }
 }
 
@@ -483,7 +483,7 @@ impl<const N: usize> TryFrom<[u8; N]> for ScObject {
 impl<const N: usize> TryFrom<&[u8; N]> for ScObject {
     type Error = ();
     fn try_from(v: &[u8; N]) -> Result<Self, Self::Error> {
-        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+        Ok(ScObject::Bytes(v.try_into().map_err(|_| ())?))
     }
 }
 
@@ -515,7 +515,7 @@ impl<const N: usize> TryFrom<&[u8; N]> for ScVal {
 impl TryFrom<&'static [u8]> for ScObject {
     type Error = ();
     fn try_from(v: &'static [u8]) -> Result<Self, Self::Error> {
-        Ok(ScObject::Binary(v.try_into().map_err(|_| ())?))
+        Ok(ScObject::Bytes(v.try_into().map_err(|_| ())?))
     }
 }
 
@@ -531,7 +531,7 @@ impl TryFrom<&'static [u8]> for ScVal {
 impl TryFrom<ScObject> for Vec<u8> {
     type Error = ();
     fn try_from(v: ScObject) -> Result<Self, Self::Error> {
-        if let ScObject::Binary(b) = v {
+        if let ScObject::Bytes(b) = v {
             Ok(b.into())
         } else {
             Err(())
@@ -543,7 +543,7 @@ impl TryFrom<ScObject> for Vec<u8> {
 impl TryFrom<&ScObject> for Vec<u8> {
     type Error = ();
     fn try_from(v: &ScObject) -> Result<Self, Self::Error> {
-        if let ScObject::Binary(b) = v {
+        if let ScObject::Bytes(b) = v {
             Ok(b.into())
         } else {
             Err(())
@@ -555,7 +555,7 @@ impl TryFrom<&ScObject> for Vec<u8> {
 impl TryFrom<ScVal> for Vec<u8> {
     type Error = ();
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
-        if let ScVal::Object(Some(ScObject::Binary(b))) = v {
+        if let ScVal::Object(Some(ScObject::Bytes(b))) = v {
             Ok(b.into())
         } else {
             Err(())
@@ -567,7 +567,7 @@ impl TryFrom<ScVal> for Vec<u8> {
 impl TryFrom<&ScVal> for Vec<u8> {
     type Error = ();
     fn try_from(v: &ScVal) -> Result<Self, Self::Error> {
-        if let ScVal::Object(Some(ScObject::Binary(b))) = v {
+        if let ScVal::Object(Some(ScObject::Bytes(b))) = v {
             Ok(b.into())
         } else {
             Err(())
@@ -1048,7 +1048,7 @@ mod test {
         let val: ScVal = v.try_into().unwrap();
         assert_eq!(
             val,
-            ScVal::Object(Some(ScObject::Binary(
+            ScVal::Object(Some(ScObject::Bytes(
                 vec![1, 2, 3, 4, 5].try_into().unwrap()
             )))
         );
@@ -1057,7 +1057,7 @@ mod test {
         let val: ScVal = v.try_into().unwrap();
         assert_eq!(
             val,
-            ScVal::Object(Some(ScObject::Binary(
+            ScVal::Object(Some(ScObject::Bytes(
                 vec![1, 2, 3, 4, 5].try_into().unwrap()
             )))
         );

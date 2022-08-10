@@ -23,11 +23,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "cb6ca7bb5cdcecf24591d997d5f0147b31e76a6ecac1221955f10edffad05cb9",
+        "ed09440dd1905a2c47024eac913bd36fed02dd2f076cd164dc76ce533f2fbbd8",
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "6bbe2a822c6cc69d99bd5332876337c36557403df90abd790b88b13d61a29129",
+        "60b8198a7024997b4274d2e2982ea40bc1e9bace40dd139aba1d188137754080",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -29232,7 +29232,7 @@ impl WriteXdr for ScVal {
 //        SCO_MAP = 1,
 //        SCO_U64 = 2,
 //        SCO_I64 = 3,
-//        SCO_BINARY = 4,
+//        SCO_BYTES = 4,
 //        SCO_BIG_INT = 5,
 //        SCO_HASH = 6,
 //        SCO_PUBLIC_KEY = 7
@@ -29253,7 +29253,7 @@ pub enum ScObjectType {
     Map = 1,
     U64 = 2,
     I64 = 3,
-    Binary = 4,
+    Bytes = 4,
     BigInt = 5,
     Hash = 6,
     PublicKey = 7,
@@ -29267,7 +29267,7 @@ impl ScObjectType {
             Self::Map => "Map",
             Self::U64 => "U64",
             Self::I64 => "I64",
-            Self::Binary => "Binary",
+            Self::Bytes => "Bytes",
             Self::BigInt => "BigInt",
             Self::Hash => "Hash",
             Self::PublicKey => "PublicKey",
@@ -29281,7 +29281,7 @@ impl ScObjectType {
             ScObjectType::Map,
             ScObjectType::U64,
             ScObjectType::I64,
-            ScObjectType::Binary,
+            ScObjectType::Bytes,
             ScObjectType::BigInt,
             ScObjectType::Hash,
             ScObjectType::PublicKey,
@@ -29321,7 +29321,7 @@ impl TryFrom<i32> for ScObjectType {
             1 => ScObjectType::Map,
             2 => ScObjectType::U64,
             3 => ScObjectType::I64,
-            4 => ScObjectType::Binary,
+            4 => ScObjectType::Bytes,
             5 => ScObjectType::BigInt,
             6 => ScObjectType::Hash,
             7 => ScObjectType::PublicKey,
@@ -30001,7 +30001,7 @@ impl WriteXdr for ScHash {
 //        uint64 u64;
 //    case SCO_I64:
 //        int64 i64;
-//    case SCO_BINARY:
+//    case SCO_BYTES:
 //        opaque bin<SCVAL_LIMIT>;
 //    case SCO_BIG_INT:
 //        SCBigInt bigInt;
@@ -30024,7 +30024,7 @@ pub enum ScObject {
     Map(ScMap),
     U64(u64),
     I64(i64),
-    Binary(VecM<u8, 256000>),
+    Bytes(VecM<u8, 256000>),
     BigInt(ScBigInt),
     Hash(ScHash),
     PublicKey(PublicKey),
@@ -30038,7 +30038,7 @@ impl ScObject {
             Self::Map(_) => "Map",
             Self::U64(_) => "U64",
             Self::I64(_) => "I64",
-            Self::Binary(_) => "Binary",
+            Self::Bytes(_) => "Bytes",
             Self::BigInt(_) => "BigInt",
             Self::Hash(_) => "Hash",
             Self::PublicKey(_) => "PublicKey",
@@ -30053,7 +30053,7 @@ impl ScObject {
             Self::Map(_) => ScObjectType::Map,
             Self::U64(_) => ScObjectType::U64,
             Self::I64(_) => ScObjectType::I64,
-            Self::Binary(_) => ScObjectType::Binary,
+            Self::Bytes(_) => ScObjectType::Bytes,
             Self::BigInt(_) => ScObjectType::BigInt,
             Self::Hash(_) => ScObjectType::Hash,
             Self::PublicKey(_) => ScObjectType::PublicKey,
@@ -30067,7 +30067,7 @@ impl ScObject {
             ScObjectType::Map,
             ScObjectType::U64,
             ScObjectType::I64,
-            ScObjectType::Binary,
+            ScObjectType::Bytes,
             ScObjectType::BigInt,
             ScObjectType::Hash,
             ScObjectType::PublicKey,
@@ -30109,7 +30109,7 @@ impl ReadXdr for ScObject {
             ScObjectType::Map => Self::Map(ScMap::read_xdr(r)?),
             ScObjectType::U64 => Self::U64(u64::read_xdr(r)?),
             ScObjectType::I64 => Self::I64(i64::read_xdr(r)?),
-            ScObjectType::Binary => Self::Binary(VecM::<u8, 256000>::read_xdr(r)?),
+            ScObjectType::Bytes => Self::Bytes(VecM::<u8, 256000>::read_xdr(r)?),
             ScObjectType::BigInt => Self::BigInt(ScBigInt::read_xdr(r)?),
             ScObjectType::Hash => Self::Hash(ScHash::read_xdr(r)?),
             ScObjectType::PublicKey => Self::PublicKey(PublicKey::read_xdr(r)?),
@@ -30130,7 +30130,7 @@ impl WriteXdr for ScObject {
             Self::Map(v) => v.write_xdr(w)?,
             Self::U64(v) => v.write_xdr(w)?,
             Self::I64(v) => v.write_xdr(w)?,
-            Self::Binary(v) => v.write_xdr(w)?,
+            Self::Bytes(v) => v.write_xdr(w)?,
             Self::BigInt(v) => v.write_xdr(w)?,
             Self::Hash(v) => v.write_xdr(w)?,
             Self::PublicKey(v) => v.write_xdr(w)?,
@@ -30339,7 +30339,7 @@ impl WriteXdr for ScEnvMetaEntry {
 //        SC_SPEC_TYPE_SYMBOL = 6,
 //        SC_SPEC_TYPE_BITSET = 7,
 //        SC_SPEC_TYPE_STATUS = 8,
-//        SC_SPEC_TYPE_BINARY = 9,
+//        SC_SPEC_TYPE_BYTES = 9,
 //        SC_SPEC_TYPE_BIG_INT = 10,
 //
 //        // Types with parameters.
@@ -30371,7 +30371,7 @@ pub enum ScSpecType {
     Symbol = 6,
     Bitset = 7,
     Status = 8,
-    Binary = 9,
+    Bytes = 9,
     BigInt = 10,
     Option = 1000,
     Result = 1001,
@@ -30394,7 +30394,7 @@ impl ScSpecType {
             Self::Symbol => "Symbol",
             Self::Bitset => "Bitset",
             Self::Status => "Status",
-            Self::Binary => "Binary",
+            Self::Bytes => "Bytes",
             Self::BigInt => "BigInt",
             Self::Option => "Option",
             Self::Result => "Result",
@@ -30417,7 +30417,7 @@ impl ScSpecType {
             ScSpecType::Symbol,
             ScSpecType::Bitset,
             ScSpecType::Status,
-            ScSpecType::Binary,
+            ScSpecType::Bytes,
             ScSpecType::BigInt,
             ScSpecType::Option,
             ScSpecType::Result,
@@ -30466,7 +30466,7 @@ impl TryFrom<i32> for ScSpecType {
             6 => ScSpecType::Symbol,
             7 => ScSpecType::Bitset,
             8 => ScSpecType::Status,
-            9 => ScSpecType::Binary,
+            9 => ScSpecType::Bytes,
             10 => ScSpecType::BigInt,
             1000 => ScSpecType::Option,
             1001 => ScSpecType::Result,
@@ -30764,7 +30764,7 @@ impl WriteXdr for ScSpecTypeUdt {
 //    case SC_SPEC_TYPE_SYMBOL:
 //    case SC_SPEC_TYPE_BITSET:
 //    case SC_SPEC_TYPE_STATUS:
-//    case SC_SPEC_TYPE_BINARY:
+//    case SC_SPEC_TYPE_BYTES:
 //    case SC_SPEC_TYPE_BIG_INT:
 //        void;
 //    case SC_SPEC_TYPE_OPTION:
@@ -30800,7 +30800,7 @@ pub enum ScSpecTypeDef {
     Symbol,
     Bitset,
     Status,
-    Binary,
+    Bytes,
     BigInt,
     Option(Box<ScSpecTypeOption>),
     Result(Box<ScSpecTypeResult>),
@@ -30823,7 +30823,7 @@ impl ScSpecTypeDef {
             Self::Symbol => "Symbol",
             Self::Bitset => "Bitset",
             Self::Status => "Status",
-            Self::Binary => "Binary",
+            Self::Bytes => "Bytes",
             Self::BigInt => "BigInt",
             Self::Option(_) => "Option",
             Self::Result(_) => "Result",
@@ -30847,7 +30847,7 @@ impl ScSpecTypeDef {
             Self::Symbol => ScSpecType::Symbol,
             Self::Bitset => ScSpecType::Bitset,
             Self::Status => ScSpecType::Status,
-            Self::Binary => ScSpecType::Binary,
+            Self::Bytes => ScSpecType::Bytes,
             Self::BigInt => ScSpecType::BigInt,
             Self::Option(_) => ScSpecType::Option,
             Self::Result(_) => ScSpecType::Result,
@@ -30870,7 +30870,7 @@ impl ScSpecTypeDef {
             ScSpecType::Symbol,
             ScSpecType::Bitset,
             ScSpecType::Status,
-            ScSpecType::Binary,
+            ScSpecType::Bytes,
             ScSpecType::BigInt,
             ScSpecType::Option,
             ScSpecType::Result,
@@ -30921,7 +30921,7 @@ impl ReadXdr for ScSpecTypeDef {
             ScSpecType::Symbol => Self::Symbol,
             ScSpecType::Bitset => Self::Bitset,
             ScSpecType::Status => Self::Status,
-            ScSpecType::Binary => Self::Binary,
+            ScSpecType::Bytes => Self::Bytes,
             ScSpecType::BigInt => Self::BigInt,
             ScSpecType::Option => Self::Option(Box::<ScSpecTypeOption>::read_xdr(r)?),
             ScSpecType::Result => Self::Result(Box::<ScSpecTypeResult>::read_xdr(r)?),
@@ -30951,7 +30951,7 @@ impl WriteXdr for ScSpecTypeDef {
             Self::Symbol => ().write_xdr(w)?,
             Self::Bitset => ().write_xdr(w)?,
             Self::Status => ().write_xdr(w)?,
-            Self::Binary => ().write_xdr(w)?,
+            Self::Bytes => ().write_xdr(w)?,
             Self::BigInt => ().write_xdr(w)?,
             Self::Option(v) => v.write_xdr(w)?,
             Self::Result(v) => v.write_xdr(w)?,

@@ -23,7 +23,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "ed09440dd1905a2c47024eac913bd36fed02dd2f076cd164dc76ce533f2fbbd8",
+        "276724f71c5f56a60ffa3377381020863ed1555f0075c5222b5df5f4e14faf15",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -31767,13 +31767,52 @@ impl WriteXdr for ScSpecUdtUnionV0 {
     }
 }
 
+// ScSpecFunctionInputV0 is an XDR Struct defines as:
+//
+//   struct SCSpecFunctionInputV0
+//    {
+//        string name<30>;
+//        SCSpecTypeDef type;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct ScSpecFunctionInputV0 {
+    pub name: VecM<u8, 30>,
+    pub type_: ScSpecTypeDef,
+}
+
+impl ReadXdr for ScSpecFunctionInputV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            name: VecM::<u8, 30>::read_xdr(r)?,
+            type_: ScSpecTypeDef::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecFunctionInputV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.name.write_xdr(w)?;
+        self.type_.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // ScSpecFunctionV0 is an XDR Struct defines as:
 //
 //   struct SCSpecFunctionV0
 //    {
 //        SCSymbol name;
-//        SCSpecTypeDef inputTypes<10>;
-//        SCSpecTypeDef outputTypes<1>;
+//        SCSpecFunctionInputV0 inputs<10>;
+//        SCSpecTypeDef outputs<1>;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -31785,8 +31824,8 @@ impl WriteXdr for ScSpecUdtUnionV0 {
 )]
 pub struct ScSpecFunctionV0 {
     pub name: VecM<u8, 10>,
-    pub input_types: VecM<ScSpecTypeDef, 10>,
-    pub output_types: VecM<ScSpecTypeDef, 1>,
+    pub inputs: VecM<ScSpecFunctionInputV0, 10>,
+    pub outputs: VecM<ScSpecTypeDef, 1>,
 }
 
 impl ReadXdr for ScSpecFunctionV0 {
@@ -31794,8 +31833,8 @@ impl ReadXdr for ScSpecFunctionV0 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             name: VecM::<u8, 10>::read_xdr(r)?,
-            input_types: VecM::<ScSpecTypeDef, 10>::read_xdr(r)?,
-            output_types: VecM::<ScSpecTypeDef, 1>::read_xdr(r)?,
+            inputs: VecM::<ScSpecFunctionInputV0, 10>::read_xdr(r)?,
+            outputs: VecM::<ScSpecTypeDef, 1>::read_xdr(r)?,
         })
     }
 }
@@ -31804,8 +31843,8 @@ impl WriteXdr for ScSpecFunctionV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.name.write_xdr(w)?;
-        self.input_types.write_xdr(w)?;
-        self.output_types.write_xdr(w)?;
+        self.inputs.write_xdr(w)?;
+        self.outputs.write_xdr(w)?;
         Ok(())
     }
 }

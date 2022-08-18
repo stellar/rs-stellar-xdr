@@ -35,7 +35,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "ee0efe28be5864ac7716fafb0e5a76dec312d890ac7ea3572db351831c23ff1c",
+        "fda39f3b8f1bd001f3f1d27ab11215bdda7ef6aef59e130161034ce2853937bb",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -11268,6 +11268,301 @@ impl WriteXdr for TransactionMetaV2 {
         self.tx_changes_before.write_xdr(w)?;
         self.operations.write_xdr(w)?;
         self.tx_changes_after.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ContractEventType is an XDR Enum defines as:
+//
+//   enum ContractEventType
+//    {
+//        SYSTEM = 0,
+//        CONTRACT = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+#[repr(i32)]
+pub enum ContractEventType {
+    System = 0,
+    Contract = 1,
+}
+
+impl ContractEventType {
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::System => "System",
+            Self::Contract => "Contract",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractEventType; 2] {
+        const VARIANTS: [ContractEventType; 2] =
+            [ContractEventType::System, ContractEventType::Contract];
+        VARIANTS
+    }
+}
+
+impl Name for ContractEventType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ContractEventType> for ContractEventType {
+    fn variants() -> slice::Iter<'static, ContractEventType> {
+        const VARIANTS: [ContractEventType; 2] = ContractEventType::variants();
+        VARIANTS.iter()
+    }
+}
+
+impl Enum for ContractEventType {}
+
+impl fmt::Display for ContractEventType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ContractEventType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ContractEventType::System,
+            1 => ContractEventType::Contract,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ContractEventType> for i32 {
+    #[must_use]
+    fn from(e: ContractEventType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ContractEventType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ContractEventType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ContractEventV0 is an XDR NestedStruct defines as:
+//
+//   struct
+//            {
+//                SCVec topics;
+//                SCVal data;
+//            }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct ContractEventV0 {
+    pub topics: ScVec,
+    pub data: ScVal,
+}
+
+impl ReadXdr for ContractEventV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            topics: ScVec::read_xdr(r)?,
+            data: ScVal::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ContractEventV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.topics.write_xdr(w)?;
+        self.data.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ContractEventBody is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            struct
+//            {
+//                SCVec topics;
+//                SCVal data;
+//            } v0;
+//        }
+//
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ContractEventBody {
+    V0(ContractEventV0),
+}
+
+impl ContractEventBody {
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0(_) => "V0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => 0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
+}
+
+impl Name for ContractEventBody {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for ContractEventBody {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for ContractEventBody {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = ContractEventBody::variants();
+        VARIANTS.iter()
+    }
+}
+
+impl Union<i32> for ContractEventBody {}
+
+impl ReadXdr for ContractEventBody {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            0 => Self::V0(ContractEventV0::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ContractEventBody {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ContractEvent is an XDR Struct defines as:
+//
+//   struct ContractEvent
+//    {
+//        // We can use this to add more fields, or because it
+//        // is first, to change ContractEvent into a union.
+//        ExtensionPoint ext;
+//
+//        Hash contractID;
+//        ContractEventType type;
+//
+//        union switch (int v)
+//        {
+//        case 0:
+//            struct
+//            {
+//                SCVec topics;
+//                SCVal data;
+//            } v0;
+//        }
+//        body;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct ContractEvent {
+    pub ext: ExtensionPoint,
+    pub contract_id: Hash,
+    pub type_: ContractEventType,
+    pub body: ContractEventBody,
+}
+
+impl ReadXdr for ContractEvent {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ext: ExtensionPoint::read_xdr(r)?,
+            contract_id: Hash::read_xdr(r)?,
+            type_: ContractEventType::read_xdr(r)?,
+            body: ContractEventBody::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ContractEvent {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ext.write_xdr(w)?;
+        self.contract_id.write_xdr(w)?;
+        self.type_.write_xdr(w)?;
+        self.body.write_xdr(w)?;
         Ok(())
     }
 }

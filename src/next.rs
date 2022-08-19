@@ -35,7 +35,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "fda39f3b8f1bd001f3f1d27ab11215bdda7ef6aef59e130161034ce2853937bb",
+        "68f8333c185a7c47775af79eede37e3ad9c4d12275449d4ecca16f76c21e3a3f",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -11515,7 +11515,7 @@ impl WriteXdr for ContractEventBody {
 //        // is first, to change ContractEvent into a union.
 //        ExtensionPoint ext;
 //
-//        Hash contractID;
+//        Hash* contractID;
 //        ContractEventType type;
 //
 //        union switch (int v)
@@ -11539,7 +11539,7 @@ impl WriteXdr for ContractEventBody {
 )]
 pub struct ContractEvent {
     pub ext: ExtensionPoint,
-    pub contract_id: Hash,
+    pub contract_id: Option<Hash>,
     pub type_: ContractEventType,
     pub body: ContractEventBody,
 }
@@ -11549,7 +11549,7 @@ impl ReadXdr for ContractEvent {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ext: ExtensionPoint::read_xdr(r)?,
-            contract_id: Hash::read_xdr(r)?,
+            contract_id: Option::<Hash>::read_xdr(r)?,
             type_: ContractEventType::read_xdr(r)?,
             body: ContractEventBody::read_xdr(r)?,
         })

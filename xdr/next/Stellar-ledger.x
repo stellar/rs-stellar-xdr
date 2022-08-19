@@ -371,7 +371,7 @@ struct ContractEvent
     // is first, to change ContractEvent into a union.
     ExtensionPoint ext;
 
-    Hash contractID;
+    Hash* contractID;
     ContractEventType type;
 
     union switch (int v)

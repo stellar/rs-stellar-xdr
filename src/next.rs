@@ -27,7 +27,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "e5d7861ce8a0629daa8d0e71efdc01c345ab96880a939b89fd39a04a9dd84236",
+        "0eb75f128f55a899a9ccecd4c5a2a4dcd7ef0cc56ff068ffeb419f55d1a72f74",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -29626,17 +29626,17 @@ impl WriteXdr for ScUnknownErrorCode {
 //    case SST_UNKNOWN_ERROR:
 //        SCUnknownErrorCode unknownCode;
 //    case SST_HOST_VALUE_ERROR:
-//        SCHostValErrorCode errorCode;
+//        SCHostValErrorCode valCode;
 //    case SST_HOST_OBJECT_ERROR:
-//        SCHostObjErrorCode errorCode;
+//        SCHostObjErrorCode objCode;
 //    case SST_HOST_FUNCTION_ERROR:
-//        SCHostFnErrorCode errorCode;
+//        SCHostFnErrorCode fnCode;
 //    case SST_HOST_STORAGE_ERROR:
-//        SCHostStorageErrorCode errorCode;
+//        SCHostStorageErrorCode storageCode;
 //    case SST_HOST_CONTEXT_ERROR:
-//        SCHostContextErrorCode errorCode;
+//        SCHostContextErrorCode contextCode;
 //    case SST_VM_ERROR:
-//        SCVmErrorCode errorCode;
+//        SCVmErrorCode vmCode;
 //    };
 //
 // union with discriminant ScStatusType

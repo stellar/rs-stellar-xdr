@@ -23,7 +23,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "276724f71c5f56a60ffa3377381020863ed1555f0075c5222b5df5f4e14faf15",
+        "adbad5f38d336dc20e3f346579f298ca3af789eaa279db31c403fe5f8f6e6e98",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -31676,6 +31676,7 @@ impl WriteXdr for ScEnvMetaEntry {
 //        SC_SPEC_TYPE_SET = 1003,
 //        SC_SPEC_TYPE_MAP = 1004,
 //        SC_SPEC_TYPE_TUPLE = 1005,
+//        SC_SPEC_TYPE_BYTES_N = 1006,
 //
 //        // User defined types.
 //        SC_SPEC_TYPE_UDT = 2000
@@ -31707,6 +31708,7 @@ pub enum ScSpecType {
     Set = 1003,
     Map = 1004,
     Tuple = 1005,
+    BytesN = 1006,
     Udt = 2000,
 }
 
@@ -31730,13 +31732,14 @@ impl ScSpecType {
             Self::Set => "Set",
             Self::Map => "Map",
             Self::Tuple => "Tuple",
+            Self::BytesN => "BytesN",
             Self::Udt => "Udt",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 17] {
-        const VARIANTS: [ScSpecType; 17] = [
+    pub const fn variants() -> [ScSpecType; 18] {
+        const VARIANTS: [ScSpecType; 18] = [
             ScSpecType::U32,
             ScSpecType::I32,
             ScSpecType::U64,
@@ -31753,6 +31756,7 @@ impl ScSpecType {
             ScSpecType::Set,
             ScSpecType::Map,
             ScSpecType::Tuple,
+            ScSpecType::BytesN,
             ScSpecType::Udt,
         ];
         VARIANTS
@@ -31768,7 +31772,7 @@ impl Name for ScSpecType {
 
 impl Variants<ScSpecType> for ScSpecType {
     fn variants() -> slice::Iter<'static, ScSpecType> {
-        const VARIANTS: [ScSpecType; 17] = ScSpecType::variants();
+        const VARIANTS: [ScSpecType; 18] = ScSpecType::variants();
         VARIANTS.iter()
     }
 }
@@ -31802,6 +31806,7 @@ impl TryFrom<i32> for ScSpecType {
             1003 => ScSpecType::Set,
             1004 => ScSpecType::Map,
             1005 => ScSpecType::Tuple,
+            1006 => ScSpecType::BytesN,
             2000 => ScSpecType::Udt,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -32052,6 +32057,41 @@ impl WriteXdr for ScSpecTypeTuple {
     }
 }
 
+// ScSpecTypeBytesN is an XDR Struct defines as:
+//
+//   struct SCSpecTypeBytesN
+//    {
+//        uint32 n;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct ScSpecTypeBytesN {
+    pub n: u32,
+}
+
+impl ReadXdr for ScSpecTypeBytesN {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            n: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeBytesN {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.n.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // ScSpecTypeUdt is an XDR Struct defines as:
 //
 //   struct SCSpecTypeUDT
@@ -32114,6 +32154,8 @@ impl WriteXdr for ScSpecTypeUdt {
 //        SCSpecTypeSet set;
 //    case SC_SPEC_TYPE_TUPLE:
 //        SCSpecTypeTuple tuple;
+//    case SC_SPEC_TYPE_BYTES_N:
+//        SCSpecTypeBytesN bytesN;
 //    case SC_SPEC_TYPE_UDT:
 //        SCSpecTypeUDT udt;
 //    };
@@ -32144,6 +32186,7 @@ pub enum ScSpecTypeDef {
     Map(Box<ScSpecTypeMap>),
     Set(Box<ScSpecTypeSet>),
     Tuple(Box<ScSpecTypeTuple>),
+    BytesN(ScSpecTypeBytesN),
     Udt(ScSpecTypeUdt),
 }
 
@@ -32167,6 +32210,7 @@ impl ScSpecTypeDef {
             Self::Map(_) => "Map",
             Self::Set(_) => "Set",
             Self::Tuple(_) => "Tuple",
+            Self::BytesN(_) => "BytesN",
             Self::Udt(_) => "Udt",
         }
     }
@@ -32191,13 +32235,14 @@ impl ScSpecTypeDef {
             Self::Map(_) => ScSpecType::Map,
             Self::Set(_) => ScSpecType::Set,
             Self::Tuple(_) => ScSpecType::Tuple,
+            Self::BytesN(_) => ScSpecType::BytesN,
             Self::Udt(_) => ScSpecType::Udt,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 17] {
-        const VARIANTS: [ScSpecType; 17] = [
+    pub const fn variants() -> [ScSpecType; 18] {
+        const VARIANTS: [ScSpecType; 18] = [
             ScSpecType::U64,
             ScSpecType::I64,
             ScSpecType::U32,
@@ -32214,6 +32259,7 @@ impl ScSpecTypeDef {
             ScSpecType::Map,
             ScSpecType::Set,
             ScSpecType::Tuple,
+            ScSpecType::BytesN,
             ScSpecType::Udt,
         ];
         VARIANTS
@@ -32236,7 +32282,7 @@ impl Discriminant<ScSpecType> for ScSpecTypeDef {
 
 impl Variants<ScSpecType> for ScSpecTypeDef {
     fn variants() -> slice::Iter<'static, ScSpecType> {
-        const VARIANTS: [ScSpecType; 17] = ScSpecTypeDef::variants();
+        const VARIANTS: [ScSpecType; 18] = ScSpecTypeDef::variants();
         VARIANTS.iter()
     }
 }
@@ -32265,6 +32311,7 @@ impl ReadXdr for ScSpecTypeDef {
             ScSpecType::Map => Self::Map(Box::<ScSpecTypeMap>::read_xdr(r)?),
             ScSpecType::Set => Self::Set(Box::<ScSpecTypeSet>::read_xdr(r)?),
             ScSpecType::Tuple => Self::Tuple(Box::<ScSpecTypeTuple>::read_xdr(r)?),
+            ScSpecType::BytesN => Self::BytesN(ScSpecTypeBytesN::read_xdr(r)?),
             ScSpecType::Udt => Self::Udt(ScSpecTypeUdt::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -32295,6 +32342,7 @@ impl WriteXdr for ScSpecTypeDef {
             Self::Map(v) => v.write_xdr(w)?,
             Self::Set(v) => v.write_xdr(w)?,
             Self::Tuple(v) => v.write_xdr(w)?,
+            Self::BytesN(v) => v.write_xdr(w)?,
             Self::Udt(v) => v.write_xdr(w)?,
         };
         Ok(())

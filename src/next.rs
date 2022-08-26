@@ -35,7 +35,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "68f8333c185a7c47775af79eede37e3ad9c4d12275449d4ecca16f76c21e3a3f",
+        "c1b43f57346f5ca124c79a1c05a33043bcb9a8185432efec848b7001afd3bb25",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -10509,6 +10509,224 @@ impl WriteXdr for TransactionHistoryResultEntry {
     }
 }
 
+// TransactionResultPairV2 is an XDR Struct defines as:
+//
+//   struct TransactionResultPairV2
+//    {
+//        Hash transactionHash;
+//        Hash hashOfMetaHashes; // hash of hashes in TransactionMetaV3
+//                               // TransactionResult is in the meta
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct TransactionResultPairV2 {
+    pub transaction_hash: Hash,
+    pub hash_of_meta_hashes: Hash,
+}
+
+impl ReadXdr for TransactionResultPairV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            transaction_hash: Hash::read_xdr(r)?,
+            hash_of_meta_hashes: Hash::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionResultPairV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.transaction_hash.write_xdr(w)?;
+        self.hash_of_meta_hashes.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// TransactionResultSetV2 is an XDR Struct defines as:
+//
+//   struct TransactionResultSetV2
+//    {
+//        TransactionResultPairV2 results<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct TransactionResultSetV2 {
+    pub results: VecM<TransactionResultPairV2>,
+}
+
+impl ReadXdr for TransactionResultSetV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            results: VecM::<TransactionResultPairV2>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionResultSetV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.results.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// TransactionHistoryResultEntryV2Ext is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum TransactionHistoryResultEntryV2Ext {
+    V0,
+}
+
+impl TransactionHistoryResultEntryV2Ext {
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => 0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        const VARIANTS: [i32; 1] = [0];
+        VARIANTS
+    }
+}
+
+impl Name for TransactionHistoryResultEntryV2Ext {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TransactionHistoryResultEntryV2Ext {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TransactionHistoryResultEntryV2Ext {
+    fn variants() -> slice::Iter<'static, i32> {
+        const VARIANTS: [i32; 1] = TransactionHistoryResultEntryV2Ext::variants();
+        VARIANTS.iter()
+    }
+}
+
+impl Union<i32> for TransactionHistoryResultEntryV2Ext {}
+
+impl ReadXdr for TransactionHistoryResultEntryV2Ext {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            0 => Self::V0,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for TransactionHistoryResultEntryV2Ext {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => ().write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// TransactionHistoryResultEntryV2 is an XDR Struct defines as:
+//
+//   struct TransactionHistoryResultEntryV2
+//    {
+//        uint32 ledgerSeq;
+//        TransactionResultSetV2 txResultSet;
+//
+//        // reserved for future use
+//        union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//        ext;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct TransactionHistoryResultEntryV2 {
+    pub ledger_seq: u32,
+    pub tx_result_set: TransactionResultSetV2,
+    pub ext: TransactionHistoryResultEntryV2Ext,
+}
+
+impl ReadXdr for TransactionHistoryResultEntryV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_seq: u32::read_xdr(r)?,
+            tx_result_set: TransactionResultSetV2::read_xdr(r)?,
+            ext: TransactionHistoryResultEntryV2Ext::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionHistoryResultEntryV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_seq.write_xdr(w)?;
+        self.tx_result_set.write_xdr(w)?;
+        self.ext.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // LedgerHeaderHistoryEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (int v)
@@ -11567,6 +11785,66 @@ impl WriteXdr for ContractEvent {
     }
 }
 
+// TransactionMetaV3 is an XDR Struct defines as:
+//
+//   struct TransactionMetaV3
+//    {
+//        LedgerEntryChanges txChangesBefore; // tx level changes before operations
+//                                            // are applied if any
+//        OperationMeta operations<>;         // meta for each operation
+//        LedgerEntryChanges txChangesAfter;  // tx level changes after operations are
+//                                            // applied if any
+//        ContractEvent events<>;            // custom events populated by the
+//                                            // contracts themselves
+//        TransactionResult txResult;
+//
+//        Hash hashes[3];                     // stores sha256(txChangesBefore, operations, txChangesAfter),
+//                                            // sha256(events), and sha256(txResult)
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct TransactionMetaV3 {
+    pub tx_changes_before: LedgerEntryChanges,
+    pub operations: VecM<OperationMeta>,
+    pub tx_changes_after: LedgerEntryChanges,
+    pub events: VecM<ContractEvent>,
+    pub tx_result: TransactionResult,
+    pub hashes: [Hash; 3],
+}
+
+impl ReadXdr for TransactionMetaV3 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
+            operations: VecM::<OperationMeta>::read_xdr(r)?,
+            tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
+            events: VecM::<ContractEvent>::read_xdr(r)?,
+            tx_result: TransactionResult::read_xdr(r)?,
+            hashes: <[Hash; 3]>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionMetaV3 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.tx_changes_before.write_xdr(w)?;
+        self.operations.write_xdr(w)?;
+        self.tx_changes_after.write_xdr(w)?;
+        self.events.write_xdr(w)?;
+        self.tx_result.write_xdr(w)?;
+        self.hashes.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // TransactionMeta is an XDR Union defines as:
 //
 //   union TransactionMeta switch (int v)
@@ -11577,6 +11855,8 @@ impl WriteXdr for ContractEvent {
 //        TransactionMetaV1 v1;
 //    case 2:
 //        TransactionMetaV2 v2;
+//    case 3:
+//        TransactionMetaV3 v3;
 //    };
 //
 // union with discriminant i32
@@ -11592,6 +11872,7 @@ pub enum TransactionMeta {
     V0(VecM<OperationMeta>),
     V1(TransactionMetaV1),
     V2(TransactionMetaV2),
+    V3(TransactionMetaV3),
 }
 
 impl TransactionMeta {
@@ -11601,6 +11882,7 @@ impl TransactionMeta {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
             Self::V2(_) => "V2",
+            Self::V3(_) => "V3",
         }
     }
 
@@ -11611,12 +11893,13 @@ impl TransactionMeta {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
             Self::V2(_) => 2,
+            Self::V3(_) => 3,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 3] {
-        const VARIANTS: [i32; 3] = [0, 1, 2];
+    pub const fn variants() -> [i32; 4] {
+        const VARIANTS: [i32; 4] = [0, 1, 2, 3];
         VARIANTS
     }
 }
@@ -11637,7 +11920,7 @@ impl Discriminant<i32> for TransactionMeta {
 
 impl Variants<i32> for TransactionMeta {
     fn variants() -> slice::Iter<'static, i32> {
-        const VARIANTS: [i32; 3] = TransactionMeta::variants();
+        const VARIANTS: [i32; 4] = TransactionMeta::variants();
         VARIANTS.iter()
     }
 }
@@ -11653,6 +11936,7 @@ impl ReadXdr for TransactionMeta {
             0 => Self::V0(VecM::<OperationMeta>::read_xdr(r)?),
             1 => Self::V1(TransactionMetaV1::read_xdr(r)?),
             2 => Self::V2(TransactionMetaV2::read_xdr(r)?),
+            3 => Self::V3(TransactionMetaV3::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11669,6 +11953,7 @@ impl WriteXdr for TransactionMeta {
             Self::V0(v) => v.write_xdr(w)?,
             Self::V1(v) => v.write_xdr(w)?,
             Self::V2(v) => v.write_xdr(w)?,
+            Self::V3(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -11708,6 +11993,49 @@ impl ReadXdr for TransactionResultMeta {
 }
 
 impl WriteXdr for TransactionResultMeta {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.result.write_xdr(w)?;
+        self.fee_processing.write_xdr(w)?;
+        self.tx_apply_processing.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// TransactionResultMetaV2 is an XDR Struct defines as:
+//
+//   struct TransactionResultMetaV2
+//    {
+//        TransactionResultPairV2 result;
+//        LedgerEntryChanges feeProcessing;
+//        TransactionMeta txApplyProcessing;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct TransactionResultMetaV2 {
+    pub result: TransactionResultPairV2,
+    pub fee_processing: LedgerEntryChanges,
+    pub tx_apply_processing: TransactionMeta,
+}
+
+impl ReadXdr for TransactionResultMetaV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            result: TransactionResultPairV2::read_xdr(r)?,
+            fee_processing: LedgerEntryChanges::read_xdr(r)?,
+            tx_apply_processing: TransactionMeta::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionResultMetaV2 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.result.write_xdr(w)?;
@@ -11876,6 +12204,66 @@ impl WriteXdr for LedgerCloseMetaV1 {
     }
 }
 
+// LedgerCloseMetaV2 is an XDR Struct defines as:
+//
+//   struct LedgerCloseMetaV2
+//    {
+//        LedgerHeaderHistoryEntry ledgerHeader;
+//
+//        GeneralizedTransactionSet txSet;
+//
+//        // NB: transactions are sorted in apply order here
+//        // fees for all transactions are processed first
+//        // followed by applying transactions
+//        TransactionResultMetaV2 txProcessing<>;
+//
+//        // upgrades are applied last
+//        UpgradeEntryMeta upgradesProcessing<>;
+//
+//        // other misc information attached to the ledger close
+//        SCPHistoryEntry scpInfo<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct LedgerCloseMetaV2 {
+    pub ledger_header: LedgerHeaderHistoryEntry,
+    pub tx_set: GeneralizedTransactionSet,
+    pub tx_processing: VecM<TransactionResultMetaV2>,
+    pub upgrades_processing: VecM<UpgradeEntryMeta>,
+    pub scp_info: VecM<ScpHistoryEntry>,
+}
+
+impl ReadXdr for LedgerCloseMetaV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
+            tx_set: GeneralizedTransactionSet::read_xdr(r)?,
+            tx_processing: VecM::<TransactionResultMetaV2>::read_xdr(r)?,
+            upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
+            scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerCloseMetaV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_header.write_xdr(w)?;
+        self.tx_set.write_xdr(w)?;
+        self.tx_processing.write_xdr(w)?;
+        self.upgrades_processing.write_xdr(w)?;
+        self.scp_info.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // LedgerCloseMeta is an XDR Union defines as:
 //
 //   union LedgerCloseMeta switch (int v)
@@ -11884,6 +12272,8 @@ impl WriteXdr for LedgerCloseMetaV1 {
 //        LedgerCloseMetaV0 v0;
 //    case 1:
 //        LedgerCloseMetaV1 v1;
+//    case 2:
+//        LedgerCloseMetaV2 v2;
 //    };
 //
 // union with discriminant i32
@@ -11898,6 +12288,7 @@ impl WriteXdr for LedgerCloseMetaV1 {
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
     V1(LedgerCloseMetaV1),
+    V2(LedgerCloseMetaV2),
 }
 
 impl LedgerCloseMeta {
@@ -11906,6 +12297,7 @@ impl LedgerCloseMeta {
         match self {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
+            Self::V2(_) => "V2",
         }
     }
 
@@ -11915,12 +12307,13 @@ impl LedgerCloseMeta {
         match self {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
+            Self::V2(_) => 2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
-        const VARIANTS: [i32; 2] = [0, 1];
+    pub const fn variants() -> [i32; 3] {
+        const VARIANTS: [i32; 3] = [0, 1, 2];
         VARIANTS
     }
 }
@@ -11941,7 +12334,7 @@ impl Discriminant<i32> for LedgerCloseMeta {
 
 impl Variants<i32> for LedgerCloseMeta {
     fn variants() -> slice::Iter<'static, i32> {
-        const VARIANTS: [i32; 2] = LedgerCloseMeta::variants();
+        const VARIANTS: [i32; 3] = LedgerCloseMeta::variants();
         VARIANTS.iter()
     }
 }
@@ -11956,6 +12349,7 @@ impl ReadXdr for LedgerCloseMeta {
         let v = match dv {
             0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
             1 => Self::V1(LedgerCloseMetaV1::read_xdr(r)?),
+            2 => Self::V2(LedgerCloseMetaV2::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -11971,6 +12365,7 @@ impl WriteXdr for LedgerCloseMeta {
         match self {
             Self::V0(v) => v.write_xdr(w)?,
             Self::V1(v) => v.write_xdr(w)?,
+            Self::V2(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

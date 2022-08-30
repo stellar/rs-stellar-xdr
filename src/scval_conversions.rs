@@ -230,6 +230,12 @@ impl From<u64> for ScVal {
     }
 }
 
+impl From<&u64> for ScVal {
+    fn from(v: &u64) -> Self {
+        <_ as Into<ScObject>>::into(v).into()
+    }
+}
+
 impl TryFrom<ScObject> for u64 {
     type Error = ();
     fn try_from(v: ScObject) -> Result<Self, Self::Error> {

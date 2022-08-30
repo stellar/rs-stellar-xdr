@@ -23,7 +23,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "adbad5f38d336dc20e3f346579f298ca3af789eaa279db31c403fe5f8f6e6e98",
+        "a066cca4c39185af66b5b7aa6db60294c151963e23d018cee34f523b589172be",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -31669,6 +31669,8 @@ impl WriteXdr for ScEnvMetaEntry {
 //
 //   enum SCSpecType
 //    {
+//        SC_SPEC_TYPE_VAL = 0,
+//
 //        // Types with no parameters.
 //        SC_SPEC_TYPE_U32 = 1,
 //        SC_SPEC_TYPE_I32 = 2,
@@ -31704,6 +31706,7 @@ impl WriteXdr for ScEnvMetaEntry {
 )]
 #[repr(i32)]
 pub enum ScSpecType {
+    Val = 0,
     U32 = 1,
     I32 = 2,
     U64 = 3,
@@ -31728,6 +31731,7 @@ impl ScSpecType {
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
+            Self::Val => "Val",
             Self::U32 => "U32",
             Self::I32 => "I32",
             Self::U64 => "U64",
@@ -31750,8 +31754,9 @@ impl ScSpecType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 18] {
-        const VARIANTS: [ScSpecType; 18] = [
+    pub const fn variants() -> [ScSpecType; 19] {
+        const VARIANTS: [ScSpecType; 19] = [
+            ScSpecType::Val,
             ScSpecType::U32,
             ScSpecType::I32,
             ScSpecType::U64,
@@ -31784,7 +31789,7 @@ impl Name for ScSpecType {
 
 impl Variants<ScSpecType> for ScSpecType {
     fn variants() -> slice::Iter<'static, ScSpecType> {
-        const VARIANTS: [ScSpecType; 18] = ScSpecType::variants();
+        const VARIANTS: [ScSpecType; 19] = ScSpecType::variants();
         VARIANTS.iter()
     }
 }
@@ -31802,6 +31807,7 @@ impl TryFrom<i32> for ScSpecType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
+            0 => ScSpecType::Val,
             1 => ScSpecType::U32,
             2 => ScSpecType::I32,
             3 => ScSpecType::U64,
@@ -32143,6 +32149,7 @@ impl WriteXdr for ScSpecTypeUdt {
 //
 //   union SCSpecTypeDef switch (SCSpecType type)
 //    {
+//    case SC_SPEC_TYPE_VAL:
 //    case SC_SPEC_TYPE_U64:
 //    case SC_SPEC_TYPE_I64:
 //    case SC_SPEC_TYPE_U32:
@@ -32182,6 +32189,7 @@ impl WriteXdr for ScSpecTypeUdt {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecTypeDef {
+    Val,
     U64,
     I64,
     U32,
@@ -32206,6 +32214,7 @@ impl ScSpecTypeDef {
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
+            Self::Val => "Val",
             Self::U64 => "U64",
             Self::I64 => "I64",
             Self::U32 => "U32",
@@ -32231,6 +32240,7 @@ impl ScSpecTypeDef {
     pub const fn discriminant(&self) -> ScSpecType {
         #[allow(clippy::match_same_arms)]
         match self {
+            Self::Val => ScSpecType::Val,
             Self::U64 => ScSpecType::U64,
             Self::I64 => ScSpecType::I64,
             Self::U32 => ScSpecType::U32,
@@ -32253,8 +32263,9 @@ impl ScSpecTypeDef {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 18] {
-        const VARIANTS: [ScSpecType; 18] = [
+    pub const fn variants() -> [ScSpecType; 19] {
+        const VARIANTS: [ScSpecType; 19] = [
+            ScSpecType::Val,
             ScSpecType::U64,
             ScSpecType::I64,
             ScSpecType::U32,
@@ -32294,7 +32305,7 @@ impl Discriminant<ScSpecType> for ScSpecTypeDef {
 
 impl Variants<ScSpecType> for ScSpecTypeDef {
     fn variants() -> slice::Iter<'static, ScSpecType> {
-        const VARIANTS: [ScSpecType; 18] = ScSpecTypeDef::variants();
+        const VARIANTS: [ScSpecType; 19] = ScSpecTypeDef::variants();
         VARIANTS.iter()
     }
 }
@@ -32307,6 +32318,7 @@ impl ReadXdr for ScSpecTypeDef {
         let dv: ScSpecType = <ScSpecType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
+            ScSpecType::Val => Self::Val,
             ScSpecType::U64 => Self::U64,
             ScSpecType::I64 => Self::I64,
             ScSpecType::U32 => Self::U32,
@@ -32338,6 +32350,7 @@ impl WriteXdr for ScSpecTypeDef {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
+            Self::Val => ().write_xdr(w)?,
             Self::U64 => ().write_xdr(w)?,
             Self::I64 => ().write_xdr(w)?,
             Self::U32 => ().write_xdr(w)?,

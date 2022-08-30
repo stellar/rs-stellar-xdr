@@ -23,7 +23,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "a066cca4c39185af66b5b7aa6db60294c151963e23d018cee34f523b589172be",
+        "87a80c63cf6b757218ea07cb2a13e80c31fd0f08c81b872806455ea830d9fef6",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -32417,6 +32417,7 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
 //
 //   struct SCSpecUDTStructV0
 //    {
+//        string lib<80>;
 //        string name<60>;
 //        SCSpecUDTStructFieldV0 fields<40>;
 //    };
@@ -32429,6 +32430,7 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecUdtStructV0 {
+    pub lib: VecM<u8, 80>,
     pub name: VecM<u8, 60>,
     pub fields: VecM<ScSpecUdtStructFieldV0, 40>,
 }
@@ -32437,6 +32439,7 @@ impl ReadXdr for ScSpecUdtStructV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            lib: VecM::<u8, 80>::read_xdr(r)?,
             name: VecM::<u8, 60>::read_xdr(r)?,
             fields: VecM::<ScSpecUdtStructFieldV0, 40>::read_xdr(r)?,
         })
@@ -32446,6 +32449,7 @@ impl ReadXdr for ScSpecUdtStructV0 {
 impl WriteXdr for ScSpecUdtStructV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.lib.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.fields.write_xdr(w)?;
         Ok(())
@@ -32495,6 +32499,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
 //
 //   struct SCSpecUDTUnionV0
 //    {
+//        string lib<80>;
 //        string name<60>;
 //        SCSpecUDTUnionCaseV0 cases<50>;
 //    };
@@ -32507,6 +32512,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecUdtUnionV0 {
+    pub lib: VecM<u8, 80>,
     pub name: VecM<u8, 60>,
     pub cases: VecM<ScSpecUdtUnionCaseV0, 50>,
 }
@@ -32515,6 +32521,7 @@ impl ReadXdr for ScSpecUdtUnionV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            lib: VecM::<u8, 80>::read_xdr(r)?,
             name: VecM::<u8, 60>::read_xdr(r)?,
             cases: VecM::<ScSpecUdtUnionCaseV0, 50>::read_xdr(r)?,
         })
@@ -32524,6 +32531,7 @@ impl ReadXdr for ScSpecUdtUnionV0 {
 impl WriteXdr for ScSpecUdtUnionV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.lib.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.cases.write_xdr(w)?;
         Ok(())

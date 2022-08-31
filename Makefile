@@ -78,20 +78,7 @@ fmt:
 	cargo fmt --all
 
 bump-version:
-	cargo workspaces version --all --force '*' --allow-branch '*' --no-git-tag --no-git-push --yes
+	cargo workspaces version --all --force '*' --no-git-commit --yes custom $(VERSION)
 
-# Build all projects as if they are being published to crates.io, and do so for
-# all feature and target combinations, and run tests for all combinations.
-publish-verify:
-	cargo +stable package
-	pushd target/package/stellar-xdr-* && \
-		cargo +stable hack --feature-powerset build --locked --target wasm32-unknown-unknown && \
-		cargo +stable hack --feature-powerset build --locked && \
-		cargo +stable hack --feature-powerset test --locked && \
-		popd
-	cargo +stable publish --locked --dry-run
-
-# Publish publishes the crate to crates.io. Always verify first.
-publish: publish-verify
-	cargo +stable publish --locked
-	while ! cargo add --dry-run stellar-xdr@$(cargo metadata --format-version 1 | jq -r '.packages[0].version') ; do echo waiting; sleep 10; done
+publish:
+	cargo workspaces publish --all --force '*' --from-git --yes

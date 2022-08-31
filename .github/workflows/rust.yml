@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  release:
+    types: [published]
 
 env:
   RUSTFLAGS: -Dwarnings -Dclippy::all -Dclippy::pedantic
@@ -89,3 +91,25 @@ jobs:
     - if: matrix.sys.test
       run: >
         cargo hack test $CARGO_HACK_ARGS
+
+  publish-verify:
+    if: "github.ref_protected"
+    needs: [complete]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: rustup update
+    - run: rustup target add wasm32-unknown-unknown
+    - run: make publish-verify
+
+  cargo-publish:
+    if: github.event_name == 'release'
+    needs: [complete]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: rustup update
+    - run: rustup target add wasm32-unknown-unknown
+    - run: make publish
+      env:
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

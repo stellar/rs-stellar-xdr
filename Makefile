@@ -77,7 +77,7 @@ reset-xdr:
 fmt:
 	cargo fmt --all
 
-set-version:
+bump-version:
 	cargo workspaces version --all --force '*' --allow-branch '*' --no-git-tag --no-git-push --yes
 
 # Build all projects as if they are being published to crates.io, and do so for

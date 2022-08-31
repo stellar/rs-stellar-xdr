@@ -94,4 +94,4 @@ publish-verify:
 # Publish publishes the crate to crates.io. Always verify first.
 publish: publish-verify
 	cargo +stable publish --locked
-	while ! cargo search --limit 1 stellar-xdr | grep $(cargo metadata --format-version 1 | jq -r '.packages[0].version'); do echo waiting; sleep 10; done
+	while ! cargo add --dry-run stellar-xdr@$(cargo metadata --format-version 1 | jq -r '.packages[0].version') ; do echo waiting; sleep 10; done

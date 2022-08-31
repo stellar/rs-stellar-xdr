@@ -86,6 +86,7 @@ publish-verify:
 		cargo +stable hack --feature-powerset build --locked && \
 		cargo +stable hack --feature-powerset test --locked && \
 		popd
+	cargo +stable publish --locked --dry-run
 
 # Publish publishes the crate to crates.io. Always verify first.
 publish: publish-verify

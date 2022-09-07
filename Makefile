@@ -77,8 +77,5 @@ reset-xdr:
 fmt:
 	cargo fmt --all
 
-bump-version:
-	cargo workspaces version --all --force '*' --no-git-commit --yes custom $(VERSION)
-
 publish:
 	cargo workspaces publish --all --force '*' --from-git --yes

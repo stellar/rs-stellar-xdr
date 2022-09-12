@@ -27,7 +27,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "0eb75f128f55a899a9ccecd4c5a2a4dcd7ef0cc56ff068ffeb419f55d1a72f74",
+        "ce7cd778639252f6bb10bc64b68d828cd0104e5ceeaa22a0e51a4a82e58fdedf",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -39,7 +39,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-overlay.x",
-        "468a1bc101a0434ecf240b48808516921f904cfc7c4ddb7147de3ecdaf4e3a12",
+        "5b45fe3bd74abb25d91db4c729f3fb57a438d0a2a012f7a1c1118f1bb4d23637",
     ),
     (
         "xdr/next/Stellar-transaction.x",
@@ -12683,13 +12683,17 @@ impl WriteXdr for Hello {
     }
 }
 
+// AuthMsgFlagPullModeRequested is an XDR Const defines as:
+//
+//   const AUTH_MSG_FLAG_PULL_MODE_REQUESTED = 100;
+//
+pub const AUTH_MSG_FLAG_PULL_MODE_REQUESTED: u64 = 100;
+
 // Auth is an XDR Struct defines as:
 //
 //   struct Auth
 //    {
-//        // Empty message, just to confirm
-//        // establishment of MAC keys.
-//        int unused;
+//        int flags;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -12700,14 +12704,14 @@ impl WriteXdr for Hello {
     serde(rename_all = "camelCase")
 )]
 pub struct Auth {
-    pub unused: i32,
+    pub flags: i32,
 }
 
 impl ReadXdr for Auth {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            unused: i32::read_xdr(r)?,
+            flags: i32::read_xdr(r)?,
         })
     }
 }
@@ -12715,7 +12719,7 @@ impl ReadXdr for Auth {
 impl WriteXdr for Auth {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.unused.write_xdr(w)?;
+        self.flags.write_xdr(w)?;
         Ok(())
     }
 }
@@ -12997,7 +13001,9 @@ impl WriteXdr for PeerAddress {
 //        SURVEY_REQUEST = 14,
 //        SURVEY_RESPONSE = 15,
 //
-//        SEND_MORE = 16
+//        SEND_MORE = 16,
+//        FLOOD_ADVERT = 18,
+//        FLOOD_DEMAND = 19
 //    };
 //
 // enum
@@ -13027,6 +13033,8 @@ pub enum MessageType {
     SurveyRequest = 14,
     SurveyResponse = 15,
     SendMore = 16,
+    FloodAdvert = 18,
+    FloodDemand = 19,
 }
 
 impl MessageType {
@@ -13050,12 +13058,14 @@ impl MessageType {
             Self::SurveyRequest => "SurveyRequest",
             Self::SurveyResponse => "SurveyResponse",
             Self::SendMore => "SendMore",
+            Self::FloodAdvert => "FloodAdvert",
+            Self::FloodDemand => "FloodDemand",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 17] {
-        const VARIANTS: [MessageType; 17] = [
+    pub const fn variants() -> [MessageType; 19] {
+        const VARIANTS: [MessageType; 19] = [
             MessageType::ErrorMsg,
             MessageType::Auth,
             MessageType::DontHave,
@@ -13073,6 +13083,8 @@ impl MessageType {
             MessageType::SurveyRequest,
             MessageType::SurveyResponse,
             MessageType::SendMore,
+            MessageType::FloodAdvert,
+            MessageType::FloodDemand,
         ];
         VARIANTS
     }
@@ -13087,7 +13099,7 @@ impl Name for MessageType {
 
 impl Variants<MessageType> for MessageType {
     fn variants() -> slice::Iter<'static, MessageType> {
-        const VARIANTS: [MessageType; 17] = MessageType::variants();
+        const VARIANTS: [MessageType; 19] = MessageType::variants();
         VARIANTS.iter()
     }
 }
@@ -13122,6 +13134,8 @@ impl TryFrom<i32> for MessageType {
             14 => MessageType::SurveyRequest,
             15 => MessageType::SurveyResponse,
             16 => MessageType::SendMore,
+            18 => MessageType::FloodAdvert,
+            19 => MessageType::FloodDemand,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13807,6 +13821,288 @@ impl WriteXdr for TopologyResponseBody {
     }
 }
 
+// TxAdvertVectorMaxSize is an XDR Const defines as:
+//
+//   const TX_ADVERT_VECTOR_MAX_SIZE = 1000;
+//
+pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
+
+// TxAdvertVector is an XDR Typedef defines as:
+//
+//   typedef Hash TxAdvertVector<TX_ADVERT_VECTOR_MAX_SIZE>;
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct TxAdvertVector(pub VecM<Hash, 1000>);
+
+impl From<TxAdvertVector> for VecM<Hash, 1000> {
+    #[must_use]
+    fn from(x: TxAdvertVector) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<Hash, 1000>> for TxAdvertVector {
+    #[must_use]
+    fn from(x: VecM<Hash, 1000>) -> Self {
+        TxAdvertVector(x)
+    }
+}
+
+impl AsRef<VecM<Hash, 1000>> for TxAdvertVector {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<Hash, 1000> {
+        &self.0
+    }
+}
+
+impl ReadXdr for TxAdvertVector {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = VecM::<Hash, 1000>::read_xdr(r)?;
+        let v = TxAdvertVector(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for TxAdvertVector {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for TxAdvertVector {
+    type Target = VecM<Hash, 1000>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<TxAdvertVector> for Vec<Hash> {
+    #[must_use]
+    fn from(x: TxAdvertVector) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<Hash>> for TxAdvertVector {
+    type Error = Error;
+    fn try_from(x: Vec<Hash>) -> Result<Self> {
+        Ok(TxAdvertVector(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<Hash>> for TxAdvertVector {
+    type Error = Error;
+    fn try_from(x: &Vec<Hash>) -> Result<Self> {
+        Ok(TxAdvertVector(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<Hash>> for TxAdvertVector {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<Hash> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[Hash]> for TxAdvertVector {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[Hash] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[Hash] {
+        self.0 .0
+    }
+}
+
+// FloodAdvert is an XDR Struct defines as:
+//
+//   struct FloodAdvert
+//    {
+//        TxAdvertVector txHashes;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct FloodAdvert {
+    pub tx_hashes: TxAdvertVector,
+}
+
+impl ReadXdr for FloodAdvert {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            tx_hashes: TxAdvertVector::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for FloodAdvert {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.tx_hashes.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// TxDemandVectorMaxSize is an XDR Const defines as:
+//
+//   const TX_DEMAND_VECTOR_MAX_SIZE = 1000;
+//
+pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
+
+// TxDemandVector is an XDR Typedef defines as:
+//
+//   typedef Hash TxDemandVector<TX_DEMAND_VECTOR_MAX_SIZE>;
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct TxDemandVector(pub VecM<Hash, 1000>);
+
+impl From<TxDemandVector> for VecM<Hash, 1000> {
+    #[must_use]
+    fn from(x: TxDemandVector) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<Hash, 1000>> for TxDemandVector {
+    #[must_use]
+    fn from(x: VecM<Hash, 1000>) -> Self {
+        TxDemandVector(x)
+    }
+}
+
+impl AsRef<VecM<Hash, 1000>> for TxDemandVector {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<Hash, 1000> {
+        &self.0
+    }
+}
+
+impl ReadXdr for TxDemandVector {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = VecM::<Hash, 1000>::read_xdr(r)?;
+        let v = TxDemandVector(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for TxDemandVector {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for TxDemandVector {
+    type Target = VecM<Hash, 1000>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<TxDemandVector> for Vec<Hash> {
+    #[must_use]
+    fn from(x: TxDemandVector) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<Hash>> for TxDemandVector {
+    type Error = Error;
+    fn try_from(x: Vec<Hash>) -> Result<Self> {
+        Ok(TxDemandVector(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<Hash>> for TxDemandVector {
+    type Error = Error;
+    fn try_from(x: &Vec<Hash>) -> Result<Self> {
+        Ok(TxDemandVector(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<Hash>> for TxDemandVector {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<Hash> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[Hash]> for TxDemandVector {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[Hash] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[Hash] {
+        self.0 .0
+    }
+}
+
+// FloodDemand is an XDR Struct defines as:
+//
+//   struct FloodDemand
+//    {
+//        TxDemandVector txHashes;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct FloodDemand {
+    pub tx_hashes: TxDemandVector,
+}
+
+impl ReadXdr for FloodDemand {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            tx_hashes: TxDemandVector::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for FloodDemand {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.tx_hashes.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // SurveyResponseBody is an XDR Union defines as:
 //
 //   union SurveyResponseBody switch (SurveyMessageCommandType type)
@@ -13946,6 +14242,12 @@ impl WriteXdr for SurveyResponseBody {
 //        uint32 getSCPLedgerSeq; // ledger seq requested ; if 0, requests the latest
 //    case SEND_MORE:
 //        SendMore sendMoreMessage;
+//
+//    // Pull mode
+//    case FLOOD_ADVERT:
+//        FloodAdvert floodAdvert;
+//    case FLOOD_DEMAND:
+//        FloodDemand floodDemand;
 //    };
 //
 // union with discriminant MessageType
@@ -13975,6 +14277,8 @@ pub enum StellarMessage {
     ScpMessage(ScpEnvelope),
     GetScpState(u32),
     SendMore(SendMore),
+    FloodAdvert(FloodAdvert),
+    FloodDemand(FloodDemand),
 }
 
 impl StellarMessage {
@@ -13998,6 +14302,8 @@ impl StellarMessage {
             Self::ScpMessage(_) => "ScpMessage",
             Self::GetScpState(_) => "GetScpState",
             Self::SendMore(_) => "SendMore",
+            Self::FloodAdvert(_) => "FloodAdvert",
+            Self::FloodDemand(_) => "FloodDemand",
         }
     }
 
@@ -14022,12 +14328,14 @@ impl StellarMessage {
             Self::ScpMessage(_) => MessageType::ScpMessage,
             Self::GetScpState(_) => MessageType::GetScpState,
             Self::SendMore(_) => MessageType::SendMore,
+            Self::FloodAdvert(_) => MessageType::FloodAdvert,
+            Self::FloodDemand(_) => MessageType::FloodDemand,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 17] {
-        const VARIANTS: [MessageType; 17] = [
+    pub const fn variants() -> [MessageType; 19] {
+        const VARIANTS: [MessageType; 19] = [
             MessageType::ErrorMsg,
             MessageType::Hello,
             MessageType::Auth,
@@ -14045,6 +14353,8 @@ impl StellarMessage {
             MessageType::ScpMessage,
             MessageType::GetScpState,
             MessageType::SendMore,
+            MessageType::FloodAdvert,
+            MessageType::FloodDemand,
         ];
         VARIANTS
     }
@@ -14066,7 +14376,7 @@ impl Discriminant<MessageType> for StellarMessage {
 
 impl Variants<MessageType> for StellarMessage {
     fn variants() -> slice::Iter<'static, MessageType> {
-        const VARIANTS: [MessageType; 17] = StellarMessage::variants();
+        const VARIANTS: [MessageType; 19] = StellarMessage::variants();
         VARIANTS.iter()
     }
 }
@@ -14102,6 +14412,8 @@ impl ReadXdr for StellarMessage {
             MessageType::ScpMessage => Self::ScpMessage(ScpEnvelope::read_xdr(r)?),
             MessageType::GetScpState => Self::GetScpState(u32::read_xdr(r)?),
             MessageType::SendMore => Self::SendMore(SendMore::read_xdr(r)?),
+            MessageType::FloodAdvert => Self::FloodAdvert(FloodAdvert::read_xdr(r)?),
+            MessageType::FloodDemand => Self::FloodDemand(FloodDemand::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14132,6 +14444,8 @@ impl WriteXdr for StellarMessage {
             Self::ScpMessage(v) => v.write_xdr(w)?,
             Self::GetScpState(v) => v.write_xdr(w)?,
             Self::SendMore(v) => v.write_xdr(w)?,
+            Self::FloodAdvert(v) => v.write_xdr(w)?,
+            Self::FloodDemand(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -29004,7 +29318,8 @@ impl WriteXdr for ScStatic {
 //        SST_HOST_FUNCTION_ERROR = 4,
 //        SST_HOST_STORAGE_ERROR = 5,
 //        SST_HOST_CONTEXT_ERROR = 6,
-//        SST_VM_ERROR = 7
+//        SST_VM_ERROR = 7,
+//        SST_CONTRACT_ERROR = 8
 //        // TODO: add more
 //    };
 //
@@ -29026,6 +29341,7 @@ pub enum ScStatusType {
     HostStorageError = 5,
     HostContextError = 6,
     VmError = 7,
+    ContractError = 8,
 }
 
 impl ScStatusType {
@@ -29040,12 +29356,13 @@ impl ScStatusType {
             Self::HostStorageError => "HostStorageError",
             Self::HostContextError => "HostContextError",
             Self::VmError => "VmError",
+            Self::ContractError => "ContractError",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScStatusType; 8] {
-        const VARIANTS: [ScStatusType; 8] = [
+    pub const fn variants() -> [ScStatusType; 9] {
+        const VARIANTS: [ScStatusType; 9] = [
             ScStatusType::Ok,
             ScStatusType::UnknownError,
             ScStatusType::HostValueError,
@@ -29054,6 +29371,7 @@ impl ScStatusType {
             ScStatusType::HostStorageError,
             ScStatusType::HostContextError,
             ScStatusType::VmError,
+            ScStatusType::ContractError,
         ];
         VARIANTS
     }
@@ -29068,7 +29386,7 @@ impl Name for ScStatusType {
 
 impl Variants<ScStatusType> for ScStatusType {
     fn variants() -> slice::Iter<'static, ScStatusType> {
-        const VARIANTS: [ScStatusType; 8] = ScStatusType::variants();
+        const VARIANTS: [ScStatusType; 9] = ScStatusType::variants();
         VARIANTS.iter()
     }
 }
@@ -29094,6 +29412,7 @@ impl TryFrom<i32> for ScStatusType {
             5 => ScStatusType::HostStorageError,
             6 => ScStatusType::HostContextError,
             7 => ScStatusType::VmError,
+            8 => ScStatusType::ContractError,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -30044,6 +30363,8 @@ impl WriteXdr for ScUnknownErrorCode {
 //        SCHostContextErrorCode contextCode;
 //    case SST_VM_ERROR:
 //        SCVmErrorCode vmCode;
+//    case SST_CONTRACT_ERROR:
+//        uint32 contractCode;
 //    };
 //
 // union with discriminant ScStatusType
@@ -30064,6 +30385,7 @@ pub enum ScStatus {
     HostStorageError(ScHostStorageErrorCode),
     HostContextError(ScHostContextErrorCode),
     VmError(ScVmErrorCode),
+    ContractError(u32),
 }
 
 impl ScStatus {
@@ -30078,6 +30400,7 @@ impl ScStatus {
             Self::HostStorageError(_) => "HostStorageError",
             Self::HostContextError(_) => "HostContextError",
             Self::VmError(_) => "VmError",
+            Self::ContractError(_) => "ContractError",
         }
     }
 
@@ -30093,12 +30416,13 @@ impl ScStatus {
             Self::HostStorageError(_) => ScStatusType::HostStorageError,
             Self::HostContextError(_) => ScStatusType::HostContextError,
             Self::VmError(_) => ScStatusType::VmError,
+            Self::ContractError(_) => ScStatusType::ContractError,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScStatusType; 8] {
-        const VARIANTS: [ScStatusType; 8] = [
+    pub const fn variants() -> [ScStatusType; 9] {
+        const VARIANTS: [ScStatusType; 9] = [
             ScStatusType::Ok,
             ScStatusType::UnknownError,
             ScStatusType::HostValueError,
@@ -30107,6 +30431,7 @@ impl ScStatus {
             ScStatusType::HostStorageError,
             ScStatusType::HostContextError,
             ScStatusType::VmError,
+            ScStatusType::ContractError,
         ];
         VARIANTS
     }
@@ -30128,7 +30453,7 @@ impl Discriminant<ScStatusType> for ScStatus {
 
 impl Variants<ScStatusType> for ScStatus {
     fn variants() -> slice::Iter<'static, ScStatusType> {
-        const VARIANTS: [ScStatusType; 8] = ScStatus::variants();
+        const VARIANTS: [ScStatusType; 9] = ScStatus::variants();
         VARIANTS.iter()
     }
 }
@@ -30157,6 +30482,7 @@ impl ReadXdr for ScStatus {
                 Self::HostContextError(ScHostContextErrorCode::read_xdr(r)?)
             }
             ScStatusType::VmError => Self::VmError(ScVmErrorCode::read_xdr(r)?),
+            ScStatusType::ContractError => Self::ContractError(u32::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -30178,6 +30504,7 @@ impl WriteXdr for ScStatus {
             Self::HostStorageError(v) => v.write_xdr(w)?,
             Self::HostContextError(v) => v.write_xdr(w)?,
             Self::VmError(v) => v.write_xdr(w)?,
+            Self::ContractError(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

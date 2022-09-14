@@ -1,7 +1,4 @@
-use crate::{
-    ScBigInt, ScMap, ScMapEntry, ScObject, ScStatic, ScStatus, ScSymbol,
-    ScVal, ScVec,
-};
+use crate::{ScBigInt, ScMap, ScMapEntry, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec};
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;

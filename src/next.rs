@@ -27,7 +27,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "ce7cd778639252f6bb10bc64b68d828cd0104e5ceeaa22a0e51a4a82e58fdedf",
+        "41733778a1aa998e9cea87af9d318dcbb198af33c2703e76955f4a3fa7114463",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -30674,9 +30674,7 @@ impl WriteXdr for ScVal {
 //        SCO_I64 = 3,
 //        SCO_BYTES = 4,
 //        SCO_BIG_INT = 5,
-//        SCO_HASH = 6,
-//        SCO_PUBLIC_KEY = 7,
-//        SCO_CONTRACT_CODE = 8
+//        SCO_CONTRACT_CODE = 6
 //
 //        // TODO: add more
 //    };
@@ -30697,9 +30695,7 @@ pub enum ScObjectType {
     I64 = 3,
     Bytes = 4,
     BigInt = 5,
-    Hash = 6,
-    PublicKey = 7,
-    ContractCode = 8,
+    ContractCode = 6,
 }
 
 impl ScObjectType {
@@ -30712,23 +30708,19 @@ impl ScObjectType {
             Self::I64 => "I64",
             Self::Bytes => "Bytes",
             Self::BigInt => "BigInt",
-            Self::Hash => "Hash",
-            Self::PublicKey => "PublicKey",
             Self::ContractCode => "ContractCode",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScObjectType; 9] {
-        const VARIANTS: [ScObjectType; 9] = [
+    pub const fn variants() -> [ScObjectType; 7] {
+        const VARIANTS: [ScObjectType; 7] = [
             ScObjectType::Vec,
             ScObjectType::Map,
             ScObjectType::U64,
             ScObjectType::I64,
             ScObjectType::Bytes,
             ScObjectType::BigInt,
-            ScObjectType::Hash,
-            ScObjectType::PublicKey,
             ScObjectType::ContractCode,
         ];
         VARIANTS
@@ -30744,7 +30736,7 @@ impl Name for ScObjectType {
 
 impl Variants<ScObjectType> for ScObjectType {
     fn variants() -> slice::Iter<'static, ScObjectType> {
-        const VARIANTS: [ScObjectType; 9] = ScObjectType::variants();
+        const VARIANTS: [ScObjectType; 7] = ScObjectType::variants();
         VARIANTS.iter()
     }
 }
@@ -30768,9 +30760,7 @@ impl TryFrom<i32> for ScObjectType {
             3 => ScObjectType::I64,
             4 => ScObjectType::Bytes,
             5 => ScObjectType::BigInt,
-            6 => ScObjectType::Hash,
-            7 => ScObjectType::PublicKey,
-            8 => ScObjectType::ContractCode,
+            6 => ScObjectType::ContractCode,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -31257,193 +31247,6 @@ impl WriteXdr for ScBigInt {
     }
 }
 
-// ScHashType is an XDR Enum defines as:
-//
-//   enum SCHashType
-//    {
-//        SCHASH_SHA256 = 0
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-#[repr(i32)]
-pub enum ScHashType {
-    SchashSha256 = 0,
-}
-
-impl ScHashType {
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::SchashSha256 => "SchashSha256",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScHashType; 1] {
-        const VARIANTS: [ScHashType; 1] = [ScHashType::SchashSha256];
-        VARIANTS
-    }
-}
-
-impl Name for ScHashType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ScHashType> for ScHashType {
-    fn variants() -> slice::Iter<'static, ScHashType> {
-        const VARIANTS: [ScHashType; 1] = ScHashType::variants();
-        VARIANTS.iter()
-    }
-}
-
-impl Enum for ScHashType {}
-
-impl fmt::Display for ScHashType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ScHashType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ScHashType::SchashSha256,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ScHashType> for i32 {
-    #[must_use]
-    fn from(e: ScHashType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ScHashType {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScHashType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// ScHash is an XDR Union defines as:
-//
-//   union SCHash switch (SCHashType type)
-//    {
-//    case SCHASH_SHA256:
-//        Hash sha256;
-//    };
-//
-// union with discriminant ScHashType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum ScHash {
-    SchashSha256(Hash),
-}
-
-impl ScHash {
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::SchashSha256(_) => "SchashSha256",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ScHashType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::SchashSha256(_) => ScHashType::SchashSha256,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScHashType; 1] {
-        const VARIANTS: [ScHashType; 1] = [ScHashType::SchashSha256];
-        VARIANTS
-    }
-}
-
-impl Name for ScHash {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ScHashType> for ScHash {
-    #[must_use]
-    fn discriminant(&self) -> ScHashType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ScHashType> for ScHash {
-    fn variants() -> slice::Iter<'static, ScHashType> {
-        const VARIANTS: [ScHashType; 1] = ScHash::variants();
-        VARIANTS.iter()
-    }
-}
-
-impl Union<ScHashType> for ScHash {}
-
-impl ReadXdr for ScHash {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ScHashType = <ScHashType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ScHashType::SchashSha256 => Self::SchashSha256(Hash::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScHash {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::SchashSha256(v) => v.write_xdr(w)?,
-        };
-        Ok(())
-    }
-}
-
 // ScContractCodeType is an XDR Enum defines as:
 //
 //   enum SCContractCodeType
@@ -31660,10 +31463,6 @@ impl WriteXdr for ScContractCode {
 //        opaque bin<SCVAL_LIMIT>;
 //    case SCO_BIG_INT:
 //        SCBigInt bigInt;
-//    case SCO_HASH:
-//        SCHash hash;
-//    case SCO_PUBLIC_KEY:
-//        PublicKey publicKey;
 //    case SCO_CONTRACT_CODE:
 //        SCContractCode contractCode;
 //    };
@@ -31684,8 +31483,6 @@ pub enum ScObject {
     I64(i64),
     Bytes(VecM<u8, 256000>),
     BigInt(ScBigInt),
-    Hash(ScHash),
-    PublicKey(PublicKey),
     ContractCode(ScContractCode),
 }
 
@@ -31699,8 +31496,6 @@ impl ScObject {
             Self::I64(_) => "I64",
             Self::Bytes(_) => "Bytes",
             Self::BigInt(_) => "BigInt",
-            Self::Hash(_) => "Hash",
-            Self::PublicKey(_) => "PublicKey",
             Self::ContractCode(_) => "ContractCode",
         }
     }
@@ -31715,23 +31510,19 @@ impl ScObject {
             Self::I64(_) => ScObjectType::I64,
             Self::Bytes(_) => ScObjectType::Bytes,
             Self::BigInt(_) => ScObjectType::BigInt,
-            Self::Hash(_) => ScObjectType::Hash,
-            Self::PublicKey(_) => ScObjectType::PublicKey,
             Self::ContractCode(_) => ScObjectType::ContractCode,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScObjectType; 9] {
-        const VARIANTS: [ScObjectType; 9] = [
+    pub const fn variants() -> [ScObjectType; 7] {
+        const VARIANTS: [ScObjectType; 7] = [
             ScObjectType::Vec,
             ScObjectType::Map,
             ScObjectType::U64,
             ScObjectType::I64,
             ScObjectType::Bytes,
             ScObjectType::BigInt,
-            ScObjectType::Hash,
-            ScObjectType::PublicKey,
             ScObjectType::ContractCode,
         ];
         VARIANTS
@@ -31754,7 +31545,7 @@ impl Discriminant<ScObjectType> for ScObject {
 
 impl Variants<ScObjectType> for ScObject {
     fn variants() -> slice::Iter<'static, ScObjectType> {
-        const VARIANTS: [ScObjectType; 9] = ScObject::variants();
+        const VARIANTS: [ScObjectType; 7] = ScObject::variants();
         VARIANTS.iter()
     }
 }
@@ -31773,8 +31564,6 @@ impl ReadXdr for ScObject {
             ScObjectType::I64 => Self::I64(i64::read_xdr(r)?),
             ScObjectType::Bytes => Self::Bytes(VecM::<u8, 256000>::read_xdr(r)?),
             ScObjectType::BigInt => Self::BigInt(ScBigInt::read_xdr(r)?),
-            ScObjectType::Hash => Self::Hash(ScHash::read_xdr(r)?),
-            ScObjectType::PublicKey => Self::PublicKey(PublicKey::read_xdr(r)?),
             ScObjectType::ContractCode => Self::ContractCode(ScContractCode::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -31795,8 +31584,6 @@ impl WriteXdr for ScObject {
             Self::I64(v) => v.write_xdr(w)?,
             Self::Bytes(v) => v.write_xdr(w)?,
             Self::BigInt(v) => v.write_xdr(w)?,
-            Self::Hash(v) => v.write_xdr(w)?,
-            Self::PublicKey(v) => v.write_xdr(w)?,
             Self::ContractCode(v) => v.write_xdr(w)?,
         };
         Ok(())

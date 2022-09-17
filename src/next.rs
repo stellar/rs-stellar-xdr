@@ -23,7 +23,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "87a80c63cf6b757218ea07cb2a13e80c31fd0f08c81b872806455ea830d9fef6",
+        "11024aa780873312446d814d8bd37aeced7a8fa35ce2eeee2e24d59c4f13a29b",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -32652,6 +32652,88 @@ impl WriteXdr for ScSpecUdtUnionV0 {
     }
 }
 
+// ScSpecUdtEnumCaseV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTEnumCaseV0
+//    {
+//        string name<60>;
+//        uint32 value;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct ScSpecUdtEnumCaseV0 {
+    pub name: VecM<u8, 60>,
+    pub value: u32,
+}
+
+impl ReadXdr for ScSpecUdtEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            name: VecM::<u8, 60>::read_xdr(r)?,
+            value: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.name.write_xdr(w)?;
+        self.value.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecUdtEnumV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTEnumV0
+//    {
+//        string lib<80>;
+//        string name<60>;
+//        SCSpecUDTEnumCaseV0 cases<50>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct ScSpecUdtEnumV0 {
+    pub lib: VecM<u8, 80>,
+    pub name: VecM<u8, 60>,
+    pub cases: VecM<ScSpecUdtEnumCaseV0, 50>,
+}
+
+impl ReadXdr for ScSpecUdtEnumV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            lib: VecM::<u8, 80>::read_xdr(r)?,
+            name: VecM::<u8, 60>::read_xdr(r)?,
+            cases: VecM::<ScSpecUdtEnumCaseV0, 50>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtEnumV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.lib.write_xdr(w)?;
+        self.name.write_xdr(w)?;
+        self.cases.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // ScSpecFunctionInputV0 is an XDR Struct defines as:
 //
 //   struct SCSpecFunctionInputV0
@@ -32740,7 +32822,8 @@ impl WriteXdr for ScSpecFunctionV0 {
 //    {
 //        SC_SPEC_ENTRY_FUNCTION_V0 = 0,
 //        SC_SPEC_ENTRY_UDT_STRUCT_V0 = 1,
-//        SC_SPEC_ENTRY_UDT_UNION_V0 = 2
+//        SC_SPEC_ENTRY_UDT_UNION_V0 = 2,
+//        SC_SPEC_ENTRY_UDT_ENUM_V0 = 3
 //    };
 //
 // enum
@@ -32756,6 +32839,7 @@ pub enum ScSpecEntryKind {
     FunctionV0 = 0,
     UdtStructV0 = 1,
     UdtUnionV0 = 2,
+    UdtEnumV0 = 3,
 }
 
 impl ScSpecEntryKind {
@@ -32765,15 +32849,17 @@ impl ScSpecEntryKind {
             Self::FunctionV0 => "FunctionV0",
             Self::UdtStructV0 => "UdtStructV0",
             Self::UdtUnionV0 => "UdtUnionV0",
+            Self::UdtEnumV0 => "UdtEnumV0",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEntryKind; 3] {
-        const VARIANTS: [ScSpecEntryKind; 3] = [
+    pub const fn variants() -> [ScSpecEntryKind; 4] {
+        const VARIANTS: [ScSpecEntryKind; 4] = [
             ScSpecEntryKind::FunctionV0,
             ScSpecEntryKind::UdtStructV0,
             ScSpecEntryKind::UdtUnionV0,
+            ScSpecEntryKind::UdtEnumV0,
         ];
         VARIANTS
     }
@@ -32788,7 +32874,7 @@ impl Name for ScSpecEntryKind {
 
 impl Variants<ScSpecEntryKind> for ScSpecEntryKind {
     fn variants() -> slice::Iter<'static, ScSpecEntryKind> {
-        const VARIANTS: [ScSpecEntryKind; 3] = ScSpecEntryKind::variants();
+        const VARIANTS: [ScSpecEntryKind; 4] = ScSpecEntryKind::variants();
         VARIANTS.iter()
     }
 }
@@ -32809,6 +32895,7 @@ impl TryFrom<i32> for ScSpecEntryKind {
             0 => ScSpecEntryKind::FunctionV0,
             1 => ScSpecEntryKind::UdtStructV0,
             2 => ScSpecEntryKind::UdtUnionV0,
+            3 => ScSpecEntryKind::UdtEnumV0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -32850,6 +32937,8 @@ impl WriteXdr for ScSpecEntryKind {
 //        SCSpecUDTStructV0 udtStructV0;
 //    case SC_SPEC_ENTRY_UDT_UNION_V0:
 //        SCSpecUDTUnionV0 udtUnionV0;
+//    case SC_SPEC_ENTRY_UDT_ENUM_V0:
+//        SCSpecUDTEnumV0 udtEnumV0;
 //    };
 //
 // union with discriminant ScSpecEntryKind
@@ -32865,6 +32954,7 @@ pub enum ScSpecEntry {
     FunctionV0(ScSpecFunctionV0),
     UdtStructV0(ScSpecUdtStructV0),
     UdtUnionV0(ScSpecUdtUnionV0),
+    UdtEnumV0(ScSpecUdtEnumV0),
 }
 
 impl ScSpecEntry {
@@ -32874,6 +32964,7 @@ impl ScSpecEntry {
             Self::FunctionV0(_) => "FunctionV0",
             Self::UdtStructV0(_) => "UdtStructV0",
             Self::UdtUnionV0(_) => "UdtUnionV0",
+            Self::UdtEnumV0(_) => "UdtEnumV0",
         }
     }
 
@@ -32884,15 +32975,17 @@ impl ScSpecEntry {
             Self::FunctionV0(_) => ScSpecEntryKind::FunctionV0,
             Self::UdtStructV0(_) => ScSpecEntryKind::UdtStructV0,
             Self::UdtUnionV0(_) => ScSpecEntryKind::UdtUnionV0,
+            Self::UdtEnumV0(_) => ScSpecEntryKind::UdtEnumV0,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecEntryKind; 3] {
-        const VARIANTS: [ScSpecEntryKind; 3] = [
+    pub const fn variants() -> [ScSpecEntryKind; 4] {
+        const VARIANTS: [ScSpecEntryKind; 4] = [
             ScSpecEntryKind::FunctionV0,
             ScSpecEntryKind::UdtStructV0,
             ScSpecEntryKind::UdtUnionV0,
+            ScSpecEntryKind::UdtEnumV0,
         ];
         VARIANTS
     }
@@ -32914,7 +33007,7 @@ impl Discriminant<ScSpecEntryKind> for ScSpecEntry {
 
 impl Variants<ScSpecEntryKind> for ScSpecEntry {
     fn variants() -> slice::Iter<'static, ScSpecEntryKind> {
-        const VARIANTS: [ScSpecEntryKind; 3] = ScSpecEntry::variants();
+        const VARIANTS: [ScSpecEntryKind; 4] = ScSpecEntry::variants();
         VARIANTS.iter()
     }
 }
@@ -32930,6 +33023,7 @@ impl ReadXdr for ScSpecEntry {
             ScSpecEntryKind::FunctionV0 => Self::FunctionV0(ScSpecFunctionV0::read_xdr(r)?),
             ScSpecEntryKind::UdtStructV0 => Self::UdtStructV0(ScSpecUdtStructV0::read_xdr(r)?),
             ScSpecEntryKind::UdtUnionV0 => Self::UdtUnionV0(ScSpecUdtUnionV0::read_xdr(r)?),
+            ScSpecEntryKind::UdtEnumV0 => Self::UdtEnumV0(ScSpecUdtEnumV0::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -32946,6 +33040,7 @@ impl WriteXdr for ScSpecEntry {
             Self::FunctionV0(v) => v.write_xdr(w)?,
             Self::UdtStructV0(v) => v.write_xdr(w)?,
             Self::UdtUnionV0(v) => v.write_xdr(w)?,
+            Self::UdtEnumV0(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

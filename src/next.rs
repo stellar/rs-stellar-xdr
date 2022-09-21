@@ -43,7 +43,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "a7dbe0ad9e3f2625c876bb5b2c2bd5e5c358ace0023dce066321afbfb031e6f4",
+        "2adffbed3768e594ef91ddf1c79788c7f532cd73f3c8fa06b4db54097fe0fb72",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -26068,7 +26068,7 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 //   union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code)
 //    {
 //    case INVOKE_HOST_FUNCTION_SUCCESS:
-//        void;
+//        SCVal success;
 //    case INVOKE_HOST_FUNCTION_MALFORMED:
 //    case INVOKE_HOST_FUNCTION_TRAPPED:
 //        void;
@@ -26084,7 +26084,7 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum InvokeHostFunctionResult {
-    Success,
+    Success(ScVal),
     Malformed,
     Trapped,
 }
@@ -26093,7 +26093,7 @@ impl InvokeHostFunctionResult {
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::Success => "Success",
+            Self::Success(_) => "Success",
             Self::Malformed => "Malformed",
             Self::Trapped => "Trapped",
         }
@@ -26103,7 +26103,7 @@ impl InvokeHostFunctionResult {
     pub const fn discriminant(&self) -> InvokeHostFunctionResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Success => InvokeHostFunctionResultCode::Success,
+            Self::Success(_) => InvokeHostFunctionResultCode::Success,
             Self::Malformed => InvokeHostFunctionResultCode::Malformed,
             Self::Trapped => InvokeHostFunctionResultCode::Trapped,
         }
@@ -26150,7 +26150,7 @@ impl ReadXdr for InvokeHostFunctionResult {
             <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            InvokeHostFunctionResultCode::Success => Self::Success,
+            InvokeHostFunctionResultCode::Success => Self::Success(ScVal::read_xdr(r)?),
             InvokeHostFunctionResultCode::Malformed => Self::Malformed,
             InvokeHostFunctionResultCode::Trapped => Self::Trapped,
             #[allow(unreachable_patterns)]
@@ -26166,7 +26166,7 @@ impl WriteXdr for InvokeHostFunctionResult {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Success => ().write_xdr(w)?,
+            Self::Success(v) => v.write_xdr(w)?,
             Self::Malformed => ().write_xdr(w)?,
             Self::Trapped => ().write_xdr(w)?,
         };

@@ -43,7 +43,7 @@ generate: src/curr.rs src/next.rs
 
 src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 	> $@
-	docker run -i --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
+	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
 		xdrgen --language rust --namespace curr --output src/ $^ \
@@ -52,7 +52,7 @@ src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 
 src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 	> $@
-	docker run -i --rm -v $$PWD:/wd -w /wd ruby /bin/bash -c '\
+	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
 		xdrgen --language rust --namespace next --output src/ $^ \

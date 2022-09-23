@@ -7,7 +7,7 @@ authors = ["Stellar Development Foundation <info@stellar.org>"]
 license = "Apache-2.0"
 version = "0.0.2"
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.64"
 
 [dependencies]
 base64 = { version = "0.13.0", optional = true }

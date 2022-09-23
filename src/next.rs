@@ -31,7 +31,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "d1c0b58d2134370a6dfa57ef509dccc5de5d1950bcbdad22ccc6c640046f79f2",
+        "87c1cb71622e40c8eea2fce2a7ce0510a3d0eae3803ec3753c73c9655dbe6eb5",
     ),
     (
         "xdr/next/Stellar-ledger.x",
@@ -43,7 +43,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "2adffbed3768e594ef91ddf1c79788c7f532cd73f3c8fa06b4db54097fe0fb72",
+        "aa4755d5621c480f58246f870c178fc3c00207b329f62950ee07387f8ad49d7d",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -7967,7 +7967,9 @@ impl WriteXdr for LedgerKey {
 //        ENVELOPE_TYPE_OP_ID = 6,
 //        ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7,
 //        ENVELOPE_TYPE_CONTRACT_ID_FROM_ED25519 = 8,
-//        ENVELOPE_TYPE_CONTRACT_ID_FROM_CONTRACT = 9
+//        ENVELOPE_TYPE_CONTRACT_ID_FROM_CONTRACT = 9,
+//        ENVELOPE_TYPE_CONTRACT_ID_FROM_ASSET = 10,
+//        ENVELOPE_TYPE_CONTRACT_ID_FROM_SOURCE = 11
 //    };
 //
 // enum
@@ -7990,6 +7992,8 @@ pub enum EnvelopeType {
     PoolRevokeOpId = 7,
     ContractIdFromEd25519 = 8,
     ContractIdFromContract = 9,
+    ContractIdFromAsset = 10,
+    ContractIdFromSource = 11,
 }
 
 impl EnvelopeType {
@@ -8006,12 +8010,14 @@ impl EnvelopeType {
             Self::PoolRevokeOpId => "PoolRevokeOpId",
             Self::ContractIdFromEd25519 => "ContractIdFromEd25519",
             Self::ContractIdFromContract => "ContractIdFromContract",
+            Self::ContractIdFromAsset => "ContractIdFromAsset",
+            Self::ContractIdFromSource => "ContractIdFromSource",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 10] {
-        const VARIANTS: [EnvelopeType; 10] = [
+    pub const fn variants() -> [EnvelopeType; 12] {
+        const VARIANTS: [EnvelopeType; 12] = [
             EnvelopeType::TxV0,
             EnvelopeType::Scp,
             EnvelopeType::Tx,
@@ -8022,6 +8028,8 @@ impl EnvelopeType {
             EnvelopeType::PoolRevokeOpId,
             EnvelopeType::ContractIdFromEd25519,
             EnvelopeType::ContractIdFromContract,
+            EnvelopeType::ContractIdFromAsset,
+            EnvelopeType::ContractIdFromSource,
         ];
         VARIANTS
     }
@@ -8036,7 +8044,7 @@ impl Name for EnvelopeType {
 
 impl Variants<EnvelopeType> for EnvelopeType {
     fn variants() -> slice::Iter<'static, EnvelopeType> {
-        const VARIANTS: [EnvelopeType; 10] = EnvelopeType::variants();
+        const VARIANTS: [EnvelopeType; 12] = EnvelopeType::variants();
         VARIANTS.iter()
     }
 }
@@ -8064,6 +8072,8 @@ impl TryFrom<i32> for EnvelopeType {
             7 => EnvelopeType::PoolRevokeOpId,
             8 => EnvelopeType::ContractIdFromEd25519,
             9 => EnvelopeType::ContractIdFromContract,
+            10 => EnvelopeType::ContractIdFromAsset,
+            11 => EnvelopeType::ContractIdFromSource,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -16433,7 +16443,8 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 //   enum HostFunction
 //    {
 //        HOST_FN_CALL = 0,
-//        HOST_FN_CREATE_CONTRACT = 1
+//        HOST_FN_CREATE_CONTRACT_WITH_ED25519 = 1,
+//        HOST_FN_CREATE_CONTRACT_WITH_SOURCE = 2
 //    };
 //
 // enum
@@ -16447,7 +16458,8 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 #[repr(i32)]
 pub enum HostFunction {
     Call = 0,
-    CreateContract = 1,
+    CreateContractWithEd25519 = 1,
+    CreateContractWithSource = 2,
 }
 
 impl HostFunction {
@@ -16455,13 +16467,18 @@ impl HostFunction {
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Call => "Call",
-            Self::CreateContract => "CreateContract",
+            Self::CreateContractWithEd25519 => "CreateContractWithEd25519",
+            Self::CreateContractWithSource => "CreateContractWithSource",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [HostFunction; 2] {
-        const VARIANTS: [HostFunction; 2] = [HostFunction::Call, HostFunction::CreateContract];
+    pub const fn variants() -> [HostFunction; 3] {
+        const VARIANTS: [HostFunction; 3] = [
+            HostFunction::Call,
+            HostFunction::CreateContractWithEd25519,
+            HostFunction::CreateContractWithSource,
+        ];
         VARIANTS
     }
 }
@@ -16475,7 +16492,7 @@ impl Name for HostFunction {
 
 impl Variants<HostFunction> for HostFunction {
     fn variants() -> slice::Iter<'static, HostFunction> {
-        const VARIANTS: [HostFunction; 2] = HostFunction::variants();
+        const VARIANTS: [HostFunction; 3] = HostFunction::variants();
         VARIANTS.iter()
     }
 }
@@ -16494,7 +16511,8 @@ impl TryFrom<i32> for HostFunction {
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
             0 => HostFunction::Call,
-            1 => HostFunction::CreateContract,
+            1 => HostFunction::CreateContractWithEd25519,
+            2 => HostFunction::CreateContractWithSource,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17155,6 +17173,45 @@ impl WriteXdr for HashIdPreimageContractId {
     }
 }
 
+// HashIdPreimageSourceContractId is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            AccountID sourceAccount;
+//            uint256 salt;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct HashIdPreimageSourceContractId {
+    pub source_account: AccountId,
+    pub salt: Uint256,
+}
+
+impl ReadXdr for HashIdPreimageSourceContractId {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            source_account: AccountId::read_xdr(r)?,
+            salt: Uint256::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for HashIdPreimageSourceContractId {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.source_account.write_xdr(w)?;
+        self.salt.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // HashIdPreimage is an XDR Union defines as:
 //
 //   union HashIDPreimage switch (EnvelopeType type)
@@ -17187,6 +17244,14 @@ impl WriteXdr for HashIdPreimageContractId {
 //            Hash contractID;
 //            uint256 salt;
 //        } contractID;
+//    case ENVELOPE_TYPE_CONTRACT_ID_FROM_ASSET:
+//        Asset fromAsset;
+//    case ENVELOPE_TYPE_CONTRACT_ID_FROM_SOURCE:
+//        struct
+//        {
+//            AccountID sourceAccount;
+//            uint256 salt;
+//        } sourceContractID;
 //    };
 //
 // union with discriminant EnvelopeType
@@ -17203,6 +17268,8 @@ pub enum HashIdPreimage {
     PoolRevokeOpId(HashIdPreimageRevokeId),
     ContractIdFromEd25519(HashIdPreimageEd25519ContractId),
     ContractIdFromContract(HashIdPreimageContractId),
+    ContractIdFromAsset(Asset),
+    ContractIdFromSource(HashIdPreimageSourceContractId),
 }
 
 impl HashIdPreimage {
@@ -17213,6 +17280,8 @@ impl HashIdPreimage {
             Self::PoolRevokeOpId(_) => "PoolRevokeOpId",
             Self::ContractIdFromEd25519(_) => "ContractIdFromEd25519",
             Self::ContractIdFromContract(_) => "ContractIdFromContract",
+            Self::ContractIdFromAsset(_) => "ContractIdFromAsset",
+            Self::ContractIdFromSource(_) => "ContractIdFromSource",
         }
     }
 
@@ -17224,16 +17293,20 @@ impl HashIdPreimage {
             Self::PoolRevokeOpId(_) => EnvelopeType::PoolRevokeOpId,
             Self::ContractIdFromEd25519(_) => EnvelopeType::ContractIdFromEd25519,
             Self::ContractIdFromContract(_) => EnvelopeType::ContractIdFromContract,
+            Self::ContractIdFromAsset(_) => EnvelopeType::ContractIdFromAsset,
+            Self::ContractIdFromSource(_) => EnvelopeType::ContractIdFromSource,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 4] {
-        const VARIANTS: [EnvelopeType; 4] = [
+    pub const fn variants() -> [EnvelopeType; 6] {
+        const VARIANTS: [EnvelopeType; 6] = [
             EnvelopeType::OpId,
             EnvelopeType::PoolRevokeOpId,
             EnvelopeType::ContractIdFromEd25519,
             EnvelopeType::ContractIdFromContract,
+            EnvelopeType::ContractIdFromAsset,
+            EnvelopeType::ContractIdFromSource,
         ];
         VARIANTS
     }
@@ -17255,7 +17328,7 @@ impl Discriminant<EnvelopeType> for HashIdPreimage {
 
 impl Variants<EnvelopeType> for HashIdPreimage {
     fn variants() -> slice::Iter<'static, EnvelopeType> {
-        const VARIANTS: [EnvelopeType; 4] = HashIdPreimage::variants();
+        const VARIANTS: [EnvelopeType; 6] = HashIdPreimage::variants();
         VARIANTS.iter()
     }
 }
@@ -17278,6 +17351,10 @@ impl ReadXdr for HashIdPreimage {
             EnvelopeType::ContractIdFromContract => {
                 Self::ContractIdFromContract(HashIdPreimageContractId::read_xdr(r)?)
             }
+            EnvelopeType::ContractIdFromAsset => Self::ContractIdFromAsset(Asset::read_xdr(r)?),
+            EnvelopeType::ContractIdFromSource => {
+                Self::ContractIdFromSource(HashIdPreimageSourceContractId::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17295,6 +17372,8 @@ impl WriteXdr for HashIdPreimage {
             Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
             Self::ContractIdFromEd25519(v) => v.write_xdr(w)?,
             Self::ContractIdFromContract(v) => v.write_xdr(w)?,
+            Self::ContractIdFromAsset(v) => v.write_xdr(w)?,
+            Self::ContractIdFromSource(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

@@ -477,7 +477,8 @@ struct LiquidityPoolWithdrawOp
 enum HostFunction
 {
     HOST_FN_CALL = 0,
-    HOST_FN_CREATE_CONTRACT = 1
+    HOST_FN_CREATE_CONTRACT_WITH_ED25519 = 1,
+    HOST_FN_CREATE_CONTRACT_WITH_SOURCE = 2
 };
 
 struct InvokeHostFunctionOp
@@ -586,6 +587,14 @@ case ENVELOPE_TYPE_CONTRACT_ID_FROM_CONTRACT:
         Hash contractID;
         uint256 salt;
     } contractID;
+case ENVELOPE_TYPE_CONTRACT_ID_FROM_ASSET:
+    Asset fromAsset;
+case ENVELOPE_TYPE_CONTRACT_ID_FROM_SOURCE:
+    struct
+    {
+        AccountID sourceAccount;
+        uint256 salt;
+    } sourceContractID;
 };
 
 enum MemoType

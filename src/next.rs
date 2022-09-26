@@ -43,7 +43,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "aa4755d5621c480f58246f870c178fc3c00207b329f62950ee07387f8ad49d7d",
+        "580d0e8108c369ac96a15681460ab47fdc943914e335d3029db43eb9b49066ff",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -16444,7 +16444,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 //    {
 //        HOST_FN_CALL = 0,
 //        HOST_FN_CREATE_CONTRACT_WITH_ED25519 = 1,
-//        HOST_FN_CREATE_CONTRACT_WITH_SOURCE = 2
+//        HOST_FN_CREATE_CONTRACT_WITH_SOURCE_ACCOUNT = 2
 //    };
 //
 // enum
@@ -16459,7 +16459,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 pub enum HostFunction {
     Call = 0,
     CreateContractWithEd25519 = 1,
-    CreateContractWithSource = 2,
+    CreateContractWithSourceAccount = 2,
 }
 
 impl HostFunction {
@@ -16468,7 +16468,7 @@ impl HostFunction {
         match self {
             Self::Call => "Call",
             Self::CreateContractWithEd25519 => "CreateContractWithEd25519",
-            Self::CreateContractWithSource => "CreateContractWithSource",
+            Self::CreateContractWithSourceAccount => "CreateContractWithSourceAccount",
         }
     }
 
@@ -16477,7 +16477,7 @@ impl HostFunction {
         const VARIANTS: [HostFunction; 3] = [
             HostFunction::Call,
             HostFunction::CreateContractWithEd25519,
-            HostFunction::CreateContractWithSource,
+            HostFunction::CreateContractWithSourceAccount,
         ];
         VARIANTS
     }
@@ -16512,7 +16512,7 @@ impl TryFrom<i32> for HostFunction {
         let e = match i {
             0 => HostFunction::Call,
             1 => HostFunction::CreateContractWithEd25519,
-            2 => HostFunction::CreateContractWithSource,
+            2 => HostFunction::CreateContractWithSourceAccount,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

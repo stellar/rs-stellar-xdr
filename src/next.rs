@@ -23,7 +23,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "8246acad85a82616a03f6d22ef0f382631e8d11e2bd92c67fb6b4b8a28e162c5",
+        "8819c9b462fcc74199f051989ad14621b833036e8fed0fa3a1b83abda84a8bfc",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -31889,6 +31889,7 @@ impl WriteXdr for ScEnvMetaEntry {
 //        SC_SPEC_TYPE_BYTES = 9,
 //        SC_SPEC_TYPE_BIG_INT = 10,
 //        SC_SPEC_TYPE_INVOKER = 11,
+//        SC_SPEC_TYPE_ACCOUNT_ID = 12,
 //
 //        // Types with parameters.
 //        SC_SPEC_TYPE_OPTION = 1000,
@@ -31925,6 +31926,7 @@ pub enum ScSpecType {
     Bytes = 9,
     BigInt = 10,
     Invoker = 11,
+    AccountId = 12,
     Option = 1000,
     Result = 1001,
     Vec = 1002,
@@ -31951,6 +31953,7 @@ impl ScSpecType {
             Self::Bytes => "Bytes",
             Self::BigInt => "BigInt",
             Self::Invoker => "Invoker",
+            Self::AccountId => "AccountId",
             Self::Option => "Option",
             Self::Result => "Result",
             Self::Vec => "Vec",
@@ -31963,8 +31966,8 @@ impl ScSpecType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 20] {
-        const VARIANTS: [ScSpecType; 20] = [
+    pub const fn variants() -> [ScSpecType; 21] {
+        const VARIANTS: [ScSpecType; 21] = [
             ScSpecType::Val,
             ScSpecType::U32,
             ScSpecType::I32,
@@ -31977,6 +31980,7 @@ impl ScSpecType {
             ScSpecType::Bytes,
             ScSpecType::BigInt,
             ScSpecType::Invoker,
+            ScSpecType::AccountId,
             ScSpecType::Option,
             ScSpecType::Result,
             ScSpecType::Vec,
@@ -31999,7 +32003,7 @@ impl Name for ScSpecType {
 
 impl Variants<ScSpecType> for ScSpecType {
     fn variants() -> slice::Iter<'static, ScSpecType> {
-        const VARIANTS: [ScSpecType; 20] = ScSpecType::variants();
+        const VARIANTS: [ScSpecType; 21] = ScSpecType::variants();
         VARIANTS.iter()
     }
 }
@@ -32029,6 +32033,7 @@ impl TryFrom<i32> for ScSpecType {
             9 => ScSpecType::Bytes,
             10 => ScSpecType::BigInt,
             11 => ScSpecType::Invoker,
+            12 => ScSpecType::AccountId,
             1000 => ScSpecType::Option,
             1001 => ScSpecType::Result,
             1002 => ScSpecType::Vec,
@@ -32372,6 +32377,7 @@ impl WriteXdr for ScSpecTypeUdt {
 //    case SC_SPEC_TYPE_BYTES:
 //    case SC_SPEC_TYPE_BIG_INT:
 //    case SC_SPEC_TYPE_INVOKER:
+//    case SC_SPEC_TYPE_ACCOUNT_ID:
 //        void;
 //    case SC_SPEC_TYPE_OPTION:
 //        SCSpecTypeOption option;
@@ -32413,6 +32419,7 @@ pub enum ScSpecTypeDef {
     Bytes,
     BigInt,
     Invoker,
+    AccountId,
     Option(Box<ScSpecTypeOption>),
     Result(Box<ScSpecTypeResult>),
     Vec(Box<ScSpecTypeVec>),
@@ -32439,6 +32446,7 @@ impl ScSpecTypeDef {
             Self::Bytes => "Bytes",
             Self::BigInt => "BigInt",
             Self::Invoker => "Invoker",
+            Self::AccountId => "AccountId",
             Self::Option(_) => "Option",
             Self::Result(_) => "Result",
             Self::Vec(_) => "Vec",
@@ -32466,6 +32474,7 @@ impl ScSpecTypeDef {
             Self::Bytes => ScSpecType::Bytes,
             Self::BigInt => ScSpecType::BigInt,
             Self::Invoker => ScSpecType::Invoker,
+            Self::AccountId => ScSpecType::AccountId,
             Self::Option(_) => ScSpecType::Option,
             Self::Result(_) => ScSpecType::Result,
             Self::Vec(_) => ScSpecType::Vec,
@@ -32478,8 +32487,8 @@ impl ScSpecTypeDef {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 20] {
-        const VARIANTS: [ScSpecType; 20] = [
+    pub const fn variants() -> [ScSpecType; 21] {
+        const VARIANTS: [ScSpecType; 21] = [
             ScSpecType::Val,
             ScSpecType::U64,
             ScSpecType::I64,
@@ -32492,6 +32501,7 @@ impl ScSpecTypeDef {
             ScSpecType::Bytes,
             ScSpecType::BigInt,
             ScSpecType::Invoker,
+            ScSpecType::AccountId,
             ScSpecType::Option,
             ScSpecType::Result,
             ScSpecType::Vec,
@@ -32521,7 +32531,7 @@ impl Discriminant<ScSpecType> for ScSpecTypeDef {
 
 impl Variants<ScSpecType> for ScSpecTypeDef {
     fn variants() -> slice::Iter<'static, ScSpecType> {
-        const VARIANTS: [ScSpecType; 20] = ScSpecTypeDef::variants();
+        const VARIANTS: [ScSpecType; 21] = ScSpecTypeDef::variants();
         VARIANTS.iter()
     }
 }
@@ -32546,6 +32556,7 @@ impl ReadXdr for ScSpecTypeDef {
             ScSpecType::Bytes => Self::Bytes,
             ScSpecType::BigInt => Self::BigInt,
             ScSpecType::Invoker => Self::Invoker,
+            ScSpecType::AccountId => Self::AccountId,
             ScSpecType::Option => Self::Option(Box::<ScSpecTypeOption>::read_xdr(r)?),
             ScSpecType::Result => Self::Result(Box::<ScSpecTypeResult>::read_xdr(r)?),
             ScSpecType::Vec => Self::Vec(Box::<ScSpecTypeVec>::read_xdr(r)?),
@@ -32579,6 +32590,7 @@ impl WriteXdr for ScSpecTypeDef {
             Self::Bytes => ().write_xdr(w)?,
             Self::BigInt => ().write_xdr(w)?,
             Self::Invoker => ().write_xdr(w)?,
+            Self::AccountId => ().write_xdr(w)?,
             Self::Option(v) => v.write_xdr(w)?,
             Self::Result(v) => v.write_xdr(w)?,
             Self::Vec(v) => v.write_xdr(w)?,

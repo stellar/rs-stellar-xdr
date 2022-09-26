@@ -43,7 +43,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "f793157e60cc8d3b5f6bf0d48d077ee8883ea1511656cfffc5437988dcdbddba",
+        "12ed5c19be9a710615c5424a139443b54ea74849ecd595544136b9688e7f2e0b",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -17173,7 +17173,7 @@ impl WriteXdr for HashIdPreimageContractId {
     }
 }
 
-// HashIdPreimageSourceContractId is an XDR NestedStruct defines as:
+// HashIdPreimageSourceAccountContractId is an XDR NestedStruct defines as:
 //
 //   struct
 //        {
@@ -17188,12 +17188,12 @@ impl WriteXdr for HashIdPreimageContractId {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct HashIdPreimageSourceContractId {
+pub struct HashIdPreimageSourceAccountContractId {
     pub source_account: AccountId,
     pub salt: Uint256,
 }
 
-impl ReadXdr for HashIdPreimageSourceContractId {
+impl ReadXdr for HashIdPreimageSourceAccountContractId {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -17203,7 +17203,7 @@ impl ReadXdr for HashIdPreimageSourceContractId {
     }
 }
 
-impl WriteXdr for HashIdPreimageSourceContractId {
+impl WriteXdr for HashIdPreimageSourceAccountContractId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.source_account.write_xdr(w)?;
@@ -17251,7 +17251,7 @@ impl WriteXdr for HashIdPreimageSourceContractId {
 //        {
 //            AccountID sourceAccount;
 //            uint256 salt;
-//        } sourceContractID;
+//        } sourceAccountContractID;
 //    };
 //
 // union with discriminant EnvelopeType
@@ -17269,7 +17269,7 @@ pub enum HashIdPreimage {
     ContractIdFromEd25519(HashIdPreimageEd25519ContractId),
     ContractIdFromContract(HashIdPreimageContractId),
     ContractIdFromAsset(Asset),
-    ContractIdFromSourceAccount(HashIdPreimageSourceContractId),
+    ContractIdFromSourceAccount(HashIdPreimageSourceAccountContractId),
 }
 
 impl HashIdPreimage {
@@ -17352,9 +17352,9 @@ impl ReadXdr for HashIdPreimage {
                 Self::ContractIdFromContract(HashIdPreimageContractId::read_xdr(r)?)
             }
             EnvelopeType::ContractIdFromAsset => Self::ContractIdFromAsset(Asset::read_xdr(r)?),
-            EnvelopeType::ContractIdFromSourceAccount => {
-                Self::ContractIdFromSourceAccount(HashIdPreimageSourceContractId::read_xdr(r)?)
-            }
+            EnvelopeType::ContractIdFromSourceAccount => Self::ContractIdFromSourceAccount(
+                HashIdPreimageSourceAccountContractId::read_xdr(r)?,
+            ),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -33471,7 +33471,7 @@ pub enum TypeVariant {
     HashIdPreimageRevokeId,
     HashIdPreimageEd25519ContractId,
     HashIdPreimageContractId,
-    HashIdPreimageSourceContractId,
+    HashIdPreimageSourceAccountContractId,
     MemoType,
     Memo,
     TimeBounds,
@@ -33855,7 +33855,9 @@ impl core::str::FromStr for TypeVariant {
             "HashIdPreimageRevokeId" => Ok(Self::HashIdPreimageRevokeId),
             "HashIdPreimageEd25519ContractId" => Ok(Self::HashIdPreimageEd25519ContractId),
             "HashIdPreimageContractId" => Ok(Self::HashIdPreimageContractId),
-            "HashIdPreimageSourceContractId" => Ok(Self::HashIdPreimageSourceContractId),
+            "HashIdPreimageSourceAccountContractId" => {
+                Ok(Self::HashIdPreimageSourceAccountContractId)
+            }
             "MemoType" => Ok(Self::MemoType),
             "Memo" => Ok(Self::Memo),
             "TimeBounds" => Ok(Self::TimeBounds),
@@ -34250,7 +34252,7 @@ pub enum Type {
     HashIdPreimageRevokeId(Box<HashIdPreimageRevokeId>),
     HashIdPreimageEd25519ContractId(Box<HashIdPreimageEd25519ContractId>),
     HashIdPreimageContractId(Box<HashIdPreimageContractId>),
-    HashIdPreimageSourceContractId(Box<HashIdPreimageSourceContractId>),
+    HashIdPreimageSourceAccountContractId(Box<HashIdPreimageSourceAccountContractId>),
     MemoType(Box<MemoType>),
     Memo(Box<Memo>),
     TimeBounds(Box<TimeBounds>),
@@ -34996,9 +34998,9 @@ impl Type {
             TypeVariant::HashIdPreimageContractId => Ok(Self::HashIdPreimageContractId(Box::new(
                 HashIdPreimageContractId::read_xdr(r)?,
             ))),
-            TypeVariant::HashIdPreimageSourceContractId => {
-                Ok(Self::HashIdPreimageSourceContractId(Box::new(
-                    HashIdPreimageSourceContractId::read_xdr(r)?,
+            TypeVariant::HashIdPreimageSourceAccountContractId => {
+                Ok(Self::HashIdPreimageSourceAccountContractId(Box::new(
+                    HashIdPreimageSourceAccountContractId::read_xdr(r)?,
                 )))
             }
             TypeVariant::MemoType => Ok(Self::MemoType(Box::new(MemoType::read_xdr(r)?))),
@@ -35688,7 +35690,7 @@ impl Type {
             Self::HashIdPreimageRevokeId(ref v) => v.as_ref(),
             Self::HashIdPreimageEd25519ContractId(ref v) => v.as_ref(),
             Self::HashIdPreimageContractId(ref v) => v.as_ref(),
-            Self::HashIdPreimageSourceContractId(ref v) => v.as_ref(),
+            Self::HashIdPreimageSourceAccountContractId(ref v) => v.as_ref(),
             Self::MemoType(ref v) => v.as_ref(),
             Self::Memo(ref v) => v.as_ref(),
             Self::TimeBounds(ref v) => v.as_ref(),
@@ -36072,7 +36074,9 @@ impl Type {
             Self::HashIdPreimageRevokeId(_) => "HashIdPreimageRevokeId",
             Self::HashIdPreimageEd25519ContractId(_) => "HashIdPreimageEd25519ContractId",
             Self::HashIdPreimageContractId(_) => "HashIdPreimageContractId",
-            Self::HashIdPreimageSourceContractId(_) => "HashIdPreimageSourceContractId",
+            Self::HashIdPreimageSourceAccountContractId(_) => {
+                "HashIdPreimageSourceAccountContractId"
+            }
             Self::MemoType(_) => "MemoType",
             Self::Memo(_) => "Memo",
             Self::TimeBounds(_) => "TimeBounds",
@@ -36462,7 +36466,7 @@ impl Type {
             TypeVariant::HashIdPreimageRevokeId,
             TypeVariant::HashIdPreimageEd25519ContractId,
             TypeVariant::HashIdPreimageContractId,
-            TypeVariant::HashIdPreimageSourceContractId,
+            TypeVariant::HashIdPreimageSourceAccountContractId,
             TypeVariant::MemoType,
             TypeVariant::Memo,
             TypeVariant::TimeBounds,
@@ -36865,7 +36869,9 @@ impl Type {
                 TypeVariant::HashIdPreimageEd25519ContractId
             }
             Self::HashIdPreimageContractId(_) => TypeVariant::HashIdPreimageContractId,
-            Self::HashIdPreimageSourceContractId(_) => TypeVariant::HashIdPreimageSourceContractId,
+            Self::HashIdPreimageSourceAccountContractId(_) => {
+                TypeVariant::HashIdPreimageSourceAccountContractId
+            }
             Self::MemoType(_) => TypeVariant::MemoType,
             Self::Memo(_) => TypeVariant::Memo,
             Self::TimeBounds(_) => TypeVariant::TimeBounds,

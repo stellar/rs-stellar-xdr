@@ -31,7 +31,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "9b02ef1930470303c5dfb29596727b508c6ff0515462c8785c3201bb8b4175a4",
+        "b06993820d3488cf05d69755de7fef2f1b1ad9c185d2f55ce78b9fb556c17dcf",
     ),
     (
         "xdr/next/Stellar-ledger.x",
@@ -47,7 +47,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-types.x",
-        "60b7588e573f5e5518766eb5e6b6ea42f0e53144663cbe557e485cceb6306c85",
+        "7b3e5470c4bcf7c19f9cc8f8bf81a494b540fc2157476329cf19863afab2343b",
     ),
 ];
 
@@ -1836,56 +1836,6 @@ impl WriteXdr for ScpQuorumSet {
         self.validators.write_xdr(w)?;
         self.inner_sets.write_xdr(w)?;
         Ok(())
-    }
-}
-
-// AccountId is an XDR Typedef defines as:
-//
-//   typedef PublicKey AccountID;
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-pub struct AccountId(pub PublicKey);
-
-impl From<AccountId> for PublicKey {
-    #[must_use]
-    fn from(x: AccountId) -> Self {
-        x.0
-    }
-}
-
-impl From<PublicKey> for AccountId {
-    #[must_use]
-    fn from(x: PublicKey) -> Self {
-        AccountId(x)
-    }
-}
-
-impl AsRef<PublicKey> for AccountId {
-    #[must_use]
-    fn as_ref(&self) -> &PublicKey {
-        &self.0
-    }
-}
-
-impl ReadXdr for AccountId {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = PublicKey::read_xdr(r)?;
-        let v = AccountId(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for AccountId {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
     }
 }
 
@@ -28998,6 +28948,56 @@ impl WriteXdr for NodeId {
     }
 }
 
+// AccountId is an XDR Typedef defines as:
+//
+//   typedef PublicKey AccountID;
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct AccountId(pub PublicKey);
+
+impl From<AccountId> for PublicKey {
+    #[must_use]
+    fn from(x: AccountId) -> Self {
+        x.0
+    }
+}
+
+impl From<PublicKey> for AccountId {
+    #[must_use]
+    fn from(x: PublicKey) -> Self {
+        AccountId(x)
+    }
+}
+
+impl AsRef<PublicKey> for AccountId {
+    #[must_use]
+    fn as_ref(&self) -> &PublicKey {
+        &self.0
+    }
+}
+
+impl ReadXdr for AccountId {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = PublicKey::read_xdr(r)?;
+        let v = AccountId(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for AccountId {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
 // Curve25519Secret is an XDR Struct defines as:
 //
 //   struct Curve25519Secret
@@ -33277,7 +33277,6 @@ pub enum TypeVariant {
     ScpStatementExternalize,
     ScpEnvelope,
     ScpQuorumSet,
-    AccountId,
     Thresholds,
     String32,
     String64,
@@ -33591,6 +33590,7 @@ pub enum TypeVariant {
     Signature,
     SignatureHint,
     NodeId,
+    AccountId,
     Curve25519Secret,
     Curve25519Public,
     HmacSha256Key,
@@ -33659,7 +33659,6 @@ impl core::str::FromStr for TypeVariant {
             "ScpStatementExternalize" => Ok(Self::ScpStatementExternalize),
             "ScpEnvelope" => Ok(Self::ScpEnvelope),
             "ScpQuorumSet" => Ok(Self::ScpQuorumSet),
-            "AccountId" => Ok(Self::AccountId),
             "Thresholds" => Ok(Self::Thresholds),
             "String32" => Ok(Self::String32),
             "String64" => Ok(Self::String64),
@@ -33985,6 +33984,7 @@ impl core::str::FromStr for TypeVariant {
             "Signature" => Ok(Self::Signature),
             "SignatureHint" => Ok(Self::SignatureHint),
             "NodeId" => Ok(Self::NodeId),
+            "AccountId" => Ok(Self::AccountId),
             "Curve25519Secret" => Ok(Self::Curve25519Secret),
             "Curve25519Public" => Ok(Self::Curve25519Public),
             "HmacSha256Key" => Ok(Self::HmacSha256Key),
@@ -34058,7 +34058,6 @@ pub enum Type {
     ScpStatementExternalize(Box<ScpStatementExternalize>),
     ScpEnvelope(Box<ScpEnvelope>),
     ScpQuorumSet(Box<ScpQuorumSet>),
-    AccountId(Box<AccountId>),
     Thresholds(Box<Thresholds>),
     String32(Box<String32>),
     String64(Box<String64>),
@@ -34372,6 +34371,7 @@ pub enum Type {
     Signature(Box<Signature>),
     SignatureHint(Box<SignatureHint>),
     NodeId(Box<NodeId>),
+    AccountId(Box<AccountId>),
     Curve25519Secret(Box<Curve25519Secret>),
     Curve25519Public(Box<Curve25519Public>),
     HmacSha256Key(Box<HmacSha256Key>),
@@ -34456,7 +34456,6 @@ impl Type {
             TypeVariant::ScpQuorumSet => {
                 Ok(Self::ScpQuorumSet(Box::new(ScpQuorumSet::read_xdr(r)?)))
             }
-            TypeVariant::AccountId => Ok(Self::AccountId(Box::new(AccountId::read_xdr(r)?))),
             TypeVariant::Thresholds => Ok(Self::Thresholds(Box::new(Thresholds::read_xdr(r)?))),
             TypeVariant::String32 => Ok(Self::String32(Box::new(String32::read_xdr(r)?))),
             TypeVariant::String64 => Ok(Self::String64(Box::new(String64::read_xdr(r)?))),
@@ -35338,6 +35337,7 @@ impl Type {
                 Ok(Self::SignatureHint(Box::new(SignatureHint::read_xdr(r)?)))
             }
             TypeVariant::NodeId => Ok(Self::NodeId(Box::new(NodeId::read_xdr(r)?))),
+            TypeVariant::AccountId => Ok(Self::AccountId(Box::new(AccountId::read_xdr(r)?))),
             TypeVariant::Curve25519Secret => Ok(Self::Curve25519Secret(Box::new(
                 Curve25519Secret::read_xdr(r)?,
             ))),
@@ -35496,7 +35496,6 @@ impl Type {
             Self::ScpStatementExternalize(ref v) => v.as_ref(),
             Self::ScpEnvelope(ref v) => v.as_ref(),
             Self::ScpQuorumSet(ref v) => v.as_ref(),
-            Self::AccountId(ref v) => v.as_ref(),
             Self::Thresholds(ref v) => v.as_ref(),
             Self::String32(ref v) => v.as_ref(),
             Self::String64(ref v) => v.as_ref(),
@@ -35810,6 +35809,7 @@ impl Type {
             Self::Signature(ref v) => v.as_ref(),
             Self::SignatureHint(ref v) => v.as_ref(),
             Self::NodeId(ref v) => v.as_ref(),
+            Self::AccountId(ref v) => v.as_ref(),
             Self::Curve25519Secret(ref v) => v.as_ref(),
             Self::Curve25519Public(ref v) => v.as_ref(),
             Self::HmacSha256Key(ref v) => v.as_ref(),
@@ -35878,7 +35878,6 @@ impl Type {
             Self::ScpStatementExternalize(_) => "ScpStatementExternalize",
             Self::ScpEnvelope(_) => "ScpEnvelope",
             Self::ScpQuorumSet(_) => "ScpQuorumSet",
-            Self::AccountId(_) => "AccountId",
             Self::Thresholds(_) => "Thresholds",
             Self::String32(_) => "String32",
             Self::String64(_) => "String64",
@@ -36204,6 +36203,7 @@ impl Type {
             Self::Signature(_) => "Signature",
             Self::SignatureHint(_) => "SignatureHint",
             Self::NodeId(_) => "NodeId",
+            Self::AccountId(_) => "AccountId",
             Self::Curve25519Secret(_) => "Curve25519Secret",
             Self::Curve25519Public(_) => "Curve25519Public",
             Self::HmacSha256Key(_) => "HmacSha256Key",
@@ -36272,7 +36272,6 @@ impl Type {
             TypeVariant::ScpStatementExternalize,
             TypeVariant::ScpEnvelope,
             TypeVariant::ScpQuorumSet,
-            TypeVariant::AccountId,
             TypeVariant::Thresholds,
             TypeVariant::String32,
             TypeVariant::String64,
@@ -36586,6 +36585,7 @@ impl Type {
             TypeVariant::Signature,
             TypeVariant::SignatureHint,
             TypeVariant::NodeId,
+            TypeVariant::AccountId,
             TypeVariant::Curve25519Secret,
             TypeVariant::Curve25519Public,
             TypeVariant::HmacSha256Key,
@@ -36655,7 +36655,6 @@ impl Type {
             Self::ScpStatementExternalize(_) => TypeVariant::ScpStatementExternalize,
             Self::ScpEnvelope(_) => TypeVariant::ScpEnvelope,
             Self::ScpQuorumSet(_) => TypeVariant::ScpQuorumSet,
-            Self::AccountId(_) => TypeVariant::AccountId,
             Self::Thresholds(_) => TypeVariant::Thresholds,
             Self::String32(_) => TypeVariant::String32,
             Self::String64(_) => TypeVariant::String64,
@@ -37017,6 +37016,7 @@ impl Type {
             Self::Signature(_) => TypeVariant::Signature,
             Self::SignatureHint(_) => TypeVariant::SignatureHint,
             Self::NodeId(_) => TypeVariant::NodeId,
+            Self::AccountId(_) => TypeVariant::AccountId,
             Self::Curve25519Secret(_) => TypeVariant::Curve25519Secret,
             Self::Curve25519Public(_) => TypeVariant::Curve25519Public,
             Self::HmacSha256Key(_) => TypeVariant::HmacSha256Key,

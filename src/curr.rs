@@ -28919,10 +28919,10 @@ impl Type {
         Ok(t)
     }
 
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub fn value(&self) -> &dyn std::any::Any {
+    pub fn value(&self) -> &dyn core::any::Any {
         match self {
             Self::Value(ref v) => v.as_ref(),
             Self::ScpBallot(ref v) => v.as_ref(),

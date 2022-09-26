@@ -27,7 +27,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "41733778a1aa998e9cea87af9d318dcbb198af33c2703e76955f4a3fa7114463",
+        "1cbf58f3a8e3f7d2f700ae48551782344c095ec38d2a36618d33ad1af18a39d1",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -30753,7 +30753,8 @@ impl WriteXdr for ScVal {
 //        SCO_I64 = 3,
 //        SCO_BYTES = 4,
 //        SCO_BIG_INT = 5,
-//        SCO_CONTRACT_CODE = 6
+//        SCO_CONTRACT_CODE = 6,
+//        SCO_ACCOUNT_ID = 7
 //
 //        // TODO: add more
 //    };
@@ -30775,6 +30776,7 @@ pub enum ScObjectType {
     Bytes = 4,
     BigInt = 5,
     ContractCode = 6,
+    AccountId = 7,
 }
 
 impl ScObjectType {
@@ -30788,12 +30790,13 @@ impl ScObjectType {
             Self::Bytes => "Bytes",
             Self::BigInt => "BigInt",
             Self::ContractCode => "ContractCode",
+            Self::AccountId => "AccountId",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScObjectType; 7] {
-        const VARIANTS: [ScObjectType; 7] = [
+    pub const fn variants() -> [ScObjectType; 8] {
+        const VARIANTS: [ScObjectType; 8] = [
             ScObjectType::Vec,
             ScObjectType::Map,
             ScObjectType::U64,
@@ -30801,6 +30804,7 @@ impl ScObjectType {
             ScObjectType::Bytes,
             ScObjectType::BigInt,
             ScObjectType::ContractCode,
+            ScObjectType::AccountId,
         ];
         VARIANTS
     }
@@ -30815,7 +30819,7 @@ impl Name for ScObjectType {
 
 impl Variants<ScObjectType> for ScObjectType {
     fn variants() -> slice::Iter<'static, ScObjectType> {
-        const VARIANTS: [ScObjectType; 7] = ScObjectType::variants();
+        const VARIANTS: [ScObjectType; 8] = ScObjectType::variants();
         VARIANTS.iter()
     }
 }
@@ -30840,6 +30844,7 @@ impl TryFrom<i32> for ScObjectType {
             4 => ScObjectType::Bytes,
             5 => ScObjectType::BigInt,
             6 => ScObjectType::ContractCode,
+            7 => ScObjectType::AccountId,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -31544,6 +31549,8 @@ impl WriteXdr for ScContractCode {
 //        SCBigInt bigInt;
 //    case SCO_CONTRACT_CODE:
 //        SCContractCode contractCode;
+//    case SCO_ACCOUNT_ID:
+//        AccountID accountID;
 //    };
 //
 // union with discriminant ScObjectType
@@ -31563,6 +31570,7 @@ pub enum ScObject {
     Bytes(VecM<u8, 256000>),
     BigInt(ScBigInt),
     ContractCode(ScContractCode),
+    AccountId(AccountId),
 }
 
 impl ScObject {
@@ -31576,6 +31584,7 @@ impl ScObject {
             Self::Bytes(_) => "Bytes",
             Self::BigInt(_) => "BigInt",
             Self::ContractCode(_) => "ContractCode",
+            Self::AccountId(_) => "AccountId",
         }
     }
 
@@ -31590,12 +31599,13 @@ impl ScObject {
             Self::Bytes(_) => ScObjectType::Bytes,
             Self::BigInt(_) => ScObjectType::BigInt,
             Self::ContractCode(_) => ScObjectType::ContractCode,
+            Self::AccountId(_) => ScObjectType::AccountId,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScObjectType; 7] {
-        const VARIANTS: [ScObjectType; 7] = [
+    pub const fn variants() -> [ScObjectType; 8] {
+        const VARIANTS: [ScObjectType; 8] = [
             ScObjectType::Vec,
             ScObjectType::Map,
             ScObjectType::U64,
@@ -31603,6 +31613,7 @@ impl ScObject {
             ScObjectType::Bytes,
             ScObjectType::BigInt,
             ScObjectType::ContractCode,
+            ScObjectType::AccountId,
         ];
         VARIANTS
     }
@@ -31624,7 +31635,7 @@ impl Discriminant<ScObjectType> for ScObject {
 
 impl Variants<ScObjectType> for ScObject {
     fn variants() -> slice::Iter<'static, ScObjectType> {
-        const VARIANTS: [ScObjectType; 7] = ScObject::variants();
+        const VARIANTS: [ScObjectType; 8] = ScObject::variants();
         VARIANTS.iter()
     }
 }
@@ -31644,6 +31655,7 @@ impl ReadXdr for ScObject {
             ScObjectType::Bytes => Self::Bytes(VecM::<u8, 256000>::read_xdr(r)?),
             ScObjectType::BigInt => Self::BigInt(ScBigInt::read_xdr(r)?),
             ScObjectType::ContractCode => Self::ContractCode(ScContractCode::read_xdr(r)?),
+            ScObjectType::AccountId => Self::AccountId(AccountId::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -31664,6 +31676,7 @@ impl WriteXdr for ScObject {
             Self::Bytes(v) => v.write_xdr(w)?,
             Self::BigInt(v) => v.write_xdr(w)?,
             Self::ContractCode(v) => v.write_xdr(w)?,
+            Self::AccountId(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -35453,10 +35466,10 @@ impl Type {
         Ok(t)
     }
 
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub fn value(&self) -> &dyn std::any::Any {
+    pub fn value(&self) -> &dyn core::any::Any {
         match self {
             Self::Value(ref v) => v.as_ref(),
             Self::ScpBallot(ref v) => v.as_ref(),

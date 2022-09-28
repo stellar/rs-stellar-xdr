@@ -43,7 +43,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 9] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "12ed5c19be9a710615c5424a139443b54ea74849ecd595544136b9688e7f2e0b",
+        "dc270655d2c26d656c7b035bc3003477dfab1097d3c46ff1cee6d68602af114c",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -16626,9 +16626,11 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 //
 //   enum HostFunction
 //    {
-//        HOST_FN_CALL = 0,
+//        HOST_FN_INVOKE_CONTRACT = 0,
 //        HOST_FN_CREATE_CONTRACT_WITH_ED25519 = 1,
-//        HOST_FN_CREATE_CONTRACT_WITH_SOURCE_ACCOUNT = 2
+//        HOST_FN_CREATE_CONTRACT_WITH_SOURCE_ACCOUNT = 2,
+//        HOST_FN_CREATE_TOKEN_CONTRACT_WITH_SOURCE_ACCOUNT = 3,
+//        HOST_FN_CREATE_TOKEN_CONTRACT_WITH_ASSET = 4
 //    };
 //
 // enum
@@ -16641,34 +16643,42 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 )]
 #[repr(i32)]
 pub enum HostFunction {
-    Call = 0,
+    InvokeContract = 0,
     CreateContractWithEd25519 = 1,
     CreateContractWithSourceAccount = 2,
+    CreateTokenContractWithSourceAccount = 3,
+    CreateTokenContractWithAsset = 4,
 }
 
 impl HostFunction {
-    pub const VARIANTS: [HostFunction; 3] = [
-        HostFunction::Call,
+    pub const VARIANTS: [HostFunction; 5] = [
+        HostFunction::InvokeContract,
         HostFunction::CreateContractWithEd25519,
         HostFunction::CreateContractWithSourceAccount,
+        HostFunction::CreateTokenContractWithSourceAccount,
+        HostFunction::CreateTokenContractWithAsset,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = [
-        "Call",
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "InvokeContract",
         "CreateContractWithEd25519",
         "CreateContractWithSourceAccount",
+        "CreateTokenContractWithSourceAccount",
+        "CreateTokenContractWithAsset",
     ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::Call => "Call",
+            Self::InvokeContract => "InvokeContract",
             Self::CreateContractWithEd25519 => "CreateContractWithEd25519",
             Self::CreateContractWithSourceAccount => "CreateContractWithSourceAccount",
+            Self::CreateTokenContractWithSourceAccount => "CreateTokenContractWithSourceAccount",
+            Self::CreateTokenContractWithAsset => "CreateTokenContractWithAsset",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [HostFunction; 3] {
+    pub const fn variants() -> [HostFunction; 5] {
         Self::VARIANTS
     }
 }
@@ -16699,9 +16709,11 @@ impl TryFrom<i32> for HostFunction {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => HostFunction::Call,
+            0 => HostFunction::InvokeContract,
             1 => HostFunction::CreateContractWithEd25519,
             2 => HostFunction::CreateContractWithSourceAccount,
+            3 => HostFunction::CreateTokenContractWithSourceAccount,
+            4 => HostFunction::CreateTokenContractWithAsset,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

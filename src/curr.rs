@@ -1945,18 +1945,15 @@ mod test {
 //
 //   typedef opaque Value<>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct Value(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub BytesM,
-);
+pub struct Value(pub BytesM);
 
 impl From<Value> for BytesM {
     #[must_use]
@@ -2690,17 +2687,15 @@ impl WriteXdr for ScpQuorumSet {
 //
 //   typedef PublicKey AccountID;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct AccountId(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub PublicKey,
-);
+pub struct AccountId(pub PublicKey);
 
 impl From<AccountId> for PublicKey {
     #[must_use]
@@ -2743,18 +2738,43 @@ impl WriteXdr for AccountId {
 //
 //   typedef opaque Thresholds[4];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct Thresholds(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub [u8; 4],
-);
+pub struct Thresholds(pub [u8; 4]);
 
+impl core::fmt::Display for Thresholds {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for Thresholds {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "Thresholds(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for Thresholds {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<Thresholds> for [u8; 4] {
     #[must_use]
     fn from(x: Thresholds) -> Self {
@@ -2845,17 +2865,15 @@ pub type String64 = StringM<64>;
 //
 //   typedef int64 SequenceNumber;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct SequenceNumber(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub i64,
-);
+pub struct SequenceNumber(pub i64);
 
 impl From<SequenceNumber> for i64 {
     #[must_use]
@@ -2898,17 +2916,15 @@ impl WriteXdr for SequenceNumber {
 //
 //   typedef uint64 TimePoint;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct TimePoint(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub u64,
-);
+pub struct TimePoint(pub u64);
 
 impl From<TimePoint> for u64 {
     #[must_use]
@@ -2951,17 +2967,15 @@ impl WriteXdr for TimePoint {
 //
 //   typedef uint64 Duration;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct Duration(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub u64,
-);
+pub struct Duration(pub u64);
 
 impl From<Duration> for u64 {
     #[must_use]
@@ -3004,18 +3018,15 @@ impl WriteXdr for Duration {
 //
 //   typedef opaque DataValue<64>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct DataValue(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub BytesM<64>,
-);
+pub struct DataValue(pub BytesM<64>);
 
 impl From<DataValue> for BytesM<64> {
     #[must_use]
@@ -3107,17 +3118,15 @@ impl AsRef<[u8]> for DataValue {
 //
 //   typedef Hash PoolID;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct PoolId(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub Hash,
-);
+pub struct PoolId(pub Hash);
 
 impl From<PoolId> for Hash {
     #[must_use]
@@ -3160,18 +3169,43 @@ impl WriteXdr for PoolId {
 //
 //   typedef opaque AssetCode4[4];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct AssetCode4(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub [u8; 4],
-);
+pub struct AssetCode4(pub [u8; 4]);
 
+impl core::fmt::Display for AssetCode4 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for AssetCode4 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "AssetCode4(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for AssetCode4 {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<AssetCode4> for [u8; 4] {
     #[must_use]
     fn from(x: AssetCode4) -> Self {
@@ -3250,18 +3284,43 @@ impl AsRef<[u8]> for AssetCode4 {
 //
 //   typedef opaque AssetCode12[12];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct AssetCode12(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub [u8; 12],
-);
+pub struct AssetCode12(pub [u8; 12]);
 
+impl core::fmt::Display for AssetCode12 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for AssetCode12 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "AssetCode12(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for AssetCode12 {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<AssetCode12> for [u8; 12] {
     #[must_use]
     fn from(x: AssetCode12) -> Self {
@@ -4254,17 +4313,15 @@ pub const MAX_SIGNERS: u64 = 20;
 //
 //   typedef AccountID* SponsorshipDescriptor;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct SponsorshipDescriptor(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub Option<AccountId>,
-);
+pub struct SponsorshipDescriptor(pub Option<AccountId>);
 
 impl From<SponsorshipDescriptor> for Option<AccountId> {
     #[must_use]
@@ -8456,18 +8513,15 @@ impl WriteXdr for EnvelopeType {
 //
 //   typedef opaque UpgradeType<128>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct UpgradeType(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub BytesM<128>,
-);
+pub struct UpgradeType(pub BytesM<128>);
 
 impl From<UpgradeType> for BytesM<128> {
     #[must_use]
@@ -11377,18 +11431,15 @@ impl WriteXdr for LedgerEntryChange {
 //
 //   typedef LedgerEntryChange LedgerEntryChanges<>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct LedgerEntryChanges(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub VecM<LedgerEntryChange>,
-);
+pub struct LedgerEntryChanges(pub VecM<LedgerEntryChange>);
 
 impl From<LedgerEntryChanges> for VecM<LedgerEntryChange> {
     #[must_use]
@@ -13042,18 +13093,15 @@ impl WriteXdr for SignedSurveyRequestMessage {
 //
 //   typedef opaque EncryptedBody<64000>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct EncryptedBody(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub BytesM<64000>,
-);
+pub struct EncryptedBody(pub BytesM<64000>);
 
 impl From<EncryptedBody> for BytesM<64000> {
     #[must_use]
@@ -13328,18 +13376,15 @@ impl WriteXdr for PeerStats {
 //
 //   typedef PeerStats PeerStatList<25>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct PeerStatList(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub VecM<PeerStats, 25>,
-);
+pub struct PeerStatList(pub VecM<PeerStats, 25>);
 
 impl From<PeerStatList> for VecM<PeerStats, 25> {
     #[must_use]
@@ -13581,18 +13626,15 @@ pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
 //
 //   typedef Hash TxAdvertVector<TX_ADVERT_VECTOR_MAX_SIZE>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct TxAdvertVector(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub VecM<Hash, 1000>,
-);
+pub struct TxAdvertVector(pub VecM<Hash, 1000>);
 
 impl From<TxAdvertVector> for VecM<Hash, 1000> {
     #[must_use]
@@ -13725,18 +13767,15 @@ pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
 //
 //   typedef Hash TxDemandVector<TX_DEMAND_VECTOR_MAX_SIZE>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct TxDemandVector(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub VecM<Hash, 1000>,
-);
+pub struct TxDemandVector(pub VecM<Hash, 1000>);
 
 impl From<TxDemandVector> for VecM<Hash, 1000> {
     #[must_use]
@@ -27490,18 +27529,43 @@ impl WriteXdr for TransactionResult {
 //
 //   typedef opaque Hash[32];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct Hash(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub [u8; 32],
-);
+pub struct Hash(pub [u8; 32]);
 
+impl core::fmt::Display for Hash {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for Hash {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "Hash(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for Hash {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<Hash> for [u8; 32] {
     #[must_use]
     fn from(x: Hash) -> Self {
@@ -27580,18 +27644,43 @@ impl AsRef<[u8]> for Hash {
 //
 //   typedef opaque uint256[32];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct Uint256(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub [u8; 32],
-);
+pub struct Uint256(pub [u8; 32]);
 
+impl core::fmt::Display for Uint256 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for Uint256 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "Uint256(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for Uint256 {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<Uint256> for [u8; 32] {
     #[must_use]
     fn from(x: Uint256) -> Self {
@@ -28389,18 +28478,15 @@ impl WriteXdr for SignerKey {
 //
 //   typedef opaque Signature<64>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct Signature(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub BytesM<64>,
-);
+pub struct Signature(pub BytesM<64>);
 
 impl From<Signature> for BytesM<64> {
     #[must_use]
@@ -28492,18 +28578,43 @@ impl AsRef<[u8]> for Signature {
 //
 //   typedef opaque SignatureHint[4];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct SignatureHint(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub [u8; 4],
-);
+pub struct SignatureHint(pub [u8; 4]);
 
+impl core::fmt::Display for SignatureHint {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for SignatureHint {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "SignatureHint(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for SignatureHint {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<SignatureHint> for [u8; 4] {
     #[must_use]
     fn from(x: SignatureHint) -> Self {
@@ -28582,17 +28693,15 @@ impl AsRef<[u8]> for SignatureHint {
 //
 //   typedef PublicKey NodeID;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct NodeId(
-    // TODO: #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(with = "hex"))]
-    pub PublicKey,
-);
+pub struct NodeId(pub PublicKey);
 
 impl From<NodeId> for PublicKey {
     #[must_use]

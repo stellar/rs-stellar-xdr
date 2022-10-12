@@ -43,18 +43,18 @@ generate: src/curr.rs src/next.rs
 
 src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 	> $@
-	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
+	podman run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
-		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
+		gem specific_install https://github.com/stellar/xdrgen.git -b 1569d783 && \
 		xdrgen --language rust --namespace curr --output src/ $^ \
 		'
 	rustfmt $@
 
 src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 	> $@
-	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
+	podman run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
-		gem specific_install https://github.com/stellar/xdrgen.git -b master && \
+		gem specific_install https://github.com/stellar/xdrgen.git -b 1569d783 && \
 		xdrgen --language rust --namespace next --output src/ $^ \
 		'
 	rustfmt $@

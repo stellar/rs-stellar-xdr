@@ -1368,7 +1368,10 @@ impl<const MAX: u32> WriteXdr for BytesM<MAX> {
 
 #[cfg(feature = "alloc")]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct StringM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
 
@@ -1405,9 +1408,9 @@ impl<const MAX: u32> core::fmt::Debug for StringM<MAX> {
 
 #[cfg(feature = "alloc")]
 impl<const MAX: u32> core::str::FromStr for StringM<MAX> {
-    type Err = ();
+    type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        s.try_into().map_err(|_| ())
+        s.try_into()
     }
 }
 

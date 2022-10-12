@@ -45,7 +45,7 @@ src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 	> $@
 	podman run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
-		gem specific_install https://github.com/stellar/xdrgen.git -b 9e1259c3 && \
+		gem specific_install https://github.com/stellar/xdrgen.git -b 1fbf2c36 && \
 		xdrgen --language rust --namespace curr --output src/ $^ \
 		'
 	rustfmt $@
@@ -54,7 +54,7 @@ src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 	> $@
 	podman run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
-		gem specific_install https://github.com/stellar/xdrgen.git -b 9e1259c3 && \
+		gem specific_install https://github.com/stellar/xdrgen.git -b 1fbf2c36 && \
 		xdrgen --language rust --namespace next --output src/ $^ \
 		'
 	rustfmt $@

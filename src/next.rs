@@ -104,6 +104,8 @@ pub enum Error {
     LengthMismatch,
     NonZeroPadding,
     Utf8Error(core::str::Utf8Error),
+    #[cfg(feature = "alloc")]
+    InvalidHex,
     #[cfg(feature = "std")]
     Io(io::Error),
 }
@@ -144,6 +146,8 @@ impl fmt::Display for Error {
             Error::LengthMismatch => write!(f, "xdr value length does not match"),
             Error::NonZeroPadding => write!(f, "xdr padding contains non-zero bytes"),
             Error::Utf8Error(e) => write!(f, "{}", e),
+            #[cfg(feature = "alloc")]
+            Error::InvalidHex => write!(f, "hex invalid"),
             #[cfg(feature = "std")]
             Error::Io(e) => write!(f, "{}", e),
         }
@@ -672,6 +676,8 @@ impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
     }
 }
 
+// VecM ------------------------------------------------------------------------
+
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -1058,6 +1064,743 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
     }
 }
 
+// BytesM ------------------------------------------------------------------------
+
+#[cfg(feature = "alloc")]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+pub struct BytesM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
+
+#[cfg(not(feature = "alloc"))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+pub struct BytesM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
+
+impl<const MAX: u32> core::fmt::Display for BytesM<MAX> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        #[cfg(feature = "alloc")]
+        let v = &self.0;
+        #[cfg(not(feature = "alloc"))]
+        let v = self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl<const MAX: u32> core::fmt::Debug for BytesM<MAX> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        #[cfg(feature = "alloc")]
+        let v = &self.0;
+        #[cfg(not(feature = "alloc"))]
+        let v = self.0;
+        write!(f, "BytesM(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> core::str::FromStr for BytesM<MAX> {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
+
+impl<const MAX: u32> Deref for BytesM<MAX> {
+    type Target = Vec<u8>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<const MAX: u32> Default for BytesM<MAX> {
+    fn default() -> Self {
+        Self(Vec::default())
+    }
+}
+
+impl<const MAX: u32> BytesM<MAX> {
+    pub const MAX_LEN: usize = { MAX as usize };
+
+    #[must_use]
+    #[allow(clippy::unused_self)]
+    pub fn max_len(&self) -> usize {
+        Self::MAX_LEN
+    }
+
+    #[must_use]
+    pub fn as_vec(&self) -> &Vec<u8> {
+        self.as_ref()
+    }
+}
+
+impl<const MAX: u32> BytesM<MAX> {
+    #[must_use]
+    #[cfg(feature = "alloc")]
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.into()
+    }
+
+    #[must_use]
+    pub fn into_vec(self) -> Vec<u8> {
+        self.into()
+    }
+}
+
+impl<const MAX: u32> BytesM<MAX> {
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> Result<String> {
+        self.try_into()
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn into_string(self) -> Result<String> {
+        self.try_into()
+    }
+
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    pub fn to_string_lossy(&self) -> String {
+        String::from_utf8_lossy(&self.0).into_owned()
+    }
+
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    pub fn into_string_lossy(self) -> String {
+        String::from_utf8_lossy(&self.0).into_owned()
+    }
+}
+
+impl<const MAX: u32> TryFrom<Vec<u8>> for BytesM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: Vec<u8>) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(BytesM(v))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+impl<const MAX: u32> From<BytesM<MAX>> for Vec<u8> {
+    #[must_use]
+    fn from(v: BytesM<MAX>) -> Self {
+        v.0
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> From<&BytesM<MAX>> for Vec<u8> {
+    #[must_use]
+    fn from(v: &BytesM<MAX>) -> Self {
+        v.0.clone()
+    }
+}
+
+impl<const MAX: u32> AsRef<Vec<u8>> for BytesM<MAX> {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&Vec<u8>> for BytesM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &Vec<u8>) -> Result<Self> {
+        v.as_slice().try_into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&[u8]> for BytesM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &[u8]) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(BytesM(v.to_vec()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+impl<const MAX: u32> AsRef<[u8]> for BytesM<MAX> {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize, const MAX: u32> TryFrom<[u8; N]> for BytesM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: [u8; N]) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(BytesM(v.to_vec()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize, const MAX: u32> TryFrom<BytesM<MAX>> for [u8; N] {
+    type Error = BytesM<MAX>;
+
+    fn try_from(v: BytesM<MAX>) -> core::result::Result<Self, Self::Error> {
+        let s: [u8; N] = v.0.try_into().map_err(BytesM::<MAX>)?;
+        Ok(s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize, const MAX: u32> TryFrom<&[u8; N]> for BytesM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &[u8; N]) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(BytesM(v.to_vec()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(not(feature = "alloc"))]
+impl<const N: usize, const MAX: u32> TryFrom<&'static [u8; N]> for BytesM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &'static [u8; N]) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(BytesM(v))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&String> for BytesM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &String) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(BytesM(v.as_bytes().to_vec()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<String> for BytesM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: String) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(BytesM(v.into()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<BytesM<MAX>> for String {
+    type Error = Error;
+
+    fn try_from(v: BytesM<MAX>) -> Result<Self> {
+        Ok(String::from_utf8(v.0)?)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&BytesM<MAX>> for String {
+    type Error = Error;
+
+    fn try_from(v: &BytesM<MAX>) -> Result<Self> {
+        Ok(core::str::from_utf8(v.as_ref())?.to_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&str> for BytesM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &str) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(BytesM(v.into()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(not(feature = "alloc"))]
+impl<const MAX: u32> TryFrom<&'static str> for BytesM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &'static str) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(BytesM(v.as_bytes()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+impl<'a, const MAX: u32> TryFrom<&'a BytesM<MAX>> for &'a str {
+    type Error = Error;
+
+    fn try_from(v: &'a BytesM<MAX>) -> Result<Self> {
+        Ok(core::str::from_utf8(v.as_ref())?)
+    }
+}
+
+impl<const MAX: u32> ReadXdr for BytesM<MAX> {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let len: u32 = u32::read_xdr(r)?;
+        if len > MAX {
+            return Err(Error::LengthExceedsMax);
+        }
+
+        let mut vec = vec![0u8; len as usize];
+        r.read_exact(&mut vec)?;
+
+        let pad = &mut [0u8; 3][..pad_len(len as usize)];
+        r.read_exact(pad)?;
+        if pad.iter().any(|b| *b != 0) {
+            return Err(Error::NonZeroPadding);
+        }
+
+        Ok(BytesM(vec))
+    }
+}
+
+impl<const MAX: u32> WriteXdr for BytesM<MAX> {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        len.write_xdr(w)?;
+
+        w.write_all(&self.0)?;
+
+        w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
+
+        Ok(())
+    }
+}
+
+// StringM ------------------------------------------------------------------------
+
+#[cfg(feature = "alloc")]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+pub struct StringM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
+
+#[cfg(not(feature = "alloc"))]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+pub struct StringM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
+
+/// `write_utf8_lossy` is a modified copy of the Rust stdlib docs examples here:
+/// <https://doc.rust-lang.org/stable/core/str/struct.Utf8Error.html#examples>
+fn write_utf8_lossy(f: &mut impl core::fmt::Write, mut input: &[u8]) -> core::fmt::Result {
+    loop {
+        match core::str::from_utf8(input) {
+            Ok(valid) => {
+                write!(f, "{}", valid)?;
+                break;
+            }
+            Err(error) => {
+                let (valid, after_valid) = input.split_at(error.valid_up_to());
+                write!(f, "{}", core::str::from_utf8(valid).unwrap())?;
+                write!(f, "\u{FFFD}")?;
+
+                if let Some(invalid_sequence_length) = error.error_len() {
+                    input = &after_valid[invalid_sequence_length..];
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+impl<const MAX: u32> core::fmt::Display for StringM<MAX> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        #[cfg(feature = "alloc")]
+        let v = &self.0;
+        #[cfg(not(feature = "alloc"))]
+        let v = self.0;
+        write_utf8_lossy(f, v)?;
+        Ok(())
+    }
+}
+
+impl<const MAX: u32> core::fmt::Debug for StringM<MAX> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        #[cfg(feature = "alloc")]
+        let v = &self.0;
+        #[cfg(not(feature = "alloc"))]
+        let v = self.0;
+        write!(f, "StringM(")?;
+        write_utf8_lossy(f, v)?;
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> core::str::FromStr for StringM<MAX> {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        s.try_into()
+    }
+}
+
+impl<const MAX: u32> Deref for StringM<MAX> {
+    type Target = Vec<u8>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<const MAX: u32> Default for StringM<MAX> {
+    fn default() -> Self {
+        Self(Vec::default())
+    }
+}
+
+impl<const MAX: u32> StringM<MAX> {
+    pub const MAX_LEN: usize = { MAX as usize };
+
+    #[must_use]
+    #[allow(clippy::unused_self)]
+    pub fn max_len(&self) -> usize {
+        Self::MAX_LEN
+    }
+
+    #[must_use]
+    pub fn as_vec(&self) -> &Vec<u8> {
+        self.as_ref()
+    }
+}
+
+impl<const MAX: u32> StringM<MAX> {
+    #[must_use]
+    #[cfg(feature = "alloc")]
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.into()
+    }
+
+    #[must_use]
+    pub fn into_vec(self) -> Vec<u8> {
+        self.into()
+    }
+}
+
+impl<const MAX: u32> StringM<MAX> {
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> Result<String> {
+        self.try_into()
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn into_string(self) -> Result<String> {
+        self.try_into()
+    }
+
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    pub fn to_string_lossy(&self) -> String {
+        String::from_utf8_lossy(&self.0).into_owned()
+    }
+
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    pub fn into_string_lossy(self) -> String {
+        String::from_utf8_lossy(&self.0).into_owned()
+    }
+}
+
+impl<const MAX: u32> TryFrom<Vec<u8>> for StringM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: Vec<u8>) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(StringM(v))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+impl<const MAX: u32> From<StringM<MAX>> for Vec<u8> {
+    #[must_use]
+    fn from(v: StringM<MAX>) -> Self {
+        v.0
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> From<&StringM<MAX>> for Vec<u8> {
+    #[must_use]
+    fn from(v: &StringM<MAX>) -> Self {
+        v.0.clone()
+    }
+}
+
+impl<const MAX: u32> AsRef<Vec<u8>> for StringM<MAX> {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&Vec<u8>> for StringM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &Vec<u8>) -> Result<Self> {
+        v.as_slice().try_into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&[u8]> for StringM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &[u8]) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(StringM(v.to_vec()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+impl<const MAX: u32> AsRef<[u8]> for StringM<MAX> {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize, const MAX: u32> TryFrom<[u8; N]> for StringM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: [u8; N]) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(StringM(v.to_vec()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize, const MAX: u32> TryFrom<StringM<MAX>> for [u8; N] {
+    type Error = StringM<MAX>;
+
+    fn try_from(v: StringM<MAX>) -> core::result::Result<Self, Self::Error> {
+        let s: [u8; N] = v.0.try_into().map_err(StringM::<MAX>)?;
+        Ok(s)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const N: usize, const MAX: u32> TryFrom<&[u8; N]> for StringM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &[u8; N]) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(StringM(v.to_vec()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(not(feature = "alloc"))]
+impl<const N: usize, const MAX: u32> TryFrom<&'static [u8; N]> for StringM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &'static [u8; N]) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(StringM(v))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&String> for StringM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &String) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(StringM(v.as_bytes().to_vec()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<String> for StringM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: String) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(StringM(v.into()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<StringM<MAX>> for String {
+    type Error = Error;
+
+    fn try_from(v: StringM<MAX>) -> Result<Self> {
+        Ok(String::from_utf8(v.0)?)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&StringM<MAX>> for String {
+    type Error = Error;
+
+    fn try_from(v: &StringM<MAX>) -> Result<Self> {
+        Ok(core::str::from_utf8(v.as_ref())?.to_owned())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<const MAX: u32> TryFrom<&str> for StringM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &str) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(StringM(v.into()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+#[cfg(not(feature = "alloc"))]
+impl<const MAX: u32> TryFrom<&'static str> for StringM<MAX> {
+    type Error = Error;
+
+    fn try_from(v: &'static str) -> Result<Self> {
+        let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        if len <= MAX {
+            Ok(StringM(v.as_bytes()))
+        } else {
+            Err(Error::LengthExceedsMax)
+        }
+    }
+}
+
+impl<'a, const MAX: u32> TryFrom<&'a StringM<MAX>> for &'a str {
+    type Error = Error;
+
+    fn try_from(v: &'a StringM<MAX>) -> Result<Self> {
+        Ok(core::str::from_utf8(v.as_ref())?)
+    }
+}
+
+impl<const MAX: u32> ReadXdr for StringM<MAX> {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let len: u32 = u32::read_xdr(r)?;
+        if len > MAX {
+            return Err(Error::LengthExceedsMax);
+        }
+
+        let mut vec = vec![0u8; len as usize];
+        r.read_exact(&mut vec)?;
+
+        let pad = &mut [0u8; 3][..pad_len(len as usize)];
+        r.read_exact(pad)?;
+        if pad.iter().any(|b| *b != 0) {
+            return Err(Error::NonZeroPadding);
+        }
+
+        Ok(StringM(vec))
+    }
+}
+
+impl<const MAX: u32> WriteXdr for StringM<MAX> {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+        len.write_xdr(w)?;
+
+        w.write_all(&self.0)?;
+
+        w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
+
+        Ok(())
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use std::io::Cursor;
@@ -1217,33 +1960,33 @@ mod test {
 //
 //   typedef opaque Value<>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct Value(pub VecM<u8>);
+pub struct Value(pub BytesM);
 
-impl From<Value> for VecM<u8> {
+impl From<Value> for BytesM {
     #[must_use]
     fn from(x: Value) -> Self {
         x.0
     }
 }
 
-impl From<VecM<u8>> for Value {
+impl From<BytesM> for Value {
     #[must_use]
-    fn from(x: VecM<u8>) -> Self {
+    fn from(x: BytesM) -> Self {
         Value(x)
     }
 }
 
-impl AsRef<VecM<u8>> for Value {
+impl AsRef<BytesM> for Value {
     #[must_use]
-    fn as_ref(&self) -> &VecM<u8> {
+    fn as_ref(&self) -> &BytesM {
         &self.0
     }
 }
@@ -1251,7 +1994,7 @@ impl AsRef<VecM<u8>> for Value {
 impl ReadXdr for Value {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<u8>::read_xdr(r)?;
+        let i = BytesM::read_xdr(r)?;
         let v = Value(i);
         Ok(v)
     }
@@ -1265,7 +2008,7 @@ impl WriteXdr for Value {
 }
 
 impl Deref for Value {
-    type Target = VecM<u8>;
+    type Target = BytesM;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -1959,15 +2702,43 @@ impl WriteXdr for ScpQuorumSet {
 //
 //   typedef opaque Thresholds[4];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct Thresholds(pub [u8; 4]);
 
+impl core::fmt::Display for Thresholds {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for Thresholds {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "Thresholds(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for Thresholds {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<Thresholds> for [u8; 4] {
     #[must_use]
     fn from(x: Thresholds) -> Self {
@@ -2046,20 +2817,21 @@ impl AsRef<[u8]> for Thresholds {
 //
 //   typedef string string32<32>;
 //
-pub type String32 = VecM<u8, 32>;
+pub type String32 = StringM<32>;
 
 // String64 is an XDR Typedef defines as:
 //
 //   typedef string string64<64>;
 //
-pub type String64 = VecM<u8, 64>;
+pub type String64 = StringM<64>;
 
 // SequenceNumber is an XDR Typedef defines as:
 //
 //   typedef int64 SequenceNumber;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2108,8 +2880,9 @@ impl WriteXdr for SequenceNumber {
 //
 //   typedef uint64 TimePoint;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2158,8 +2931,9 @@ impl WriteXdr for TimePoint {
 //
 //   typedef uint64 Duration;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2208,33 +2982,33 @@ impl WriteXdr for Duration {
 //
 //   typedef opaque DataValue<64>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct DataValue(pub VecM<u8, 64>);
+pub struct DataValue(pub BytesM<64>);
 
-impl From<DataValue> for VecM<u8, 64> {
+impl From<DataValue> for BytesM<64> {
     #[must_use]
     fn from(x: DataValue) -> Self {
         x.0
     }
 }
 
-impl From<VecM<u8, 64>> for DataValue {
+impl From<BytesM<64>> for DataValue {
     #[must_use]
-    fn from(x: VecM<u8, 64>) -> Self {
+    fn from(x: BytesM<64>) -> Self {
         DataValue(x)
     }
 }
 
-impl AsRef<VecM<u8, 64>> for DataValue {
+impl AsRef<BytesM<64>> for DataValue {
     #[must_use]
-    fn as_ref(&self) -> &VecM<u8, 64> {
+    fn as_ref(&self) -> &BytesM<64> {
         &self.0
     }
 }
@@ -2242,7 +3016,7 @@ impl AsRef<VecM<u8, 64>> for DataValue {
 impl ReadXdr for DataValue {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<u8, 64>::read_xdr(r)?;
+        let i = BytesM::<64>::read_xdr(r)?;
         let v = DataValue(i);
         Ok(v)
     }
@@ -2256,7 +3030,7 @@ impl WriteXdr for DataValue {
 }
 
 impl Deref for DataValue {
-    type Target = VecM<u8, 64>;
+    type Target = BytesM<64>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -2308,8 +3082,9 @@ impl AsRef<[u8]> for DataValue {
 //
 //   typedef Hash PoolID;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -2358,15 +3133,43 @@ impl WriteXdr for PoolId {
 //
 //   typedef opaque AssetCode4[4];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct AssetCode4(pub [u8; 4]);
 
+impl core::fmt::Display for AssetCode4 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for AssetCode4 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "AssetCode4(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for AssetCode4 {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<AssetCode4> for [u8; 4] {
     #[must_use]
     fn from(x: AssetCode4) -> Self {
@@ -2445,15 +3248,43 @@ impl AsRef<[u8]> for AssetCode4 {
 //
 //   typedef opaque AssetCode12[12];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct AssetCode12(pub [u8; 12]);
 
+impl core::fmt::Display for AssetCode12 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for AssetCode12 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "AssetCode12(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for AssetCode12 {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<AssetCode12> for [u8; 12] {
     #[must_use]
     fn from(x: AssetCode12) -> Self {
@@ -3458,8 +4289,9 @@ pub const MAX_SIGNERS: u64 = 20;
 //
 //   typedef AccountID* SponsorshipDescriptor;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -4003,7 +4835,7 @@ pub struct AccountEntry {
     pub num_sub_entries: u32,
     pub inflation_dest: Option<AccountId>,
     pub flags: u32,
-    pub home_domain: VecM<u8, 32>,
+    pub home_domain: StringM<32>,
     pub thresholds: Thresholds,
     pub signers: VecM<Signer, 20>,
     pub ext: AccountEntryExt,
@@ -4019,7 +4851,7 @@ impl ReadXdr for AccountEntry {
             num_sub_entries: u32::read_xdr(r)?,
             inflation_dest: Option::<AccountId>::read_xdr(r)?,
             flags: u32::read_xdr(r)?,
-            home_domain: VecM::<u8, 32>::read_xdr(r)?,
+            home_domain: StringM::<32>::read_xdr(r)?,
             thresholds: Thresholds::read_xdr(r)?,
             signers: VecM::<Signer, 20>::read_xdr(r)?,
             ext: AccountEntryExt::read_xdr(r)?,
@@ -5270,7 +6102,7 @@ impl WriteXdr for DataEntryExt {
 )]
 pub struct DataEntry {
     pub account_id: AccountId,
-    pub data_name: VecM<u8, 64>,
+    pub data_name: StringM<64>,
     pub data_value: DataValue,
     pub ext: DataEntryExt,
 }
@@ -5280,7 +6112,7 @@ impl ReadXdr for DataEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: AccountId::read_xdr(r)?,
-            data_name: VecM::<u8, 64>::read_xdr(r)?,
+            data_name: StringM::<64>::read_xdr(r)?,
             data_value: DataValue::read_xdr(r)?,
             ext: DataEntryExt::read_xdr(r)?,
         })
@@ -7740,7 +8572,7 @@ impl WriteXdr for LedgerKeyOffer {
 )]
 pub struct LedgerKeyData {
     pub account_id: AccountId,
-    pub data_name: VecM<u8, 64>,
+    pub data_name: StringM<64>,
 }
 
 impl ReadXdr for LedgerKeyData {
@@ -7748,7 +8580,7 @@ impl ReadXdr for LedgerKeyData {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: AccountId::read_xdr(r)?,
-            data_name: VecM::<u8, 64>::read_xdr(r)?,
+            data_name: StringM::<64>::read_xdr(r)?,
         })
     }
 }
@@ -8277,33 +9109,33 @@ impl WriteXdr for EnvelopeType {
 //
 //   typedef opaque UpgradeType<128>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct UpgradeType(pub VecM<u8, 128>);
+pub struct UpgradeType(pub BytesM<128>);
 
-impl From<UpgradeType> for VecM<u8, 128> {
+impl From<UpgradeType> for BytesM<128> {
     #[must_use]
     fn from(x: UpgradeType) -> Self {
         x.0
     }
 }
 
-impl From<VecM<u8, 128>> for UpgradeType {
+impl From<BytesM<128>> for UpgradeType {
     #[must_use]
-    fn from(x: VecM<u8, 128>) -> Self {
+    fn from(x: BytesM<128>) -> Self {
         UpgradeType(x)
     }
 }
 
-impl AsRef<VecM<u8, 128>> for UpgradeType {
+impl AsRef<BytesM<128>> for UpgradeType {
     #[must_use]
-    fn as_ref(&self) -> &VecM<u8, 128> {
+    fn as_ref(&self) -> &BytesM<128> {
         &self.0
     }
 }
@@ -8311,7 +9143,7 @@ impl AsRef<VecM<u8, 128>> for UpgradeType {
 impl ReadXdr for UpgradeType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<u8, 128>::read_xdr(r)?;
+        let i = BytesM::<128>::read_xdr(r)?;
         let v = UpgradeType(i);
         Ok(v)
     }
@@ -8325,7 +9157,7 @@ impl WriteXdr for UpgradeType {
 }
 
 impl Deref for UpgradeType {
-    type Target = VecM<u8, 128>;
+    type Target = BytesM<128>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -11510,9 +12342,9 @@ impl WriteXdr for LedgerEntryChange {
 //
 //   typedef LedgerEntryChange LedgerEntryChanges<>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -12744,7 +13576,7 @@ impl WriteXdr for ErrorCode {
 )]
 pub struct SError {
     pub code: ErrorCode,
-    pub msg: VecM<u8, 100>,
+    pub msg: StringM<100>,
 }
 
 impl ReadXdr for SError {
@@ -12752,7 +13584,7 @@ impl ReadXdr for SError {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             code: ErrorCode::read_xdr(r)?,
-            msg: VecM::<u8, 100>::read_xdr(r)?,
+            msg: StringM::<100>::read_xdr(r)?,
         })
     }
 }
@@ -12871,7 +13703,7 @@ pub struct Hello {
     pub overlay_version: u32,
     pub overlay_min_version: u32,
     pub network_id: Hash,
-    pub version_str: VecM<u8, 100>,
+    pub version_str: StringM<100>,
     pub listening_port: i32,
     pub peer_id: NodeId,
     pub cert: AuthCert,
@@ -12886,7 +13718,7 @@ impl ReadXdr for Hello {
             overlay_version: u32::read_xdr(r)?,
             overlay_min_version: u32::read_xdr(r)?,
             network_id: Hash::read_xdr(r)?,
-            version_str: VecM::<u8, 100>::read_xdr(r)?,
+            version_str: StringM::<100>::read_xdr(r)?,
             listening_port: i32::read_xdr(r)?,
             peer_id: NodeId::read_xdr(r)?,
             cert: AuthCert::read_xdr(r)?,
@@ -13646,33 +14478,33 @@ impl WriteXdr for SignedSurveyRequestMessage {
 //
 //   typedef opaque EncryptedBody<64000>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct EncryptedBody(pub VecM<u8, 64000>);
+pub struct EncryptedBody(pub BytesM<64000>);
 
-impl From<EncryptedBody> for VecM<u8, 64000> {
+impl From<EncryptedBody> for BytesM<64000> {
     #[must_use]
     fn from(x: EncryptedBody) -> Self {
         x.0
     }
 }
 
-impl From<VecM<u8, 64000>> for EncryptedBody {
+impl From<BytesM<64000>> for EncryptedBody {
     #[must_use]
-    fn from(x: VecM<u8, 64000>) -> Self {
+    fn from(x: BytesM<64000>) -> Self {
         EncryptedBody(x)
     }
 }
 
-impl AsRef<VecM<u8, 64000>> for EncryptedBody {
+impl AsRef<BytesM<64000>> for EncryptedBody {
     #[must_use]
-    fn as_ref(&self) -> &VecM<u8, 64000> {
+    fn as_ref(&self) -> &BytesM<64000> {
         &self.0
     }
 }
@@ -13680,7 +14512,7 @@ impl AsRef<VecM<u8, 64000>> for EncryptedBody {
 impl ReadXdr for EncryptedBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<u8, 64000>::read_xdr(r)?;
+        let i = BytesM::<64000>::read_xdr(r)?;
         let v = EncryptedBody(i);
         Ok(v)
     }
@@ -13694,7 +14526,7 @@ impl WriteXdr for EncryptedBody {
 }
 
 impl Deref for EncryptedBody {
-    type Target = VecM<u8, 64000>;
+    type Target = BytesM<64000>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -13864,7 +14696,7 @@ impl WriteXdr for SignedSurveyResponseMessage {
 )]
 pub struct PeerStats {
     pub id: NodeId,
-    pub version_str: VecM<u8, 100>,
+    pub version_str: StringM<100>,
     pub messages_read: u64,
     pub messages_written: u64,
     pub bytes_read: u64,
@@ -13885,7 +14717,7 @@ impl ReadXdr for PeerStats {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             id: NodeId::read_xdr(r)?,
-            version_str: VecM::<u8, 100>::read_xdr(r)?,
+            version_str: StringM::<100>::read_xdr(r)?,
             messages_read: u64::read_xdr(r)?,
             messages_written: u64::read_xdr(r)?,
             bytes_read: u64::read_xdr(r)?,
@@ -13929,9 +14761,9 @@ impl WriteXdr for PeerStats {
 //
 //   typedef PeerStats PeerStatList<25>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14083,9 +14915,9 @@ pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
 //
 //   typedef Hash TxAdvertVector<TX_ADVERT_VECTOR_MAX_SIZE>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -14224,9 +15056,9 @@ pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
 //
 //   typedef Hash TxDemandVector<TX_DEMAND_VECTOR_MAX_SIZE>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -15821,7 +16653,7 @@ pub struct SetOptionsOp {
     pub low_threshold: Option<u32>,
     pub med_threshold: Option<u32>,
     pub high_threshold: Option<u32>,
-    pub home_domain: Option<VecM<u8, 32>>,
+    pub home_domain: Option<StringM<32>>,
     pub signer: Option<Signer>,
 }
 
@@ -15836,7 +16668,7 @@ impl ReadXdr for SetOptionsOp {
             low_threshold: Option::<u32>::read_xdr(r)?,
             med_threshold: Option::<u32>::read_xdr(r)?,
             high_threshold: Option::<u32>::read_xdr(r)?,
-            home_domain: Option::<VecM<u8, 32>>::read_xdr(r)?,
+            home_domain: Option::<StringM<32>>::read_xdr(r)?,
             signer: Option::<Signer>::read_xdr(r)?,
         })
     }
@@ -16086,7 +16918,7 @@ impl WriteXdr for AllowTrustOp {
     serde(rename_all = "camelCase")
 )]
 pub struct ManageDataOp {
-    pub data_name: VecM<u8, 64>,
+    pub data_name: StringM<64>,
     pub data_value: Option<DataValue>,
 }
 
@@ -16094,7 +16926,7 @@ impl ReadXdr for ManageDataOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            data_name: VecM::<u8, 64>::read_xdr(r)?,
+            data_name: StringM::<64>::read_xdr(r)?,
             data_value: Option::<DataValue>::read_xdr(r)?,
         })
     }
@@ -17873,7 +18705,7 @@ impl WriteXdr for MemoType {
 #[allow(clippy::large_enum_variant)]
 pub enum Memo {
     None,
-    Text(VecM<u8, 28>),
+    Text(StringM<28>),
     Id(u64),
     Hash(Hash),
     Return(Hash),
@@ -17947,7 +18779,7 @@ impl ReadXdr for Memo {
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             MemoType::None => Self::None,
-            MemoType::Text => Self::Text(VecM::<u8, 28>::read_xdr(r)?),
+            MemoType::Text => Self::Text(StringM::<28>::read_xdr(r)?),
             MemoType::Id => Self::Id(u64::read_xdr(r)?),
             MemoType::Hash => Self::Hash(Hash::read_xdr(r)?),
             MemoType::Return => Self::Return(Hash::read_xdr(r)?),
@@ -28723,15 +29555,43 @@ impl WriteXdr for TransactionResult {
 //
 //   typedef opaque Hash[32];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct Hash(pub [u8; 32]);
 
+impl core::fmt::Display for Hash {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for Hash {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "Hash(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for Hash {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<Hash> for [u8; 32] {
     #[must_use]
     fn from(x: Hash) -> Self {
@@ -28810,15 +29670,43 @@ impl AsRef<[u8]> for Hash {
 //
 //   typedef opaque uint256[32];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct Uint256(pub [u8; 32]);
 
+impl core::fmt::Display for Uint256 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for Uint256 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "Uint256(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for Uint256 {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<Uint256> for [u8; 32] {
     #[must_use]
     fn from(x: Uint256) -> Self {
@@ -29459,7 +30347,7 @@ impl WriteXdr for PublicKey {
 )]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
-    pub payload: VecM<u8, 64>,
+    pub payload: BytesM<64>,
 }
 
 impl ReadXdr for SignerKeyEd25519SignedPayload {
@@ -29467,7 +30355,7 @@ impl ReadXdr for SignerKeyEd25519SignedPayload {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ed25519: Uint256::read_xdr(r)?,
-            payload: VecM::<u8, 64>::read_xdr(r)?,
+            payload: BytesM::<64>::read_xdr(r)?,
         })
     }
 }
@@ -29616,33 +30504,33 @@ impl WriteXdr for SignerKey {
 //
 //   typedef opaque Signature<64>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct Signature(pub VecM<u8, 64>);
+pub struct Signature(pub BytesM<64>);
 
-impl From<Signature> for VecM<u8, 64> {
+impl From<Signature> for BytesM<64> {
     #[must_use]
     fn from(x: Signature) -> Self {
         x.0
     }
 }
 
-impl From<VecM<u8, 64>> for Signature {
+impl From<BytesM<64>> for Signature {
     #[must_use]
-    fn from(x: VecM<u8, 64>) -> Self {
+    fn from(x: BytesM<64>) -> Self {
         Signature(x)
     }
 }
 
-impl AsRef<VecM<u8, 64>> for Signature {
+impl AsRef<BytesM<64>> for Signature {
     #[must_use]
-    fn as_ref(&self) -> &VecM<u8, 64> {
+    fn as_ref(&self) -> &BytesM<64> {
         &self.0
     }
 }
@@ -29650,7 +30538,7 @@ impl AsRef<VecM<u8, 64>> for Signature {
 impl ReadXdr for Signature {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<u8, 64>::read_xdr(r)?;
+        let i = BytesM::<64>::read_xdr(r)?;
         let v = Signature(i);
         Ok(v)
     }
@@ -29664,7 +30552,7 @@ impl WriteXdr for Signature {
 }
 
 impl Deref for Signature {
-    type Target = VecM<u8, 64>;
+    type Target = BytesM<64>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -29716,15 +30604,43 @@ impl AsRef<[u8]> for Signature {
 //
 //   typedef opaque SignatureHint[4];
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct SignatureHint(pub [u8; 4]);
 
+impl core::fmt::Display for SignatureHint {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for SignatureHint {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        write!(f, "SignatureHint(")?;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for SignatureHint {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
 impl From<SignatureHint> for [u8; 4] {
     #[must_use]
     fn from(x: SignatureHint) -> Self {
@@ -29803,8 +30719,9 @@ impl AsRef<[u8]> for SignatureHint {
 //
 //   typedef PublicKey NodeID;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -29853,8 +30770,9 @@ impl WriteXdr for NodeId {
 //
 //   typedef PublicKey AccountID;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -30043,7 +30961,7 @@ impl WriteXdr for HmacSha256Mac {
 //
 //   typedef string SCSymbol<10>;
 //
-pub type ScSymbol = VecM<u8, 10>;
+pub type ScSymbol = StringM<10>;
 
 // ScValType is an XDR Enum defines as:
 //
@@ -31614,7 +32532,7 @@ pub enum ScVal {
     I32(i32),
     Static(ScStatic),
     Object(Option<ScObject>),
-    Symbol(VecM<u8, 10>),
+    Symbol(StringM<10>),
     Bitset(u64),
     Status(ScStatus),
 }
@@ -31702,7 +32620,7 @@ impl ReadXdr for ScVal {
             ScValType::I32 => Self::I32(i32::read_xdr(r)?),
             ScValType::Static => Self::Static(ScStatic::read_xdr(r)?),
             ScValType::Object => Self::Object(Option::<ScObject>::read_xdr(r)?),
-            ScValType::Symbol => Self::Symbol(VecM::<u8, 10>::read_xdr(r)?),
+            ScValType::Symbol => Self::Symbol(StringM::<10>::read_xdr(r)?),
             ScValType::Bitset => Self::Bitset(u64::read_xdr(r)?),
             ScValType::Status => Self::Status(ScStatus::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -31926,9 +32844,9 @@ pub const SCVAL_LIMIT: u64 = 256000;
 //
 //   typedef SCVal SCVec<SCVAL_LIMIT>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -32026,9 +32944,9 @@ impl AsRef<[ScVal]> for ScVec {
 //
 //   typedef SCMapEntry SCMap<SCVAL_LIMIT>;
 //
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
@@ -32248,8 +33166,8 @@ impl WriteXdr for ScNumSign {
 #[allow(clippy::large_enum_variant)]
 pub enum ScBigInt {
     Zero,
-    Positive(VecM<u8, 256000>),
-    Negative(VecM<u8, 256000>),
+    Positive(BytesM<256000>),
+    Negative(BytesM<256000>),
 }
 
 impl ScBigInt {
@@ -32311,8 +33229,8 @@ impl ReadXdr for ScBigInt {
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             ScNumSign::Zero => Self::Zero,
-            ScNumSign::Positive => Self::Positive(VecM::<u8, 256000>::read_xdr(r)?),
-            ScNumSign::Negative => Self::Negative(VecM::<u8, 256000>::read_xdr(r)?),
+            ScNumSign::Positive => Self::Positive(BytesM::<256000>::read_xdr(r)?),
+            ScNumSign::Negative => Self::Negative(BytesM::<256000>::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -32454,7 +33372,7 @@ impl WriteXdr for ScContractCodeType {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ScContractCode {
-    Wasm(VecM<u8, 256000>),
+    Wasm(BytesM<256000>),
     Token,
 }
 
@@ -32514,7 +33432,7 @@ impl ReadXdr for ScContractCode {
         let dv: ScContractCodeType = <ScContractCodeType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            ScContractCodeType::Wasm => Self::Wasm(VecM::<u8, 256000>::read_xdr(r)?),
+            ScContractCodeType::Wasm => Self::Wasm(BytesM::<256000>::read_xdr(r)?),
             ScContractCodeType::Token => Self::Token,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -32572,7 +33490,7 @@ pub enum ScObject {
     Map(ScMap),
     U64(u64),
     I64(i64),
-    Bytes(VecM<u8, 256000>),
+    Bytes(BytesM<256000>),
     BigInt(ScBigInt),
     ContractCode(ScContractCode),
     AccountId(AccountId),
@@ -32667,7 +33585,7 @@ impl ReadXdr for ScObject {
             ScObjectType::Map => Self::Map(ScMap::read_xdr(r)?),
             ScObjectType::U64 => Self::U64(u64::read_xdr(r)?),
             ScObjectType::I64 => Self::I64(i64::read_xdr(r)?),
-            ScObjectType::Bytes => Self::Bytes(VecM::<u8, 256000>::read_xdr(r)?),
+            ScObjectType::Bytes => Self::Bytes(BytesM::<256000>::read_xdr(r)?),
             ScObjectType::BigInt => Self::BigInt(ScBigInt::read_xdr(r)?),
             ScObjectType::ContractCode => Self::ContractCode(ScContractCode::read_xdr(r)?),
             ScObjectType::AccountId => Self::AccountId(AccountId::read_xdr(r)?),
@@ -33381,14 +34299,14 @@ impl WriteXdr for ScSpecTypeBytesN {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecTypeUdt {
-    pub name: VecM<u8, 60>,
+    pub name: StringM<60>,
 }
 
 impl ReadXdr for ScSpecTypeUdt {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            name: VecM::<u8, 60>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
         })
     }
 }
@@ -33683,7 +34601,7 @@ impl WriteXdr for ScSpecTypeDef {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecUdtStructFieldV0 {
-    pub name: VecM<u8, 30>,
+    pub name: StringM<30>,
     pub type_: ScSpecTypeDef,
 }
 
@@ -33691,7 +34609,7 @@ impl ReadXdr for ScSpecUdtStructFieldV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            name: VecM::<u8, 30>::read_xdr(r)?,
+            name: StringM::<30>::read_xdr(r)?,
             type_: ScSpecTypeDef::read_xdr(r)?,
         })
     }
@@ -33723,8 +34641,8 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecUdtStructV0 {
-    pub lib: VecM<u8, 80>,
-    pub name: VecM<u8, 60>,
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
     pub fields: VecM<ScSpecUdtStructFieldV0, 40>,
 }
 
@@ -33732,8 +34650,8 @@ impl ReadXdr for ScSpecUdtStructV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            lib: VecM::<u8, 80>::read_xdr(r)?,
-            name: VecM::<u8, 60>::read_xdr(r)?,
+            lib: StringM::<80>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
             fields: VecM::<ScSpecUdtStructFieldV0, 40>::read_xdr(r)?,
         })
     }
@@ -33765,7 +34683,7 @@ impl WriteXdr for ScSpecUdtStructV0 {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecUdtUnionCaseV0 {
-    pub name: VecM<u8, 60>,
+    pub name: StringM<60>,
     pub type_: Option<ScSpecTypeDef>,
 }
 
@@ -33773,7 +34691,7 @@ impl ReadXdr for ScSpecUdtUnionCaseV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            name: VecM::<u8, 60>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
             type_: Option::<ScSpecTypeDef>::read_xdr(r)?,
         })
     }
@@ -33805,8 +34723,8 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecUdtUnionV0 {
-    pub lib: VecM<u8, 80>,
-    pub name: VecM<u8, 60>,
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtUnionCaseV0, 50>,
 }
 
@@ -33814,8 +34732,8 @@ impl ReadXdr for ScSpecUdtUnionV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            lib: VecM::<u8, 80>::read_xdr(r)?,
-            name: VecM::<u8, 60>::read_xdr(r)?,
+            lib: StringM::<80>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
             cases: VecM::<ScSpecUdtUnionCaseV0, 50>::read_xdr(r)?,
         })
     }
@@ -33847,7 +34765,7 @@ impl WriteXdr for ScSpecUdtUnionV0 {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecUdtEnumCaseV0 {
-    pub name: VecM<u8, 60>,
+    pub name: StringM<60>,
     pub value: u32,
 }
 
@@ -33855,7 +34773,7 @@ impl ReadXdr for ScSpecUdtEnumCaseV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            name: VecM::<u8, 60>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
             value: u32::read_xdr(r)?,
         })
     }
@@ -33887,8 +34805,8 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecUdtEnumV0 {
-    pub lib: VecM<u8, 80>,
-    pub name: VecM<u8, 60>,
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtEnumCaseV0, 50>,
 }
 
@@ -33896,8 +34814,8 @@ impl ReadXdr for ScSpecUdtEnumV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            lib: VecM::<u8, 80>::read_xdr(r)?,
-            name: VecM::<u8, 60>::read_xdr(r)?,
+            lib: StringM::<80>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
             cases: VecM::<ScSpecUdtEnumCaseV0, 50>::read_xdr(r)?,
         })
     }
@@ -33929,7 +34847,7 @@ impl WriteXdr for ScSpecUdtEnumV0 {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecUdtErrorEnumCaseV0 {
-    pub name: VecM<u8, 60>,
+    pub name: StringM<60>,
     pub value: u32,
 }
 
@@ -33937,7 +34855,7 @@ impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            name: VecM::<u8, 60>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
             value: u32::read_xdr(r)?,
         })
     }
@@ -33969,8 +34887,8 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecUdtErrorEnumV0 {
-    pub lib: VecM<u8, 80>,
-    pub name: VecM<u8, 60>,
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtErrorEnumCaseV0, 50>,
 }
 
@@ -33978,8 +34896,8 @@ impl ReadXdr for ScSpecUdtErrorEnumV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            lib: VecM::<u8, 80>::read_xdr(r)?,
-            name: VecM::<u8, 60>::read_xdr(r)?,
+            lib: StringM::<80>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
             cases: VecM::<ScSpecUdtErrorEnumCaseV0, 50>::read_xdr(r)?,
         })
     }
@@ -34011,7 +34929,7 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecFunctionInputV0 {
-    pub name: VecM<u8, 30>,
+    pub name: StringM<30>,
     pub type_: ScSpecTypeDef,
 }
 
@@ -34019,7 +34937,7 @@ impl ReadXdr for ScSpecFunctionInputV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            name: VecM::<u8, 30>::read_xdr(r)?,
+            name: StringM::<30>::read_xdr(r)?,
             type_: ScSpecTypeDef::read_xdr(r)?,
         })
     }
@@ -34051,7 +34969,7 @@ impl WriteXdr for ScSpecFunctionInputV0 {
     serde(rename_all = "camelCase")
 )]
 pub struct ScSpecFunctionV0 {
-    pub name: VecM<u8, 10>,
+    pub name: StringM<10>,
     pub inputs: VecM<ScSpecFunctionInputV0, 10>,
     pub outputs: VecM<ScSpecTypeDef, 1>,
 }
@@ -34060,7 +34978,7 @@ impl ReadXdr for ScSpecFunctionV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            name: VecM::<u8, 10>::read_xdr(r)?,
+            name: StringM::<10>::read_xdr(r)?,
             inputs: VecM::<ScSpecFunctionInputV0, 10>::read_xdr(r)?,
             outputs: VecM::<ScSpecTypeDef, 1>::read_xdr(r)?,
         })

@@ -170,15 +170,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "escape8259"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba4f4911e3666fcd7826997b4745c8224295a6f3072f1418c3067b97a67557ee"
-dependencies = [
- "rustversion",
-]
-
-[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -343,12 +334,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustversion"
-version = "1.0.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97477e48b4cf8603ad5f7aaf897467cf42ab4218a38ef76fb14c2d6773a6d6a8"
-
-[[package]]
 name = "ryu"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -425,7 +410,6 @@ version = "0.0.6"
 dependencies = [
  "arbitrary",
  "base64",
- "escape8259",
  "hex",
  "num-bigint",
  "serde",

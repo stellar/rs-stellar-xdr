@@ -56,7 +56,10 @@ jobs:
     - uses: stellar/actions/rust-cache@main
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
-    - run: cargo install --target-dir ~/.cargo/target --locked --version 0.5.16 cargo-hack
+    - uses: stellar/binaries@v4/actions/install
+      with:
+        name: cargo-hack
+        version: 0.5.16
     - if: "github.ref_protected"
       run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
     - if: "!github.ref_protected"
@@ -81,7 +84,10 @@ jobs:
     - uses: stellar/actions/rust-cache@main
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
-    - run: cargo install --target-dir ~/.cargo/target --locked --version 0.5.16 cargo-hack
+    - uses: stellar/binaries@v4/actions/install
+      with:
+        name: cargo-hack
+        version: 0.5.16
     - if: "github.ref_protected"
       run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
     - if: "!github.ref_protected"

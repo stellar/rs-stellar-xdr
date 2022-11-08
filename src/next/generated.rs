@@ -16,43 +16,43 @@
 pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     (
         "xdr/next/Stellar-SCP.x",
-        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+        "2b855c7f79b8e50cf15ca1e1aa89fb16bbb38117de0b1c969c80e675ae1ca4bb",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
-        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
+        "8d30dbf039e41e149725b34f2c809fc034c0879adac9d85fc49b8371f9a0444f",
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "1c4304a077e12a94a793efa90e18099011f11b385a8aa2272c65e334cee989df",
+        "12426042317d65b8a101c9c178caa43fc626da3ffa20ddf5d3c7c7b2de21f899",
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "69e8f476cb30ceda3a0981b7f9367a4e4f1a29393336a78ae4cc1e9e7f5e750c",
+        "ebd884f862e6fb6076aa3fec952333eff0e061e1d6c58f1897b95c693b2833c4",
     ),
     (
         "xdr/next/Stellar-internal.x",
-        "368706dd6e2efafd16a8f63daf3374845b791d097b15c502aa7653a412b68b68",
+        "467d954846f88e50e690b64a0ef2dc138b92b03d24bdd66559df16f76535b288",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "bc3ef59ed74e6f990ce14dd051a000a6dd793fc6a5deb4a83c7fef1035ff1bc6",
+        "5091d3fdd56b4e568e3626e4be8a7bb10be6676140bb4ea53f4929ed7a9f97cf",
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "b19c10a07c9775594723ad12927259dd4bbd9ed9dfd0e70078662ec2e90e130d",
+        "d5fc8a5f97fef517ef030b8f1d0beeaa9f133503a512dae8d58f41f86338a9f7",
     ),
     (
         "xdr/next/Stellar-overlay.x",
-        "3093b425866f34b32702d80d5298f9f2dc00736b0fdaac7efa653490a39fb231",
+        "abdb314b64e9f8df6f6f89b3d4fa5d104a41a04c39307ce23f7bf349b0729eef",
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "bdac432e08265df6a13dc4c6135090ca6dcaa8eeedd61a0533ba52b4c9baf201",
+        "99a6e4c0c72788ba2da9e928b805c77d9cf96adb6726d25770752af30b16be00",
     ),
     (
         "xdr/next/Stellar-types.x",
-        "7b3e5470c4bcf7c19f9cc8f8bf81a494b540fc2157476329cf19863afab2343b",
+        "92991a74191509be836e0507081b8624f38bde51994d5c4554b0347c0c68ac6c",
     ),
 ];
 
@@ -2981,7 +2981,7 @@ impl WriteXdr for ScEnvMetaEntry {
 //        SC_SPEC_TYPE_STATUS = 10,
 //        SC_SPEC_TYPE_BYTES = 11,
 //        SC_SPEC_TYPE_INVOKER = 12,
-//        SC_SPEC_TYPE_ACCOUNT_ID = 13,
+//        SC_SPEC_TYPE_ADDRESS = 13,
 //
 //        // Types with parameters.
 //        SC_SPEC_TYPE_OPTION = 1000,
@@ -3019,7 +3019,7 @@ pub enum ScSpecType {
     Status = 10,
     Bytes = 11,
     Invoker = 12,
-    AccountId = 13,
+    Address = 13,
     Option = 1000,
     Result = 1001,
     Vec = 1002,
@@ -3045,7 +3045,7 @@ impl ScSpecType {
         ScSpecType::Status,
         ScSpecType::Bytes,
         ScSpecType::Invoker,
-        ScSpecType::AccountId,
+        ScSpecType::Address,
         ScSpecType::Option,
         ScSpecType::Result,
         ScSpecType::Vec,
@@ -3056,27 +3056,8 @@ impl ScSpecType {
         ScSpecType::Udt,
     ];
     pub const VARIANTS_STR: [&'static str; 22] = [
-        "Val",
-        "U32",
-        "I32",
-        "U64",
-        "I64",
-        "U128",
-        "I128",
-        "Bool",
-        "Symbol",
-        "Bitset",
-        "Status",
-        "Bytes",
-        "Invoker",
-        "AccountId",
-        "Option",
-        "Result",
-        "Vec",
-        "Set",
-        "Map",
-        "Tuple",
-        "BytesN",
+        "Val", "U32", "I32", "U64", "I64", "U128", "I128", "Bool", "Symbol", "Bitset", "Status",
+        "Bytes", "Invoker", "Address", "Option", "Result", "Vec", "Set", "Map", "Tuple", "BytesN",
         "Udt",
     ];
 
@@ -3096,7 +3077,7 @@ impl ScSpecType {
             Self::Status => "Status",
             Self::Bytes => "Bytes",
             Self::Invoker => "Invoker",
-            Self::AccountId => "AccountId",
+            Self::Address => "Address",
             Self::Option => "Option",
             Self::Result => "Result",
             Self::Vec => "Vec",
@@ -3153,7 +3134,7 @@ impl TryFrom<i32> for ScSpecType {
             10 => ScSpecType::Status,
             11 => ScSpecType::Bytes,
             12 => ScSpecType::Invoker,
-            13 => ScSpecType::AccountId,
+            13 => ScSpecType::Address,
             1000 => ScSpecType::Option,
             1001 => ScSpecType::Result,
             1002 => ScSpecType::Vec,
@@ -3497,8 +3478,7 @@ impl WriteXdr for ScSpecTypeUdt {
 //    case SC_SPEC_TYPE_BITSET:
 //    case SC_SPEC_TYPE_STATUS:
 //    case SC_SPEC_TYPE_BYTES:
-//    case SC_SPEC_TYPE_INVOKER:
-//    case SC_SPEC_TYPE_ACCOUNT_ID:
+//    case SC_SPEC_TYPE_ADDRESS:
 //        void;
 //    case SC_SPEC_TYPE_OPTION:
 //        SCSpecTypeOption option;
@@ -3540,8 +3520,7 @@ pub enum ScSpecTypeDef {
     Bitset,
     Status,
     Bytes,
-    Invoker,
-    AccountId,
+    Address,
     Option(Box<ScSpecTypeOption>),
     Result(Box<ScSpecTypeResult>),
     Vec(Box<ScSpecTypeVec>),
@@ -3553,7 +3532,7 @@ pub enum ScSpecTypeDef {
 }
 
 impl ScSpecTypeDef {
-    pub const VARIANTS: [ScSpecType; 22] = [
+    pub const VARIANTS: [ScSpecType; 21] = [
         ScSpecType::Val,
         ScSpecType::U64,
         ScSpecType::I64,
@@ -3566,8 +3545,7 @@ impl ScSpecTypeDef {
         ScSpecType::Bitset,
         ScSpecType::Status,
         ScSpecType::Bytes,
-        ScSpecType::Invoker,
-        ScSpecType::AccountId,
+        ScSpecType::Address,
         ScSpecType::Option,
         ScSpecType::Result,
         ScSpecType::Vec,
@@ -3577,29 +3555,9 @@ impl ScSpecTypeDef {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 22] = [
-        "Val",
-        "U64",
-        "I64",
-        "U128",
-        "I128",
-        "U32",
-        "I32",
-        "Bool",
-        "Symbol",
-        "Bitset",
-        "Status",
-        "Bytes",
-        "Invoker",
-        "AccountId",
-        "Option",
-        "Result",
-        "Vec",
-        "Map",
-        "Set",
-        "Tuple",
-        "BytesN",
-        "Udt",
+    pub const VARIANTS_STR: [&'static str; 21] = [
+        "Val", "U64", "I64", "U128", "I128", "U32", "I32", "Bool", "Symbol", "Bitset", "Status",
+        "Bytes", "Address", "Option", "Result", "Vec", "Map", "Set", "Tuple", "BytesN", "Udt",
     ];
 
     #[must_use]
@@ -3617,8 +3575,7 @@ impl ScSpecTypeDef {
             Self::Bitset => "Bitset",
             Self::Status => "Status",
             Self::Bytes => "Bytes",
-            Self::Invoker => "Invoker",
-            Self::AccountId => "AccountId",
+            Self::Address => "Address",
             Self::Option(_) => "Option",
             Self::Result(_) => "Result",
             Self::Vec(_) => "Vec",
@@ -3646,8 +3603,7 @@ impl ScSpecTypeDef {
             Self::Bitset => ScSpecType::Bitset,
             Self::Status => ScSpecType::Status,
             Self::Bytes => ScSpecType::Bytes,
-            Self::Invoker => ScSpecType::Invoker,
-            Self::AccountId => ScSpecType::AccountId,
+            Self::Address => ScSpecType::Address,
             Self::Option(_) => ScSpecType::Option,
             Self::Result(_) => ScSpecType::Result,
             Self::Vec(_) => ScSpecType::Vec,
@@ -3660,7 +3616,7 @@ impl ScSpecTypeDef {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 22] {
+    pub const fn variants() -> [ScSpecType; 21] {
         Self::VARIANTS
     }
 }
@@ -3705,8 +3661,7 @@ impl ReadXdr for ScSpecTypeDef {
             ScSpecType::Bitset => Self::Bitset,
             ScSpecType::Status => Self::Status,
             ScSpecType::Bytes => Self::Bytes,
-            ScSpecType::Invoker => Self::Invoker,
-            ScSpecType::AccountId => Self::AccountId,
+            ScSpecType::Address => Self::Address,
             ScSpecType::Option => Self::Option(Box::<ScSpecTypeOption>::read_xdr(r)?),
             ScSpecType::Result => Self::Result(Box::<ScSpecTypeResult>::read_xdr(r)?),
             ScSpecType::Vec => Self::Vec(Box::<ScSpecTypeVec>::read_xdr(r)?),
@@ -3740,8 +3695,7 @@ impl WriteXdr for ScSpecTypeDef {
             Self::Bitset => ().write_xdr(w)?,
             Self::Status => ().write_xdr(w)?,
             Self::Bytes => ().write_xdr(w)?,
-            Self::Invoker => ().write_xdr(w)?,
-            Self::AccountId => ().write_xdr(w)?,
+            Self::Address => ().write_xdr(w)?,
             Self::Option(v) => v.write_xdr(w)?,
             Self::Result(v) => v.write_xdr(w)?,
             Self::Vec(v) => v.write_xdr(w)?,
@@ -6131,7 +6085,8 @@ impl WriteXdr for ScVal {
 //        SCO_I128 = 5,
 //        SCO_BYTES = 6,
 //        SCO_CONTRACT_CODE = 7,
-//        SCO_ACCOUNT_ID = 8
+//        SCO_ADDRESS = 8,
+//        SCO_NONCE_KEY = 9
 //
 //        // TODO: add more
 //    };
@@ -6154,11 +6109,12 @@ pub enum ScObjectType {
     I128 = 5,
     Bytes = 6,
     ContractCode = 7,
-    AccountId = 8,
+    Address = 8,
+    NonceKey = 9,
 }
 
 impl ScObjectType {
-    pub const VARIANTS: [ScObjectType; 9] = [
+    pub const VARIANTS: [ScObjectType; 10] = [
         ScObjectType::Vec,
         ScObjectType::Map,
         ScObjectType::U64,
@@ -6167,9 +6123,10 @@ impl ScObjectType {
         ScObjectType::I128,
         ScObjectType::Bytes,
         ScObjectType::ContractCode,
-        ScObjectType::AccountId,
+        ScObjectType::Address,
+        ScObjectType::NonceKey,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "Vec",
         "Map",
         "U64",
@@ -6178,7 +6135,8 @@ impl ScObjectType {
         "I128",
         "Bytes",
         "ContractCode",
-        "AccountId",
+        "Address",
+        "NonceKey",
     ];
 
     #[must_use]
@@ -6192,12 +6150,13 @@ impl ScObjectType {
             Self::I128 => "I128",
             Self::Bytes => "Bytes",
             Self::ContractCode => "ContractCode",
-            Self::AccountId => "AccountId",
+            Self::Address => "Address",
+            Self::NonceKey => "NonceKey",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScObjectType; 9] {
+    pub const fn variants() -> [ScObjectType; 10] {
         Self::VARIANTS
     }
 }
@@ -6236,7 +6195,8 @@ impl TryFrom<i32> for ScObjectType {
             5 => ScObjectType::I128,
             6 => ScObjectType::Bytes,
             7 => ScObjectType::ContractCode,
-            8 => ScObjectType::AccountId,
+            8 => ScObjectType::Address,
+            9 => ScObjectType::NonceKey,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -6756,6 +6716,206 @@ impl WriteXdr for Int128Parts {
     }
 }
 
+// ScAddressType is an XDR Enum defines as:
+//
+//   enum SCAddressType
+//    {
+//        SC_ADDRESS_TYPE_ACCOUNT = 0,
+//        SC_ADDRESS_TYPE_CONTRACT = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScAddressType {
+    Account = 0,
+    Contract = 1,
+}
+
+impl ScAddressType {
+    pub const VARIANTS: [ScAddressType; 2] = [ScAddressType::Account, ScAddressType::Contract];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Account", "Contract"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Account => "Account",
+            Self::Contract => "Contract",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScAddressType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScAddressType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScAddressType> for ScAddressType {
+    fn variants() -> slice::Iter<'static, ScAddressType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScAddressType {}
+
+impl fmt::Display for ScAddressType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScAddressType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScAddressType::Account,
+            1 => ScAddressType::Contract,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScAddressType> for i32 {
+    #[must_use]
+    fn from(e: ScAddressType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScAddressType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScAddressType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScAddress is an XDR Union defines as:
+//
+//   union SCAddress switch (SCAddressType type)
+//    {
+//    case SC_ADDRESS_TYPE_ACCOUNT:
+//        AccountID accountId;
+//    case SC_ADDRESS_TYPE_CONTRACT:
+//        Hash contractId;
+//    };
+//
+// union with discriminant ScAddressType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScAddress {
+    Account(AccountId),
+    Contract(Hash),
+}
+
+impl ScAddress {
+    pub const VARIANTS: [ScAddressType; 2] = [ScAddressType::Account, ScAddressType::Contract];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Account", "Contract"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Account(_) => "Account",
+            Self::Contract(_) => "Contract",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScAddressType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Account(_) => ScAddressType::Account,
+            Self::Contract(_) => ScAddressType::Contract,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScAddressType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScAddress {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScAddressType> for ScAddress {
+    #[must_use]
+    fn discriminant(&self) -> ScAddressType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScAddressType> for ScAddress {
+    fn variants() -> slice::Iter<'static, ScAddressType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScAddressType> for ScAddress {}
+
+impl ReadXdr for ScAddress {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScAddressType = <ScAddressType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScAddressType::Account => Self::Account(AccountId::read_xdr(r)?),
+            ScAddressType::Contract => Self::Contract(Hash::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScAddress {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Account(v) => v.write_xdr(w)?,
+            Self::Contract(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
 // ScObject is an XDR Union defines as:
 //
 //   union SCObject switch (SCObjectType type)
@@ -6776,8 +6936,10 @@ impl WriteXdr for Int128Parts {
 //        opaque bin<SCVAL_LIMIT>;
 //    case SCO_CONTRACT_CODE:
 //        SCContractCode contractCode;
-//    case SCO_ACCOUNT_ID:
-//        AccountID accountID;
+//    case SCO_ADDRESS:
+//        SCAddress address;
+//    case SCO_NONCE_KEY:
+//        SCAddress nonceAddress;
 //    };
 //
 // union with discriminant ScObjectType
@@ -6798,11 +6960,12 @@ pub enum ScObject {
     I128(Int128Parts),
     Bytes(BytesM<256000>),
     ContractCode(ScContractCode),
-    AccountId(AccountId),
+    Address(ScAddress),
+    NonceKey(ScAddress),
 }
 
 impl ScObject {
-    pub const VARIANTS: [ScObjectType; 9] = [
+    pub const VARIANTS: [ScObjectType; 10] = [
         ScObjectType::Vec,
         ScObjectType::Map,
         ScObjectType::U64,
@@ -6811,9 +6974,10 @@ impl ScObject {
         ScObjectType::I128,
         ScObjectType::Bytes,
         ScObjectType::ContractCode,
-        ScObjectType::AccountId,
+        ScObjectType::Address,
+        ScObjectType::NonceKey,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "Vec",
         "Map",
         "U64",
@@ -6822,7 +6986,8 @@ impl ScObject {
         "I128",
         "Bytes",
         "ContractCode",
-        "AccountId",
+        "Address",
+        "NonceKey",
     ];
 
     #[must_use]
@@ -6836,7 +7001,8 @@ impl ScObject {
             Self::I128(_) => "I128",
             Self::Bytes(_) => "Bytes",
             Self::ContractCode(_) => "ContractCode",
-            Self::AccountId(_) => "AccountId",
+            Self::Address(_) => "Address",
+            Self::NonceKey(_) => "NonceKey",
         }
     }
 
@@ -6852,12 +7018,13 @@ impl ScObject {
             Self::I128(_) => ScObjectType::I128,
             Self::Bytes(_) => ScObjectType::Bytes,
             Self::ContractCode(_) => ScObjectType::ContractCode,
-            Self::AccountId(_) => ScObjectType::AccountId,
+            Self::Address(_) => ScObjectType::Address,
+            Self::NonceKey(_) => ScObjectType::NonceKey,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScObjectType; 9] {
+    pub const fn variants() -> [ScObjectType; 10] {
         Self::VARIANTS
     }
 }
@@ -6898,7 +7065,8 @@ impl ReadXdr for ScObject {
             ScObjectType::I128 => Self::I128(Int128Parts::read_xdr(r)?),
             ScObjectType::Bytes => Self::Bytes(BytesM::<256000>::read_xdr(r)?),
             ScObjectType::ContractCode => Self::ContractCode(ScContractCode::read_xdr(r)?),
-            ScObjectType::AccountId => Self::AccountId(AccountId::read_xdr(r)?),
+            ScObjectType::Address => Self::Address(ScAddress::read_xdr(r)?),
+            ScObjectType::NonceKey => Self::NonceKey(ScAddress::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -6920,7 +7088,8 @@ impl WriteXdr for ScObject {
             Self::I128(v) => v.write_xdr(w)?,
             Self::Bytes(v) => v.write_xdr(w)?,
             Self::ContractCode(v) => v.write_xdr(w)?,
-            Self::AccountId(v) => v.write_xdr(w)?,
+            Self::Address(v) => v.write_xdr(w)?,
+            Self::NonceKey(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -13578,7 +13747,8 @@ impl WriteXdr for LedgerKey {
 //        ENVELOPE_TYPE_CONTRACT_ID_FROM_CONTRACT = 9,
 //        ENVELOPE_TYPE_CONTRACT_ID_FROM_ASSET = 10,
 //        ENVELOPE_TYPE_CONTRACT_ID_FROM_SOURCE_ACCOUNT = 11,
-//        ENVELOPE_TYPE_CREATE_CONTRACT_ARGS = 12
+//        ENVELOPE_TYPE_CREATE_CONTRACT_ARGS = 12,
+//        ENVELOPE_TYPE_CONTRACT_AUTH = 13
 //    };
 //
 // enum
@@ -13604,10 +13774,11 @@ pub enum EnvelopeType {
     ContractIdFromAsset = 10,
     ContractIdFromSourceAccount = 11,
     CreateContractArgs = 12,
+    ContractAuth = 13,
 }
 
 impl EnvelopeType {
-    pub const VARIANTS: [EnvelopeType; 13] = [
+    pub const VARIANTS: [EnvelopeType; 14] = [
         EnvelopeType::TxV0,
         EnvelopeType::Scp,
         EnvelopeType::Tx,
@@ -13621,8 +13792,9 @@ impl EnvelopeType {
         EnvelopeType::ContractIdFromAsset,
         EnvelopeType::ContractIdFromSourceAccount,
         EnvelopeType::CreateContractArgs,
+        EnvelopeType::ContractAuth,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: [&'static str; 14] = [
         "TxV0",
         "Scp",
         "Tx",
@@ -13636,6 +13808,7 @@ impl EnvelopeType {
         "ContractIdFromAsset",
         "ContractIdFromSourceAccount",
         "CreateContractArgs",
+        "ContractAuth",
     ];
 
     #[must_use]
@@ -13654,11 +13827,12 @@ impl EnvelopeType {
             Self::ContractIdFromAsset => "ContractIdFromAsset",
             Self::ContractIdFromSourceAccount => "ContractIdFromSourceAccount",
             Self::CreateContractArgs => "CreateContractArgs",
+            Self::ContractAuth => "ContractAuth",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 13] {
+    pub const fn variants() -> [EnvelopeType; 14] {
         Self::VARIANTS
     }
 }
@@ -13702,6 +13876,7 @@ impl TryFrom<i32> for EnvelopeType {
             10 => EnvelopeType::ContractIdFromAsset,
             11 => EnvelopeType::ContractIdFromSourceAccount,
             12 => EnvelopeType::CreateContractArgs,
+            13 => EnvelopeType::ContractAuth,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -19047,6 +19222,106 @@ impl WriteXdr for SurveyMessageCommandType {
     }
 }
 
+// SurveyMessageResponseType is an XDR Enum defines as:
+//
+//   enum SurveyMessageResponseType
+//    {
+//        SURVEY_TOPOLOGY_RESPONSE_V0 = 0,
+//        SURVEY_TOPOLOGY_RESPONSE_V1 = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum SurveyMessageResponseType {
+    V0 = 0,
+    V1 = 1,
+}
+
+impl SurveyMessageResponseType {
+    pub const VARIANTS: [SurveyMessageResponseType; 2] =
+        [SurveyMessageResponseType::V0, SurveyMessageResponseType::V1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0 => "V0",
+            Self::V1 => "V1",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [SurveyMessageResponseType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SurveyMessageResponseType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<SurveyMessageResponseType> for SurveyMessageResponseType {
+    fn variants() -> slice::Iter<'static, SurveyMessageResponseType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for SurveyMessageResponseType {}
+
+impl fmt::Display for SurveyMessageResponseType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for SurveyMessageResponseType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => SurveyMessageResponseType::V0,
+            1 => SurveyMessageResponseType::V1,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<SurveyMessageResponseType> for i32 {
+    #[must_use]
+    fn from(e: SurveyMessageResponseType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for SurveyMessageResponseType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for SurveyMessageResponseType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
 // SurveyRequestMessage is an XDR Struct defines as:
 //
 //   struct SurveyRequestMessage
@@ -19520,9 +19795,9 @@ impl AsRef<[PeerStats]> for PeerStatList {
     }
 }
 
-// TopologyResponseBody is an XDR Struct defines as:
+// TopologyResponseBodyV0 is an XDR Struct defines as:
 //
-//   struct TopologyResponseBody
+//   struct TopologyResponseBodyV0
 //    {
 //        PeerStatList inboundPeers;
 //        PeerStatList outboundPeers;
@@ -19538,14 +19813,14 @@ impl AsRef<[PeerStats]> for PeerStatList {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct TopologyResponseBody {
+pub struct TopologyResponseBodyV0 {
     pub inbound_peers: PeerStatList,
     pub outbound_peers: PeerStatList,
     pub total_inbound_peer_count: u32,
     pub total_outbound_peer_count: u32,
 }
 
-impl ReadXdr for TopologyResponseBody {
+impl ReadXdr for TopologyResponseBodyV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
@@ -19557,7 +19832,7 @@ impl ReadXdr for TopologyResponseBody {
     }
 }
 
-impl WriteXdr for TopologyResponseBody {
+impl WriteXdr for TopologyResponseBodyV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.inbound_peers.write_xdr(w)?;
@@ -19568,15 +19843,74 @@ impl WriteXdr for TopologyResponseBody {
     }
 }
 
-// SurveyResponseBody is an XDR Union defines as:
+// TopologyResponseBodyV1 is an XDR Struct defines as:
 //
-//   union SurveyResponseBody switch (SurveyMessageCommandType type)
+//   struct TopologyResponseBodyV1
 //    {
-//    case SURVEY_TOPOLOGY:
-//        TopologyResponseBody topologyResponseBody;
+//        PeerStatList inboundPeers;
+//        PeerStatList outboundPeers;
+//
+//        uint32 totalInboundPeerCount;
+//        uint32 totalOutboundPeerCount;
+//
+//        uint32 maxInboundPeerCount;
+//        uint32 maxOutboundPeerCount;
 //    };
 //
-// union with discriminant SurveyMessageCommandType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct TopologyResponseBodyV1 {
+    pub inbound_peers: PeerStatList,
+    pub outbound_peers: PeerStatList,
+    pub total_inbound_peer_count: u32,
+    pub total_outbound_peer_count: u32,
+    pub max_inbound_peer_count: u32,
+    pub max_outbound_peer_count: u32,
+}
+
+impl ReadXdr for TopologyResponseBodyV1 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            inbound_peers: PeerStatList::read_xdr(r)?,
+            outbound_peers: PeerStatList::read_xdr(r)?,
+            total_inbound_peer_count: u32::read_xdr(r)?,
+            total_outbound_peer_count: u32::read_xdr(r)?,
+            max_inbound_peer_count: u32::read_xdr(r)?,
+            max_outbound_peer_count: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TopologyResponseBodyV1 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.inbound_peers.write_xdr(w)?;
+        self.outbound_peers.write_xdr(w)?;
+        self.total_inbound_peer_count.write_xdr(w)?;
+        self.total_outbound_peer_count.write_xdr(w)?;
+        self.max_inbound_peer_count.write_xdr(w)?;
+        self.max_outbound_peer_count.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// SurveyResponseBody is an XDR Union defines as:
+//
+//   union SurveyResponseBody switch (SurveyMessageResponseType type)
+//    {
+//    case SURVEY_TOPOLOGY_RESPONSE_V0:
+//        TopologyResponseBodyV0 topologyResponseBodyV0;
+//    case SURVEY_TOPOLOGY_RESPONSE_V1:
+//        TopologyResponseBodyV1 topologyResponseBodyV1;
+//    };
+//
+// union with discriminant SurveyMessageResponseType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -19586,30 +19920,34 @@ impl WriteXdr for TopologyResponseBody {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SurveyResponseBody {
-    SurveyTopology(TopologyResponseBody),
+    V0(TopologyResponseBodyV0),
+    V1(TopologyResponseBodyV1),
 }
 
 impl SurveyResponseBody {
-    pub const VARIANTS: [SurveyMessageCommandType; 1] = [SurveyMessageCommandType::SurveyTopology];
-    pub const VARIANTS_STR: [&'static str; 1] = ["SurveyTopology"];
+    pub const VARIANTS: [SurveyMessageResponseType; 2] =
+        [SurveyMessageResponseType::V0, SurveyMessageResponseType::V1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::SurveyTopology(_) => "SurveyTopology",
+            Self::V0(_) => "V0",
+            Self::V1(_) => "V1",
         }
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> SurveyMessageCommandType {
+    pub const fn discriminant(&self) -> SurveyMessageResponseType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::SurveyTopology(_) => SurveyMessageCommandType::SurveyTopology,
+            Self::V0(_) => SurveyMessageResponseType::V0,
+            Self::V1(_) => SurveyMessageResponseType::V1,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SurveyMessageCommandType; 1] {
+    pub const fn variants() -> [SurveyMessageResponseType; 2] {
         Self::VARIANTS
     }
 }
@@ -19621,30 +19959,29 @@ impl Name for SurveyResponseBody {
     }
 }
 
-impl Discriminant<SurveyMessageCommandType> for SurveyResponseBody {
+impl Discriminant<SurveyMessageResponseType> for SurveyResponseBody {
     #[must_use]
-    fn discriminant(&self) -> SurveyMessageCommandType {
+    fn discriminant(&self) -> SurveyMessageResponseType {
         Self::discriminant(self)
     }
 }
 
-impl Variants<SurveyMessageCommandType> for SurveyResponseBody {
-    fn variants() -> slice::Iter<'static, SurveyMessageCommandType> {
+impl Variants<SurveyMessageResponseType> for SurveyResponseBody {
+    fn variants() -> slice::Iter<'static, SurveyMessageResponseType> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<SurveyMessageCommandType> for SurveyResponseBody {}
+impl Union<SurveyMessageResponseType> for SurveyResponseBody {}
 
 impl ReadXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: SurveyMessageCommandType = <SurveyMessageCommandType as ReadXdr>::read_xdr(r)?;
+        let dv: SurveyMessageResponseType = <SurveyMessageResponseType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            SurveyMessageCommandType::SurveyTopology => {
-                Self::SurveyTopology(TopologyResponseBody::read_xdr(r)?)
-            }
+            SurveyMessageResponseType::V0 => Self::V0(TopologyResponseBodyV0::read_xdr(r)?),
+            SurveyMessageResponseType::V1 => Self::V1(TopologyResponseBodyV1::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -19658,7 +19995,8 @@ impl WriteXdr for SurveyResponseBody {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::SurveyTopology(v) => v.write_xdr(w)?,
+            Self::V0(v) => v.write_xdr(w)?,
+            Self::V1(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -22901,6 +23239,135 @@ impl WriteXdr for HostFunction {
     }
 }
 
+// AuthorizedInvocation is an XDR Struct defines as:
+//
+//   struct AuthorizedInvocation
+//    {
+//        Hash contractID;
+//        SCSymbol functionName;
+//        SCVec args;
+//        AuthorizedInvocation subInvocations<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct AuthorizedInvocation {
+    pub contract_id: Hash,
+    pub function_name: StringM<10>,
+    pub args: ScVec,
+    pub sub_invocations: VecM<AuthorizedInvocation>,
+}
+
+impl ReadXdr for AuthorizedInvocation {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            contract_id: Hash::read_xdr(r)?,
+            function_name: StringM::<10>::read_xdr(r)?,
+            args: ScVec::read_xdr(r)?,
+            sub_invocations: VecM::<AuthorizedInvocation>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for AuthorizedInvocation {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.contract_id.write_xdr(w)?;
+        self.function_name.write_xdr(w)?;
+        self.args.write_xdr(w)?;
+        self.sub_invocations.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// AddressWithNonce is an XDR Struct defines as:
+//
+//   struct AddressWithNonce
+//    {
+//        SCAddress address;
+//        uint64 nonce;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct AddressWithNonce {
+    pub address: ScAddress,
+    pub nonce: u64,
+}
+
+impl ReadXdr for AddressWithNonce {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            address: ScAddress::read_xdr(r)?,
+            nonce: u64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for AddressWithNonce {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.address.write_xdr(w)?;
+        self.nonce.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ContractAuth is an XDR Struct defines as:
+//
+//   struct ContractAuth
+//    {
+//        AddressWithNonce* addressWithNonce; // not present for invoker
+//        AuthorizedInvocation rootInvocation;
+//        SCVec signatureArgs;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractAuth {
+    pub address_with_nonce: Option<AddressWithNonce>,
+    pub root_invocation: AuthorizedInvocation,
+    pub signature_args: ScVec,
+}
+
+impl ReadXdr for ContractAuth {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            address_with_nonce: Option::<AddressWithNonce>::read_xdr(r)?,
+            root_invocation: AuthorizedInvocation::read_xdr(r)?,
+            signature_args: ScVec::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ContractAuth {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.address_with_nonce.write_xdr(w)?;
+        self.root_invocation.write_xdr(w)?;
+        self.signature_args.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // InvokeHostFunctionOp is an XDR Struct defines as:
 //
 //   struct InvokeHostFunctionOp
@@ -22909,6 +23376,9 @@ impl WriteXdr for HostFunction {
 //        HostFunction function;
 //        // The footprint for this invocation
 //        LedgerFootprint footprint;
+//        // Per-address authorizations for this host fn
+//        // Currently only supported for INVOKE_CONTRACT function
+//        ContractAuth auth<>;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -22921,6 +23391,7 @@ impl WriteXdr for HostFunction {
 pub struct InvokeHostFunctionOp {
     pub function: HostFunction,
     pub footprint: LedgerFootprint,
+    pub auth: VecM<ContractAuth>,
 }
 
 impl ReadXdr for InvokeHostFunctionOp {
@@ -22929,6 +23400,7 @@ impl ReadXdr for InvokeHostFunctionOp {
         Ok(Self {
             function: HostFunction::read_xdr(r)?,
             footprint: LedgerFootprint::read_xdr(r)?,
+            auth: VecM::<ContractAuth>::read_xdr(r)?,
         })
     }
 }
@@ -22938,6 +23410,7 @@ impl WriteXdr for InvokeHostFunctionOp {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.function.write_xdr(w)?;
         self.footprint.write_xdr(w)?;
+        self.auth.write_xdr(w)?;
         Ok(())
     }
 }
@@ -23683,6 +24156,45 @@ impl WriteXdr for HashIdPreimageCreateContractArgs {
     }
 }
 
+// HashIdPreimageContractAuth is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash networkID;
+//            AuthorizedInvocation invocation;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct HashIdPreimageContractAuth {
+    pub network_id: Hash,
+    pub invocation: AuthorizedInvocation,
+}
+
+impl ReadXdr for HashIdPreimageContractAuth {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            network_id: Hash::read_xdr(r)?,
+            invocation: AuthorizedInvocation::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for HashIdPreimageContractAuth {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.network_id.write_xdr(w)?;
+        self.invocation.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // HashIdPreimage is an XDR Union defines as:
 //
 //   union HashIDPreimage switch (EnvelopeType type)
@@ -23737,6 +24249,12 @@ impl WriteXdr for HashIdPreimageCreateContractArgs {
 //            SCContractCode source;
 //            uint256 salt;
 //        } createContractArgs;
+//    case ENVELOPE_TYPE_CONTRACT_AUTH:
+//        struct
+//        {
+//            Hash networkID;
+//            AuthorizedInvocation invocation;
+//        } contractAuth;
 //    };
 //
 // union with discriminant EnvelopeType
@@ -23756,10 +24274,11 @@ pub enum HashIdPreimage {
     ContractIdFromAsset(HashIdPreimageFromAsset),
     ContractIdFromSourceAccount(HashIdPreimageSourceAccountContractId),
     CreateContractArgs(HashIdPreimageCreateContractArgs),
+    ContractAuth(HashIdPreimageContractAuth),
 }
 
 impl HashIdPreimage {
-    pub const VARIANTS: [EnvelopeType; 7] = [
+    pub const VARIANTS: [EnvelopeType; 8] = [
         EnvelopeType::OpId,
         EnvelopeType::PoolRevokeOpId,
         EnvelopeType::ContractIdFromEd25519,
@@ -23767,8 +24286,9 @@ impl HashIdPreimage {
         EnvelopeType::ContractIdFromAsset,
         EnvelopeType::ContractIdFromSourceAccount,
         EnvelopeType::CreateContractArgs,
+        EnvelopeType::ContractAuth,
     ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
+    pub const VARIANTS_STR: [&'static str; 8] = [
         "OpId",
         "PoolRevokeOpId",
         "ContractIdFromEd25519",
@@ -23776,6 +24296,7 @@ impl HashIdPreimage {
         "ContractIdFromAsset",
         "ContractIdFromSourceAccount",
         "CreateContractArgs",
+        "ContractAuth",
     ];
 
     #[must_use]
@@ -23788,6 +24309,7 @@ impl HashIdPreimage {
             Self::ContractIdFromAsset(_) => "ContractIdFromAsset",
             Self::ContractIdFromSourceAccount(_) => "ContractIdFromSourceAccount",
             Self::CreateContractArgs(_) => "CreateContractArgs",
+            Self::ContractAuth(_) => "ContractAuth",
         }
     }
 
@@ -23802,11 +24324,12 @@ impl HashIdPreimage {
             Self::ContractIdFromAsset(_) => EnvelopeType::ContractIdFromAsset,
             Self::ContractIdFromSourceAccount(_) => EnvelopeType::ContractIdFromSourceAccount,
             Self::CreateContractArgs(_) => EnvelopeType::CreateContractArgs,
+            Self::ContractAuth(_) => EnvelopeType::ContractAuth,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 7] {
+    pub const fn variants() -> [EnvelopeType; 8] {
         Self::VARIANTS
     }
 }
@@ -23858,6 +24381,9 @@ impl ReadXdr for HashIdPreimage {
             EnvelopeType::CreateContractArgs => {
                 Self::CreateContractArgs(HashIdPreimageCreateContractArgs::read_xdr(r)?)
             }
+            EnvelopeType::ContractAuth => {
+                Self::ContractAuth(HashIdPreimageContractAuth::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -23878,6 +24404,7 @@ impl WriteXdr for HashIdPreimage {
             Self::ContractIdFromAsset(v) => v.write_xdr(w)?,
             Self::ContractIdFromSourceAccount(v) => v.write_xdr(w)?,
             Self::CreateContractArgs(v) => v.write_xdr(w)?,
+            Self::ContractAuth(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -36341,6 +36868,8 @@ pub enum TypeVariant {
     ScContractCodeType,
     ScContractCode,
     Int128Parts,
+    ScAddressType,
+    ScAddress,
     ScObject,
     StoredTransactionSet,
     PersistedScpStateV0,
@@ -36499,6 +37028,7 @@ pub enum TypeVariant {
     MessageType,
     DontHave,
     SurveyMessageCommandType,
+    SurveyMessageResponseType,
     SurveyRequestMessage,
     SignedSurveyRequestMessage,
     EncryptedBody,
@@ -36506,7 +37036,8 @@ pub enum TypeVariant {
     SignedSurveyResponseMessage,
     PeerStats,
     PeerStatList,
-    TopologyResponseBody,
+    TopologyResponseBodyV0,
+    TopologyResponseBodyV1,
     SurveyResponseBody,
     TxAdvertVector,
     FloodAdvert,
@@ -36553,6 +37084,9 @@ pub enum TypeVariant {
     ContractIdFromEd25519PublicKey,
     CreateContractArgs,
     HostFunction,
+    AuthorizedInvocation,
+    AddressWithNonce,
+    ContractAuth,
     InvokeHostFunctionOp,
     Operation,
     OperationBody,
@@ -36564,6 +37098,7 @@ pub enum TypeVariant {
     HashIdPreimageFromAsset,
     HashIdPreimageSourceAccountContractId,
     HashIdPreimageCreateContractArgs,
+    HashIdPreimageContractAuth,
     MemoType,
     Memo,
     TimeBounds,
@@ -36679,7 +37214,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 390] = [
+    pub const VARIANTS: [TypeVariant; 398] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -36735,6 +37270,8 @@ impl TypeVariant {
         TypeVariant::ScContractCodeType,
         TypeVariant::ScContractCode,
         TypeVariant::Int128Parts,
+        TypeVariant::ScAddressType,
+        TypeVariant::ScAddress,
         TypeVariant::ScObject,
         TypeVariant::StoredTransactionSet,
         TypeVariant::PersistedScpStateV0,
@@ -36893,6 +37430,7 @@ impl TypeVariant {
         TypeVariant::MessageType,
         TypeVariant::DontHave,
         TypeVariant::SurveyMessageCommandType,
+        TypeVariant::SurveyMessageResponseType,
         TypeVariant::SurveyRequestMessage,
         TypeVariant::SignedSurveyRequestMessage,
         TypeVariant::EncryptedBody,
@@ -36900,7 +37438,8 @@ impl TypeVariant {
         TypeVariant::SignedSurveyResponseMessage,
         TypeVariant::PeerStats,
         TypeVariant::PeerStatList,
-        TypeVariant::TopologyResponseBody,
+        TypeVariant::TopologyResponseBodyV0,
+        TypeVariant::TopologyResponseBodyV1,
         TypeVariant::SurveyResponseBody,
         TypeVariant::TxAdvertVector,
         TypeVariant::FloodAdvert,
@@ -36947,6 +37486,9 @@ impl TypeVariant {
         TypeVariant::ContractIdFromEd25519PublicKey,
         TypeVariant::CreateContractArgs,
         TypeVariant::HostFunction,
+        TypeVariant::AuthorizedInvocation,
+        TypeVariant::AddressWithNonce,
+        TypeVariant::ContractAuth,
         TypeVariant::InvokeHostFunctionOp,
         TypeVariant::Operation,
         TypeVariant::OperationBody,
@@ -36958,6 +37500,7 @@ impl TypeVariant {
         TypeVariant::HashIdPreimageFromAsset,
         TypeVariant::HashIdPreimageSourceAccountContractId,
         TypeVariant::HashIdPreimageCreateContractArgs,
+        TypeVariant::HashIdPreimageContractAuth,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -37071,7 +37614,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 390] = [
+    pub const VARIANTS_STR: [&'static str; 398] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -37127,6 +37670,8 @@ impl TypeVariant {
         "ScContractCodeType",
         "ScContractCode",
         "Int128Parts",
+        "ScAddressType",
+        "ScAddress",
         "ScObject",
         "StoredTransactionSet",
         "PersistedScpStateV0",
@@ -37285,6 +37830,7 @@ impl TypeVariant {
         "MessageType",
         "DontHave",
         "SurveyMessageCommandType",
+        "SurveyMessageResponseType",
         "SurveyRequestMessage",
         "SignedSurveyRequestMessage",
         "EncryptedBody",
@@ -37292,7 +37838,8 @@ impl TypeVariant {
         "SignedSurveyResponseMessage",
         "PeerStats",
         "PeerStatList",
-        "TopologyResponseBody",
+        "TopologyResponseBodyV0",
+        "TopologyResponseBodyV1",
         "SurveyResponseBody",
         "TxAdvertVector",
         "FloodAdvert",
@@ -37339,6 +37886,9 @@ impl TypeVariant {
         "ContractIdFromEd25519PublicKey",
         "CreateContractArgs",
         "HostFunction",
+        "AuthorizedInvocation",
+        "AddressWithNonce",
+        "ContractAuth",
         "InvokeHostFunctionOp",
         "Operation",
         "OperationBody",
@@ -37350,6 +37900,7 @@ impl TypeVariant {
         "HashIdPreimageFromAsset",
         "HashIdPreimageSourceAccountContractId",
         "HashIdPreimageCreateContractArgs",
+        "HashIdPreimageContractAuth",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -37523,6 +38074,8 @@ impl TypeVariant {
             Self::ScContractCodeType => "ScContractCodeType",
             Self::ScContractCode => "ScContractCode",
             Self::Int128Parts => "Int128Parts",
+            Self::ScAddressType => "ScAddressType",
+            Self::ScAddress => "ScAddress",
             Self::ScObject => "ScObject",
             Self::StoredTransactionSet => "StoredTransactionSet",
             Self::PersistedScpStateV0 => "PersistedScpStateV0",
@@ -37683,6 +38236,7 @@ impl TypeVariant {
             Self::MessageType => "MessageType",
             Self::DontHave => "DontHave",
             Self::SurveyMessageCommandType => "SurveyMessageCommandType",
+            Self::SurveyMessageResponseType => "SurveyMessageResponseType",
             Self::SurveyRequestMessage => "SurveyRequestMessage",
             Self::SignedSurveyRequestMessage => "SignedSurveyRequestMessage",
             Self::EncryptedBody => "EncryptedBody",
@@ -37690,7 +38244,8 @@ impl TypeVariant {
             Self::SignedSurveyResponseMessage => "SignedSurveyResponseMessage",
             Self::PeerStats => "PeerStats",
             Self::PeerStatList => "PeerStatList",
-            Self::TopologyResponseBody => "TopologyResponseBody",
+            Self::TopologyResponseBodyV0 => "TopologyResponseBodyV0",
+            Self::TopologyResponseBodyV1 => "TopologyResponseBodyV1",
             Self::SurveyResponseBody => "SurveyResponseBody",
             Self::TxAdvertVector => "TxAdvertVector",
             Self::FloodAdvert => "FloodAdvert",
@@ -37737,6 +38292,9 @@ impl TypeVariant {
             Self::ContractIdFromEd25519PublicKey => "ContractIdFromEd25519PublicKey",
             Self::CreateContractArgs => "CreateContractArgs",
             Self::HostFunction => "HostFunction",
+            Self::AuthorizedInvocation => "AuthorizedInvocation",
+            Self::AddressWithNonce => "AddressWithNonce",
+            Self::ContractAuth => "ContractAuth",
             Self::InvokeHostFunctionOp => "InvokeHostFunctionOp",
             Self::Operation => "Operation",
             Self::OperationBody => "OperationBody",
@@ -37748,6 +38306,7 @@ impl TypeVariant {
             Self::HashIdPreimageFromAsset => "HashIdPreimageFromAsset",
             Self::HashIdPreimageSourceAccountContractId => "HashIdPreimageSourceAccountContractId",
             Self::HashIdPreimageCreateContractArgs => "HashIdPreimageCreateContractArgs",
+            Self::HashIdPreimageContractAuth => "HashIdPreimageContractAuth",
             Self::MemoType => "MemoType",
             Self::Memo => "Memo",
             Self::TimeBounds => "TimeBounds",
@@ -37869,7 +38428,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 390] {
+    pub const fn variants() -> [TypeVariant; 398] {
         Self::VARIANTS
     }
 }
@@ -37947,6 +38506,8 @@ impl core::str::FromStr for TypeVariant {
             "ScContractCodeType" => Ok(Self::ScContractCodeType),
             "ScContractCode" => Ok(Self::ScContractCode),
             "Int128Parts" => Ok(Self::Int128Parts),
+            "ScAddressType" => Ok(Self::ScAddressType),
+            "ScAddress" => Ok(Self::ScAddress),
             "ScObject" => Ok(Self::ScObject),
             "StoredTransactionSet" => Ok(Self::StoredTransactionSet),
             "PersistedScpStateV0" => Ok(Self::PersistedScpStateV0),
@@ -38107,6 +38668,7 @@ impl core::str::FromStr for TypeVariant {
             "MessageType" => Ok(Self::MessageType),
             "DontHave" => Ok(Self::DontHave),
             "SurveyMessageCommandType" => Ok(Self::SurveyMessageCommandType),
+            "SurveyMessageResponseType" => Ok(Self::SurveyMessageResponseType),
             "SurveyRequestMessage" => Ok(Self::SurveyRequestMessage),
             "SignedSurveyRequestMessage" => Ok(Self::SignedSurveyRequestMessage),
             "EncryptedBody" => Ok(Self::EncryptedBody),
@@ -38114,7 +38676,8 @@ impl core::str::FromStr for TypeVariant {
             "SignedSurveyResponseMessage" => Ok(Self::SignedSurveyResponseMessage),
             "PeerStats" => Ok(Self::PeerStats),
             "PeerStatList" => Ok(Self::PeerStatList),
-            "TopologyResponseBody" => Ok(Self::TopologyResponseBody),
+            "TopologyResponseBodyV0" => Ok(Self::TopologyResponseBodyV0),
+            "TopologyResponseBodyV1" => Ok(Self::TopologyResponseBodyV1),
             "SurveyResponseBody" => Ok(Self::SurveyResponseBody),
             "TxAdvertVector" => Ok(Self::TxAdvertVector),
             "FloodAdvert" => Ok(Self::FloodAdvert),
@@ -38161,6 +38724,9 @@ impl core::str::FromStr for TypeVariant {
             "ContractIdFromEd25519PublicKey" => Ok(Self::ContractIdFromEd25519PublicKey),
             "CreateContractArgs" => Ok(Self::CreateContractArgs),
             "HostFunction" => Ok(Self::HostFunction),
+            "AuthorizedInvocation" => Ok(Self::AuthorizedInvocation),
+            "AddressWithNonce" => Ok(Self::AddressWithNonce),
+            "ContractAuth" => Ok(Self::ContractAuth),
             "InvokeHostFunctionOp" => Ok(Self::InvokeHostFunctionOp),
             "Operation" => Ok(Self::Operation),
             "OperationBody" => Ok(Self::OperationBody),
@@ -38174,6 +38740,7 @@ impl core::str::FromStr for TypeVariant {
                 Ok(Self::HashIdPreimageSourceAccountContractId)
             }
             "HashIdPreimageCreateContractArgs" => Ok(Self::HashIdPreimageCreateContractArgs),
+            "HashIdPreimageContractAuth" => Ok(Self::HashIdPreimageContractAuth),
             "MemoType" => Ok(Self::MemoType),
             "Memo" => Ok(Self::Memo),
             "TimeBounds" => Ok(Self::TimeBounds),
@@ -38362,6 +38929,8 @@ pub enum Type {
     ScContractCodeType(Box<ScContractCodeType>),
     ScContractCode(Box<ScContractCode>),
     Int128Parts(Box<Int128Parts>),
+    ScAddressType(Box<ScAddressType>),
+    ScAddress(Box<ScAddress>),
     ScObject(Box<ScObject>),
     StoredTransactionSet(Box<StoredTransactionSet>),
     PersistedScpStateV0(Box<PersistedScpStateV0>),
@@ -38520,6 +39089,7 @@ pub enum Type {
     MessageType(Box<MessageType>),
     DontHave(Box<DontHave>),
     SurveyMessageCommandType(Box<SurveyMessageCommandType>),
+    SurveyMessageResponseType(Box<SurveyMessageResponseType>),
     SurveyRequestMessage(Box<SurveyRequestMessage>),
     SignedSurveyRequestMessage(Box<SignedSurveyRequestMessage>),
     EncryptedBody(Box<EncryptedBody>),
@@ -38527,7 +39097,8 @@ pub enum Type {
     SignedSurveyResponseMessage(Box<SignedSurveyResponseMessage>),
     PeerStats(Box<PeerStats>),
     PeerStatList(Box<PeerStatList>),
-    TopologyResponseBody(Box<TopologyResponseBody>),
+    TopologyResponseBodyV0(Box<TopologyResponseBodyV0>),
+    TopologyResponseBodyV1(Box<TopologyResponseBodyV1>),
     SurveyResponseBody(Box<SurveyResponseBody>),
     TxAdvertVector(Box<TxAdvertVector>),
     FloodAdvert(Box<FloodAdvert>),
@@ -38574,6 +39145,9 @@ pub enum Type {
     ContractIdFromEd25519PublicKey(Box<ContractIdFromEd25519PublicKey>),
     CreateContractArgs(Box<CreateContractArgs>),
     HostFunction(Box<HostFunction>),
+    AuthorizedInvocation(Box<AuthorizedInvocation>),
+    AddressWithNonce(Box<AddressWithNonce>),
+    ContractAuth(Box<ContractAuth>),
     InvokeHostFunctionOp(Box<InvokeHostFunctionOp>),
     Operation(Box<Operation>),
     OperationBody(Box<OperationBody>),
@@ -38585,6 +39159,7 @@ pub enum Type {
     HashIdPreimageFromAsset(Box<HashIdPreimageFromAsset>),
     HashIdPreimageSourceAccountContractId(Box<HashIdPreimageSourceAccountContractId>),
     HashIdPreimageCreateContractArgs(Box<HashIdPreimageCreateContractArgs>),
+    HashIdPreimageContractAuth(Box<HashIdPreimageContractAuth>),
     MemoType(Box<MemoType>),
     Memo(Box<Memo>),
     TimeBounds(Box<TimeBounds>),
@@ -38700,7 +39275,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 390] = [
+    pub const VARIANTS: [TypeVariant; 398] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38756,6 +39331,8 @@ impl Type {
         TypeVariant::ScContractCodeType,
         TypeVariant::ScContractCode,
         TypeVariant::Int128Parts,
+        TypeVariant::ScAddressType,
+        TypeVariant::ScAddress,
         TypeVariant::ScObject,
         TypeVariant::StoredTransactionSet,
         TypeVariant::PersistedScpStateV0,
@@ -38914,6 +39491,7 @@ impl Type {
         TypeVariant::MessageType,
         TypeVariant::DontHave,
         TypeVariant::SurveyMessageCommandType,
+        TypeVariant::SurveyMessageResponseType,
         TypeVariant::SurveyRequestMessage,
         TypeVariant::SignedSurveyRequestMessage,
         TypeVariant::EncryptedBody,
@@ -38921,7 +39499,8 @@ impl Type {
         TypeVariant::SignedSurveyResponseMessage,
         TypeVariant::PeerStats,
         TypeVariant::PeerStatList,
-        TypeVariant::TopologyResponseBody,
+        TypeVariant::TopologyResponseBodyV0,
+        TypeVariant::TopologyResponseBodyV1,
         TypeVariant::SurveyResponseBody,
         TypeVariant::TxAdvertVector,
         TypeVariant::FloodAdvert,
@@ -38968,6 +39547,9 @@ impl Type {
         TypeVariant::ContractIdFromEd25519PublicKey,
         TypeVariant::CreateContractArgs,
         TypeVariant::HostFunction,
+        TypeVariant::AuthorizedInvocation,
+        TypeVariant::AddressWithNonce,
+        TypeVariant::ContractAuth,
         TypeVariant::InvokeHostFunctionOp,
         TypeVariant::Operation,
         TypeVariant::OperationBody,
@@ -38979,6 +39561,7 @@ impl Type {
         TypeVariant::HashIdPreimageFromAsset,
         TypeVariant::HashIdPreimageSourceAccountContractId,
         TypeVariant::HashIdPreimageCreateContractArgs,
+        TypeVariant::HashIdPreimageContractAuth,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -39092,7 +39675,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 390] = [
+    pub const VARIANTS_STR: [&'static str; 398] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -39148,6 +39731,8 @@ impl Type {
         "ScContractCodeType",
         "ScContractCode",
         "Int128Parts",
+        "ScAddressType",
+        "ScAddress",
         "ScObject",
         "StoredTransactionSet",
         "PersistedScpStateV0",
@@ -39306,6 +39891,7 @@ impl Type {
         "MessageType",
         "DontHave",
         "SurveyMessageCommandType",
+        "SurveyMessageResponseType",
         "SurveyRequestMessage",
         "SignedSurveyRequestMessage",
         "EncryptedBody",
@@ -39313,7 +39899,8 @@ impl Type {
         "SignedSurveyResponseMessage",
         "PeerStats",
         "PeerStatList",
-        "TopologyResponseBody",
+        "TopologyResponseBodyV0",
+        "TopologyResponseBodyV1",
         "SurveyResponseBody",
         "TxAdvertVector",
         "FloodAdvert",
@@ -39360,6 +39947,9 @@ impl Type {
         "ContractIdFromEd25519PublicKey",
         "CreateContractArgs",
         "HostFunction",
+        "AuthorizedInvocation",
+        "AddressWithNonce",
+        "ContractAuth",
         "InvokeHostFunctionOp",
         "Operation",
         "OperationBody",
@@ -39371,6 +39961,7 @@ impl Type {
         "HashIdPreimageFromAsset",
         "HashIdPreimageSourceAccountContractId",
         "HashIdPreimageCreateContractArgs",
+        "HashIdPreimageContractAuth",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -39626,6 +40217,10 @@ impl Type {
                 Ok(Self::ScContractCode(Box::new(ScContractCode::read_xdr(r)?)))
             }
             TypeVariant::Int128Parts => Ok(Self::Int128Parts(Box::new(Int128Parts::read_xdr(r)?))),
+            TypeVariant::ScAddressType => {
+                Ok(Self::ScAddressType(Box::new(ScAddressType::read_xdr(r)?)))
+            }
+            TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(ScAddress::read_xdr(r)?))),
             TypeVariant::ScObject => Ok(Self::ScObject(Box::new(ScObject::read_xdr(r)?))),
             TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
                 StoredTransactionSet::read_xdr(r)?,
@@ -40044,6 +40639,9 @@ impl Type {
             TypeVariant::SurveyMessageCommandType => Ok(Self::SurveyMessageCommandType(Box::new(
                 SurveyMessageCommandType::read_xdr(r)?,
             ))),
+            TypeVariant::SurveyMessageResponseType => Ok(Self::SurveyMessageResponseType(
+                Box::new(SurveyMessageResponseType::read_xdr(r)?),
+            )),
             TypeVariant::SurveyRequestMessage => Ok(Self::SurveyRequestMessage(Box::new(
                 SurveyRequestMessage::read_xdr(r)?,
             ))),
@@ -40063,8 +40661,11 @@ impl Type {
             TypeVariant::PeerStatList => {
                 Ok(Self::PeerStatList(Box::new(PeerStatList::read_xdr(r)?)))
             }
-            TypeVariant::TopologyResponseBody => Ok(Self::TopologyResponseBody(Box::new(
-                TopologyResponseBody::read_xdr(r)?,
+            TypeVariant::TopologyResponseBodyV0 => Ok(Self::TopologyResponseBodyV0(Box::new(
+                TopologyResponseBodyV0::read_xdr(r)?,
+            ))),
+            TypeVariant::TopologyResponseBodyV1 => Ok(Self::TopologyResponseBodyV1(Box::new(
+                TopologyResponseBodyV1::read_xdr(r)?,
             ))),
             TypeVariant::SurveyResponseBody => Ok(Self::SurveyResponseBody(Box::new(
                 SurveyResponseBody::read_xdr(r)?,
@@ -40198,6 +40799,15 @@ impl Type {
             TypeVariant::HostFunction => {
                 Ok(Self::HostFunction(Box::new(HostFunction::read_xdr(r)?)))
             }
+            TypeVariant::AuthorizedInvocation => Ok(Self::AuthorizedInvocation(Box::new(
+                AuthorizedInvocation::read_xdr(r)?,
+            ))),
+            TypeVariant::AddressWithNonce => Ok(Self::AddressWithNonce(Box::new(
+                AddressWithNonce::read_xdr(r)?,
+            ))),
+            TypeVariant::ContractAuth => {
+                Ok(Self::ContractAuth(Box::new(ContractAuth::read_xdr(r)?)))
+            }
             TypeVariant::InvokeHostFunctionOp => Ok(Self::InvokeHostFunctionOp(Box::new(
                 InvokeHostFunctionOp::read_xdr(r)?,
             ))),
@@ -40235,6 +40845,9 @@ impl Type {
                     HashIdPreimageCreateContractArgs::read_xdr(r)?,
                 )))
             }
+            TypeVariant::HashIdPreimageContractAuth => Ok(Self::HashIdPreimageContractAuth(
+                Box::new(HashIdPreimageContractAuth::read_xdr(r)?),
+            )),
             TypeVariant::MemoType => Ok(Self::MemoType(Box::new(MemoType::read_xdr(r)?))),
             TypeVariant::Memo => Ok(Self::Memo(Box::new(Memo::read_xdr(r)?))),
             TypeVariant::TimeBounds => Ok(Self::TimeBounds(Box::new(TimeBounds::read_xdr(r)?))),
@@ -40819,6 +41432,14 @@ impl Type {
             TypeVariant::Int128Parts => Box::new(
                 ReadXdrIter::<_, Int128Parts>::new(r)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
+            ),
+            TypeVariant::ScAddressType => Box::new(
+                ReadXdrIter::<_, ScAddressType>::new(r)
+                    .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
+            ),
+            TypeVariant::ScAddress => Box::new(
+                ReadXdrIter::<_, ScAddress>::new(r)
+                    .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
             ),
             TypeVariant::ScObject => Box::new(
                 ReadXdrIter::<_, ScObject>::new(r).map(|r| r.map(|t| Self::ScObject(Box::new(t)))),
@@ -41437,6 +42058,10 @@ impl Type {
                 ReadXdrIter::<_, SurveyMessageCommandType>::new(r)
                     .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t)))),
             ),
+            TypeVariant::SurveyMessageResponseType => Box::new(
+                ReadXdrIter::<_, SurveyMessageResponseType>::new(r)
+                    .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t)))),
+            ),
             TypeVariant::SurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, SurveyRequestMessage>::new(r)
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
@@ -41465,9 +42090,13 @@ impl Type {
                 ReadXdrIter::<_, PeerStatList>::new(r)
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
-            TypeVariant::TopologyResponseBody => Box::new(
-                ReadXdrIter::<_, TopologyResponseBody>::new(r)
-                    .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t)))),
+            TypeVariant::TopologyResponseBodyV0 => Box::new(
+                ReadXdrIter::<_, TopologyResponseBodyV0>::new(r)
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t)))),
+            ),
+            TypeVariant::TopologyResponseBodyV1 => Box::new(
+                ReadXdrIter::<_, TopologyResponseBodyV1>::new(r)
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
                 ReadXdrIter::<_, SurveyResponseBody>::new(r)
@@ -41653,6 +42282,18 @@ impl Type {
                 ReadXdrIter::<_, HostFunction>::new(r)
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
             ),
+            TypeVariant::AuthorizedInvocation => Box::new(
+                ReadXdrIter::<_, AuthorizedInvocation>::new(r)
+                    .map(|r| r.map(|t| Self::AuthorizedInvocation(Box::new(t)))),
+            ),
+            TypeVariant::AddressWithNonce => Box::new(
+                ReadXdrIter::<_, AddressWithNonce>::new(r)
+                    .map(|r| r.map(|t| Self::AddressWithNonce(Box::new(t)))),
+            ),
+            TypeVariant::ContractAuth => Box::new(
+                ReadXdrIter::<_, ContractAuth>::new(r)
+                    .map(|r| r.map(|t| Self::ContractAuth(Box::new(t)))),
+            ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionOp>::new(r)
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
@@ -41696,6 +42337,10 @@ impl Type {
             TypeVariant::HashIdPreimageCreateContractArgs => Box::new(
                 ReadXdrIter::<_, HashIdPreimageCreateContractArgs>::new(r)
                     .map(|r| r.map(|t| Self::HashIdPreimageCreateContractArgs(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageContractAuth => Box::new(
+                ReadXdrIter::<_, HashIdPreimageContractAuth>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageContractAuth(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(r).map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
@@ -42367,6 +43012,14 @@ impl Type {
                 ReadXdrIter::<_, Frame<Int128Parts>>::new(r)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t.0)))),
             ),
+            TypeVariant::ScAddressType => Box::new(
+                ReadXdrIter::<_, Frame<ScAddressType>>::new(r)
+                    .map(|r| r.map(|t| Self::ScAddressType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScAddress => Box::new(
+                ReadXdrIter::<_, Frame<ScAddress>>::new(r)
+                    .map(|r| r.map(|t| Self::ScAddress(Box::new(t.0)))),
+            ),
             TypeVariant::ScObject => Box::new(
                 ReadXdrIter::<_, Frame<ScObject>>::new(r)
                     .map(|r| r.map(|t| Self::ScObject(Box::new(t.0)))),
@@ -42999,6 +43652,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<SurveyMessageCommandType>>::new(r)
                     .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t.0)))),
             ),
+            TypeVariant::SurveyMessageResponseType => Box::new(
+                ReadXdrIter::<_, Frame<SurveyMessageResponseType>>::new(r)
+                    .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t.0)))),
+            ),
             TypeVariant::SurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, Frame<SurveyRequestMessage>>::new(r)
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t.0)))),
@@ -43027,9 +43684,13 @@ impl Type {
                 ReadXdrIter::<_, Frame<PeerStatList>>::new(r)
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t.0)))),
             ),
-            TypeVariant::TopologyResponseBody => Box::new(
-                ReadXdrIter::<_, Frame<TopologyResponseBody>>::new(r)
-                    .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t.0)))),
+            TypeVariant::TopologyResponseBodyV0 => Box::new(
+                ReadXdrIter::<_, Frame<TopologyResponseBodyV0>>::new(r)
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t.0)))),
+            ),
+            TypeVariant::TopologyResponseBodyV1 => Box::new(
+                ReadXdrIter::<_, Frame<TopologyResponseBodyV1>>::new(r)
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t.0)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
                 ReadXdrIter::<_, Frame<SurveyResponseBody>>::new(r)
@@ -43215,6 +43876,18 @@ impl Type {
                 ReadXdrIter::<_, Frame<HostFunction>>::new(r)
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t.0)))),
             ),
+            TypeVariant::AuthorizedInvocation => Box::new(
+                ReadXdrIter::<_, Frame<AuthorizedInvocation>>::new(r)
+                    .map(|r| r.map(|t| Self::AuthorizedInvocation(Box::new(t.0)))),
+            ),
+            TypeVariant::AddressWithNonce => Box::new(
+                ReadXdrIter::<_, Frame<AddressWithNonce>>::new(r)
+                    .map(|r| r.map(|t| Self::AddressWithNonce(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractAuth => Box::new(
+                ReadXdrIter::<_, Frame<ContractAuth>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractAuth(Box::new(t.0)))),
+            ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, Frame<InvokeHostFunctionOp>>::new(r)
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t.0)))),
@@ -43258,6 +43931,10 @@ impl Type {
             TypeVariant::HashIdPreimageCreateContractArgs => Box::new(
                 ReadXdrIter::<_, Frame<HashIdPreimageCreateContractArgs>>::new(r)
                     .map(|r| r.map(|t| Self::HashIdPreimageCreateContractArgs(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimageContractAuth => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageContractAuth>>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageContractAuth(Box::new(t.0)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, Frame<MemoType>>::new(r)
@@ -43936,6 +44613,14 @@ impl Type {
                 ReadXdrIter::<_, Int128Parts>::new(dec)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
             ),
+            TypeVariant::ScAddressType => Box::new(
+                ReadXdrIter::<_, ScAddressType>::new(dec)
+                    .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
+            ),
+            TypeVariant::ScAddress => Box::new(
+                ReadXdrIter::<_, ScAddress>::new(dec)
+                    .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
+            ),
             TypeVariant::ScObject => Box::new(
                 ReadXdrIter::<_, ScObject>::new(dec)
                     .map(|r| r.map(|t| Self::ScObject(Box::new(t)))),
@@ -44561,6 +45246,10 @@ impl Type {
                 ReadXdrIter::<_, SurveyMessageCommandType>::new(dec)
                     .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t)))),
             ),
+            TypeVariant::SurveyMessageResponseType => Box::new(
+                ReadXdrIter::<_, SurveyMessageResponseType>::new(dec)
+                    .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t)))),
+            ),
             TypeVariant::SurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, SurveyRequestMessage>::new(dec)
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
@@ -44589,9 +45278,13 @@ impl Type {
                 ReadXdrIter::<_, PeerStatList>::new(dec)
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
-            TypeVariant::TopologyResponseBody => Box::new(
-                ReadXdrIter::<_, TopologyResponseBody>::new(dec)
-                    .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t)))),
+            TypeVariant::TopologyResponseBodyV0 => Box::new(
+                ReadXdrIter::<_, TopologyResponseBodyV0>::new(dec)
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t)))),
+            ),
+            TypeVariant::TopologyResponseBodyV1 => Box::new(
+                ReadXdrIter::<_, TopologyResponseBodyV1>::new(dec)
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
                 ReadXdrIter::<_, SurveyResponseBody>::new(dec)
@@ -44777,6 +45470,18 @@ impl Type {
                 ReadXdrIter::<_, HostFunction>::new(dec)
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
             ),
+            TypeVariant::AuthorizedInvocation => Box::new(
+                ReadXdrIter::<_, AuthorizedInvocation>::new(dec)
+                    .map(|r| r.map(|t| Self::AuthorizedInvocation(Box::new(t)))),
+            ),
+            TypeVariant::AddressWithNonce => Box::new(
+                ReadXdrIter::<_, AddressWithNonce>::new(dec)
+                    .map(|r| r.map(|t| Self::AddressWithNonce(Box::new(t)))),
+            ),
+            TypeVariant::ContractAuth => Box::new(
+                ReadXdrIter::<_, ContractAuth>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractAuth(Box::new(t)))),
+            ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionOp>::new(dec)
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
@@ -44820,6 +45525,10 @@ impl Type {
             TypeVariant::HashIdPreimageCreateContractArgs => Box::new(
                 ReadXdrIter::<_, HashIdPreimageCreateContractArgs>::new(dec)
                     .map(|r| r.map(|t| Self::HashIdPreimageCreateContractArgs(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageContractAuth => Box::new(
+                ReadXdrIter::<_, HashIdPreimageContractAuth>::new(dec)
+                    .map(|r| r.map(|t| Self::HashIdPreimageContractAuth(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(dec)
@@ -45340,6 +46049,8 @@ impl Type {
             Self::ScContractCodeType(ref v) => v.as_ref(),
             Self::ScContractCode(ref v) => v.as_ref(),
             Self::Int128Parts(ref v) => v.as_ref(),
+            Self::ScAddressType(ref v) => v.as_ref(),
+            Self::ScAddress(ref v) => v.as_ref(),
             Self::ScObject(ref v) => v.as_ref(),
             Self::StoredTransactionSet(ref v) => v.as_ref(),
             Self::PersistedScpStateV0(ref v) => v.as_ref(),
@@ -45498,6 +46209,7 @@ impl Type {
             Self::MessageType(ref v) => v.as_ref(),
             Self::DontHave(ref v) => v.as_ref(),
             Self::SurveyMessageCommandType(ref v) => v.as_ref(),
+            Self::SurveyMessageResponseType(ref v) => v.as_ref(),
             Self::SurveyRequestMessage(ref v) => v.as_ref(),
             Self::SignedSurveyRequestMessage(ref v) => v.as_ref(),
             Self::EncryptedBody(ref v) => v.as_ref(),
@@ -45505,7 +46217,8 @@ impl Type {
             Self::SignedSurveyResponseMessage(ref v) => v.as_ref(),
             Self::PeerStats(ref v) => v.as_ref(),
             Self::PeerStatList(ref v) => v.as_ref(),
-            Self::TopologyResponseBody(ref v) => v.as_ref(),
+            Self::TopologyResponseBodyV0(ref v) => v.as_ref(),
+            Self::TopologyResponseBodyV1(ref v) => v.as_ref(),
             Self::SurveyResponseBody(ref v) => v.as_ref(),
             Self::TxAdvertVector(ref v) => v.as_ref(),
             Self::FloodAdvert(ref v) => v.as_ref(),
@@ -45552,6 +46265,9 @@ impl Type {
             Self::ContractIdFromEd25519PublicKey(ref v) => v.as_ref(),
             Self::CreateContractArgs(ref v) => v.as_ref(),
             Self::HostFunction(ref v) => v.as_ref(),
+            Self::AuthorizedInvocation(ref v) => v.as_ref(),
+            Self::AddressWithNonce(ref v) => v.as_ref(),
+            Self::ContractAuth(ref v) => v.as_ref(),
             Self::InvokeHostFunctionOp(ref v) => v.as_ref(),
             Self::Operation(ref v) => v.as_ref(),
             Self::OperationBody(ref v) => v.as_ref(),
@@ -45563,6 +46279,7 @@ impl Type {
             Self::HashIdPreimageFromAsset(ref v) => v.as_ref(),
             Self::HashIdPreimageSourceAccountContractId(ref v) => v.as_ref(),
             Self::HashIdPreimageCreateContractArgs(ref v) => v.as_ref(),
+            Self::HashIdPreimageContractAuth(ref v) => v.as_ref(),
             Self::MemoType(ref v) => v.as_ref(),
             Self::Memo(ref v) => v.as_ref(),
             Self::TimeBounds(ref v) => v.as_ref(),
@@ -45737,6 +46454,8 @@ impl Type {
             Self::ScContractCodeType(_) => "ScContractCodeType",
             Self::ScContractCode(_) => "ScContractCode",
             Self::Int128Parts(_) => "Int128Parts",
+            Self::ScAddressType(_) => "ScAddressType",
+            Self::ScAddress(_) => "ScAddress",
             Self::ScObject(_) => "ScObject",
             Self::StoredTransactionSet(_) => "StoredTransactionSet",
             Self::PersistedScpStateV0(_) => "PersistedScpStateV0",
@@ -45897,6 +46616,7 @@ impl Type {
             Self::MessageType(_) => "MessageType",
             Self::DontHave(_) => "DontHave",
             Self::SurveyMessageCommandType(_) => "SurveyMessageCommandType",
+            Self::SurveyMessageResponseType(_) => "SurveyMessageResponseType",
             Self::SurveyRequestMessage(_) => "SurveyRequestMessage",
             Self::SignedSurveyRequestMessage(_) => "SignedSurveyRequestMessage",
             Self::EncryptedBody(_) => "EncryptedBody",
@@ -45904,7 +46624,8 @@ impl Type {
             Self::SignedSurveyResponseMessage(_) => "SignedSurveyResponseMessage",
             Self::PeerStats(_) => "PeerStats",
             Self::PeerStatList(_) => "PeerStatList",
-            Self::TopologyResponseBody(_) => "TopologyResponseBody",
+            Self::TopologyResponseBodyV0(_) => "TopologyResponseBodyV0",
+            Self::TopologyResponseBodyV1(_) => "TopologyResponseBodyV1",
             Self::SurveyResponseBody(_) => "SurveyResponseBody",
             Self::TxAdvertVector(_) => "TxAdvertVector",
             Self::FloodAdvert(_) => "FloodAdvert",
@@ -45951,6 +46672,9 @@ impl Type {
             Self::ContractIdFromEd25519PublicKey(_) => "ContractIdFromEd25519PublicKey",
             Self::CreateContractArgs(_) => "CreateContractArgs",
             Self::HostFunction(_) => "HostFunction",
+            Self::AuthorizedInvocation(_) => "AuthorizedInvocation",
+            Self::AddressWithNonce(_) => "AddressWithNonce",
+            Self::ContractAuth(_) => "ContractAuth",
             Self::InvokeHostFunctionOp(_) => "InvokeHostFunctionOp",
             Self::Operation(_) => "Operation",
             Self::OperationBody(_) => "OperationBody",
@@ -45964,6 +46688,7 @@ impl Type {
                 "HashIdPreimageSourceAccountContractId"
             }
             Self::HashIdPreimageCreateContractArgs(_) => "HashIdPreimageCreateContractArgs",
+            Self::HashIdPreimageContractAuth(_) => "HashIdPreimageContractAuth",
             Self::MemoType(_) => "MemoType",
             Self::Memo(_) => "Memo",
             Self::TimeBounds(_) => "TimeBounds",
@@ -46089,7 +46814,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 390] {
+    pub const fn variants() -> [TypeVariant; 398] {
         Self::VARIANTS
     }
 
@@ -46152,6 +46877,8 @@ impl Type {
             Self::ScContractCodeType(_) => TypeVariant::ScContractCodeType,
             Self::ScContractCode(_) => TypeVariant::ScContractCode,
             Self::Int128Parts(_) => TypeVariant::Int128Parts,
+            Self::ScAddressType(_) => TypeVariant::ScAddressType,
+            Self::ScAddress(_) => TypeVariant::ScAddress,
             Self::ScObject(_) => TypeVariant::ScObject,
             Self::StoredTransactionSet(_) => TypeVariant::StoredTransactionSet,
             Self::PersistedScpStateV0(_) => TypeVariant::PersistedScpStateV0,
@@ -46326,6 +47053,7 @@ impl Type {
             Self::MessageType(_) => TypeVariant::MessageType,
             Self::DontHave(_) => TypeVariant::DontHave,
             Self::SurveyMessageCommandType(_) => TypeVariant::SurveyMessageCommandType,
+            Self::SurveyMessageResponseType(_) => TypeVariant::SurveyMessageResponseType,
             Self::SurveyRequestMessage(_) => TypeVariant::SurveyRequestMessage,
             Self::SignedSurveyRequestMessage(_) => TypeVariant::SignedSurveyRequestMessage,
             Self::EncryptedBody(_) => TypeVariant::EncryptedBody,
@@ -46333,7 +47061,8 @@ impl Type {
             Self::SignedSurveyResponseMessage(_) => TypeVariant::SignedSurveyResponseMessage,
             Self::PeerStats(_) => TypeVariant::PeerStats,
             Self::PeerStatList(_) => TypeVariant::PeerStatList,
-            Self::TopologyResponseBody(_) => TypeVariant::TopologyResponseBody,
+            Self::TopologyResponseBodyV0(_) => TypeVariant::TopologyResponseBodyV0,
+            Self::TopologyResponseBodyV1(_) => TypeVariant::TopologyResponseBodyV1,
             Self::SurveyResponseBody(_) => TypeVariant::SurveyResponseBody,
             Self::TxAdvertVector(_) => TypeVariant::TxAdvertVector,
             Self::FloodAdvert(_) => TypeVariant::FloodAdvert,
@@ -46382,6 +47111,9 @@ impl Type {
             Self::ContractIdFromEd25519PublicKey(_) => TypeVariant::ContractIdFromEd25519PublicKey,
             Self::CreateContractArgs(_) => TypeVariant::CreateContractArgs,
             Self::HostFunction(_) => TypeVariant::HostFunction,
+            Self::AuthorizedInvocation(_) => TypeVariant::AuthorizedInvocation,
+            Self::AddressWithNonce(_) => TypeVariant::AddressWithNonce,
+            Self::ContractAuth(_) => TypeVariant::ContractAuth,
             Self::InvokeHostFunctionOp(_) => TypeVariant::InvokeHostFunctionOp,
             Self::Operation(_) => TypeVariant::Operation,
             Self::OperationBody(_) => TypeVariant::OperationBody,
@@ -46399,6 +47131,7 @@ impl Type {
             Self::HashIdPreimageCreateContractArgs(_) => {
                 TypeVariant::HashIdPreimageCreateContractArgs
             }
+            Self::HashIdPreimageContractAuth(_) => TypeVariant::HashIdPreimageContractAuth,
             Self::MemoType(_) => TypeVariant::MemoType,
             Self::Memo(_) => TypeVariant::Memo,
             Self::TimeBounds(_) => TypeVariant::TimeBounds,

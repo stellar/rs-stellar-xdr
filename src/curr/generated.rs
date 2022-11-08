@@ -13,31 +13,31 @@
 pub const XDR_FILES_SHA256: [(&str, &str); 7] = [
     (
         "xdr/curr/Stellar-SCP.x",
-        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+        "2b855c7f79b8e50cf15ca1e1aa89fb16bbb38117de0b1c969c80e675ae1ca4bb",
     ),
     (
         "xdr/curr/Stellar-internal.x",
-        "368706dd6e2efafd16a8f63daf3374845b791d097b15c502aa7653a412b68b68",
+        "467d954846f88e50e690b64a0ef2dc138b92b03d24bdd66559df16f76535b288",
     ),
     (
         "xdr/curr/Stellar-ledger-entries.x",
-        "3aa135c309c2d67883f165961739b4940c90df59240d8aeef55deced8d7708b5",
+        "5f0ff65913dcbd2e0376add3fc6cec24ba398a07e8eb170eec4e967a37c52313",
     ),
     (
         "xdr/curr/Stellar-ledger.x",
-        "96ac88de23d2b0f2f23a0495527c8aefb8623b4db0e39ba34f357d10a211c214",
+        "3c5fe246dcafeef2b099fa8f1fc6d0ea5e8f6a35b57c133b2987cfe02f5d4d1e",
     ),
     (
         "xdr/curr/Stellar-overlay.x",
-        "3093b425866f34b32702d80d5298f9f2dc00736b0fdaac7efa653490a39fb231",
+        "56d0a34446e90f047e7d9d862c881d710abac37ac6ccabc37de7b2d23b77056f",
     ),
     (
         "xdr/curr/Stellar-transaction.x",
-        "45fdeb428e68d6b07e3e3157b6404567e0efb712c9d4c90a61a1035854c32b90",
+        "37596456adbc328df75071873fe4a909d556750a159b8b4776028f6dfed2ce3f",
     ),
     (
         "xdr/curr/Stellar-types.x",
-        "60b7588e573f5e5518766eb5e6b6ea42f0e53144663cbe557e485cceb6306c85",
+        "0931ee6baae1ba761f7cc5aca52f8dbbbcc22f8375f91a1f8ba8db1c914dfdd8",
     ),
 ];
 

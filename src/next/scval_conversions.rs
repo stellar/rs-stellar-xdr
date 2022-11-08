@@ -883,41 +883,41 @@ impl_for_tuple! { 10 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 }
 impl_for_tuple! { 11 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 T10 10 }
 impl_for_tuple! { 12 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 T10 10 T11 11 }
 
-impl From<AccountId> for ScVal {
-    fn from(v: AccountId) -> Self {
-        ScVal::Object(Some(ScObject::AccountId(v)))
-    }
-}
+// impl From<AccountId> for ScVal {
+//     fn from(v: AccountId) -> Self {
+//         ScVal::Object(Some(ScObject::AccountId(v)))
+//     }
+// }
 
-impl From<&AccountId> for ScVal {
-    fn from(v: &AccountId) -> Self {
-        ScVal::Object(Some(ScObject::AccountId(v.clone())))
-    }
-}
+// impl From<&AccountId> for ScVal {
+//     fn from(v: &AccountId) -> Self {
+//         ScVal::Object(Some(ScObject::AccountId(v.clone())))
+//     }
+// }
 
-impl TryFrom<ScVal> for AccountId {
-    type Error = ();
+// impl TryFrom<ScVal> for AccountId {
+//     type Error = ();
 
-    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
-        if let ScVal::Object(Some(ScObject::AccountId(a))) = v {
-            Ok(a)
-        } else {
-            Err(())
-        }
-    }
-}
+//     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+//         if let ScVal::Object(Some(ScObject::AccountId(a))) = v {
+//             Ok(a)
+//         } else {
+//             Err(())
+//         }
+//     }
+// }
 
-impl TryFrom<&ScVal> for AccountId {
-    type Error = ();
+// impl TryFrom<&ScVal> for AccountId {
+//     type Error = ();
 
-    fn try_from(v: &ScVal) -> Result<Self, Self::Error> {
-        if let ScVal::Object(Some(ScObject::AccountId(a))) = v {
-            Ok(a.clone())
-        } else {
-            Err(())
-        }
-    }
-}
+//     fn try_from(v: &ScVal) -> Result<Self, Self::Error> {
+//         if let ScVal::Object(Some(ScObject::AccountId(a))) = v {
+//             Ok(a.clone())
+//         } else {
+//             Err(())
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod test {

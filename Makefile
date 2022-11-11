@@ -1,4 +1,4 @@
-.PHONY: src/version_curr.rs src/version_next.rs
+.PHONY: src/curr_xdr_version.rs src/next_xdr_version.rs
 
 XDR_VERSION_CURR=eba1d3de9
 XDR_VERSION_NEXT=1a76201f8
@@ -44,12 +44,12 @@ build: generate
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 
-generate: src/version_curr.rs src/version_next.rs src/curr.rs src/next.rs
+generate: src/curr_xdr_version.rs src/next_xdr_version.rs src/curr.rs src/next.rs
 
-src/version_curr.rs:
+src/curr_xdr_version.rs:
 	echo 'pub const XDR_VERSION: &str = "$(XDR_VERSION_CURR)";' > $@
 
-src/version_next.rs:
+src/next_xdr_version.rs:
 	echo 'pub const XDR_VERSION: &str = "$(XDR_VERSION_NEXT)";' > $@
 
 src/curr.rs: $(XDR_FILES_LOCAL_CURR)
@@ -71,8 +71,8 @@ src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 	rustfmt $@
 
 clean:
-	rm -f src/version_curr.rs
-	rm -f src/version_next.rs
+	rm -f src/curr_xdr_version.rs
+	rm -f src/next_xdr_version.rs
 	rm -f src/curr.rs
 	rm -f src/next.rs
 	cargo clean

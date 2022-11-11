@@ -1,23 +1,20 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// TODO: Concatenate these into a single string, and also include XDR_VERSION.
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const GIT_REVISION: &str = env!("GIT_REVISION");
-#[must_use]
-pub const fn version() -> &'static [&'static str] {
-    &[VERSION, GIT_REVISION, XDR_VERSION]
-}
+const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+const GIT_REVISION: &str = env!("GIT_REVISION");
+pub const VERSION: &str =
+    const_format::formatcp!("{PKG_VERSION} ({GIT_REVISION}) (xdr: {XDR_VERSION})");
 
 #[cfg(not(feature = "next"))]
-mod version_curr;
+mod curr_xdr_version;
 #[cfg(not(feature = "next"))]
-pub use version_curr::*;
+use curr_xdr_version::XDR_VERSION;
 
 #[cfg(feature = "next")]
-mod version_next;
+mod next_xdr_version;
 #[cfg(feature = "next")]
-pub use version_next::*;
+use next_xdr_version::XDR_VERSION;
 
 #[cfg(not(feature = "next"))]
 mod curr;

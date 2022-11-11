@@ -2,6 +2,16 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(not(feature = "next"))]
+mod version_curr;
+#[cfg(not(feature = "next"))]
+pub use version_curr::*;
+
+#[cfg(feature = "next")]
+mod version_next;
+#[cfg(feature = "next")]
+pub use version_next::*;
+
+#[cfg(not(feature = "next"))]
 mod curr;
 #[cfg(not(feature = "next"))]
 pub use curr::*;

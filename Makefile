@@ -1,4 +1,9 @@
-XDR_BASE_URL_CURR=https://github.com/stellar/stellar-core/raw/master/src/protocol-curr/xdr
+.PHONY: src/version_curr.rs src/version_next.rs
+
+XDR_VERSION_CURR=eba1d3de93281d531b1e72839ceaf39cc9c406ca
+XDR_VERSION_NEXT=1a76201f837e5b0f4fa5aff228ee865bfc1f6361
+
+XDR_BASE_URL_CURR=https://github.com/stellar/stellar-core/raw/$(XDR_VERSION_CURR)/src/protocol-curr/xdr
 XDR_BASE_LOCAL_CURR=xdr/curr
 XDR_FILES_CURR= \
 	Stellar-SCP.x \
@@ -9,7 +14,7 @@ XDR_FILES_CURR= \
 	Stellar-types.x
 XDR_FILES_LOCAL_CURR=$(addprefix xdr/curr/,$(XDR_FILES_CURR))
 
-XDR_BASE_URL_NEXT=https://github.com/stellar/stellar-xdr-next/raw/main
+XDR_BASE_URL_NEXT=https://github.com/stellar/stellar-xdr-next/raw/$(XDR_VERSION_NEXT)
 XDR_BASE_LOCAL_NEXT=xdr/next
 XDR_FILES_NEXT= \
 	Stellar-SCP.x \
@@ -39,7 +44,13 @@ build: generate
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 
-generate: src/curr.rs src/next.rs
+generate: src/version_curr.rs src/version_next.rs src/curr.rs src/next.rs
+
+src/version_curr.rs:
+	echo 'pub const VERSION: &str = "$(XDR_VERSION_CURR)";' > $@
+
+src/version_next.rs:
+	echo 'pub const VERSION: &str = "$(XDR_VERSION_NEXT)";' > $@
 
 src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 	> $@
@@ -60,6 +71,8 @@ src/next.rs: $(XDR_FILES_LOCAL_NEXT)
 	rustfmt $@
 
 clean:
+	rm -f src/version_curr.rs
+	rm -f src/version_next.rs
 	rm -f src/curr.rs
 	rm -f src/next.rs
 	cargo clean

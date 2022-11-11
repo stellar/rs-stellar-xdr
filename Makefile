@@ -1,7 +1,7 @@
 .PHONY: src/version_curr.rs src/version_next.rs
 
-XDR_VERSION_CURR=eba1d3de93281d531b1e72839ceaf39cc9c406ca
-XDR_VERSION_NEXT=1a76201f837e5b0f4fa5aff228ee865bfc1f6361
+XDR_VERSION_CURR=eba1d3de9
+XDR_VERSION_NEXT=1a76201f8
 
 XDR_BASE_URL_CURR=https://github.com/stellar/stellar-core/raw/$(XDR_VERSION_CURR)/src/protocol-curr/xdr
 XDR_BASE_LOCAL_CURR=xdr/curr

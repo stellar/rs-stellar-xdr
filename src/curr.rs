@@ -1,37 +1,42 @@
 // Module  is generated from:
-//  xdr/curr/Stellar-SCP.x
-//  xdr/curr/Stellar-ledger-entries.x
-//  xdr/curr/Stellar-ledger.x
-//  xdr/curr/Stellar-overlay.x
-//  xdr/curr/Stellar-transaction.x
-//  xdr/curr/Stellar-types.x
+//  xdr/curr/src/protocol-curr/xdr/Stellar-SCP.x
+//  xdr/curr/src/protocol-curr/xdr/Stellar-internal.x
+//  xdr/curr/src/protocol-curr/xdr/Stellar-ledger-entries.x
+//  xdr/curr/src/protocol-curr/xdr/Stellar-ledger.x
+//  xdr/curr/src/protocol-curr/xdr/Stellar-overlay.x
+//  xdr/curr/src/protocol-curr/xdr/Stellar-transaction.x
+//  xdr/curr/src/protocol-curr/xdr/Stellar-types.x
 
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
-pub const XDR_FILES_SHA256: [(&str, &str); 6] = [
+pub const XDR_FILES_SHA256: [(&str, &str); 7] = [
     (
-        "xdr/curr/Stellar-SCP.x",
+        "xdr/curr/src/protocol-curr/xdr/Stellar-SCP.x",
         "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
     ),
     (
-        "xdr/curr/Stellar-ledger-entries.x",
+        "xdr/curr/src/protocol-curr/xdr/Stellar-internal.x",
+        "368706dd6e2efafd16a8f63daf3374845b791d097b15c502aa7653a412b68b68",
+    ),
+    (
+        "xdr/curr/src/protocol-curr/xdr/Stellar-ledger-entries.x",
         "3aa135c309c2d67883f165961739b4940c90df59240d8aeef55deced8d7708b5",
     ),
     (
-        "xdr/curr/Stellar-ledger.x",
+        "xdr/curr/src/protocol-curr/xdr/Stellar-ledger.x",
         "96ac88de23d2b0f2f23a0495527c8aefb8623b4db0e39ba34f357d10a211c214",
     ),
     (
-        "xdr/curr/Stellar-overlay.x",
+        "xdr/curr/src/protocol-curr/xdr/Stellar-overlay.x",
         "3093b425866f34b32702d80d5298f9f2dc00736b0fdaac7efa653490a39fb231",
     ),
     (
-        "xdr/curr/Stellar-transaction.x",
+        "xdr/curr/src/protocol-curr/xdr/Stellar-transaction.x",
         "45fdeb428e68d6b07e3e3157b6404567e0efb712c9d4c90a61a1035854c32b90",
     ),
     (
-        "xdr/curr/Stellar-types.x",
+        "xdr/curr/src/protocol-curr/xdr/Stellar-types.x",
         "60b7588e573f5e5518766eb5e6b6ea42f0e53144663cbe557e485cceb6306c85",
     ),
 ];
@@ -2679,6 +2684,291 @@ impl WriteXdr for ScpQuorumSet {
         self.threshold.write_xdr(w)?;
         self.validators.write_xdr(w)?;
         self.inner_sets.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// StoredTransactionSet is an XDR Union defines as:
+//
+//   union StoredTransactionSet switch (int v)
+//    {
+//    case 0:
+//    	TransactionSet txSet;
+//    case 1:
+//    	GeneralizedTransactionSet generalizedTxSet;
+//    };
+//
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum StoredTransactionSet {
+    V0(TransactionSet),
+    V1(GeneralizedTransactionSet),
+}
+
+impl StoredTransactionSet {
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0(_) => "V0",
+            Self::V1(_) => "V1",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => 0,
+            Self::V1(_) => 1,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for StoredTransactionSet {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for StoredTransactionSet {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for StoredTransactionSet {
+    fn variants() -> slice::Iter<'static, i32> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<i32> for StoredTransactionSet {}
+
+impl ReadXdr for StoredTransactionSet {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            0 => Self::V0(TransactionSet::read_xdr(r)?),
+            1 => Self::V1(GeneralizedTransactionSet::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for StoredTransactionSet {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(v) => v.write_xdr(w)?,
+            Self::V1(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// PersistedScpStateV0 is an XDR Struct defines as:
+//
+//   struct PersistedSCPStateV0
+//    {
+//    	SCPEnvelope scpEnvelopes<>;
+//    	SCPQuorumSet quorumSets<>;
+//    	StoredTransactionSet txSets<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct PersistedScpStateV0 {
+    pub scp_envelopes: VecM<ScpEnvelope>,
+    pub quorum_sets: VecM<ScpQuorumSet>,
+    pub tx_sets: VecM<StoredTransactionSet>,
+}
+
+impl ReadXdr for PersistedScpStateV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            scp_envelopes: VecM::<ScpEnvelope>::read_xdr(r)?,
+            quorum_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
+            tx_sets: VecM::<StoredTransactionSet>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for PersistedScpStateV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.scp_envelopes.write_xdr(w)?;
+        self.quorum_sets.write_xdr(w)?;
+        self.tx_sets.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// PersistedScpStateV1 is an XDR Struct defines as:
+//
+//   struct PersistedSCPStateV1
+//    {
+//    	// Tx sets are saved separately
+//    	SCPEnvelope scpEnvelopes<>;
+//    	SCPQuorumSet quorumSets<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct PersistedScpStateV1 {
+    pub scp_envelopes: VecM<ScpEnvelope>,
+    pub quorum_sets: VecM<ScpQuorumSet>,
+}
+
+impl ReadXdr for PersistedScpStateV1 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            scp_envelopes: VecM::<ScpEnvelope>::read_xdr(r)?,
+            quorum_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for PersistedScpStateV1 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.scp_envelopes.write_xdr(w)?;
+        self.quorum_sets.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// PersistedScpState is an XDR Union defines as:
+//
+//   union PersistedSCPState switch (int v)
+//    {
+//    case 0:
+//    	PersistedSCPStateV0 v0;
+//    case 1:
+//    	PersistedSCPStateV1 v1;
+//    };
+//
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum PersistedScpState {
+    V0(PersistedScpStateV0),
+    V1(PersistedScpStateV1),
+}
+
+impl PersistedScpState {
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0(_) => "V0",
+            Self::V1(_) => "V1",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => 0,
+            Self::V1(_) => 1,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for PersistedScpState {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for PersistedScpState {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for PersistedScpState {
+    fn variants() -> slice::Iter<'static, i32> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<i32> for PersistedScpState {}
+
+impl ReadXdr for PersistedScpState {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            0 => Self::V0(PersistedScpStateV0::read_xdr(r)?),
+            1 => Self::V1(PersistedScpStateV1::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for PersistedScpState {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(v) => v.write_xdr(w)?,
+            Self::V1(v) => v.write_xdr(w)?,
+        };
         Ok(())
     }
 }
@@ -28898,6 +29188,10 @@ pub enum TypeVariant {
     ScpStatementExternalize,
     ScpEnvelope,
     ScpQuorumSet,
+    StoredTransactionSet,
+    PersistedScpStateV0,
+    PersistedScpStateV1,
+    PersistedScpState,
     AccountId,
     Thresholds,
     String32,
@@ -29191,7 +29485,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 301] = [
+    pub const VARIANTS: [TypeVariant; 305] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -29203,6 +29497,10 @@ impl TypeVariant {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::StoredTransactionSet,
+        TypeVariant::PersistedScpStateV0,
+        TypeVariant::PersistedScpStateV1,
+        TypeVariant::PersistedScpState,
         TypeVariant::AccountId,
         TypeVariant::Thresholds,
         TypeVariant::String32,
@@ -29494,7 +29792,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 301] = [
+    pub const VARIANTS_STR: [&'static str; 305] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -29506,6 +29804,10 @@ impl TypeVariant {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "StoredTransactionSet",
+        "PersistedScpStateV0",
+        "PersistedScpStateV1",
+        "PersistedScpState",
         "AccountId",
         "Thresholds",
         "String32",
@@ -29813,6 +30115,10 @@ impl TypeVariant {
             Self::ScpStatementExternalize => "ScpStatementExternalize",
             Self::ScpEnvelope => "ScpEnvelope",
             Self::ScpQuorumSet => "ScpQuorumSet",
+            Self::StoredTransactionSet => "StoredTransactionSet",
+            Self::PersistedScpStateV0 => "PersistedScpStateV0",
+            Self::PersistedScpStateV1 => "PersistedScpStateV1",
+            Self::PersistedScpState => "PersistedScpState",
             Self::AccountId => "AccountId",
             Self::Thresholds => "Thresholds",
             Self::String32 => "String32",
@@ -30114,7 +30420,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 301] {
+    pub const fn variants() -> [TypeVariant; 305] {
         Self::VARIANTS
     }
 }
@@ -30148,6 +30454,10 @@ impl core::str::FromStr for TypeVariant {
             "ScpStatementExternalize" => Ok(Self::ScpStatementExternalize),
             "ScpEnvelope" => Ok(Self::ScpEnvelope),
             "ScpQuorumSet" => Ok(Self::ScpQuorumSet),
+            "StoredTransactionSet" => Ok(Self::StoredTransactionSet),
+            "PersistedScpStateV0" => Ok(Self::PersistedScpStateV0),
+            "PersistedScpStateV1" => Ok(Self::PersistedScpStateV1),
+            "PersistedScpState" => Ok(Self::PersistedScpState),
             "AccountId" => Ok(Self::AccountId),
             "Thresholds" => Ok(Self::Thresholds),
             "String32" => Ok(Self::String32),
@@ -30471,6 +30781,10 @@ pub enum Type {
     ScpStatementExternalize(Box<ScpStatementExternalize>),
     ScpEnvelope(Box<ScpEnvelope>),
     ScpQuorumSet(Box<ScpQuorumSet>),
+    StoredTransactionSet(Box<StoredTransactionSet>),
+    PersistedScpStateV0(Box<PersistedScpStateV0>),
+    PersistedScpStateV1(Box<PersistedScpStateV1>),
+    PersistedScpState(Box<PersistedScpState>),
     AccountId(Box<AccountId>),
     Thresholds(Box<Thresholds>),
     String32(Box<String32>),
@@ -30764,7 +31078,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 301] = [
+    pub const VARIANTS: [TypeVariant; 305] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -30776,6 +31090,10 @@ impl Type {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::StoredTransactionSet,
+        TypeVariant::PersistedScpStateV0,
+        TypeVariant::PersistedScpStateV1,
+        TypeVariant::PersistedScpState,
         TypeVariant::AccountId,
         TypeVariant::Thresholds,
         TypeVariant::String32,
@@ -31067,7 +31385,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 301] = [
+    pub const VARIANTS_STR: [&'static str; 305] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -31079,6 +31397,10 @@ impl Type {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "StoredTransactionSet",
+        "PersistedScpStateV0",
+        "PersistedScpStateV1",
+        "PersistedScpState",
         "AccountId",
         "Thresholds",
         "String32",
@@ -31402,6 +31724,18 @@ impl Type {
             TypeVariant::ScpQuorumSet => {
                 Ok(Self::ScpQuorumSet(Box::new(ScpQuorumSet::read_xdr(r)?)))
             }
+            TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
+                StoredTransactionSet::read_xdr(r)?,
+            ))),
+            TypeVariant::PersistedScpStateV0 => Ok(Self::PersistedScpStateV0(Box::new(
+                PersistedScpStateV0::read_xdr(r)?,
+            ))),
+            TypeVariant::PersistedScpStateV1 => Ok(Self::PersistedScpStateV1(Box::new(
+                PersistedScpStateV1::read_xdr(r)?,
+            ))),
+            TypeVariant::PersistedScpState => Ok(Self::PersistedScpState(Box::new(
+                PersistedScpState::read_xdr(r)?,
+            ))),
             TypeVariant::AccountId => Ok(Self::AccountId(Box::new(AccountId::read_xdr(r)?))),
             TypeVariant::Thresholds => Ok(Self::Thresholds(Box::new(Thresholds::read_xdr(r)?))),
             TypeVariant::String32 => Ok(Self::String32(Box::new(String32::read_xdr(r)?))),
@@ -32238,6 +32572,10 @@ impl Type {
             Self::ScpStatementExternalize(ref v) => v.as_ref(),
             Self::ScpEnvelope(ref v) => v.as_ref(),
             Self::ScpQuorumSet(ref v) => v.as_ref(),
+            Self::StoredTransactionSet(ref v) => v.as_ref(),
+            Self::PersistedScpStateV0(ref v) => v.as_ref(),
+            Self::PersistedScpStateV1(ref v) => v.as_ref(),
+            Self::PersistedScpState(ref v) => v.as_ref(),
             Self::AccountId(ref v) => v.as_ref(),
             Self::Thresholds(ref v) => v.as_ref(),
             Self::String32(ref v) => v.as_ref(),
@@ -32546,6 +32884,10 @@ impl Type {
             Self::ScpStatementExternalize(_) => "ScpStatementExternalize",
             Self::ScpEnvelope(_) => "ScpEnvelope",
             Self::ScpQuorumSet(_) => "ScpQuorumSet",
+            Self::StoredTransactionSet(_) => "StoredTransactionSet",
+            Self::PersistedScpStateV0(_) => "PersistedScpStateV0",
+            Self::PersistedScpStateV1(_) => "PersistedScpStateV1",
+            Self::PersistedScpState(_) => "PersistedScpState",
             Self::AccountId(_) => "AccountId",
             Self::Thresholds(_) => "Thresholds",
             Self::String32(_) => "String32",
@@ -32851,7 +33193,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 301] {
+    pub const fn variants() -> [TypeVariant; 305] {
         Self::VARIANTS
     }
 
@@ -32870,6 +33212,10 @@ impl Type {
             Self::ScpStatementExternalize(_) => TypeVariant::ScpStatementExternalize,
             Self::ScpEnvelope(_) => TypeVariant::ScpEnvelope,
             Self::ScpQuorumSet(_) => TypeVariant::ScpQuorumSet,
+            Self::StoredTransactionSet(_) => TypeVariant::StoredTransactionSet,
+            Self::PersistedScpStateV0(_) => TypeVariant::PersistedScpStateV0,
+            Self::PersistedScpStateV1(_) => TypeVariant::PersistedScpStateV1,
+            Self::PersistedScpState(_) => TypeVariant::PersistedScpState,
             Self::AccountId(_) => TypeVariant::AccountId,
             Self::Thresholds(_) => TypeVariant::Thresholds,
             Self::String32(_) => TypeVariant::String32,

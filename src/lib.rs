@@ -1,6 +1,14 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+const GIT_REVISION: &str = env!("GIT_REVISION");
+#[cfg(not(feature = "next"))]
+const XDR_VERSION: &str = env!("XDR_CURR_VERSION");
+#[cfg(feature = "next")]
+const XDR_VERSION: &str = env!("XDR_NEXT_VERSION");
+pub const VERSION: &str = const_format::formatcp!("{PKG_VERSION} ({GIT_REVISION}) ({XDR_VERSION})");
+
 #[cfg(not(feature = "next"))]
 mod curr;
 #[cfg(not(feature = "next"))]

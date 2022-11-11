@@ -1,1 +1,1 @@
-pub const VERSION: &str = "1a76201f8";
+pub const XDR_VERSION: &str = "1a76201f8";

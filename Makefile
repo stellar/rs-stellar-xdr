@@ -47,10 +47,10 @@ watch:
 generate: src/version_curr.rs src/version_next.rs src/curr.rs src/next.rs
 
 src/version_curr.rs:
-	echo 'pub const VERSION: &str = "$(XDR_VERSION_CURR)";' > $@
+	echo 'pub const XDR_VERSION: &str = "$(XDR_VERSION_CURR)";' > $@
 
 src/version_next.rs:
-	echo 'pub const VERSION: &str = "$(XDR_VERSION_NEXT)";' > $@
+	echo 'pub const XDR_VERSION: &str = "$(XDR_VERSION_NEXT)";' > $@
 
 src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 	> $@

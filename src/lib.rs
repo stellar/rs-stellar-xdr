@@ -1,6 +1,14 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// TODO: Concatenate these into a single string, and also include XDR_VERSION.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const GIT_REVISION: &str = env!("GIT_REVISION");
+#[must_use]
+pub const fn version() -> &'static [&'static str] {
+    &[VERSION, GIT_REVISION, XDR_VERSION]
+}
+
 #[cfg(not(feature = "next"))]
 mod version_curr;
 #[cfg(not(feature = "next"))]

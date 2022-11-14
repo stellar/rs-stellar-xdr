@@ -16,7 +16,7 @@ watch:
 
 generate: src/curr.rs src/next.rs
 
-src/curr.rs: xdr/curr/src/protocol-curr/xdr/*.x
+src/curr.rs: $(sort xdr/curr/src/protocol-curr/xdr/*.x)
 	> $@
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
@@ -25,7 +25,7 @@ src/curr.rs: xdr/curr/src/protocol-curr/xdr/*.x
 		'
 	rustfmt $@
 
-src/next.rs: xdr/next/*.x
+src/next.rs: $(sort xdr/next/*.x)
 	> $@
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \

@@ -1,28 +1,3 @@
-XDR_BASE_URL_CURR=https://github.com/stellar/stellar-core/raw/master/src/protocol-curr/xdr
-XDR_BASE_LOCAL_CURR=xdr/curr
-XDR_FILES_CURR= \
-	Stellar-SCP.x \
-	Stellar-ledger-entries.x \
-	Stellar-ledger.x \
-	Stellar-overlay.x \
-	Stellar-transaction.x \
-	Stellar-types.x
-XDR_FILES_LOCAL_CURR=$(addprefix xdr/curr/,$(XDR_FILES_CURR))
-
-XDR_BASE_URL_NEXT=https://github.com/stellar/stellar-xdr-next/raw/main
-XDR_BASE_LOCAL_NEXT=xdr/next
-XDR_FILES_NEXT= \
-	Stellar-SCP.x \
-	Stellar-ledger-entries.x \
-	Stellar-ledger.x \
-	Stellar-overlay.x \
-	Stellar-transaction.x \
-	Stellar-types.x \
-	Stellar-contract.x \
-	Stellar-contract-env-meta.x \
-	Stellar-contract-spec.x
-XDR_FILES_LOCAL_NEXT=$(addprefix xdr/next/,$(XDR_FILES_NEXT))
-
 export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
 CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,num-bigint,arbitrary,hex
@@ -41,7 +16,7 @@ watch:
 
 generate: src/curr.rs src/next.rs
 
-src/curr.rs: $(XDR_FILES_LOCAL_CURR)
+src/curr.rs: $(sort $(wildcard xdr/curr/src/protocol-curr/xdr/*.x))
 	> $@
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
@@ -50,7 +25,7 @@ src/curr.rs: $(XDR_FILES_LOCAL_CURR)
 		'
 	rustfmt $@
 
-src/next.rs: $(XDR_FILES_LOCAL_NEXT)
+src/next.rs: $(sort $(wildcard xdr/next/*.x))
 	> $@
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
@@ -63,16 +38,6 @@ clean:
 	rm -f src/curr.rs
 	rm -f src/next.rs
 	cargo clean
-
-$(XDR_FILES_LOCAL_CURR):
-	curl -L -o $@ $(XDR_BASE_URL_CURR)/$(notdir $@)
-
-$(XDR_FILES_LOCAL_NEXT):
-	curl -L -o $@ $(XDR_BASE_URL_NEXT)/$(notdir $@)
-
-reset-xdr:
-	rm -f xdr/*/*.x
-	$(MAKE) build
 
 fmt:
 	cargo fmt --all

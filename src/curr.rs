@@ -1,42 +1,42 @@
 // Module  is generated from:
-//  xdr/curr/src/protocol-curr/xdr/Stellar-SCP.x
-//  xdr/curr/src/protocol-curr/xdr/Stellar-internal.x
-//  xdr/curr/src/protocol-curr/xdr/Stellar-ledger-entries.x
-//  xdr/curr/src/protocol-curr/xdr/Stellar-ledger.x
-//  xdr/curr/src/protocol-curr/xdr/Stellar-overlay.x
-//  xdr/curr/src/protocol-curr/xdr/Stellar-transaction.x
-//  xdr/curr/src/protocol-curr/xdr/Stellar-types.x
+//  xdr/curr/Stellar-SCP.x
+//  xdr/curr/Stellar-internal.x
+//  xdr/curr/Stellar-ledger-entries.x
+//  xdr/curr/Stellar-ledger.x
+//  xdr/curr/Stellar-overlay.x
+//  xdr/curr/Stellar-transaction.x
+//  xdr/curr/Stellar-types.x
 
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
 pub const XDR_FILES_SHA256: [(&str, &str); 7] = [
     (
-        "xdr/curr/src/protocol-curr/xdr/Stellar-SCP.x",
+        "xdr/curr/Stellar-SCP.x",
         "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
     ),
     (
-        "xdr/curr/src/protocol-curr/xdr/Stellar-internal.x",
+        "xdr/curr/Stellar-internal.x",
         "368706dd6e2efafd16a8f63daf3374845b791d097b15c502aa7653a412b68b68",
     ),
     (
-        "xdr/curr/src/protocol-curr/xdr/Stellar-ledger-entries.x",
+        "xdr/curr/Stellar-ledger-entries.x",
         "3aa135c309c2d67883f165961739b4940c90df59240d8aeef55deced8d7708b5",
     ),
     (
-        "xdr/curr/src/protocol-curr/xdr/Stellar-ledger.x",
+        "xdr/curr/Stellar-ledger.x",
         "96ac88de23d2b0f2f23a0495527c8aefb8623b4db0e39ba34f357d10a211c214",
     ),
     (
-        "xdr/curr/src/protocol-curr/xdr/Stellar-overlay.x",
+        "xdr/curr/Stellar-overlay.x",
         "3093b425866f34b32702d80d5298f9f2dc00736b0fdaac7efa653490a39fb231",
     ),
     (
-        "xdr/curr/src/protocol-curr/xdr/Stellar-transaction.x",
+        "xdr/curr/Stellar-transaction.x",
         "45fdeb428e68d6b07e3e3157b6404567e0efb712c9d4c90a61a1035854c32b90",
     ),
     (
-        "xdr/curr/src/protocol-curr/xdr/Stellar-types.x",
+        "xdr/curr/Stellar-types.x",
         "60b7588e573f5e5518766eb5e6b6ea42f0e53144663cbe557e485cceb6306c85",
     ),
 ];

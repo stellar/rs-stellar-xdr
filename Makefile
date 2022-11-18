@@ -16,7 +16,7 @@ watch:
 
 generate: src/curr.rs src/next.rs
 
-src/curr.rs: $(sort $(wildcard xdr/curr/src/protocol-curr/xdr/*.x))
+src/curr.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \

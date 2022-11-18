@@ -1,7 +1,3 @@
-[submodule "xdr/curr"]
-	path = xdr/curr
-	url = https://github.com/stellar/stellar-xdr
-	branch = curr
 [submodule "xdr/next"]
 	path = xdr/next
 	url = https://github.com/stellar/stellar-xdr

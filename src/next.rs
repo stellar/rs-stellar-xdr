@@ -24,11 +24,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "8819c9b462fcc74199f051989ad14621b833036e8fed0fa3a1b83abda84a8bfc",
+        "1c4304a077e12a94a793efa90e18099011f11b385a8aa2272c65e334cee989df",
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "f0cd24f498a0b9c99586fe1a7759bf4d00dfa834ed164f3eed4e56bc5f781014",
+        "69e8f476cb30ceda3a0981b7f9367a4e4f1a29393336a78ae4cc1e9e7f5e750c",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -2905,14 +2905,15 @@ impl WriteXdr for ScEnvMetaEntry {
 //        SC_SPEC_TYPE_I32 = 2,
 //        SC_SPEC_TYPE_U64 = 3,
 //        SC_SPEC_TYPE_I64 = 4,
-//        SC_SPEC_TYPE_BOOL = 5,
-//        SC_SPEC_TYPE_SYMBOL = 6,
-//        SC_SPEC_TYPE_BITSET = 7,
-//        SC_SPEC_TYPE_STATUS = 8,
-//        SC_SPEC_TYPE_BYTES = 9,
-//        SC_SPEC_TYPE_BIG_INT = 10,
-//        SC_SPEC_TYPE_INVOKER = 11,
-//        SC_SPEC_TYPE_ACCOUNT_ID = 12,
+//        SC_SPEC_TYPE_U128 = 5,
+//        SC_SPEC_TYPE_I128 = 6,
+//        SC_SPEC_TYPE_BOOL = 7,
+//        SC_SPEC_TYPE_SYMBOL = 8,
+//        SC_SPEC_TYPE_BITSET = 9,
+//        SC_SPEC_TYPE_STATUS = 10,
+//        SC_SPEC_TYPE_BYTES = 11,
+//        SC_SPEC_TYPE_INVOKER = 12,
+//        SC_SPEC_TYPE_ACCOUNT_ID = 13,
 //
 //        // Types with parameters.
 //        SC_SPEC_TYPE_OPTION = 1000,
@@ -2942,14 +2943,15 @@ pub enum ScSpecType {
     I32 = 2,
     U64 = 3,
     I64 = 4,
-    Bool = 5,
-    Symbol = 6,
-    Bitset = 7,
-    Status = 8,
-    Bytes = 9,
-    BigInt = 10,
-    Invoker = 11,
-    AccountId = 12,
+    U128 = 5,
+    I128 = 6,
+    Bool = 7,
+    Symbol = 8,
+    Bitset = 9,
+    Status = 10,
+    Bytes = 11,
+    Invoker = 12,
+    AccountId = 13,
     Option = 1000,
     Result = 1001,
     Vec = 1002,
@@ -2961,18 +2963,19 @@ pub enum ScSpecType {
 }
 
 impl ScSpecType {
-    pub const VARIANTS: [ScSpecType; 21] = [
+    pub const VARIANTS: [ScSpecType; 22] = [
         ScSpecType::Val,
         ScSpecType::U32,
         ScSpecType::I32,
         ScSpecType::U64,
         ScSpecType::I64,
+        ScSpecType::U128,
+        ScSpecType::I128,
         ScSpecType::Bool,
         ScSpecType::Symbol,
         ScSpecType::Bitset,
         ScSpecType::Status,
         ScSpecType::Bytes,
-        ScSpecType::BigInt,
         ScSpecType::Invoker,
         ScSpecType::AccountId,
         ScSpecType::Option,
@@ -2984,18 +2987,19 @@ impl ScSpecType {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 21] = [
+    pub const VARIANTS_STR: [&'static str; 22] = [
         "Val",
         "U32",
         "I32",
         "U64",
         "I64",
+        "U128",
+        "I128",
         "Bool",
         "Symbol",
         "Bitset",
         "Status",
         "Bytes",
-        "BigInt",
         "Invoker",
         "AccountId",
         "Option",
@@ -3016,12 +3020,13 @@ impl ScSpecType {
             Self::I32 => "I32",
             Self::U64 => "U64",
             Self::I64 => "I64",
+            Self::U128 => "U128",
+            Self::I128 => "I128",
             Self::Bool => "Bool",
             Self::Symbol => "Symbol",
             Self::Bitset => "Bitset",
             Self::Status => "Status",
             Self::Bytes => "Bytes",
-            Self::BigInt => "BigInt",
             Self::Invoker => "Invoker",
             Self::AccountId => "AccountId",
             Self::Option => "Option",
@@ -3036,7 +3041,7 @@ impl ScSpecType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 21] {
+    pub const fn variants() -> [ScSpecType; 22] {
         Self::VARIANTS
     }
 }
@@ -3072,14 +3077,15 @@ impl TryFrom<i32> for ScSpecType {
             2 => ScSpecType::I32,
             3 => ScSpecType::U64,
             4 => ScSpecType::I64,
-            5 => ScSpecType::Bool,
-            6 => ScSpecType::Symbol,
-            7 => ScSpecType::Bitset,
-            8 => ScSpecType::Status,
-            9 => ScSpecType::Bytes,
-            10 => ScSpecType::BigInt,
-            11 => ScSpecType::Invoker,
-            12 => ScSpecType::AccountId,
+            5 => ScSpecType::U128,
+            6 => ScSpecType::I128,
+            7 => ScSpecType::Bool,
+            8 => ScSpecType::Symbol,
+            9 => ScSpecType::Bitset,
+            10 => ScSpecType::Status,
+            11 => ScSpecType::Bytes,
+            12 => ScSpecType::Invoker,
+            13 => ScSpecType::AccountId,
             1000 => ScSpecType::Option,
             1001 => ScSpecType::Result,
             1002 => ScSpecType::Vec,
@@ -3414,6 +3420,8 @@ impl WriteXdr for ScSpecTypeUdt {
 //    case SC_SPEC_TYPE_VAL:
 //    case SC_SPEC_TYPE_U64:
 //    case SC_SPEC_TYPE_I64:
+//    case SC_SPEC_TYPE_U128:
+//    case SC_SPEC_TYPE_I128:
 //    case SC_SPEC_TYPE_U32:
 //    case SC_SPEC_TYPE_I32:
 //    case SC_SPEC_TYPE_BOOL:
@@ -3421,7 +3429,6 @@ impl WriteXdr for ScSpecTypeUdt {
 //    case SC_SPEC_TYPE_BITSET:
 //    case SC_SPEC_TYPE_STATUS:
 //    case SC_SPEC_TYPE_BYTES:
-//    case SC_SPEC_TYPE_BIG_INT:
 //    case SC_SPEC_TYPE_INVOKER:
 //    case SC_SPEC_TYPE_ACCOUNT_ID:
 //        void;
@@ -3456,6 +3463,8 @@ pub enum ScSpecTypeDef {
     Val,
     U64,
     I64,
+    U128,
+    I128,
     U32,
     I32,
     Bool,
@@ -3463,7 +3472,6 @@ pub enum ScSpecTypeDef {
     Bitset,
     Status,
     Bytes,
-    BigInt,
     Invoker,
     AccountId,
     Option(Box<ScSpecTypeOption>),
@@ -3477,10 +3485,12 @@ pub enum ScSpecTypeDef {
 }
 
 impl ScSpecTypeDef {
-    pub const VARIANTS: [ScSpecType; 21] = [
+    pub const VARIANTS: [ScSpecType; 22] = [
         ScSpecType::Val,
         ScSpecType::U64,
         ScSpecType::I64,
+        ScSpecType::U128,
+        ScSpecType::I128,
         ScSpecType::U32,
         ScSpecType::I32,
         ScSpecType::Bool,
@@ -3488,7 +3498,6 @@ impl ScSpecTypeDef {
         ScSpecType::Bitset,
         ScSpecType::Status,
         ScSpecType::Bytes,
-        ScSpecType::BigInt,
         ScSpecType::Invoker,
         ScSpecType::AccountId,
         ScSpecType::Option,
@@ -3500,10 +3509,12 @@ impl ScSpecTypeDef {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 21] = [
+    pub const VARIANTS_STR: [&'static str; 22] = [
         "Val",
         "U64",
         "I64",
+        "U128",
+        "I128",
         "U32",
         "I32",
         "Bool",
@@ -3511,7 +3522,6 @@ impl ScSpecTypeDef {
         "Bitset",
         "Status",
         "Bytes",
-        "BigInt",
         "Invoker",
         "AccountId",
         "Option",
@@ -3530,6 +3540,8 @@ impl ScSpecTypeDef {
             Self::Val => "Val",
             Self::U64 => "U64",
             Self::I64 => "I64",
+            Self::U128 => "U128",
+            Self::I128 => "I128",
             Self::U32 => "U32",
             Self::I32 => "I32",
             Self::Bool => "Bool",
@@ -3537,7 +3549,6 @@ impl ScSpecTypeDef {
             Self::Bitset => "Bitset",
             Self::Status => "Status",
             Self::Bytes => "Bytes",
-            Self::BigInt => "BigInt",
             Self::Invoker => "Invoker",
             Self::AccountId => "AccountId",
             Self::Option(_) => "Option",
@@ -3558,6 +3569,8 @@ impl ScSpecTypeDef {
             Self::Val => ScSpecType::Val,
             Self::U64 => ScSpecType::U64,
             Self::I64 => ScSpecType::I64,
+            Self::U128 => ScSpecType::U128,
+            Self::I128 => ScSpecType::I128,
             Self::U32 => ScSpecType::U32,
             Self::I32 => ScSpecType::I32,
             Self::Bool => ScSpecType::Bool,
@@ -3565,7 +3578,6 @@ impl ScSpecTypeDef {
             Self::Bitset => ScSpecType::Bitset,
             Self::Status => ScSpecType::Status,
             Self::Bytes => ScSpecType::Bytes,
-            Self::BigInt => ScSpecType::BigInt,
             Self::Invoker => ScSpecType::Invoker,
             Self::AccountId => ScSpecType::AccountId,
             Self::Option(_) => ScSpecType::Option,
@@ -3580,7 +3592,7 @@ impl ScSpecTypeDef {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 21] {
+    pub const fn variants() -> [ScSpecType; 22] {
         Self::VARIANTS
     }
 }
@@ -3616,6 +3628,8 @@ impl ReadXdr for ScSpecTypeDef {
             ScSpecType::Val => Self::Val,
             ScSpecType::U64 => Self::U64,
             ScSpecType::I64 => Self::I64,
+            ScSpecType::U128 => Self::U128,
+            ScSpecType::I128 => Self::I128,
             ScSpecType::U32 => Self::U32,
             ScSpecType::I32 => Self::I32,
             ScSpecType::Bool => Self::Bool,
@@ -3623,7 +3637,6 @@ impl ReadXdr for ScSpecTypeDef {
             ScSpecType::Bitset => Self::Bitset,
             ScSpecType::Status => Self::Status,
             ScSpecType::Bytes => Self::Bytes,
-            ScSpecType::BigInt => Self::BigInt,
             ScSpecType::Invoker => Self::Invoker,
             ScSpecType::AccountId => Self::AccountId,
             ScSpecType::Option => Self::Option(Box::<ScSpecTypeOption>::read_xdr(r)?),
@@ -3650,6 +3663,8 @@ impl WriteXdr for ScSpecTypeDef {
             Self::Val => ().write_xdr(w)?,
             Self::U64 => ().write_xdr(w)?,
             Self::I64 => ().write_xdr(w)?,
+            Self::U128 => ().write_xdr(w)?,
+            Self::I128 => ().write_xdr(w)?,
             Self::U32 => ().write_xdr(w)?,
             Self::I32 => ().write_xdr(w)?,
             Self::Bool => ().write_xdr(w)?,
@@ -3657,7 +3672,6 @@ impl WriteXdr for ScSpecTypeDef {
             Self::Bitset => ().write_xdr(w)?,
             Self::Status => ().write_xdr(w)?,
             Self::Bytes => ().write_xdr(w)?,
-            Self::BigInt => ().write_xdr(w)?,
             Self::Invoker => ().write_xdr(w)?,
             Self::AccountId => ().write_xdr(w)?,
             Self::Option(v) => v.write_xdr(w)?,
@@ -6045,10 +6059,11 @@ impl WriteXdr for ScVal {
 //        SCO_MAP = 1,
 //        SCO_U64 = 2,
 //        SCO_I64 = 3,
-//        SCO_BYTES = 4,
-//        SCO_BIG_INT = 5,
-//        SCO_CONTRACT_CODE = 6,
-//        SCO_ACCOUNT_ID = 7
+//        SCO_U128 = 4,
+//        SCO_I128 = 5,
+//        SCO_BYTES = 6,
+//        SCO_CONTRACT_CODE = 7,
+//        SCO_ACCOUNT_ID = 8
 //
 //        // TODO: add more
 //    };
@@ -6067,30 +6082,33 @@ pub enum ScObjectType {
     Map = 1,
     U64 = 2,
     I64 = 3,
-    Bytes = 4,
-    BigInt = 5,
-    ContractCode = 6,
-    AccountId = 7,
+    U128 = 4,
+    I128 = 5,
+    Bytes = 6,
+    ContractCode = 7,
+    AccountId = 8,
 }
 
 impl ScObjectType {
-    pub const VARIANTS: [ScObjectType; 8] = [
+    pub const VARIANTS: [ScObjectType; 9] = [
         ScObjectType::Vec,
         ScObjectType::Map,
         ScObjectType::U64,
         ScObjectType::I64,
+        ScObjectType::U128,
+        ScObjectType::I128,
         ScObjectType::Bytes,
-        ScObjectType::BigInt,
         ScObjectType::ContractCode,
         ScObjectType::AccountId,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: [&'static str; 9] = [
         "Vec",
         "Map",
         "U64",
         "I64",
+        "U128",
+        "I128",
         "Bytes",
-        "BigInt",
         "ContractCode",
         "AccountId",
     ];
@@ -6102,15 +6120,16 @@ impl ScObjectType {
             Self::Map => "Map",
             Self::U64 => "U64",
             Self::I64 => "I64",
+            Self::U128 => "U128",
+            Self::I128 => "I128",
             Self::Bytes => "Bytes",
-            Self::BigInt => "BigInt",
             Self::ContractCode => "ContractCode",
             Self::AccountId => "AccountId",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScObjectType; 8] {
+    pub const fn variants() -> [ScObjectType; 9] {
         Self::VARIANTS
     }
 }
@@ -6145,10 +6164,11 @@ impl TryFrom<i32> for ScObjectType {
             1 => ScObjectType::Map,
             2 => ScObjectType::U64,
             3 => ScObjectType::I64,
-            4 => ScObjectType::Bytes,
-            5 => ScObjectType::BigInt,
-            6 => ScObjectType::ContractCode,
-            7 => ScObjectType::AccountId,
+            4 => ScObjectType::U128,
+            5 => ScObjectType::I128,
+            6 => ScObjectType::Bytes,
+            7 => ScObjectType::ContractCode,
+            8 => ScObjectType::AccountId,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -6425,218 +6445,6 @@ impl AsRef<[ScMapEntry]> for ScMap {
     }
 }
 
-// ScNumSign is an XDR Enum defines as:
-//
-//   enum SCNumSign
-//    {
-//        NEGATIVE = -1,
-//        ZERO = 0,
-//        POSITIVE = 1
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-#[repr(i32)]
-pub enum ScNumSign {
-    Negative = -1,
-    Zero = 0,
-    Positive = 1,
-}
-
-impl ScNumSign {
-    pub const VARIANTS: [ScNumSign; 3] =
-        [ScNumSign::Negative, ScNumSign::Zero, ScNumSign::Positive];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Negative", "Zero", "Positive"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Negative => "Negative",
-            Self::Zero => "Zero",
-            Self::Positive => "Positive",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScNumSign; 3] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ScNumSign {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ScNumSign> for ScNumSign {
-    fn variants() -> slice::Iter<'static, ScNumSign> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ScNumSign {}
-
-impl fmt::Display for ScNumSign {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ScNumSign {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            -1 => ScNumSign::Negative,
-            0 => ScNumSign::Zero,
-            1 => ScNumSign::Positive,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ScNumSign> for i32 {
-    #[must_use]
-    fn from(e: ScNumSign) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ScNumSign {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScNumSign {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// ScBigInt is an XDR Union defines as:
-//
-//   union SCBigInt switch (SCNumSign sign)
-//    {
-//    case ZERO:
-//        void;
-//    case POSITIVE:
-//    case NEGATIVE:
-//        opaque magnitude<256000>;
-//    };
-//
-// union with discriminant ScNumSign
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum ScBigInt {
-    Zero,
-    Positive(BytesM<256000>),
-    Negative(BytesM<256000>),
-}
-
-impl ScBigInt {
-    pub const VARIANTS: [ScNumSign; 3] =
-        [ScNumSign::Zero, ScNumSign::Positive, ScNumSign::Negative];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Zero", "Positive", "Negative"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Zero => "Zero",
-            Self::Positive(_) => "Positive",
-            Self::Negative(_) => "Negative",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ScNumSign {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Zero => ScNumSign::Zero,
-            Self::Positive(_) => ScNumSign::Positive,
-            Self::Negative(_) => ScNumSign::Negative,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScNumSign; 3] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ScBigInt {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ScNumSign> for ScBigInt {
-    #[must_use]
-    fn discriminant(&self) -> ScNumSign {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ScNumSign> for ScBigInt {
-    fn variants() -> slice::Iter<'static, ScNumSign> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ScNumSign> for ScBigInt {}
-
-impl ReadXdr for ScBigInt {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ScNumSign = <ScNumSign as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ScNumSign::Zero => Self::Zero,
-            ScNumSign::Positive => Self::Positive(BytesM::<256000>::read_xdr(r)?),
-            ScNumSign::Negative => Self::Negative(BytesM::<256000>::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScBigInt {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Zero => ().write_xdr(w)?,
-            Self::Positive(v) => v.write_xdr(w)?,
-            Self::Negative(v) => v.write_xdr(w)?,
-        };
-        Ok(())
-    }
-}
-
 // ScContractCodeType is an XDR Enum defines as:
 //
 //   enum SCContractCodeType
@@ -6839,6 +6647,47 @@ impl WriteXdr for ScContractCode {
     }
 }
 
+// Int128Parts is an XDR Struct defines as:
+//
+//   struct Int128Parts {
+//        // Both signed and unsigned 128-bit ints
+//        // are transported in a pair of uint64s
+//        // to reduce the risk of sign-extension.
+//        uint64 lo;
+//        uint64 hi;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct Int128Parts {
+    pub lo: u64,
+    pub hi: u64,
+}
+
+impl ReadXdr for Int128Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            lo: u64::read_xdr(r)?,
+            hi: u64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for Int128Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.lo.write_xdr(w)?;
+        self.hi.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // ScObject is an XDR Union defines as:
 //
 //   union SCObject switch (SCObjectType type)
@@ -6851,10 +6700,12 @@ impl WriteXdr for ScContractCode {
 //        uint64 u64;
 //    case SCO_I64:
 //        int64 i64;
+//    case SCO_U128:
+//        Int128Parts u128;
+//    case SCO_I128:
+//        Int128Parts i128;
 //    case SCO_BYTES:
 //        opaque bin<SCVAL_LIMIT>;
-//    case SCO_BIG_INT:
-//        SCBigInt bigInt;
 //    case SCO_CONTRACT_CODE:
 //        SCContractCode contractCode;
 //    case SCO_ACCOUNT_ID:
@@ -6875,30 +6726,33 @@ pub enum ScObject {
     Map(ScMap),
     U64(u64),
     I64(i64),
+    U128(Int128Parts),
+    I128(Int128Parts),
     Bytes(BytesM<256000>),
-    BigInt(ScBigInt),
     ContractCode(ScContractCode),
     AccountId(AccountId),
 }
 
 impl ScObject {
-    pub const VARIANTS: [ScObjectType; 8] = [
+    pub const VARIANTS: [ScObjectType; 9] = [
         ScObjectType::Vec,
         ScObjectType::Map,
         ScObjectType::U64,
         ScObjectType::I64,
+        ScObjectType::U128,
+        ScObjectType::I128,
         ScObjectType::Bytes,
-        ScObjectType::BigInt,
         ScObjectType::ContractCode,
         ScObjectType::AccountId,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: [&'static str; 9] = [
         "Vec",
         "Map",
         "U64",
         "I64",
+        "U128",
+        "I128",
         "Bytes",
-        "BigInt",
         "ContractCode",
         "AccountId",
     ];
@@ -6910,8 +6764,9 @@ impl ScObject {
             Self::Map(_) => "Map",
             Self::U64(_) => "U64",
             Self::I64(_) => "I64",
+            Self::U128(_) => "U128",
+            Self::I128(_) => "I128",
             Self::Bytes(_) => "Bytes",
-            Self::BigInt(_) => "BigInt",
             Self::ContractCode(_) => "ContractCode",
             Self::AccountId(_) => "AccountId",
         }
@@ -6925,15 +6780,16 @@ impl ScObject {
             Self::Map(_) => ScObjectType::Map,
             Self::U64(_) => ScObjectType::U64,
             Self::I64(_) => ScObjectType::I64,
+            Self::U128(_) => ScObjectType::U128,
+            Self::I128(_) => ScObjectType::I128,
             Self::Bytes(_) => ScObjectType::Bytes,
-            Self::BigInt(_) => ScObjectType::BigInt,
             Self::ContractCode(_) => ScObjectType::ContractCode,
             Self::AccountId(_) => ScObjectType::AccountId,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScObjectType; 8] {
+    pub const fn variants() -> [ScObjectType; 9] {
         Self::VARIANTS
     }
 }
@@ -6970,8 +6826,9 @@ impl ReadXdr for ScObject {
             ScObjectType::Map => Self::Map(ScMap::read_xdr(r)?),
             ScObjectType::U64 => Self::U64(u64::read_xdr(r)?),
             ScObjectType::I64 => Self::I64(i64::read_xdr(r)?),
+            ScObjectType::U128 => Self::U128(Int128Parts::read_xdr(r)?),
+            ScObjectType::I128 => Self::I128(Int128Parts::read_xdr(r)?),
             ScObjectType::Bytes => Self::Bytes(BytesM::<256000>::read_xdr(r)?),
-            ScObjectType::BigInt => Self::BigInt(ScBigInt::read_xdr(r)?),
             ScObjectType::ContractCode => Self::ContractCode(ScContractCode::read_xdr(r)?),
             ScObjectType::AccountId => Self::AccountId(AccountId::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -6991,8 +6848,9 @@ impl WriteXdr for ScObject {
             Self::Map(v) => v.write_xdr(w)?,
             Self::U64(v) => v.write_xdr(w)?,
             Self::I64(v) => v.write_xdr(w)?,
+            Self::U128(v) => v.write_xdr(w)?,
+            Self::I128(v) => v.write_xdr(w)?,
             Self::Bytes(v) => v.write_xdr(w)?,
-            Self::BigInt(v) => v.write_xdr(w)?,
             Self::ContractCode(v) => v.write_xdr(w)?,
             Self::AccountId(v) => v.write_xdr(w)?,
         };
@@ -36377,10 +36235,9 @@ pub enum TypeVariant {
     ScMapEntry,
     ScVec,
     ScMap,
-    ScNumSign,
-    ScBigInt,
     ScContractCodeType,
     ScContractCode,
+    Int128Parts,
     ScObject,
     StoredTransactionSet,
     PersistedScpStateV0,
@@ -36718,7 +36575,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 390] = [
+    pub const VARIANTS: [TypeVariant; 389] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -36771,10 +36628,9 @@ impl TypeVariant {
         TypeVariant::ScMapEntry,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
-        TypeVariant::ScNumSign,
-        TypeVariant::ScBigInt,
         TypeVariant::ScContractCodeType,
         TypeVariant::ScContractCode,
+        TypeVariant::Int128Parts,
         TypeVariant::ScObject,
         TypeVariant::StoredTransactionSet,
         TypeVariant::PersistedScpStateV0,
@@ -37110,7 +36966,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 390] = [
+    pub const VARIANTS_STR: [&'static str; 389] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -37163,10 +37019,9 @@ impl TypeVariant {
         "ScMapEntry",
         "ScVec",
         "ScMap",
-        "ScNumSign",
-        "ScBigInt",
         "ScContractCodeType",
         "ScContractCode",
+        "Int128Parts",
         "ScObject",
         "StoredTransactionSet",
         "PersistedScpStateV0",
@@ -37559,10 +37414,9 @@ impl TypeVariant {
             Self::ScMapEntry => "ScMapEntry",
             Self::ScVec => "ScVec",
             Self::ScMap => "ScMap",
-            Self::ScNumSign => "ScNumSign",
-            Self::ScBigInt => "ScBigInt",
             Self::ScContractCodeType => "ScContractCodeType",
             Self::ScContractCode => "ScContractCode",
+            Self::Int128Parts => "Int128Parts",
             Self::ScObject => "ScObject",
             Self::StoredTransactionSet => "StoredTransactionSet",
             Self::PersistedScpStateV0 => "PersistedScpStateV0",
@@ -37908,7 +37762,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 390] {
+    pub const fn variants() -> [TypeVariant; 389] {
         Self::VARIANTS
     }
 }
@@ -37983,10 +37837,9 @@ impl core::str::FromStr for TypeVariant {
             "ScMapEntry" => Ok(Self::ScMapEntry),
             "ScVec" => Ok(Self::ScVec),
             "ScMap" => Ok(Self::ScMap),
-            "ScNumSign" => Ok(Self::ScNumSign),
-            "ScBigInt" => Ok(Self::ScBigInt),
             "ScContractCodeType" => Ok(Self::ScContractCodeType),
             "ScContractCode" => Ok(Self::ScContractCode),
+            "Int128Parts" => Ok(Self::Int128Parts),
             "ScObject" => Ok(Self::ScObject),
             "StoredTransactionSet" => Ok(Self::StoredTransactionSet),
             "PersistedScpStateV0" => Ok(Self::PersistedScpStateV0),
@@ -38397,10 +38250,9 @@ pub enum Type {
     ScMapEntry(Box<ScMapEntry>),
     ScVec(Box<ScVec>),
     ScMap(Box<ScMap>),
-    ScNumSign(Box<ScNumSign>),
-    ScBigInt(Box<ScBigInt>),
     ScContractCodeType(Box<ScContractCodeType>),
     ScContractCode(Box<ScContractCode>),
+    Int128Parts(Box<Int128Parts>),
     ScObject(Box<ScObject>),
     StoredTransactionSet(Box<StoredTransactionSet>),
     PersistedScpStateV0(Box<PersistedScpStateV0>),
@@ -38738,7 +38590,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 390] = [
+    pub const VARIANTS: [TypeVariant; 389] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38791,10 +38643,9 @@ impl Type {
         TypeVariant::ScMapEntry,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
-        TypeVariant::ScNumSign,
-        TypeVariant::ScBigInt,
         TypeVariant::ScContractCodeType,
         TypeVariant::ScContractCode,
+        TypeVariant::Int128Parts,
         TypeVariant::ScObject,
         TypeVariant::StoredTransactionSet,
         TypeVariant::PersistedScpStateV0,
@@ -39130,7 +38981,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 390] = [
+    pub const VARIANTS_STR: [&'static str; 389] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -39183,10 +39034,9 @@ impl Type {
         "ScMapEntry",
         "ScVec",
         "ScMap",
-        "ScNumSign",
-        "ScBigInt",
         "ScContractCodeType",
         "ScContractCode",
+        "Int128Parts",
         "ScObject",
         "StoredTransactionSet",
         "PersistedScpStateV0",
@@ -39657,14 +39507,13 @@ impl Type {
             TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(ScMapEntry::read_xdr(r)?))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(ScVec::read_xdr(r)?))),
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(ScMap::read_xdr(r)?))),
-            TypeVariant::ScNumSign => Ok(Self::ScNumSign(Box::new(ScNumSign::read_xdr(r)?))),
-            TypeVariant::ScBigInt => Ok(Self::ScBigInt(Box::new(ScBigInt::read_xdr(r)?))),
             TypeVariant::ScContractCodeType => Ok(Self::ScContractCodeType(Box::new(
                 ScContractCodeType::read_xdr(r)?,
             ))),
             TypeVariant::ScContractCode => {
                 Ok(Self::ScContractCode(Box::new(ScContractCode::read_xdr(r)?)))
             }
+            TypeVariant::Int128Parts => Ok(Self::Int128Parts(Box::new(Int128Parts::read_xdr(r)?))),
             TypeVariant::ScObject => Ok(Self::ScObject(Box::new(ScObject::read_xdr(r)?))),
             TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
                 StoredTransactionSet::read_xdr(r)?,
@@ -40682,10 +40531,9 @@ impl Type {
             Self::ScMapEntry(ref v) => v.as_ref(),
             Self::ScVec(ref v) => v.as_ref(),
             Self::ScMap(ref v) => v.as_ref(),
-            Self::ScNumSign(ref v) => v.as_ref(),
-            Self::ScBigInt(ref v) => v.as_ref(),
             Self::ScContractCodeType(ref v) => v.as_ref(),
             Self::ScContractCode(ref v) => v.as_ref(),
+            Self::Int128Parts(ref v) => v.as_ref(),
             Self::ScObject(ref v) => v.as_ref(),
             Self::StoredTransactionSet(ref v) => v.as_ref(),
             Self::PersistedScpStateV0(ref v) => v.as_ref(),
@@ -41079,10 +40927,9 @@ impl Type {
             Self::ScMapEntry(_) => "ScMapEntry",
             Self::ScVec(_) => "ScVec",
             Self::ScMap(_) => "ScMap",
-            Self::ScNumSign(_) => "ScNumSign",
-            Self::ScBigInt(_) => "ScBigInt",
             Self::ScContractCodeType(_) => "ScContractCodeType",
             Self::ScContractCode(_) => "ScContractCode",
+            Self::Int128Parts(_) => "Int128Parts",
             Self::ScObject(_) => "ScObject",
             Self::StoredTransactionSet(_) => "StoredTransactionSet",
             Self::PersistedScpStateV0(_) => "PersistedScpStateV0",
@@ -41434,7 +41281,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 390] {
+    pub const fn variants() -> [TypeVariant; 389] {
         Self::VARIANTS
     }
 
@@ -41494,10 +41341,9 @@ impl Type {
             Self::ScMapEntry(_) => TypeVariant::ScMapEntry,
             Self::ScVec(_) => TypeVariant::ScVec,
             Self::ScMap(_) => TypeVariant::ScMap,
-            Self::ScNumSign(_) => TypeVariant::ScNumSign,
-            Self::ScBigInt(_) => TypeVariant::ScBigInt,
             Self::ScContractCodeType(_) => TypeVariant::ScContractCodeType,
             Self::ScContractCode(_) => TypeVariant::ScContractCode,
+            Self::Int128Parts(_) => TypeVariant::Int128Parts,
             Self::ScObject(_) => TypeVariant::ScObject,
             Self::StoredTransactionSet(_) => TypeVariant::StoredTransactionSet,
             Self::PersistedScpStateV0(_) => TypeVariant::PersistedScpStateV0,

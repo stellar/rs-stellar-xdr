@@ -50,8 +50,9 @@ impl Validate for ScVal {
                 ScObject::Vec(_)
                 | ScObject::U64(_)
                 | ScObject::I64(_)
+                | ScObject::U128(_)
+                | ScObject::I128(_)
                 | ScObject::Bytes(_)
-                | ScObject::BigInt(_)
                 | ScObject::ContractCode(_)
                 | ScObject::AccountId(_) => Ok(()),
             },

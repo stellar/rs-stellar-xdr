@@ -28,7 +28,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "f0cd24f498a0b9c99586fe1a7759bf4d00dfa834ed164f3eed4e56bc5f781014",
+        "1cbf58f3a8e3f7d2f700ae48551782344c095ec38d2a36618d33ad1af18a39d1",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -36,7 +36,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "bc3ef59ed74e6f990ce14dd051a000a6dd793fc6a5deb4a83c7fef1035ff1bc6",
+        "b06993820d3488cf05d69755de7fef2f1b1ad9c185d2f55ce78b9fb556c17dcf",
     ),
     (
         "xdr/next/Stellar-ledger.x",
@@ -48,7 +48,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "bdac432e08265df6a13dc4c6135090ca6dcaa8eeedd61a0533ba52b4c9baf201",
+        "dc270655d2c26d656c7b035bc3003477dfab1097d3c46ff1cee6d68602af114c",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -6663,7 +6663,7 @@ impl WriteXdr for ScBigInt {
 //
 //   enum SCContractCodeType
 //    {
-//        SCCONTRACT_CODE_WASM_REF = 0,
+//        SCCONTRACT_CODE_WASM = 0,
 //        SCCONTRACT_CODE_TOKEN = 1
 //    };
 //
@@ -6677,19 +6677,19 @@ impl WriteXdr for ScBigInt {
 )]
 #[repr(i32)]
 pub enum ScContractCodeType {
-    WasmRef = 0,
+    Wasm = 0,
     Token = 1,
 }
 
 impl ScContractCodeType {
     pub const VARIANTS: [ScContractCodeType; 2] =
-        [ScContractCodeType::WasmRef, ScContractCodeType::Token];
-    pub const VARIANTS_STR: [&'static str; 2] = ["WasmRef", "Token"];
+        [ScContractCodeType::Wasm, ScContractCodeType::Token];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "Token"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::WasmRef => "WasmRef",
+            Self::Wasm => "Wasm",
             Self::Token => "Token",
         }
     }
@@ -6726,7 +6726,7 @@ impl TryFrom<i32> for ScContractCodeType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScContractCodeType::WasmRef,
+            0 => ScContractCodeType::Wasm,
             1 => ScContractCodeType::Token,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -6763,8 +6763,8 @@ impl WriteXdr for ScContractCodeType {
 //
 //   union SCContractCode switch (SCContractCodeType type)
 //    {
-//    case SCCONTRACT_CODE_WASM_REF:
-//        Hash wasm_id;
+//    case SCCONTRACT_CODE_WASM:
+//        opaque wasm<SCVAL_LIMIT>;
 //    case SCCONTRACT_CODE_TOKEN:
 //        void;
 //    };
@@ -6779,19 +6779,19 @@ impl WriteXdr for ScContractCodeType {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ScContractCode {
-    WasmRef(Hash),
+    Wasm(BytesM<256000>),
     Token,
 }
 
 impl ScContractCode {
     pub const VARIANTS: [ScContractCodeType; 2] =
-        [ScContractCodeType::WasmRef, ScContractCodeType::Token];
-    pub const VARIANTS_STR: [&'static str; 2] = ["WasmRef", "Token"];
+        [ScContractCodeType::Wasm, ScContractCodeType::Token];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "Token"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::WasmRef(_) => "WasmRef",
+            Self::Wasm(_) => "Wasm",
             Self::Token => "Token",
         }
     }
@@ -6800,7 +6800,7 @@ impl ScContractCode {
     pub const fn discriminant(&self) -> ScContractCodeType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::WasmRef(_) => ScContractCodeType::WasmRef,
+            Self::Wasm(_) => ScContractCodeType::Wasm,
             Self::Token => ScContractCodeType::Token,
         }
     }
@@ -6839,7 +6839,7 @@ impl ReadXdr for ScContractCode {
         let dv: ScContractCodeType = <ScContractCodeType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            ScContractCodeType::WasmRef => Self::WasmRef(Hash::read_xdr(r)?),
+            ScContractCodeType::Wasm => Self::Wasm(BytesM::<256000>::read_xdr(r)?),
             ScContractCodeType::Token => Self::Token,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -6854,7 +6854,7 @@ impl WriteXdr for ScContractCode {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::WasmRef(v) => v.write_xdr(w)?,
+            Self::Wasm(v) => v.write_xdr(w)?,
             Self::Token => ().write_xdr(w)?,
         };
         Ok(())
@@ -8580,8 +8580,7 @@ impl WriteXdr for ThresholdIndexes {
 //        CLAIMABLE_BALANCE = 4,
 //        LIQUIDITY_POOL = 5,
 //        CONTRACT_DATA = 6,
-//        CONTRACT_CODE = 7,
-//        CONFIG_SETTING = 8
+//        CONFIG_SETTING = 7
 //    };
 //
 // enum
@@ -8601,12 +8600,11 @@ pub enum LedgerEntryType {
     ClaimableBalance = 4,
     LiquidityPool = 5,
     ContractData = 6,
-    ContractCode = 7,
-    ConfigSetting = 8,
+    ConfigSetting = 7,
 }
 
 impl LedgerEntryType {
-    pub const VARIANTS: [LedgerEntryType; 9] = [
+    pub const VARIANTS: [LedgerEntryType; 8] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
@@ -8614,10 +8612,9 @@ impl LedgerEntryType {
         LedgerEntryType::ClaimableBalance,
         LedgerEntryType::LiquidityPool,
         LedgerEntryType::ContractData,
-        LedgerEntryType::ContractCode,
         LedgerEntryType::ConfigSetting,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 8] = [
         "Account",
         "Trustline",
         "Offer",
@@ -8625,7 +8622,6 @@ impl LedgerEntryType {
         "ClaimableBalance",
         "LiquidityPool",
         "ContractData",
-        "ContractCode",
         "ConfigSetting",
     ];
 
@@ -8639,13 +8635,12 @@ impl LedgerEntryType {
             Self::ClaimableBalance => "ClaimableBalance",
             Self::LiquidityPool => "LiquidityPool",
             Self::ContractData => "ContractData",
-            Self::ContractCode => "ContractCode",
             Self::ConfigSetting => "ConfigSetting",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 9] {
+    pub const fn variants() -> [LedgerEntryType; 8] {
         Self::VARIANTS
     }
 }
@@ -8683,8 +8678,7 @@ impl TryFrom<i32> for LedgerEntryType {
             4 => LedgerEntryType::ClaimableBalance,
             5 => LedgerEntryType::LiquidityPool,
             6 => LedgerEntryType::ContractData,
-            7 => LedgerEntryType::ContractCode,
-            8 => LedgerEntryType::ConfigSetting,
+            7 => LedgerEntryType::ConfigSetting,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12153,49 +12147,6 @@ impl WriteXdr for ContractDataEntry {
     }
 }
 
-// ContractCodeEntry is an XDR Struct defines as:
-//
-//   struct ContractCodeEntry {
-//        ExtensionPoint ext;
-//
-//        Hash hash;
-//        opaque code<SCVAL_LIMIT>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-pub struct ContractCodeEntry {
-    pub ext: ExtensionPoint,
-    pub hash: Hash,
-    pub code: BytesM<256000>,
-}
-
-impl ReadXdr for ContractCodeEntry {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ext: ExtensionPoint::read_xdr(r)?,
-            hash: Hash::read_xdr(r)?,
-            code: BytesM::<256000>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ContractCodeEntry {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ext.write_xdr(w)?;
-        self.hash.write_xdr(w)?;
-        self.code.write_xdr(w)?;
-        Ok(())
-    }
-}
-
 // ConfigSettingType is an XDR Enum defines as:
 //
 //   enum ConfigSettingType
@@ -12782,8 +12733,6 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 //            LiquidityPoolEntry liquidityPool;
 //        case CONTRACT_DATA:
 //            ContractDataEntry contractData;
-//        case CONTRACT_CODE:
-//            ContractCodeEntry contractCode;
 //        case CONFIG_SETTING:
 //            ConfigSettingEntry configSetting;
 //        }
@@ -12805,12 +12754,11 @@ pub enum LedgerEntryData {
     ClaimableBalance(ClaimableBalanceEntry),
     LiquidityPool(LiquidityPoolEntry),
     ContractData(ContractDataEntry),
-    ContractCode(ContractCodeEntry),
     ConfigSetting(ConfigSettingEntry),
 }
 
 impl LedgerEntryData {
-    pub const VARIANTS: [LedgerEntryType; 9] = [
+    pub const VARIANTS: [LedgerEntryType; 8] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
@@ -12818,10 +12766,9 @@ impl LedgerEntryData {
         LedgerEntryType::ClaimableBalance,
         LedgerEntryType::LiquidityPool,
         LedgerEntryType::ContractData,
-        LedgerEntryType::ContractCode,
         LedgerEntryType::ConfigSetting,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 8] = [
         "Account",
         "Trustline",
         "Offer",
@@ -12829,7 +12776,6 @@ impl LedgerEntryData {
         "ClaimableBalance",
         "LiquidityPool",
         "ContractData",
-        "ContractCode",
         "ConfigSetting",
     ];
 
@@ -12843,7 +12789,6 @@ impl LedgerEntryData {
             Self::ClaimableBalance(_) => "ClaimableBalance",
             Self::LiquidityPool(_) => "LiquidityPool",
             Self::ContractData(_) => "ContractData",
-            Self::ContractCode(_) => "ContractCode",
             Self::ConfigSetting(_) => "ConfigSetting",
         }
     }
@@ -12859,13 +12804,12 @@ impl LedgerEntryData {
             Self::ClaimableBalance(_) => LedgerEntryType::ClaimableBalance,
             Self::LiquidityPool(_) => LedgerEntryType::LiquidityPool,
             Self::ContractData(_) => LedgerEntryType::ContractData,
-            Self::ContractCode(_) => LedgerEntryType::ContractCode,
             Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 9] {
+    pub const fn variants() -> [LedgerEntryType; 8] {
         Self::VARIANTS
     }
 }
@@ -12907,7 +12851,6 @@ impl ReadXdr for LedgerEntryData {
             }
             LedgerEntryType::LiquidityPool => Self::LiquidityPool(LiquidityPoolEntry::read_xdr(r)?),
             LedgerEntryType::ContractData => Self::ContractData(ContractDataEntry::read_xdr(r)?),
-            LedgerEntryType::ContractCode => Self::ContractCode(ContractCodeEntry::read_xdr(r)?),
             LedgerEntryType::ConfigSetting => Self::ConfigSetting(ConfigSettingEntry::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -12929,7 +12872,6 @@ impl WriteXdr for LedgerEntryData {
             Self::ClaimableBalance(v) => v.write_xdr(w)?,
             Self::LiquidityPool(v) => v.write_xdr(w)?,
             Self::ContractData(v) => v.write_xdr(w)?,
-            Self::ContractCode(v) => v.write_xdr(w)?,
             Self::ConfigSetting(v) => v.write_xdr(w)?,
         };
         Ok(())
@@ -13059,8 +13001,6 @@ impl WriteXdr for LedgerEntryExt {
 //            LiquidityPoolEntry liquidityPool;
 //        case CONTRACT_DATA:
 //            ContractDataEntry contractData;
-//        case CONTRACT_CODE:
-//            ContractCodeEntry contractCode;
 //        case CONFIG_SETTING:
 //            ConfigSettingEntry configSetting;
 //        }
@@ -13372,41 +13312,6 @@ impl WriteXdr for LedgerKeyContractData {
     }
 }
 
-// LedgerKeyContractCode is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            Hash hash;
-//        }
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-pub struct LedgerKeyContractCode {
-    pub hash: Hash,
-}
-
-impl ReadXdr for LedgerKeyContractCode {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            hash: Hash::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for LedgerKeyContractCode {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.hash.write_xdr(w)?;
-        Ok(())
-    }
-}
-
 // LedgerKeyConfigSetting is an XDR NestedStruct defines as:
 //
 //   struct
@@ -13490,11 +13395,6 @@ impl WriteXdr for LedgerKeyConfigSetting {
 //            Hash contractID;
 //            SCVal key;
 //        } contractData;
-//    case CONTRACT_CODE:
-//        struct
-//        {
-//            Hash hash;
-//        } contractCode;
 //    case CONFIG_SETTING:
 //        struct
 //        {
@@ -13519,12 +13419,11 @@ pub enum LedgerKey {
     ClaimableBalance(LedgerKeyClaimableBalance),
     LiquidityPool(LedgerKeyLiquidityPool),
     ContractData(LedgerKeyContractData),
-    ContractCode(LedgerKeyContractCode),
     ConfigSetting(LedgerKeyConfigSetting),
 }
 
 impl LedgerKey {
-    pub const VARIANTS: [LedgerEntryType; 9] = [
+    pub const VARIANTS: [LedgerEntryType; 8] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
@@ -13532,10 +13431,9 @@ impl LedgerKey {
         LedgerEntryType::ClaimableBalance,
         LedgerEntryType::LiquidityPool,
         LedgerEntryType::ContractData,
-        LedgerEntryType::ContractCode,
         LedgerEntryType::ConfigSetting,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 8] = [
         "Account",
         "Trustline",
         "Offer",
@@ -13543,7 +13441,6 @@ impl LedgerKey {
         "ClaimableBalance",
         "LiquidityPool",
         "ContractData",
-        "ContractCode",
         "ConfigSetting",
     ];
 
@@ -13557,7 +13454,6 @@ impl LedgerKey {
             Self::ClaimableBalance(_) => "ClaimableBalance",
             Self::LiquidityPool(_) => "LiquidityPool",
             Self::ContractData(_) => "ContractData",
-            Self::ContractCode(_) => "ContractCode",
             Self::ConfigSetting(_) => "ConfigSetting",
         }
     }
@@ -13573,13 +13469,12 @@ impl LedgerKey {
             Self::ClaimableBalance(_) => LedgerEntryType::ClaimableBalance,
             Self::LiquidityPool(_) => LedgerEntryType::LiquidityPool,
             Self::ContractData(_) => LedgerEntryType::ContractData,
-            Self::ContractCode(_) => LedgerEntryType::ContractCode,
             Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 9] {
+    pub const fn variants() -> [LedgerEntryType; 8] {
         Self::VARIANTS
     }
 }
@@ -13625,9 +13520,6 @@ impl ReadXdr for LedgerKey {
             LedgerEntryType::ContractData => {
                 Self::ContractData(LedgerKeyContractData::read_xdr(r)?)
             }
-            LedgerEntryType::ContractCode => {
-                Self::ContractCode(LedgerKeyContractCode::read_xdr(r)?)
-            }
             LedgerEntryType::ConfigSetting => {
                 Self::ConfigSetting(LedgerKeyConfigSetting::read_xdr(r)?)
             }
@@ -13651,7 +13543,6 @@ impl WriteXdr for LedgerKey {
             Self::ClaimableBalance(v) => v.write_xdr(w)?,
             Self::LiquidityPool(v) => v.write_xdr(w)?,
             Self::ContractData(v) => v.write_xdr(w)?,
-            Self::ContractCode(v) => v.write_xdr(w)?,
             Self::ConfigSetting(v) => v.write_xdr(w)?,
         };
         Ok(())
@@ -13673,8 +13564,7 @@ impl WriteXdr for LedgerKey {
 //        ENVELOPE_TYPE_CONTRACT_ID_FROM_ED25519 = 8,
 //        ENVELOPE_TYPE_CONTRACT_ID_FROM_CONTRACT = 9,
 //        ENVELOPE_TYPE_CONTRACT_ID_FROM_ASSET = 10,
-//        ENVELOPE_TYPE_CONTRACT_ID_FROM_SOURCE_ACCOUNT = 11,
-//        ENVELOPE_TYPE_CREATE_CONTRACT_ARGS = 12
+//        ENVELOPE_TYPE_CONTRACT_ID_FROM_SOURCE_ACCOUNT = 11
 //    };
 //
 // enum
@@ -13699,11 +13589,10 @@ pub enum EnvelopeType {
     ContractIdFromContract = 9,
     ContractIdFromAsset = 10,
     ContractIdFromSourceAccount = 11,
-    CreateContractArgs = 12,
 }
 
 impl EnvelopeType {
-    pub const VARIANTS: [EnvelopeType; 13] = [
+    pub const VARIANTS: [EnvelopeType; 12] = [
         EnvelopeType::TxV0,
         EnvelopeType::Scp,
         EnvelopeType::Tx,
@@ -13716,9 +13605,8 @@ impl EnvelopeType {
         EnvelopeType::ContractIdFromContract,
         EnvelopeType::ContractIdFromAsset,
         EnvelopeType::ContractIdFromSourceAccount,
-        EnvelopeType::CreateContractArgs,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: [&'static str; 12] = [
         "TxV0",
         "Scp",
         "Tx",
@@ -13731,7 +13619,6 @@ impl EnvelopeType {
         "ContractIdFromContract",
         "ContractIdFromAsset",
         "ContractIdFromSourceAccount",
-        "CreateContractArgs",
     ];
 
     #[must_use]
@@ -13749,12 +13636,11 @@ impl EnvelopeType {
             Self::ContractIdFromContract => "ContractIdFromContract",
             Self::ContractIdFromAsset => "ContractIdFromAsset",
             Self::ContractIdFromSourceAccount => "ContractIdFromSourceAccount",
-            Self::CreateContractArgs => "CreateContractArgs",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 13] {
+    pub const fn variants() -> [EnvelopeType; 12] {
         Self::VARIANTS
     }
 }
@@ -13797,7 +13683,6 @@ impl TryFrom<i32> for EnvelopeType {
             9 => EnvelopeType::ContractIdFromContract,
             10 => EnvelopeType::ContractIdFromAsset,
             11 => EnvelopeType::ContractIdFromSourceAccount,
-            12 => EnvelopeType::CreateContractArgs,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -22292,13 +22177,15 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
     }
 }
 
-// HostFunctionType is an XDR Enum defines as:
+// HostFunction is an XDR Enum defines as:
 //
-//   enum HostFunctionType
+//   enum HostFunction
 //    {
-//        HOST_FUNCTION_TYPE_INVOKE_CONTRACT = 0,
-//        HOST_FUNCTION_TYPE_CREATE_CONTRACT = 1,
-//        HOST_FUNCTION_TYPE_INSTALL_CONTRACT_CODE = 2
+//        HOST_FN_INVOKE_CONTRACT = 0,
+//        HOST_FN_CREATE_CONTRACT_WITH_ED25519 = 1,
+//        HOST_FN_CREATE_CONTRACT_WITH_SOURCE_ACCOUNT = 2,
+//        HOST_FN_CREATE_TOKEN_CONTRACT_WITH_SOURCE_ACCOUNT = 3,
+//        HOST_FN_CREATE_TOKEN_CONTRACT_WITH_ASSET = 4
 //    };
 //
 // enum
@@ -22310,598 +22197,43 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
     serde(rename_all = "camelCase")
 )]
 #[repr(i32)]
-pub enum HostFunctionType {
+pub enum HostFunction {
     InvokeContract = 0,
-    CreateContract = 1,
-    InstallContractCode = 2,
+    CreateContractWithEd25519 = 1,
+    CreateContractWithSourceAccount = 2,
+    CreateTokenContractWithSourceAccount = 3,
+    CreateTokenContractWithAsset = 4,
 }
 
-impl HostFunctionType {
-    pub const VARIANTS: [HostFunctionType; 3] = [
-        HostFunctionType::InvokeContract,
-        HostFunctionType::CreateContract,
-        HostFunctionType::InstallContractCode,
+impl HostFunction {
+    pub const VARIANTS: [HostFunction; 5] = [
+        HostFunction::InvokeContract,
+        HostFunction::CreateContractWithEd25519,
+        HostFunction::CreateContractWithSourceAccount,
+        HostFunction::CreateTokenContractWithSourceAccount,
+        HostFunction::CreateTokenContractWithAsset,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] =
-        ["InvokeContract", "CreateContract", "InstallContractCode"];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "InvokeContract",
+        "CreateContractWithEd25519",
+        "CreateContractWithSourceAccount",
+        "CreateTokenContractWithSourceAccount",
+        "CreateTokenContractWithAsset",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::InvokeContract => "InvokeContract",
-            Self::CreateContract => "CreateContract",
-            Self::InstallContractCode => "InstallContractCode",
+            Self::CreateContractWithEd25519 => "CreateContractWithEd25519",
+            Self::CreateContractWithSourceAccount => "CreateContractWithSourceAccount",
+            Self::CreateTokenContractWithSourceAccount => "CreateTokenContractWithSourceAccount",
+            Self::CreateTokenContractWithAsset => "CreateTokenContractWithAsset",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [HostFunctionType; 3] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for HostFunctionType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<HostFunctionType> for HostFunctionType {
-    fn variants() -> slice::Iter<'static, HostFunctionType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for HostFunctionType {}
-
-impl fmt::Display for HostFunctionType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for HostFunctionType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => HostFunctionType::InvokeContract,
-            1 => HostFunctionType::CreateContract,
-            2 => HostFunctionType::InstallContractCode,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<HostFunctionType> for i32 {
-    #[must_use]
-    fn from(e: HostFunctionType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for HostFunctionType {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for HostFunctionType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// ContractIdType is an XDR Enum defines as:
-//
-//   enum ContractIDType
-//    {
-//        CONTRACT_ID_FROM_SOURCE_ACCOUNT = 0,
-//        CONTRACT_ID_FROM_ED25519_PUBLIC_KEY = 1,
-//        CONTRACT_ID_FROM_ASSET = 2
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-#[repr(i32)]
-pub enum ContractIdType {
-    SourceAccount = 0,
-    Ed25519PublicKey = 1,
-    Asset = 2,
-}
-
-impl ContractIdType {
-    pub const VARIANTS: [ContractIdType; 3] = [
-        ContractIdType::SourceAccount,
-        ContractIdType::Ed25519PublicKey,
-        ContractIdType::Asset,
-    ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["SourceAccount", "Ed25519PublicKey", "Asset"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::SourceAccount => "SourceAccount",
-            Self::Ed25519PublicKey => "Ed25519PublicKey",
-            Self::Asset => "Asset",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ContractIdType; 3] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ContractIdType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ContractIdType> for ContractIdType {
-    fn variants() -> slice::Iter<'static, ContractIdType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ContractIdType {}
-
-impl fmt::Display for ContractIdType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ContractIdType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ContractIdType::SourceAccount,
-            1 => ContractIdType::Ed25519PublicKey,
-            2 => ContractIdType::Asset,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ContractIdType> for i32 {
-    #[must_use]
-    fn from(e: ContractIdType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ContractIdType {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ContractIdType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// ContractIdPublicKeyType is an XDR Enum defines as:
-//
-//   enum ContractIDPublicKeyType
-//    {
-//        CONTRACT_ID_PUBLIC_KEY_SOURCE_ACCOUNT = 0,
-//        CONTRACT_ID_PUBLIC_KEY_ED25519 = 1
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-#[repr(i32)]
-pub enum ContractIdPublicKeyType {
-    SourceAccount = 0,
-    Ed25519 = 1,
-}
-
-impl ContractIdPublicKeyType {
-    pub const VARIANTS: [ContractIdPublicKeyType; 2] = [
-        ContractIdPublicKeyType::SourceAccount,
-        ContractIdPublicKeyType::Ed25519,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Ed25519"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::SourceAccount => "SourceAccount",
-            Self::Ed25519 => "Ed25519",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ContractIdPublicKeyType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ContractIdPublicKeyType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ContractIdPublicKeyType> for ContractIdPublicKeyType {
-    fn variants() -> slice::Iter<'static, ContractIdPublicKeyType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ContractIdPublicKeyType {}
-
-impl fmt::Display for ContractIdPublicKeyType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ContractIdPublicKeyType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ContractIdPublicKeyType::SourceAccount,
-            1 => ContractIdPublicKeyType::Ed25519,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ContractIdPublicKeyType> for i32 {
-    #[must_use]
-    fn from(e: ContractIdPublicKeyType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ContractIdPublicKeyType {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ContractIdPublicKeyType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// InstallContractCodeArgs is an XDR Struct defines as:
-//
-//   struct InstallContractCodeArgs
-//    {
-//        opaque code<SCVAL_LIMIT>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-pub struct InstallContractCodeArgs {
-    pub code: BytesM<256000>,
-}
-
-impl ReadXdr for InstallContractCodeArgs {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            code: BytesM::<256000>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for InstallContractCodeArgs {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.code.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ContractIdFromEd25519PublicKey is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            uint256 key;
-//            Signature signature;
-//            uint256 salt;
-//        }
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-pub struct ContractIdFromEd25519PublicKey {
-    pub key: Uint256,
-    pub signature: Signature,
-    pub salt: Uint256,
-}
-
-impl ReadXdr for ContractIdFromEd25519PublicKey {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            key: Uint256::read_xdr(r)?,
-            signature: Signature::read_xdr(r)?,
-            salt: Uint256::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ContractIdFromEd25519PublicKey {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
-        self.signature.write_xdr(w)?;
-        self.salt.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ContractId is an XDR Union defines as:
-//
-//   union ContractID switch (ContractIDType type)
-//    {
-//    case CONTRACT_ID_FROM_SOURCE_ACCOUNT:
-//        uint256 salt;
-//    case CONTRACT_ID_FROM_ED25519_PUBLIC_KEY:
-//        struct
-//        {
-//            uint256 key;
-//            Signature signature;
-//            uint256 salt;
-//        } fromEd25519PublicKey;
-//    case CONTRACT_ID_FROM_ASSET:
-//        Asset asset;
-//    };
-//
-// union with discriminant ContractIdType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum ContractId {
-    SourceAccount(Uint256),
-    Ed25519PublicKey(ContractIdFromEd25519PublicKey),
-    Asset(Asset),
-}
-
-impl ContractId {
-    pub const VARIANTS: [ContractIdType; 3] = [
-        ContractIdType::SourceAccount,
-        ContractIdType::Ed25519PublicKey,
-        ContractIdType::Asset,
-    ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["SourceAccount", "Ed25519PublicKey", "Asset"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::SourceAccount(_) => "SourceAccount",
-            Self::Ed25519PublicKey(_) => "Ed25519PublicKey",
-            Self::Asset(_) => "Asset",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ContractIdType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::SourceAccount(_) => ContractIdType::SourceAccount,
-            Self::Ed25519PublicKey(_) => ContractIdType::Ed25519PublicKey,
-            Self::Asset(_) => ContractIdType::Asset,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ContractIdType; 3] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ContractId {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ContractIdType> for ContractId {
-    #[must_use]
-    fn discriminant(&self) -> ContractIdType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ContractIdType> for ContractId {
-    fn variants() -> slice::Iter<'static, ContractIdType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ContractIdType> for ContractId {}
-
-impl ReadXdr for ContractId {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ContractIdType = <ContractIdType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ContractIdType::SourceAccount => Self::SourceAccount(Uint256::read_xdr(r)?),
-            ContractIdType::Ed25519PublicKey => {
-                Self::Ed25519PublicKey(ContractIdFromEd25519PublicKey::read_xdr(r)?)
-            }
-            ContractIdType::Asset => Self::Asset(Asset::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ContractId {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::SourceAccount(v) => v.write_xdr(w)?,
-            Self::Ed25519PublicKey(v) => v.write_xdr(w)?,
-            Self::Asset(v) => v.write_xdr(w)?,
-        };
-        Ok(())
-    }
-}
-
-// CreateContractArgs is an XDR Struct defines as:
-//
-//   struct CreateContractArgs
-//    {
-//        ContractID contractID;
-//        SCContractCode source;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-pub struct CreateContractArgs {
-    pub contract_id: ContractId,
-    pub source: ScContractCode,
-}
-
-impl ReadXdr for CreateContractArgs {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            contract_id: ContractId::read_xdr(r)?,
-            source: ScContractCode::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for CreateContractArgs {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.contract_id.write_xdr(w)?;
-        self.source.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// HostFunction is an XDR Union defines as:
-//
-//   union HostFunction switch (HostFunctionType type)
-//    {
-//    case HOST_FUNCTION_TYPE_INVOKE_CONTRACT:
-//        SCVec invokeArgs;
-//    case HOST_FUNCTION_TYPE_CREATE_CONTRACT:
-//        CreateContractArgs createContractArgs;
-//    case HOST_FUNCTION_TYPE_INSTALL_CONTRACT_CODE:
-//        InstallContractCodeArgs installContractCodeArgs;
-//    };
-//
-// union with discriminant HostFunctionType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum HostFunction {
-    InvokeContract(ScVec),
-    CreateContract(CreateContractArgs),
-    InstallContractCode(InstallContractCodeArgs),
-}
-
-impl HostFunction {
-    pub const VARIANTS: [HostFunctionType; 3] = [
-        HostFunctionType::InvokeContract,
-        HostFunctionType::CreateContract,
-        HostFunctionType::InstallContractCode,
-    ];
-    pub const VARIANTS_STR: [&'static str; 3] =
-        ["InvokeContract", "CreateContract", "InstallContractCode"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::InvokeContract(_) => "InvokeContract",
-            Self::CreateContract(_) => "CreateContract",
-            Self::InstallContractCode(_) => "InstallContractCode",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> HostFunctionType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::InvokeContract(_) => HostFunctionType::InvokeContract,
-            Self::CreateContract(_) => HostFunctionType::CreateContract,
-            Self::InstallContractCode(_) => HostFunctionType::InstallContractCode,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [HostFunctionType; 3] {
+    pub const fn variants() -> [HostFunction; 5] {
         Self::VARIANTS
     }
 }
@@ -22913,37 +22245,49 @@ impl Name for HostFunction {
     }
 }
 
-impl Discriminant<HostFunctionType> for HostFunction {
-    #[must_use]
-    fn discriminant(&self) -> HostFunctionType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<HostFunctionType> for HostFunction {
-    fn variants() -> slice::Iter<'static, HostFunctionType> {
+impl Variants<HostFunction> for HostFunction {
+    fn variants() -> slice::Iter<'static, HostFunction> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<HostFunctionType> for HostFunction {}
+impl Enum for HostFunction {}
+
+impl fmt::Display for HostFunction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for HostFunction {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => HostFunction::InvokeContract,
+            1 => HostFunction::CreateContractWithEd25519,
+            2 => HostFunction::CreateContractWithSourceAccount,
+            3 => HostFunction::CreateTokenContractWithSourceAccount,
+            4 => HostFunction::CreateTokenContractWithAsset,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<HostFunction> for i32 {
+    #[must_use]
+    fn from(e: HostFunction) -> Self {
+        e as Self
+    }
+}
 
 impl ReadXdr for HostFunction {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: HostFunctionType = <HostFunctionType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            HostFunctionType::InvokeContract => Self::InvokeContract(ScVec::read_xdr(r)?),
-            HostFunctionType::CreateContract => {
-                Self::CreateContract(CreateContractArgs::read_xdr(r)?)
-            }
-            HostFunctionType::InstallContractCode => {
-                Self::InstallContractCode(InstallContractCodeArgs::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
         Ok(v)
     }
 }
@@ -22951,14 +22295,8 @@ impl ReadXdr for HostFunction {
 impl WriteXdr for HostFunction {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::InvokeContract(v) => v.write_xdr(w)?,
-            Self::CreateContract(v) => v.write_xdr(w)?,
-            Self::InstallContractCode(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
     }
 }
 
@@ -22968,6 +22306,10 @@ impl WriteXdr for HostFunction {
 //    {
 //        // The host function to invoke
 //        HostFunction function;
+//
+//        // Parameters to the host function
+//        SCVec parameters;
+//
 //        // The footprint for this invocation
 //        LedgerFootprint footprint;
 //    };
@@ -22981,6 +22323,7 @@ impl WriteXdr for HostFunction {
 )]
 pub struct InvokeHostFunctionOp {
     pub function: HostFunction,
+    pub parameters: ScVec,
     pub footprint: LedgerFootprint,
 }
 
@@ -22989,6 +22332,7 @@ impl ReadXdr for InvokeHostFunctionOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             function: HostFunction::read_xdr(r)?,
+            parameters: ScVec::read_xdr(r)?,
             footprint: LedgerFootprint::read_xdr(r)?,
         })
     }
@@ -22998,6 +22342,7 @@ impl WriteXdr for InvokeHostFunctionOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.function.write_xdr(w)?;
+        self.parameters.write_xdr(w)?;
         self.footprint.write_xdr(w)?;
         Ok(())
     }
@@ -23537,7 +22882,6 @@ impl WriteXdr for HashIdPreimageRevokeId {
 //
 //   struct
 //        {
-//            Hash networkID;
 //            uint256 ed25519;
 //            uint256 salt;
 //        }
@@ -23550,7 +22894,6 @@ impl WriteXdr for HashIdPreimageRevokeId {
     serde(rename_all = "camelCase")
 )]
 pub struct HashIdPreimageEd25519ContractId {
-    pub network_id: Hash,
     pub ed25519: Uint256,
     pub salt: Uint256,
 }
@@ -23559,7 +22902,6 @@ impl ReadXdr for HashIdPreimageEd25519ContractId {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            network_id: Hash::read_xdr(r)?,
             ed25519: Uint256::read_xdr(r)?,
             salt: Uint256::read_xdr(r)?,
         })
@@ -23569,7 +22911,6 @@ impl ReadXdr for HashIdPreimageEd25519ContractId {
 impl WriteXdr for HashIdPreimageEd25519ContractId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.network_id.write_xdr(w)?;
         self.ed25519.write_xdr(w)?;
         self.salt.write_xdr(w)?;
         Ok(())
@@ -23580,7 +22921,6 @@ impl WriteXdr for HashIdPreimageEd25519ContractId {
 //
 //   struct
 //        {
-//            Hash networkID;
 //            Hash contractID;
 //            uint256 salt;
 //        }
@@ -23593,7 +22933,6 @@ impl WriteXdr for HashIdPreimageEd25519ContractId {
     serde(rename_all = "camelCase")
 )]
 pub struct HashIdPreimageContractId {
-    pub network_id: Hash,
     pub contract_id: Hash,
     pub salt: Uint256,
 }
@@ -23602,7 +22941,6 @@ impl ReadXdr for HashIdPreimageContractId {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            network_id: Hash::read_xdr(r)?,
             contract_id: Hash::read_xdr(r)?,
             salt: Uint256::read_xdr(r)?,
         })
@@ -23612,48 +22950,8 @@ impl ReadXdr for HashIdPreimageContractId {
 impl WriteXdr for HashIdPreimageContractId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.network_id.write_xdr(w)?;
         self.contract_id.write_xdr(w)?;
         self.salt.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// HashIdPreimageFromAsset is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            Hash networkID;
-//            Asset asset;
-//        }
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-pub struct HashIdPreimageFromAsset {
-    pub network_id: Hash,
-    pub asset: Asset,
-}
-
-impl ReadXdr for HashIdPreimageFromAsset {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            network_id: Hash::read_xdr(r)?,
-            asset: Asset::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for HashIdPreimageFromAsset {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.network_id.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
         Ok(())
     }
 }
@@ -23662,7 +22960,6 @@ impl WriteXdr for HashIdPreimageFromAsset {
 //
 //   struct
 //        {
-//            Hash networkID;
 //            AccountID sourceAccount;
 //            uint256 salt;
 //        }
@@ -23675,7 +22972,6 @@ impl WriteXdr for HashIdPreimageFromAsset {
     serde(rename_all = "camelCase")
 )]
 pub struct HashIdPreimageSourceAccountContractId {
-    pub network_id: Hash,
     pub source_account: AccountId,
     pub salt: Uint256,
 }
@@ -23684,7 +22980,6 @@ impl ReadXdr for HashIdPreimageSourceAccountContractId {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            network_id: Hash::read_xdr(r)?,
             source_account: AccountId::read_xdr(r)?,
             salt: Uint256::read_xdr(r)?,
         })
@@ -23694,51 +22989,7 @@ impl ReadXdr for HashIdPreimageSourceAccountContractId {
 impl WriteXdr for HashIdPreimageSourceAccountContractId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.network_id.write_xdr(w)?;
         self.source_account.write_xdr(w)?;
-        self.salt.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// HashIdPreimageCreateContractArgs is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            Hash networkID;
-//            SCContractCode source;
-//            uint256 salt;
-//        }
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
-)]
-pub struct HashIdPreimageCreateContractArgs {
-    pub network_id: Hash,
-    pub source: ScContractCode,
-    pub salt: Uint256,
-}
-
-impl ReadXdr for HashIdPreimageCreateContractArgs {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            network_id: Hash::read_xdr(r)?,
-            source: ScContractCode::read_xdr(r)?,
-            salt: Uint256::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for HashIdPreimageCreateContractArgs {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.network_id.write_xdr(w)?;
-        self.source.write_xdr(w)?;
         self.salt.write_xdr(w)?;
         Ok(())
     }
@@ -23767,37 +23018,23 @@ impl WriteXdr for HashIdPreimageCreateContractArgs {
 //    case ENVELOPE_TYPE_CONTRACT_ID_FROM_ED25519:
 //        struct
 //        {
-//            Hash networkID;
 //            uint256 ed25519;
 //            uint256 salt;
 //        } ed25519ContractID;
 //    case ENVELOPE_TYPE_CONTRACT_ID_FROM_CONTRACT:
 //        struct
 //        {
-//            Hash networkID;
 //            Hash contractID;
 //            uint256 salt;
 //        } contractID;
 //    case ENVELOPE_TYPE_CONTRACT_ID_FROM_ASSET:
-//        struct
-//        {
-//            Hash networkID;
-//            Asset asset;
-//        } fromAsset;
+//        Asset fromAsset;
 //    case ENVELOPE_TYPE_CONTRACT_ID_FROM_SOURCE_ACCOUNT:
 //        struct
 //        {
-//            Hash networkID;
 //            AccountID sourceAccount;
 //            uint256 salt;
 //        } sourceAccountContractID;
-//    case ENVELOPE_TYPE_CREATE_CONTRACT_ARGS:
-//        struct
-//        {
-//            Hash networkID;
-//            SCContractCode source;
-//            uint256 salt;
-//        } createContractArgs;
 //    };
 //
 // union with discriminant EnvelopeType
@@ -23814,29 +23051,26 @@ pub enum HashIdPreimage {
     PoolRevokeOpId(HashIdPreimageRevokeId),
     ContractIdFromEd25519(HashIdPreimageEd25519ContractId),
     ContractIdFromContract(HashIdPreimageContractId),
-    ContractIdFromAsset(HashIdPreimageFromAsset),
+    ContractIdFromAsset(Asset),
     ContractIdFromSourceAccount(HashIdPreimageSourceAccountContractId),
-    CreateContractArgs(HashIdPreimageCreateContractArgs),
 }
 
 impl HashIdPreimage {
-    pub const VARIANTS: [EnvelopeType; 7] = [
+    pub const VARIANTS: [EnvelopeType; 6] = [
         EnvelopeType::OpId,
         EnvelopeType::PoolRevokeOpId,
         EnvelopeType::ContractIdFromEd25519,
         EnvelopeType::ContractIdFromContract,
         EnvelopeType::ContractIdFromAsset,
         EnvelopeType::ContractIdFromSourceAccount,
-        EnvelopeType::CreateContractArgs,
     ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
+    pub const VARIANTS_STR: [&'static str; 6] = [
         "OpId",
         "PoolRevokeOpId",
         "ContractIdFromEd25519",
         "ContractIdFromContract",
         "ContractIdFromAsset",
         "ContractIdFromSourceAccount",
-        "CreateContractArgs",
     ];
 
     #[must_use]
@@ -23848,7 +23082,6 @@ impl HashIdPreimage {
             Self::ContractIdFromContract(_) => "ContractIdFromContract",
             Self::ContractIdFromAsset(_) => "ContractIdFromAsset",
             Self::ContractIdFromSourceAccount(_) => "ContractIdFromSourceAccount",
-            Self::CreateContractArgs(_) => "CreateContractArgs",
         }
     }
 
@@ -23862,12 +23095,11 @@ impl HashIdPreimage {
             Self::ContractIdFromContract(_) => EnvelopeType::ContractIdFromContract,
             Self::ContractIdFromAsset(_) => EnvelopeType::ContractIdFromAsset,
             Self::ContractIdFromSourceAccount(_) => EnvelopeType::ContractIdFromSourceAccount,
-            Self::CreateContractArgs(_) => EnvelopeType::CreateContractArgs,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 7] {
+    pub const fn variants() -> [EnvelopeType; 6] {
         Self::VARIANTS
     }
 }
@@ -23910,15 +23142,10 @@ impl ReadXdr for HashIdPreimage {
             EnvelopeType::ContractIdFromContract => {
                 Self::ContractIdFromContract(HashIdPreimageContractId::read_xdr(r)?)
             }
-            EnvelopeType::ContractIdFromAsset => {
-                Self::ContractIdFromAsset(HashIdPreimageFromAsset::read_xdr(r)?)
-            }
+            EnvelopeType::ContractIdFromAsset => Self::ContractIdFromAsset(Asset::read_xdr(r)?),
             EnvelopeType::ContractIdFromSourceAccount => Self::ContractIdFromSourceAccount(
                 HashIdPreimageSourceAccountContractId::read_xdr(r)?,
             ),
-            EnvelopeType::CreateContractArgs => {
-                Self::CreateContractArgs(HashIdPreimageCreateContractArgs::read_xdr(r)?)
-            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -23938,7 +23165,6 @@ impl WriteXdr for HashIdPreimage {
             Self::ContractIdFromContract(v) => v.write_xdr(w)?,
             Self::ContractIdFromAsset(v) => v.write_xdr(w)?,
             Self::ContractIdFromSourceAccount(v) => v.write_xdr(w)?,
-            Self::CreateContractArgs(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -36468,7 +35694,6 @@ pub enum TypeVariant {
     LiquidityPoolEntryBody,
     LiquidityPoolEntryConstantProduct,
     ContractDataEntry,
-    ContractCodeEntry,
     ConfigSettingType,
     ConfigSetting,
     ConfigSettingId,
@@ -36487,7 +35712,6 @@ pub enum TypeVariant {
     LedgerKeyClaimableBalance,
     LedgerKeyLiquidityPool,
     LedgerKeyContractData,
-    LedgerKeyContractCode,
     LedgerKeyConfigSetting,
     EnvelopeType,
     UpgradeType,
@@ -36606,13 +35830,6 @@ pub enum TypeVariant {
     SetTrustLineFlagsOp,
     LiquidityPoolDepositOp,
     LiquidityPoolWithdrawOp,
-    HostFunctionType,
-    ContractIdType,
-    ContractIdPublicKeyType,
-    InstallContractCodeArgs,
-    ContractId,
-    ContractIdFromEd25519PublicKey,
-    CreateContractArgs,
     HostFunction,
     InvokeHostFunctionOp,
     Operation,
@@ -36622,9 +35839,7 @@ pub enum TypeVariant {
     HashIdPreimageRevokeId,
     HashIdPreimageEd25519ContractId,
     HashIdPreimageContractId,
-    HashIdPreimageFromAsset,
     HashIdPreimageSourceAccountContractId,
-    HashIdPreimageCreateContractArgs,
     MemoType,
     Memo,
     TimeBounds,
@@ -36740,7 +35955,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 390] = [
+    pub const VARIANTS: [TypeVariant; 379] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -36862,7 +36077,6 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolEntryBody,
         TypeVariant::LiquidityPoolEntryConstantProduct,
         TypeVariant::ContractDataEntry,
-        TypeVariant::ContractCodeEntry,
         TypeVariant::ConfigSettingType,
         TypeVariant::ConfigSetting,
         TypeVariant::ConfigSettingId,
@@ -36881,7 +36095,6 @@ impl TypeVariant {
         TypeVariant::LedgerKeyClaimableBalance,
         TypeVariant::LedgerKeyLiquidityPool,
         TypeVariant::LedgerKeyContractData,
-        TypeVariant::LedgerKeyContractCode,
         TypeVariant::LedgerKeyConfigSetting,
         TypeVariant::EnvelopeType,
         TypeVariant::UpgradeType,
@@ -37000,13 +36213,6 @@ impl TypeVariant {
         TypeVariant::SetTrustLineFlagsOp,
         TypeVariant::LiquidityPoolDepositOp,
         TypeVariant::LiquidityPoolWithdrawOp,
-        TypeVariant::HostFunctionType,
-        TypeVariant::ContractIdType,
-        TypeVariant::ContractIdPublicKeyType,
-        TypeVariant::InstallContractCodeArgs,
-        TypeVariant::ContractId,
-        TypeVariant::ContractIdFromEd25519PublicKey,
-        TypeVariant::CreateContractArgs,
         TypeVariant::HostFunction,
         TypeVariant::InvokeHostFunctionOp,
         TypeVariant::Operation,
@@ -37016,9 +36222,7 @@ impl TypeVariant {
         TypeVariant::HashIdPreimageRevokeId,
         TypeVariant::HashIdPreimageEd25519ContractId,
         TypeVariant::HashIdPreimageContractId,
-        TypeVariant::HashIdPreimageFromAsset,
         TypeVariant::HashIdPreimageSourceAccountContractId,
-        TypeVariant::HashIdPreimageCreateContractArgs,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -37132,7 +36336,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 390] = [
+    pub const VARIANTS_STR: [&'static str; 379] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -37254,7 +36458,6 @@ impl TypeVariant {
         "LiquidityPoolEntryBody",
         "LiquidityPoolEntryConstantProduct",
         "ContractDataEntry",
-        "ContractCodeEntry",
         "ConfigSettingType",
         "ConfigSetting",
         "ConfigSettingId",
@@ -37273,7 +36476,6 @@ impl TypeVariant {
         "LedgerKeyClaimableBalance",
         "LedgerKeyLiquidityPool",
         "LedgerKeyContractData",
-        "LedgerKeyContractCode",
         "LedgerKeyConfigSetting",
         "EnvelopeType",
         "UpgradeType",
@@ -37392,13 +36594,6 @@ impl TypeVariant {
         "SetTrustLineFlagsOp",
         "LiquidityPoolDepositOp",
         "LiquidityPoolWithdrawOp",
-        "HostFunctionType",
-        "ContractIdType",
-        "ContractIdPublicKeyType",
-        "InstallContractCodeArgs",
-        "ContractId",
-        "ContractIdFromEd25519PublicKey",
-        "CreateContractArgs",
         "HostFunction",
         "InvokeHostFunctionOp",
         "Operation",
@@ -37408,9 +36603,7 @@ impl TypeVariant {
         "HashIdPreimageRevokeId",
         "HashIdPreimageEd25519ContractId",
         "HashIdPreimageContractId",
-        "HashIdPreimageFromAsset",
         "HashIdPreimageSourceAccountContractId",
-        "HashIdPreimageCreateContractArgs",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -37652,7 +36845,6 @@ impl TypeVariant {
             Self::LiquidityPoolEntryBody => "LiquidityPoolEntryBody",
             Self::LiquidityPoolEntryConstantProduct => "LiquidityPoolEntryConstantProduct",
             Self::ContractDataEntry => "ContractDataEntry",
-            Self::ContractCodeEntry => "ContractCodeEntry",
             Self::ConfigSettingType => "ConfigSettingType",
             Self::ConfigSetting => "ConfigSetting",
             Self::ConfigSettingId => "ConfigSettingId",
@@ -37671,7 +36863,6 @@ impl TypeVariant {
             Self::LedgerKeyClaimableBalance => "LedgerKeyClaimableBalance",
             Self::LedgerKeyLiquidityPool => "LedgerKeyLiquidityPool",
             Self::LedgerKeyContractData => "LedgerKeyContractData",
-            Self::LedgerKeyContractCode => "LedgerKeyContractCode",
             Self::LedgerKeyConfigSetting => "LedgerKeyConfigSetting",
             Self::EnvelopeType => "EnvelopeType",
             Self::UpgradeType => "UpgradeType",
@@ -37790,13 +36981,6 @@ impl TypeVariant {
             Self::SetTrustLineFlagsOp => "SetTrustLineFlagsOp",
             Self::LiquidityPoolDepositOp => "LiquidityPoolDepositOp",
             Self::LiquidityPoolWithdrawOp => "LiquidityPoolWithdrawOp",
-            Self::HostFunctionType => "HostFunctionType",
-            Self::ContractIdType => "ContractIdType",
-            Self::ContractIdPublicKeyType => "ContractIdPublicKeyType",
-            Self::InstallContractCodeArgs => "InstallContractCodeArgs",
-            Self::ContractId => "ContractId",
-            Self::ContractIdFromEd25519PublicKey => "ContractIdFromEd25519PublicKey",
-            Self::CreateContractArgs => "CreateContractArgs",
             Self::HostFunction => "HostFunction",
             Self::InvokeHostFunctionOp => "InvokeHostFunctionOp",
             Self::Operation => "Operation",
@@ -37806,9 +36990,7 @@ impl TypeVariant {
             Self::HashIdPreimageRevokeId => "HashIdPreimageRevokeId",
             Self::HashIdPreimageEd25519ContractId => "HashIdPreimageEd25519ContractId",
             Self::HashIdPreimageContractId => "HashIdPreimageContractId",
-            Self::HashIdPreimageFromAsset => "HashIdPreimageFromAsset",
             Self::HashIdPreimageSourceAccountContractId => "HashIdPreimageSourceAccountContractId",
-            Self::HashIdPreimageCreateContractArgs => "HashIdPreimageCreateContractArgs",
             Self::MemoType => "MemoType",
             Self::Memo => "Memo",
             Self::TimeBounds => "TimeBounds",
@@ -37930,7 +37112,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 390] {
+    pub const fn variants() -> [TypeVariant; 379] {
         Self::VARIANTS
     }
 }
@@ -38076,7 +37258,6 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolEntryBody" => Ok(Self::LiquidityPoolEntryBody),
             "LiquidityPoolEntryConstantProduct" => Ok(Self::LiquidityPoolEntryConstantProduct),
             "ContractDataEntry" => Ok(Self::ContractDataEntry),
-            "ContractCodeEntry" => Ok(Self::ContractCodeEntry),
             "ConfigSettingType" => Ok(Self::ConfigSettingType),
             "ConfigSetting" => Ok(Self::ConfigSetting),
             "ConfigSettingId" => Ok(Self::ConfigSettingId),
@@ -38095,7 +37276,6 @@ impl core::str::FromStr for TypeVariant {
             "LedgerKeyClaimableBalance" => Ok(Self::LedgerKeyClaimableBalance),
             "LedgerKeyLiquidityPool" => Ok(Self::LedgerKeyLiquidityPool),
             "LedgerKeyContractData" => Ok(Self::LedgerKeyContractData),
-            "LedgerKeyContractCode" => Ok(Self::LedgerKeyContractCode),
             "LedgerKeyConfigSetting" => Ok(Self::LedgerKeyConfigSetting),
             "EnvelopeType" => Ok(Self::EnvelopeType),
             "UpgradeType" => Ok(Self::UpgradeType),
@@ -38214,13 +37394,6 @@ impl core::str::FromStr for TypeVariant {
             "SetTrustLineFlagsOp" => Ok(Self::SetTrustLineFlagsOp),
             "LiquidityPoolDepositOp" => Ok(Self::LiquidityPoolDepositOp),
             "LiquidityPoolWithdrawOp" => Ok(Self::LiquidityPoolWithdrawOp),
-            "HostFunctionType" => Ok(Self::HostFunctionType),
-            "ContractIdType" => Ok(Self::ContractIdType),
-            "ContractIdPublicKeyType" => Ok(Self::ContractIdPublicKeyType),
-            "InstallContractCodeArgs" => Ok(Self::InstallContractCodeArgs),
-            "ContractId" => Ok(Self::ContractId),
-            "ContractIdFromEd25519PublicKey" => Ok(Self::ContractIdFromEd25519PublicKey),
-            "CreateContractArgs" => Ok(Self::CreateContractArgs),
             "HostFunction" => Ok(Self::HostFunction),
             "InvokeHostFunctionOp" => Ok(Self::InvokeHostFunctionOp),
             "Operation" => Ok(Self::Operation),
@@ -38230,11 +37403,9 @@ impl core::str::FromStr for TypeVariant {
             "HashIdPreimageRevokeId" => Ok(Self::HashIdPreimageRevokeId),
             "HashIdPreimageEd25519ContractId" => Ok(Self::HashIdPreimageEd25519ContractId),
             "HashIdPreimageContractId" => Ok(Self::HashIdPreimageContractId),
-            "HashIdPreimageFromAsset" => Ok(Self::HashIdPreimageFromAsset),
             "HashIdPreimageSourceAccountContractId" => {
                 Ok(Self::HashIdPreimageSourceAccountContractId)
             }
-            "HashIdPreimageCreateContractArgs" => Ok(Self::HashIdPreimageCreateContractArgs),
             "MemoType" => Ok(Self::MemoType),
             "Memo" => Ok(Self::Memo),
             "TimeBounds" => Ok(Self::TimeBounds),
@@ -38488,7 +37659,6 @@ pub enum Type {
     LiquidityPoolEntryBody(Box<LiquidityPoolEntryBody>),
     LiquidityPoolEntryConstantProduct(Box<LiquidityPoolEntryConstantProduct>),
     ContractDataEntry(Box<ContractDataEntry>),
-    ContractCodeEntry(Box<ContractCodeEntry>),
     ConfigSettingType(Box<ConfigSettingType>),
     ConfigSetting(Box<ConfigSetting>),
     ConfigSettingId(Box<ConfigSettingId>),
@@ -38507,7 +37677,6 @@ pub enum Type {
     LedgerKeyClaimableBalance(Box<LedgerKeyClaimableBalance>),
     LedgerKeyLiquidityPool(Box<LedgerKeyLiquidityPool>),
     LedgerKeyContractData(Box<LedgerKeyContractData>),
-    LedgerKeyContractCode(Box<LedgerKeyContractCode>),
     LedgerKeyConfigSetting(Box<LedgerKeyConfigSetting>),
     EnvelopeType(Box<EnvelopeType>),
     UpgradeType(Box<UpgradeType>),
@@ -38626,13 +37795,6 @@ pub enum Type {
     SetTrustLineFlagsOp(Box<SetTrustLineFlagsOp>),
     LiquidityPoolDepositOp(Box<LiquidityPoolDepositOp>),
     LiquidityPoolWithdrawOp(Box<LiquidityPoolWithdrawOp>),
-    HostFunctionType(Box<HostFunctionType>),
-    ContractIdType(Box<ContractIdType>),
-    ContractIdPublicKeyType(Box<ContractIdPublicKeyType>),
-    InstallContractCodeArgs(Box<InstallContractCodeArgs>),
-    ContractId(Box<ContractId>),
-    ContractIdFromEd25519PublicKey(Box<ContractIdFromEd25519PublicKey>),
-    CreateContractArgs(Box<CreateContractArgs>),
     HostFunction(Box<HostFunction>),
     InvokeHostFunctionOp(Box<InvokeHostFunctionOp>),
     Operation(Box<Operation>),
@@ -38642,9 +37804,7 @@ pub enum Type {
     HashIdPreimageRevokeId(Box<HashIdPreimageRevokeId>),
     HashIdPreimageEd25519ContractId(Box<HashIdPreimageEd25519ContractId>),
     HashIdPreimageContractId(Box<HashIdPreimageContractId>),
-    HashIdPreimageFromAsset(Box<HashIdPreimageFromAsset>),
     HashIdPreimageSourceAccountContractId(Box<HashIdPreimageSourceAccountContractId>),
-    HashIdPreimageCreateContractArgs(Box<HashIdPreimageCreateContractArgs>),
     MemoType(Box<MemoType>),
     Memo(Box<Memo>),
     TimeBounds(Box<TimeBounds>),
@@ -38760,7 +37920,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 390] = [
+    pub const VARIANTS: [TypeVariant; 379] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38882,7 +38042,6 @@ impl Type {
         TypeVariant::LiquidityPoolEntryBody,
         TypeVariant::LiquidityPoolEntryConstantProduct,
         TypeVariant::ContractDataEntry,
-        TypeVariant::ContractCodeEntry,
         TypeVariant::ConfigSettingType,
         TypeVariant::ConfigSetting,
         TypeVariant::ConfigSettingId,
@@ -38901,7 +38060,6 @@ impl Type {
         TypeVariant::LedgerKeyClaimableBalance,
         TypeVariant::LedgerKeyLiquidityPool,
         TypeVariant::LedgerKeyContractData,
-        TypeVariant::LedgerKeyContractCode,
         TypeVariant::LedgerKeyConfigSetting,
         TypeVariant::EnvelopeType,
         TypeVariant::UpgradeType,
@@ -39020,13 +38178,6 @@ impl Type {
         TypeVariant::SetTrustLineFlagsOp,
         TypeVariant::LiquidityPoolDepositOp,
         TypeVariant::LiquidityPoolWithdrawOp,
-        TypeVariant::HostFunctionType,
-        TypeVariant::ContractIdType,
-        TypeVariant::ContractIdPublicKeyType,
-        TypeVariant::InstallContractCodeArgs,
-        TypeVariant::ContractId,
-        TypeVariant::ContractIdFromEd25519PublicKey,
-        TypeVariant::CreateContractArgs,
         TypeVariant::HostFunction,
         TypeVariant::InvokeHostFunctionOp,
         TypeVariant::Operation,
@@ -39036,9 +38187,7 @@ impl Type {
         TypeVariant::HashIdPreimageRevokeId,
         TypeVariant::HashIdPreimageEd25519ContractId,
         TypeVariant::HashIdPreimageContractId,
-        TypeVariant::HashIdPreimageFromAsset,
         TypeVariant::HashIdPreimageSourceAccountContractId,
-        TypeVariant::HashIdPreimageCreateContractArgs,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -39152,7 +38301,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 390] = [
+    pub const VARIANTS_STR: [&'static str; 379] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -39274,7 +38423,6 @@ impl Type {
         "LiquidityPoolEntryBody",
         "LiquidityPoolEntryConstantProduct",
         "ContractDataEntry",
-        "ContractCodeEntry",
         "ConfigSettingType",
         "ConfigSetting",
         "ConfigSettingId",
@@ -39293,7 +38441,6 @@ impl Type {
         "LedgerKeyClaimableBalance",
         "LedgerKeyLiquidityPool",
         "LedgerKeyContractData",
-        "LedgerKeyContractCode",
         "LedgerKeyConfigSetting",
         "EnvelopeType",
         "UpgradeType",
@@ -39412,13 +38559,6 @@ impl Type {
         "SetTrustLineFlagsOp",
         "LiquidityPoolDepositOp",
         "LiquidityPoolWithdrawOp",
-        "HostFunctionType",
-        "ContractIdType",
-        "ContractIdPublicKeyType",
-        "InstallContractCodeArgs",
-        "ContractId",
-        "ContractIdFromEd25519PublicKey",
-        "CreateContractArgs",
         "HostFunction",
         "InvokeHostFunctionOp",
         "Operation",
@@ -39428,9 +38568,7 @@ impl Type {
         "HashIdPreimageRevokeId",
         "HashIdPreimageEd25519ContractId",
         "HashIdPreimageContractId",
-        "HashIdPreimageFromAsset",
         "HashIdPreimageSourceAccountContractId",
-        "HashIdPreimageCreateContractArgs",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -39846,9 +38984,6 @@ impl Type {
             TypeVariant::ContractDataEntry => Ok(Self::ContractDataEntry(Box::new(
                 ContractDataEntry::read_xdr(r)?,
             ))),
-            TypeVariant::ContractCodeEntry => Ok(Self::ContractCodeEntry(Box::new(
-                ContractCodeEntry::read_xdr(r)?,
-            ))),
             TypeVariant::ConfigSettingType => Ok(Self::ConfigSettingType(Box::new(
                 ConfigSettingType::read_xdr(r)?,
             ))),
@@ -39898,9 +39033,6 @@ impl Type {
             ))),
             TypeVariant::LedgerKeyContractData => Ok(Self::LedgerKeyContractData(Box::new(
                 LedgerKeyContractData::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerKeyContractCode => Ok(Self::LedgerKeyContractCode(Box::new(
-                LedgerKeyContractCode::read_xdr(r)?,
             ))),
             TypeVariant::LedgerKeyConfigSetting => Ok(Self::LedgerKeyConfigSetting(Box::new(
                 LedgerKeyConfigSetting::read_xdr(r)?,
@@ -40232,27 +39364,6 @@ impl Type {
             TypeVariant::LiquidityPoolWithdrawOp => Ok(Self::LiquidityPoolWithdrawOp(Box::new(
                 LiquidityPoolWithdrawOp::read_xdr(r)?,
             ))),
-            TypeVariant::HostFunctionType => Ok(Self::HostFunctionType(Box::new(
-                HostFunctionType::read_xdr(r)?,
-            ))),
-            TypeVariant::ContractIdType => {
-                Ok(Self::ContractIdType(Box::new(ContractIdType::read_xdr(r)?)))
-            }
-            TypeVariant::ContractIdPublicKeyType => Ok(Self::ContractIdPublicKeyType(Box::new(
-                ContractIdPublicKeyType::read_xdr(r)?,
-            ))),
-            TypeVariant::InstallContractCodeArgs => Ok(Self::InstallContractCodeArgs(Box::new(
-                InstallContractCodeArgs::read_xdr(r)?,
-            ))),
-            TypeVariant::ContractId => Ok(Self::ContractId(Box::new(ContractId::read_xdr(r)?))),
-            TypeVariant::ContractIdFromEd25519PublicKey => {
-                Ok(Self::ContractIdFromEd25519PublicKey(Box::new(
-                    ContractIdFromEd25519PublicKey::read_xdr(r)?,
-                )))
-            }
-            TypeVariant::CreateContractArgs => Ok(Self::CreateContractArgs(Box::new(
-                CreateContractArgs::read_xdr(r)?,
-            ))),
             TypeVariant::HostFunction => {
                 Ok(Self::HostFunction(Box::new(HostFunction::read_xdr(r)?)))
             }
@@ -40280,17 +39391,9 @@ impl Type {
             TypeVariant::HashIdPreimageContractId => Ok(Self::HashIdPreimageContractId(Box::new(
                 HashIdPreimageContractId::read_xdr(r)?,
             ))),
-            TypeVariant::HashIdPreimageFromAsset => Ok(Self::HashIdPreimageFromAsset(Box::new(
-                HashIdPreimageFromAsset::read_xdr(r)?,
-            ))),
             TypeVariant::HashIdPreimageSourceAccountContractId => {
                 Ok(Self::HashIdPreimageSourceAccountContractId(Box::new(
                     HashIdPreimageSourceAccountContractId::read_xdr(r)?,
-                )))
-            }
-            TypeVariant::HashIdPreimageCreateContractArgs => {
-                Ok(Self::HashIdPreimageCreateContractArgs(Box::new(
-                    HashIdPreimageCreateContractArgs::read_xdr(r)?,
                 )))
             }
             TypeVariant::MemoType => Ok(Self::MemoType(Box::new(MemoType::read_xdr(r)?))),
@@ -41132,10 +40235,6 @@ impl Type {
                 ReadXdrIter::<_, ContractDataEntry>::new(r)
                     .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t)))),
             ),
-            TypeVariant::ContractCodeEntry => Box::new(
-                ReadXdrIter::<_, ContractCodeEntry>::new(r)
-                    .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
-            ),
             TypeVariant::ConfigSettingType => Box::new(
                 ReadXdrIter::<_, ConfigSettingType>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingType(Box::new(t)))),
@@ -41207,10 +40306,6 @@ impl Type {
             TypeVariant::LedgerKeyContractData => Box::new(
                 ReadXdrIter::<_, LedgerKeyContractData>::new(r)
                     .map(|r| r.map(|t| Self::LedgerKeyContractData(Box::new(t)))),
-            ),
-            TypeVariant::LedgerKeyContractCode => Box::new(
-                ReadXdrIter::<_, LedgerKeyContractCode>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerKeyContractCode(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyConfigSetting => Box::new(
                 ReadXdrIter::<_, LedgerKeyConfigSetting>::new(r)
@@ -41678,34 +40773,6 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(r)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))),
             ),
-            TypeVariant::HostFunctionType => Box::new(
-                ReadXdrIter::<_, HostFunctionType>::new(r)
-                    .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t)))),
-            ),
-            TypeVariant::ContractIdType => Box::new(
-                ReadXdrIter::<_, ContractIdType>::new(r)
-                    .map(|r| r.map(|t| Self::ContractIdType(Box::new(t)))),
-            ),
-            TypeVariant::ContractIdPublicKeyType => Box::new(
-                ReadXdrIter::<_, ContractIdPublicKeyType>::new(r)
-                    .map(|r| r.map(|t| Self::ContractIdPublicKeyType(Box::new(t)))),
-            ),
-            TypeVariant::InstallContractCodeArgs => Box::new(
-                ReadXdrIter::<_, InstallContractCodeArgs>::new(r)
-                    .map(|r| r.map(|t| Self::InstallContractCodeArgs(Box::new(t)))),
-            ),
-            TypeVariant::ContractId => Box::new(
-                ReadXdrIter::<_, ContractId>::new(r)
-                    .map(|r| r.map(|t| Self::ContractId(Box::new(t)))),
-            ),
-            TypeVariant::ContractIdFromEd25519PublicKey => Box::new(
-                ReadXdrIter::<_, ContractIdFromEd25519PublicKey>::new(r)
-                    .map(|r| r.map(|t| Self::ContractIdFromEd25519PublicKey(Box::new(t)))),
-            ),
-            TypeVariant::CreateContractArgs => Box::new(
-                ReadXdrIter::<_, CreateContractArgs>::new(r)
-                    .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
-            ),
             TypeVariant::HostFunction => Box::new(
                 ReadXdrIter::<_, HostFunction>::new(r)
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
@@ -41742,17 +40809,9 @@ impl Type {
                 ReadXdrIter::<_, HashIdPreimageContractId>::new(r)
                     .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t)))),
             ),
-            TypeVariant::HashIdPreimageFromAsset => Box::new(
-                ReadXdrIter::<_, HashIdPreimageFromAsset>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageFromAsset(Box::new(t)))),
-            ),
             TypeVariant::HashIdPreimageSourceAccountContractId => Box::new(
                 ReadXdrIter::<_, HashIdPreimageSourceAccountContractId>::new(r)
                     .map(|r| r.map(|t| Self::HashIdPreimageSourceAccountContractId(Box::new(t)))),
-            ),
-            TypeVariant::HashIdPreimageCreateContractArgs => Box::new(
-                ReadXdrIter::<_, HashIdPreimageCreateContractArgs>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageCreateContractArgs(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(r).map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
@@ -42338,7 +41397,6 @@ impl Type {
             Self::LiquidityPoolEntryBody(ref v) => v.as_ref(),
             Self::LiquidityPoolEntryConstantProduct(ref v) => v.as_ref(),
             Self::ContractDataEntry(ref v) => v.as_ref(),
-            Self::ContractCodeEntry(ref v) => v.as_ref(),
             Self::ConfigSettingType(ref v) => v.as_ref(),
             Self::ConfigSetting(ref v) => v.as_ref(),
             Self::ConfigSettingId(ref v) => v.as_ref(),
@@ -42357,7 +41415,6 @@ impl Type {
             Self::LedgerKeyClaimableBalance(ref v) => v.as_ref(),
             Self::LedgerKeyLiquidityPool(ref v) => v.as_ref(),
             Self::LedgerKeyContractData(ref v) => v.as_ref(),
-            Self::LedgerKeyContractCode(ref v) => v.as_ref(),
             Self::LedgerKeyConfigSetting(ref v) => v.as_ref(),
             Self::EnvelopeType(ref v) => v.as_ref(),
             Self::UpgradeType(ref v) => v.as_ref(),
@@ -42476,13 +41533,6 @@ impl Type {
             Self::SetTrustLineFlagsOp(ref v) => v.as_ref(),
             Self::LiquidityPoolDepositOp(ref v) => v.as_ref(),
             Self::LiquidityPoolWithdrawOp(ref v) => v.as_ref(),
-            Self::HostFunctionType(ref v) => v.as_ref(),
-            Self::ContractIdType(ref v) => v.as_ref(),
-            Self::ContractIdPublicKeyType(ref v) => v.as_ref(),
-            Self::InstallContractCodeArgs(ref v) => v.as_ref(),
-            Self::ContractId(ref v) => v.as_ref(),
-            Self::ContractIdFromEd25519PublicKey(ref v) => v.as_ref(),
-            Self::CreateContractArgs(ref v) => v.as_ref(),
             Self::HostFunction(ref v) => v.as_ref(),
             Self::InvokeHostFunctionOp(ref v) => v.as_ref(),
             Self::Operation(ref v) => v.as_ref(),
@@ -42492,9 +41542,7 @@ impl Type {
             Self::HashIdPreimageRevokeId(ref v) => v.as_ref(),
             Self::HashIdPreimageEd25519ContractId(ref v) => v.as_ref(),
             Self::HashIdPreimageContractId(ref v) => v.as_ref(),
-            Self::HashIdPreimageFromAsset(ref v) => v.as_ref(),
             Self::HashIdPreimageSourceAccountContractId(ref v) => v.as_ref(),
-            Self::HashIdPreimageCreateContractArgs(ref v) => v.as_ref(),
             Self::MemoType(ref v) => v.as_ref(),
             Self::Memo(ref v) => v.as_ref(),
             Self::TimeBounds(ref v) => v.as_ref(),
@@ -42737,7 +41785,6 @@ impl Type {
             Self::LiquidityPoolEntryBody(_) => "LiquidityPoolEntryBody",
             Self::LiquidityPoolEntryConstantProduct(_) => "LiquidityPoolEntryConstantProduct",
             Self::ContractDataEntry(_) => "ContractDataEntry",
-            Self::ContractCodeEntry(_) => "ContractCodeEntry",
             Self::ConfigSettingType(_) => "ConfigSettingType",
             Self::ConfigSetting(_) => "ConfigSetting",
             Self::ConfigSettingId(_) => "ConfigSettingId",
@@ -42756,7 +41803,6 @@ impl Type {
             Self::LedgerKeyClaimableBalance(_) => "LedgerKeyClaimableBalance",
             Self::LedgerKeyLiquidityPool(_) => "LedgerKeyLiquidityPool",
             Self::LedgerKeyContractData(_) => "LedgerKeyContractData",
-            Self::LedgerKeyContractCode(_) => "LedgerKeyContractCode",
             Self::LedgerKeyConfigSetting(_) => "LedgerKeyConfigSetting",
             Self::EnvelopeType(_) => "EnvelopeType",
             Self::UpgradeType(_) => "UpgradeType",
@@ -42875,13 +41921,6 @@ impl Type {
             Self::SetTrustLineFlagsOp(_) => "SetTrustLineFlagsOp",
             Self::LiquidityPoolDepositOp(_) => "LiquidityPoolDepositOp",
             Self::LiquidityPoolWithdrawOp(_) => "LiquidityPoolWithdrawOp",
-            Self::HostFunctionType(_) => "HostFunctionType",
-            Self::ContractIdType(_) => "ContractIdType",
-            Self::ContractIdPublicKeyType(_) => "ContractIdPublicKeyType",
-            Self::InstallContractCodeArgs(_) => "InstallContractCodeArgs",
-            Self::ContractId(_) => "ContractId",
-            Self::ContractIdFromEd25519PublicKey(_) => "ContractIdFromEd25519PublicKey",
-            Self::CreateContractArgs(_) => "CreateContractArgs",
             Self::HostFunction(_) => "HostFunction",
             Self::InvokeHostFunctionOp(_) => "InvokeHostFunctionOp",
             Self::Operation(_) => "Operation",
@@ -42891,11 +41930,9 @@ impl Type {
             Self::HashIdPreimageRevokeId(_) => "HashIdPreimageRevokeId",
             Self::HashIdPreimageEd25519ContractId(_) => "HashIdPreimageEd25519ContractId",
             Self::HashIdPreimageContractId(_) => "HashIdPreimageContractId",
-            Self::HashIdPreimageFromAsset(_) => "HashIdPreimageFromAsset",
             Self::HashIdPreimageSourceAccountContractId(_) => {
                 "HashIdPreimageSourceAccountContractId"
             }
-            Self::HashIdPreimageCreateContractArgs(_) => "HashIdPreimageCreateContractArgs",
             Self::MemoType(_) => "MemoType",
             Self::Memo(_) => "Memo",
             Self::TimeBounds(_) => "TimeBounds",
@@ -43021,7 +42058,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 390] {
+    pub const fn variants() -> [TypeVariant; 379] {
         Self::VARIANTS
     }
 
@@ -43158,7 +42195,6 @@ impl Type {
                 TypeVariant::LiquidityPoolEntryConstantProduct
             }
             Self::ContractDataEntry(_) => TypeVariant::ContractDataEntry,
-            Self::ContractCodeEntry(_) => TypeVariant::ContractCodeEntry,
             Self::ConfigSettingType(_) => TypeVariant::ConfigSettingType,
             Self::ConfigSetting(_) => TypeVariant::ConfigSetting,
             Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
@@ -43177,7 +42213,6 @@ impl Type {
             Self::LedgerKeyClaimableBalance(_) => TypeVariant::LedgerKeyClaimableBalance,
             Self::LedgerKeyLiquidityPool(_) => TypeVariant::LedgerKeyLiquidityPool,
             Self::LedgerKeyContractData(_) => TypeVariant::LedgerKeyContractData,
-            Self::LedgerKeyContractCode(_) => TypeVariant::LedgerKeyContractCode,
             Self::LedgerKeyConfigSetting(_) => TypeVariant::LedgerKeyConfigSetting,
             Self::EnvelopeType(_) => TypeVariant::EnvelopeType,
             Self::UpgradeType(_) => TypeVariant::UpgradeType,
@@ -43306,13 +42341,6 @@ impl Type {
             Self::SetTrustLineFlagsOp(_) => TypeVariant::SetTrustLineFlagsOp,
             Self::LiquidityPoolDepositOp(_) => TypeVariant::LiquidityPoolDepositOp,
             Self::LiquidityPoolWithdrawOp(_) => TypeVariant::LiquidityPoolWithdrawOp,
-            Self::HostFunctionType(_) => TypeVariant::HostFunctionType,
-            Self::ContractIdType(_) => TypeVariant::ContractIdType,
-            Self::ContractIdPublicKeyType(_) => TypeVariant::ContractIdPublicKeyType,
-            Self::InstallContractCodeArgs(_) => TypeVariant::InstallContractCodeArgs,
-            Self::ContractId(_) => TypeVariant::ContractId,
-            Self::ContractIdFromEd25519PublicKey(_) => TypeVariant::ContractIdFromEd25519PublicKey,
-            Self::CreateContractArgs(_) => TypeVariant::CreateContractArgs,
             Self::HostFunction(_) => TypeVariant::HostFunction,
             Self::InvokeHostFunctionOp(_) => TypeVariant::InvokeHostFunctionOp,
             Self::Operation(_) => TypeVariant::Operation,
@@ -43324,12 +42352,8 @@ impl Type {
                 TypeVariant::HashIdPreimageEd25519ContractId
             }
             Self::HashIdPreimageContractId(_) => TypeVariant::HashIdPreimageContractId,
-            Self::HashIdPreimageFromAsset(_) => TypeVariant::HashIdPreimageFromAsset,
             Self::HashIdPreimageSourceAccountContractId(_) => {
                 TypeVariant::HashIdPreimageSourceAccountContractId
-            }
-            Self::HashIdPreimageCreateContractArgs(_) => {
-                TypeVariant::HashIdPreimageCreateContractArgs
             }
             Self::MemoType(_) => TypeVariant::MemoType,
             Self::Memo(_) => TypeVariant::Memo,

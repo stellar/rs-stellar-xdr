@@ -1,4 +1,6 @@
-use crate::{AccountId, ScMap, ScMapEntry, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec};
+use crate::{
+    AccountId, Int128Parts, ScMap, ScMapEntry, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec,
+};
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
@@ -246,6 +248,137 @@ impl TryFrom<ScVal> for u64 {
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
         if let ScVal::Object(Some(ScObject::U64(i))) = v {
             Ok(i)
+        } else {
+            Err(())
+        }
+    }
+}
+
+#[inline(always)]
+#[allow(clippy::inline_always, clippy::cast_possible_truncation)]
+fn u128_lo(u: u128) -> u64 {
+    u as u64
+}
+
+#[inline(always)]
+#[allow(clippy::inline_always, clippy::cast_possible_truncation)]
+fn u128_hi(u: u128) -> u64 {
+    (u >> 64) as u64
+}
+
+#[inline(always)]
+#[allow(clippy::inline_always)]
+fn u128_from_pieces(lo: u64, hi: u64) -> u128 {
+    u128::from(lo) | (u128::from(hi) << 64)
+}
+
+#[inline(always)]
+#[allow(clippy::inline_always, clippy::cast_sign_loss)]
+fn u128_from_i128(i: i128) -> u128 {
+    i as u128
+}
+
+#[inline(always)]
+#[allow(clippy::inline_always, clippy::cast_possible_wrap)]
+fn i128_from_u128(u: u128) -> i128 {
+    u as i128
+}
+
+impl From<u128> for ScObject {
+    fn from(v: u128) -> Self {
+        ScObject::U128(Int128Parts {
+            lo: u128_lo(v),
+            hi: u128_hi(v),
+        })
+    }
+}
+
+impl From<&u128> for ScObject {
+    fn from(v: &u128) -> Self {
+        <ScObject as From<u128>>::from(*v)
+    }
+}
+
+impl From<u128> for ScVal {
+    fn from(v: u128) -> Self {
+        <_ as Into<ScObject>>::into(v).into()
+    }
+}
+
+impl From<&u128> for ScVal {
+    fn from(v: &u128) -> Self {
+        <_ as Into<ScObject>>::into(v).into()
+    }
+}
+
+impl TryFrom<ScObject> for u128 {
+    type Error = ();
+    fn try_from(v: ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::U128(i) = v {
+            Ok(u128_from_pieces(i.lo, i.hi))
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryFrom<ScVal> for u128 {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(ScObject::U128(i))) = v {
+            Ok(u128_from_pieces(i.lo, i.hi))
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl From<i128> for ScObject {
+    fn from(v: i128) -> Self {
+        let v = u128_from_i128(v);
+        ScObject::I128(Int128Parts {
+            lo: u128_lo(v),
+            hi: u128_hi(v),
+        })
+    }
+}
+
+impl From<&i128> for ScObject {
+    fn from(v: &i128) -> Self {
+        <ScObject as From<i128>>::from(*v)
+    }
+}
+
+impl From<i128> for ScVal {
+    fn from(v: i128) -> Self {
+        <_ as Into<ScObject>>::into(v).into()
+    }
+}
+
+impl From<&i128> for ScVal {
+    fn from(v: &i128) -> Self {
+        <_ as Into<ScObject>>::into(v).into()
+    }
+}
+
+impl TryFrom<ScObject> for i128 {
+    type Error = ();
+    fn try_from(v: ScObject) -> Result<Self, Self::Error> {
+        if let ScObject::I128(i) = v {
+            let v: u128 = u128_from_pieces(i.lo, i.hi);
+            Ok(i128_from_u128(v))
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryFrom<ScVal> for i128 {
+    type Error = ();
+    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
+        if let ScVal::Object(Some(ScObject::I128(i))) = v {
+            let v: u128 = u128_from_pieces(i.lo, i.hi);
+            Ok(i128_from_u128(v))
         } else {
             Err(())
         }

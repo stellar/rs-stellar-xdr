@@ -30789,7 +30789,8 @@ impl core::str::FromStr for TypeVariant {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "camelCase"),
+    serde(untagged)
 )]
 pub enum Type {
     Value(Box<Value>),
@@ -33812,8 +33813,8 @@ impl Type {
     }
 
     #[cfg(feature = "alloc")]
-    #[must_use]
     #[allow(clippy::too_many_lines)]
+    #[must_use]
     pub fn value(&self) -> &dyn core::any::Any {
         match self {
             Self::Value(ref v) => v.as_ref(),

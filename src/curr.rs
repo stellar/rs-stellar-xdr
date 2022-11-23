@@ -408,6 +408,14 @@ where
         ReadXdrIter::new(r)
     }
 
+    /// Create an iterator that reads the read implementation as a stream of
+    /// values that are read into the implementing type.
+    #[cfg(feature = "base64")]
+    fn read_xdr_base64_iter<R: Read>(r: &mut R) -> ReadXdrIter<base64::read::DecoderReader, Self> {
+        let mut dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+        ReadXdrIter::new(&mut dec)
+    }
+
     /// Construct the type from the XDR bytes.
     ///
     /// An error is returned if the bytes are not completely consumed by the
@@ -33797,10 +33805,20 @@ impl Type {
         }
     }
 
+    #[cfg(feature = "base64")]
+    #[allow(clippy::too_many_lines)]
+    pub fn read_xdr_base64_iter<R: Read>(
+        v: TypeVariant,
+        r: &mut R,
+    ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
+        let mut dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+        Self::read_xdr_iter(v, &mut dec)
+    }
+
     #[cfg(feature = "std")]
     pub fn from_xdr<B: AsRef<[u8]>>(v: TypeVariant, bytes: B) -> Result<Self> {
         let mut cursor = Cursor::new(bytes.as_ref());
-        let t = Self::read_xdr(v, &mut cursor)?;
+        let t = Self::read_xdr_to_end(v, &mut cursor)?;
         Ok(t)
     }
 
@@ -33808,7 +33826,7 @@ impl Type {
     pub fn from_xdr_base64(v: TypeVariant, b64: String) -> Result<Self> {
         let mut b64_reader = Cursor::new(b64);
         let mut dec = base64::read::DecoderReader::new(&mut b64_reader, base64::STANDARD);
-        let t = Self::read_xdr(v, &mut dec)?;
+        let t = Self::read_xdr_to_end(v, &mut dec)?;
         Ok(t)
     }
 

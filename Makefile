@@ -20,7 +20,7 @@ src/curr.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
-		gem specific_install https://github.com/stellar/xdrgen.git -b d01cb885 && \
+		gem specific_install https://github.com/stellar/xdrgen.git -b d37c2495 && \
 		xdrgen --language rust --namespace curr --output src/ $^ \
 		'
 	rustfmt $@
@@ -29,7 +29,7 @@ src/next.rs: $(sort $(wildcard xdr/next/*.x))
 	> $@
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
-		gem specific_install https://github.com/stellar/xdrgen.git -b d01cb885 && \
+		gem specific_install https://github.com/stellar/xdrgen.git -b d37c2495 && \
 		xdrgen --language rust --namespace next --output src/ $^ \
 		'
 	rustfmt $@

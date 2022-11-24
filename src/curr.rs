@@ -411,7 +411,7 @@ where
     /// Create an iterator that reads the read implementation as a stream of
     /// values that are read into the implementing type.
     #[cfg(feature = "base64")]
-    fn read_xdr_base64_iter<R: Read>(r: &mut R) -> ReadXdrIter<base64::read::DecoderReader, Self> {
+    fn read_xdr_base64_iter<R: Read, B: Read>(r: &mut R) -> ReadXdrIter<B, Self> {
         let mut dec = base64::read::DecoderReader::new(r, base64::STANDARD);
         ReadXdrIter::new(&mut dec)
     }
@@ -1818,6 +1818,35 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
         w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
 
         Ok(())
+    }
+}
+
+// Frame ------------------------------------------------------------------------
+
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct Frame<T>(pub T)
+where
+    T: ReadXdr;
+
+impl<T> ReadXdr for Frame<T>
+where
+    T: ReadXdr,
+{
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        // Read the length value.
+        // TODO: Actually use the length and cap the length we'll read from `r`
+        // with the length.
+        // TODO: Actually use the high bit as a signal that there are additional
+        // frames, and support reading those additional frames.
+        _ = u32::read_xdr(r)?;
+        // Read the embedded value.
+        T::read_xdr(r)
     }
 }
 

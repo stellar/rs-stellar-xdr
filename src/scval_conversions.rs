@@ -257,20 +257,14 @@ impl TryFrom<ScVal> for u64 {
 pub mod int128_helpers {
     #[must_use]
     #[inline(always)]
-    #[allow(
-        clippy::inline_always,
-        clippy::cast_possible_truncation
-    )]
+    #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
     pub fn u128_lo(u: u128) -> u64 {
         u as u64
     }
 
     #[must_use]
     #[inline(always)]
-    #[allow(
-        clippy::inline_always,
-        clippy::cast_possible_truncation
-    )]
+    #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
     pub fn u128_hi(u: u128) -> u64 {
         (u >> 64) as u64
     }
@@ -284,20 +278,14 @@ pub mod int128_helpers {
 
     #[must_use]
     #[inline(always)]
-    #[allow(
-        clippy::inline_always,
-        clippy::cast_sign_loss,
-    )]
+    #[allow(clippy::inline_always, clippy::cast_sign_loss)]
     pub fn u128_from_i128(i: i128) -> u128 {
         i as u128
     }
 
     #[must_use]
     #[inline(always)]
-    #[allow(
-        clippy::inline_always,
-        clippy::cast_possible_wrap,
-    )]
+    #[allow(clippy::inline_always, clippy::cast_possible_wrap)]
     pub fn i128_from_u128(u: u128) -> i128 {
         u as i128
     }

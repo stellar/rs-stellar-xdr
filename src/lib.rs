@@ -1,13 +1,28 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
-const GIT_REVISION: &str = env!("GIT_REVISION");
-#[cfg(not(feature = "next"))]
-const XDR_VERSION: &str = env!("XDR_CURR_VERSION");
-#[cfg(feature = "next")]
-const XDR_VERSION: &str = env!("XDR_NEXT_VERSION");
-pub const VERSION: &str = const_format::formatcp!("{PKG_VERSION} ({GIT_REVISION}) ({XDR_VERSION})");
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Version<'a> {
+    pub pkg: &'a str,
+    pub rev: &'a str,
+    pub xdr: &'a str,
+}
+
+pub const VERSION: Version = Version {
+    pkg: env!("CARGO_PKG_VERSION"),
+    rev: env!("GIT_REVISION"),
+    xdr: {
+        #[cfg(not(feature = "next"))]
+        {
+            env!("XDR_CURR_VERSION")
+        }
+        #[cfg(feature = "next")]
+        {
+            env!("XDR_NEXT_VERSION")
+        }
+    },
+};
 
 #[cfg(not(feature = "next"))]
 mod curr;

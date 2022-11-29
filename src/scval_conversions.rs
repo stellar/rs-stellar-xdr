@@ -254,35 +254,45 @@ impl TryFrom<ScVal> for u64 {
     }
 }
 
-#[inline(always)]
-#[allow(clippy::inline_always, clippy::cast_possible_truncation)]
-fn u128_lo(u: u128) -> u64 {
-    u as u64
+pub mod int128_helpers {
+    #[must_use]
+    #[inline(always)]
+    #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
+    pub fn u128_lo(u: u128) -> u64 {
+        u as u64
+    }
+
+    #[must_use]
+    #[inline(always)]
+    #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
+    pub fn u128_hi(u: u128) -> u64 {
+        (u >> 64) as u64
+    }
+
+    #[must_use]
+    #[inline(always)]
+    #[allow(clippy::inline_always)]
+    pub fn u128_from_pieces(lo: u64, hi: u64) -> u128 {
+        u128::from(lo) | (u128::from(hi) << 64)
+    }
+
+    #[must_use]
+    #[inline(always)]
+    #[allow(clippy::inline_always, clippy::cast_sign_loss)]
+    pub fn u128_from_i128(i: i128) -> u128 {
+        i as u128
+    }
+
+    #[must_use]
+    #[inline(always)]
+    #[allow(clippy::inline_always, clippy::cast_possible_wrap)]
+    pub fn i128_from_u128(u: u128) -> i128 {
+        u as i128
+    }
 }
 
-#[inline(always)]
-#[allow(clippy::inline_always, clippy::cast_possible_truncation)]
-fn u128_hi(u: u128) -> u64 {
-    (u >> 64) as u64
-}
-
-#[inline(always)]
-#[allow(clippy::inline_always)]
-fn u128_from_pieces(lo: u64, hi: u64) -> u128 {
-    u128::from(lo) | (u128::from(hi) << 64)
-}
-
-#[inline(always)]
-#[allow(clippy::inline_always, clippy::cast_sign_loss)]
-fn u128_from_i128(i: i128) -> u128 {
-    i as u128
-}
-
-#[inline(always)]
-#[allow(clippy::inline_always, clippy::cast_possible_wrap)]
-fn i128_from_u128(u: u128) -> i128 {
-    u as i128
-}
+#[allow(clippy::wildcard_imports)]
+use int128_helpers::*;
 
 impl From<u128> for ScObject {
     fn from(v: u128) -> Self {

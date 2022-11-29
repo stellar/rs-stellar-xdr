@@ -1,4 +1,4 @@
 #[test]
 fn version() {
-    std::println!("{}", stellar_xdr::VERSION);
+    std::println!("{:?}", stellar_xdr::VERSION);
 }

@@ -25,7 +25,6 @@ pub const VERSION: Version = Version {
 
 #[cfg(not(feature = "next"))]
 mod curr;
-
 #[cfg(not(feature = "next"))]
 pub use curr::*;
 

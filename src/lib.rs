@@ -24,15 +24,7 @@
 //! stellar-xdr = { version = "...", default-features = true, features = [...] }
 //! ```
 //!
-//! ### CLI
-//!
-//! To use the CLI:
-//!
-//! ```toml
-//! cargo install --locked stellar-xdr --version ... --features cli
-//! ```
-//!
-//! ## Features
+//! #### Features
 //!
 //! The crate has several features, tiers of functionality, ancillary
 //! functionality, and channels of XDR.
@@ -72,9 +64,30 @@
 //! crate. If multiple channels are enabled they are available in modules at
 //! the root of the crate.
 //!
-//! CLI features:
+//! ### CLI
 //!
-//! - `cli` – Enables support for all features required by the CLI.
+//! To use the CLI:
+//!
+//! ```toml
+//! cargo install --locked stellar-xdr --version ... --features cli
+//! ```
+//!
+//! #### Examples
+//!
+//! Parse a `TransactionEnvelope`:
+//! ```
+//! echo -n 'AAAAA...' | stellar-xdr decode --type TransactionEnvelope
+//! ```
+//!
+//! Parse a `ScSpecEntry` stream from a contract:
+//! ```
+//! echo -n 'AAAAA...' | stellar-xdr +next decode --type ScSpecEntry --input stream-base64 --output json-formatted
+//! ```
+//!
+//! Parse a `BucketEntry` framed stream from a bucket file:
+//! ```
+//! stellar-xdr decode --type BucketEntry --input stream-framed --output json-formatted bucket.xdr
+//! ```
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

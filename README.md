@@ -22,15 +22,7 @@ To use the library, include in your toml:
 stellar-xdr = { version = "...", default-features = true, features = [...] }
 ```
 
-#### CLI
-
-To use the CLI:
-
-```toml
-cargo install --locked stellar-xdr --version ... --features cli
-```
-
-### Features
+##### Features
 
 The crate has several features, tiers of functionality, ancillary
 functionality, and channels of XDR.
@@ -70,8 +62,29 @@ If a single channel is enabled the types are available at the root of the
 crate. If multiple channels are enabled they are available in modules at
 the root of the crate.
 
-CLI features:
+#### CLI
 
-- `cli` – Enables support for all features required by the CLI.
+To use the CLI:
+
+```toml
+cargo install --locked stellar-xdr --version ... --features cli
+```
+
+##### Examples
+
+Parse a `TransactionEnvelope`:
+```rust
+echo -n 'AAAAA...' | stellar-xdr decode --type TransactionEnvelope
+```
+
+Parse a `ScSpecEntry` stream from a contract:
+```rust
+echo -n 'AAAAA...' | stellar-xdr +next decode --type ScSpecEntry --input stream-base64 --output json-formatted
+```
+
+Parse a `BucketEntry` framed stream from a bucket file:
+```rust
+stellar-xdr decode --type BucketEntry --input stream-framed --output json-formatted bucket.xdr
+```
 
 License: Apache-2.0

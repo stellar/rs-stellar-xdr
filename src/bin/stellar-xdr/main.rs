@@ -2,9 +2,8 @@ mod decode;
 mod types;
 mod version;
 
-use std::error::Error;
-
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
+use std::{error::Error, fmt::Debug};
 
 #[derive(Parser, Debug, Clone)]
 #[command(
@@ -49,14 +48,20 @@ enum Cmd {
     Version,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn run() -> Result<(), Box<dyn Error>> {
     let root = Root::parse();
-
     match root.cmd {
         Cmd::Types(c) => c.run(&root.channel)?,
         Cmd::Decode(c) => c.run(&root.channel)?,
         Cmd::Version => version::Cmd::run(),
     }
-
     Ok(())
+}
+
+fn main() {
+    if let Err(e) = run() {
+        Root::command()
+            .error(clap::error::ErrorKind::ValueValidation, e)
+            .exit()
+    }
 }

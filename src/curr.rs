@@ -1831,7 +1831,7 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Frame<T>(pub T)
 where
@@ -2026,7 +2026,7 @@ mod test {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Value(pub BytesM);
 
@@ -2129,7 +2129,7 @@ impl AsRef<[u8]> for Value {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpBallot {
     pub counter: u32,
@@ -2171,7 +2171,7 @@ impl WriteXdr for ScpBallot {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ScpStatementType {
@@ -2281,7 +2281,7 @@ impl WriteXdr for ScpStatementType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpNomination {
     pub quorum_set_hash: Hash,
@@ -2327,7 +2327,7 @@ impl WriteXdr for ScpNomination {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpStatementPrepare {
     pub quorum_set_hash: Hash,
@@ -2381,7 +2381,7 @@ impl WriteXdr for ScpStatementPrepare {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpStatementConfirm {
     pub ballot: ScpBallot,
@@ -2430,7 +2430,7 @@ impl WriteXdr for ScpStatementConfirm {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpStatementExternalize {
     pub commit: ScpBallot,
@@ -2499,7 +2499,7 @@ impl WriteXdr for ScpStatementExternalize {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpStatementPledges {
@@ -2647,7 +2647,7 @@ impl WriteXdr for ScpStatementPledges {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpStatement {
     pub node_id: NodeId,
@@ -2689,7 +2689,7 @@ impl WriteXdr for ScpStatement {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpEnvelope {
     pub statement: ScpStatement,
@@ -2729,7 +2729,7 @@ impl WriteXdr for ScpEnvelope {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpQuorumSet {
     pub threshold: u32,
@@ -2774,7 +2774,7 @@ impl WriteXdr for ScpQuorumSet {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum StoredTransactionSet {
@@ -2873,7 +2873,7 @@ impl WriteXdr for StoredTransactionSet {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PersistedScpStateV0 {
     pub scp_envelopes: VecM<ScpEnvelope>,
@@ -2916,7 +2916,7 @@ impl WriteXdr for PersistedScpStateV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PersistedScpStateV1 {
     pub scp_envelopes: VecM<ScpEnvelope>,
@@ -2958,7 +2958,7 @@ impl WriteXdr for PersistedScpStateV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PersistedScpState {
@@ -3053,7 +3053,7 @@ impl WriteXdr for PersistedScpState {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AccountId(pub PublicKey);
 
@@ -3231,7 +3231,7 @@ pub type String64 = StringM<64>;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SequenceNumber(pub i64);
 
@@ -3282,7 +3282,7 @@ impl WriteXdr for SequenceNumber {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TimePoint(pub u64);
 
@@ -3333,7 +3333,7 @@ impl WriteXdr for TimePoint {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Duration(pub u64);
 
@@ -3384,7 +3384,7 @@ impl WriteXdr for Duration {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct DataValue(pub BytesM<64>);
 
@@ -3484,7 +3484,7 @@ impl AsRef<[u8]> for DataValue {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PoolId(pub Hash);
 
@@ -3771,7 +3771,7 @@ impl AsRef<[u8]> for AssetCode12 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum AssetType {
@@ -3887,7 +3887,7 @@ impl WriteXdr for AssetType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AssetCode {
@@ -3985,7 +3985,7 @@ impl WriteXdr for AssetCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AlphaNum4 {
     pub asset_code: AssetCode4,
@@ -4024,7 +4024,7 @@ impl WriteXdr for AlphaNum4 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AlphaNum12 {
     pub asset_code: AssetCode12,
@@ -4072,7 +4072,7 @@ impl WriteXdr for AlphaNum12 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum Asset {
@@ -4179,7 +4179,7 @@ impl WriteXdr for Asset {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Price {
     pub n: i32,
@@ -4218,7 +4218,7 @@ impl WriteXdr for Price {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Liabilities {
     pub buying: i64,
@@ -4260,7 +4260,7 @@ impl WriteXdr for Liabilities {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ThresholdIndexes {
@@ -4374,7 +4374,7 @@ impl WriteXdr for ThresholdIndexes {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LedgerEntryType {
@@ -4498,7 +4498,7 @@ impl WriteXdr for LedgerEntryType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Signer {
     pub key: SignerKey,
@@ -4550,7 +4550,7 @@ impl WriteXdr for Signer {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum AccountFlags {
@@ -4679,7 +4679,7 @@ pub const MAX_SIGNERS: u64 = 20;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SponsorshipDescriptor(pub Option<AccountId>);
 
@@ -4740,7 +4740,7 @@ impl WriteXdr for SponsorshipDescriptor {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AccountEntryExtensionV3 {
     pub ext: ExtensionPoint,
@@ -4785,7 +4785,7 @@ impl WriteXdr for AccountEntryExtensionV3 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExtensionV2Ext {
@@ -4893,7 +4893,7 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AccountEntryExtensionV2 {
     pub num_sponsored: u32,
@@ -4941,7 +4941,7 @@ impl WriteXdr for AccountEntryExtensionV2 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExtensionV1Ext {
@@ -5047,7 +5047,7 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AccountEntryExtensionV1 {
     pub liabilities: Liabilities,
@@ -5089,7 +5089,7 @@ impl WriteXdr for AccountEntryExtensionV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExt {
@@ -5210,7 +5210,7 @@ impl WriteXdr for AccountEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AccountEntry {
     pub account_id: AccountId,
@@ -5280,7 +5280,7 @@ impl WriteXdr for AccountEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum TrustLineFlags {
@@ -5407,7 +5407,7 @@ pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LiquidityPoolType {
@@ -5514,7 +5514,7 @@ impl WriteXdr for LiquidityPoolType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineAsset {
@@ -5629,7 +5629,7 @@ impl WriteXdr for TrustLineAsset {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryExtensionV2Ext {
@@ -5728,7 +5728,7 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TrustLineEntryExtensionV2 {
     pub liquidity_pool_use_count: i32,
@@ -5770,7 +5770,7 @@ impl WriteXdr for TrustLineEntryExtensionV2 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryV1Ext {
@@ -5876,7 +5876,7 @@ impl WriteXdr for TrustLineEntryV1Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TrustLineEntryV1 {
     pub liabilities: Liabilities,
@@ -5930,7 +5930,7 @@ impl WriteXdr for TrustLineEntryV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryExt {
@@ -6055,7 +6055,7 @@ impl WriteXdr for TrustLineEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TrustLineEntry {
     pub account_id: AccountId,
@@ -6108,7 +6108,7 @@ impl WriteXdr for TrustLineEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum OfferEntryFlags {
@@ -6210,7 +6210,7 @@ pub const MASK_OFFERENTRY_FLAGS: u64 = 1;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum OfferEntryExt {
@@ -6322,7 +6322,7 @@ impl WriteXdr for OfferEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct OfferEntry {
     pub seller_id: AccountId,
@@ -6380,7 +6380,7 @@ impl WriteXdr for OfferEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum DataEntryExt {
@@ -6482,7 +6482,7 @@ impl WriteXdr for DataEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct DataEntry {
     pub account_id: AccountId,
@@ -6532,7 +6532,7 @@ impl WriteXdr for DataEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimPredicateType {
@@ -6668,7 +6668,7 @@ impl WriteXdr for ClaimPredicateType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimPredicate {
@@ -6800,7 +6800,7 @@ impl WriteXdr for ClaimPredicate {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimantType {
@@ -6895,7 +6895,7 @@ impl WriteXdr for ClaimantType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimantV0 {
     pub destination: AccountId,
@@ -6939,7 +6939,7 @@ impl WriteXdr for ClaimantV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum Claimant {
@@ -7032,7 +7032,7 @@ impl WriteXdr for Claimant {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimableBalanceIdType {
@@ -7129,7 +7129,7 @@ impl WriteXdr for ClaimableBalanceIdType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceId {
@@ -7227,7 +7227,7 @@ impl WriteXdr for ClaimableBalanceId {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimableBalanceFlags {
@@ -7330,7 +7330,7 @@ pub const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceEntryExtensionV1Ext {
@@ -7429,7 +7429,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimableBalanceEntryExtensionV1 {
     pub ext: ClaimableBalanceEntryExtensionV1Ext,
@@ -7471,7 +7471,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceEntryExt {
@@ -7588,7 +7588,7 @@ impl WriteXdr for ClaimableBalanceEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimableBalanceEntry {
     pub balance_id: ClaimableBalanceId,
@@ -7637,7 +7637,7 @@ impl WriteXdr for ClaimableBalanceEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolConstantProductParameters {
     pub asset_a: Asset,
@@ -7684,7 +7684,7 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolEntryConstantProduct {
     pub params: LiquidityPoolConstantProductParameters,
@@ -7742,7 +7742,7 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolEntryBody {
@@ -7854,7 +7854,7 @@ impl WriteXdr for LiquidityPoolEntryBody {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolEntry {
     pub liquidity_pool_id: PoolId,
@@ -7894,7 +7894,7 @@ impl WriteXdr for LiquidityPoolEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryExtensionV1Ext {
@@ -7993,7 +7993,7 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerEntryExtensionV1 {
     pub sponsoring_id: SponsorshipDescriptor,
@@ -8043,7 +8043,7 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryData {
@@ -8180,7 +8180,7 @@ impl WriteXdr for LedgerEntryData {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryExt {
@@ -8304,7 +8304,7 @@ impl WriteXdr for LedgerEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerEntry {
     pub last_modified_ledger_seq: u32,
@@ -8345,7 +8345,7 @@ impl WriteXdr for LedgerEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyAccount {
     pub account_id: AccountId,
@@ -8381,7 +8381,7 @@ impl WriteXdr for LedgerKeyAccount {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyTrustLine {
     pub account_id: AccountId,
@@ -8420,7 +8420,7 @@ impl WriteXdr for LedgerKeyTrustLine {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyOffer {
     pub seller_id: AccountId,
@@ -8459,7 +8459,7 @@ impl WriteXdr for LedgerKeyOffer {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyData {
     pub account_id: AccountId,
@@ -8497,7 +8497,7 @@ impl WriteXdr for LedgerKeyData {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyClaimableBalance {
     pub balance_id: ClaimableBalanceId,
@@ -8532,7 +8532,7 @@ impl WriteXdr for LedgerKeyClaimableBalance {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyLiquidityPool {
     pub liquidity_pool_id: PoolId,
@@ -8605,7 +8605,7 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerKey {
@@ -8748,7 +8748,7 @@ impl WriteXdr for LedgerKey {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum EnvelopeType {
@@ -8879,7 +8879,7 @@ impl WriteXdr for EnvelopeType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct UpgradeType(pub BytesM<128>);
 
@@ -8983,7 +8983,7 @@ impl AsRef<[u8]> for UpgradeType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum StellarValueType {
@@ -9081,7 +9081,7 @@ impl WriteXdr for StellarValueType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerCloseValueSignature {
     pub node_id: NodeId,
@@ -9123,7 +9123,7 @@ impl WriteXdr for LedgerCloseValueSignature {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum StellarValueExt {
@@ -9238,7 +9238,7 @@ impl WriteXdr for StellarValueExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct StellarValue {
     pub tx_set_hash: Hash,
@@ -9291,7 +9291,7 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LedgerHeaderFlags {
@@ -9397,7 +9397,7 @@ impl WriteXdr for LedgerHeaderFlags {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderExtensionV1Ext {
@@ -9496,7 +9496,7 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerHeaderExtensionV1 {
     pub flags: u32,
@@ -9538,7 +9538,7 @@ impl WriteXdr for LedgerHeaderExtensionV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderExt {
@@ -9670,7 +9670,7 @@ impl WriteXdr for LedgerHeaderExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerHeader {
     pub ledger_version: u32,
@@ -9752,7 +9752,7 @@ impl WriteXdr for LedgerHeader {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LedgerUpgradeType {
@@ -9875,7 +9875,7 @@ impl WriteXdr for LedgerUpgradeType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerUpgrade {
@@ -10000,7 +10000,7 @@ impl WriteXdr for LedgerUpgrade {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum BucketEntryType {
@@ -10111,7 +10111,7 @@ impl WriteXdr for BucketEntryType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum BucketMetadataExt {
@@ -10212,7 +10212,7 @@ impl WriteXdr for BucketMetadataExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct BucketMetadata {
     pub ledger_version: u32,
@@ -10258,7 +10258,7 @@ impl WriteXdr for BucketMetadata {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum BucketEntry {
@@ -10374,7 +10374,7 @@ impl WriteXdr for BucketEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum TxSetComponentType {
@@ -10470,7 +10470,7 @@ impl WriteXdr for TxSetComponentType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TxSetComponentTxsMaybeDiscountedFee {
     pub base_fee: Option<i64>,
@@ -10514,7 +10514,7 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TxSetComponent {
@@ -10615,7 +10615,7 @@ impl WriteXdr for TxSetComponent {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionPhase {
@@ -10708,7 +10708,7 @@ impl WriteXdr for TransactionPhase {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionSet {
     pub previous_ledger_hash: Hash,
@@ -10747,7 +10747,7 @@ impl WriteXdr for TransactionSet {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionSetV1 {
     pub previous_ledger_hash: Hash,
@@ -10788,7 +10788,7 @@ impl WriteXdr for TransactionSetV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum GeneralizedTransactionSet {
@@ -10881,7 +10881,7 @@ impl WriteXdr for GeneralizedTransactionSet {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionResultPair {
     pub transaction_hash: Hash,
@@ -10919,7 +10919,7 @@ impl WriteXdr for TransactionResultPair {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionResultSet {
     pub results: VecM<TransactionResultPair>,
@@ -10958,7 +10958,7 @@ impl WriteXdr for TransactionResultSet {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryEntryExt {
@@ -11066,7 +11066,7 @@ impl WriteXdr for TransactionHistoryEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionHistoryEntry {
     pub ledger_seq: u32,
@@ -11109,7 +11109,7 @@ impl WriteXdr for TransactionHistoryEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryResultEntryExt {
@@ -11210,7 +11210,7 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionHistoryResultEntry {
     pub ledger_seq: u32,
@@ -11253,7 +11253,7 @@ impl WriteXdr for TransactionHistoryResultEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderHistoryEntryExt {
@@ -11354,7 +11354,7 @@ impl WriteXdr for LedgerHeaderHistoryEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerHeaderHistoryEntry {
     pub hash: Hash,
@@ -11396,7 +11396,7 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerScpMessages {
     pub ledger_seq: u32,
@@ -11435,7 +11435,7 @@ impl WriteXdr for LedgerScpMessages {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpHistoryEntryV0 {
     pub quorum_sets: VecM<ScpQuorumSet>,
@@ -11475,7 +11475,7 @@ impl WriteXdr for ScpHistoryEntryV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpHistoryEntry {
@@ -11571,7 +11571,7 @@ impl WriteXdr for ScpHistoryEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LedgerEntryChangeType {
@@ -11687,7 +11687,7 @@ impl WriteXdr for LedgerEntryChangeType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryChange {
@@ -11797,7 +11797,7 @@ impl WriteXdr for LedgerEntryChange {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerEntryChanges(pub VecM<LedgerEntryChange>);
 
@@ -11899,7 +11899,7 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct OperationMeta {
     pub changes: LedgerEntryChanges,
@@ -11935,7 +11935,7 @@ impl WriteXdr for OperationMeta {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionMetaV1 {
     pub tx_changes: LedgerEntryChanges,
@@ -11977,7 +11977,7 @@ impl WriteXdr for TransactionMetaV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionMetaV2 {
     pub tx_changes_before: LedgerEntryChanges,
@@ -12024,7 +12024,7 @@ impl WriteXdr for TransactionMetaV2 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionMeta {
@@ -12128,7 +12128,7 @@ impl WriteXdr for TransactionMeta {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionResultMeta {
     pub result: TransactionResultPair,
@@ -12170,7 +12170,7 @@ impl WriteXdr for TransactionResultMeta {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct UpgradeEntryMeta {
     pub upgrade: LedgerUpgrade,
@@ -12221,7 +12221,7 @@ impl WriteXdr for UpgradeEntryMeta {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerCloseMetaV0 {
     pub ledger_header: LedgerHeaderHistoryEntry,
@@ -12281,7 +12281,7 @@ impl WriteXdr for LedgerCloseMetaV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerCloseMetaV1 {
     pub ledger_header: LedgerHeaderHistoryEntry,
@@ -12332,7 +12332,7 @@ impl WriteXdr for LedgerCloseMetaV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerCloseMeta {
@@ -12434,7 +12434,7 @@ impl WriteXdr for LedgerCloseMeta {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ErrorCode {
@@ -12547,7 +12547,7 @@ impl WriteXdr for ErrorCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SError {
     pub code: ErrorCode,
@@ -12585,7 +12585,7 @@ impl WriteXdr for SError {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SendMore {
     pub num_messages: u32,
@@ -12622,7 +12622,7 @@ impl WriteXdr for SendMore {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AuthCert {
     pub pubkey: Curve25519Public,
@@ -12671,7 +12671,7 @@ impl WriteXdr for AuthCert {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Hello {
     pub ledger_version: u32,
@@ -12736,7 +12736,7 @@ pub const AUTH_MSG_FLAG_PULL_MODE_REQUESTED: u64 = 100;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Auth {
     pub flags: i32,
@@ -12773,7 +12773,7 @@ impl WriteXdr for Auth {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum IpAddrType {
@@ -12874,7 +12874,7 @@ impl WriteXdr for IpAddrType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PeerAddressIp {
@@ -12980,7 +12980,7 @@ impl WriteXdr for PeerAddressIp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PeerAddress {
     pub ip: PeerAddressIp,
@@ -13049,7 +13049,7 @@ impl WriteXdr for PeerAddress {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum MessageType {
@@ -13238,7 +13238,7 @@ impl WriteXdr for MessageType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct DontHave {
     pub type_: MessageType,
@@ -13277,7 +13277,7 @@ impl WriteXdr for DontHave {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum SurveyMessageCommandType {
@@ -13375,7 +13375,7 @@ impl WriteXdr for SurveyMessageCommandType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SurveyRequestMessage {
     pub surveyor_peer_id: NodeId,
@@ -13423,7 +13423,7 @@ impl WriteXdr for SurveyRequestMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SignedSurveyRequestMessage {
     pub request_signature: Signature,
@@ -13459,7 +13459,7 @@ impl WriteXdr for SignedSurveyRequestMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct EncryptedBody(pub BytesM<64000>);
 
@@ -13565,7 +13565,7 @@ impl AsRef<[u8]> for EncryptedBody {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SurveyResponseMessage {
     pub surveyor_peer_id: NodeId,
@@ -13613,7 +13613,7 @@ impl WriteXdr for SurveyResponseMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SignedSurveyResponseMessage {
     pub response_signature: Signature,
@@ -13667,7 +13667,7 @@ impl WriteXdr for SignedSurveyResponseMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PeerStats {
     pub id: NodeId,
@@ -13742,7 +13742,7 @@ impl WriteXdr for PeerStats {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PeerStatList(pub VecM<PeerStats, 25>);
 
@@ -13848,7 +13848,7 @@ impl AsRef<[PeerStats]> for PeerStatList {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TopologyResponseBody {
     pub inbound_peers: PeerStatList,
@@ -13894,7 +13894,7 @@ impl WriteXdr for TopologyResponseBody {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SurveyResponseBody {
@@ -13992,7 +13992,7 @@ pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TxAdvertVector(pub VecM<Hash, 1000>);
 
@@ -14094,7 +14094,7 @@ impl AsRef<[Hash]> for TxAdvertVector {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct FloodAdvert {
     pub tx_hashes: TxAdvertVector,
@@ -14133,7 +14133,7 @@ pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TxDemandVector(pub VecM<Hash, 1000>);
 
@@ -14235,7 +14235,7 @@ impl AsRef<[Hash]> for TxDemandVector {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct FloodDemand {
     pub tx_hashes: TxDemandVector,
@@ -14316,7 +14316,7 @@ impl WriteXdr for FloodDemand {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum StellarMessage {
@@ -14546,7 +14546,7 @@ impl WriteXdr for StellarMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AuthenticatedMessageV0 {
     pub sequence: u64,
@@ -14594,7 +14594,7 @@ impl WriteXdr for AuthenticatedMessageV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AuthenticatedMessage {
@@ -14688,7 +14688,7 @@ impl WriteXdr for AuthenticatedMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolParameters {
@@ -14785,7 +14785,7 @@ impl WriteXdr for LiquidityPoolParameters {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct MuxedAccountMed25519 {
     pub id: u64,
@@ -14831,7 +14831,7 @@ impl WriteXdr for MuxedAccountMed25519 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum MuxedAccount {
@@ -14929,7 +14929,7 @@ impl WriteXdr for MuxedAccount {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct DecoratedSignature {
     pub hint: SignatureHint,
@@ -14991,7 +14991,7 @@ impl WriteXdr for DecoratedSignature {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum OperationType {
@@ -15205,7 +15205,7 @@ impl WriteXdr for OperationType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct CreateAccountOp {
     pub destination: AccountId,
@@ -15245,7 +15245,7 @@ impl WriteXdr for CreateAccountOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PaymentOp {
     pub destination: MuxedAccount,
@@ -15295,7 +15295,7 @@ impl WriteXdr for PaymentOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictReceiveOp {
     pub send_asset: Asset,
@@ -15354,7 +15354,7 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictSendOp {
     pub send_asset: Asset,
@@ -15410,7 +15410,7 @@ impl WriteXdr for PathPaymentStrictSendOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ManageSellOfferOp {
     pub selling: Asset,
@@ -15464,7 +15464,7 @@ impl WriteXdr for ManageSellOfferOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ManageBuyOfferOp {
     pub selling: Asset,
@@ -15514,7 +15514,7 @@ impl WriteXdr for ManageBuyOfferOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct CreatePassiveSellOfferOp {
     pub selling: Asset,
@@ -15573,7 +15573,7 @@ impl WriteXdr for CreatePassiveSellOfferOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SetOptionsOp {
     pub inflation_dest: Option<AccountId>,
@@ -15645,7 +15645,7 @@ impl WriteXdr for SetOptionsOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ChangeTrustAsset {
@@ -15761,7 +15761,7 @@ impl WriteXdr for ChangeTrustAsset {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ChangeTrustOp {
     pub line: ChangeTrustAsset,
@@ -15803,7 +15803,7 @@ impl WriteXdr for ChangeTrustOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AllowTrustOp {
     pub trustor: AccountId,
@@ -15845,7 +15845,7 @@ impl WriteXdr for AllowTrustOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ManageDataOp {
     pub data_name: StringM<64>,
@@ -15883,7 +15883,7 @@ impl WriteXdr for ManageDataOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct BumpSequenceOp {
     pub bump_to: SequenceNumber,
@@ -15920,7 +15920,7 @@ impl WriteXdr for BumpSequenceOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct CreateClaimableBalanceOp {
     pub asset: Asset,
@@ -15961,7 +15961,7 @@ impl WriteXdr for CreateClaimableBalanceOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
@@ -15996,7 +15996,7 @@ impl WriteXdr for ClaimClaimableBalanceOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct BeginSponsoringFutureReservesOp {
     pub sponsored_id: AccountId,
@@ -16033,7 +16033,7 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum RevokeSponsorshipType {
@@ -16134,7 +16134,7 @@ impl WriteXdr for RevokeSponsorshipType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct RevokeSponsorshipOpSigner {
     pub account_id: AccountId,
@@ -16180,7 +16180,7 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum RevokeSponsorshipOp {
@@ -16282,7 +16282,7 @@ impl WriteXdr for RevokeSponsorshipOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClawbackOp {
     pub asset: Asset,
@@ -16323,7 +16323,7 @@ impl WriteXdr for ClawbackOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClawbackClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
@@ -16362,7 +16362,7 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SetTrustLineFlagsOp {
     pub trustor: AccountId,
@@ -16416,7 +16416,7 @@ pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolDepositOp {
     pub liquidity_pool_id: PoolId,
@@ -16466,7 +16466,7 @@ impl WriteXdr for LiquidityPoolDepositOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolWithdrawOp {
     pub liquidity_pool_id: PoolId,
@@ -16558,7 +16558,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationBody {
@@ -16895,7 +16895,7 @@ impl WriteXdr for OperationBody {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Operation {
     pub source_account: Option<MuxedAccount>,
@@ -16935,7 +16935,7 @@ impl WriteXdr for Operation {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct HashIdPreimageOperationId {
     pub source_account: AccountId,
@@ -16980,7 +16980,7 @@ impl WriteXdr for HashIdPreimageOperationId {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct HashIdPreimageRevokeId {
     pub source_account: AccountId,
@@ -17043,7 +17043,7 @@ impl WriteXdr for HashIdPreimageRevokeId {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum HashIdPreimage {
@@ -17147,7 +17147,7 @@ impl WriteXdr for HashIdPreimage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum MemoType {
@@ -17269,7 +17269,7 @@ impl WriteXdr for MemoType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum Memo {
@@ -17388,7 +17388,7 @@ impl WriteXdr for Memo {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TimeBounds {
     pub min_time: TimePoint,
@@ -17427,7 +17427,7 @@ impl WriteXdr for TimeBounds {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerBounds {
     pub min_ledger: u32,
@@ -17493,7 +17493,7 @@ impl WriteXdr for LedgerBounds {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PreconditionsV2 {
     pub time_bounds: Option<TimeBounds>,
@@ -17546,7 +17546,7 @@ impl WriteXdr for PreconditionsV2 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum PreconditionType {
@@ -17656,7 +17656,7 @@ impl WriteXdr for PreconditionType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum Preconditions {
@@ -17770,7 +17770,7 @@ pub const MAX_OPS_PER_TX: u64 = 100;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionV0Ext {
@@ -17873,7 +17873,7 @@ impl WriteXdr for TransactionV0Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionV0 {
     pub source_account_ed25519: Uint256,
@@ -17929,7 +17929,7 @@ impl WriteXdr for TransactionV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionV0Envelope {
     pub tx: TransactionV0,
@@ -17969,7 +17969,7 @@ impl WriteXdr for TransactionV0Envelope {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionExt {
@@ -18083,7 +18083,7 @@ impl WriteXdr for TransactionExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Transaction {
     pub source_account: MuxedAccount,
@@ -18139,7 +18139,7 @@ impl WriteXdr for Transaction {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionV1Envelope {
     pub tx: Transaction,
@@ -18179,7 +18179,7 @@ impl WriteXdr for TransactionV1Envelope {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum FeeBumpTransactionInnerTx {
@@ -18273,7 +18273,7 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum FeeBumpTransactionExt {
@@ -18378,7 +18378,7 @@ impl WriteXdr for FeeBumpTransactionExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct FeeBumpTransaction {
     pub fee_source: MuxedAccount,
@@ -18425,7 +18425,7 @@ impl WriteXdr for FeeBumpTransaction {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct FeeBumpTransactionEnvelope {
     pub tx: FeeBumpTransaction,
@@ -18469,7 +18469,7 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionEnvelope {
@@ -18580,7 +18580,7 @@ impl WriteXdr for TransactionEnvelope {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionSignaturePayloadTaggedTransaction {
@@ -18686,7 +18686,7 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionSignaturePayload {
     pub network_id: Hash,
@@ -18727,7 +18727,7 @@ impl WriteXdr for TransactionSignaturePayload {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimAtomType {
@@ -18841,7 +18841,7 @@ impl WriteXdr for ClaimAtomType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimOfferAtomV0 {
     pub seller_ed25519: Uint256,
@@ -18901,7 +18901,7 @@ impl WriteXdr for ClaimOfferAtomV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimOfferAtom {
     pub seller_id: AccountId,
@@ -18959,7 +18959,7 @@ impl WriteXdr for ClaimOfferAtom {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimLiquidityAtom {
     pub liquidity_pool_id: PoolId,
@@ -19012,7 +19012,7 @@ impl WriteXdr for ClaimLiquidityAtom {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimAtom {
@@ -19127,7 +19127,7 @@ impl WriteXdr for ClaimAtom {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum CreateAccountResultCode {
@@ -19252,7 +19252,7 @@ impl WriteXdr for CreateAccountResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum CreateAccountResult {
@@ -19389,7 +19389,7 @@ impl WriteXdr for CreateAccountResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum PaymentResultCode {
@@ -19544,7 +19544,7 @@ impl WriteXdr for PaymentResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PaymentResult {
@@ -19728,7 +19728,7 @@ impl WriteXdr for PaymentResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum PathPaymentStrictReceiveResultCode {
@@ -19888,7 +19888,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SimplePaymentResult {
     pub destination: AccountId,
@@ -19930,7 +19930,7 @@ impl WriteXdr for SimplePaymentResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictReceiveResultSuccess {
     pub offers: VecM<ClaimAtom>,
@@ -19990,7 +19990,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PathPaymentStrictReceiveResult {
@@ -20197,7 +20197,7 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum PathPaymentStrictSendResultCode {
@@ -20356,7 +20356,7 @@ impl WriteXdr for PathPaymentStrictSendResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictSendResultSuccess {
     pub offers: VecM<ClaimAtom>,
@@ -20415,7 +20415,7 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PathPaymentStrictSendResult {
@@ -20621,7 +20621,7 @@ impl WriteXdr for PathPaymentStrictSendResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ManageSellOfferResultCode {
@@ -20782,7 +20782,7 @@ impl WriteXdr for ManageSellOfferResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ManageOfferEffect {
@@ -20891,7 +20891,7 @@ impl WriteXdr for ManageOfferEffect {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageOfferSuccessResultOffer {
@@ -21008,7 +21008,7 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ManageOfferSuccessResult {
     pub offers_claimed: VecM<ClaimAtom>,
@@ -21061,7 +21061,7 @@ impl WriteXdr for ManageOfferSuccessResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageSellOfferResult {
@@ -21263,7 +21263,7 @@ impl WriteXdr for ManageSellOfferResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ManageBuyOfferResultCode {
@@ -21436,7 +21436,7 @@ impl WriteXdr for ManageBuyOfferResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageBuyOfferResult {
@@ -21632,7 +21632,7 @@ impl WriteXdr for ManageBuyOfferResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum SetOptionsResultCode {
@@ -21793,7 +21793,7 @@ impl WriteXdr for SetOptionsResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SetOptionsResult {
@@ -21974,7 +21974,7 @@ impl WriteXdr for SetOptionsResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ChangeTrustResultCode {
@@ -22123,7 +22123,7 @@ impl WriteXdr for ChangeTrustResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ChangeTrustResult {
@@ -22286,7 +22286,7 @@ impl WriteXdr for ChangeTrustResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum AllowTrustResultCode {
@@ -22423,7 +22423,7 @@ impl WriteXdr for AllowTrustResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AllowTrustResult {
@@ -22572,7 +22572,7 @@ impl WriteXdr for AllowTrustResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum AccountMergeResultCode {
@@ -22715,7 +22715,7 @@ impl WriteXdr for AccountMergeResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountMergeResult {
@@ -22864,7 +22864,7 @@ impl WriteXdr for AccountMergeResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum InflationResultCode {
@@ -22963,7 +22963,7 @@ impl WriteXdr for InflationResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct InflationPayout {
     pub destination: AccountId,
@@ -23005,7 +23005,7 @@ impl WriteXdr for InflationPayout {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum InflationResult {
@@ -23112,7 +23112,7 @@ impl WriteXdr for InflationResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ManageDataResultCode {
@@ -23237,7 +23237,7 @@ impl WriteXdr for ManageDataResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageDataResult {
@@ -23365,7 +23365,7 @@ impl WriteXdr for ManageDataResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum BumpSequenceResultCode {
@@ -23469,7 +23469,7 @@ impl WriteXdr for BumpSequenceResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum BumpSequenceResult {
@@ -23575,7 +23575,7 @@ impl WriteXdr for BumpSequenceResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum CreateClaimableBalanceResultCode {
@@ -23707,7 +23707,7 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum CreateClaimableBalanceResult {
@@ -23847,7 +23847,7 @@ impl WriteXdr for CreateClaimableBalanceResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimClaimableBalanceResultCode {
@@ -23978,7 +23978,7 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimClaimableBalanceResult {
@@ -24117,7 +24117,7 @@ impl WriteXdr for ClaimClaimableBalanceResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum BeginSponsoringFutureReservesResultCode {
@@ -24233,7 +24233,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum BeginSponsoringFutureReservesResult {
@@ -24352,7 +24352,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum EndSponsoringFutureReservesResultCode {
@@ -24457,7 +24457,7 @@ impl WriteXdr for EndSponsoringFutureReservesResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum EndSponsoringFutureReservesResult {
@@ -24567,7 +24567,7 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum RevokeSponsorshipResultCode {
@@ -24698,7 +24698,7 @@ impl WriteXdr for RevokeSponsorshipResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum RevokeSponsorshipResult {
@@ -24838,7 +24838,7 @@ impl WriteXdr for RevokeSponsorshipResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClawbackResultCode {
@@ -24963,7 +24963,7 @@ impl WriteXdr for ClawbackResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClawbackResult {
@@ -25094,7 +25094,7 @@ impl WriteXdr for ClawbackResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClawbackClaimableBalanceResultCode {
@@ -25210,7 +25210,7 @@ impl WriteXdr for ClawbackClaimableBalanceResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClawbackClaimableBalanceResult {
@@ -25334,7 +25334,7 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum SetTrustLineFlagsResultCode {
@@ -25465,7 +25465,7 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SetTrustLineFlagsResult {
@@ -25612,7 +25612,7 @@ impl WriteXdr for SetTrustLineFlagsResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LiquidityPoolDepositResultCode {
@@ -25755,7 +25755,7 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolDepositResult {
@@ -25913,7 +25913,7 @@ impl WriteXdr for LiquidityPoolDepositResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LiquidityPoolWithdrawResultCode {
@@ -26044,7 +26044,7 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolWithdrawResult {
@@ -26184,7 +26184,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum OperationResultCode {
@@ -26360,7 +26360,7 @@ impl WriteXdr for OperationResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationResultTr {
@@ -26705,7 +26705,7 @@ impl WriteXdr for OperationResultTr {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationResult {
@@ -26866,7 +26866,7 @@ impl WriteXdr for OperationResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum TransactionResultCode {
@@ -27069,7 +27069,7 @@ impl WriteXdr for TransactionResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum InnerTransactionResultResult {
@@ -27276,7 +27276,7 @@ impl WriteXdr for InnerTransactionResultResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum InnerTransactionResultExt {
@@ -27402,7 +27402,7 @@ impl WriteXdr for InnerTransactionResultExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct InnerTransactionResult {
     pub fee_charged: i64,
@@ -27444,7 +27444,7 @@ impl WriteXdr for InnerTransactionResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct InnerTransactionResultPair {
     pub transaction_hash: Hash,
@@ -27504,7 +27504,7 @@ impl WriteXdr for InnerTransactionResultPair {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionResultResult {
@@ -27729,7 +27729,7 @@ impl WriteXdr for TransactionResultResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionResultExt {
@@ -27856,7 +27856,7 @@ impl WriteXdr for TransactionResultExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionResult {
     pub fee_charged: i64,
@@ -28153,7 +28153,7 @@ pub type Int64 = i64;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ExtensionPoint {
@@ -28252,7 +28252,7 @@ impl WriteXdr for ExtensionPoint {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum CryptoKeyType {
@@ -28371,7 +28371,7 @@ impl WriteXdr for CryptoKeyType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum PublicKeyType {
@@ -28469,7 +28469,7 @@ impl WriteXdr for PublicKeyType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum SignerKeyType {
@@ -28580,7 +28580,7 @@ impl WriteXdr for SignerKeyType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PublicKey {
@@ -28677,7 +28677,7 @@ impl WriteXdr for PublicKey {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
@@ -28731,7 +28731,7 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SignerKey {
@@ -28844,7 +28844,7 @@ impl WriteXdr for SignerKey {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Signature(pub BytesM<64>);
 
@@ -29059,7 +29059,7 @@ impl AsRef<[u8]> for SignatureHint {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct NodeId(pub PublicKey);
 
@@ -29112,7 +29112,7 @@ impl WriteXdr for NodeId {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Curve25519Secret {
     pub key: [u8; 32],
@@ -29147,7 +29147,7 @@ impl WriteXdr for Curve25519Secret {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Curve25519Public {
     pub key: [u8; 32],
@@ -29182,7 +29182,7 @@ impl WriteXdr for Curve25519Public {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct HmacSha256Key {
     pub key: [u8; 32],
@@ -29217,7 +29217,7 @@ impl WriteXdr for HmacSha256Key {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct HmacSha256Mac {
     pub mac: [u8; 32],
@@ -29244,7 +29244,7 @@ impl WriteXdr for HmacSha256Mac {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub enum TypeVariant {
     Value,
@@ -30837,7 +30837,7 @@ impl core::str::FromStr for TypeVariant {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase"),
+    serde(rename_all = "snake_case"),
     serde(untagged)
 )]
 pub enum Type {

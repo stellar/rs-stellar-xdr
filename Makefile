@@ -2,7 +2,7 @@ export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
 CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex
 
-XDRGEN_VERSION=6a6d407c
+XDRGEN_VERSION=fbac7d56
 
 all: build test
 

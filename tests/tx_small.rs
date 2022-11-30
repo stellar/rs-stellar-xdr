@@ -1,4 +1,4 @@
-#![cfg(any(feature = "curr", feature = "next"))]
+#![cfg(all(any(feature = "curr", feature = "next"), not(all(feature = "curr", feature = "next"))))]
 
 use stellar_xdr::{
     Error, Memo, MuxedAccount, Preconditions, SequenceNumber, Transaction, TransactionEnvelope,

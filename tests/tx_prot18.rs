@@ -1,4 +1,4 @@
-#![cfg(any(feature = "curr", feature = "next"))]
+#![cfg(all(any(feature = "curr", feature = "next"), not(all(feature = "curr", feature = "next"))))]
 #![cfg(all(feature = "std", feature = "base64"))]
 
 use stellar_xdr::{Error, OperationBody, ReadXdr, SequenceNumber, TransactionEnvelope};

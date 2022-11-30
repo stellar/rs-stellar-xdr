@@ -23,17 +23,12 @@ pub const VERSION: Version = Version {
     xdr_next: env!("XDR_NEXT_VERSION"),
 };
 
-#[cfg(not(any(feature = "curr", feature = "next")))]
+#[cfg(feature = "curr")]
 pub mod curr;
-#[cfg(not(any(feature = "curr", feature = "next")))]
-pub mod next;
-
-#[cfg(feature = "curr")]
-mod curr;
-#[cfg(feature = "curr")]
+#[cfg(all(feature = "curr", not(feature = "next")))]
 pub use curr::*;
 
 #[cfg(feature = "next")]
-mod next;
-#[cfg(feature = "next")]
+pub mod next;
+#[cfg(all(not(feature = "curr"), feature = "next"))]
 pub use next::*;

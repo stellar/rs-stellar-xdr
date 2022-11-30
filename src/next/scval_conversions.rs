@@ -1,4 +1,4 @@
-use crate::{
+use super::{
     AccountId, Int128Parts, ScMap, ScMapEntry, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec,
 };
 
@@ -921,7 +921,7 @@ impl TryFrom<&ScVal> for AccountId {
 
 #[cfg(test)]
 mod test {
-    use crate::{ScObject, ScStatic, ScVal};
+    use super::{ScObject, ScStatic, ScVal};
 
     #[test]
     fn i32_pos() {
@@ -943,7 +943,7 @@ mod test {
 
     #[test]
     fn u32() {
-        use crate::ScVal;
+        use super::ScVal;
 
         let v = 5u32;
         let val: ScVal = v.try_into().unwrap();

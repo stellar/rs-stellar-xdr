@@ -1,6 +1,6 @@
 #![allow(clippy::missing_errors_doc)]
 
-use crate::{Error, ScMap, ScMapEntry, ScVal, Validate};
+use super::{Error, ScMap, ScMapEntry, ScVal, Validate};
 extern crate alloc;
 use alloc::vec::Vec;
 

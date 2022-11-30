@@ -1,43 +1,58 @@
 // Module  is generated from:
-//  xdr/curr/Stellar-SCP.x
-//  xdr/curr/Stellar-internal.x
-//  xdr/curr/Stellar-ledger-entries.x
-//  xdr/curr/Stellar-ledger.x
-//  xdr/curr/Stellar-overlay.x
-//  xdr/curr/Stellar-transaction.x
-//  xdr/curr/Stellar-types.x
+//  xdr/next/Stellar-SCP.x
+//  xdr/next/Stellar-contract-env-meta.x
+//  xdr/next/Stellar-contract-spec.x
+//  xdr/next/Stellar-contract.x
+//  xdr/next/Stellar-internal.x
+//  xdr/next/Stellar-ledger-entries.x
+//  xdr/next/Stellar-ledger.x
+//  xdr/next/Stellar-overlay.x
+//  xdr/next/Stellar-transaction.x
+//  xdr/next/Stellar-types.x
 
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
-pub const XDR_FILES_SHA256: [(&str, &str); 7] = [
+pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     (
-        "xdr/curr/Stellar-SCP.x",
+        "xdr/next/Stellar-SCP.x",
         "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
     ),
     (
-        "xdr/curr/Stellar-internal.x",
+        "xdr/next/Stellar-contract-env-meta.x",
+        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
+    ),
+    (
+        "xdr/next/Stellar-contract-spec.x",
+        "1c4304a077e12a94a793efa90e18099011f11b385a8aa2272c65e334cee989df",
+    ),
+    (
+        "xdr/next/Stellar-contract.x",
+        "69e8f476cb30ceda3a0981b7f9367a4e4f1a29393336a78ae4cc1e9e7f5e750c",
+    ),
+    (
+        "xdr/next/Stellar-internal.x",
         "368706dd6e2efafd16a8f63daf3374845b791d097b15c502aa7653a412b68b68",
     ),
     (
-        "xdr/curr/Stellar-ledger-entries.x",
-        "3aa135c309c2d67883f165961739b4940c90df59240d8aeef55deced8d7708b5",
+        "xdr/next/Stellar-ledger-entries.x",
+        "bc3ef59ed74e6f990ce14dd051a000a6dd793fc6a5deb4a83c7fef1035ff1bc6",
     ),
     (
-        "xdr/curr/Stellar-ledger.x",
-        "96ac88de23d2b0f2f23a0495527c8aefb8623b4db0e39ba34f357d10a211c214",
+        "xdr/next/Stellar-ledger.x",
+        "b19c10a07c9775594723ad12927259dd4bbd9ed9dfd0e70078662ec2e90e130d",
     ),
     (
-        "xdr/curr/Stellar-overlay.x",
+        "xdr/next/Stellar-overlay.x",
         "3093b425866f34b32702d80d5298f9f2dc00736b0fdaac7efa653490a39fb231",
     ),
     (
-        "xdr/curr/Stellar-transaction.x",
-        "45fdeb428e68d6b07e3e3157b6404567e0efb712c9d4c90a61a1035854c32b90",
+        "xdr/next/Stellar-transaction.x",
+        "bdac432e08265df6a13dc4c6135090ca6dcaa8eeedd61a0533ba52b4c9baf201",
     ),
     (
-        "xdr/curr/Stellar-types.x",
-        "60b7588e573f5e5518766eb5e6b6ea42f0e53144663cbe557e485cceb6306c85",
+        "xdr/next/Stellar-types.x",
+        "7b3e5470c4bcf7c19f9cc8f8bf81a494b540fc2157476329cf19863afab2343b",
     ),
 ];
 
@@ -1865,9 +1880,7 @@ where
 mod tests {
     use std::io::Cursor;
 
-    use crate::WriteXdr;
-
-    use super::{Error, ReadXdr, VecM};
+    use super::{Error, ReadXdr, VecM, WriteXdr};
 
     #[test]
     pub fn vec_u8_read_without_padding() {
@@ -1972,7 +1985,7 @@ mod tests {
 
 #[cfg(all(test, feature = "std"))]
 mod test {
-    use crate::VecM;
+    use super::VecM;
 
     #[test]
     fn into_option_none() {
@@ -2001,7 +2014,7 @@ mod test {
 
 #[cfg(all(test, not(feature = "alloc")))]
 mod test {
-    use crate::VecM;
+    use super::VecM;
 
     #[test]
     fn to_option_none() {
@@ -2758,6 +2771,4161 @@ impl WriteXdr for ScpQuorumSet {
     }
 }
 
+// ScEnvMetaKind is an XDR Enum defines as:
+//
+//   enum SCEnvMetaKind
+//    {
+//        SC_ENV_META_KIND_INTERFACE_VERSION = 0
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScEnvMetaKind {
+    ScEnvMetaKindInterfaceVersion = 0,
+}
+
+impl ScEnvMetaKind {
+    pub const VARIANTS: [ScEnvMetaKind; 1] = [ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ScEnvMetaKindInterfaceVersion"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ScEnvMetaKindInterfaceVersion => "ScEnvMetaKindInterfaceVersion",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScEnvMetaKind; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScEnvMetaKind {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScEnvMetaKind> for ScEnvMetaKind {
+    fn variants() -> slice::Iter<'static, ScEnvMetaKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScEnvMetaKind {}
+
+impl fmt::Display for ScEnvMetaKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScEnvMetaKind {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScEnvMetaKind::ScEnvMetaKindInterfaceVersion,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScEnvMetaKind> for i32 {
+    #[must_use]
+    fn from(e: ScEnvMetaKind) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScEnvMetaKind {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScEnvMetaKind {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScEnvMetaEntry is an XDR Union defines as:
+//
+//   union SCEnvMetaEntry switch (SCEnvMetaKind kind)
+//    {
+//    case SC_ENV_META_KIND_INTERFACE_VERSION:
+//        uint64 interfaceVersion;
+//    };
+//
+// union with discriminant ScEnvMetaKind
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScEnvMetaEntry {
+    ScEnvMetaKindInterfaceVersion(u64),
+}
+
+impl ScEnvMetaEntry {
+    pub const VARIANTS: [ScEnvMetaKind; 1] = [ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ScEnvMetaKindInterfaceVersion"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ScEnvMetaKindInterfaceVersion(_) => "ScEnvMetaKindInterfaceVersion",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScEnvMetaKind {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ScEnvMetaKindInterfaceVersion(_) => ScEnvMetaKind::ScEnvMetaKindInterfaceVersion,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScEnvMetaKind; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScEnvMetaEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScEnvMetaKind> for ScEnvMetaEntry {
+    #[must_use]
+    fn discriminant(&self) -> ScEnvMetaKind {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScEnvMetaKind> for ScEnvMetaEntry {
+    fn variants() -> slice::Iter<'static, ScEnvMetaKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScEnvMetaKind> for ScEnvMetaEntry {}
+
+impl ReadXdr for ScEnvMetaEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScEnvMetaKind = <ScEnvMetaKind as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScEnvMetaKind::ScEnvMetaKindInterfaceVersion => {
+                Self::ScEnvMetaKindInterfaceVersion(u64::read_xdr(r)?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScEnvMetaEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ScEnvMetaKindInterfaceVersion(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ScSpecType is an XDR Enum defines as:
+//
+//   enum SCSpecType
+//    {
+//        SC_SPEC_TYPE_VAL = 0,
+//
+//        // Types with no parameters.
+//        SC_SPEC_TYPE_U32 = 1,
+//        SC_SPEC_TYPE_I32 = 2,
+//        SC_SPEC_TYPE_U64 = 3,
+//        SC_SPEC_TYPE_I64 = 4,
+//        SC_SPEC_TYPE_U128 = 5,
+//        SC_SPEC_TYPE_I128 = 6,
+//        SC_SPEC_TYPE_BOOL = 7,
+//        SC_SPEC_TYPE_SYMBOL = 8,
+//        SC_SPEC_TYPE_BITSET = 9,
+//        SC_SPEC_TYPE_STATUS = 10,
+//        SC_SPEC_TYPE_BYTES = 11,
+//        SC_SPEC_TYPE_INVOKER = 12,
+//        SC_SPEC_TYPE_ACCOUNT_ID = 13,
+//
+//        // Types with parameters.
+//        SC_SPEC_TYPE_OPTION = 1000,
+//        SC_SPEC_TYPE_RESULT = 1001,
+//        SC_SPEC_TYPE_VEC = 1002,
+//        SC_SPEC_TYPE_SET = 1003,
+//        SC_SPEC_TYPE_MAP = 1004,
+//        SC_SPEC_TYPE_TUPLE = 1005,
+//        SC_SPEC_TYPE_BYTES_N = 1006,
+//
+//        // User defined types.
+//        SC_SPEC_TYPE_UDT = 2000
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScSpecType {
+    Val = 0,
+    U32 = 1,
+    I32 = 2,
+    U64 = 3,
+    I64 = 4,
+    U128 = 5,
+    I128 = 6,
+    Bool = 7,
+    Symbol = 8,
+    Bitset = 9,
+    Status = 10,
+    Bytes = 11,
+    Invoker = 12,
+    AccountId = 13,
+    Option = 1000,
+    Result = 1001,
+    Vec = 1002,
+    Set = 1003,
+    Map = 1004,
+    Tuple = 1005,
+    BytesN = 1006,
+    Udt = 2000,
+}
+
+impl ScSpecType {
+    pub const VARIANTS: [ScSpecType; 22] = [
+        ScSpecType::Val,
+        ScSpecType::U32,
+        ScSpecType::I32,
+        ScSpecType::U64,
+        ScSpecType::I64,
+        ScSpecType::U128,
+        ScSpecType::I128,
+        ScSpecType::Bool,
+        ScSpecType::Symbol,
+        ScSpecType::Bitset,
+        ScSpecType::Status,
+        ScSpecType::Bytes,
+        ScSpecType::Invoker,
+        ScSpecType::AccountId,
+        ScSpecType::Option,
+        ScSpecType::Result,
+        ScSpecType::Vec,
+        ScSpecType::Set,
+        ScSpecType::Map,
+        ScSpecType::Tuple,
+        ScSpecType::BytesN,
+        ScSpecType::Udt,
+    ];
+    pub const VARIANTS_STR: [&'static str; 22] = [
+        "Val",
+        "U32",
+        "I32",
+        "U64",
+        "I64",
+        "U128",
+        "I128",
+        "Bool",
+        "Symbol",
+        "Bitset",
+        "Status",
+        "Bytes",
+        "Invoker",
+        "AccountId",
+        "Option",
+        "Result",
+        "Vec",
+        "Set",
+        "Map",
+        "Tuple",
+        "BytesN",
+        "Udt",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Val => "Val",
+            Self::U32 => "U32",
+            Self::I32 => "I32",
+            Self::U64 => "U64",
+            Self::I64 => "I64",
+            Self::U128 => "U128",
+            Self::I128 => "I128",
+            Self::Bool => "Bool",
+            Self::Symbol => "Symbol",
+            Self::Bitset => "Bitset",
+            Self::Status => "Status",
+            Self::Bytes => "Bytes",
+            Self::Invoker => "Invoker",
+            Self::AccountId => "AccountId",
+            Self::Option => "Option",
+            Self::Result => "Result",
+            Self::Vec => "Vec",
+            Self::Set => "Set",
+            Self::Map => "Map",
+            Self::Tuple => "Tuple",
+            Self::BytesN => "BytesN",
+            Self::Udt => "Udt",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecType; 22] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScSpecType> for ScSpecType {
+    fn variants() -> slice::Iter<'static, ScSpecType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScSpecType {}
+
+impl fmt::Display for ScSpecType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScSpecType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScSpecType::Val,
+            1 => ScSpecType::U32,
+            2 => ScSpecType::I32,
+            3 => ScSpecType::U64,
+            4 => ScSpecType::I64,
+            5 => ScSpecType::U128,
+            6 => ScSpecType::I128,
+            7 => ScSpecType::Bool,
+            8 => ScSpecType::Symbol,
+            9 => ScSpecType::Bitset,
+            10 => ScSpecType::Status,
+            11 => ScSpecType::Bytes,
+            12 => ScSpecType::Invoker,
+            13 => ScSpecType::AccountId,
+            1000 => ScSpecType::Option,
+            1001 => ScSpecType::Result,
+            1002 => ScSpecType::Vec,
+            1003 => ScSpecType::Set,
+            1004 => ScSpecType::Map,
+            1005 => ScSpecType::Tuple,
+            1006 => ScSpecType::BytesN,
+            2000 => ScSpecType::Udt,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScSpecType> for i32 {
+    #[must_use]
+    fn from(e: ScSpecType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScSpecType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScSpecType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScSpecTypeOption is an XDR Struct defines as:
+//
+//   struct SCSpecTypeOption
+//    {
+//        SCSpecTypeDef valueType;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeOption {
+    pub value_type: Box<ScSpecTypeDef>,
+}
+
+impl ReadXdr for ScSpecTypeOption {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            value_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeOption {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.value_type.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecTypeResult is an XDR Struct defines as:
+//
+//   struct SCSpecTypeResult
+//    {
+//        SCSpecTypeDef okType;
+//        SCSpecTypeDef errorType;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeResult {
+    pub ok_type: Box<ScSpecTypeDef>,
+    pub error_type: Box<ScSpecTypeDef>,
+}
+
+impl ReadXdr for ScSpecTypeResult {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ok_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+            error_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeResult {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ok_type.write_xdr(w)?;
+        self.error_type.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecTypeVec is an XDR Struct defines as:
+//
+//   struct SCSpecTypeVec
+//    {
+//        SCSpecTypeDef elementType;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeVec {
+    pub element_type: Box<ScSpecTypeDef>,
+}
+
+impl ReadXdr for ScSpecTypeVec {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            element_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeVec {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.element_type.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecTypeMap is an XDR Struct defines as:
+//
+//   struct SCSpecTypeMap
+//    {
+//        SCSpecTypeDef keyType;
+//        SCSpecTypeDef valueType;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeMap {
+    pub key_type: Box<ScSpecTypeDef>,
+    pub value_type: Box<ScSpecTypeDef>,
+}
+
+impl ReadXdr for ScSpecTypeMap {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            key_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+            value_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeMap {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.key_type.write_xdr(w)?;
+        self.value_type.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecTypeSet is an XDR Struct defines as:
+//
+//   struct SCSpecTypeSet
+//    {
+//        SCSpecTypeDef elementType;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeSet {
+    pub element_type: Box<ScSpecTypeDef>,
+}
+
+impl ReadXdr for ScSpecTypeSet {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            element_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeSet {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.element_type.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecTypeTuple is an XDR Struct defines as:
+//
+//   struct SCSpecTypeTuple
+//    {
+//        SCSpecTypeDef valueTypes<12>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeTuple {
+    pub value_types: VecM<ScSpecTypeDef, 12>,
+}
+
+impl ReadXdr for ScSpecTypeTuple {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            value_types: VecM::<ScSpecTypeDef, 12>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeTuple {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.value_types.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecTypeBytesN is an XDR Struct defines as:
+//
+//   struct SCSpecTypeBytesN
+//    {
+//        uint32 n;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeBytesN {
+    pub n: u32,
+}
+
+impl ReadXdr for ScSpecTypeBytesN {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            n: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeBytesN {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.n.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecTypeUdt is an XDR Struct defines as:
+//
+//   struct SCSpecTypeUDT
+//    {
+//        string name<60>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeUdt {
+    pub name: StringM<60>,
+}
+
+impl ReadXdr for ScSpecTypeUdt {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            name: StringM::<60>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeUdt {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.name.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecTypeDef is an XDR Union defines as:
+//
+//   union SCSpecTypeDef switch (SCSpecType type)
+//    {
+//    case SC_SPEC_TYPE_VAL:
+//    case SC_SPEC_TYPE_U64:
+//    case SC_SPEC_TYPE_I64:
+//    case SC_SPEC_TYPE_U128:
+//    case SC_SPEC_TYPE_I128:
+//    case SC_SPEC_TYPE_U32:
+//    case SC_SPEC_TYPE_I32:
+//    case SC_SPEC_TYPE_BOOL:
+//    case SC_SPEC_TYPE_SYMBOL:
+//    case SC_SPEC_TYPE_BITSET:
+//    case SC_SPEC_TYPE_STATUS:
+//    case SC_SPEC_TYPE_BYTES:
+//    case SC_SPEC_TYPE_INVOKER:
+//    case SC_SPEC_TYPE_ACCOUNT_ID:
+//        void;
+//    case SC_SPEC_TYPE_OPTION:
+//        SCSpecTypeOption option;
+//    case SC_SPEC_TYPE_RESULT:
+//        SCSpecTypeResult result;
+//    case SC_SPEC_TYPE_VEC:
+//        SCSpecTypeVec vec;
+//    case SC_SPEC_TYPE_MAP:
+//        SCSpecTypeMap map;
+//    case SC_SPEC_TYPE_SET:
+//        SCSpecTypeSet set;
+//    case SC_SPEC_TYPE_TUPLE:
+//        SCSpecTypeTuple tuple;
+//    case SC_SPEC_TYPE_BYTES_N:
+//        SCSpecTypeBytesN bytesN;
+//    case SC_SPEC_TYPE_UDT:
+//        SCSpecTypeUDT udt;
+//    };
+//
+// union with discriminant ScSpecType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScSpecTypeDef {
+    Val,
+    U64,
+    I64,
+    U128,
+    I128,
+    U32,
+    I32,
+    Bool,
+    Symbol,
+    Bitset,
+    Status,
+    Bytes,
+    Invoker,
+    AccountId,
+    Option(Box<ScSpecTypeOption>),
+    Result(Box<ScSpecTypeResult>),
+    Vec(Box<ScSpecTypeVec>),
+    Map(Box<ScSpecTypeMap>),
+    Set(Box<ScSpecTypeSet>),
+    Tuple(Box<ScSpecTypeTuple>),
+    BytesN(ScSpecTypeBytesN),
+    Udt(ScSpecTypeUdt),
+}
+
+impl ScSpecTypeDef {
+    pub const VARIANTS: [ScSpecType; 22] = [
+        ScSpecType::Val,
+        ScSpecType::U64,
+        ScSpecType::I64,
+        ScSpecType::U128,
+        ScSpecType::I128,
+        ScSpecType::U32,
+        ScSpecType::I32,
+        ScSpecType::Bool,
+        ScSpecType::Symbol,
+        ScSpecType::Bitset,
+        ScSpecType::Status,
+        ScSpecType::Bytes,
+        ScSpecType::Invoker,
+        ScSpecType::AccountId,
+        ScSpecType::Option,
+        ScSpecType::Result,
+        ScSpecType::Vec,
+        ScSpecType::Map,
+        ScSpecType::Set,
+        ScSpecType::Tuple,
+        ScSpecType::BytesN,
+        ScSpecType::Udt,
+    ];
+    pub const VARIANTS_STR: [&'static str; 22] = [
+        "Val",
+        "U64",
+        "I64",
+        "U128",
+        "I128",
+        "U32",
+        "I32",
+        "Bool",
+        "Symbol",
+        "Bitset",
+        "Status",
+        "Bytes",
+        "Invoker",
+        "AccountId",
+        "Option",
+        "Result",
+        "Vec",
+        "Map",
+        "Set",
+        "Tuple",
+        "BytesN",
+        "Udt",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Val => "Val",
+            Self::U64 => "U64",
+            Self::I64 => "I64",
+            Self::U128 => "U128",
+            Self::I128 => "I128",
+            Self::U32 => "U32",
+            Self::I32 => "I32",
+            Self::Bool => "Bool",
+            Self::Symbol => "Symbol",
+            Self::Bitset => "Bitset",
+            Self::Status => "Status",
+            Self::Bytes => "Bytes",
+            Self::Invoker => "Invoker",
+            Self::AccountId => "AccountId",
+            Self::Option(_) => "Option",
+            Self::Result(_) => "Result",
+            Self::Vec(_) => "Vec",
+            Self::Map(_) => "Map",
+            Self::Set(_) => "Set",
+            Self::Tuple(_) => "Tuple",
+            Self::BytesN(_) => "BytesN",
+            Self::Udt(_) => "Udt",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScSpecType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Val => ScSpecType::Val,
+            Self::U64 => ScSpecType::U64,
+            Self::I64 => ScSpecType::I64,
+            Self::U128 => ScSpecType::U128,
+            Self::I128 => ScSpecType::I128,
+            Self::U32 => ScSpecType::U32,
+            Self::I32 => ScSpecType::I32,
+            Self::Bool => ScSpecType::Bool,
+            Self::Symbol => ScSpecType::Symbol,
+            Self::Bitset => ScSpecType::Bitset,
+            Self::Status => ScSpecType::Status,
+            Self::Bytes => ScSpecType::Bytes,
+            Self::Invoker => ScSpecType::Invoker,
+            Self::AccountId => ScSpecType::AccountId,
+            Self::Option(_) => ScSpecType::Option,
+            Self::Result(_) => ScSpecType::Result,
+            Self::Vec(_) => ScSpecType::Vec,
+            Self::Map(_) => ScSpecType::Map,
+            Self::Set(_) => ScSpecType::Set,
+            Self::Tuple(_) => ScSpecType::Tuple,
+            Self::BytesN(_) => ScSpecType::BytesN,
+            Self::Udt(_) => ScSpecType::Udt,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecType; 22] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecTypeDef {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScSpecType> for ScSpecTypeDef {
+    #[must_use]
+    fn discriminant(&self) -> ScSpecType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScSpecType> for ScSpecTypeDef {
+    fn variants() -> slice::Iter<'static, ScSpecType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScSpecType> for ScSpecTypeDef {}
+
+impl ReadXdr for ScSpecTypeDef {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScSpecType = <ScSpecType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScSpecType::Val => Self::Val,
+            ScSpecType::U64 => Self::U64,
+            ScSpecType::I64 => Self::I64,
+            ScSpecType::U128 => Self::U128,
+            ScSpecType::I128 => Self::I128,
+            ScSpecType::U32 => Self::U32,
+            ScSpecType::I32 => Self::I32,
+            ScSpecType::Bool => Self::Bool,
+            ScSpecType::Symbol => Self::Symbol,
+            ScSpecType::Bitset => Self::Bitset,
+            ScSpecType::Status => Self::Status,
+            ScSpecType::Bytes => Self::Bytes,
+            ScSpecType::Invoker => Self::Invoker,
+            ScSpecType::AccountId => Self::AccountId,
+            ScSpecType::Option => Self::Option(Box::<ScSpecTypeOption>::read_xdr(r)?),
+            ScSpecType::Result => Self::Result(Box::<ScSpecTypeResult>::read_xdr(r)?),
+            ScSpecType::Vec => Self::Vec(Box::<ScSpecTypeVec>::read_xdr(r)?),
+            ScSpecType::Map => Self::Map(Box::<ScSpecTypeMap>::read_xdr(r)?),
+            ScSpecType::Set => Self::Set(Box::<ScSpecTypeSet>::read_xdr(r)?),
+            ScSpecType::Tuple => Self::Tuple(Box::<ScSpecTypeTuple>::read_xdr(r)?),
+            ScSpecType::BytesN => Self::BytesN(ScSpecTypeBytesN::read_xdr(r)?),
+            ScSpecType::Udt => Self::Udt(ScSpecTypeUdt::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScSpecTypeDef {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Val => ().write_xdr(w)?,
+            Self::U64 => ().write_xdr(w)?,
+            Self::I64 => ().write_xdr(w)?,
+            Self::U128 => ().write_xdr(w)?,
+            Self::I128 => ().write_xdr(w)?,
+            Self::U32 => ().write_xdr(w)?,
+            Self::I32 => ().write_xdr(w)?,
+            Self::Bool => ().write_xdr(w)?,
+            Self::Symbol => ().write_xdr(w)?,
+            Self::Bitset => ().write_xdr(w)?,
+            Self::Status => ().write_xdr(w)?,
+            Self::Bytes => ().write_xdr(w)?,
+            Self::Invoker => ().write_xdr(w)?,
+            Self::AccountId => ().write_xdr(w)?,
+            Self::Option(v) => v.write_xdr(w)?,
+            Self::Result(v) => v.write_xdr(w)?,
+            Self::Vec(v) => v.write_xdr(w)?,
+            Self::Map(v) => v.write_xdr(w)?,
+            Self::Set(v) => v.write_xdr(w)?,
+            Self::Tuple(v) => v.write_xdr(w)?,
+            Self::BytesN(v) => v.write_xdr(w)?,
+            Self::Udt(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ScSpecUdtStructFieldV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTStructFieldV0
+//    {
+//        string name<30>;
+//        SCSpecTypeDef type;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtStructFieldV0 {
+    pub name: StringM<30>,
+    pub type_: ScSpecTypeDef,
+}
+
+impl ReadXdr for ScSpecUdtStructFieldV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            name: StringM::<30>::read_xdr(r)?,
+            type_: ScSpecTypeDef::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtStructFieldV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.name.write_xdr(w)?;
+        self.type_.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecUdtStructV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTStructV0
+//    {
+//        string lib<80>;
+//        string name<60>;
+//        SCSpecUDTStructFieldV0 fields<40>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtStructV0 {
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
+    pub fields: VecM<ScSpecUdtStructFieldV0, 40>,
+}
+
+impl ReadXdr for ScSpecUdtStructV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            lib: StringM::<80>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
+            fields: VecM::<ScSpecUdtStructFieldV0, 40>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtStructV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.lib.write_xdr(w)?;
+        self.name.write_xdr(w)?;
+        self.fields.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecUdtUnionCaseV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTUnionCaseV0
+//    {
+//        string name<60>;
+//        SCSpecTypeDef *type;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtUnionCaseV0 {
+    pub name: StringM<60>,
+    pub type_: Option<ScSpecTypeDef>,
+}
+
+impl ReadXdr for ScSpecUdtUnionCaseV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            name: StringM::<60>::read_xdr(r)?,
+            type_: Option::<ScSpecTypeDef>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtUnionCaseV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.name.write_xdr(w)?;
+        self.type_.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecUdtUnionV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTUnionV0
+//    {
+//        string lib<80>;
+//        string name<60>;
+//        SCSpecUDTUnionCaseV0 cases<50>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtUnionV0 {
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
+    pub cases: VecM<ScSpecUdtUnionCaseV0, 50>,
+}
+
+impl ReadXdr for ScSpecUdtUnionV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            lib: StringM::<80>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
+            cases: VecM::<ScSpecUdtUnionCaseV0, 50>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtUnionV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.lib.write_xdr(w)?;
+        self.name.write_xdr(w)?;
+        self.cases.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecUdtEnumCaseV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTEnumCaseV0
+//    {
+//        string name<60>;
+//        uint32 value;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtEnumCaseV0 {
+    pub name: StringM<60>,
+    pub value: u32,
+}
+
+impl ReadXdr for ScSpecUdtEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            name: StringM::<60>::read_xdr(r)?,
+            value: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.name.write_xdr(w)?;
+        self.value.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecUdtEnumV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTEnumV0
+//    {
+//        string lib<80>;
+//        string name<60>;
+//        SCSpecUDTEnumCaseV0 cases<50>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtEnumV0 {
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
+    pub cases: VecM<ScSpecUdtEnumCaseV0, 50>,
+}
+
+impl ReadXdr for ScSpecUdtEnumV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            lib: StringM::<80>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
+            cases: VecM::<ScSpecUdtEnumCaseV0, 50>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtEnumV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.lib.write_xdr(w)?;
+        self.name.write_xdr(w)?;
+        self.cases.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecUdtErrorEnumCaseV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTErrorEnumCaseV0
+//    {
+//        string name<60>;
+//        uint32 value;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtErrorEnumCaseV0 {
+    pub name: StringM<60>,
+    pub value: u32,
+}
+
+impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            name: StringM::<60>::read_xdr(r)?,
+            value: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.name.write_xdr(w)?;
+        self.value.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecUdtErrorEnumV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTErrorEnumV0
+//    {
+//        string lib<80>;
+//        string name<60>;
+//        SCSpecUDTErrorEnumCaseV0 cases<50>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtErrorEnumV0 {
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
+    pub cases: VecM<ScSpecUdtErrorEnumCaseV0, 50>,
+}
+
+impl ReadXdr for ScSpecUdtErrorEnumV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            lib: StringM::<80>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
+            cases: VecM::<ScSpecUdtErrorEnumCaseV0, 50>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtErrorEnumV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.lib.write_xdr(w)?;
+        self.name.write_xdr(w)?;
+        self.cases.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecFunctionInputV0 is an XDR Struct defines as:
+//
+//   struct SCSpecFunctionInputV0
+//    {
+//        string name<30>;
+//        SCSpecTypeDef type;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecFunctionInputV0 {
+    pub name: StringM<30>,
+    pub type_: ScSpecTypeDef,
+}
+
+impl ReadXdr for ScSpecFunctionInputV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            name: StringM::<30>::read_xdr(r)?,
+            type_: ScSpecTypeDef::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecFunctionInputV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.name.write_xdr(w)?;
+        self.type_.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecFunctionV0 is an XDR Struct defines as:
+//
+//   struct SCSpecFunctionV0
+//    {
+//        SCSymbol name;
+//        SCSpecFunctionInputV0 inputs<10>;
+//        SCSpecTypeDef outputs<1>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecFunctionV0 {
+    pub name: StringM<10>,
+    pub inputs: VecM<ScSpecFunctionInputV0, 10>,
+    pub outputs: VecM<ScSpecTypeDef, 1>,
+}
+
+impl ReadXdr for ScSpecFunctionV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            name: StringM::<10>::read_xdr(r)?,
+            inputs: VecM::<ScSpecFunctionInputV0, 10>::read_xdr(r)?,
+            outputs: VecM::<ScSpecTypeDef, 1>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecFunctionV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.name.write_xdr(w)?;
+        self.inputs.write_xdr(w)?;
+        self.outputs.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecEntryKind is an XDR Enum defines as:
+//
+//   enum SCSpecEntryKind
+//    {
+//        SC_SPEC_ENTRY_FUNCTION_V0 = 0,
+//        SC_SPEC_ENTRY_UDT_STRUCT_V0 = 1,
+//        SC_SPEC_ENTRY_UDT_UNION_V0 = 2,
+//        SC_SPEC_ENTRY_UDT_ENUM_V0 = 3,
+//        SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScSpecEntryKind {
+    FunctionV0 = 0,
+    UdtStructV0 = 1,
+    UdtUnionV0 = 2,
+    UdtEnumV0 = 3,
+    UdtErrorEnumV0 = 4,
+}
+
+impl ScSpecEntryKind {
+    pub const VARIANTS: [ScSpecEntryKind; 5] = [
+        ScSpecEntryKind::FunctionV0,
+        ScSpecEntryKind::UdtStructV0,
+        ScSpecEntryKind::UdtUnionV0,
+        ScSpecEntryKind::UdtEnumV0,
+        ScSpecEntryKind::UdtErrorEnumV0,
+    ];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "FunctionV0",
+        "UdtStructV0",
+        "UdtUnionV0",
+        "UdtEnumV0",
+        "UdtErrorEnumV0",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::FunctionV0 => "FunctionV0",
+            Self::UdtStructV0 => "UdtStructV0",
+            Self::UdtUnionV0 => "UdtUnionV0",
+            Self::UdtEnumV0 => "UdtEnumV0",
+            Self::UdtErrorEnumV0 => "UdtErrorEnumV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecEntryKind; 5] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecEntryKind {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScSpecEntryKind> for ScSpecEntryKind {
+    fn variants() -> slice::Iter<'static, ScSpecEntryKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScSpecEntryKind {}
+
+impl fmt::Display for ScSpecEntryKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScSpecEntryKind {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScSpecEntryKind::FunctionV0,
+            1 => ScSpecEntryKind::UdtStructV0,
+            2 => ScSpecEntryKind::UdtUnionV0,
+            3 => ScSpecEntryKind::UdtEnumV0,
+            4 => ScSpecEntryKind::UdtErrorEnumV0,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScSpecEntryKind> for i32 {
+    #[must_use]
+    fn from(e: ScSpecEntryKind) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScSpecEntryKind {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScSpecEntryKind {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScSpecEntry is an XDR Union defines as:
+//
+//   union SCSpecEntry switch (SCSpecEntryKind kind)
+//    {
+//    case SC_SPEC_ENTRY_FUNCTION_V0:
+//        SCSpecFunctionV0 functionV0;
+//    case SC_SPEC_ENTRY_UDT_STRUCT_V0:
+//        SCSpecUDTStructV0 udtStructV0;
+//    case SC_SPEC_ENTRY_UDT_UNION_V0:
+//        SCSpecUDTUnionV0 udtUnionV0;
+//    case SC_SPEC_ENTRY_UDT_ENUM_V0:
+//        SCSpecUDTEnumV0 udtEnumV0;
+//    case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:
+//        SCSpecUDTErrorEnumV0 udtErrorEnumV0;
+//    };
+//
+// union with discriminant ScSpecEntryKind
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScSpecEntry {
+    FunctionV0(ScSpecFunctionV0),
+    UdtStructV0(ScSpecUdtStructV0),
+    UdtUnionV0(ScSpecUdtUnionV0),
+    UdtEnumV0(ScSpecUdtEnumV0),
+    UdtErrorEnumV0(ScSpecUdtErrorEnumV0),
+}
+
+impl ScSpecEntry {
+    pub const VARIANTS: [ScSpecEntryKind; 5] = [
+        ScSpecEntryKind::FunctionV0,
+        ScSpecEntryKind::UdtStructV0,
+        ScSpecEntryKind::UdtUnionV0,
+        ScSpecEntryKind::UdtEnumV0,
+        ScSpecEntryKind::UdtErrorEnumV0,
+    ];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "FunctionV0",
+        "UdtStructV0",
+        "UdtUnionV0",
+        "UdtEnumV0",
+        "UdtErrorEnumV0",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::FunctionV0(_) => "FunctionV0",
+            Self::UdtStructV0(_) => "UdtStructV0",
+            Self::UdtUnionV0(_) => "UdtUnionV0",
+            Self::UdtEnumV0(_) => "UdtEnumV0",
+            Self::UdtErrorEnumV0(_) => "UdtErrorEnumV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScSpecEntryKind {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::FunctionV0(_) => ScSpecEntryKind::FunctionV0,
+            Self::UdtStructV0(_) => ScSpecEntryKind::UdtStructV0,
+            Self::UdtUnionV0(_) => ScSpecEntryKind::UdtUnionV0,
+            Self::UdtEnumV0(_) => ScSpecEntryKind::UdtEnumV0,
+            Self::UdtErrorEnumV0(_) => ScSpecEntryKind::UdtErrorEnumV0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecEntryKind; 5] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScSpecEntryKind> for ScSpecEntry {
+    #[must_use]
+    fn discriminant(&self) -> ScSpecEntryKind {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScSpecEntryKind> for ScSpecEntry {
+    fn variants() -> slice::Iter<'static, ScSpecEntryKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScSpecEntryKind> for ScSpecEntry {}
+
+impl ReadXdr for ScSpecEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScSpecEntryKind = <ScSpecEntryKind as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScSpecEntryKind::FunctionV0 => Self::FunctionV0(ScSpecFunctionV0::read_xdr(r)?),
+            ScSpecEntryKind::UdtStructV0 => Self::UdtStructV0(ScSpecUdtStructV0::read_xdr(r)?),
+            ScSpecEntryKind::UdtUnionV0 => Self::UdtUnionV0(ScSpecUdtUnionV0::read_xdr(r)?),
+            ScSpecEntryKind::UdtEnumV0 => Self::UdtEnumV0(ScSpecUdtEnumV0::read_xdr(r)?),
+            ScSpecEntryKind::UdtErrorEnumV0 => {
+                Self::UdtErrorEnumV0(ScSpecUdtErrorEnumV0::read_xdr(r)?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScSpecEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::FunctionV0(v) => v.write_xdr(w)?,
+            Self::UdtStructV0(v) => v.write_xdr(w)?,
+            Self::UdtUnionV0(v) => v.write_xdr(w)?,
+            Self::UdtEnumV0(v) => v.write_xdr(w)?,
+            Self::UdtErrorEnumV0(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ScSymbol is an XDR Typedef defines as:
+//
+//   typedef string SCSymbol<10>;
+//
+pub type ScSymbol = StringM<10>;
+
+// ScValType is an XDR Enum defines as:
+//
+//   enum SCValType
+//    {
+//        SCV_U63 = 0,
+//        SCV_U32 = 1,
+//        SCV_I32 = 2,
+//        SCV_STATIC = 3,
+//        SCV_OBJECT = 4,
+//        SCV_SYMBOL = 5,
+//        SCV_BITSET = 6,
+//        SCV_STATUS = 7
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScValType {
+    U63 = 0,
+    U32 = 1,
+    I32 = 2,
+    Static = 3,
+    Object = 4,
+    Symbol = 5,
+    Bitset = 6,
+    Status = 7,
+}
+
+impl ScValType {
+    pub const VARIANTS: [ScValType; 8] = [
+        ScValType::U63,
+        ScValType::U32,
+        ScValType::I32,
+        ScValType::Static,
+        ScValType::Object,
+        ScValType::Symbol,
+        ScValType::Bitset,
+        ScValType::Status,
+    ];
+    pub const VARIANTS_STR: [&'static str; 8] = [
+        "U63", "U32", "I32", "Static", "Object", "Symbol", "Bitset", "Status",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::U63 => "U63",
+            Self::U32 => "U32",
+            Self::I32 => "I32",
+            Self::Static => "Static",
+            Self::Object => "Object",
+            Self::Symbol => "Symbol",
+            Self::Bitset => "Bitset",
+            Self::Status => "Status",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScValType; 8] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScValType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScValType> for ScValType {
+    fn variants() -> slice::Iter<'static, ScValType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScValType {}
+
+impl fmt::Display for ScValType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScValType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScValType::U63,
+            1 => ScValType::U32,
+            2 => ScValType::I32,
+            3 => ScValType::Static,
+            4 => ScValType::Object,
+            5 => ScValType::Symbol,
+            6 => ScValType::Bitset,
+            7 => ScValType::Status,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScValType> for i32 {
+    #[must_use]
+    fn from(e: ScValType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScValType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScValType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScStatic is an XDR Enum defines as:
+//
+//   enum SCStatic
+//    {
+//        SCS_VOID = 0,
+//        SCS_TRUE = 1,
+//        SCS_FALSE = 2,
+//        SCS_LEDGER_KEY_CONTRACT_CODE = 3
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScStatic {
+    Void = 0,
+    True = 1,
+    False = 2,
+    LedgerKeyContractCode = 3,
+}
+
+impl ScStatic {
+    pub const VARIANTS: [ScStatic; 4] = [
+        ScStatic::Void,
+        ScStatic::True,
+        ScStatic::False,
+        ScStatic::LedgerKeyContractCode,
+    ];
+    pub const VARIANTS_STR: [&'static str; 4] = ["Void", "True", "False", "LedgerKeyContractCode"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Void => "Void",
+            Self::True => "True",
+            Self::False => "False",
+            Self::LedgerKeyContractCode => "LedgerKeyContractCode",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScStatic; 4] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScStatic {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScStatic> for ScStatic {
+    fn variants() -> slice::Iter<'static, ScStatic> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScStatic {}
+
+impl fmt::Display for ScStatic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScStatic {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScStatic::Void,
+            1 => ScStatic::True,
+            2 => ScStatic::False,
+            3 => ScStatic::LedgerKeyContractCode,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScStatic> for i32 {
+    #[must_use]
+    fn from(e: ScStatic) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScStatic {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScStatic {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScStatusType is an XDR Enum defines as:
+//
+//   enum SCStatusType
+//    {
+//        SST_OK = 0,
+//        SST_UNKNOWN_ERROR = 1,
+//        SST_HOST_VALUE_ERROR = 2,
+//        SST_HOST_OBJECT_ERROR = 3,
+//        SST_HOST_FUNCTION_ERROR = 4,
+//        SST_HOST_STORAGE_ERROR = 5,
+//        SST_HOST_CONTEXT_ERROR = 6,
+//        SST_VM_ERROR = 7,
+//        SST_CONTRACT_ERROR = 8
+//        // TODO: add more
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScStatusType {
+    Ok = 0,
+    UnknownError = 1,
+    HostValueError = 2,
+    HostObjectError = 3,
+    HostFunctionError = 4,
+    HostStorageError = 5,
+    HostContextError = 6,
+    VmError = 7,
+    ContractError = 8,
+}
+
+impl ScStatusType {
+    pub const VARIANTS: [ScStatusType; 9] = [
+        ScStatusType::Ok,
+        ScStatusType::UnknownError,
+        ScStatusType::HostValueError,
+        ScStatusType::HostObjectError,
+        ScStatusType::HostFunctionError,
+        ScStatusType::HostStorageError,
+        ScStatusType::HostContextError,
+        ScStatusType::VmError,
+        ScStatusType::ContractError,
+    ];
+    pub const VARIANTS_STR: [&'static str; 9] = [
+        "Ok",
+        "UnknownError",
+        "HostValueError",
+        "HostObjectError",
+        "HostFunctionError",
+        "HostStorageError",
+        "HostContextError",
+        "VmError",
+        "ContractError",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Ok => "Ok",
+            Self::UnknownError => "UnknownError",
+            Self::HostValueError => "HostValueError",
+            Self::HostObjectError => "HostObjectError",
+            Self::HostFunctionError => "HostFunctionError",
+            Self::HostStorageError => "HostStorageError",
+            Self::HostContextError => "HostContextError",
+            Self::VmError => "VmError",
+            Self::ContractError => "ContractError",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScStatusType; 9] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScStatusType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScStatusType> for ScStatusType {
+    fn variants() -> slice::Iter<'static, ScStatusType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScStatusType {}
+
+impl fmt::Display for ScStatusType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScStatusType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScStatusType::Ok,
+            1 => ScStatusType::UnknownError,
+            2 => ScStatusType::HostValueError,
+            3 => ScStatusType::HostObjectError,
+            4 => ScStatusType::HostFunctionError,
+            5 => ScStatusType::HostStorageError,
+            6 => ScStatusType::HostContextError,
+            7 => ScStatusType::VmError,
+            8 => ScStatusType::ContractError,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScStatusType> for i32 {
+    #[must_use]
+    fn from(e: ScStatusType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScStatusType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScStatusType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScHostValErrorCode is an XDR Enum defines as:
+//
+//   enum SCHostValErrorCode
+//    {
+//        HOST_VALUE_UNKNOWN_ERROR = 0,
+//        HOST_VALUE_RESERVED_TAG_VALUE = 1,
+//        HOST_VALUE_UNEXPECTED_VAL_TYPE = 2,
+//        HOST_VALUE_U63_OUT_OF_RANGE = 3,
+//        HOST_VALUE_U32_OUT_OF_RANGE = 4,
+//        HOST_VALUE_STATIC_UNKNOWN = 5,
+//        HOST_VALUE_MISSING_OBJECT = 6,
+//        HOST_VALUE_SYMBOL_TOO_LONG = 7,
+//        HOST_VALUE_SYMBOL_BAD_CHAR = 8,
+//        HOST_VALUE_SYMBOL_CONTAINS_NON_UTF8 = 9,
+//        HOST_VALUE_BITSET_TOO_MANY_BITS = 10,
+//        HOST_VALUE_STATUS_UNKNOWN = 11
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScHostValErrorCode {
+    UnknownError = 0,
+    ReservedTagValue = 1,
+    UnexpectedValType = 2,
+    U63OutOfRange = 3,
+    U32OutOfRange = 4,
+    StaticUnknown = 5,
+    MissingObject = 6,
+    SymbolTooLong = 7,
+    SymbolBadChar = 8,
+    SymbolContainsNonUtf8 = 9,
+    BitsetTooManyBits = 10,
+    StatusUnknown = 11,
+}
+
+impl ScHostValErrorCode {
+    pub const VARIANTS: [ScHostValErrorCode; 12] = [
+        ScHostValErrorCode::UnknownError,
+        ScHostValErrorCode::ReservedTagValue,
+        ScHostValErrorCode::UnexpectedValType,
+        ScHostValErrorCode::U63OutOfRange,
+        ScHostValErrorCode::U32OutOfRange,
+        ScHostValErrorCode::StaticUnknown,
+        ScHostValErrorCode::MissingObject,
+        ScHostValErrorCode::SymbolTooLong,
+        ScHostValErrorCode::SymbolBadChar,
+        ScHostValErrorCode::SymbolContainsNonUtf8,
+        ScHostValErrorCode::BitsetTooManyBits,
+        ScHostValErrorCode::StatusUnknown,
+    ];
+    pub const VARIANTS_STR: [&'static str; 12] = [
+        "UnknownError",
+        "ReservedTagValue",
+        "UnexpectedValType",
+        "U63OutOfRange",
+        "U32OutOfRange",
+        "StaticUnknown",
+        "MissingObject",
+        "SymbolTooLong",
+        "SymbolBadChar",
+        "SymbolContainsNonUtf8",
+        "BitsetTooManyBits",
+        "StatusUnknown",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::ReservedTagValue => "ReservedTagValue",
+            Self::UnexpectedValType => "UnexpectedValType",
+            Self::U63OutOfRange => "U63OutOfRange",
+            Self::U32OutOfRange => "U32OutOfRange",
+            Self::StaticUnknown => "StaticUnknown",
+            Self::MissingObject => "MissingObject",
+            Self::SymbolTooLong => "SymbolTooLong",
+            Self::SymbolBadChar => "SymbolBadChar",
+            Self::SymbolContainsNonUtf8 => "SymbolContainsNonUtf8",
+            Self::BitsetTooManyBits => "BitsetTooManyBits",
+            Self::StatusUnknown => "StatusUnknown",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScHostValErrorCode; 12] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScHostValErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScHostValErrorCode> for ScHostValErrorCode {
+    fn variants() -> slice::Iter<'static, ScHostValErrorCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScHostValErrorCode {}
+
+impl fmt::Display for ScHostValErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHostValErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHostValErrorCode::UnknownError,
+            1 => ScHostValErrorCode::ReservedTagValue,
+            2 => ScHostValErrorCode::UnexpectedValType,
+            3 => ScHostValErrorCode::U63OutOfRange,
+            4 => ScHostValErrorCode::U32OutOfRange,
+            5 => ScHostValErrorCode::StaticUnknown,
+            6 => ScHostValErrorCode::MissingObject,
+            7 => ScHostValErrorCode::SymbolTooLong,
+            8 => ScHostValErrorCode::SymbolBadChar,
+            9 => ScHostValErrorCode::SymbolContainsNonUtf8,
+            10 => ScHostValErrorCode::BitsetTooManyBits,
+            11 => ScHostValErrorCode::StatusUnknown,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHostValErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScHostValErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHostValErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHostValErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScHostObjErrorCode is an XDR Enum defines as:
+//
+//   enum SCHostObjErrorCode
+//    {
+//        HOST_OBJECT_UNKNOWN_ERROR = 0,
+//        HOST_OBJECT_UNKNOWN_REFERENCE = 1,
+//        HOST_OBJECT_UNEXPECTED_TYPE = 2,
+//        HOST_OBJECT_OBJECT_COUNT_EXCEEDS_U32_MAX = 3,
+//        HOST_OBJECT_OBJECT_NOT_EXIST = 4,
+//        HOST_OBJECT_VEC_INDEX_OUT_OF_BOUND = 5,
+//        HOST_OBJECT_CONTRACT_HASH_WRONG_LENGTH = 6
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScHostObjErrorCode {
+    UnknownError = 0,
+    UnknownReference = 1,
+    UnexpectedType = 2,
+    ObjectCountExceedsU32Max = 3,
+    ObjectNotExist = 4,
+    VecIndexOutOfBound = 5,
+    ContractHashWrongLength = 6,
+}
+
+impl ScHostObjErrorCode {
+    pub const VARIANTS: [ScHostObjErrorCode; 7] = [
+        ScHostObjErrorCode::UnknownError,
+        ScHostObjErrorCode::UnknownReference,
+        ScHostObjErrorCode::UnexpectedType,
+        ScHostObjErrorCode::ObjectCountExceedsU32Max,
+        ScHostObjErrorCode::ObjectNotExist,
+        ScHostObjErrorCode::VecIndexOutOfBound,
+        ScHostObjErrorCode::ContractHashWrongLength,
+    ];
+    pub const VARIANTS_STR: [&'static str; 7] = [
+        "UnknownError",
+        "UnknownReference",
+        "UnexpectedType",
+        "ObjectCountExceedsU32Max",
+        "ObjectNotExist",
+        "VecIndexOutOfBound",
+        "ContractHashWrongLength",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::UnknownReference => "UnknownReference",
+            Self::UnexpectedType => "UnexpectedType",
+            Self::ObjectCountExceedsU32Max => "ObjectCountExceedsU32Max",
+            Self::ObjectNotExist => "ObjectNotExist",
+            Self::VecIndexOutOfBound => "VecIndexOutOfBound",
+            Self::ContractHashWrongLength => "ContractHashWrongLength",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScHostObjErrorCode; 7] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScHostObjErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScHostObjErrorCode> for ScHostObjErrorCode {
+    fn variants() -> slice::Iter<'static, ScHostObjErrorCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScHostObjErrorCode {}
+
+impl fmt::Display for ScHostObjErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHostObjErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHostObjErrorCode::UnknownError,
+            1 => ScHostObjErrorCode::UnknownReference,
+            2 => ScHostObjErrorCode::UnexpectedType,
+            3 => ScHostObjErrorCode::ObjectCountExceedsU32Max,
+            4 => ScHostObjErrorCode::ObjectNotExist,
+            5 => ScHostObjErrorCode::VecIndexOutOfBound,
+            6 => ScHostObjErrorCode::ContractHashWrongLength,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHostObjErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScHostObjErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHostObjErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHostObjErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScHostFnErrorCode is an XDR Enum defines as:
+//
+//   enum SCHostFnErrorCode
+//    {
+//        HOST_FN_UNKNOWN_ERROR = 0,
+//        HOST_FN_UNEXPECTED_HOST_FUNCTION_ACTION = 1,
+//        HOST_FN_INPUT_ARGS_WRONG_LENGTH = 2,
+//        HOST_FN_INPUT_ARGS_WRONG_TYPE = 3,
+//        HOST_FN_INPUT_ARGS_INVALID = 4
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScHostFnErrorCode {
+    UnknownError = 0,
+    UnexpectedHostFunctionAction = 1,
+    InputArgsWrongLength = 2,
+    InputArgsWrongType = 3,
+    InputArgsInvalid = 4,
+}
+
+impl ScHostFnErrorCode {
+    pub const VARIANTS: [ScHostFnErrorCode; 5] = [
+        ScHostFnErrorCode::UnknownError,
+        ScHostFnErrorCode::UnexpectedHostFunctionAction,
+        ScHostFnErrorCode::InputArgsWrongLength,
+        ScHostFnErrorCode::InputArgsWrongType,
+        ScHostFnErrorCode::InputArgsInvalid,
+    ];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "UnknownError",
+        "UnexpectedHostFunctionAction",
+        "InputArgsWrongLength",
+        "InputArgsWrongType",
+        "InputArgsInvalid",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::UnexpectedHostFunctionAction => "UnexpectedHostFunctionAction",
+            Self::InputArgsWrongLength => "InputArgsWrongLength",
+            Self::InputArgsWrongType => "InputArgsWrongType",
+            Self::InputArgsInvalid => "InputArgsInvalid",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScHostFnErrorCode; 5] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScHostFnErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScHostFnErrorCode> for ScHostFnErrorCode {
+    fn variants() -> slice::Iter<'static, ScHostFnErrorCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScHostFnErrorCode {}
+
+impl fmt::Display for ScHostFnErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHostFnErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHostFnErrorCode::UnknownError,
+            1 => ScHostFnErrorCode::UnexpectedHostFunctionAction,
+            2 => ScHostFnErrorCode::InputArgsWrongLength,
+            3 => ScHostFnErrorCode::InputArgsWrongType,
+            4 => ScHostFnErrorCode::InputArgsInvalid,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHostFnErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScHostFnErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHostFnErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHostFnErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScHostStorageErrorCode is an XDR Enum defines as:
+//
+//   enum SCHostStorageErrorCode
+//    {
+//        HOST_STORAGE_UNKNOWN_ERROR = 0,
+//        HOST_STORAGE_EXPECT_CONTRACT_DATA = 1,
+//        HOST_STORAGE_READWRITE_ACCESS_TO_READONLY_ENTRY = 2,
+//        HOST_STORAGE_ACCESS_TO_UNKNOWN_ENTRY = 3,
+//        HOST_STORAGE_MISSING_KEY_IN_GET = 4,
+//        HOST_STORAGE_GET_ON_DELETED_KEY = 5
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScHostStorageErrorCode {
+    UnknownError = 0,
+    ExpectContractData = 1,
+    ReadwriteAccessToReadonlyEntry = 2,
+    AccessToUnknownEntry = 3,
+    MissingKeyInGet = 4,
+    GetOnDeletedKey = 5,
+}
+
+impl ScHostStorageErrorCode {
+    pub const VARIANTS: [ScHostStorageErrorCode; 6] = [
+        ScHostStorageErrorCode::UnknownError,
+        ScHostStorageErrorCode::ExpectContractData,
+        ScHostStorageErrorCode::ReadwriteAccessToReadonlyEntry,
+        ScHostStorageErrorCode::AccessToUnknownEntry,
+        ScHostStorageErrorCode::MissingKeyInGet,
+        ScHostStorageErrorCode::GetOnDeletedKey,
+    ];
+    pub const VARIANTS_STR: [&'static str; 6] = [
+        "UnknownError",
+        "ExpectContractData",
+        "ReadwriteAccessToReadonlyEntry",
+        "AccessToUnknownEntry",
+        "MissingKeyInGet",
+        "GetOnDeletedKey",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::ExpectContractData => "ExpectContractData",
+            Self::ReadwriteAccessToReadonlyEntry => "ReadwriteAccessToReadonlyEntry",
+            Self::AccessToUnknownEntry => "AccessToUnknownEntry",
+            Self::MissingKeyInGet => "MissingKeyInGet",
+            Self::GetOnDeletedKey => "GetOnDeletedKey",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScHostStorageErrorCode; 6] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScHostStorageErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScHostStorageErrorCode> for ScHostStorageErrorCode {
+    fn variants() -> slice::Iter<'static, ScHostStorageErrorCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScHostStorageErrorCode {}
+
+impl fmt::Display for ScHostStorageErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHostStorageErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHostStorageErrorCode::UnknownError,
+            1 => ScHostStorageErrorCode::ExpectContractData,
+            2 => ScHostStorageErrorCode::ReadwriteAccessToReadonlyEntry,
+            3 => ScHostStorageErrorCode::AccessToUnknownEntry,
+            4 => ScHostStorageErrorCode::MissingKeyInGet,
+            5 => ScHostStorageErrorCode::GetOnDeletedKey,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHostStorageErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScHostStorageErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHostStorageErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHostStorageErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScHostContextErrorCode is an XDR Enum defines as:
+//
+//   enum SCHostContextErrorCode
+//    {
+//        HOST_CONTEXT_UNKNOWN_ERROR = 0,
+//        HOST_CONTEXT_NO_CONTRACT_RUNNING = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScHostContextErrorCode {
+    UnknownError = 0,
+    NoContractRunning = 1,
+}
+
+impl ScHostContextErrorCode {
+    pub const VARIANTS: [ScHostContextErrorCode; 2] = [
+        ScHostContextErrorCode::UnknownError,
+        ScHostContextErrorCode::NoContractRunning,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["UnknownError", "NoContractRunning"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::NoContractRunning => "NoContractRunning",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScHostContextErrorCode; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScHostContextErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScHostContextErrorCode> for ScHostContextErrorCode {
+    fn variants() -> slice::Iter<'static, ScHostContextErrorCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScHostContextErrorCode {}
+
+impl fmt::Display for ScHostContextErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHostContextErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHostContextErrorCode::UnknownError,
+            1 => ScHostContextErrorCode::NoContractRunning,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHostContextErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScHostContextErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHostContextErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHostContextErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScVmErrorCode is an XDR Enum defines as:
+//
+//   enum SCVmErrorCode {
+//        VM_UNKNOWN = 0,
+//        VM_VALIDATION = 1,
+//        VM_INSTANTIATION = 2,
+//        VM_FUNCTION = 3,
+//        VM_TABLE = 4,
+//        VM_MEMORY = 5,
+//        VM_GLOBAL = 6,
+//        VM_VALUE = 7,
+//        VM_TRAP_UNREACHABLE = 8,
+//        VM_TRAP_MEMORY_ACCESS_OUT_OF_BOUNDS = 9,
+//        VM_TRAP_TABLE_ACCESS_OUT_OF_BOUNDS = 10,
+//        VM_TRAP_ELEM_UNINITIALIZED = 11,
+//        VM_TRAP_DIVISION_BY_ZERO = 12,
+//        VM_TRAP_INTEGER_OVERFLOW = 13,
+//        VM_TRAP_INVALID_CONVERSION_TO_INT = 14,
+//        VM_TRAP_STACK_OVERFLOW = 15,
+//        VM_TRAP_UNEXPECTED_SIGNATURE = 16,
+//        VM_TRAP_MEM_LIMIT_EXCEEDED = 17,
+//        VM_TRAP_CPU_LIMIT_EXCEEDED = 18
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScVmErrorCode {
+    Unknown = 0,
+    Validation = 1,
+    Instantiation = 2,
+    Function = 3,
+    Table = 4,
+    Memory = 5,
+    Global = 6,
+    Value = 7,
+    TrapUnreachable = 8,
+    TrapMemoryAccessOutOfBounds = 9,
+    TrapTableAccessOutOfBounds = 10,
+    TrapElemUninitialized = 11,
+    TrapDivisionByZero = 12,
+    TrapIntegerOverflow = 13,
+    TrapInvalidConversionToInt = 14,
+    TrapStackOverflow = 15,
+    TrapUnexpectedSignature = 16,
+    TrapMemLimitExceeded = 17,
+    TrapCpuLimitExceeded = 18,
+}
+
+impl ScVmErrorCode {
+    pub const VARIANTS: [ScVmErrorCode; 19] = [
+        ScVmErrorCode::Unknown,
+        ScVmErrorCode::Validation,
+        ScVmErrorCode::Instantiation,
+        ScVmErrorCode::Function,
+        ScVmErrorCode::Table,
+        ScVmErrorCode::Memory,
+        ScVmErrorCode::Global,
+        ScVmErrorCode::Value,
+        ScVmErrorCode::TrapUnreachable,
+        ScVmErrorCode::TrapMemoryAccessOutOfBounds,
+        ScVmErrorCode::TrapTableAccessOutOfBounds,
+        ScVmErrorCode::TrapElemUninitialized,
+        ScVmErrorCode::TrapDivisionByZero,
+        ScVmErrorCode::TrapIntegerOverflow,
+        ScVmErrorCode::TrapInvalidConversionToInt,
+        ScVmErrorCode::TrapStackOverflow,
+        ScVmErrorCode::TrapUnexpectedSignature,
+        ScVmErrorCode::TrapMemLimitExceeded,
+        ScVmErrorCode::TrapCpuLimitExceeded,
+    ];
+    pub const VARIANTS_STR: [&'static str; 19] = [
+        "Unknown",
+        "Validation",
+        "Instantiation",
+        "Function",
+        "Table",
+        "Memory",
+        "Global",
+        "Value",
+        "TrapUnreachable",
+        "TrapMemoryAccessOutOfBounds",
+        "TrapTableAccessOutOfBounds",
+        "TrapElemUninitialized",
+        "TrapDivisionByZero",
+        "TrapIntegerOverflow",
+        "TrapInvalidConversionToInt",
+        "TrapStackOverflow",
+        "TrapUnexpectedSignature",
+        "TrapMemLimitExceeded",
+        "TrapCpuLimitExceeded",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Unknown => "Unknown",
+            Self::Validation => "Validation",
+            Self::Instantiation => "Instantiation",
+            Self::Function => "Function",
+            Self::Table => "Table",
+            Self::Memory => "Memory",
+            Self::Global => "Global",
+            Self::Value => "Value",
+            Self::TrapUnreachable => "TrapUnreachable",
+            Self::TrapMemoryAccessOutOfBounds => "TrapMemoryAccessOutOfBounds",
+            Self::TrapTableAccessOutOfBounds => "TrapTableAccessOutOfBounds",
+            Self::TrapElemUninitialized => "TrapElemUninitialized",
+            Self::TrapDivisionByZero => "TrapDivisionByZero",
+            Self::TrapIntegerOverflow => "TrapIntegerOverflow",
+            Self::TrapInvalidConversionToInt => "TrapInvalidConversionToInt",
+            Self::TrapStackOverflow => "TrapStackOverflow",
+            Self::TrapUnexpectedSignature => "TrapUnexpectedSignature",
+            Self::TrapMemLimitExceeded => "TrapMemLimitExceeded",
+            Self::TrapCpuLimitExceeded => "TrapCpuLimitExceeded",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScVmErrorCode; 19] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScVmErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScVmErrorCode> for ScVmErrorCode {
+    fn variants() -> slice::Iter<'static, ScVmErrorCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScVmErrorCode {}
+
+impl fmt::Display for ScVmErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScVmErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScVmErrorCode::Unknown,
+            1 => ScVmErrorCode::Validation,
+            2 => ScVmErrorCode::Instantiation,
+            3 => ScVmErrorCode::Function,
+            4 => ScVmErrorCode::Table,
+            5 => ScVmErrorCode::Memory,
+            6 => ScVmErrorCode::Global,
+            7 => ScVmErrorCode::Value,
+            8 => ScVmErrorCode::TrapUnreachable,
+            9 => ScVmErrorCode::TrapMemoryAccessOutOfBounds,
+            10 => ScVmErrorCode::TrapTableAccessOutOfBounds,
+            11 => ScVmErrorCode::TrapElemUninitialized,
+            12 => ScVmErrorCode::TrapDivisionByZero,
+            13 => ScVmErrorCode::TrapIntegerOverflow,
+            14 => ScVmErrorCode::TrapInvalidConversionToInt,
+            15 => ScVmErrorCode::TrapStackOverflow,
+            16 => ScVmErrorCode::TrapUnexpectedSignature,
+            17 => ScVmErrorCode::TrapMemLimitExceeded,
+            18 => ScVmErrorCode::TrapCpuLimitExceeded,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScVmErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScVmErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScVmErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScVmErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScUnknownErrorCode is an XDR Enum defines as:
+//
+//   enum SCUnknownErrorCode
+//    {
+//        UNKNOWN_ERROR_GENERAL = 0,
+//        UNKNOWN_ERROR_XDR = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScUnknownErrorCode {
+    General = 0,
+    Xdr = 1,
+}
+
+impl ScUnknownErrorCode {
+    pub const VARIANTS: [ScUnknownErrorCode; 2] =
+        [ScUnknownErrorCode::General, ScUnknownErrorCode::Xdr];
+    pub const VARIANTS_STR: [&'static str; 2] = ["General", "Xdr"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::General => "General",
+            Self::Xdr => "Xdr",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScUnknownErrorCode; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScUnknownErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScUnknownErrorCode> for ScUnknownErrorCode {
+    fn variants() -> slice::Iter<'static, ScUnknownErrorCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScUnknownErrorCode {}
+
+impl fmt::Display for ScUnknownErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScUnknownErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScUnknownErrorCode::General,
+            1 => ScUnknownErrorCode::Xdr,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScUnknownErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScUnknownErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScUnknownErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScUnknownErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScStatus is an XDR Union defines as:
+//
+//   union SCStatus switch (SCStatusType type)
+//    {
+//    case SST_OK:
+//        void;
+//    case SST_UNKNOWN_ERROR:
+//        SCUnknownErrorCode unknownCode;
+//    case SST_HOST_VALUE_ERROR:
+//        SCHostValErrorCode valCode;
+//    case SST_HOST_OBJECT_ERROR:
+//        SCHostObjErrorCode objCode;
+//    case SST_HOST_FUNCTION_ERROR:
+//        SCHostFnErrorCode fnCode;
+//    case SST_HOST_STORAGE_ERROR:
+//        SCHostStorageErrorCode storageCode;
+//    case SST_HOST_CONTEXT_ERROR:
+//        SCHostContextErrorCode contextCode;
+//    case SST_VM_ERROR:
+//        SCVmErrorCode vmCode;
+//    case SST_CONTRACT_ERROR:
+//        uint32 contractCode;
+//    };
+//
+// union with discriminant ScStatusType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScStatus {
+    Ok,
+    UnknownError(ScUnknownErrorCode),
+    HostValueError(ScHostValErrorCode),
+    HostObjectError(ScHostObjErrorCode),
+    HostFunctionError(ScHostFnErrorCode),
+    HostStorageError(ScHostStorageErrorCode),
+    HostContextError(ScHostContextErrorCode),
+    VmError(ScVmErrorCode),
+    ContractError(u32),
+}
+
+impl ScStatus {
+    pub const VARIANTS: [ScStatusType; 9] = [
+        ScStatusType::Ok,
+        ScStatusType::UnknownError,
+        ScStatusType::HostValueError,
+        ScStatusType::HostObjectError,
+        ScStatusType::HostFunctionError,
+        ScStatusType::HostStorageError,
+        ScStatusType::HostContextError,
+        ScStatusType::VmError,
+        ScStatusType::ContractError,
+    ];
+    pub const VARIANTS_STR: [&'static str; 9] = [
+        "Ok",
+        "UnknownError",
+        "HostValueError",
+        "HostObjectError",
+        "HostFunctionError",
+        "HostStorageError",
+        "HostContextError",
+        "VmError",
+        "ContractError",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Ok => "Ok",
+            Self::UnknownError(_) => "UnknownError",
+            Self::HostValueError(_) => "HostValueError",
+            Self::HostObjectError(_) => "HostObjectError",
+            Self::HostFunctionError(_) => "HostFunctionError",
+            Self::HostStorageError(_) => "HostStorageError",
+            Self::HostContextError(_) => "HostContextError",
+            Self::VmError(_) => "VmError",
+            Self::ContractError(_) => "ContractError",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScStatusType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Ok => ScStatusType::Ok,
+            Self::UnknownError(_) => ScStatusType::UnknownError,
+            Self::HostValueError(_) => ScStatusType::HostValueError,
+            Self::HostObjectError(_) => ScStatusType::HostObjectError,
+            Self::HostFunctionError(_) => ScStatusType::HostFunctionError,
+            Self::HostStorageError(_) => ScStatusType::HostStorageError,
+            Self::HostContextError(_) => ScStatusType::HostContextError,
+            Self::VmError(_) => ScStatusType::VmError,
+            Self::ContractError(_) => ScStatusType::ContractError,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScStatusType; 9] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScStatus {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScStatusType> for ScStatus {
+    #[must_use]
+    fn discriminant(&self) -> ScStatusType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScStatusType> for ScStatus {
+    fn variants() -> slice::Iter<'static, ScStatusType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScStatusType> for ScStatus {}
+
+impl ReadXdr for ScStatus {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScStatusType = <ScStatusType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScStatusType::Ok => Self::Ok,
+            ScStatusType::UnknownError => Self::UnknownError(ScUnknownErrorCode::read_xdr(r)?),
+            ScStatusType::HostValueError => Self::HostValueError(ScHostValErrorCode::read_xdr(r)?),
+            ScStatusType::HostObjectError => {
+                Self::HostObjectError(ScHostObjErrorCode::read_xdr(r)?)
+            }
+            ScStatusType::HostFunctionError => {
+                Self::HostFunctionError(ScHostFnErrorCode::read_xdr(r)?)
+            }
+            ScStatusType::HostStorageError => {
+                Self::HostStorageError(ScHostStorageErrorCode::read_xdr(r)?)
+            }
+            ScStatusType::HostContextError => {
+                Self::HostContextError(ScHostContextErrorCode::read_xdr(r)?)
+            }
+            ScStatusType::VmError => Self::VmError(ScVmErrorCode::read_xdr(r)?),
+            ScStatusType::ContractError => Self::ContractError(u32::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScStatus {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Ok => ().write_xdr(w)?,
+            Self::UnknownError(v) => v.write_xdr(w)?,
+            Self::HostValueError(v) => v.write_xdr(w)?,
+            Self::HostObjectError(v) => v.write_xdr(w)?,
+            Self::HostFunctionError(v) => v.write_xdr(w)?,
+            Self::HostStorageError(v) => v.write_xdr(w)?,
+            Self::HostContextError(v) => v.write_xdr(w)?,
+            Self::VmError(v) => v.write_xdr(w)?,
+            Self::ContractError(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ScVal is an XDR Union defines as:
+//
+//   union SCVal switch (SCValType type)
+//    {
+//    case SCV_U63:
+//        int64 u63;
+//    case SCV_U32:
+//        uint32 u32;
+//    case SCV_I32:
+//        int32 i32;
+//    case SCV_STATIC:
+//        SCStatic ic;
+//    case SCV_OBJECT:
+//        SCObject* obj;
+//    case SCV_SYMBOL:
+//        SCSymbol sym;
+//    case SCV_BITSET:
+//        uint64 bits;
+//    case SCV_STATUS:
+//        SCStatus status;
+//    };
+//
+// union with discriminant ScValType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScVal {
+    U63(i64),
+    U32(u32),
+    I32(i32),
+    Static(ScStatic),
+    Object(Option<ScObject>),
+    Symbol(StringM<10>),
+    Bitset(u64),
+    Status(ScStatus),
+}
+
+impl ScVal {
+    pub const VARIANTS: [ScValType; 8] = [
+        ScValType::U63,
+        ScValType::U32,
+        ScValType::I32,
+        ScValType::Static,
+        ScValType::Object,
+        ScValType::Symbol,
+        ScValType::Bitset,
+        ScValType::Status,
+    ];
+    pub const VARIANTS_STR: [&'static str; 8] = [
+        "U63", "U32", "I32", "Static", "Object", "Symbol", "Bitset", "Status",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::U63(_) => "U63",
+            Self::U32(_) => "U32",
+            Self::I32(_) => "I32",
+            Self::Static(_) => "Static",
+            Self::Object(_) => "Object",
+            Self::Symbol(_) => "Symbol",
+            Self::Bitset(_) => "Bitset",
+            Self::Status(_) => "Status",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScValType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::U63(_) => ScValType::U63,
+            Self::U32(_) => ScValType::U32,
+            Self::I32(_) => ScValType::I32,
+            Self::Static(_) => ScValType::Static,
+            Self::Object(_) => ScValType::Object,
+            Self::Symbol(_) => ScValType::Symbol,
+            Self::Bitset(_) => ScValType::Bitset,
+            Self::Status(_) => ScValType::Status,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScValType; 8] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScVal {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScValType> for ScVal {
+    #[must_use]
+    fn discriminant(&self) -> ScValType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScValType> for ScVal {
+    fn variants() -> slice::Iter<'static, ScValType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScValType> for ScVal {}
+
+impl ReadXdr for ScVal {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScValType::U63 => Self::U63(i64::read_xdr(r)?),
+            ScValType::U32 => Self::U32(u32::read_xdr(r)?),
+            ScValType::I32 => Self::I32(i32::read_xdr(r)?),
+            ScValType::Static => Self::Static(ScStatic::read_xdr(r)?),
+            ScValType::Object => Self::Object(Option::<ScObject>::read_xdr(r)?),
+            ScValType::Symbol => Self::Symbol(StringM::<10>::read_xdr(r)?),
+            ScValType::Bitset => Self::Bitset(u64::read_xdr(r)?),
+            ScValType::Status => Self::Status(ScStatus::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScVal {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::U63(v) => v.write_xdr(w)?,
+            Self::U32(v) => v.write_xdr(w)?,
+            Self::I32(v) => v.write_xdr(w)?,
+            Self::Static(v) => v.write_xdr(w)?,
+            Self::Object(v) => v.write_xdr(w)?,
+            Self::Symbol(v) => v.write_xdr(w)?,
+            Self::Bitset(v) => v.write_xdr(w)?,
+            Self::Status(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ScObjectType is an XDR Enum defines as:
+//
+//   enum SCObjectType
+//    {
+//        // We have a few objects that represent non-stellar-specific concepts
+//        // like general-purpose maps, vectors, numbers, blobs.
+//
+//        SCO_VEC = 0,
+//        SCO_MAP = 1,
+//        SCO_U64 = 2,
+//        SCO_I64 = 3,
+//        SCO_U128 = 4,
+//        SCO_I128 = 5,
+//        SCO_BYTES = 6,
+//        SCO_CONTRACT_CODE = 7,
+//        SCO_ACCOUNT_ID = 8
+//
+//        // TODO: add more
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScObjectType {
+    Vec = 0,
+    Map = 1,
+    U64 = 2,
+    I64 = 3,
+    U128 = 4,
+    I128 = 5,
+    Bytes = 6,
+    ContractCode = 7,
+    AccountId = 8,
+}
+
+impl ScObjectType {
+    pub const VARIANTS: [ScObjectType; 9] = [
+        ScObjectType::Vec,
+        ScObjectType::Map,
+        ScObjectType::U64,
+        ScObjectType::I64,
+        ScObjectType::U128,
+        ScObjectType::I128,
+        ScObjectType::Bytes,
+        ScObjectType::ContractCode,
+        ScObjectType::AccountId,
+    ];
+    pub const VARIANTS_STR: [&'static str; 9] = [
+        "Vec",
+        "Map",
+        "U64",
+        "I64",
+        "U128",
+        "I128",
+        "Bytes",
+        "ContractCode",
+        "AccountId",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Vec => "Vec",
+            Self::Map => "Map",
+            Self::U64 => "U64",
+            Self::I64 => "I64",
+            Self::U128 => "U128",
+            Self::I128 => "I128",
+            Self::Bytes => "Bytes",
+            Self::ContractCode => "ContractCode",
+            Self::AccountId => "AccountId",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScObjectType; 9] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScObjectType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScObjectType> for ScObjectType {
+    fn variants() -> slice::Iter<'static, ScObjectType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScObjectType {}
+
+impl fmt::Display for ScObjectType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScObjectType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScObjectType::Vec,
+            1 => ScObjectType::Map,
+            2 => ScObjectType::U64,
+            3 => ScObjectType::I64,
+            4 => ScObjectType::U128,
+            5 => ScObjectType::I128,
+            6 => ScObjectType::Bytes,
+            7 => ScObjectType::ContractCode,
+            8 => ScObjectType::AccountId,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScObjectType> for i32 {
+    #[must_use]
+    fn from(e: ScObjectType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScObjectType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScObjectType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScMapEntry is an XDR Struct defines as:
+//
+//   struct SCMapEntry
+//    {
+//        SCVal key;
+//        SCVal val;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScMapEntry {
+    pub key: ScVal,
+    pub val: ScVal,
+}
+
+impl ReadXdr for ScMapEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            key: ScVal::read_xdr(r)?,
+            val: ScVal::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScMapEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.key.write_xdr(w)?;
+        self.val.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScvalLimit is an XDR Const defines as:
+//
+//   const SCVAL_LIMIT = 256000;
+//
+pub const SCVAL_LIMIT: u64 = 256000;
+
+// ScVec is an XDR Typedef defines as:
+//
+//   typedef SCVal SCVec<SCVAL_LIMIT>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScVec(pub VecM<ScVal, 256000>);
+
+impl From<ScVec> for VecM<ScVal, 256000> {
+    #[must_use]
+    fn from(x: ScVec) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<ScVal, 256000>> for ScVec {
+    #[must_use]
+    fn from(x: VecM<ScVal, 256000>) -> Self {
+        ScVec(x)
+    }
+}
+
+impl AsRef<VecM<ScVal, 256000>> for ScVec {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<ScVal, 256000> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScVec {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = VecM::<ScVal, 256000>::read_xdr(r)?;
+        let v = ScVec(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScVec {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for ScVec {
+    type Target = VecM<ScVal, 256000>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScVec> for Vec<ScVal> {
+    #[must_use]
+    fn from(x: ScVec) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ScVal>> for ScVec {
+    type Error = Error;
+    fn try_from(x: Vec<ScVal>) -> Result<Self> {
+        Ok(ScVec(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<ScVal>> for ScVec {
+    type Error = Error;
+    fn try_from(x: &Vec<ScVal>) -> Result<Self> {
+        Ok(ScVec(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ScVal>> for ScVec {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<ScVal> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ScVal]> for ScVec {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[ScVal] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ScVal] {
+        self.0 .0
+    }
+}
+
+// ScMap is an XDR Typedef defines as:
+//
+//   typedef SCMapEntry SCMap<SCVAL_LIMIT>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScMap(pub VecM<ScMapEntry, 256000>);
+
+impl From<ScMap> for VecM<ScMapEntry, 256000> {
+    #[must_use]
+    fn from(x: ScMap) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<ScMapEntry, 256000>> for ScMap {
+    #[must_use]
+    fn from(x: VecM<ScMapEntry, 256000>) -> Self {
+        ScMap(x)
+    }
+}
+
+impl AsRef<VecM<ScMapEntry, 256000>> for ScMap {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<ScMapEntry, 256000> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScMap {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = VecM::<ScMapEntry, 256000>::read_xdr(r)?;
+        let v = ScMap(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScMap {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for ScMap {
+    type Target = VecM<ScMapEntry, 256000>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScMap> for Vec<ScMapEntry> {
+    #[must_use]
+    fn from(x: ScMap) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ScMapEntry>> for ScMap {
+    type Error = Error;
+    fn try_from(x: Vec<ScMapEntry>) -> Result<Self> {
+        Ok(ScMap(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<ScMapEntry>> for ScMap {
+    type Error = Error;
+    fn try_from(x: &Vec<ScMapEntry>) -> Result<Self> {
+        Ok(ScMap(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ScMapEntry>> for ScMap {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<ScMapEntry> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ScMapEntry]> for ScMap {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[ScMapEntry] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ScMapEntry] {
+        self.0 .0
+    }
+}
+
+// ScContractCodeType is an XDR Enum defines as:
+//
+//   enum SCContractCodeType
+//    {
+//        SCCONTRACT_CODE_WASM_REF = 0,
+//        SCCONTRACT_CODE_TOKEN = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScContractCodeType {
+    WasmRef = 0,
+    Token = 1,
+}
+
+impl ScContractCodeType {
+    pub const VARIANTS: [ScContractCodeType; 2] =
+        [ScContractCodeType::WasmRef, ScContractCodeType::Token];
+    pub const VARIANTS_STR: [&'static str; 2] = ["WasmRef", "Token"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::WasmRef => "WasmRef",
+            Self::Token => "Token",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScContractCodeType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScContractCodeType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScContractCodeType> for ScContractCodeType {
+    fn variants() -> slice::Iter<'static, ScContractCodeType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScContractCodeType {}
+
+impl fmt::Display for ScContractCodeType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScContractCodeType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScContractCodeType::WasmRef,
+            1 => ScContractCodeType::Token,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScContractCodeType> for i32 {
+    #[must_use]
+    fn from(e: ScContractCodeType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScContractCodeType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScContractCodeType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScContractCode is an XDR Union defines as:
+//
+//   union SCContractCode switch (SCContractCodeType type)
+//    {
+//    case SCCONTRACT_CODE_WASM_REF:
+//        Hash wasm_id;
+//    case SCCONTRACT_CODE_TOKEN:
+//        void;
+//    };
+//
+// union with discriminant ScContractCodeType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScContractCode {
+    WasmRef(Hash),
+    Token,
+}
+
+impl ScContractCode {
+    pub const VARIANTS: [ScContractCodeType; 2] =
+        [ScContractCodeType::WasmRef, ScContractCodeType::Token];
+    pub const VARIANTS_STR: [&'static str; 2] = ["WasmRef", "Token"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::WasmRef(_) => "WasmRef",
+            Self::Token => "Token",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScContractCodeType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::WasmRef(_) => ScContractCodeType::WasmRef,
+            Self::Token => ScContractCodeType::Token,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScContractCodeType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScContractCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScContractCodeType> for ScContractCode {
+    #[must_use]
+    fn discriminant(&self) -> ScContractCodeType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScContractCodeType> for ScContractCode {
+    fn variants() -> slice::Iter<'static, ScContractCodeType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScContractCodeType> for ScContractCode {}
+
+impl ReadXdr for ScContractCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScContractCodeType = <ScContractCodeType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScContractCodeType::WasmRef => Self::WasmRef(Hash::read_xdr(r)?),
+            ScContractCodeType::Token => Self::Token,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScContractCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::WasmRef(v) => v.write_xdr(w)?,
+            Self::Token => ().write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// Int128Parts is an XDR Struct defines as:
+//
+//   struct Int128Parts {
+//        // Both signed and unsigned 128-bit ints
+//        // are transported in a pair of uint64s
+//        // to reduce the risk of sign-extension.
+//        uint64 lo;
+//        uint64 hi;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct Int128Parts {
+    pub lo: u64,
+    pub hi: u64,
+}
+
+impl ReadXdr for Int128Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            lo: u64::read_xdr(r)?,
+            hi: u64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for Int128Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.lo.write_xdr(w)?;
+        self.hi.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScObject is an XDR Union defines as:
+//
+//   union SCObject switch (SCObjectType type)
+//    {
+//    case SCO_VEC:
+//        SCVec vec;
+//    case SCO_MAP:
+//        SCMap map;
+//    case SCO_U64:
+//        uint64 u64;
+//    case SCO_I64:
+//        int64 i64;
+//    case SCO_U128:
+//        Int128Parts u128;
+//    case SCO_I128:
+//        Int128Parts i128;
+//    case SCO_BYTES:
+//        opaque bin<SCVAL_LIMIT>;
+//    case SCO_CONTRACT_CODE:
+//        SCContractCode contractCode;
+//    case SCO_ACCOUNT_ID:
+//        AccountID accountID;
+//    };
+//
+// union with discriminant ScObjectType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScObject {
+    Vec(ScVec),
+    Map(ScMap),
+    U64(u64),
+    I64(i64),
+    U128(Int128Parts),
+    I128(Int128Parts),
+    Bytes(BytesM<256000>),
+    ContractCode(ScContractCode),
+    AccountId(AccountId),
+}
+
+impl ScObject {
+    pub const VARIANTS: [ScObjectType; 9] = [
+        ScObjectType::Vec,
+        ScObjectType::Map,
+        ScObjectType::U64,
+        ScObjectType::I64,
+        ScObjectType::U128,
+        ScObjectType::I128,
+        ScObjectType::Bytes,
+        ScObjectType::ContractCode,
+        ScObjectType::AccountId,
+    ];
+    pub const VARIANTS_STR: [&'static str; 9] = [
+        "Vec",
+        "Map",
+        "U64",
+        "I64",
+        "U128",
+        "I128",
+        "Bytes",
+        "ContractCode",
+        "AccountId",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Vec(_) => "Vec",
+            Self::Map(_) => "Map",
+            Self::U64(_) => "U64",
+            Self::I64(_) => "I64",
+            Self::U128(_) => "U128",
+            Self::I128(_) => "I128",
+            Self::Bytes(_) => "Bytes",
+            Self::ContractCode(_) => "ContractCode",
+            Self::AccountId(_) => "AccountId",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScObjectType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Vec(_) => ScObjectType::Vec,
+            Self::Map(_) => ScObjectType::Map,
+            Self::U64(_) => ScObjectType::U64,
+            Self::I64(_) => ScObjectType::I64,
+            Self::U128(_) => ScObjectType::U128,
+            Self::I128(_) => ScObjectType::I128,
+            Self::Bytes(_) => ScObjectType::Bytes,
+            Self::ContractCode(_) => ScObjectType::ContractCode,
+            Self::AccountId(_) => ScObjectType::AccountId,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScObjectType; 9] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScObject {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScObjectType> for ScObject {
+    #[must_use]
+    fn discriminant(&self) -> ScObjectType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScObjectType> for ScObject {
+    fn variants() -> slice::Iter<'static, ScObjectType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScObjectType> for ScObject {}
+
+impl ReadXdr for ScObject {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScObjectType = <ScObjectType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScObjectType::Vec => Self::Vec(ScVec::read_xdr(r)?),
+            ScObjectType::Map => Self::Map(ScMap::read_xdr(r)?),
+            ScObjectType::U64 => Self::U64(u64::read_xdr(r)?),
+            ScObjectType::I64 => Self::I64(i64::read_xdr(r)?),
+            ScObjectType::U128 => Self::U128(Int128Parts::read_xdr(r)?),
+            ScObjectType::I128 => Self::I128(Int128Parts::read_xdr(r)?),
+            ScObjectType::Bytes => Self::Bytes(BytesM::<256000>::read_xdr(r)?),
+            ScObjectType::ContractCode => Self::ContractCode(ScContractCode::read_xdr(r)?),
+            ScObjectType::AccountId => Self::AccountId(AccountId::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScObject {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Vec(v) => v.write_xdr(w)?,
+            Self::Map(v) => v.write_xdr(w)?,
+            Self::U64(v) => v.write_xdr(w)?,
+            Self::I64(v) => v.write_xdr(w)?,
+            Self::U128(v) => v.write_xdr(w)?,
+            Self::I128(v) => v.write_xdr(w)?,
+            Self::Bytes(v) => v.write_xdr(w)?,
+            Self::ContractCode(v) => v.write_xdr(w)?,
+            Self::AccountId(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
 // StoredTransactionSet is an XDR Union defines as:
 //
 //   union StoredTransactionSet switch (int v)
@@ -3040,57 +7208,6 @@ impl WriteXdr for PersistedScpState {
             Self::V1(v) => v.write_xdr(w)?,
         };
         Ok(())
-    }
-}
-
-// AccountId is an XDR Typedef defines as:
-//
-//   typedef PublicKey AccountID;
-//
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct AccountId(pub PublicKey);
-
-impl From<AccountId> for PublicKey {
-    #[must_use]
-    fn from(x: AccountId) -> Self {
-        x.0
-    }
-}
-
-impl From<PublicKey> for AccountId {
-    #[must_use]
-    fn from(x: PublicKey) -> Self {
-        AccountId(x)
-    }
-}
-
-impl AsRef<PublicKey> for AccountId {
-    #[must_use]
-    fn as_ref(&self) -> &PublicKey {
-        &self.0
-    }
-}
-
-impl ReadXdr for AccountId {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = PublicKey::read_xdr(r)?;
-        let v = AccountId(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for AccountId {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
     }
 }
 
@@ -4365,7 +8482,10 @@ impl WriteXdr for ThresholdIndexes {
 //        OFFER = 2,
 //        DATA = 3,
 //        CLAIMABLE_BALANCE = 4,
-//        LIQUIDITY_POOL = 5
+//        LIQUIDITY_POOL = 5,
+//        CONTRACT_DATA = 6,
+//        CONTRACT_CODE = 7,
+//        CONFIG_SETTING = 8
 //    };
 //
 // enum
@@ -4384,24 +8504,33 @@ pub enum LedgerEntryType {
     Data = 3,
     ClaimableBalance = 4,
     LiquidityPool = 5,
+    ContractData = 6,
+    ContractCode = 7,
+    ConfigSetting = 8,
 }
 
 impl LedgerEntryType {
-    pub const VARIANTS: [LedgerEntryType; 6] = [
+    pub const VARIANTS: [LedgerEntryType; 9] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
         LedgerEntryType::Data,
         LedgerEntryType::ClaimableBalance,
         LedgerEntryType::LiquidityPool,
+        LedgerEntryType::ContractData,
+        LedgerEntryType::ContractCode,
+        LedgerEntryType::ConfigSetting,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: [&'static str; 9] = [
         "Account",
         "Trustline",
         "Offer",
         "Data",
         "ClaimableBalance",
         "LiquidityPool",
+        "ContractData",
+        "ContractCode",
+        "ConfigSetting",
     ];
 
     #[must_use]
@@ -4413,11 +8542,14 @@ impl LedgerEntryType {
             Self::Data => "Data",
             Self::ClaimableBalance => "ClaimableBalance",
             Self::LiquidityPool => "LiquidityPool",
+            Self::ContractData => "ContractData",
+            Self::ContractCode => "ContractCode",
+            Self::ConfigSetting => "ConfigSetting",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 6] {
+    pub const fn variants() -> [LedgerEntryType; 9] {
         Self::VARIANTS
     }
 }
@@ -4454,6 +8586,9 @@ impl TryFrom<i32> for LedgerEntryType {
             3 => LedgerEntryType::Data,
             4 => LedgerEntryType::ClaimableBalance,
             5 => LedgerEntryType::LiquidityPool,
+            6 => LedgerEntryType::ContractData,
+            7 => LedgerEntryType::ContractCode,
+            8 => LedgerEntryType::ConfigSetting,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -7880,6 +12015,520 @@ impl WriteXdr for LiquidityPoolEntry {
     }
 }
 
+// ContractDataEntry is an XDR Struct defines as:
+//
+//   struct ContractDataEntry {
+//        Hash contractID;
+//        SCVal key;
+//        SCVal val;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractDataEntry {
+    pub contract_id: Hash,
+    pub key: ScVal,
+    pub val: ScVal,
+}
+
+impl ReadXdr for ContractDataEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            contract_id: Hash::read_xdr(r)?,
+            key: ScVal::read_xdr(r)?,
+            val: ScVal::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ContractDataEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.contract_id.write_xdr(w)?;
+        self.key.write_xdr(w)?;
+        self.val.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ContractCodeEntry is an XDR Struct defines as:
+//
+//   struct ContractCodeEntry {
+//        ExtensionPoint ext;
+//
+//        Hash hash;
+//        opaque code<SCVAL_LIMIT>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractCodeEntry {
+    pub ext: ExtensionPoint,
+    pub hash: Hash,
+    pub code: BytesM<256000>,
+}
+
+impl ReadXdr for ContractCodeEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ext: ExtensionPoint::read_xdr(r)?,
+            hash: Hash::read_xdr(r)?,
+            code: BytesM::<256000>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ContractCodeEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ext.write_xdr(w)?;
+        self.hash.write_xdr(w)?;
+        self.code.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ConfigSettingType is an XDR Enum defines as:
+//
+//   enum ConfigSettingType
+//    {
+//        CONFIG_SETTING_TYPE_UINT32 = 0
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ConfigSettingType {
+    ConfigSettingTypeUint32 = 0,
+}
+
+impl ConfigSettingType {
+    pub const VARIANTS: [ConfigSettingType; 1] = [ConfigSettingType::ConfigSettingTypeUint32];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingTypeUint32"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ConfigSettingTypeUint32 => "ConfigSettingTypeUint32",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ConfigSettingType; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ConfigSettingType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ConfigSettingType> for ConfigSettingType {
+    fn variants() -> slice::Iter<'static, ConfigSettingType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ConfigSettingType {}
+
+impl fmt::Display for ConfigSettingType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ConfigSettingType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ConfigSettingType::ConfigSettingTypeUint32,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ConfigSettingType> for i32 {
+    #[must_use]
+    fn from(e: ConfigSettingType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ConfigSettingType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ConfigSettingType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ConfigSetting is an XDR Union defines as:
+//
+//   union ConfigSetting switch (ConfigSettingType type)
+//    {
+//    case CONFIG_SETTING_TYPE_UINT32:
+//        uint32 uint32Val;
+//    };
+//
+// union with discriminant ConfigSettingType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ConfigSetting {
+    ConfigSettingTypeUint32(u32),
+}
+
+impl ConfigSetting {
+    pub const VARIANTS: [ConfigSettingType; 1] = [ConfigSettingType::ConfigSettingTypeUint32];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingTypeUint32"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ConfigSettingTypeUint32(_) => "ConfigSettingTypeUint32",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ConfigSettingType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ConfigSettingTypeUint32(_) => ConfigSettingType::ConfigSettingTypeUint32,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ConfigSettingType; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ConfigSetting {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ConfigSettingType> for ConfigSetting {
+    #[must_use]
+    fn discriminant(&self) -> ConfigSettingType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ConfigSettingType> for ConfigSetting {
+    fn variants() -> slice::Iter<'static, ConfigSettingType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ConfigSettingType> for ConfigSetting {}
+
+impl ReadXdr for ConfigSetting {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ConfigSettingType = <ConfigSettingType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ConfigSettingType::ConfigSettingTypeUint32 => {
+                Self::ConfigSettingTypeUint32(u32::read_xdr(r)?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ConfigSetting {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ConfigSettingTypeUint32(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ConfigSettingId is an XDR Enum defines as:
+//
+//   enum ConfigSettingID
+//    {
+//        CONFIG_SETTING_CONTRACT_MAX_SIZE = 0
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ConfigSettingId {
+    ConfigSettingContractMaxSize = 0,
+}
+
+impl ConfigSettingId {
+    pub const VARIANTS: [ConfigSettingId; 1] = [ConfigSettingId::ConfigSettingContractMaxSize];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingContractMaxSize"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ConfigSettingContractMaxSize => "ConfigSettingContractMaxSize",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ConfigSettingId; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ConfigSettingId {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ConfigSettingId> for ConfigSettingId {
+    fn variants() -> slice::Iter<'static, ConfigSettingId> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ConfigSettingId {}
+
+impl fmt::Display for ConfigSettingId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ConfigSettingId {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ConfigSettingId::ConfigSettingContractMaxSize,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ConfigSettingId> for i32 {
+    #[must_use]
+    fn from(e: ConfigSettingId) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ConfigSettingId {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ConfigSettingId {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ConfigSettingEntryExt is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ConfigSettingEntryExt {
+    V0,
+}
+
+impl ConfigSettingEntryExt {
+    pub const VARIANTS: [i32; 1] = [0];
+    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => 0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ConfigSettingEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for ConfigSettingEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for ConfigSettingEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<i32> for ConfigSettingEntryExt {}
+
+impl ReadXdr for ConfigSettingEntryExt {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            0 => Self::V0,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ConfigSettingEntryExt {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => ().write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ConfigSettingEntry is an XDR Struct defines as:
+//
+//   struct ConfigSettingEntry
+//    {
+//        union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//        ext;
+//
+//        ConfigSettingID configSettingID;
+//        ConfigSetting setting;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingEntry {
+    pub ext: ConfigSettingEntryExt,
+    pub config_setting_id: ConfigSettingId,
+    pub setting: ConfigSetting,
+}
+
+impl ReadXdr for ConfigSettingEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ext: ConfigSettingEntryExt::read_xdr(r)?,
+            config_setting_id: ConfigSettingId::read_xdr(r)?,
+            setting: ConfigSetting::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ext.write_xdr(w)?;
+        self.config_setting_id.write_xdr(w)?;
+        self.setting.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // LedgerEntryExtensionV1Ext is an XDR NestedUnion defines as:
 //
 //   union switch (int v)
@@ -8035,6 +12684,12 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 //            ClaimableBalanceEntry claimableBalance;
 //        case LIQUIDITY_POOL:
 //            LiquidityPoolEntry liquidityPool;
+//        case CONTRACT_DATA:
+//            ContractDataEntry contractData;
+//        case CONTRACT_CODE:
+//            ContractCodeEntry contractCode;
+//        case CONFIG_SETTING:
+//            ConfigSettingEntry configSetting;
 //        }
 //
 // union with discriminant LedgerEntryType
@@ -8053,24 +12708,33 @@ pub enum LedgerEntryData {
     Data(DataEntry),
     ClaimableBalance(ClaimableBalanceEntry),
     LiquidityPool(LiquidityPoolEntry),
+    ContractData(ContractDataEntry),
+    ContractCode(ContractCodeEntry),
+    ConfigSetting(ConfigSettingEntry),
 }
 
 impl LedgerEntryData {
-    pub const VARIANTS: [LedgerEntryType; 6] = [
+    pub const VARIANTS: [LedgerEntryType; 9] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
         LedgerEntryType::Data,
         LedgerEntryType::ClaimableBalance,
         LedgerEntryType::LiquidityPool,
+        LedgerEntryType::ContractData,
+        LedgerEntryType::ContractCode,
+        LedgerEntryType::ConfigSetting,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: [&'static str; 9] = [
         "Account",
         "Trustline",
         "Offer",
         "Data",
         "ClaimableBalance",
         "LiquidityPool",
+        "ContractData",
+        "ContractCode",
+        "ConfigSetting",
     ];
 
     #[must_use]
@@ -8082,6 +12746,9 @@ impl LedgerEntryData {
             Self::Data(_) => "Data",
             Self::ClaimableBalance(_) => "ClaimableBalance",
             Self::LiquidityPool(_) => "LiquidityPool",
+            Self::ContractData(_) => "ContractData",
+            Self::ContractCode(_) => "ContractCode",
+            Self::ConfigSetting(_) => "ConfigSetting",
         }
     }
 
@@ -8095,11 +12762,14 @@ impl LedgerEntryData {
             Self::Data(_) => LedgerEntryType::Data,
             Self::ClaimableBalance(_) => LedgerEntryType::ClaimableBalance,
             Self::LiquidityPool(_) => LedgerEntryType::LiquidityPool,
+            Self::ContractData(_) => LedgerEntryType::ContractData,
+            Self::ContractCode(_) => LedgerEntryType::ContractCode,
+            Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 6] {
+    pub const fn variants() -> [LedgerEntryType; 9] {
         Self::VARIANTS
     }
 }
@@ -8140,6 +12810,9 @@ impl ReadXdr for LedgerEntryData {
                 Self::ClaimableBalance(ClaimableBalanceEntry::read_xdr(r)?)
             }
             LedgerEntryType::LiquidityPool => Self::LiquidityPool(LiquidityPoolEntry::read_xdr(r)?),
+            LedgerEntryType::ContractData => Self::ContractData(ContractDataEntry::read_xdr(r)?),
+            LedgerEntryType::ContractCode => Self::ContractCode(ContractCodeEntry::read_xdr(r)?),
+            LedgerEntryType::ConfigSetting => Self::ConfigSetting(ConfigSettingEntry::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -8159,6 +12832,9 @@ impl WriteXdr for LedgerEntryData {
             Self::Data(v) => v.write_xdr(w)?,
             Self::ClaimableBalance(v) => v.write_xdr(w)?,
             Self::LiquidityPool(v) => v.write_xdr(w)?,
+            Self::ContractData(v) => v.write_xdr(w)?,
+            Self::ContractCode(v) => v.write_xdr(w)?,
+            Self::ConfigSetting(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -8285,6 +12961,12 @@ impl WriteXdr for LedgerEntryExt {
 //            ClaimableBalanceEntry claimableBalance;
 //        case LIQUIDITY_POOL:
 //            LiquidityPoolEntry liquidityPool;
+//        case CONTRACT_DATA:
+//            ContractDataEntry contractData;
+//        case CONTRACT_CODE:
+//            ContractCodeEntry contractCode;
+//        case CONFIG_SETTING:
+//            ConfigSettingEntry configSetting;
 //        }
 //        data;
 //
@@ -8555,6 +13237,115 @@ impl WriteXdr for LedgerKeyLiquidityPool {
     }
 }
 
+// LedgerKeyContractData is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash contractID;
+//            SCVal key;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerKeyContractData {
+    pub contract_id: Hash,
+    pub key: ScVal,
+}
+
+impl ReadXdr for LedgerKeyContractData {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            contract_id: Hash::read_xdr(r)?,
+            key: ScVal::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerKeyContractData {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.contract_id.write_xdr(w)?;
+        self.key.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// LedgerKeyContractCode is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash hash;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerKeyContractCode {
+    pub hash: Hash,
+}
+
+impl ReadXdr for LedgerKeyContractCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            hash: Hash::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerKeyContractCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.hash.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// LedgerKeyConfigSetting is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            ConfigSettingID configSettingID;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerKeyConfigSetting {
+    pub config_setting_id: ConfigSettingId,
+}
+
+impl ReadXdr for LedgerKeyConfigSetting {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            config_setting_id: ConfigSettingId::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerKeyConfigSetting {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.config_setting_id.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // LedgerKey is an XDR Union defines as:
 //
 //   union LedgerKey switch (LedgerEntryType type)
@@ -8597,6 +13388,22 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 //        {
 //            PoolID liquidityPoolID;
 //        } liquidityPool;
+//    case CONTRACT_DATA:
+//        struct
+//        {
+//            Hash contractID;
+//            SCVal key;
+//        } contractData;
+//    case CONTRACT_CODE:
+//        struct
+//        {
+//            Hash hash;
+//        } contractCode;
+//    case CONFIG_SETTING:
+//        struct
+//        {
+//            ConfigSettingID configSettingID;
+//        } configSetting;
 //    };
 //
 // union with discriminant LedgerEntryType
@@ -8615,24 +13422,33 @@ pub enum LedgerKey {
     Data(LedgerKeyData),
     ClaimableBalance(LedgerKeyClaimableBalance),
     LiquidityPool(LedgerKeyLiquidityPool),
+    ContractData(LedgerKeyContractData),
+    ContractCode(LedgerKeyContractCode),
+    ConfigSetting(LedgerKeyConfigSetting),
 }
 
 impl LedgerKey {
-    pub const VARIANTS: [LedgerEntryType; 6] = [
+    pub const VARIANTS: [LedgerEntryType; 9] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
         LedgerEntryType::Data,
         LedgerEntryType::ClaimableBalance,
         LedgerEntryType::LiquidityPool,
+        LedgerEntryType::ContractData,
+        LedgerEntryType::ContractCode,
+        LedgerEntryType::ConfigSetting,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: [&'static str; 9] = [
         "Account",
         "Trustline",
         "Offer",
         "Data",
         "ClaimableBalance",
         "LiquidityPool",
+        "ContractData",
+        "ContractCode",
+        "ConfigSetting",
     ];
 
     #[must_use]
@@ -8644,6 +13460,9 @@ impl LedgerKey {
             Self::Data(_) => "Data",
             Self::ClaimableBalance(_) => "ClaimableBalance",
             Self::LiquidityPool(_) => "LiquidityPool",
+            Self::ContractData(_) => "ContractData",
+            Self::ContractCode(_) => "ContractCode",
+            Self::ConfigSetting(_) => "ConfigSetting",
         }
     }
 
@@ -8657,11 +13476,14 @@ impl LedgerKey {
             Self::Data(_) => LedgerEntryType::Data,
             Self::ClaimableBalance(_) => LedgerEntryType::ClaimableBalance,
             Self::LiquidityPool(_) => LedgerEntryType::LiquidityPool,
+            Self::ContractData(_) => LedgerEntryType::ContractData,
+            Self::ContractCode(_) => LedgerEntryType::ContractCode,
+            Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 6] {
+    pub const fn variants() -> [LedgerEntryType; 9] {
         Self::VARIANTS
     }
 }
@@ -8704,6 +13526,15 @@ impl ReadXdr for LedgerKey {
             LedgerEntryType::LiquidityPool => {
                 Self::LiquidityPool(LedgerKeyLiquidityPool::read_xdr(r)?)
             }
+            LedgerEntryType::ContractData => {
+                Self::ContractData(LedgerKeyContractData::read_xdr(r)?)
+            }
+            LedgerEntryType::ContractCode => {
+                Self::ContractCode(LedgerKeyContractCode::read_xdr(r)?)
+            }
+            LedgerEntryType::ConfigSetting => {
+                Self::ConfigSetting(LedgerKeyConfigSetting::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -8723,6 +13554,9 @@ impl WriteXdr for LedgerKey {
             Self::Data(v) => v.write_xdr(w)?,
             Self::ClaimableBalance(v) => v.write_xdr(w)?,
             Self::LiquidityPool(v) => v.write_xdr(w)?,
+            Self::ContractData(v) => v.write_xdr(w)?,
+            Self::ContractCode(v) => v.write_xdr(w)?,
+            Self::ConfigSetting(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -8739,7 +13573,12 @@ impl WriteXdr for LedgerKey {
 //        ENVELOPE_TYPE_SCPVALUE = 4,
 //        ENVELOPE_TYPE_TX_FEE_BUMP = 5,
 //        ENVELOPE_TYPE_OP_ID = 6,
-//        ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7
+//        ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7,
+//        ENVELOPE_TYPE_CONTRACT_ID_FROM_ED25519 = 8,
+//        ENVELOPE_TYPE_CONTRACT_ID_FROM_CONTRACT = 9,
+//        ENVELOPE_TYPE_CONTRACT_ID_FROM_ASSET = 10,
+//        ENVELOPE_TYPE_CONTRACT_ID_FROM_SOURCE_ACCOUNT = 11,
+//        ENVELOPE_TYPE_CREATE_CONTRACT_ARGS = 12
 //    };
 //
 // enum
@@ -8760,10 +13599,15 @@ pub enum EnvelopeType {
     TxFeeBump = 5,
     OpId = 6,
     PoolRevokeOpId = 7,
+    ContractIdFromEd25519 = 8,
+    ContractIdFromContract = 9,
+    ContractIdFromAsset = 10,
+    ContractIdFromSourceAccount = 11,
+    CreateContractArgs = 12,
 }
 
 impl EnvelopeType {
-    pub const VARIANTS: [EnvelopeType; 8] = [
+    pub const VARIANTS: [EnvelopeType; 13] = [
         EnvelopeType::TxV0,
         EnvelopeType::Scp,
         EnvelopeType::Tx,
@@ -8772,8 +13616,13 @@ impl EnvelopeType {
         EnvelopeType::TxFeeBump,
         EnvelopeType::OpId,
         EnvelopeType::PoolRevokeOpId,
+        EnvelopeType::ContractIdFromEd25519,
+        EnvelopeType::ContractIdFromContract,
+        EnvelopeType::ContractIdFromAsset,
+        EnvelopeType::ContractIdFromSourceAccount,
+        EnvelopeType::CreateContractArgs,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: [&'static str; 13] = [
         "TxV0",
         "Scp",
         "Tx",
@@ -8782,6 +13631,11 @@ impl EnvelopeType {
         "TxFeeBump",
         "OpId",
         "PoolRevokeOpId",
+        "ContractIdFromEd25519",
+        "ContractIdFromContract",
+        "ContractIdFromAsset",
+        "ContractIdFromSourceAccount",
+        "CreateContractArgs",
     ];
 
     #[must_use]
@@ -8795,11 +13649,16 @@ impl EnvelopeType {
             Self::TxFeeBump => "TxFeeBump",
             Self::OpId => "OpId",
             Self::PoolRevokeOpId => "PoolRevokeOpId",
+            Self::ContractIdFromEd25519 => "ContractIdFromEd25519",
+            Self::ContractIdFromContract => "ContractIdFromContract",
+            Self::ContractIdFromAsset => "ContractIdFromAsset",
+            Self::ContractIdFromSourceAccount => "ContractIdFromSourceAccount",
+            Self::CreateContractArgs => "CreateContractArgs",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 8] {
+    pub const fn variants() -> [EnvelopeType; 13] {
         Self::VARIANTS
     }
 }
@@ -8838,6 +13697,11 @@ impl TryFrom<i32> for EnvelopeType {
             5 => EnvelopeType::TxFeeBump,
             6 => EnvelopeType::OpId,
             7 => EnvelopeType::PoolRevokeOpId,
+            8 => EnvelopeType::ContractIdFromEd25519,
+            9 => EnvelopeType::ContractIdFromContract,
+            10 => EnvelopeType::ContractIdFromAsset,
+            11 => EnvelopeType::ContractIdFromSourceAccount,
+            12 => EnvelopeType::CreateContractArgs,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -9272,9 +14136,9 @@ impl WriteXdr for StellarValue {
 
 // MaskLedgerHeaderFlags is an XDR Const defines as:
 //
-//   const MASK_LEDGER_HEADER_FLAGS = 0x7;
+//   const MASK_LEDGER_HEADER_FLAGS = 0x7F;
 //
-pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
+pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7F;
 
 // LedgerHeaderFlags is an XDR Enum defines as:
 //
@@ -9282,7 +14146,11 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 //    {
 //        DISABLE_LIQUIDITY_POOL_TRADING_FLAG = 0x1,
 //        DISABLE_LIQUIDITY_POOL_DEPOSIT_FLAG = 0x2,
-//        DISABLE_LIQUIDITY_POOL_WITHDRAWAL_FLAG = 0x4
+//        DISABLE_LIQUIDITY_POOL_WITHDRAWAL_FLAG = 0x4,
+//        DISABLE_CONTRACT_CREATE = 0x8,
+//        DISABLE_CONTRACT_UPDATE = 0x10,
+//        DISABLE_CONTRACT_REMOVE = 0x20,
+//        DISABLE_CONTRACT_INVOKE = 0x40
 //    };
 //
 // enum
@@ -9295,30 +14163,50 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 )]
 #[repr(i32)]
 pub enum LedgerHeaderFlags {
-    TradingFlag = 1,
-    DepositFlag = 2,
-    WithdrawalFlag = 4,
+    LiquidityPoolTradingFlag = 1,
+    LiquidityPoolDepositFlag = 2,
+    LiquidityPoolWithdrawalFlag = 4,
+    ContractCreate = 8,
+    ContractUpdate = 16,
+    ContractRemove = 32,
+    ContractInvoke = 64,
 }
 
 impl LedgerHeaderFlags {
-    pub const VARIANTS: [LedgerHeaderFlags; 3] = [
-        LedgerHeaderFlags::TradingFlag,
-        LedgerHeaderFlags::DepositFlag,
-        LedgerHeaderFlags::WithdrawalFlag,
+    pub const VARIANTS: [LedgerHeaderFlags; 7] = [
+        LedgerHeaderFlags::LiquidityPoolTradingFlag,
+        LedgerHeaderFlags::LiquidityPoolDepositFlag,
+        LedgerHeaderFlags::LiquidityPoolWithdrawalFlag,
+        LedgerHeaderFlags::ContractCreate,
+        LedgerHeaderFlags::ContractUpdate,
+        LedgerHeaderFlags::ContractRemove,
+        LedgerHeaderFlags::ContractInvoke,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["TradingFlag", "DepositFlag", "WithdrawalFlag"];
+    pub const VARIANTS_STR: [&'static str; 7] = [
+        "LiquidityPoolTradingFlag",
+        "LiquidityPoolDepositFlag",
+        "LiquidityPoolWithdrawalFlag",
+        "ContractCreate",
+        "ContractUpdate",
+        "ContractRemove",
+        "ContractInvoke",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::TradingFlag => "TradingFlag",
-            Self::DepositFlag => "DepositFlag",
-            Self::WithdrawalFlag => "WithdrawalFlag",
+            Self::LiquidityPoolTradingFlag => "LiquidityPoolTradingFlag",
+            Self::LiquidityPoolDepositFlag => "LiquidityPoolDepositFlag",
+            Self::LiquidityPoolWithdrawalFlag => "LiquidityPoolWithdrawalFlag",
+            Self::ContractCreate => "ContractCreate",
+            Self::ContractUpdate => "ContractUpdate",
+            Self::ContractRemove => "ContractRemove",
+            Self::ContractInvoke => "ContractInvoke",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerHeaderFlags; 3] {
+    pub const fn variants() -> [LedgerHeaderFlags; 7] {
         Self::VARIANTS
     }
 }
@@ -9349,9 +14237,13 @@ impl TryFrom<i32> for LedgerHeaderFlags {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            1 => LedgerHeaderFlags::TradingFlag,
-            2 => LedgerHeaderFlags::DepositFlag,
-            4 => LedgerHeaderFlags::WithdrawalFlag,
+            1 => LedgerHeaderFlags::LiquidityPoolTradingFlag,
+            2 => LedgerHeaderFlags::LiquidityPoolDepositFlag,
+            4 => LedgerHeaderFlags::LiquidityPoolWithdrawalFlag,
+            8 => LedgerHeaderFlags::ContractCreate,
+            16 => LedgerHeaderFlags::ContractUpdate,
+            32 => LedgerHeaderFlags::ContractRemove,
+            64 => LedgerHeaderFlags::ContractInvoke,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -9743,7 +14635,8 @@ impl WriteXdr for LedgerHeader {
 //        LEDGER_UPGRADE_BASE_FEE = 2,
 //        LEDGER_UPGRADE_MAX_TX_SET_SIZE = 3,
 //        LEDGER_UPGRADE_BASE_RESERVE = 4,
-//        LEDGER_UPGRADE_FLAGS = 5
+//        LEDGER_UPGRADE_FLAGS = 5,
+//        LEDGER_UPGRADE_CONFIG = 6
 //    };
 //
 // enum
@@ -9761,18 +14654,26 @@ pub enum LedgerUpgradeType {
     MaxTxSetSize = 3,
     BaseReserve = 4,
     Flags = 5,
+    Config = 6,
 }
 
 impl LedgerUpgradeType {
-    pub const VARIANTS: [LedgerUpgradeType; 5] = [
+    pub const VARIANTS: [LedgerUpgradeType; 6] = [
         LedgerUpgradeType::Version,
         LedgerUpgradeType::BaseFee,
         LedgerUpgradeType::MaxTxSetSize,
         LedgerUpgradeType::BaseReserve,
         LedgerUpgradeType::Flags,
+        LedgerUpgradeType::Config,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] =
-        ["Version", "BaseFee", "MaxTxSetSize", "BaseReserve", "Flags"];
+    pub const VARIANTS_STR: [&'static str; 6] = [
+        "Version",
+        "BaseFee",
+        "MaxTxSetSize",
+        "BaseReserve",
+        "Flags",
+        "Config",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -9782,11 +14683,12 @@ impl LedgerUpgradeType {
             Self::MaxTxSetSize => "MaxTxSetSize",
             Self::BaseReserve => "BaseReserve",
             Self::Flags => "Flags",
+            Self::Config => "Config",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerUpgradeType; 5] {
+    pub const fn variants() -> [LedgerUpgradeType; 6] {
         Self::VARIANTS
     }
 }
@@ -9822,6 +14724,7 @@ impl TryFrom<i32> for LedgerUpgradeType {
             3 => LedgerUpgradeType::MaxTxSetSize,
             4 => LedgerUpgradeType::BaseReserve,
             5 => LedgerUpgradeType::Flags,
+            6 => LedgerUpgradeType::Config,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -9853,6 +14756,45 @@ impl WriteXdr for LedgerUpgradeType {
     }
 }
 
+// LedgerUpgradeConfigSetting is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            ConfigSettingID id; // id to update
+//            ConfigSetting setting; // new value
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerUpgradeConfigSetting {
+    pub id: ConfigSettingId,
+    pub setting: ConfigSetting,
+}
+
+impl ReadXdr for LedgerUpgradeConfigSetting {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            id: ConfigSettingId::read_xdr(r)?,
+            setting: ConfigSetting::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerUpgradeConfigSetting {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.id.write_xdr(w)?;
+        self.setting.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // LedgerUpgrade is an XDR Union defines as:
 //
 //   union LedgerUpgrade switch (LedgerUpgradeType type)
@@ -9867,6 +14809,12 @@ impl WriteXdr for LedgerUpgradeType {
 //        uint32 newBaseReserve; // update baseReserve
 //    case LEDGER_UPGRADE_FLAGS:
 //        uint32 newFlags; // update flags
+//    case LEDGER_UPGRADE_CONFIG:
+//        struct
+//        {
+//            ConfigSettingID id; // id to update
+//            ConfigSetting setting; // new value
+//        } configSetting;
 //    };
 //
 // union with discriminant LedgerUpgradeType
@@ -9884,18 +14832,26 @@ pub enum LedgerUpgrade {
     MaxTxSetSize(u32),
     BaseReserve(u32),
     Flags(u32),
+    Config(LedgerUpgradeConfigSetting),
 }
 
 impl LedgerUpgrade {
-    pub const VARIANTS: [LedgerUpgradeType; 5] = [
+    pub const VARIANTS: [LedgerUpgradeType; 6] = [
         LedgerUpgradeType::Version,
         LedgerUpgradeType::BaseFee,
         LedgerUpgradeType::MaxTxSetSize,
         LedgerUpgradeType::BaseReserve,
         LedgerUpgradeType::Flags,
+        LedgerUpgradeType::Config,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] =
-        ["Version", "BaseFee", "MaxTxSetSize", "BaseReserve", "Flags"];
+    pub const VARIANTS_STR: [&'static str; 6] = [
+        "Version",
+        "BaseFee",
+        "MaxTxSetSize",
+        "BaseReserve",
+        "Flags",
+        "Config",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -9905,6 +14861,7 @@ impl LedgerUpgrade {
             Self::MaxTxSetSize(_) => "MaxTxSetSize",
             Self::BaseReserve(_) => "BaseReserve",
             Self::Flags(_) => "Flags",
+            Self::Config(_) => "Config",
         }
     }
 
@@ -9917,11 +14874,12 @@ impl LedgerUpgrade {
             Self::MaxTxSetSize(_) => LedgerUpgradeType::MaxTxSetSize,
             Self::BaseReserve(_) => LedgerUpgradeType::BaseReserve,
             Self::Flags(_) => LedgerUpgradeType::Flags,
+            Self::Config(_) => LedgerUpgradeType::Config,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerUpgradeType; 5] {
+    pub const fn variants() -> [LedgerUpgradeType; 6] {
         Self::VARIANTS
     }
 }
@@ -9959,6 +14917,7 @@ impl ReadXdr for LedgerUpgrade {
             LedgerUpgradeType::MaxTxSetSize => Self::MaxTxSetSize(u32::read_xdr(r)?),
             LedgerUpgradeType::BaseReserve => Self::BaseReserve(u32::read_xdr(r)?),
             LedgerUpgradeType::Flags => Self::Flags(u32::read_xdr(r)?),
+            LedgerUpgradeType::Config => Self::Config(LedgerUpgradeConfigSetting::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -9977,6 +14936,7 @@ impl WriteXdr for LedgerUpgrade {
             Self::MaxTxSetSize(v) => v.write_xdr(w)?,
             Self::BaseReserve(v) => v.write_xdr(w)?,
             Self::Flags(v) => v.write_xdr(w)?,
+            Self::Config(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -11239,6 +16199,225 @@ impl WriteXdr for TransactionHistoryResultEntry {
     }
 }
 
+// TransactionResultPairV2 is an XDR Struct defines as:
+//
+//   struct TransactionResultPairV2
+//    {
+//        Hash transactionHash;
+//        Hash hashOfMetaHashes; // hash of hashes in TransactionMetaV3
+//                               // TransactionResult is in the meta
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct TransactionResultPairV2 {
+    pub transaction_hash: Hash,
+    pub hash_of_meta_hashes: Hash,
+}
+
+impl ReadXdr for TransactionResultPairV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            transaction_hash: Hash::read_xdr(r)?,
+            hash_of_meta_hashes: Hash::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionResultPairV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.transaction_hash.write_xdr(w)?;
+        self.hash_of_meta_hashes.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// TransactionResultSetV2 is an XDR Struct defines as:
+//
+//   struct TransactionResultSetV2
+//    {
+//        TransactionResultPairV2 results<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct TransactionResultSetV2 {
+    pub results: VecM<TransactionResultPairV2>,
+}
+
+impl ReadXdr for TransactionResultSetV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            results: VecM::<TransactionResultPairV2>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionResultSetV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.results.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// TransactionHistoryResultEntryV2Ext is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum TransactionHistoryResultEntryV2Ext {
+    V0,
+}
+
+impl TransactionHistoryResultEntryV2Ext {
+    pub const VARIANTS: [i32; 1] = [0];
+    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0 => "V0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => 0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for TransactionHistoryResultEntryV2Ext {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for TransactionHistoryResultEntryV2Ext {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for TransactionHistoryResultEntryV2Ext {
+    fn variants() -> slice::Iter<'static, i32> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<i32> for TransactionHistoryResultEntryV2Ext {}
+
+impl ReadXdr for TransactionHistoryResultEntryV2Ext {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            0 => Self::V0,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for TransactionHistoryResultEntryV2Ext {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => ().write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// TransactionHistoryResultEntryV2 is an XDR Struct defines as:
+//
+//   struct TransactionHistoryResultEntryV2
+//    {
+//        uint32 ledgerSeq;
+//        TransactionResultSetV2 txResultSet;
+//
+//        // reserved for future use
+//        union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//        ext;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct TransactionHistoryResultEntryV2 {
+    pub ledger_seq: u32,
+    pub tx_result_set: TransactionResultSetV2,
+    pub ext: TransactionHistoryResultEntryV2Ext,
+}
+
+impl ReadXdr for TransactionHistoryResultEntryV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_seq: u32::read_xdr(r)?,
+            tx_result_set: TransactionResultSetV2::read_xdr(r)?,
+            ext: TransactionHistoryResultEntryV2Ext::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionHistoryResultEntryV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_seq.write_xdr(w)?;
+        self.tx_result_set.write_xdr(w)?;
+        self.ext.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // LedgerHeaderHistoryEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (int v)
@@ -12006,6 +17185,398 @@ impl WriteXdr for TransactionMetaV2 {
     }
 }
 
+// ContractEventType is an XDR Enum defines as:
+//
+//   enum ContractEventType
+//    {
+//        SYSTEM = 0,
+//        CONTRACT = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ContractEventType {
+    System = 0,
+    Contract = 1,
+}
+
+impl ContractEventType {
+    pub const VARIANTS: [ContractEventType; 2] =
+        [ContractEventType::System, ContractEventType::Contract];
+    pub const VARIANTS_STR: [&'static str; 2] = ["System", "Contract"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::System => "System",
+            Self::Contract => "Contract",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractEventType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractEventType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ContractEventType> for ContractEventType {
+    fn variants() -> slice::Iter<'static, ContractEventType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ContractEventType {}
+
+impl fmt::Display for ContractEventType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ContractEventType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ContractEventType::System,
+            1 => ContractEventType::Contract,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ContractEventType> for i32 {
+    #[must_use]
+    fn from(e: ContractEventType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ContractEventType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ContractEventType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ContractEventV0 is an XDR NestedStruct defines as:
+//
+//   struct
+//            {
+//                SCVec topics;
+//                SCVal data;
+//            }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractEventV0 {
+    pub topics: ScVec,
+    pub data: ScVal,
+}
+
+impl ReadXdr for ContractEventV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            topics: ScVec::read_xdr(r)?,
+            data: ScVal::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ContractEventV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.topics.write_xdr(w)?;
+        self.data.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ContractEventBody is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            struct
+//            {
+//                SCVec topics;
+//                SCVal data;
+//            } v0;
+//        }
+//
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ContractEventBody {
+    V0(ContractEventV0),
+}
+
+impl ContractEventBody {
+    pub const VARIANTS: [i32; 1] = [0];
+    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0(_) => "V0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => 0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractEventBody {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for ContractEventBody {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for ContractEventBody {
+    fn variants() -> slice::Iter<'static, i32> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<i32> for ContractEventBody {}
+
+impl ReadXdr for ContractEventBody {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            0 => Self::V0(ContractEventV0::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ContractEventBody {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ContractEvent is an XDR Struct defines as:
+//
+//   struct ContractEvent
+//    {
+//        // We can use this to add more fields, or because it
+//        // is first, to change ContractEvent into a union.
+//        ExtensionPoint ext;
+//
+//        Hash* contractID;
+//        ContractEventType type;
+//
+//        union switch (int v)
+//        {
+//        case 0:
+//            struct
+//            {
+//                SCVec topics;
+//                SCVal data;
+//            } v0;
+//        }
+//        body;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractEvent {
+    pub ext: ExtensionPoint,
+    pub contract_id: Option<Hash>,
+    pub type_: ContractEventType,
+    pub body: ContractEventBody,
+}
+
+impl ReadXdr for ContractEvent {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ext: ExtensionPoint::read_xdr(r)?,
+            contract_id: Option::<Hash>::read_xdr(r)?,
+            type_: ContractEventType::read_xdr(r)?,
+            body: ContractEventBody::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ContractEvent {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ext.write_xdr(w)?;
+        self.contract_id.write_xdr(w)?;
+        self.type_.write_xdr(w)?;
+        self.body.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// OperationEvents is an XDR Struct defines as:
+//
+//   struct OperationEvents
+//    {
+//        ContractEvent events<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct OperationEvents {
+    pub events: VecM<ContractEvent>,
+}
+
+impl ReadXdr for OperationEvents {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            events: VecM::<ContractEvent>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for OperationEvents {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.events.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// TransactionMetaV3 is an XDR Struct defines as:
+//
+//   struct TransactionMetaV3
+//    {
+//        LedgerEntryChanges txChangesBefore; // tx level changes before operations
+//                                            // are applied if any
+//        OperationMeta operations<>;         // meta for each operation
+//        LedgerEntryChanges txChangesAfter;  // tx level changes after operations are
+//                                            // applied if any
+//        OperationEvents events<>;           // custom events populated by the
+//                                            // contracts themselves. One list per operation.
+//        TransactionResult txResult;
+//
+//        Hash hashes[3];                     // stores sha256(txChangesBefore, operations, txChangesAfter),
+//                                            // sha256(events), and sha256(txResult)
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct TransactionMetaV3 {
+    pub tx_changes_before: LedgerEntryChanges,
+    pub operations: VecM<OperationMeta>,
+    pub tx_changes_after: LedgerEntryChanges,
+    pub events: VecM<OperationEvents>,
+    pub tx_result: TransactionResult,
+    pub hashes: [Hash; 3],
+}
+
+impl ReadXdr for TransactionMetaV3 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
+            operations: VecM::<OperationMeta>::read_xdr(r)?,
+            tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
+            events: VecM::<OperationEvents>::read_xdr(r)?,
+            tx_result: TransactionResult::read_xdr(r)?,
+            hashes: <[Hash; 3]>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionMetaV3 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.tx_changes_before.write_xdr(w)?;
+        self.operations.write_xdr(w)?;
+        self.tx_changes_after.write_xdr(w)?;
+        self.events.write_xdr(w)?;
+        self.tx_result.write_xdr(w)?;
+        self.hashes.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // TransactionMeta is an XDR Union defines as:
 //
 //   union TransactionMeta switch (int v)
@@ -12016,6 +17587,8 @@ impl WriteXdr for TransactionMetaV2 {
 //        TransactionMetaV1 v1;
 //    case 2:
 //        TransactionMetaV2 v2;
+//    case 3:
+//        TransactionMetaV3 v3;
 //    };
 //
 // union with discriminant i32
@@ -12031,11 +17604,12 @@ pub enum TransactionMeta {
     V0(VecM<OperationMeta>),
     V1(TransactionMetaV1),
     V2(TransactionMetaV2),
+    V3(TransactionMetaV3),
 }
 
 impl TransactionMeta {
-    pub const VARIANTS: [i32; 3] = [0, 1, 2];
-    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
+    pub const VARIANTS: [i32; 4] = [0, 1, 2, 3];
+    pub const VARIANTS_STR: [&'static str; 4] = ["V0", "V1", "V2", "V3"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -12043,6 +17617,7 @@ impl TransactionMeta {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
             Self::V2(_) => "V2",
+            Self::V3(_) => "V3",
         }
     }
 
@@ -12053,11 +17628,12 @@ impl TransactionMeta {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
             Self::V2(_) => 2,
+            Self::V3(_) => 3,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 3] {
+    pub const fn variants() -> [i32; 4] {
         Self::VARIANTS
     }
 }
@@ -12093,6 +17669,7 @@ impl ReadXdr for TransactionMeta {
             0 => Self::V0(VecM::<OperationMeta>::read_xdr(r)?),
             1 => Self::V1(TransactionMetaV1::read_xdr(r)?),
             2 => Self::V2(TransactionMetaV2::read_xdr(r)?),
+            3 => Self::V3(TransactionMetaV3::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12109,6 +17686,7 @@ impl WriteXdr for TransactionMeta {
             Self::V0(v) => v.write_xdr(w)?,
             Self::V1(v) => v.write_xdr(w)?,
             Self::V2(v) => v.write_xdr(w)?,
+            Self::V3(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -12148,6 +17726,49 @@ impl ReadXdr for TransactionResultMeta {
 }
 
 impl WriteXdr for TransactionResultMeta {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.result.write_xdr(w)?;
+        self.fee_processing.write_xdr(w)?;
+        self.tx_apply_processing.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// TransactionResultMetaV2 is an XDR Struct defines as:
+//
+//   struct TransactionResultMetaV2
+//    {
+//        TransactionResultPairV2 result;
+//        LedgerEntryChanges feeProcessing;
+//        TransactionMeta txApplyProcessing;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct TransactionResultMetaV2 {
+    pub result: TransactionResultPairV2,
+    pub fee_processing: LedgerEntryChanges,
+    pub tx_apply_processing: TransactionMeta,
+}
+
+impl ReadXdr for TransactionResultMetaV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            result: TransactionResultPairV2::read_xdr(r)?,
+            fee_processing: LedgerEntryChanges::read_xdr(r)?,
+            tx_apply_processing: TransactionMeta::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionResultMetaV2 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.result.write_xdr(w)?;
@@ -12316,6 +17937,66 @@ impl WriteXdr for LedgerCloseMetaV1 {
     }
 }
 
+// LedgerCloseMetaV2 is an XDR Struct defines as:
+//
+//   struct LedgerCloseMetaV2
+//    {
+//        LedgerHeaderHistoryEntry ledgerHeader;
+//
+//        GeneralizedTransactionSet txSet;
+//
+//        // NB: transactions are sorted in apply order here
+//        // fees for all transactions are processed first
+//        // followed by applying transactions
+//        TransactionResultMetaV2 txProcessing<>;
+//
+//        // upgrades are applied last
+//        UpgradeEntryMeta upgradesProcessing<>;
+//
+//        // other misc information attached to the ledger close
+//        SCPHistoryEntry scpInfo<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerCloseMetaV2 {
+    pub ledger_header: LedgerHeaderHistoryEntry,
+    pub tx_set: GeneralizedTransactionSet,
+    pub tx_processing: VecM<TransactionResultMetaV2>,
+    pub upgrades_processing: VecM<UpgradeEntryMeta>,
+    pub scp_info: VecM<ScpHistoryEntry>,
+}
+
+impl ReadXdr for LedgerCloseMetaV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
+            tx_set: GeneralizedTransactionSet::read_xdr(r)?,
+            tx_processing: VecM::<TransactionResultMetaV2>::read_xdr(r)?,
+            upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
+            scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerCloseMetaV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_header.write_xdr(w)?;
+        self.tx_set.write_xdr(w)?;
+        self.tx_processing.write_xdr(w)?;
+        self.upgrades_processing.write_xdr(w)?;
+        self.scp_info.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // LedgerCloseMeta is an XDR Union defines as:
 //
 //   union LedgerCloseMeta switch (int v)
@@ -12324,6 +18005,8 @@ impl WriteXdr for LedgerCloseMetaV1 {
 //        LedgerCloseMetaV0 v0;
 //    case 1:
 //        LedgerCloseMetaV1 v1;
+//    case 2:
+//        LedgerCloseMetaV2 v2;
 //    };
 //
 // union with discriminant i32
@@ -12338,17 +18021,19 @@ impl WriteXdr for LedgerCloseMetaV1 {
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
     V1(LedgerCloseMetaV1),
+    V2(LedgerCloseMetaV2),
 }
 
 impl LedgerCloseMeta {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: [i32; 3] = [0, 1, 2];
+    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
+            Self::V2(_) => "V2",
         }
     }
 
@@ -12358,11 +18043,12 @@ impl LedgerCloseMeta {
         match self {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
+            Self::V2(_) => 2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> [i32; 3] {
         Self::VARIANTS
     }
 }
@@ -12397,6 +18083,7 @@ impl ReadXdr for LedgerCloseMeta {
         let v = match dv {
             0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
             1 => Self::V1(LedgerCloseMetaV1::read_xdr(r)?),
+            2 => Self::V2(LedgerCloseMetaV2::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -12412,6 +18099,7 @@ impl WriteXdr for LedgerCloseMeta {
         match self {
             Self::V0(v) => v.write_xdr(w)?,
             Self::V1(v) => v.write_xdr(w)?,
+            Self::V2(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -14955,6 +20643,45 @@ impl WriteXdr for DecoratedSignature {
     }
 }
 
+// LedgerFootprint is an XDR Struct defines as:
+//
+//   struct LedgerFootprint
+//    {
+//        LedgerKey readOnly<>;
+//        LedgerKey readWrite<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerFootprint {
+    pub read_only: VecM<LedgerKey>,
+    pub read_write: VecM<LedgerKey>,
+}
+
+impl ReadXdr for LedgerFootprint {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            read_only: VecM::<LedgerKey>::read_xdr(r)?,
+            read_write: VecM::<LedgerKey>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for LedgerFootprint {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.read_only.write_xdr(w)?;
+        self.read_write.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // OperationType is an XDR Enum defines as:
 //
 //   enum OperationType
@@ -14982,7 +20709,8 @@ impl WriteXdr for DecoratedSignature {
 //        CLAWBACK_CLAIMABLE_BALANCE = 20,
 //        SET_TRUST_LINE_FLAGS = 21,
 //        LIQUIDITY_POOL_DEPOSIT = 22,
-//        LIQUIDITY_POOL_WITHDRAW = 23
+//        LIQUIDITY_POOL_WITHDRAW = 23,
+//        INVOKE_HOST_FUNCTION = 24
 //    };
 //
 // enum
@@ -15019,10 +20747,11 @@ pub enum OperationType {
     SetTrustLineFlags = 21,
     LiquidityPoolDeposit = 22,
     LiquidityPoolWithdraw = 23,
+    InvokeHostFunction = 24,
 }
 
 impl OperationType {
-    pub const VARIANTS: [OperationType; 24] = [
+    pub const VARIANTS: [OperationType; 25] = [
         OperationType::CreateAccount,
         OperationType::Payment,
         OperationType::PathPaymentStrictReceive,
@@ -15047,8 +20776,9 @@ impl OperationType {
         OperationType::SetTrustLineFlags,
         OperationType::LiquidityPoolDeposit,
         OperationType::LiquidityPoolWithdraw,
+        OperationType::InvokeHostFunction,
     ];
-    pub const VARIANTS_STR: [&'static str; 24] = [
+    pub const VARIANTS_STR: [&'static str; 25] = [
         "CreateAccount",
         "Payment",
         "PathPaymentStrictReceive",
@@ -15073,6 +20803,7 @@ impl OperationType {
         "SetTrustLineFlags",
         "LiquidityPoolDeposit",
         "LiquidityPoolWithdraw",
+        "InvokeHostFunction",
     ];
 
     #[must_use]
@@ -15102,11 +20833,12 @@ impl OperationType {
             Self::SetTrustLineFlags => "SetTrustLineFlags",
             Self::LiquidityPoolDeposit => "LiquidityPoolDeposit",
             Self::LiquidityPoolWithdraw => "LiquidityPoolWithdraw",
+            Self::InvokeHostFunction => "InvokeHostFunction",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [OperationType; 24] {
+    pub const fn variants() -> [OperationType; 25] {
         Self::VARIANTS
     }
 }
@@ -15161,6 +20893,7 @@ impl TryFrom<i32> for OperationType {
             21 => OperationType::SetTrustLineFlags,
             22 => OperationType::LiquidityPoolDeposit,
             23 => OperationType::LiquidityPoolWithdraw,
+            24 => OperationType::InvokeHostFunction,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -16498,6 +22231,717 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
     }
 }
 
+// HostFunctionType is an XDR Enum defines as:
+//
+//   enum HostFunctionType
+//    {
+//        HOST_FUNCTION_TYPE_INVOKE_CONTRACT = 0,
+//        HOST_FUNCTION_TYPE_CREATE_CONTRACT = 1,
+//        HOST_FUNCTION_TYPE_INSTALL_CONTRACT_CODE = 2
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum HostFunctionType {
+    InvokeContract = 0,
+    CreateContract = 1,
+    InstallContractCode = 2,
+}
+
+impl HostFunctionType {
+    pub const VARIANTS: [HostFunctionType; 3] = [
+        HostFunctionType::InvokeContract,
+        HostFunctionType::CreateContract,
+        HostFunctionType::InstallContractCode,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] =
+        ["InvokeContract", "CreateContract", "InstallContractCode"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::InvokeContract => "InvokeContract",
+            Self::CreateContract => "CreateContract",
+            Self::InstallContractCode => "InstallContractCode",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [HostFunctionType; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for HostFunctionType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<HostFunctionType> for HostFunctionType {
+    fn variants() -> slice::Iter<'static, HostFunctionType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for HostFunctionType {}
+
+impl fmt::Display for HostFunctionType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for HostFunctionType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => HostFunctionType::InvokeContract,
+            1 => HostFunctionType::CreateContract,
+            2 => HostFunctionType::InstallContractCode,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<HostFunctionType> for i32 {
+    #[must_use]
+    fn from(e: HostFunctionType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for HostFunctionType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for HostFunctionType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ContractIdType is an XDR Enum defines as:
+//
+//   enum ContractIDType
+//    {
+//        CONTRACT_ID_FROM_SOURCE_ACCOUNT = 0,
+//        CONTRACT_ID_FROM_ED25519_PUBLIC_KEY = 1,
+//        CONTRACT_ID_FROM_ASSET = 2
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ContractIdType {
+    SourceAccount = 0,
+    Ed25519PublicKey = 1,
+    Asset = 2,
+}
+
+impl ContractIdType {
+    pub const VARIANTS: [ContractIdType; 3] = [
+        ContractIdType::SourceAccount,
+        ContractIdType::Ed25519PublicKey,
+        ContractIdType::Asset,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["SourceAccount", "Ed25519PublicKey", "Asset"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::SourceAccount => "SourceAccount",
+            Self::Ed25519PublicKey => "Ed25519PublicKey",
+            Self::Asset => "Asset",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractIdType; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractIdType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ContractIdType> for ContractIdType {
+    fn variants() -> slice::Iter<'static, ContractIdType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ContractIdType {}
+
+impl fmt::Display for ContractIdType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ContractIdType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ContractIdType::SourceAccount,
+            1 => ContractIdType::Ed25519PublicKey,
+            2 => ContractIdType::Asset,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ContractIdType> for i32 {
+    #[must_use]
+    fn from(e: ContractIdType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ContractIdType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ContractIdType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ContractIdPublicKeyType is an XDR Enum defines as:
+//
+//   enum ContractIDPublicKeyType
+//    {
+//        CONTRACT_ID_PUBLIC_KEY_SOURCE_ACCOUNT = 0,
+//        CONTRACT_ID_PUBLIC_KEY_ED25519 = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ContractIdPublicKeyType {
+    SourceAccount = 0,
+    Ed25519 = 1,
+}
+
+impl ContractIdPublicKeyType {
+    pub const VARIANTS: [ContractIdPublicKeyType; 2] = [
+        ContractIdPublicKeyType::SourceAccount,
+        ContractIdPublicKeyType::Ed25519,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Ed25519"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::SourceAccount => "SourceAccount",
+            Self::Ed25519 => "Ed25519",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractIdPublicKeyType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractIdPublicKeyType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ContractIdPublicKeyType> for ContractIdPublicKeyType {
+    fn variants() -> slice::Iter<'static, ContractIdPublicKeyType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ContractIdPublicKeyType {}
+
+impl fmt::Display for ContractIdPublicKeyType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ContractIdPublicKeyType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ContractIdPublicKeyType::SourceAccount,
+            1 => ContractIdPublicKeyType::Ed25519,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ContractIdPublicKeyType> for i32 {
+    #[must_use]
+    fn from(e: ContractIdPublicKeyType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ContractIdPublicKeyType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ContractIdPublicKeyType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// InstallContractCodeArgs is an XDR Struct defines as:
+//
+//   struct InstallContractCodeArgs
+//    {
+//        opaque code<SCVAL_LIMIT>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct InstallContractCodeArgs {
+    pub code: BytesM<256000>,
+}
+
+impl ReadXdr for InstallContractCodeArgs {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            code: BytesM::<256000>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for InstallContractCodeArgs {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.code.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ContractIdFromEd25519PublicKey is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            uint256 key;
+//            Signature signature;
+//            uint256 salt;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractIdFromEd25519PublicKey {
+    pub key: Uint256,
+    pub signature: Signature,
+    pub salt: Uint256,
+}
+
+impl ReadXdr for ContractIdFromEd25519PublicKey {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            key: Uint256::read_xdr(r)?,
+            signature: Signature::read_xdr(r)?,
+            salt: Uint256::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ContractIdFromEd25519PublicKey {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.key.write_xdr(w)?;
+        self.signature.write_xdr(w)?;
+        self.salt.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ContractId is an XDR Union defines as:
+//
+//   union ContractID switch (ContractIDType type)
+//    {
+//    case CONTRACT_ID_FROM_SOURCE_ACCOUNT:
+//        uint256 salt;
+//    case CONTRACT_ID_FROM_ED25519_PUBLIC_KEY:
+//        struct
+//        {
+//            uint256 key;
+//            Signature signature;
+//            uint256 salt;
+//        } fromEd25519PublicKey;
+//    case CONTRACT_ID_FROM_ASSET:
+//        Asset asset;
+//    };
+//
+// union with discriminant ContractIdType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ContractId {
+    SourceAccount(Uint256),
+    Ed25519PublicKey(ContractIdFromEd25519PublicKey),
+    Asset(Asset),
+}
+
+impl ContractId {
+    pub const VARIANTS: [ContractIdType; 3] = [
+        ContractIdType::SourceAccount,
+        ContractIdType::Ed25519PublicKey,
+        ContractIdType::Asset,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["SourceAccount", "Ed25519PublicKey", "Asset"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::SourceAccount(_) => "SourceAccount",
+            Self::Ed25519PublicKey(_) => "Ed25519PublicKey",
+            Self::Asset(_) => "Asset",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ContractIdType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SourceAccount(_) => ContractIdType::SourceAccount,
+            Self::Ed25519PublicKey(_) => ContractIdType::Ed25519PublicKey,
+            Self::Asset(_) => ContractIdType::Asset,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractIdType; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractId {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ContractIdType> for ContractId {
+    #[must_use]
+    fn discriminant(&self) -> ContractIdType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ContractIdType> for ContractId {
+    fn variants() -> slice::Iter<'static, ContractIdType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ContractIdType> for ContractId {}
+
+impl ReadXdr for ContractId {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ContractIdType = <ContractIdType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ContractIdType::SourceAccount => Self::SourceAccount(Uint256::read_xdr(r)?),
+            ContractIdType::Ed25519PublicKey => {
+                Self::Ed25519PublicKey(ContractIdFromEd25519PublicKey::read_xdr(r)?)
+            }
+            ContractIdType::Asset => Self::Asset(Asset::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ContractId {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SourceAccount(v) => v.write_xdr(w)?,
+            Self::Ed25519PublicKey(v) => v.write_xdr(w)?,
+            Self::Asset(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// CreateContractArgs is an XDR Struct defines as:
+//
+//   struct CreateContractArgs
+//    {
+//        ContractID contractID;
+//        SCContractCode source;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct CreateContractArgs {
+    pub contract_id: ContractId,
+    pub source: ScContractCode,
+}
+
+impl ReadXdr for CreateContractArgs {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            contract_id: ContractId::read_xdr(r)?,
+            source: ScContractCode::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for CreateContractArgs {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.contract_id.write_xdr(w)?;
+        self.source.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// HostFunction is an XDR Union defines as:
+//
+//   union HostFunction switch (HostFunctionType type)
+//    {
+//    case HOST_FUNCTION_TYPE_INVOKE_CONTRACT:
+//        SCVec invokeArgs;
+//    case HOST_FUNCTION_TYPE_CREATE_CONTRACT:
+//        CreateContractArgs createContractArgs;
+//    case HOST_FUNCTION_TYPE_INSTALL_CONTRACT_CODE:
+//        InstallContractCodeArgs installContractCodeArgs;
+//    };
+//
+// union with discriminant HostFunctionType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum HostFunction {
+    InvokeContract(ScVec),
+    CreateContract(CreateContractArgs),
+    InstallContractCode(InstallContractCodeArgs),
+}
+
+impl HostFunction {
+    pub const VARIANTS: [HostFunctionType; 3] = [
+        HostFunctionType::InvokeContract,
+        HostFunctionType::CreateContract,
+        HostFunctionType::InstallContractCode,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] =
+        ["InvokeContract", "CreateContract", "InstallContractCode"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::InvokeContract(_) => "InvokeContract",
+            Self::CreateContract(_) => "CreateContract",
+            Self::InstallContractCode(_) => "InstallContractCode",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> HostFunctionType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::InvokeContract(_) => HostFunctionType::InvokeContract,
+            Self::CreateContract(_) => HostFunctionType::CreateContract,
+            Self::InstallContractCode(_) => HostFunctionType::InstallContractCode,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [HostFunctionType; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for HostFunction {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<HostFunctionType> for HostFunction {
+    #[must_use]
+    fn discriminant(&self) -> HostFunctionType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<HostFunctionType> for HostFunction {
+    fn variants() -> slice::Iter<'static, HostFunctionType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<HostFunctionType> for HostFunction {}
+
+impl ReadXdr for HostFunction {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: HostFunctionType = <HostFunctionType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            HostFunctionType::InvokeContract => Self::InvokeContract(ScVec::read_xdr(r)?),
+            HostFunctionType::CreateContract => {
+                Self::CreateContract(CreateContractArgs::read_xdr(r)?)
+            }
+            HostFunctionType::InstallContractCode => {
+                Self::InstallContractCode(InstallContractCodeArgs::read_xdr(r)?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for HostFunction {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::InvokeContract(v) => v.write_xdr(w)?,
+            Self::CreateContract(v) => v.write_xdr(w)?,
+            Self::InstallContractCode(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// InvokeHostFunctionOp is an XDR Struct defines as:
+//
+//   struct InvokeHostFunctionOp
+//    {
+//        // The host function to invoke
+//        HostFunction function;
+//        // The footprint for this invocation
+//        LedgerFootprint footprint;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct InvokeHostFunctionOp {
+    pub function: HostFunction,
+    pub footprint: LedgerFootprint,
+}
+
+impl ReadXdr for InvokeHostFunctionOp {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            function: HostFunction::read_xdr(r)?,
+            footprint: LedgerFootprint::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for InvokeHostFunctionOp {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.function.write_xdr(w)?;
+        self.footprint.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // OperationBody is an XDR NestedUnion defines as:
 //
 //   union switch (OperationType type)
@@ -16550,6 +22994,8 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 //            LiquidityPoolDepositOp liquidityPoolDepositOp;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawOp liquidityPoolWithdrawOp;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionOp invokeHostFunctionOp;
 //        }
 //
 // union with discriminant OperationType
@@ -16586,10 +23032,11 @@ pub enum OperationBody {
     SetTrustLineFlags(SetTrustLineFlagsOp),
     LiquidityPoolDeposit(LiquidityPoolDepositOp),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawOp),
+    InvokeHostFunction(InvokeHostFunctionOp),
 }
 
 impl OperationBody {
-    pub const VARIANTS: [OperationType; 24] = [
+    pub const VARIANTS: [OperationType; 25] = [
         OperationType::CreateAccount,
         OperationType::Payment,
         OperationType::PathPaymentStrictReceive,
@@ -16614,8 +23061,9 @@ impl OperationBody {
         OperationType::SetTrustLineFlags,
         OperationType::LiquidityPoolDeposit,
         OperationType::LiquidityPoolWithdraw,
+        OperationType::InvokeHostFunction,
     ];
-    pub const VARIANTS_STR: [&'static str; 24] = [
+    pub const VARIANTS_STR: [&'static str; 25] = [
         "CreateAccount",
         "Payment",
         "PathPaymentStrictReceive",
@@ -16640,6 +23088,7 @@ impl OperationBody {
         "SetTrustLineFlags",
         "LiquidityPoolDeposit",
         "LiquidityPoolWithdraw",
+        "InvokeHostFunction",
     ];
 
     #[must_use]
@@ -16669,6 +23118,7 @@ impl OperationBody {
             Self::SetTrustLineFlags(_) => "SetTrustLineFlags",
             Self::LiquidityPoolDeposit(_) => "LiquidityPoolDeposit",
             Self::LiquidityPoolWithdraw(_) => "LiquidityPoolWithdraw",
+            Self::InvokeHostFunction(_) => "InvokeHostFunction",
         }
     }
 
@@ -16700,11 +23150,12 @@ impl OperationBody {
             Self::SetTrustLineFlags(_) => OperationType::SetTrustLineFlags,
             Self::LiquidityPoolDeposit(_) => OperationType::LiquidityPoolDeposit,
             Self::LiquidityPoolWithdraw(_) => OperationType::LiquidityPoolWithdraw,
+            Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [OperationType; 24] {
+    pub const fn variants() -> [OperationType; 25] {
         Self::VARIANTS
     }
 }
@@ -16785,6 +23236,9 @@ impl ReadXdr for OperationBody {
             OperationType::LiquidityPoolWithdraw => {
                 Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawOp::read_xdr(r)?)
             }
+            OperationType::InvokeHostFunction => {
+                Self::InvokeHostFunction(InvokeHostFunctionOp::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -16822,6 +23276,7 @@ impl WriteXdr for OperationBody {
             Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
             Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
             Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+            Self::InvokeHostFunction(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -16886,6 +23341,8 @@ impl WriteXdr for OperationBody {
 //            LiquidityPoolDepositOp liquidityPoolDepositOp;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawOp liquidityPoolWithdrawOp;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionOp invokeHostFunctionOp;
 //        }
 //        body;
 //    };
@@ -17015,6 +23472,217 @@ impl WriteXdr for HashIdPreimageRevokeId {
     }
 }
 
+// HashIdPreimageEd25519ContractId is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash networkID;
+//            uint256 ed25519;
+//            uint256 salt;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct HashIdPreimageEd25519ContractId {
+    pub network_id: Hash,
+    pub ed25519: Uint256,
+    pub salt: Uint256,
+}
+
+impl ReadXdr for HashIdPreimageEd25519ContractId {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            network_id: Hash::read_xdr(r)?,
+            ed25519: Uint256::read_xdr(r)?,
+            salt: Uint256::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for HashIdPreimageEd25519ContractId {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.network_id.write_xdr(w)?;
+        self.ed25519.write_xdr(w)?;
+        self.salt.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// HashIdPreimageContractId is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash networkID;
+//            Hash contractID;
+//            uint256 salt;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct HashIdPreimageContractId {
+    pub network_id: Hash,
+    pub contract_id: Hash,
+    pub salt: Uint256,
+}
+
+impl ReadXdr for HashIdPreimageContractId {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            network_id: Hash::read_xdr(r)?,
+            contract_id: Hash::read_xdr(r)?,
+            salt: Uint256::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for HashIdPreimageContractId {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.network_id.write_xdr(w)?;
+        self.contract_id.write_xdr(w)?;
+        self.salt.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// HashIdPreimageFromAsset is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash networkID;
+//            Asset asset;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct HashIdPreimageFromAsset {
+    pub network_id: Hash,
+    pub asset: Asset,
+}
+
+impl ReadXdr for HashIdPreimageFromAsset {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            network_id: Hash::read_xdr(r)?,
+            asset: Asset::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for HashIdPreimageFromAsset {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.network_id.write_xdr(w)?;
+        self.asset.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// HashIdPreimageSourceAccountContractId is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash networkID;
+//            AccountID sourceAccount;
+//            uint256 salt;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct HashIdPreimageSourceAccountContractId {
+    pub network_id: Hash,
+    pub source_account: AccountId,
+    pub salt: Uint256,
+}
+
+impl ReadXdr for HashIdPreimageSourceAccountContractId {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            network_id: Hash::read_xdr(r)?,
+            source_account: AccountId::read_xdr(r)?,
+            salt: Uint256::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for HashIdPreimageSourceAccountContractId {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.network_id.write_xdr(w)?;
+        self.source_account.write_xdr(w)?;
+        self.salt.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// HashIdPreimageCreateContractArgs is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash networkID;
+//            SCContractCode source;
+//            uint256 salt;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct HashIdPreimageCreateContractArgs {
+    pub network_id: Hash,
+    pub source: ScContractCode,
+    pub salt: Uint256,
+}
+
+impl ReadXdr for HashIdPreimageCreateContractArgs {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            network_id: Hash::read_xdr(r)?,
+            source: ScContractCode::read_xdr(r)?,
+            salt: Uint256::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for HashIdPreimageCreateContractArgs {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.network_id.write_xdr(w)?;
+        self.source.write_xdr(w)?;
+        self.salt.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // HashIdPreimage is an XDR Union defines as:
 //
 //   union HashIDPreimage switch (EnvelopeType type)
@@ -17035,6 +23703,40 @@ impl WriteXdr for HashIdPreimageRevokeId {
 //            PoolID liquidityPoolID;
 //            Asset asset;
 //        } revokeID;
+//    case ENVELOPE_TYPE_CONTRACT_ID_FROM_ED25519:
+//        struct
+//        {
+//            Hash networkID;
+//            uint256 ed25519;
+//            uint256 salt;
+//        } ed25519ContractID;
+//    case ENVELOPE_TYPE_CONTRACT_ID_FROM_CONTRACT:
+//        struct
+//        {
+//            Hash networkID;
+//            Hash contractID;
+//            uint256 salt;
+//        } contractID;
+//    case ENVELOPE_TYPE_CONTRACT_ID_FROM_ASSET:
+//        struct
+//        {
+//            Hash networkID;
+//            Asset asset;
+//        } fromAsset;
+//    case ENVELOPE_TYPE_CONTRACT_ID_FROM_SOURCE_ACCOUNT:
+//        struct
+//        {
+//            Hash networkID;
+//            AccountID sourceAccount;
+//            uint256 salt;
+//        } sourceAccountContractID;
+//    case ENVELOPE_TYPE_CREATE_CONTRACT_ARGS:
+//        struct
+//        {
+//            Hash networkID;
+//            SCContractCode source;
+//            uint256 salt;
+//        } createContractArgs;
 //    };
 //
 // union with discriminant EnvelopeType
@@ -17049,17 +23751,43 @@ impl WriteXdr for HashIdPreimageRevokeId {
 pub enum HashIdPreimage {
     OpId(HashIdPreimageOperationId),
     PoolRevokeOpId(HashIdPreimageRevokeId),
+    ContractIdFromEd25519(HashIdPreimageEd25519ContractId),
+    ContractIdFromContract(HashIdPreimageContractId),
+    ContractIdFromAsset(HashIdPreimageFromAsset),
+    ContractIdFromSourceAccount(HashIdPreimageSourceAccountContractId),
+    CreateContractArgs(HashIdPreimageCreateContractArgs),
 }
 
 impl HashIdPreimage {
-    pub const VARIANTS: [EnvelopeType; 2] = [EnvelopeType::OpId, EnvelopeType::PoolRevokeOpId];
-    pub const VARIANTS_STR: [&'static str; 2] = ["OpId", "PoolRevokeOpId"];
+    pub const VARIANTS: [EnvelopeType; 7] = [
+        EnvelopeType::OpId,
+        EnvelopeType::PoolRevokeOpId,
+        EnvelopeType::ContractIdFromEd25519,
+        EnvelopeType::ContractIdFromContract,
+        EnvelopeType::ContractIdFromAsset,
+        EnvelopeType::ContractIdFromSourceAccount,
+        EnvelopeType::CreateContractArgs,
+    ];
+    pub const VARIANTS_STR: [&'static str; 7] = [
+        "OpId",
+        "PoolRevokeOpId",
+        "ContractIdFromEd25519",
+        "ContractIdFromContract",
+        "ContractIdFromAsset",
+        "ContractIdFromSourceAccount",
+        "CreateContractArgs",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::OpId(_) => "OpId",
             Self::PoolRevokeOpId(_) => "PoolRevokeOpId",
+            Self::ContractIdFromEd25519(_) => "ContractIdFromEd25519",
+            Self::ContractIdFromContract(_) => "ContractIdFromContract",
+            Self::ContractIdFromAsset(_) => "ContractIdFromAsset",
+            Self::ContractIdFromSourceAccount(_) => "ContractIdFromSourceAccount",
+            Self::CreateContractArgs(_) => "CreateContractArgs",
         }
     }
 
@@ -17069,11 +23797,16 @@ impl HashIdPreimage {
         match self {
             Self::OpId(_) => EnvelopeType::OpId,
             Self::PoolRevokeOpId(_) => EnvelopeType::PoolRevokeOpId,
+            Self::ContractIdFromEd25519(_) => EnvelopeType::ContractIdFromEd25519,
+            Self::ContractIdFromContract(_) => EnvelopeType::ContractIdFromContract,
+            Self::ContractIdFromAsset(_) => EnvelopeType::ContractIdFromAsset,
+            Self::ContractIdFromSourceAccount(_) => EnvelopeType::ContractIdFromSourceAccount,
+            Self::CreateContractArgs(_) => EnvelopeType::CreateContractArgs,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 2] {
+    pub const fn variants() -> [EnvelopeType; 7] {
         Self::VARIANTS
     }
 }
@@ -17110,6 +23843,21 @@ impl ReadXdr for HashIdPreimage {
             EnvelopeType::PoolRevokeOpId => {
                 Self::PoolRevokeOpId(HashIdPreimageRevokeId::read_xdr(r)?)
             }
+            EnvelopeType::ContractIdFromEd25519 => {
+                Self::ContractIdFromEd25519(HashIdPreimageEd25519ContractId::read_xdr(r)?)
+            }
+            EnvelopeType::ContractIdFromContract => {
+                Self::ContractIdFromContract(HashIdPreimageContractId::read_xdr(r)?)
+            }
+            EnvelopeType::ContractIdFromAsset => {
+                Self::ContractIdFromAsset(HashIdPreimageFromAsset::read_xdr(r)?)
+            }
+            EnvelopeType::ContractIdFromSourceAccount => Self::ContractIdFromSourceAccount(
+                HashIdPreimageSourceAccountContractId::read_xdr(r)?,
+            ),
+            EnvelopeType::CreateContractArgs => {
+                Self::CreateContractArgs(HashIdPreimageCreateContractArgs::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17125,6 +23873,11 @@ impl WriteXdr for HashIdPreimage {
         match self {
             Self::OpId(v) => v.write_xdr(w)?,
             Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
+            Self::ContractIdFromEd25519(v) => v.write_xdr(w)?,
+            Self::ContractIdFromContract(v) => v.write_xdr(w)?,
+            Self::ContractIdFromAsset(v) => v.write_xdr(w)?,
+            Self::ContractIdFromSourceAccount(v) => v.write_xdr(w)?,
+            Self::CreateContractArgs(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -26164,6 +32917,228 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
     }
 }
 
+// InvokeHostFunctionResultCode is an XDR Enum defines as:
+//
+//   enum InvokeHostFunctionResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        INVOKE_HOST_FUNCTION_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        INVOKE_HOST_FUNCTION_MALFORMED = -1,
+//        INVOKE_HOST_FUNCTION_TRAPPED = -2
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum InvokeHostFunctionResultCode {
+    Success = 0,
+    Malformed = -1,
+    Trapped = -2,
+}
+
+impl InvokeHostFunctionResultCode {
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 3] = [
+        InvokeHostFunctionResultCode::Success,
+        InvokeHostFunctionResultCode::Malformed,
+        InvokeHostFunctionResultCode::Trapped,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["Success", "Malformed", "Trapped"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::Trapped => "Trapped",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for InvokeHostFunctionResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<InvokeHostFunctionResultCode> for InvokeHostFunctionResultCode {
+    fn variants() -> slice::Iter<'static, InvokeHostFunctionResultCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for InvokeHostFunctionResultCode {}
+
+impl fmt::Display for InvokeHostFunctionResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for InvokeHostFunctionResultCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => InvokeHostFunctionResultCode::Success,
+            -1 => InvokeHostFunctionResultCode::Malformed,
+            -2 => InvokeHostFunctionResultCode::Trapped,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<InvokeHostFunctionResultCode> for i32 {
+    #[must_use]
+    fn from(e: InvokeHostFunctionResultCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for InvokeHostFunctionResultCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for InvokeHostFunctionResultCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// InvokeHostFunctionResult is an XDR Union defines as:
+//
+//   union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code)
+//    {
+//    case INVOKE_HOST_FUNCTION_SUCCESS:
+//        SCVal success;
+//    case INVOKE_HOST_FUNCTION_MALFORMED:
+//    case INVOKE_HOST_FUNCTION_TRAPPED:
+//        void;
+//    };
+//
+// union with discriminant InvokeHostFunctionResultCode
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum InvokeHostFunctionResult {
+    Success(ScVal),
+    Malformed,
+    Trapped,
+}
+
+impl InvokeHostFunctionResult {
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 3] = [
+        InvokeHostFunctionResultCode::Success,
+        InvokeHostFunctionResultCode::Malformed,
+        InvokeHostFunctionResultCode::Trapped,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["Success", "Malformed", "Trapped"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Success(_) => "Success",
+            Self::Malformed => "Malformed",
+            Self::Trapped => "Trapped",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> InvokeHostFunctionResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => InvokeHostFunctionResultCode::Success,
+            Self::Malformed => InvokeHostFunctionResultCode::Malformed,
+            Self::Trapped => InvokeHostFunctionResultCode::Trapped,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for InvokeHostFunctionResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {
+    #[must_use]
+    fn discriminant(&self) -> InvokeHostFunctionResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {
+    fn variants() -> slice::Iter<'static, InvokeHostFunctionResultCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {}
+
+impl ReadXdr for InvokeHostFunctionResult {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: InvokeHostFunctionResultCode =
+            <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            InvokeHostFunctionResultCode::Success => Self::Success(ScVal::read_xdr(r)?),
+            InvokeHostFunctionResultCode::Malformed => Self::Malformed,
+            InvokeHostFunctionResultCode::Trapped => Self::Trapped,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for InvokeHostFunctionResult {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(v) => v.write_xdr(w)?,
+            Self::Malformed => ().write_xdr(w)?,
+            Self::Trapped => ().write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
 // OperationResultCode is an XDR Enum defines as:
 //
 //   enum OperationResultCode
@@ -26352,6 +33327,8 @@ impl WriteXdr for OperationResultCode {
 //            LiquidityPoolDepositResult liquidityPoolDepositResult;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionResult invokeHostFunctionResult;
 //        }
 //
 // union with discriminant OperationType
@@ -26388,10 +33365,11 @@ pub enum OperationResultTr {
     SetTrustLineFlags(SetTrustLineFlagsResult),
     LiquidityPoolDeposit(LiquidityPoolDepositResult),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawResult),
+    InvokeHostFunction(InvokeHostFunctionResult),
 }
 
 impl OperationResultTr {
-    pub const VARIANTS: [OperationType; 24] = [
+    pub const VARIANTS: [OperationType; 25] = [
         OperationType::CreateAccount,
         OperationType::Payment,
         OperationType::PathPaymentStrictReceive,
@@ -26416,8 +33394,9 @@ impl OperationResultTr {
         OperationType::SetTrustLineFlags,
         OperationType::LiquidityPoolDeposit,
         OperationType::LiquidityPoolWithdraw,
+        OperationType::InvokeHostFunction,
     ];
-    pub const VARIANTS_STR: [&'static str; 24] = [
+    pub const VARIANTS_STR: [&'static str; 25] = [
         "CreateAccount",
         "Payment",
         "PathPaymentStrictReceive",
@@ -26442,6 +33421,7 @@ impl OperationResultTr {
         "SetTrustLineFlags",
         "LiquidityPoolDeposit",
         "LiquidityPoolWithdraw",
+        "InvokeHostFunction",
     ];
 
     #[must_use]
@@ -26471,6 +33451,7 @@ impl OperationResultTr {
             Self::SetTrustLineFlags(_) => "SetTrustLineFlags",
             Self::LiquidityPoolDeposit(_) => "LiquidityPoolDeposit",
             Self::LiquidityPoolWithdraw(_) => "LiquidityPoolWithdraw",
+            Self::InvokeHostFunction(_) => "InvokeHostFunction",
         }
     }
 
@@ -26502,11 +33483,12 @@ impl OperationResultTr {
             Self::SetTrustLineFlags(_) => OperationType::SetTrustLineFlags,
             Self::LiquidityPoolDeposit(_) => OperationType::LiquidityPoolDeposit,
             Self::LiquidityPoolWithdraw(_) => OperationType::LiquidityPoolWithdraw,
+            Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [OperationType; 24] {
+    pub const fn variants() -> [OperationType; 25] {
         Self::VARIANTS
     }
 }
@@ -26591,6 +33573,9 @@ impl ReadXdr for OperationResultTr {
             OperationType::LiquidityPoolWithdraw => {
                 Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawResult::read_xdr(r)?)
             }
+            OperationType::InvokeHostFunction => {
+                Self::InvokeHostFunction(InvokeHostFunctionResult::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -26628,6 +33613,7 @@ impl WriteXdr for OperationResultTr {
             Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
             Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
             Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+            Self::InvokeHostFunction(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -26688,6 +33674,8 @@ impl WriteXdr for OperationResultTr {
 //            LiquidityPoolDepositResult liquidityPoolDepositResult;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionResult invokeHostFunctionResult;
 //        }
 //        tr;
 //    case opBAD_AUTH:
@@ -29100,6 +36088,57 @@ impl WriteXdr for NodeId {
     }
 }
 
+// AccountId is an XDR Typedef defines as:
+//
+//   typedef PublicKey AccountID;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct AccountId(pub PublicKey);
+
+impl From<AccountId> for PublicKey {
+    #[must_use]
+    fn from(x: AccountId) -> Self {
+        x.0
+    }
+}
+
+impl From<PublicKey> for AccountId {
+    #[must_use]
+    fn from(x: PublicKey) -> Self {
+        AccountId(x)
+    }
+}
+
+impl AsRef<PublicKey> for AccountId {
+    #[must_use]
+    fn as_ref(&self) -> &PublicKey {
+        &self.0
+    }
+}
+
+impl ReadXdr for AccountId {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = PublicKey::read_xdr(r)?;
+        let v = AccountId(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for AccountId {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
 // Curve25519Secret is an XDR Struct defines as:
 //
 //   struct Curve25519Secret
@@ -29258,11 +36297,55 @@ pub enum TypeVariant {
     ScpStatementExternalize,
     ScpEnvelope,
     ScpQuorumSet,
+    ScEnvMetaKind,
+    ScEnvMetaEntry,
+    ScSpecType,
+    ScSpecTypeOption,
+    ScSpecTypeResult,
+    ScSpecTypeVec,
+    ScSpecTypeMap,
+    ScSpecTypeSet,
+    ScSpecTypeTuple,
+    ScSpecTypeBytesN,
+    ScSpecTypeUdt,
+    ScSpecTypeDef,
+    ScSpecUdtStructFieldV0,
+    ScSpecUdtStructV0,
+    ScSpecUdtUnionCaseV0,
+    ScSpecUdtUnionV0,
+    ScSpecUdtEnumCaseV0,
+    ScSpecUdtEnumV0,
+    ScSpecUdtErrorEnumCaseV0,
+    ScSpecUdtErrorEnumV0,
+    ScSpecFunctionInputV0,
+    ScSpecFunctionV0,
+    ScSpecEntryKind,
+    ScSpecEntry,
+    ScSymbol,
+    ScValType,
+    ScStatic,
+    ScStatusType,
+    ScHostValErrorCode,
+    ScHostObjErrorCode,
+    ScHostFnErrorCode,
+    ScHostStorageErrorCode,
+    ScHostContextErrorCode,
+    ScVmErrorCode,
+    ScUnknownErrorCode,
+    ScStatus,
+    ScVal,
+    ScObjectType,
+    ScMapEntry,
+    ScVec,
+    ScMap,
+    ScContractCodeType,
+    ScContractCode,
+    Int128Parts,
+    ScObject,
     StoredTransactionSet,
     PersistedScpStateV0,
     PersistedScpStateV1,
     PersistedScpState,
-    AccountId,
     Thresholds,
     String32,
     String64,
@@ -29322,6 +36405,13 @@ pub enum TypeVariant {
     LiquidityPoolEntry,
     LiquidityPoolEntryBody,
     LiquidityPoolEntryConstantProduct,
+    ContractDataEntry,
+    ContractCodeEntry,
+    ConfigSettingType,
+    ConfigSetting,
+    ConfigSettingId,
+    ConfigSettingEntry,
+    ConfigSettingEntryExt,
     LedgerEntryExtensionV1,
     LedgerEntryExtensionV1Ext,
     LedgerEntry,
@@ -29334,6 +36424,9 @@ pub enum TypeVariant {
     LedgerKeyData,
     LedgerKeyClaimableBalance,
     LedgerKeyLiquidityPool,
+    LedgerKeyContractData,
+    LedgerKeyContractCode,
+    LedgerKeyConfigSetting,
     EnvelopeType,
     UpgradeType,
     StellarValueType,
@@ -29347,6 +36440,7 @@ pub enum TypeVariant {
     LedgerHeaderExt,
     LedgerUpgradeType,
     LedgerUpgrade,
+    LedgerUpgradeConfigSetting,
     BucketEntryType,
     BucketMetadata,
     BucketMetadataExt,
@@ -29364,6 +36458,10 @@ pub enum TypeVariant {
     TransactionHistoryEntryExt,
     TransactionHistoryResultEntry,
     TransactionHistoryResultEntryExt,
+    TransactionResultPairV2,
+    TransactionResultSetV2,
+    TransactionHistoryResultEntryV2,
+    TransactionHistoryResultEntryV2Ext,
     LedgerHeaderHistoryEntry,
     LedgerHeaderHistoryEntryExt,
     LedgerScpMessages,
@@ -29375,11 +36473,19 @@ pub enum TypeVariant {
     OperationMeta,
     TransactionMetaV1,
     TransactionMetaV2,
+    ContractEventType,
+    ContractEvent,
+    ContractEventBody,
+    ContractEventV0,
+    OperationEvents,
+    TransactionMetaV3,
     TransactionMeta,
     TransactionResultMeta,
+    TransactionResultMetaV2,
     UpgradeEntryMeta,
     LedgerCloseMetaV0,
     LedgerCloseMetaV1,
+    LedgerCloseMetaV2,
     LedgerCloseMeta,
     ErrorCode,
     SError,
@@ -29413,6 +36519,7 @@ pub enum TypeVariant {
     MuxedAccount,
     MuxedAccountMed25519,
     DecoratedSignature,
+    LedgerFootprint,
     OperationType,
     CreateAccountOp,
     PaymentOp,
@@ -29438,11 +36545,25 @@ pub enum TypeVariant {
     SetTrustLineFlagsOp,
     LiquidityPoolDepositOp,
     LiquidityPoolWithdrawOp,
+    HostFunctionType,
+    ContractIdType,
+    ContractIdPublicKeyType,
+    InstallContractCodeArgs,
+    ContractId,
+    ContractIdFromEd25519PublicKey,
+    CreateContractArgs,
+    HostFunction,
+    InvokeHostFunctionOp,
     Operation,
     OperationBody,
     HashIdPreimage,
     HashIdPreimageOperationId,
     HashIdPreimageRevokeId,
+    HashIdPreimageEd25519ContractId,
+    HashIdPreimageContractId,
+    HashIdPreimageFromAsset,
+    HashIdPreimageSourceAccountContractId,
+    HashIdPreimageCreateContractArgs,
     MemoType,
     Memo,
     TimeBounds,
@@ -29521,6 +36642,8 @@ pub enum TypeVariant {
     LiquidityPoolDepositResult,
     LiquidityPoolWithdrawResultCode,
     LiquidityPoolWithdrawResult,
+    InvokeHostFunctionResultCode,
+    InvokeHostFunctionResult,
     OperationResultCode,
     OperationResult,
     OperationResultTr,
@@ -29548,6 +36671,7 @@ pub enum TypeVariant {
     Signature,
     SignatureHint,
     NodeId,
+    AccountId,
     Curve25519Secret,
     Curve25519Public,
     HmacSha256Key,
@@ -29555,7 +36679,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 305] = [
+    pub const VARIANTS: [TypeVariant; 390] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -29567,11 +36691,55 @@ impl TypeVariant {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::ScEnvMetaKind,
+        TypeVariant::ScEnvMetaEntry,
+        TypeVariant::ScSpecType,
+        TypeVariant::ScSpecTypeOption,
+        TypeVariant::ScSpecTypeResult,
+        TypeVariant::ScSpecTypeVec,
+        TypeVariant::ScSpecTypeMap,
+        TypeVariant::ScSpecTypeSet,
+        TypeVariant::ScSpecTypeTuple,
+        TypeVariant::ScSpecTypeBytesN,
+        TypeVariant::ScSpecTypeUdt,
+        TypeVariant::ScSpecTypeDef,
+        TypeVariant::ScSpecUdtStructFieldV0,
+        TypeVariant::ScSpecUdtStructV0,
+        TypeVariant::ScSpecUdtUnionCaseV0,
+        TypeVariant::ScSpecUdtUnionV0,
+        TypeVariant::ScSpecUdtEnumCaseV0,
+        TypeVariant::ScSpecUdtEnumV0,
+        TypeVariant::ScSpecUdtErrorEnumCaseV0,
+        TypeVariant::ScSpecUdtErrorEnumV0,
+        TypeVariant::ScSpecFunctionInputV0,
+        TypeVariant::ScSpecFunctionV0,
+        TypeVariant::ScSpecEntryKind,
+        TypeVariant::ScSpecEntry,
+        TypeVariant::ScSymbol,
+        TypeVariant::ScValType,
+        TypeVariant::ScStatic,
+        TypeVariant::ScStatusType,
+        TypeVariant::ScHostValErrorCode,
+        TypeVariant::ScHostObjErrorCode,
+        TypeVariant::ScHostFnErrorCode,
+        TypeVariant::ScHostStorageErrorCode,
+        TypeVariant::ScHostContextErrorCode,
+        TypeVariant::ScVmErrorCode,
+        TypeVariant::ScUnknownErrorCode,
+        TypeVariant::ScStatus,
+        TypeVariant::ScVal,
+        TypeVariant::ScObjectType,
+        TypeVariant::ScMapEntry,
+        TypeVariant::ScVec,
+        TypeVariant::ScMap,
+        TypeVariant::ScContractCodeType,
+        TypeVariant::ScContractCode,
+        TypeVariant::Int128Parts,
+        TypeVariant::ScObject,
         TypeVariant::StoredTransactionSet,
         TypeVariant::PersistedScpStateV0,
         TypeVariant::PersistedScpStateV1,
         TypeVariant::PersistedScpState,
-        TypeVariant::AccountId,
         TypeVariant::Thresholds,
         TypeVariant::String32,
         TypeVariant::String64,
@@ -29631,6 +36799,13 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolEntry,
         TypeVariant::LiquidityPoolEntryBody,
         TypeVariant::LiquidityPoolEntryConstantProduct,
+        TypeVariant::ContractDataEntry,
+        TypeVariant::ContractCodeEntry,
+        TypeVariant::ConfigSettingType,
+        TypeVariant::ConfigSetting,
+        TypeVariant::ConfigSettingId,
+        TypeVariant::ConfigSettingEntry,
+        TypeVariant::ConfigSettingEntryExt,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -29643,6 +36818,9 @@ impl TypeVariant {
         TypeVariant::LedgerKeyData,
         TypeVariant::LedgerKeyClaimableBalance,
         TypeVariant::LedgerKeyLiquidityPool,
+        TypeVariant::LedgerKeyContractData,
+        TypeVariant::LedgerKeyContractCode,
+        TypeVariant::LedgerKeyConfigSetting,
         TypeVariant::EnvelopeType,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
@@ -29656,6 +36834,7 @@ impl TypeVariant {
         TypeVariant::LedgerHeaderExt,
         TypeVariant::LedgerUpgradeType,
         TypeVariant::LedgerUpgrade,
+        TypeVariant::LedgerUpgradeConfigSetting,
         TypeVariant::BucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
@@ -29673,6 +36852,10 @@ impl TypeVariant {
         TypeVariant::TransactionHistoryEntryExt,
         TypeVariant::TransactionHistoryResultEntry,
         TypeVariant::TransactionHistoryResultEntryExt,
+        TypeVariant::TransactionResultPairV2,
+        TypeVariant::TransactionResultSetV2,
+        TypeVariant::TransactionHistoryResultEntryV2,
+        TypeVariant::TransactionHistoryResultEntryV2Ext,
         TypeVariant::LedgerHeaderHistoryEntry,
         TypeVariant::LedgerHeaderHistoryEntryExt,
         TypeVariant::LedgerScpMessages,
@@ -29684,11 +36867,19 @@ impl TypeVariant {
         TypeVariant::OperationMeta,
         TypeVariant::TransactionMetaV1,
         TypeVariant::TransactionMetaV2,
+        TypeVariant::ContractEventType,
+        TypeVariant::ContractEvent,
+        TypeVariant::ContractEventBody,
+        TypeVariant::ContractEventV0,
+        TypeVariant::OperationEvents,
+        TypeVariant::TransactionMetaV3,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
+        TypeVariant::TransactionResultMetaV2,
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaV1,
+        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
@@ -29722,6 +36913,7 @@ impl TypeVariant {
         TypeVariant::MuxedAccount,
         TypeVariant::MuxedAccountMed25519,
         TypeVariant::DecoratedSignature,
+        TypeVariant::LedgerFootprint,
         TypeVariant::OperationType,
         TypeVariant::CreateAccountOp,
         TypeVariant::PaymentOp,
@@ -29747,11 +36939,25 @@ impl TypeVariant {
         TypeVariant::SetTrustLineFlagsOp,
         TypeVariant::LiquidityPoolDepositOp,
         TypeVariant::LiquidityPoolWithdrawOp,
+        TypeVariant::HostFunctionType,
+        TypeVariant::ContractIdType,
+        TypeVariant::ContractIdPublicKeyType,
+        TypeVariant::InstallContractCodeArgs,
+        TypeVariant::ContractId,
+        TypeVariant::ContractIdFromEd25519PublicKey,
+        TypeVariant::CreateContractArgs,
+        TypeVariant::HostFunction,
+        TypeVariant::InvokeHostFunctionOp,
         TypeVariant::Operation,
         TypeVariant::OperationBody,
         TypeVariant::HashIdPreimage,
         TypeVariant::HashIdPreimageOperationId,
         TypeVariant::HashIdPreimageRevokeId,
+        TypeVariant::HashIdPreimageEd25519ContractId,
+        TypeVariant::HashIdPreimageContractId,
+        TypeVariant::HashIdPreimageFromAsset,
+        TypeVariant::HashIdPreimageSourceAccountContractId,
+        TypeVariant::HashIdPreimageCreateContractArgs,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -29830,6 +37036,8 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolDepositResult,
         TypeVariant::LiquidityPoolWithdrawResultCode,
         TypeVariant::LiquidityPoolWithdrawResult,
+        TypeVariant::InvokeHostFunctionResultCode,
+        TypeVariant::InvokeHostFunctionResult,
         TypeVariant::OperationResultCode,
         TypeVariant::OperationResult,
         TypeVariant::OperationResultTr,
@@ -29857,12 +37065,13 @@ impl TypeVariant {
         TypeVariant::Signature,
         TypeVariant::SignatureHint,
         TypeVariant::NodeId,
+        TypeVariant::AccountId,
         TypeVariant::Curve25519Secret,
         TypeVariant::Curve25519Public,
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 305] = [
+    pub const VARIANTS_STR: [&'static str; 390] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -29874,11 +37083,55 @@ impl TypeVariant {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "ScEnvMetaKind",
+        "ScEnvMetaEntry",
+        "ScSpecType",
+        "ScSpecTypeOption",
+        "ScSpecTypeResult",
+        "ScSpecTypeVec",
+        "ScSpecTypeMap",
+        "ScSpecTypeSet",
+        "ScSpecTypeTuple",
+        "ScSpecTypeBytesN",
+        "ScSpecTypeUdt",
+        "ScSpecTypeDef",
+        "ScSpecUdtStructFieldV0",
+        "ScSpecUdtStructV0",
+        "ScSpecUdtUnionCaseV0",
+        "ScSpecUdtUnionV0",
+        "ScSpecUdtEnumCaseV0",
+        "ScSpecUdtEnumV0",
+        "ScSpecUdtErrorEnumCaseV0",
+        "ScSpecUdtErrorEnumV0",
+        "ScSpecFunctionInputV0",
+        "ScSpecFunctionV0",
+        "ScSpecEntryKind",
+        "ScSpecEntry",
+        "ScSymbol",
+        "ScValType",
+        "ScStatic",
+        "ScStatusType",
+        "ScHostValErrorCode",
+        "ScHostObjErrorCode",
+        "ScHostFnErrorCode",
+        "ScHostStorageErrorCode",
+        "ScHostContextErrorCode",
+        "ScVmErrorCode",
+        "ScUnknownErrorCode",
+        "ScStatus",
+        "ScVal",
+        "ScObjectType",
+        "ScMapEntry",
+        "ScVec",
+        "ScMap",
+        "ScContractCodeType",
+        "ScContractCode",
+        "Int128Parts",
+        "ScObject",
         "StoredTransactionSet",
         "PersistedScpStateV0",
         "PersistedScpStateV1",
         "PersistedScpState",
-        "AccountId",
         "Thresholds",
         "String32",
         "String64",
@@ -29938,6 +37191,13 @@ impl TypeVariant {
         "LiquidityPoolEntry",
         "LiquidityPoolEntryBody",
         "LiquidityPoolEntryConstantProduct",
+        "ContractDataEntry",
+        "ContractCodeEntry",
+        "ConfigSettingType",
+        "ConfigSetting",
+        "ConfigSettingId",
+        "ConfigSettingEntry",
+        "ConfigSettingEntryExt",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -29950,6 +37210,9 @@ impl TypeVariant {
         "LedgerKeyData",
         "LedgerKeyClaimableBalance",
         "LedgerKeyLiquidityPool",
+        "LedgerKeyContractData",
+        "LedgerKeyContractCode",
+        "LedgerKeyConfigSetting",
         "EnvelopeType",
         "UpgradeType",
         "StellarValueType",
@@ -29963,6 +37226,7 @@ impl TypeVariant {
         "LedgerHeaderExt",
         "LedgerUpgradeType",
         "LedgerUpgrade",
+        "LedgerUpgradeConfigSetting",
         "BucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
@@ -29980,6 +37244,10 @@ impl TypeVariant {
         "TransactionHistoryEntryExt",
         "TransactionHistoryResultEntry",
         "TransactionHistoryResultEntryExt",
+        "TransactionResultPairV2",
+        "TransactionResultSetV2",
+        "TransactionHistoryResultEntryV2",
+        "TransactionHistoryResultEntryV2Ext",
         "LedgerHeaderHistoryEntry",
         "LedgerHeaderHistoryEntryExt",
         "LedgerScpMessages",
@@ -29991,11 +37259,19 @@ impl TypeVariant {
         "OperationMeta",
         "TransactionMetaV1",
         "TransactionMetaV2",
+        "ContractEventType",
+        "ContractEvent",
+        "ContractEventBody",
+        "ContractEventV0",
+        "OperationEvents",
+        "TransactionMetaV3",
         "TransactionMeta",
         "TransactionResultMeta",
+        "TransactionResultMetaV2",
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaV1",
+        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
@@ -30029,6 +37305,7 @@ impl TypeVariant {
         "MuxedAccount",
         "MuxedAccountMed25519",
         "DecoratedSignature",
+        "LedgerFootprint",
         "OperationType",
         "CreateAccountOp",
         "PaymentOp",
@@ -30054,11 +37331,25 @@ impl TypeVariant {
         "SetTrustLineFlagsOp",
         "LiquidityPoolDepositOp",
         "LiquidityPoolWithdrawOp",
+        "HostFunctionType",
+        "ContractIdType",
+        "ContractIdPublicKeyType",
+        "InstallContractCodeArgs",
+        "ContractId",
+        "ContractIdFromEd25519PublicKey",
+        "CreateContractArgs",
+        "HostFunction",
+        "InvokeHostFunctionOp",
         "Operation",
         "OperationBody",
         "HashIdPreimage",
         "HashIdPreimageOperationId",
         "HashIdPreimageRevokeId",
+        "HashIdPreimageEd25519ContractId",
+        "HashIdPreimageContractId",
+        "HashIdPreimageFromAsset",
+        "HashIdPreimageSourceAccountContractId",
+        "HashIdPreimageCreateContractArgs",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -30137,6 +37428,8 @@ impl TypeVariant {
         "LiquidityPoolDepositResult",
         "LiquidityPoolWithdrawResultCode",
         "LiquidityPoolWithdrawResult",
+        "InvokeHostFunctionResultCode",
+        "InvokeHostFunctionResult",
         "OperationResultCode",
         "OperationResult",
         "OperationResultTr",
@@ -30164,6 +37457,7 @@ impl TypeVariant {
         "Signature",
         "SignatureHint",
         "NodeId",
+        "AccountId",
         "Curve25519Secret",
         "Curve25519Public",
         "HmacSha256Key",
@@ -30185,11 +37479,55 @@ impl TypeVariant {
             Self::ScpStatementExternalize => "ScpStatementExternalize",
             Self::ScpEnvelope => "ScpEnvelope",
             Self::ScpQuorumSet => "ScpQuorumSet",
+            Self::ScEnvMetaKind => "ScEnvMetaKind",
+            Self::ScEnvMetaEntry => "ScEnvMetaEntry",
+            Self::ScSpecType => "ScSpecType",
+            Self::ScSpecTypeOption => "ScSpecTypeOption",
+            Self::ScSpecTypeResult => "ScSpecTypeResult",
+            Self::ScSpecTypeVec => "ScSpecTypeVec",
+            Self::ScSpecTypeMap => "ScSpecTypeMap",
+            Self::ScSpecTypeSet => "ScSpecTypeSet",
+            Self::ScSpecTypeTuple => "ScSpecTypeTuple",
+            Self::ScSpecTypeBytesN => "ScSpecTypeBytesN",
+            Self::ScSpecTypeUdt => "ScSpecTypeUdt",
+            Self::ScSpecTypeDef => "ScSpecTypeDef",
+            Self::ScSpecUdtStructFieldV0 => "ScSpecUdtStructFieldV0",
+            Self::ScSpecUdtStructV0 => "ScSpecUdtStructV0",
+            Self::ScSpecUdtUnionCaseV0 => "ScSpecUdtUnionCaseV0",
+            Self::ScSpecUdtUnionV0 => "ScSpecUdtUnionV0",
+            Self::ScSpecUdtEnumCaseV0 => "ScSpecUdtEnumCaseV0",
+            Self::ScSpecUdtEnumV0 => "ScSpecUdtEnumV0",
+            Self::ScSpecUdtErrorEnumCaseV0 => "ScSpecUdtErrorEnumCaseV0",
+            Self::ScSpecUdtErrorEnumV0 => "ScSpecUdtErrorEnumV0",
+            Self::ScSpecFunctionInputV0 => "ScSpecFunctionInputV0",
+            Self::ScSpecFunctionV0 => "ScSpecFunctionV0",
+            Self::ScSpecEntryKind => "ScSpecEntryKind",
+            Self::ScSpecEntry => "ScSpecEntry",
+            Self::ScSymbol => "ScSymbol",
+            Self::ScValType => "ScValType",
+            Self::ScStatic => "ScStatic",
+            Self::ScStatusType => "ScStatusType",
+            Self::ScHostValErrorCode => "ScHostValErrorCode",
+            Self::ScHostObjErrorCode => "ScHostObjErrorCode",
+            Self::ScHostFnErrorCode => "ScHostFnErrorCode",
+            Self::ScHostStorageErrorCode => "ScHostStorageErrorCode",
+            Self::ScHostContextErrorCode => "ScHostContextErrorCode",
+            Self::ScVmErrorCode => "ScVmErrorCode",
+            Self::ScUnknownErrorCode => "ScUnknownErrorCode",
+            Self::ScStatus => "ScStatus",
+            Self::ScVal => "ScVal",
+            Self::ScObjectType => "ScObjectType",
+            Self::ScMapEntry => "ScMapEntry",
+            Self::ScVec => "ScVec",
+            Self::ScMap => "ScMap",
+            Self::ScContractCodeType => "ScContractCodeType",
+            Self::ScContractCode => "ScContractCode",
+            Self::Int128Parts => "Int128Parts",
+            Self::ScObject => "ScObject",
             Self::StoredTransactionSet => "StoredTransactionSet",
             Self::PersistedScpStateV0 => "PersistedScpStateV0",
             Self::PersistedScpStateV1 => "PersistedScpStateV1",
             Self::PersistedScpState => "PersistedScpState",
-            Self::AccountId => "AccountId",
             Self::Thresholds => "Thresholds",
             Self::String32 => "String32",
             Self::String64 => "String64",
@@ -30251,6 +37589,13 @@ impl TypeVariant {
             Self::LiquidityPoolEntry => "LiquidityPoolEntry",
             Self::LiquidityPoolEntryBody => "LiquidityPoolEntryBody",
             Self::LiquidityPoolEntryConstantProduct => "LiquidityPoolEntryConstantProduct",
+            Self::ContractDataEntry => "ContractDataEntry",
+            Self::ContractCodeEntry => "ContractCodeEntry",
+            Self::ConfigSettingType => "ConfigSettingType",
+            Self::ConfigSetting => "ConfigSetting",
+            Self::ConfigSettingId => "ConfigSettingId",
+            Self::ConfigSettingEntry => "ConfigSettingEntry",
+            Self::ConfigSettingEntryExt => "ConfigSettingEntryExt",
             Self::LedgerEntryExtensionV1 => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry => "LedgerEntry",
@@ -30263,6 +37608,9 @@ impl TypeVariant {
             Self::LedgerKeyData => "LedgerKeyData",
             Self::LedgerKeyClaimableBalance => "LedgerKeyClaimableBalance",
             Self::LedgerKeyLiquidityPool => "LedgerKeyLiquidityPool",
+            Self::LedgerKeyContractData => "LedgerKeyContractData",
+            Self::LedgerKeyContractCode => "LedgerKeyContractCode",
+            Self::LedgerKeyConfigSetting => "LedgerKeyConfigSetting",
             Self::EnvelopeType => "EnvelopeType",
             Self::UpgradeType => "UpgradeType",
             Self::StellarValueType => "StellarValueType",
@@ -30276,6 +37624,7 @@ impl TypeVariant {
             Self::LedgerHeaderExt => "LedgerHeaderExt",
             Self::LedgerUpgradeType => "LedgerUpgradeType",
             Self::LedgerUpgrade => "LedgerUpgrade",
+            Self::LedgerUpgradeConfigSetting => "LedgerUpgradeConfigSetting",
             Self::BucketEntryType => "BucketEntryType",
             Self::BucketMetadata => "BucketMetadata",
             Self::BucketMetadataExt => "BucketMetadataExt",
@@ -30293,6 +37642,10 @@ impl TypeVariant {
             Self::TransactionHistoryEntryExt => "TransactionHistoryEntryExt",
             Self::TransactionHistoryResultEntry => "TransactionHistoryResultEntry",
             Self::TransactionHistoryResultEntryExt => "TransactionHistoryResultEntryExt",
+            Self::TransactionResultPairV2 => "TransactionResultPairV2",
+            Self::TransactionResultSetV2 => "TransactionResultSetV2",
+            Self::TransactionHistoryResultEntryV2 => "TransactionHistoryResultEntryV2",
+            Self::TransactionHistoryResultEntryV2Ext => "TransactionHistoryResultEntryV2Ext",
             Self::LedgerHeaderHistoryEntry => "LedgerHeaderHistoryEntry",
             Self::LedgerHeaderHistoryEntryExt => "LedgerHeaderHistoryEntryExt",
             Self::LedgerScpMessages => "LedgerScpMessages",
@@ -30304,11 +37657,19 @@ impl TypeVariant {
             Self::OperationMeta => "OperationMeta",
             Self::TransactionMetaV1 => "TransactionMetaV1",
             Self::TransactionMetaV2 => "TransactionMetaV2",
+            Self::ContractEventType => "ContractEventType",
+            Self::ContractEvent => "ContractEvent",
+            Self::ContractEventBody => "ContractEventBody",
+            Self::ContractEventV0 => "ContractEventV0",
+            Self::OperationEvents => "OperationEvents",
+            Self::TransactionMetaV3 => "TransactionMetaV3",
             Self::TransactionMeta => "TransactionMeta",
             Self::TransactionResultMeta => "TransactionResultMeta",
+            Self::TransactionResultMetaV2 => "TransactionResultMetaV2",
             Self::UpgradeEntryMeta => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0 => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaV1 => "LedgerCloseMetaV1",
+            Self::LedgerCloseMetaV2 => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta => "LedgerCloseMeta",
             Self::ErrorCode => "ErrorCode",
             Self::SError => "SError",
@@ -30342,6 +37703,7 @@ impl TypeVariant {
             Self::MuxedAccount => "MuxedAccount",
             Self::MuxedAccountMed25519 => "MuxedAccountMed25519",
             Self::DecoratedSignature => "DecoratedSignature",
+            Self::LedgerFootprint => "LedgerFootprint",
             Self::OperationType => "OperationType",
             Self::CreateAccountOp => "CreateAccountOp",
             Self::PaymentOp => "PaymentOp",
@@ -30367,11 +37729,25 @@ impl TypeVariant {
             Self::SetTrustLineFlagsOp => "SetTrustLineFlagsOp",
             Self::LiquidityPoolDepositOp => "LiquidityPoolDepositOp",
             Self::LiquidityPoolWithdrawOp => "LiquidityPoolWithdrawOp",
+            Self::HostFunctionType => "HostFunctionType",
+            Self::ContractIdType => "ContractIdType",
+            Self::ContractIdPublicKeyType => "ContractIdPublicKeyType",
+            Self::InstallContractCodeArgs => "InstallContractCodeArgs",
+            Self::ContractId => "ContractId",
+            Self::ContractIdFromEd25519PublicKey => "ContractIdFromEd25519PublicKey",
+            Self::CreateContractArgs => "CreateContractArgs",
+            Self::HostFunction => "HostFunction",
+            Self::InvokeHostFunctionOp => "InvokeHostFunctionOp",
             Self::Operation => "Operation",
             Self::OperationBody => "OperationBody",
             Self::HashIdPreimage => "HashIdPreimage",
             Self::HashIdPreimageOperationId => "HashIdPreimageOperationId",
             Self::HashIdPreimageRevokeId => "HashIdPreimageRevokeId",
+            Self::HashIdPreimageEd25519ContractId => "HashIdPreimageEd25519ContractId",
+            Self::HashIdPreimageContractId => "HashIdPreimageContractId",
+            Self::HashIdPreimageFromAsset => "HashIdPreimageFromAsset",
+            Self::HashIdPreimageSourceAccountContractId => "HashIdPreimageSourceAccountContractId",
+            Self::HashIdPreimageCreateContractArgs => "HashIdPreimageCreateContractArgs",
             Self::MemoType => "MemoType",
             Self::Memo => "Memo",
             Self::TimeBounds => "TimeBounds",
@@ -30454,6 +37830,8 @@ impl TypeVariant {
             Self::LiquidityPoolDepositResult => "LiquidityPoolDepositResult",
             Self::LiquidityPoolWithdrawResultCode => "LiquidityPoolWithdrawResultCode",
             Self::LiquidityPoolWithdrawResult => "LiquidityPoolWithdrawResult",
+            Self::InvokeHostFunctionResultCode => "InvokeHostFunctionResultCode",
+            Self::InvokeHostFunctionResult => "InvokeHostFunctionResult",
             Self::OperationResultCode => "OperationResultCode",
             Self::OperationResult => "OperationResult",
             Self::OperationResultTr => "OperationResultTr",
@@ -30481,6 +37859,7 @@ impl TypeVariant {
             Self::Signature => "Signature",
             Self::SignatureHint => "SignatureHint",
             Self::NodeId => "NodeId",
+            Self::AccountId => "AccountId",
             Self::Curve25519Secret => "Curve25519Secret",
             Self::Curve25519Public => "Curve25519Public",
             Self::HmacSha256Key => "HmacSha256Key",
@@ -30490,7 +37869,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 305] {
+    pub const fn variants() -> [TypeVariant; 390] {
         Self::VARIANTS
     }
 }
@@ -30524,11 +37903,55 @@ impl core::str::FromStr for TypeVariant {
             "ScpStatementExternalize" => Ok(Self::ScpStatementExternalize),
             "ScpEnvelope" => Ok(Self::ScpEnvelope),
             "ScpQuorumSet" => Ok(Self::ScpQuorumSet),
+            "ScEnvMetaKind" => Ok(Self::ScEnvMetaKind),
+            "ScEnvMetaEntry" => Ok(Self::ScEnvMetaEntry),
+            "ScSpecType" => Ok(Self::ScSpecType),
+            "ScSpecTypeOption" => Ok(Self::ScSpecTypeOption),
+            "ScSpecTypeResult" => Ok(Self::ScSpecTypeResult),
+            "ScSpecTypeVec" => Ok(Self::ScSpecTypeVec),
+            "ScSpecTypeMap" => Ok(Self::ScSpecTypeMap),
+            "ScSpecTypeSet" => Ok(Self::ScSpecTypeSet),
+            "ScSpecTypeTuple" => Ok(Self::ScSpecTypeTuple),
+            "ScSpecTypeBytesN" => Ok(Self::ScSpecTypeBytesN),
+            "ScSpecTypeUdt" => Ok(Self::ScSpecTypeUdt),
+            "ScSpecTypeDef" => Ok(Self::ScSpecTypeDef),
+            "ScSpecUdtStructFieldV0" => Ok(Self::ScSpecUdtStructFieldV0),
+            "ScSpecUdtStructV0" => Ok(Self::ScSpecUdtStructV0),
+            "ScSpecUdtUnionCaseV0" => Ok(Self::ScSpecUdtUnionCaseV0),
+            "ScSpecUdtUnionV0" => Ok(Self::ScSpecUdtUnionV0),
+            "ScSpecUdtEnumCaseV0" => Ok(Self::ScSpecUdtEnumCaseV0),
+            "ScSpecUdtEnumV0" => Ok(Self::ScSpecUdtEnumV0),
+            "ScSpecUdtErrorEnumCaseV0" => Ok(Self::ScSpecUdtErrorEnumCaseV0),
+            "ScSpecUdtErrorEnumV0" => Ok(Self::ScSpecUdtErrorEnumV0),
+            "ScSpecFunctionInputV0" => Ok(Self::ScSpecFunctionInputV0),
+            "ScSpecFunctionV0" => Ok(Self::ScSpecFunctionV0),
+            "ScSpecEntryKind" => Ok(Self::ScSpecEntryKind),
+            "ScSpecEntry" => Ok(Self::ScSpecEntry),
+            "ScSymbol" => Ok(Self::ScSymbol),
+            "ScValType" => Ok(Self::ScValType),
+            "ScStatic" => Ok(Self::ScStatic),
+            "ScStatusType" => Ok(Self::ScStatusType),
+            "ScHostValErrorCode" => Ok(Self::ScHostValErrorCode),
+            "ScHostObjErrorCode" => Ok(Self::ScHostObjErrorCode),
+            "ScHostFnErrorCode" => Ok(Self::ScHostFnErrorCode),
+            "ScHostStorageErrorCode" => Ok(Self::ScHostStorageErrorCode),
+            "ScHostContextErrorCode" => Ok(Self::ScHostContextErrorCode),
+            "ScVmErrorCode" => Ok(Self::ScVmErrorCode),
+            "ScUnknownErrorCode" => Ok(Self::ScUnknownErrorCode),
+            "ScStatus" => Ok(Self::ScStatus),
+            "ScVal" => Ok(Self::ScVal),
+            "ScObjectType" => Ok(Self::ScObjectType),
+            "ScMapEntry" => Ok(Self::ScMapEntry),
+            "ScVec" => Ok(Self::ScVec),
+            "ScMap" => Ok(Self::ScMap),
+            "ScContractCodeType" => Ok(Self::ScContractCodeType),
+            "ScContractCode" => Ok(Self::ScContractCode),
+            "Int128Parts" => Ok(Self::Int128Parts),
+            "ScObject" => Ok(Self::ScObject),
             "StoredTransactionSet" => Ok(Self::StoredTransactionSet),
             "PersistedScpStateV0" => Ok(Self::PersistedScpStateV0),
             "PersistedScpStateV1" => Ok(Self::PersistedScpStateV1),
             "PersistedScpState" => Ok(Self::PersistedScpState),
-            "AccountId" => Ok(Self::AccountId),
             "Thresholds" => Ok(Self::Thresholds),
             "String32" => Ok(Self::String32),
             "String64" => Ok(Self::String64),
@@ -30590,6 +38013,13 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolEntry" => Ok(Self::LiquidityPoolEntry),
             "LiquidityPoolEntryBody" => Ok(Self::LiquidityPoolEntryBody),
             "LiquidityPoolEntryConstantProduct" => Ok(Self::LiquidityPoolEntryConstantProduct),
+            "ContractDataEntry" => Ok(Self::ContractDataEntry),
+            "ContractCodeEntry" => Ok(Self::ContractCodeEntry),
+            "ConfigSettingType" => Ok(Self::ConfigSettingType),
+            "ConfigSetting" => Ok(Self::ConfigSetting),
+            "ConfigSettingId" => Ok(Self::ConfigSettingId),
+            "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
+            "ConfigSettingEntryExt" => Ok(Self::ConfigSettingEntryExt),
             "LedgerEntryExtensionV1" => Ok(Self::LedgerEntryExtensionV1),
             "LedgerEntryExtensionV1Ext" => Ok(Self::LedgerEntryExtensionV1Ext),
             "LedgerEntry" => Ok(Self::LedgerEntry),
@@ -30602,6 +38032,9 @@ impl core::str::FromStr for TypeVariant {
             "LedgerKeyData" => Ok(Self::LedgerKeyData),
             "LedgerKeyClaimableBalance" => Ok(Self::LedgerKeyClaimableBalance),
             "LedgerKeyLiquidityPool" => Ok(Self::LedgerKeyLiquidityPool),
+            "LedgerKeyContractData" => Ok(Self::LedgerKeyContractData),
+            "LedgerKeyContractCode" => Ok(Self::LedgerKeyContractCode),
+            "LedgerKeyConfigSetting" => Ok(Self::LedgerKeyConfigSetting),
             "EnvelopeType" => Ok(Self::EnvelopeType),
             "UpgradeType" => Ok(Self::UpgradeType),
             "StellarValueType" => Ok(Self::StellarValueType),
@@ -30615,6 +38048,7 @@ impl core::str::FromStr for TypeVariant {
             "LedgerHeaderExt" => Ok(Self::LedgerHeaderExt),
             "LedgerUpgradeType" => Ok(Self::LedgerUpgradeType),
             "LedgerUpgrade" => Ok(Self::LedgerUpgrade),
+            "LedgerUpgradeConfigSetting" => Ok(Self::LedgerUpgradeConfigSetting),
             "BucketEntryType" => Ok(Self::BucketEntryType),
             "BucketMetadata" => Ok(Self::BucketMetadata),
             "BucketMetadataExt" => Ok(Self::BucketMetadataExt),
@@ -30632,6 +38066,10 @@ impl core::str::FromStr for TypeVariant {
             "TransactionHistoryEntryExt" => Ok(Self::TransactionHistoryEntryExt),
             "TransactionHistoryResultEntry" => Ok(Self::TransactionHistoryResultEntry),
             "TransactionHistoryResultEntryExt" => Ok(Self::TransactionHistoryResultEntryExt),
+            "TransactionResultPairV2" => Ok(Self::TransactionResultPairV2),
+            "TransactionResultSetV2" => Ok(Self::TransactionResultSetV2),
+            "TransactionHistoryResultEntryV2" => Ok(Self::TransactionHistoryResultEntryV2),
+            "TransactionHistoryResultEntryV2Ext" => Ok(Self::TransactionHistoryResultEntryV2Ext),
             "LedgerHeaderHistoryEntry" => Ok(Self::LedgerHeaderHistoryEntry),
             "LedgerHeaderHistoryEntryExt" => Ok(Self::LedgerHeaderHistoryEntryExt),
             "LedgerScpMessages" => Ok(Self::LedgerScpMessages),
@@ -30643,11 +38081,19 @@ impl core::str::FromStr for TypeVariant {
             "OperationMeta" => Ok(Self::OperationMeta),
             "TransactionMetaV1" => Ok(Self::TransactionMetaV1),
             "TransactionMetaV2" => Ok(Self::TransactionMetaV2),
+            "ContractEventType" => Ok(Self::ContractEventType),
+            "ContractEvent" => Ok(Self::ContractEvent),
+            "ContractEventBody" => Ok(Self::ContractEventBody),
+            "ContractEventV0" => Ok(Self::ContractEventV0),
+            "OperationEvents" => Ok(Self::OperationEvents),
+            "TransactionMetaV3" => Ok(Self::TransactionMetaV3),
             "TransactionMeta" => Ok(Self::TransactionMeta),
             "TransactionResultMeta" => Ok(Self::TransactionResultMeta),
+            "TransactionResultMetaV2" => Ok(Self::TransactionResultMetaV2),
             "UpgradeEntryMeta" => Ok(Self::UpgradeEntryMeta),
             "LedgerCloseMetaV0" => Ok(Self::LedgerCloseMetaV0),
             "LedgerCloseMetaV1" => Ok(Self::LedgerCloseMetaV1),
+            "LedgerCloseMetaV2" => Ok(Self::LedgerCloseMetaV2),
             "LedgerCloseMeta" => Ok(Self::LedgerCloseMeta),
             "ErrorCode" => Ok(Self::ErrorCode),
             "SError" => Ok(Self::SError),
@@ -30681,6 +38127,7 @@ impl core::str::FromStr for TypeVariant {
             "MuxedAccount" => Ok(Self::MuxedAccount),
             "MuxedAccountMed25519" => Ok(Self::MuxedAccountMed25519),
             "DecoratedSignature" => Ok(Self::DecoratedSignature),
+            "LedgerFootprint" => Ok(Self::LedgerFootprint),
             "OperationType" => Ok(Self::OperationType),
             "CreateAccountOp" => Ok(Self::CreateAccountOp),
             "PaymentOp" => Ok(Self::PaymentOp),
@@ -30706,11 +38153,27 @@ impl core::str::FromStr for TypeVariant {
             "SetTrustLineFlagsOp" => Ok(Self::SetTrustLineFlagsOp),
             "LiquidityPoolDepositOp" => Ok(Self::LiquidityPoolDepositOp),
             "LiquidityPoolWithdrawOp" => Ok(Self::LiquidityPoolWithdrawOp),
+            "HostFunctionType" => Ok(Self::HostFunctionType),
+            "ContractIdType" => Ok(Self::ContractIdType),
+            "ContractIdPublicKeyType" => Ok(Self::ContractIdPublicKeyType),
+            "InstallContractCodeArgs" => Ok(Self::InstallContractCodeArgs),
+            "ContractId" => Ok(Self::ContractId),
+            "ContractIdFromEd25519PublicKey" => Ok(Self::ContractIdFromEd25519PublicKey),
+            "CreateContractArgs" => Ok(Self::CreateContractArgs),
+            "HostFunction" => Ok(Self::HostFunction),
+            "InvokeHostFunctionOp" => Ok(Self::InvokeHostFunctionOp),
             "Operation" => Ok(Self::Operation),
             "OperationBody" => Ok(Self::OperationBody),
             "HashIdPreimage" => Ok(Self::HashIdPreimage),
             "HashIdPreimageOperationId" => Ok(Self::HashIdPreimageOperationId),
             "HashIdPreimageRevokeId" => Ok(Self::HashIdPreimageRevokeId),
+            "HashIdPreimageEd25519ContractId" => Ok(Self::HashIdPreimageEd25519ContractId),
+            "HashIdPreimageContractId" => Ok(Self::HashIdPreimageContractId),
+            "HashIdPreimageFromAsset" => Ok(Self::HashIdPreimageFromAsset),
+            "HashIdPreimageSourceAccountContractId" => {
+                Ok(Self::HashIdPreimageSourceAccountContractId)
+            }
+            "HashIdPreimageCreateContractArgs" => Ok(Self::HashIdPreimageCreateContractArgs),
             "MemoType" => Ok(Self::MemoType),
             "Memo" => Ok(Self::Memo),
             "TimeBounds" => Ok(Self::TimeBounds),
@@ -30797,6 +38260,8 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolDepositResult" => Ok(Self::LiquidityPoolDepositResult),
             "LiquidityPoolWithdrawResultCode" => Ok(Self::LiquidityPoolWithdrawResultCode),
             "LiquidityPoolWithdrawResult" => Ok(Self::LiquidityPoolWithdrawResult),
+            "InvokeHostFunctionResultCode" => Ok(Self::InvokeHostFunctionResultCode),
+            "InvokeHostFunctionResult" => Ok(Self::InvokeHostFunctionResult),
             "OperationResultCode" => Ok(Self::OperationResultCode),
             "OperationResult" => Ok(Self::OperationResult),
             "OperationResultTr" => Ok(Self::OperationResultTr),
@@ -30824,6 +38289,7 @@ impl core::str::FromStr for TypeVariant {
             "Signature" => Ok(Self::Signature),
             "SignatureHint" => Ok(Self::SignatureHint),
             "NodeId" => Ok(Self::NodeId),
+            "AccountId" => Ok(Self::AccountId),
             "Curve25519Secret" => Ok(Self::Curve25519Secret),
             "Curve25519Public" => Ok(Self::Curve25519Public),
             "HmacSha256Key" => Ok(Self::HmacSha256Key),
@@ -30852,11 +38318,55 @@ pub enum Type {
     ScpStatementExternalize(Box<ScpStatementExternalize>),
     ScpEnvelope(Box<ScpEnvelope>),
     ScpQuorumSet(Box<ScpQuorumSet>),
+    ScEnvMetaKind(Box<ScEnvMetaKind>),
+    ScEnvMetaEntry(Box<ScEnvMetaEntry>),
+    ScSpecType(Box<ScSpecType>),
+    ScSpecTypeOption(Box<ScSpecTypeOption>),
+    ScSpecTypeResult(Box<ScSpecTypeResult>),
+    ScSpecTypeVec(Box<ScSpecTypeVec>),
+    ScSpecTypeMap(Box<ScSpecTypeMap>),
+    ScSpecTypeSet(Box<ScSpecTypeSet>),
+    ScSpecTypeTuple(Box<ScSpecTypeTuple>),
+    ScSpecTypeBytesN(Box<ScSpecTypeBytesN>),
+    ScSpecTypeUdt(Box<ScSpecTypeUdt>),
+    ScSpecTypeDef(Box<ScSpecTypeDef>),
+    ScSpecUdtStructFieldV0(Box<ScSpecUdtStructFieldV0>),
+    ScSpecUdtStructV0(Box<ScSpecUdtStructV0>),
+    ScSpecUdtUnionCaseV0(Box<ScSpecUdtUnionCaseV0>),
+    ScSpecUdtUnionV0(Box<ScSpecUdtUnionV0>),
+    ScSpecUdtEnumCaseV0(Box<ScSpecUdtEnumCaseV0>),
+    ScSpecUdtEnumV0(Box<ScSpecUdtEnumV0>),
+    ScSpecUdtErrorEnumCaseV0(Box<ScSpecUdtErrorEnumCaseV0>),
+    ScSpecUdtErrorEnumV0(Box<ScSpecUdtErrorEnumV0>),
+    ScSpecFunctionInputV0(Box<ScSpecFunctionInputV0>),
+    ScSpecFunctionV0(Box<ScSpecFunctionV0>),
+    ScSpecEntryKind(Box<ScSpecEntryKind>),
+    ScSpecEntry(Box<ScSpecEntry>),
+    ScSymbol(Box<ScSymbol>),
+    ScValType(Box<ScValType>),
+    ScStatic(Box<ScStatic>),
+    ScStatusType(Box<ScStatusType>),
+    ScHostValErrorCode(Box<ScHostValErrorCode>),
+    ScHostObjErrorCode(Box<ScHostObjErrorCode>),
+    ScHostFnErrorCode(Box<ScHostFnErrorCode>),
+    ScHostStorageErrorCode(Box<ScHostStorageErrorCode>),
+    ScHostContextErrorCode(Box<ScHostContextErrorCode>),
+    ScVmErrorCode(Box<ScVmErrorCode>),
+    ScUnknownErrorCode(Box<ScUnknownErrorCode>),
+    ScStatus(Box<ScStatus>),
+    ScVal(Box<ScVal>),
+    ScObjectType(Box<ScObjectType>),
+    ScMapEntry(Box<ScMapEntry>),
+    ScVec(Box<ScVec>),
+    ScMap(Box<ScMap>),
+    ScContractCodeType(Box<ScContractCodeType>),
+    ScContractCode(Box<ScContractCode>),
+    Int128Parts(Box<Int128Parts>),
+    ScObject(Box<ScObject>),
     StoredTransactionSet(Box<StoredTransactionSet>),
     PersistedScpStateV0(Box<PersistedScpStateV0>),
     PersistedScpStateV1(Box<PersistedScpStateV1>),
     PersistedScpState(Box<PersistedScpState>),
-    AccountId(Box<AccountId>),
     Thresholds(Box<Thresholds>),
     String32(Box<String32>),
     String64(Box<String64>),
@@ -30916,6 +38426,13 @@ pub enum Type {
     LiquidityPoolEntry(Box<LiquidityPoolEntry>),
     LiquidityPoolEntryBody(Box<LiquidityPoolEntryBody>),
     LiquidityPoolEntryConstantProduct(Box<LiquidityPoolEntryConstantProduct>),
+    ContractDataEntry(Box<ContractDataEntry>),
+    ContractCodeEntry(Box<ContractCodeEntry>),
+    ConfigSettingType(Box<ConfigSettingType>),
+    ConfigSetting(Box<ConfigSetting>),
+    ConfigSettingId(Box<ConfigSettingId>),
+    ConfigSettingEntry(Box<ConfigSettingEntry>),
+    ConfigSettingEntryExt(Box<ConfigSettingEntryExt>),
     LedgerEntryExtensionV1(Box<LedgerEntryExtensionV1>),
     LedgerEntryExtensionV1Ext(Box<LedgerEntryExtensionV1Ext>),
     LedgerEntry(Box<LedgerEntry>),
@@ -30928,6 +38445,9 @@ pub enum Type {
     LedgerKeyData(Box<LedgerKeyData>),
     LedgerKeyClaimableBalance(Box<LedgerKeyClaimableBalance>),
     LedgerKeyLiquidityPool(Box<LedgerKeyLiquidityPool>),
+    LedgerKeyContractData(Box<LedgerKeyContractData>),
+    LedgerKeyContractCode(Box<LedgerKeyContractCode>),
+    LedgerKeyConfigSetting(Box<LedgerKeyConfigSetting>),
     EnvelopeType(Box<EnvelopeType>),
     UpgradeType(Box<UpgradeType>),
     StellarValueType(Box<StellarValueType>),
@@ -30941,6 +38461,7 @@ pub enum Type {
     LedgerHeaderExt(Box<LedgerHeaderExt>),
     LedgerUpgradeType(Box<LedgerUpgradeType>),
     LedgerUpgrade(Box<LedgerUpgrade>),
+    LedgerUpgradeConfigSetting(Box<LedgerUpgradeConfigSetting>),
     BucketEntryType(Box<BucketEntryType>),
     BucketMetadata(Box<BucketMetadata>),
     BucketMetadataExt(Box<BucketMetadataExt>),
@@ -30958,6 +38479,10 @@ pub enum Type {
     TransactionHistoryEntryExt(Box<TransactionHistoryEntryExt>),
     TransactionHistoryResultEntry(Box<TransactionHistoryResultEntry>),
     TransactionHistoryResultEntryExt(Box<TransactionHistoryResultEntryExt>),
+    TransactionResultPairV2(Box<TransactionResultPairV2>),
+    TransactionResultSetV2(Box<TransactionResultSetV2>),
+    TransactionHistoryResultEntryV2(Box<TransactionHistoryResultEntryV2>),
+    TransactionHistoryResultEntryV2Ext(Box<TransactionHistoryResultEntryV2Ext>),
     LedgerHeaderHistoryEntry(Box<LedgerHeaderHistoryEntry>),
     LedgerHeaderHistoryEntryExt(Box<LedgerHeaderHistoryEntryExt>),
     LedgerScpMessages(Box<LedgerScpMessages>),
@@ -30969,11 +38494,19 @@ pub enum Type {
     OperationMeta(Box<OperationMeta>),
     TransactionMetaV1(Box<TransactionMetaV1>),
     TransactionMetaV2(Box<TransactionMetaV2>),
+    ContractEventType(Box<ContractEventType>),
+    ContractEvent(Box<ContractEvent>),
+    ContractEventBody(Box<ContractEventBody>),
+    ContractEventV0(Box<ContractEventV0>),
+    OperationEvents(Box<OperationEvents>),
+    TransactionMetaV3(Box<TransactionMetaV3>),
     TransactionMeta(Box<TransactionMeta>),
     TransactionResultMeta(Box<TransactionResultMeta>),
+    TransactionResultMetaV2(Box<TransactionResultMetaV2>),
     UpgradeEntryMeta(Box<UpgradeEntryMeta>),
     LedgerCloseMetaV0(Box<LedgerCloseMetaV0>),
     LedgerCloseMetaV1(Box<LedgerCloseMetaV1>),
+    LedgerCloseMetaV2(Box<LedgerCloseMetaV2>),
     LedgerCloseMeta(Box<LedgerCloseMeta>),
     ErrorCode(Box<ErrorCode>),
     SError(Box<SError>),
@@ -31007,6 +38540,7 @@ pub enum Type {
     MuxedAccount(Box<MuxedAccount>),
     MuxedAccountMed25519(Box<MuxedAccountMed25519>),
     DecoratedSignature(Box<DecoratedSignature>),
+    LedgerFootprint(Box<LedgerFootprint>),
     OperationType(Box<OperationType>),
     CreateAccountOp(Box<CreateAccountOp>),
     PaymentOp(Box<PaymentOp>),
@@ -31032,11 +38566,25 @@ pub enum Type {
     SetTrustLineFlagsOp(Box<SetTrustLineFlagsOp>),
     LiquidityPoolDepositOp(Box<LiquidityPoolDepositOp>),
     LiquidityPoolWithdrawOp(Box<LiquidityPoolWithdrawOp>),
+    HostFunctionType(Box<HostFunctionType>),
+    ContractIdType(Box<ContractIdType>),
+    ContractIdPublicKeyType(Box<ContractIdPublicKeyType>),
+    InstallContractCodeArgs(Box<InstallContractCodeArgs>),
+    ContractId(Box<ContractId>),
+    ContractIdFromEd25519PublicKey(Box<ContractIdFromEd25519PublicKey>),
+    CreateContractArgs(Box<CreateContractArgs>),
+    HostFunction(Box<HostFunction>),
+    InvokeHostFunctionOp(Box<InvokeHostFunctionOp>),
     Operation(Box<Operation>),
     OperationBody(Box<OperationBody>),
     HashIdPreimage(Box<HashIdPreimage>),
     HashIdPreimageOperationId(Box<HashIdPreimageOperationId>),
     HashIdPreimageRevokeId(Box<HashIdPreimageRevokeId>),
+    HashIdPreimageEd25519ContractId(Box<HashIdPreimageEd25519ContractId>),
+    HashIdPreimageContractId(Box<HashIdPreimageContractId>),
+    HashIdPreimageFromAsset(Box<HashIdPreimageFromAsset>),
+    HashIdPreimageSourceAccountContractId(Box<HashIdPreimageSourceAccountContractId>),
+    HashIdPreimageCreateContractArgs(Box<HashIdPreimageCreateContractArgs>),
     MemoType(Box<MemoType>),
     Memo(Box<Memo>),
     TimeBounds(Box<TimeBounds>),
@@ -31115,6 +38663,8 @@ pub enum Type {
     LiquidityPoolDepositResult(Box<LiquidityPoolDepositResult>),
     LiquidityPoolWithdrawResultCode(Box<LiquidityPoolWithdrawResultCode>),
     LiquidityPoolWithdrawResult(Box<LiquidityPoolWithdrawResult>),
+    InvokeHostFunctionResultCode(Box<InvokeHostFunctionResultCode>),
+    InvokeHostFunctionResult(Box<InvokeHostFunctionResult>),
     OperationResultCode(Box<OperationResultCode>),
     OperationResult(Box<OperationResult>),
     OperationResultTr(Box<OperationResultTr>),
@@ -31142,6 +38692,7 @@ pub enum Type {
     Signature(Box<Signature>),
     SignatureHint(Box<SignatureHint>),
     NodeId(Box<NodeId>),
+    AccountId(Box<AccountId>),
     Curve25519Secret(Box<Curve25519Secret>),
     Curve25519Public(Box<Curve25519Public>),
     HmacSha256Key(Box<HmacSha256Key>),
@@ -31149,7 +38700,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 305] = [
+    pub const VARIANTS: [TypeVariant; 390] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -31161,11 +38712,55 @@ impl Type {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::ScEnvMetaKind,
+        TypeVariant::ScEnvMetaEntry,
+        TypeVariant::ScSpecType,
+        TypeVariant::ScSpecTypeOption,
+        TypeVariant::ScSpecTypeResult,
+        TypeVariant::ScSpecTypeVec,
+        TypeVariant::ScSpecTypeMap,
+        TypeVariant::ScSpecTypeSet,
+        TypeVariant::ScSpecTypeTuple,
+        TypeVariant::ScSpecTypeBytesN,
+        TypeVariant::ScSpecTypeUdt,
+        TypeVariant::ScSpecTypeDef,
+        TypeVariant::ScSpecUdtStructFieldV0,
+        TypeVariant::ScSpecUdtStructV0,
+        TypeVariant::ScSpecUdtUnionCaseV0,
+        TypeVariant::ScSpecUdtUnionV0,
+        TypeVariant::ScSpecUdtEnumCaseV0,
+        TypeVariant::ScSpecUdtEnumV0,
+        TypeVariant::ScSpecUdtErrorEnumCaseV0,
+        TypeVariant::ScSpecUdtErrorEnumV0,
+        TypeVariant::ScSpecFunctionInputV0,
+        TypeVariant::ScSpecFunctionV0,
+        TypeVariant::ScSpecEntryKind,
+        TypeVariant::ScSpecEntry,
+        TypeVariant::ScSymbol,
+        TypeVariant::ScValType,
+        TypeVariant::ScStatic,
+        TypeVariant::ScStatusType,
+        TypeVariant::ScHostValErrorCode,
+        TypeVariant::ScHostObjErrorCode,
+        TypeVariant::ScHostFnErrorCode,
+        TypeVariant::ScHostStorageErrorCode,
+        TypeVariant::ScHostContextErrorCode,
+        TypeVariant::ScVmErrorCode,
+        TypeVariant::ScUnknownErrorCode,
+        TypeVariant::ScStatus,
+        TypeVariant::ScVal,
+        TypeVariant::ScObjectType,
+        TypeVariant::ScMapEntry,
+        TypeVariant::ScVec,
+        TypeVariant::ScMap,
+        TypeVariant::ScContractCodeType,
+        TypeVariant::ScContractCode,
+        TypeVariant::Int128Parts,
+        TypeVariant::ScObject,
         TypeVariant::StoredTransactionSet,
         TypeVariant::PersistedScpStateV0,
         TypeVariant::PersistedScpStateV1,
         TypeVariant::PersistedScpState,
-        TypeVariant::AccountId,
         TypeVariant::Thresholds,
         TypeVariant::String32,
         TypeVariant::String64,
@@ -31225,6 +38820,13 @@ impl Type {
         TypeVariant::LiquidityPoolEntry,
         TypeVariant::LiquidityPoolEntryBody,
         TypeVariant::LiquidityPoolEntryConstantProduct,
+        TypeVariant::ContractDataEntry,
+        TypeVariant::ContractCodeEntry,
+        TypeVariant::ConfigSettingType,
+        TypeVariant::ConfigSetting,
+        TypeVariant::ConfigSettingId,
+        TypeVariant::ConfigSettingEntry,
+        TypeVariant::ConfigSettingEntryExt,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -31237,6 +38839,9 @@ impl Type {
         TypeVariant::LedgerKeyData,
         TypeVariant::LedgerKeyClaimableBalance,
         TypeVariant::LedgerKeyLiquidityPool,
+        TypeVariant::LedgerKeyContractData,
+        TypeVariant::LedgerKeyContractCode,
+        TypeVariant::LedgerKeyConfigSetting,
         TypeVariant::EnvelopeType,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
@@ -31250,6 +38855,7 @@ impl Type {
         TypeVariant::LedgerHeaderExt,
         TypeVariant::LedgerUpgradeType,
         TypeVariant::LedgerUpgrade,
+        TypeVariant::LedgerUpgradeConfigSetting,
         TypeVariant::BucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
@@ -31267,6 +38873,10 @@ impl Type {
         TypeVariant::TransactionHistoryEntryExt,
         TypeVariant::TransactionHistoryResultEntry,
         TypeVariant::TransactionHistoryResultEntryExt,
+        TypeVariant::TransactionResultPairV2,
+        TypeVariant::TransactionResultSetV2,
+        TypeVariant::TransactionHistoryResultEntryV2,
+        TypeVariant::TransactionHistoryResultEntryV2Ext,
         TypeVariant::LedgerHeaderHistoryEntry,
         TypeVariant::LedgerHeaderHistoryEntryExt,
         TypeVariant::LedgerScpMessages,
@@ -31278,11 +38888,19 @@ impl Type {
         TypeVariant::OperationMeta,
         TypeVariant::TransactionMetaV1,
         TypeVariant::TransactionMetaV2,
+        TypeVariant::ContractEventType,
+        TypeVariant::ContractEvent,
+        TypeVariant::ContractEventBody,
+        TypeVariant::ContractEventV0,
+        TypeVariant::OperationEvents,
+        TypeVariant::TransactionMetaV3,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
+        TypeVariant::TransactionResultMetaV2,
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaV1,
+        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
@@ -31316,6 +38934,7 @@ impl Type {
         TypeVariant::MuxedAccount,
         TypeVariant::MuxedAccountMed25519,
         TypeVariant::DecoratedSignature,
+        TypeVariant::LedgerFootprint,
         TypeVariant::OperationType,
         TypeVariant::CreateAccountOp,
         TypeVariant::PaymentOp,
@@ -31341,11 +38960,25 @@ impl Type {
         TypeVariant::SetTrustLineFlagsOp,
         TypeVariant::LiquidityPoolDepositOp,
         TypeVariant::LiquidityPoolWithdrawOp,
+        TypeVariant::HostFunctionType,
+        TypeVariant::ContractIdType,
+        TypeVariant::ContractIdPublicKeyType,
+        TypeVariant::InstallContractCodeArgs,
+        TypeVariant::ContractId,
+        TypeVariant::ContractIdFromEd25519PublicKey,
+        TypeVariant::CreateContractArgs,
+        TypeVariant::HostFunction,
+        TypeVariant::InvokeHostFunctionOp,
         TypeVariant::Operation,
         TypeVariant::OperationBody,
         TypeVariant::HashIdPreimage,
         TypeVariant::HashIdPreimageOperationId,
         TypeVariant::HashIdPreimageRevokeId,
+        TypeVariant::HashIdPreimageEd25519ContractId,
+        TypeVariant::HashIdPreimageContractId,
+        TypeVariant::HashIdPreimageFromAsset,
+        TypeVariant::HashIdPreimageSourceAccountContractId,
+        TypeVariant::HashIdPreimageCreateContractArgs,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -31424,6 +39057,8 @@ impl Type {
         TypeVariant::LiquidityPoolDepositResult,
         TypeVariant::LiquidityPoolWithdrawResultCode,
         TypeVariant::LiquidityPoolWithdrawResult,
+        TypeVariant::InvokeHostFunctionResultCode,
+        TypeVariant::InvokeHostFunctionResult,
         TypeVariant::OperationResultCode,
         TypeVariant::OperationResult,
         TypeVariant::OperationResultTr,
@@ -31451,12 +39086,13 @@ impl Type {
         TypeVariant::Signature,
         TypeVariant::SignatureHint,
         TypeVariant::NodeId,
+        TypeVariant::AccountId,
         TypeVariant::Curve25519Secret,
         TypeVariant::Curve25519Public,
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 305] = [
+    pub const VARIANTS_STR: [&'static str; 390] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -31468,11 +39104,55 @@ impl Type {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "ScEnvMetaKind",
+        "ScEnvMetaEntry",
+        "ScSpecType",
+        "ScSpecTypeOption",
+        "ScSpecTypeResult",
+        "ScSpecTypeVec",
+        "ScSpecTypeMap",
+        "ScSpecTypeSet",
+        "ScSpecTypeTuple",
+        "ScSpecTypeBytesN",
+        "ScSpecTypeUdt",
+        "ScSpecTypeDef",
+        "ScSpecUdtStructFieldV0",
+        "ScSpecUdtStructV0",
+        "ScSpecUdtUnionCaseV0",
+        "ScSpecUdtUnionV0",
+        "ScSpecUdtEnumCaseV0",
+        "ScSpecUdtEnumV0",
+        "ScSpecUdtErrorEnumCaseV0",
+        "ScSpecUdtErrorEnumV0",
+        "ScSpecFunctionInputV0",
+        "ScSpecFunctionV0",
+        "ScSpecEntryKind",
+        "ScSpecEntry",
+        "ScSymbol",
+        "ScValType",
+        "ScStatic",
+        "ScStatusType",
+        "ScHostValErrorCode",
+        "ScHostObjErrorCode",
+        "ScHostFnErrorCode",
+        "ScHostStorageErrorCode",
+        "ScHostContextErrorCode",
+        "ScVmErrorCode",
+        "ScUnknownErrorCode",
+        "ScStatus",
+        "ScVal",
+        "ScObjectType",
+        "ScMapEntry",
+        "ScVec",
+        "ScMap",
+        "ScContractCodeType",
+        "ScContractCode",
+        "Int128Parts",
+        "ScObject",
         "StoredTransactionSet",
         "PersistedScpStateV0",
         "PersistedScpStateV1",
         "PersistedScpState",
-        "AccountId",
         "Thresholds",
         "String32",
         "String64",
@@ -31532,6 +39212,13 @@ impl Type {
         "LiquidityPoolEntry",
         "LiquidityPoolEntryBody",
         "LiquidityPoolEntryConstantProduct",
+        "ContractDataEntry",
+        "ContractCodeEntry",
+        "ConfigSettingType",
+        "ConfigSetting",
+        "ConfigSettingId",
+        "ConfigSettingEntry",
+        "ConfigSettingEntryExt",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -31544,6 +39231,9 @@ impl Type {
         "LedgerKeyData",
         "LedgerKeyClaimableBalance",
         "LedgerKeyLiquidityPool",
+        "LedgerKeyContractData",
+        "LedgerKeyContractCode",
+        "LedgerKeyConfigSetting",
         "EnvelopeType",
         "UpgradeType",
         "StellarValueType",
@@ -31557,6 +39247,7 @@ impl Type {
         "LedgerHeaderExt",
         "LedgerUpgradeType",
         "LedgerUpgrade",
+        "LedgerUpgradeConfigSetting",
         "BucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
@@ -31574,6 +39265,10 @@ impl Type {
         "TransactionHistoryEntryExt",
         "TransactionHistoryResultEntry",
         "TransactionHistoryResultEntryExt",
+        "TransactionResultPairV2",
+        "TransactionResultSetV2",
+        "TransactionHistoryResultEntryV2",
+        "TransactionHistoryResultEntryV2Ext",
         "LedgerHeaderHistoryEntry",
         "LedgerHeaderHistoryEntryExt",
         "LedgerScpMessages",
@@ -31585,11 +39280,19 @@ impl Type {
         "OperationMeta",
         "TransactionMetaV1",
         "TransactionMetaV2",
+        "ContractEventType",
+        "ContractEvent",
+        "ContractEventBody",
+        "ContractEventV0",
+        "OperationEvents",
+        "TransactionMetaV3",
         "TransactionMeta",
         "TransactionResultMeta",
+        "TransactionResultMetaV2",
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaV1",
+        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
@@ -31623,6 +39326,7 @@ impl Type {
         "MuxedAccount",
         "MuxedAccountMed25519",
         "DecoratedSignature",
+        "LedgerFootprint",
         "OperationType",
         "CreateAccountOp",
         "PaymentOp",
@@ -31648,11 +39352,25 @@ impl Type {
         "SetTrustLineFlagsOp",
         "LiquidityPoolDepositOp",
         "LiquidityPoolWithdrawOp",
+        "HostFunctionType",
+        "ContractIdType",
+        "ContractIdPublicKeyType",
+        "InstallContractCodeArgs",
+        "ContractId",
+        "ContractIdFromEd25519PublicKey",
+        "CreateContractArgs",
+        "HostFunction",
+        "InvokeHostFunctionOp",
         "Operation",
         "OperationBody",
         "HashIdPreimage",
         "HashIdPreimageOperationId",
         "HashIdPreimageRevokeId",
+        "HashIdPreimageEd25519ContractId",
+        "HashIdPreimageContractId",
+        "HashIdPreimageFromAsset",
+        "HashIdPreimageSourceAccountContractId",
+        "HashIdPreimageCreateContractArgs",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -31731,6 +39449,8 @@ impl Type {
         "LiquidityPoolDepositResult",
         "LiquidityPoolWithdrawResultCode",
         "LiquidityPoolWithdrawResult",
+        "InvokeHostFunctionResultCode",
+        "InvokeHostFunctionResult",
         "OperationResultCode",
         "OperationResult",
         "OperationResultTr",
@@ -31758,6 +39478,7 @@ impl Type {
         "Signature",
         "SignatureHint",
         "NodeId",
+        "AccountId",
         "Curve25519Secret",
         "Curve25519Public",
         "HmacSha256Key",
@@ -31795,6 +39516,117 @@ impl Type {
             TypeVariant::ScpQuorumSet => {
                 Ok(Self::ScpQuorumSet(Box::new(ScpQuorumSet::read_xdr(r)?)))
             }
+            TypeVariant::ScEnvMetaKind => {
+                Ok(Self::ScEnvMetaKind(Box::new(ScEnvMetaKind::read_xdr(r)?)))
+            }
+            TypeVariant::ScEnvMetaEntry => {
+                Ok(Self::ScEnvMetaEntry(Box::new(ScEnvMetaEntry::read_xdr(r)?)))
+            }
+            TypeVariant::ScSpecType => Ok(Self::ScSpecType(Box::new(ScSpecType::read_xdr(r)?))),
+            TypeVariant::ScSpecTypeOption => Ok(Self::ScSpecTypeOption(Box::new(
+                ScSpecTypeOption::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecTypeResult => Ok(Self::ScSpecTypeResult(Box::new(
+                ScSpecTypeResult::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecTypeVec => {
+                Ok(Self::ScSpecTypeVec(Box::new(ScSpecTypeVec::read_xdr(r)?)))
+            }
+            TypeVariant::ScSpecTypeMap => {
+                Ok(Self::ScSpecTypeMap(Box::new(ScSpecTypeMap::read_xdr(r)?)))
+            }
+            TypeVariant::ScSpecTypeSet => {
+                Ok(Self::ScSpecTypeSet(Box::new(ScSpecTypeSet::read_xdr(r)?)))
+            }
+            TypeVariant::ScSpecTypeTuple => Ok(Self::ScSpecTypeTuple(Box::new(
+                ScSpecTypeTuple::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecTypeBytesN => Ok(Self::ScSpecTypeBytesN(Box::new(
+                ScSpecTypeBytesN::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecTypeUdt => {
+                Ok(Self::ScSpecTypeUdt(Box::new(ScSpecTypeUdt::read_xdr(r)?)))
+            }
+            TypeVariant::ScSpecTypeDef => {
+                Ok(Self::ScSpecTypeDef(Box::new(ScSpecTypeDef::read_xdr(r)?)))
+            }
+            TypeVariant::ScSpecUdtStructFieldV0 => Ok(Self::ScSpecUdtStructFieldV0(Box::new(
+                ScSpecUdtStructFieldV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecUdtStructV0 => Ok(Self::ScSpecUdtStructV0(Box::new(
+                ScSpecUdtStructV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseV0 => Ok(Self::ScSpecUdtUnionCaseV0(Box::new(
+                ScSpecUdtUnionCaseV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionV0 => Ok(Self::ScSpecUdtUnionV0(Box::new(
+                ScSpecUdtUnionV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecUdtEnumCaseV0 => Ok(Self::ScSpecUdtEnumCaseV0(Box::new(
+                ScSpecUdtEnumCaseV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecUdtEnumV0 => Ok(Self::ScSpecUdtEnumV0(Box::new(
+                ScSpecUdtEnumV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => Ok(Self::ScSpecUdtErrorEnumCaseV0(Box::new(
+                ScSpecUdtErrorEnumCaseV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecUdtErrorEnumV0 => Ok(Self::ScSpecUdtErrorEnumV0(Box::new(
+                ScSpecUdtErrorEnumV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecFunctionInputV0 => Ok(Self::ScSpecFunctionInputV0(Box::new(
+                ScSpecFunctionInputV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
+                ScSpecFunctionV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecEntryKind => Ok(Self::ScSpecEntryKind(Box::new(
+                ScSpecEntryKind::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecEntry => Ok(Self::ScSpecEntry(Box::new(ScSpecEntry::read_xdr(r)?))),
+            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(ScSymbol::read_xdr(r)?))),
+            TypeVariant::ScValType => Ok(Self::ScValType(Box::new(ScValType::read_xdr(r)?))),
+            TypeVariant::ScStatic => Ok(Self::ScStatic(Box::new(ScStatic::read_xdr(r)?))),
+            TypeVariant::ScStatusType => {
+                Ok(Self::ScStatusType(Box::new(ScStatusType::read_xdr(r)?)))
+            }
+            TypeVariant::ScHostValErrorCode => Ok(Self::ScHostValErrorCode(Box::new(
+                ScHostValErrorCode::read_xdr(r)?,
+            ))),
+            TypeVariant::ScHostObjErrorCode => Ok(Self::ScHostObjErrorCode(Box::new(
+                ScHostObjErrorCode::read_xdr(r)?,
+            ))),
+            TypeVariant::ScHostFnErrorCode => Ok(Self::ScHostFnErrorCode(Box::new(
+                ScHostFnErrorCode::read_xdr(r)?,
+            ))),
+            TypeVariant::ScHostStorageErrorCode => Ok(Self::ScHostStorageErrorCode(Box::new(
+                ScHostStorageErrorCode::read_xdr(r)?,
+            ))),
+            TypeVariant::ScHostContextErrorCode => Ok(Self::ScHostContextErrorCode(Box::new(
+                ScHostContextErrorCode::read_xdr(r)?,
+            ))),
+            TypeVariant::ScVmErrorCode => {
+                Ok(Self::ScVmErrorCode(Box::new(ScVmErrorCode::read_xdr(r)?)))
+            }
+            TypeVariant::ScUnknownErrorCode => Ok(Self::ScUnknownErrorCode(Box::new(
+                ScUnknownErrorCode::read_xdr(r)?,
+            ))),
+            TypeVariant::ScStatus => Ok(Self::ScStatus(Box::new(ScStatus::read_xdr(r)?))),
+            TypeVariant::ScVal => Ok(Self::ScVal(Box::new(ScVal::read_xdr(r)?))),
+            TypeVariant::ScObjectType => {
+                Ok(Self::ScObjectType(Box::new(ScObjectType::read_xdr(r)?)))
+            }
+            TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(ScMapEntry::read_xdr(r)?))),
+            TypeVariant::ScVec => Ok(Self::ScVec(Box::new(ScVec::read_xdr(r)?))),
+            TypeVariant::ScMap => Ok(Self::ScMap(Box::new(ScMap::read_xdr(r)?))),
+            TypeVariant::ScContractCodeType => Ok(Self::ScContractCodeType(Box::new(
+                ScContractCodeType::read_xdr(r)?,
+            ))),
+            TypeVariant::ScContractCode => {
+                Ok(Self::ScContractCode(Box::new(ScContractCode::read_xdr(r)?)))
+            }
+            TypeVariant::Int128Parts => Ok(Self::Int128Parts(Box::new(Int128Parts::read_xdr(r)?))),
+            TypeVariant::ScObject => Ok(Self::ScObject(Box::new(ScObject::read_xdr(r)?))),
             TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
                 StoredTransactionSet::read_xdr(r)?,
             ))),
@@ -31807,7 +39639,6 @@ impl Type {
             TypeVariant::PersistedScpState => Ok(Self::PersistedScpState(Box::new(
                 PersistedScpState::read_xdr(r)?,
             ))),
-            TypeVariant::AccountId => Ok(Self::AccountId(Box::new(AccountId::read_xdr(r)?))),
             TypeVariant::Thresholds => Ok(Self::Thresholds(Box::new(Thresholds::read_xdr(r)?))),
             TypeVariant::String32 => Ok(Self::String32(Box::new(String32::read_xdr(r)?))),
             TypeVariant::String64 => Ok(Self::String64(Box::new(String64::read_xdr(r)?))),
@@ -31951,6 +39782,27 @@ impl Type {
                     LiquidityPoolEntryConstantProduct::read_xdr(r)?,
                 )))
             }
+            TypeVariant::ContractDataEntry => Ok(Self::ContractDataEntry(Box::new(
+                ContractDataEntry::read_xdr(r)?,
+            ))),
+            TypeVariant::ContractCodeEntry => Ok(Self::ContractCodeEntry(Box::new(
+                ContractCodeEntry::read_xdr(r)?,
+            ))),
+            TypeVariant::ConfigSettingType => Ok(Self::ConfigSettingType(Box::new(
+                ConfigSettingType::read_xdr(r)?,
+            ))),
+            TypeVariant::ConfigSetting => {
+                Ok(Self::ConfigSetting(Box::new(ConfigSetting::read_xdr(r)?)))
+            }
+            TypeVariant::ConfigSettingId => Ok(Self::ConfigSettingId(Box::new(
+                ConfigSettingId::read_xdr(r)?,
+            ))),
+            TypeVariant::ConfigSettingEntry => Ok(Self::ConfigSettingEntry(Box::new(
+                ConfigSettingEntry::read_xdr(r)?,
+            ))),
+            TypeVariant::ConfigSettingEntryExt => Ok(Self::ConfigSettingEntryExt(Box::new(
+                ConfigSettingEntryExt::read_xdr(r)?,
+            ))),
             TypeVariant::LedgerEntryExtensionV1 => Ok(Self::LedgerEntryExtensionV1(Box::new(
                 LedgerEntryExtensionV1::read_xdr(r)?,
             ))),
@@ -31982,6 +39834,15 @@ impl Type {
             )),
             TypeVariant::LedgerKeyLiquidityPool => Ok(Self::LedgerKeyLiquidityPool(Box::new(
                 LedgerKeyLiquidityPool::read_xdr(r)?,
+            ))),
+            TypeVariant::LedgerKeyContractData => Ok(Self::LedgerKeyContractData(Box::new(
+                LedgerKeyContractData::read_xdr(r)?,
+            ))),
+            TypeVariant::LedgerKeyContractCode => Ok(Self::LedgerKeyContractCode(Box::new(
+                LedgerKeyContractCode::read_xdr(r)?,
+            ))),
+            TypeVariant::LedgerKeyConfigSetting => Ok(Self::LedgerKeyConfigSetting(Box::new(
+                LedgerKeyConfigSetting::read_xdr(r)?,
             ))),
             TypeVariant::EnvelopeType => {
                 Ok(Self::EnvelopeType(Box::new(EnvelopeType::read_xdr(r)?)))
@@ -32020,6 +39881,9 @@ impl Type {
             TypeVariant::LedgerUpgrade => {
                 Ok(Self::LedgerUpgrade(Box::new(LedgerUpgrade::read_xdr(r)?)))
             }
+            TypeVariant::LedgerUpgradeConfigSetting => Ok(Self::LedgerUpgradeConfigSetting(
+                Box::new(LedgerUpgradeConfigSetting::read_xdr(r)?),
+            )),
             TypeVariant::BucketEntryType => Ok(Self::BucketEntryType(Box::new(
                 BucketEntryType::read_xdr(r)?,
             ))),
@@ -32073,6 +39937,22 @@ impl Type {
                     TransactionHistoryResultEntryExt::read_xdr(r)?,
                 )))
             }
+            TypeVariant::TransactionResultPairV2 => Ok(Self::TransactionResultPairV2(Box::new(
+                TransactionResultPairV2::read_xdr(r)?,
+            ))),
+            TypeVariant::TransactionResultSetV2 => Ok(Self::TransactionResultSetV2(Box::new(
+                TransactionResultSetV2::read_xdr(r)?,
+            ))),
+            TypeVariant::TransactionHistoryResultEntryV2 => {
+                Ok(Self::TransactionHistoryResultEntryV2(Box::new(
+                    TransactionHistoryResultEntryV2::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::TransactionHistoryResultEntryV2Ext => {
+                Ok(Self::TransactionHistoryResultEntryV2Ext(Box::new(
+                    TransactionHistoryResultEntryV2Ext::read_xdr(r)?,
+                )))
+            }
             TypeVariant::LedgerHeaderHistoryEntry => Ok(Self::LedgerHeaderHistoryEntry(Box::new(
                 LedgerHeaderHistoryEntry::read_xdr(r)?,
             ))),
@@ -32106,11 +39986,32 @@ impl Type {
             TypeVariant::TransactionMetaV2 => Ok(Self::TransactionMetaV2(Box::new(
                 TransactionMetaV2::read_xdr(r)?,
             ))),
+            TypeVariant::ContractEventType => Ok(Self::ContractEventType(Box::new(
+                ContractEventType::read_xdr(r)?,
+            ))),
+            TypeVariant::ContractEvent => {
+                Ok(Self::ContractEvent(Box::new(ContractEvent::read_xdr(r)?)))
+            }
+            TypeVariant::ContractEventBody => Ok(Self::ContractEventBody(Box::new(
+                ContractEventBody::read_xdr(r)?,
+            ))),
+            TypeVariant::ContractEventV0 => Ok(Self::ContractEventV0(Box::new(
+                ContractEventV0::read_xdr(r)?,
+            ))),
+            TypeVariant::OperationEvents => Ok(Self::OperationEvents(Box::new(
+                OperationEvents::read_xdr(r)?,
+            ))),
+            TypeVariant::TransactionMetaV3 => Ok(Self::TransactionMetaV3(Box::new(
+                TransactionMetaV3::read_xdr(r)?,
+            ))),
             TypeVariant::TransactionMeta => Ok(Self::TransactionMeta(Box::new(
                 TransactionMeta::read_xdr(r)?,
             ))),
             TypeVariant::TransactionResultMeta => Ok(Self::TransactionResultMeta(Box::new(
                 TransactionResultMeta::read_xdr(r)?,
+            ))),
+            TypeVariant::TransactionResultMetaV2 => Ok(Self::TransactionResultMetaV2(Box::new(
+                TransactionResultMetaV2::read_xdr(r)?,
             ))),
             TypeVariant::UpgradeEntryMeta => Ok(Self::UpgradeEntryMeta(Box::new(
                 UpgradeEntryMeta::read_xdr(r)?,
@@ -32120,6 +40021,9 @@ impl Type {
             ))),
             TypeVariant::LedgerCloseMetaV1 => Ok(Self::LedgerCloseMetaV1(Box::new(
                 LedgerCloseMetaV1::read_xdr(r)?,
+            ))),
+            TypeVariant::LedgerCloseMetaV2 => Ok(Self::LedgerCloseMetaV2(Box::new(
+                LedgerCloseMetaV2::read_xdr(r)?,
             ))),
             TypeVariant::LedgerCloseMeta => Ok(Self::LedgerCloseMeta(Box::new(
                 LedgerCloseMeta::read_xdr(r)?,
@@ -32194,6 +40098,9 @@ impl Type {
             TypeVariant::DecoratedSignature => Ok(Self::DecoratedSignature(Box::new(
                 DecoratedSignature::read_xdr(r)?,
             ))),
+            TypeVariant::LedgerFootprint => Ok(Self::LedgerFootprint(Box::new(
+                LedgerFootprint::read_xdr(r)?,
+            ))),
             TypeVariant::OperationType => {
                 Ok(Self::OperationType(Box::new(OperationType::read_xdr(r)?)))
             }
@@ -32267,6 +40174,33 @@ impl Type {
             TypeVariant::LiquidityPoolWithdrawOp => Ok(Self::LiquidityPoolWithdrawOp(Box::new(
                 LiquidityPoolWithdrawOp::read_xdr(r)?,
             ))),
+            TypeVariant::HostFunctionType => Ok(Self::HostFunctionType(Box::new(
+                HostFunctionType::read_xdr(r)?,
+            ))),
+            TypeVariant::ContractIdType => {
+                Ok(Self::ContractIdType(Box::new(ContractIdType::read_xdr(r)?)))
+            }
+            TypeVariant::ContractIdPublicKeyType => Ok(Self::ContractIdPublicKeyType(Box::new(
+                ContractIdPublicKeyType::read_xdr(r)?,
+            ))),
+            TypeVariant::InstallContractCodeArgs => Ok(Self::InstallContractCodeArgs(Box::new(
+                InstallContractCodeArgs::read_xdr(r)?,
+            ))),
+            TypeVariant::ContractId => Ok(Self::ContractId(Box::new(ContractId::read_xdr(r)?))),
+            TypeVariant::ContractIdFromEd25519PublicKey => {
+                Ok(Self::ContractIdFromEd25519PublicKey(Box::new(
+                    ContractIdFromEd25519PublicKey::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::CreateContractArgs => Ok(Self::CreateContractArgs(Box::new(
+                CreateContractArgs::read_xdr(r)?,
+            ))),
+            TypeVariant::HostFunction => {
+                Ok(Self::HostFunction(Box::new(HostFunction::read_xdr(r)?)))
+            }
+            TypeVariant::InvokeHostFunctionOp => Ok(Self::InvokeHostFunctionOp(Box::new(
+                InvokeHostFunctionOp::read_xdr(r)?,
+            ))),
             TypeVariant::Operation => Ok(Self::Operation(Box::new(Operation::read_xdr(r)?))),
             TypeVariant::OperationBody => {
                 Ok(Self::OperationBody(Box::new(OperationBody::read_xdr(r)?)))
@@ -32280,6 +40214,27 @@ impl Type {
             TypeVariant::HashIdPreimageRevokeId => Ok(Self::HashIdPreimageRevokeId(Box::new(
                 HashIdPreimageRevokeId::read_xdr(r)?,
             ))),
+            TypeVariant::HashIdPreimageEd25519ContractId => {
+                Ok(Self::HashIdPreimageEd25519ContractId(Box::new(
+                    HashIdPreimageEd25519ContractId::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::HashIdPreimageContractId => Ok(Self::HashIdPreimageContractId(Box::new(
+                HashIdPreimageContractId::read_xdr(r)?,
+            ))),
+            TypeVariant::HashIdPreimageFromAsset => Ok(Self::HashIdPreimageFromAsset(Box::new(
+                HashIdPreimageFromAsset::read_xdr(r)?,
+            ))),
+            TypeVariant::HashIdPreimageSourceAccountContractId => {
+                Ok(Self::HashIdPreimageSourceAccountContractId(Box::new(
+                    HashIdPreimageSourceAccountContractId::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::HashIdPreimageCreateContractArgs => {
+                Ok(Self::HashIdPreimageCreateContractArgs(Box::new(
+                    HashIdPreimageCreateContractArgs::read_xdr(r)?,
+                )))
+            }
             TypeVariant::MemoType => Ok(Self::MemoType(Box::new(MemoType::read_xdr(r)?))),
             TypeVariant::Memo => Ok(Self::Memo(Box::new(Memo::read_xdr(r)?))),
             TypeVariant::TimeBounds => Ok(Self::TimeBounds(Box::new(TimeBounds::read_xdr(r)?))),
@@ -32536,6 +40491,12 @@ impl Type {
             TypeVariant::LiquidityPoolWithdrawResult => Ok(Self::LiquidityPoolWithdrawResult(
                 Box::new(LiquidityPoolWithdrawResult::read_xdr(r)?),
             )),
+            TypeVariant::InvokeHostFunctionResultCode => Ok(Self::InvokeHostFunctionResultCode(
+                Box::new(InvokeHostFunctionResultCode::read_xdr(r)?),
+            )),
+            TypeVariant::InvokeHostFunctionResult => Ok(Self::InvokeHostFunctionResult(Box::new(
+                InvokeHostFunctionResult::read_xdr(r)?,
+            ))),
             TypeVariant::OperationResultCode => Ok(Self::OperationResultCode(Box::new(
                 OperationResultCode::read_xdr(r)?,
             ))),
@@ -32597,6 +40558,7 @@ impl Type {
                 Ok(Self::SignatureHint(Box::new(SignatureHint::read_xdr(r)?)))
             }
             TypeVariant::NodeId => Ok(Self::NodeId(Box::new(NodeId::read_xdr(r)?))),
+            TypeVariant::AccountId => Ok(Self::AccountId(Box::new(AccountId::read_xdr(r)?))),
             TypeVariant::Curve25519Secret => Ok(Self::Curve25519Secret(Box::new(
                 Curve25519Secret::read_xdr(r)?,
             ))),
@@ -32688,6 +40650,179 @@ impl Type {
                 ReadXdrIter::<_, ScpQuorumSet>::new(r)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
+            TypeVariant::ScEnvMetaKind => Box::new(
+                ReadXdrIter::<_, ScEnvMetaKind>::new(r)
+                    .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t)))),
+            ),
+            TypeVariant::ScEnvMetaEntry => Box::new(
+                ReadXdrIter::<_, ScEnvMetaEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecType => Box::new(
+                ReadXdrIter::<_, ScSpecType>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecType(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeOption => Box::new(
+                ReadXdrIter::<_, ScSpecTypeOption>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeOption(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeResult => Box::new(
+                ReadXdrIter::<_, ScSpecTypeResult>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeResult(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeVec => Box::new(
+                ReadXdrIter::<_, ScSpecTypeVec>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeVec(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeMap => Box::new(
+                ReadXdrIter::<_, ScSpecTypeMap>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeSet => Box::new(
+                ReadXdrIter::<_, ScSpecTypeSet>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeSet(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeTuple => Box::new(
+                ReadXdrIter::<_, ScSpecTypeTuple>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeTuple(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeBytesN => Box::new(
+                ReadXdrIter::<_, ScSpecTypeBytesN>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeBytesN(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeUdt => Box::new(
+                ReadXdrIter::<_, ScSpecTypeUdt>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeDef => Box::new(
+                ReadXdrIter::<_, ScSpecTypeDef>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeDef(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtStructFieldV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtStructFieldV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtStructFieldV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtStructV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtStructV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtEnumCaseV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtEnumV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtEnumV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtErrorEnumCaseV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtErrorEnumV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecFunctionInputV0 => Box::new(
+                ReadXdrIter::<_, ScSpecFunctionInputV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecFunctionV0 => Box::new(
+                ReadXdrIter::<_, ScSpecFunctionV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEntryKind => Box::new(
+                ReadXdrIter::<_, ScSpecEntryKind>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEntry => Box::new(
+                ReadXdrIter::<_, ScSpecEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, ScSymbol>::new(r).map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
+            ),
+            TypeVariant::ScValType => Box::new(
+                ReadXdrIter::<_, ScValType>::new(r)
+                    .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
+            ),
+            TypeVariant::ScStatic => Box::new(
+                ReadXdrIter::<_, ScStatic>::new(r).map(|r| r.map(|t| Self::ScStatic(Box::new(t)))),
+            ),
+            TypeVariant::ScStatusType => Box::new(
+                ReadXdrIter::<_, ScStatusType>::new(r)
+                    .map(|r| r.map(|t| Self::ScStatusType(Box::new(t)))),
+            ),
+            TypeVariant::ScHostValErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostValErrorCode>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostValErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScHostObjErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostObjErrorCode>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostObjErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScHostFnErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostFnErrorCode>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostFnErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScHostStorageErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostStorageErrorCode>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostStorageErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScHostContextErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostContextErrorCode>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostContextErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScVmErrorCode => Box::new(
+                ReadXdrIter::<_, ScVmErrorCode>::new(r)
+                    .map(|r| r.map(|t| Self::ScVmErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScUnknownErrorCode => Box::new(
+                ReadXdrIter::<_, ScUnknownErrorCode>::new(r)
+                    .map(|r| r.map(|t| Self::ScUnknownErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScStatus => Box::new(
+                ReadXdrIter::<_, ScStatus>::new(r).map(|r| r.map(|t| Self::ScStatus(Box::new(t)))),
+            ),
+            TypeVariant::ScVal => Box::new(
+                ReadXdrIter::<_, ScVal>::new(r).map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
+            ),
+            TypeVariant::ScObjectType => Box::new(
+                ReadXdrIter::<_, ScObjectType>::new(r)
+                    .map(|r| r.map(|t| Self::ScObjectType(Box::new(t)))),
+            ),
+            TypeVariant::ScMapEntry => Box::new(
+                ReadXdrIter::<_, ScMapEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScVec => Box::new(
+                ReadXdrIter::<_, ScVec>::new(r).map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
+            ),
+            TypeVariant::ScMap => Box::new(
+                ReadXdrIter::<_, ScMap>::new(r).map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
+            ),
+            TypeVariant::ScContractCodeType => Box::new(
+                ReadXdrIter::<_, ScContractCodeType>::new(r)
+                    .map(|r| r.map(|t| Self::ScContractCodeType(Box::new(t)))),
+            ),
+            TypeVariant::ScContractCode => Box::new(
+                ReadXdrIter::<_, ScContractCode>::new(r)
+                    .map(|r| r.map(|t| Self::ScContractCode(Box::new(t)))),
+            ),
+            TypeVariant::Int128Parts => Box::new(
+                ReadXdrIter::<_, Int128Parts>::new(r)
+                    .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
+            ),
+            TypeVariant::ScObject => Box::new(
+                ReadXdrIter::<_, ScObject>::new(r).map(|r| r.map(|t| Self::ScObject(Box::new(t)))),
+            ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(r)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
@@ -32703,10 +40838,6 @@ impl Type {
             TypeVariant::PersistedScpState => Box::new(
                 ReadXdrIter::<_, PersistedScpState>::new(r)
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t)))),
-            ),
-            TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, AccountId>::new(r)
-                    .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
             ),
             TypeVariant::Thresholds => Box::new(
                 ReadXdrIter::<_, Thresholds>::new(r)
@@ -32936,6 +41067,34 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(r)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
+            TypeVariant::ContractDataEntry => Box::new(
+                ReadXdrIter::<_, ContractDataEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t)))),
+            ),
+            TypeVariant::ContractCodeEntry => Box::new(
+                ReadXdrIter::<_, ContractCodeEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingType => Box::new(
+                ReadXdrIter::<_, ConfigSettingType>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingType(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSetting => Box::new(
+                ReadXdrIter::<_, ConfigSetting>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSetting(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingId => Box::new(
+                ReadXdrIter::<_, ConfigSettingId>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingEntry => Box::new(
+                ReadXdrIter::<_, ConfigSettingEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingEntryExt => Box::new(
+                ReadXdrIter::<_, ConfigSettingEntryExt>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntryExt(Box::new(t)))),
+            ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(r)
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))),
@@ -32983,6 +41142,18 @@ impl Type {
             TypeVariant::LedgerKeyLiquidityPool => Box::new(
                 ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(r)
                     .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyContractData => Box::new(
+                ReadXdrIter::<_, LedgerKeyContractData>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyContractData(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyContractCode => Box::new(
+                ReadXdrIter::<_, LedgerKeyContractCode>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyContractCode(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyConfigSetting => Box::new(
+                ReadXdrIter::<_, LedgerKeyConfigSetting>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, EnvelopeType>::new(r)
@@ -33035,6 +41206,10 @@ impl Type {
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, LedgerUpgrade>::new(r)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
+            ),
+            TypeVariant::LedgerUpgradeConfigSetting => Box::new(
+                ReadXdrIter::<_, LedgerUpgradeConfigSetting>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerUpgradeConfigSetting(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, BucketEntryType>::new(r)
@@ -33104,6 +41279,22 @@ impl Type {
                 ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(r)
                     .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))),
             ),
+            TypeVariant::TransactionResultPairV2 => Box::new(
+                ReadXdrIter::<_, TransactionResultPairV2>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultPairV2(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultSetV2 => Box::new(
+                ReadXdrIter::<_, TransactionResultSetV2>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultSetV2(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntryV2 => Box::new(
+                ReadXdrIter::<_, TransactionHistoryResultEntryV2>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntryV2Ext => Box::new(
+                ReadXdrIter::<_, TransactionHistoryResultEntryV2Ext>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2Ext(Box::new(t)))),
+            ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
                 ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(r)
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))),
@@ -33148,6 +41339,30 @@ impl Type {
                 ReadXdrIter::<_, TransactionMetaV2>::new(r)
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t)))),
             ),
+            TypeVariant::ContractEventType => Box::new(
+                ReadXdrIter::<_, ContractEventType>::new(r)
+                    .map(|r| r.map(|t| Self::ContractEventType(Box::new(t)))),
+            ),
+            TypeVariant::ContractEvent => Box::new(
+                ReadXdrIter::<_, ContractEvent>::new(r)
+                    .map(|r| r.map(|t| Self::ContractEvent(Box::new(t)))),
+            ),
+            TypeVariant::ContractEventBody => Box::new(
+                ReadXdrIter::<_, ContractEventBody>::new(r)
+                    .map(|r| r.map(|t| Self::ContractEventBody(Box::new(t)))),
+            ),
+            TypeVariant::ContractEventV0 => Box::new(
+                ReadXdrIter::<_, ContractEventV0>::new(r)
+                    .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t)))),
+            ),
+            TypeVariant::OperationEvents => Box::new(
+                ReadXdrIter::<_, OperationEvents>::new(r)
+                    .map(|r| r.map(|t| Self::OperationEvents(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMetaV3 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV3>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t)))),
+            ),
             TypeVariant::TransactionMeta => Box::new(
                 ReadXdrIter::<_, TransactionMeta>::new(r)
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t)))),
@@ -33155,6 +41370,10 @@ impl Type {
             TypeVariant::TransactionResultMeta => Box::new(
                 ReadXdrIter::<_, TransactionResultMeta>::new(r)
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultMetaV2 => Box::new(
+                ReadXdrIter::<_, TransactionResultMetaV2>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultMetaV2(Box::new(t)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, UpgradeEntryMeta>::new(r)
@@ -33167,6 +41386,10 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(r)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaV2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaV2>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(r)
@@ -33294,6 +41517,10 @@ impl Type {
                 ReadXdrIter::<_, DecoratedSignature>::new(r)
                     .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t)))),
             ),
+            TypeVariant::LedgerFootprint => Box::new(
+                ReadXdrIter::<_, LedgerFootprint>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
+            ),
             TypeVariant::OperationType => Box::new(
                 ReadXdrIter::<_, OperationType>::new(r)
                     .map(|r| r.map(|t| Self::OperationType(Box::new(t)))),
@@ -33394,6 +41621,42 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(r)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))),
             ),
+            TypeVariant::HostFunctionType => Box::new(
+                ReadXdrIter::<_, HostFunctionType>::new(r)
+                    .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdType => Box::new(
+                ReadXdrIter::<_, ContractIdType>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdType(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdPublicKeyType => Box::new(
+                ReadXdrIter::<_, ContractIdPublicKeyType>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdPublicKeyType(Box::new(t)))),
+            ),
+            TypeVariant::InstallContractCodeArgs => Box::new(
+                ReadXdrIter::<_, InstallContractCodeArgs>::new(r)
+                    .map(|r| r.map(|t| Self::InstallContractCodeArgs(Box::new(t)))),
+            ),
+            TypeVariant::ContractId => Box::new(
+                ReadXdrIter::<_, ContractId>::new(r)
+                    .map(|r| r.map(|t| Self::ContractId(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdFromEd25519PublicKey => Box::new(
+                ReadXdrIter::<_, ContractIdFromEd25519PublicKey>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdFromEd25519PublicKey(Box::new(t)))),
+            ),
+            TypeVariant::CreateContractArgs => Box::new(
+                ReadXdrIter::<_, CreateContractArgs>::new(r)
+                    .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
+            ),
+            TypeVariant::HostFunction => Box::new(
+                ReadXdrIter::<_, HostFunction>::new(r)
+                    .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionOp => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionOp>::new(r)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
+            ),
             TypeVariant::Operation => Box::new(
                 ReadXdrIter::<_, Operation>::new(r)
                     .map(|r| r.map(|t| Self::Operation(Box::new(t)))),
@@ -33413,6 +41676,26 @@ impl Type {
             TypeVariant::HashIdPreimageRevokeId => Box::new(
                 ReadXdrIter::<_, HashIdPreimageRevokeId>::new(r)
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageEd25519ContractId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageEd25519ContractId>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageEd25519ContractId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageContractId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageContractId>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageFromAsset => Box::new(
+                ReadXdrIter::<_, HashIdPreimageFromAsset>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageFromAsset(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageSourceAccountContractId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageSourceAccountContractId>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageSourceAccountContractId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageCreateContractArgs => Box::new(
+                ReadXdrIter::<_, HashIdPreimageCreateContractArgs>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageCreateContractArgs(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(r).map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
@@ -33725,6 +42008,14 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(r)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))),
             ),
+            TypeVariant::InvokeHostFunctionResultCode => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionResultCode(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionResult => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionResult>::new(r)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t)))),
+            ),
             TypeVariant::OperationResultCode => Box::new(
                 ReadXdrIter::<_, OperationResultCode>::new(r)
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t)))),
@@ -33826,6 +42117,10 @@ impl Type {
             TypeVariant::NodeId => Box::new(
                 ReadXdrIter::<_, NodeId>::new(r).map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
             ),
+            TypeVariant::AccountId => Box::new(
+                ReadXdrIter::<_, AccountId>::new(r)
+                    .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
+            ),
             TypeVariant::Curve25519Secret => Box::new(
                 ReadXdrIter::<_, Curve25519Secret>::new(r)
                     .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t)))),
@@ -33896,6 +42191,186 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScpQuorumSet>>::new(r)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t.0)))),
             ),
+            TypeVariant::ScEnvMetaKind => Box::new(
+                ReadXdrIter::<_, Frame<ScEnvMetaKind>>::new(r)
+                    .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t.0)))),
+            ),
+            TypeVariant::ScEnvMetaEntry => Box::new(
+                ReadXdrIter::<_, Frame<ScEnvMetaEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecType => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecType>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeOption => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeOption>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeOption(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeResult => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeResult>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeResult(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeVec => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeVec>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeVec(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeMap => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeMap>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeSet => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeSet>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeSet(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeTuple => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeTuple>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeTuple(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeBytesN => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeBytesN>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeBytesN(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeUdt => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeUdt>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeDef => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeDef>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecTypeDef(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtStructFieldV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtStructFieldV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtStructFieldV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtStructV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtStructV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtUnionV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtEnumCaseV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumCaseV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtEnumV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtEnumV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtErrorEnumCaseV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumCaseV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtErrorEnumV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecFunctionInputV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecFunctionInputV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecFunctionV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecFunctionV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEntryKind => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEntryKind>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEntry => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, Frame<ScSymbol>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t.0)))),
+            ),
+            TypeVariant::ScValType => Box::new(
+                ReadXdrIter::<_, Frame<ScValType>>::new(r)
+                    .map(|r| r.map(|t| Self::ScValType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScStatic => Box::new(
+                ReadXdrIter::<_, Frame<ScStatic>>::new(r)
+                    .map(|r| r.map(|t| Self::ScStatic(Box::new(t.0)))),
+            ),
+            TypeVariant::ScStatusType => Box::new(
+                ReadXdrIter::<_, Frame<ScStatusType>>::new(r)
+                    .map(|r| r.map(|t| Self::ScStatusType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScHostValErrorCode => Box::new(
+                ReadXdrIter::<_, Frame<ScHostValErrorCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostValErrorCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ScHostObjErrorCode => Box::new(
+                ReadXdrIter::<_, Frame<ScHostObjErrorCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostObjErrorCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ScHostFnErrorCode => Box::new(
+                ReadXdrIter::<_, Frame<ScHostFnErrorCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostFnErrorCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ScHostStorageErrorCode => Box::new(
+                ReadXdrIter::<_, Frame<ScHostStorageErrorCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostStorageErrorCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ScHostContextErrorCode => Box::new(
+                ReadXdrIter::<_, Frame<ScHostContextErrorCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostContextErrorCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ScVmErrorCode => Box::new(
+                ReadXdrIter::<_, Frame<ScVmErrorCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ScVmErrorCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ScUnknownErrorCode => Box::new(
+                ReadXdrIter::<_, Frame<ScUnknownErrorCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ScUnknownErrorCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ScStatus => Box::new(
+                ReadXdrIter::<_, Frame<ScStatus>>::new(r)
+                    .map(|r| r.map(|t| Self::ScStatus(Box::new(t.0)))),
+            ),
+            TypeVariant::ScVal => Box::new(
+                ReadXdrIter::<_, Frame<ScVal>>::new(r)
+                    .map(|r| r.map(|t| Self::ScVal(Box::new(t.0)))),
+            ),
+            TypeVariant::ScObjectType => Box::new(
+                ReadXdrIter::<_, Frame<ScObjectType>>::new(r)
+                    .map(|r| r.map(|t| Self::ScObjectType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMapEntry => Box::new(
+                ReadXdrIter::<_, Frame<ScMapEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ScVec => Box::new(
+                ReadXdrIter::<_, Frame<ScVec>>::new(r)
+                    .map(|r| r.map(|t| Self::ScVec(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMap => Box::new(
+                ReadXdrIter::<_, Frame<ScMap>>::new(r)
+                    .map(|r| r.map(|t| Self::ScMap(Box::new(t.0)))),
+            ),
+            TypeVariant::ScContractCodeType => Box::new(
+                ReadXdrIter::<_, Frame<ScContractCodeType>>::new(r)
+                    .map(|r| r.map(|t| Self::ScContractCodeType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScContractCode => Box::new(
+                ReadXdrIter::<_, Frame<ScContractCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ScContractCode(Box::new(t.0)))),
+            ),
+            TypeVariant::Int128Parts => Box::new(
+                ReadXdrIter::<_, Frame<Int128Parts>>::new(r)
+                    .map(|r| r.map(|t| Self::Int128Parts(Box::new(t.0)))),
+            ),
+            TypeVariant::ScObject => Box::new(
+                ReadXdrIter::<_, Frame<ScObject>>::new(r)
+                    .map(|r| r.map(|t| Self::ScObject(Box::new(t.0)))),
+            ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(r)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t.0)))),
@@ -33911,10 +42386,6 @@ impl Type {
             TypeVariant::PersistedScpState => Box::new(
                 ReadXdrIter::<_, Frame<PersistedScpState>>::new(r)
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t.0)))),
-            ),
-            TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, Frame<AccountId>>::new(r)
-                    .map(|r| r.map(|t| Self::AccountId(Box::new(t.0)))),
             ),
             TypeVariant::Thresholds => Box::new(
                 ReadXdrIter::<_, Frame<Thresholds>>::new(r)
@@ -34153,6 +42624,34 @@ impl Type {
                 ReadXdrIter::<_, Frame<LiquidityPoolEntryConstantProduct>>::new(r)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t.0)))),
             ),
+            TypeVariant::ContractDataEntry => Box::new(
+                ReadXdrIter::<_, Frame<ContractDataEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractCodeEntry => Box::new(
+                ReadXdrIter::<_, Frame<ContractCodeEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingType => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingType>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingType(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSetting => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSetting>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSetting(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingId => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingId>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingEntry => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingEntryExt => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingEntryExt>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntryExt(Box::new(t.0)))),
+            ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerEntryExtensionV1>>::new(r)
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t.0)))),
@@ -34200,6 +42699,18 @@ impl Type {
             TypeVariant::LedgerKeyLiquidityPool => Box::new(
                 ReadXdrIter::<_, Frame<LedgerKeyLiquidityPool>>::new(r)
                     .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyContractData => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyContractData>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyContractData(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyContractCode => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyContractCode>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyContractCode(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyConfigSetting => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyConfigSetting>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t.0)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, Frame<EnvelopeType>>::new(r)
@@ -34252,6 +42763,10 @@ impl Type {
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, Frame<LedgerUpgrade>>::new(r)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerUpgradeConfigSetting => Box::new(
+                ReadXdrIter::<_, Frame<LedgerUpgradeConfigSetting>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerUpgradeConfigSetting(Box::new(t.0)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, Frame<BucketEntryType>>::new(r)
@@ -34321,6 +42836,22 @@ impl Type {
                 ReadXdrIter::<_, Frame<TransactionHistoryResultEntryExt>>::new(r)
                     .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t.0)))),
             ),
+            TypeVariant::TransactionResultPairV2 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionResultPairV2>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultPairV2(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionResultSetV2 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionResultSetV2>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultSetV2(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntryV2 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionHistoryResultEntryV2>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntryV2Ext => Box::new(
+                ReadXdrIter::<_, Frame<TransactionHistoryResultEntryV2Ext>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2Ext(Box::new(t.0)))),
+            ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
                 ReadXdrIter::<_, Frame<LedgerHeaderHistoryEntry>>::new(r)
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t.0)))),
@@ -34365,6 +42896,30 @@ impl Type {
                 ReadXdrIter::<_, Frame<TransactionMetaV2>>::new(r)
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t.0)))),
             ),
+            TypeVariant::ContractEventType => Box::new(
+                ReadXdrIter::<_, Frame<ContractEventType>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractEventType(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractEvent => Box::new(
+                ReadXdrIter::<_, Frame<ContractEvent>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractEvent(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractEventBody => Box::new(
+                ReadXdrIter::<_, Frame<ContractEventBody>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractEventBody(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractEventV0 => Box::new(
+                ReadXdrIter::<_, Frame<ContractEventV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t.0)))),
+            ),
+            TypeVariant::OperationEvents => Box::new(
+                ReadXdrIter::<_, Frame<OperationEvents>>::new(r)
+                    .map(|r| r.map(|t| Self::OperationEvents(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionMetaV3 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionMetaV3>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t.0)))),
+            ),
             TypeVariant::TransactionMeta => Box::new(
                 ReadXdrIter::<_, Frame<TransactionMeta>>::new(r)
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t.0)))),
@@ -34372,6 +42927,10 @@ impl Type {
             TypeVariant::TransactionResultMeta => Box::new(
                 ReadXdrIter::<_, Frame<TransactionResultMeta>>::new(r)
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionResultMetaV2 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionResultMetaV2>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultMetaV2(Box::new(t.0)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, Frame<UpgradeEntryMeta>>::new(r)
@@ -34384,6 +42943,10 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMetaV1>>::new(r)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerCloseMetaV2 => Box::new(
+                ReadXdrIter::<_, Frame<LedgerCloseMetaV2>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMeta>>::new(r)
@@ -34516,6 +43079,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<DecoratedSignature>>::new(r)
                     .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t.0)))),
             ),
+            TypeVariant::LedgerFootprint => Box::new(
+                ReadXdrIter::<_, Frame<LedgerFootprint>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t.0)))),
+            ),
             TypeVariant::OperationType => Box::new(
                 ReadXdrIter::<_, Frame<OperationType>>::new(r)
                     .map(|r| r.map(|t| Self::OperationType(Box::new(t.0)))),
@@ -34616,6 +43183,42 @@ impl Type {
                 ReadXdrIter::<_, Frame<LiquidityPoolWithdrawOp>>::new(r)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t.0)))),
             ),
+            TypeVariant::HostFunctionType => Box::new(
+                ReadXdrIter::<_, Frame<HostFunctionType>>::new(r)
+                    .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractIdType => Box::new(
+                ReadXdrIter::<_, Frame<ContractIdType>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdType(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractIdPublicKeyType => Box::new(
+                ReadXdrIter::<_, Frame<ContractIdPublicKeyType>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdPublicKeyType(Box::new(t.0)))),
+            ),
+            TypeVariant::InstallContractCodeArgs => Box::new(
+                ReadXdrIter::<_, Frame<InstallContractCodeArgs>>::new(r)
+                    .map(|r| r.map(|t| Self::InstallContractCodeArgs(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractId => Box::new(
+                ReadXdrIter::<_, Frame<ContractId>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractId(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractIdFromEd25519PublicKey => Box::new(
+                ReadXdrIter::<_, Frame<ContractIdFromEd25519PublicKey>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdFromEd25519PublicKey(Box::new(t.0)))),
+            ),
+            TypeVariant::CreateContractArgs => Box::new(
+                ReadXdrIter::<_, Frame<CreateContractArgs>>::new(r)
+                    .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t.0)))),
+            ),
+            TypeVariant::HostFunction => Box::new(
+                ReadXdrIter::<_, Frame<HostFunction>>::new(r)
+                    .map(|r| r.map(|t| Self::HostFunction(Box::new(t.0)))),
+            ),
+            TypeVariant::InvokeHostFunctionOp => Box::new(
+                ReadXdrIter::<_, Frame<InvokeHostFunctionOp>>::new(r)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t.0)))),
+            ),
             TypeVariant::Operation => Box::new(
                 ReadXdrIter::<_, Frame<Operation>>::new(r)
                     .map(|r| r.map(|t| Self::Operation(Box::new(t.0)))),
@@ -34635,6 +43238,26 @@ impl Type {
             TypeVariant::HashIdPreimageRevokeId => Box::new(
                 ReadXdrIter::<_, Frame<HashIdPreimageRevokeId>>::new(r)
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimageEd25519ContractId => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageEd25519ContractId>>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageEd25519ContractId(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimageContractId => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageContractId>>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimageFromAsset => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageFromAsset>>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageFromAsset(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimageSourceAccountContractId => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageSourceAccountContractId>>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageSourceAccountContractId(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimageCreateContractArgs => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageCreateContractArgs>>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageCreateContractArgs(Box::new(t.0)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, Frame<MemoType>>::new(r)
@@ -34951,6 +43574,14 @@ impl Type {
                 ReadXdrIter::<_, Frame<LiquidityPoolWithdrawResult>>::new(r)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t.0)))),
             ),
+            TypeVariant::InvokeHostFunctionResultCode => Box::new(
+                ReadXdrIter::<_, Frame<InvokeHostFunctionResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::InvokeHostFunctionResult => Box::new(
+                ReadXdrIter::<_, Frame<InvokeHostFunctionResult>>::new(r)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t.0)))),
+            ),
             TypeVariant::OperationResultCode => Box::new(
                 ReadXdrIter::<_, Frame<OperationResultCode>>::new(r)
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t.0)))),
@@ -35058,6 +43689,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<NodeId>>::new(r)
                     .map(|r| r.map(|t| Self::NodeId(Box::new(t.0)))),
             ),
+            TypeVariant::AccountId => Box::new(
+                ReadXdrIter::<_, Frame<AccountId>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountId(Box::new(t.0)))),
+            ),
             TypeVariant::Curve25519Secret => Box::new(
                 ReadXdrIter::<_, Frame<Curve25519Secret>>::new(r)
                     .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t.0)))),
@@ -35128,6 +43763,183 @@ impl Type {
                 ReadXdrIter::<_, ScpQuorumSet>::new(dec)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
+            TypeVariant::ScEnvMetaKind => Box::new(
+                ReadXdrIter::<_, ScEnvMetaKind>::new(dec)
+                    .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t)))),
+            ),
+            TypeVariant::ScEnvMetaEntry => Box::new(
+                ReadXdrIter::<_, ScEnvMetaEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecType => Box::new(
+                ReadXdrIter::<_, ScSpecType>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecType(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeOption => Box::new(
+                ReadXdrIter::<_, ScSpecTypeOption>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecTypeOption(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeResult => Box::new(
+                ReadXdrIter::<_, ScSpecTypeResult>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecTypeResult(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeVec => Box::new(
+                ReadXdrIter::<_, ScSpecTypeVec>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecTypeVec(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeMap => Box::new(
+                ReadXdrIter::<_, ScSpecTypeMap>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeSet => Box::new(
+                ReadXdrIter::<_, ScSpecTypeSet>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecTypeSet(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeTuple => Box::new(
+                ReadXdrIter::<_, ScSpecTypeTuple>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecTypeTuple(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeBytesN => Box::new(
+                ReadXdrIter::<_, ScSpecTypeBytesN>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecTypeBytesN(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeUdt => Box::new(
+                ReadXdrIter::<_, ScSpecTypeUdt>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeDef => Box::new(
+                ReadXdrIter::<_, ScSpecTypeDef>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecTypeDef(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtStructFieldV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtStructFieldV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecUdtStructFieldV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtStructV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtStructV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtEnumCaseV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtEnumV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtEnumV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtErrorEnumCaseV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtErrorEnumV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecFunctionInputV0 => Box::new(
+                ReadXdrIter::<_, ScSpecFunctionInputV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecFunctionV0 => Box::new(
+                ReadXdrIter::<_, ScSpecFunctionV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEntryKind => Box::new(
+                ReadXdrIter::<_, ScSpecEntryKind>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEntry => Box::new(
+                ReadXdrIter::<_, ScSpecEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, ScSymbol>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
+            ),
+            TypeVariant::ScValType => Box::new(
+                ReadXdrIter::<_, ScValType>::new(dec)
+                    .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
+            ),
+            TypeVariant::ScStatic => Box::new(
+                ReadXdrIter::<_, ScStatic>::new(dec)
+                    .map(|r| r.map(|t| Self::ScStatic(Box::new(t)))),
+            ),
+            TypeVariant::ScStatusType => Box::new(
+                ReadXdrIter::<_, ScStatusType>::new(dec)
+                    .map(|r| r.map(|t| Self::ScStatusType(Box::new(t)))),
+            ),
+            TypeVariant::ScHostValErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostValErrorCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ScHostValErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScHostObjErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostObjErrorCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ScHostObjErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScHostFnErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostFnErrorCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ScHostFnErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScHostStorageErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostStorageErrorCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ScHostStorageErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScHostContextErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostContextErrorCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ScHostContextErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScVmErrorCode => Box::new(
+                ReadXdrIter::<_, ScVmErrorCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ScVmErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScUnknownErrorCode => Box::new(
+                ReadXdrIter::<_, ScUnknownErrorCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ScUnknownErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScStatus => Box::new(
+                ReadXdrIter::<_, ScStatus>::new(dec)
+                    .map(|r| r.map(|t| Self::ScStatus(Box::new(t)))),
+            ),
+            TypeVariant::ScVal => Box::new(
+                ReadXdrIter::<_, ScVal>::new(dec).map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
+            ),
+            TypeVariant::ScObjectType => Box::new(
+                ReadXdrIter::<_, ScObjectType>::new(dec)
+                    .map(|r| r.map(|t| Self::ScObjectType(Box::new(t)))),
+            ),
+            TypeVariant::ScMapEntry => Box::new(
+                ReadXdrIter::<_, ScMapEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScVec => Box::new(
+                ReadXdrIter::<_, ScVec>::new(dec).map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
+            ),
+            TypeVariant::ScMap => Box::new(
+                ReadXdrIter::<_, ScMap>::new(dec).map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
+            ),
+            TypeVariant::ScContractCodeType => Box::new(
+                ReadXdrIter::<_, ScContractCodeType>::new(dec)
+                    .map(|r| r.map(|t| Self::ScContractCodeType(Box::new(t)))),
+            ),
+            TypeVariant::ScContractCode => Box::new(
+                ReadXdrIter::<_, ScContractCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ScContractCode(Box::new(t)))),
+            ),
+            TypeVariant::Int128Parts => Box::new(
+                ReadXdrIter::<_, Int128Parts>::new(dec)
+                    .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
+            ),
+            TypeVariant::ScObject => Box::new(
+                ReadXdrIter::<_, ScObject>::new(dec)
+                    .map(|r| r.map(|t| Self::ScObject(Box::new(t)))),
+            ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(dec)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
@@ -35143,10 +43955,6 @@ impl Type {
             TypeVariant::PersistedScpState => Box::new(
                 ReadXdrIter::<_, PersistedScpState>::new(dec)
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t)))),
-            ),
-            TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, AccountId>::new(dec)
-                    .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
             ),
             TypeVariant::Thresholds => Box::new(
                 ReadXdrIter::<_, Thresholds>::new(dec)
@@ -35380,6 +44188,34 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(dec)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
+            TypeVariant::ContractDataEntry => Box::new(
+                ReadXdrIter::<_, ContractDataEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t)))),
+            ),
+            TypeVariant::ContractCodeEntry => Box::new(
+                ReadXdrIter::<_, ContractCodeEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingType => Box::new(
+                ReadXdrIter::<_, ConfigSettingType>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingType(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSetting => Box::new(
+                ReadXdrIter::<_, ConfigSetting>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSetting(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingId => Box::new(
+                ReadXdrIter::<_, ConfigSettingId>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingEntry => Box::new(
+                ReadXdrIter::<_, ConfigSettingEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingEntryExt => Box::new(
+                ReadXdrIter::<_, ConfigSettingEntryExt>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntryExt(Box::new(t)))),
+            ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec)
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))),
@@ -35427,6 +44263,18 @@ impl Type {
             TypeVariant::LedgerKeyLiquidityPool => Box::new(
                 ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(dec)
                     .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyContractData => Box::new(
+                ReadXdrIter::<_, LedgerKeyContractData>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerKeyContractData(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyContractCode => Box::new(
+                ReadXdrIter::<_, LedgerKeyContractCode>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerKeyContractCode(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyConfigSetting => Box::new(
+                ReadXdrIter::<_, LedgerKeyConfigSetting>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, EnvelopeType>::new(dec)
@@ -35479,6 +44327,10 @@ impl Type {
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, LedgerUpgrade>::new(dec)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
+            ),
+            TypeVariant::LedgerUpgradeConfigSetting => Box::new(
+                ReadXdrIter::<_, LedgerUpgradeConfigSetting>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerUpgradeConfigSetting(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, BucketEntryType>::new(dec)
@@ -35548,6 +44400,22 @@ impl Type {
                 ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(dec)
                     .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))),
             ),
+            TypeVariant::TransactionResultPairV2 => Box::new(
+                ReadXdrIter::<_, TransactionResultPairV2>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionResultPairV2(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultSetV2 => Box::new(
+                ReadXdrIter::<_, TransactionResultSetV2>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionResultSetV2(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntryV2 => Box::new(
+                ReadXdrIter::<_, TransactionHistoryResultEntryV2>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntryV2Ext => Box::new(
+                ReadXdrIter::<_, TransactionHistoryResultEntryV2Ext>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2Ext(Box::new(t)))),
+            ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
                 ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(dec)
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))),
@@ -35592,6 +44460,30 @@ impl Type {
                 ReadXdrIter::<_, TransactionMetaV2>::new(dec)
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t)))),
             ),
+            TypeVariant::ContractEventType => Box::new(
+                ReadXdrIter::<_, ContractEventType>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractEventType(Box::new(t)))),
+            ),
+            TypeVariant::ContractEvent => Box::new(
+                ReadXdrIter::<_, ContractEvent>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractEvent(Box::new(t)))),
+            ),
+            TypeVariant::ContractEventBody => Box::new(
+                ReadXdrIter::<_, ContractEventBody>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractEventBody(Box::new(t)))),
+            ),
+            TypeVariant::ContractEventV0 => Box::new(
+                ReadXdrIter::<_, ContractEventV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t)))),
+            ),
+            TypeVariant::OperationEvents => Box::new(
+                ReadXdrIter::<_, OperationEvents>::new(dec)
+                    .map(|r| r.map(|t| Self::OperationEvents(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMetaV3 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV3>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t)))),
+            ),
             TypeVariant::TransactionMeta => Box::new(
                 ReadXdrIter::<_, TransactionMeta>::new(dec)
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t)))),
@@ -35599,6 +44491,10 @@ impl Type {
             TypeVariant::TransactionResultMeta => Box::new(
                 ReadXdrIter::<_, TransactionResultMeta>::new(dec)
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultMetaV2 => Box::new(
+                ReadXdrIter::<_, TransactionResultMetaV2>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionResultMetaV2(Box::new(t)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, UpgradeEntryMeta>::new(dec)
@@ -35611,6 +44507,10 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(dec)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaV2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaV2>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(dec)
@@ -35741,6 +44641,10 @@ impl Type {
                 ReadXdrIter::<_, DecoratedSignature>::new(dec)
                     .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t)))),
             ),
+            TypeVariant::LedgerFootprint => Box::new(
+                ReadXdrIter::<_, LedgerFootprint>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
+            ),
             TypeVariant::OperationType => Box::new(
                 ReadXdrIter::<_, OperationType>::new(dec)
                     .map(|r| r.map(|t| Self::OperationType(Box::new(t)))),
@@ -35841,6 +44745,42 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(dec)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))),
             ),
+            TypeVariant::HostFunctionType => Box::new(
+                ReadXdrIter::<_, HostFunctionType>::new(dec)
+                    .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdType => Box::new(
+                ReadXdrIter::<_, ContractIdType>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractIdType(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdPublicKeyType => Box::new(
+                ReadXdrIter::<_, ContractIdPublicKeyType>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractIdPublicKeyType(Box::new(t)))),
+            ),
+            TypeVariant::InstallContractCodeArgs => Box::new(
+                ReadXdrIter::<_, InstallContractCodeArgs>::new(dec)
+                    .map(|r| r.map(|t| Self::InstallContractCodeArgs(Box::new(t)))),
+            ),
+            TypeVariant::ContractId => Box::new(
+                ReadXdrIter::<_, ContractId>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractId(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdFromEd25519PublicKey => Box::new(
+                ReadXdrIter::<_, ContractIdFromEd25519PublicKey>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractIdFromEd25519PublicKey(Box::new(t)))),
+            ),
+            TypeVariant::CreateContractArgs => Box::new(
+                ReadXdrIter::<_, CreateContractArgs>::new(dec)
+                    .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
+            ),
+            TypeVariant::HostFunction => Box::new(
+                ReadXdrIter::<_, HostFunction>::new(dec)
+                    .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionOp => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionOp>::new(dec)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
+            ),
             TypeVariant::Operation => Box::new(
                 ReadXdrIter::<_, Operation>::new(dec)
                     .map(|r| r.map(|t| Self::Operation(Box::new(t)))),
@@ -35860,6 +44800,26 @@ impl Type {
             TypeVariant::HashIdPreimageRevokeId => Box::new(
                 ReadXdrIter::<_, HashIdPreimageRevokeId>::new(dec)
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageEd25519ContractId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageEd25519ContractId>::new(dec)
+                    .map(|r| r.map(|t| Self::HashIdPreimageEd25519ContractId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageContractId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageContractId>::new(dec)
+                    .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageFromAsset => Box::new(
+                ReadXdrIter::<_, HashIdPreimageFromAsset>::new(dec)
+                    .map(|r| r.map(|t| Self::HashIdPreimageFromAsset(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageSourceAccountContractId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageSourceAccountContractId>::new(dec)
+                    .map(|r| r.map(|t| Self::HashIdPreimageSourceAccountContractId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageCreateContractArgs => Box::new(
+                ReadXdrIter::<_, HashIdPreimageCreateContractArgs>::new(dec)
+                    .map(|r| r.map(|t| Self::HashIdPreimageCreateContractArgs(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(dec)
@@ -36173,6 +45133,14 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(dec)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))),
             ),
+            TypeVariant::InvokeHostFunctionResultCode => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionResultCode(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionResult => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionResult>::new(dec)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t)))),
+            ),
             TypeVariant::OperationResultCode => Box::new(
                 ReadXdrIter::<_, OperationResultCode>::new(dec)
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t)))),
@@ -36274,6 +45242,10 @@ impl Type {
             TypeVariant::NodeId => Box::new(
                 ReadXdrIter::<_, NodeId>::new(dec).map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
             ),
+            TypeVariant::AccountId => Box::new(
+                ReadXdrIter::<_, AccountId>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
+            ),
             TypeVariant::Curve25519Secret => Box::new(
                 ReadXdrIter::<_, Curve25519Secret>::new(dec)
                     .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t)))),
@@ -36324,11 +45296,55 @@ impl Type {
             Self::ScpStatementExternalize(ref v) => v.as_ref(),
             Self::ScpEnvelope(ref v) => v.as_ref(),
             Self::ScpQuorumSet(ref v) => v.as_ref(),
+            Self::ScEnvMetaKind(ref v) => v.as_ref(),
+            Self::ScEnvMetaEntry(ref v) => v.as_ref(),
+            Self::ScSpecType(ref v) => v.as_ref(),
+            Self::ScSpecTypeOption(ref v) => v.as_ref(),
+            Self::ScSpecTypeResult(ref v) => v.as_ref(),
+            Self::ScSpecTypeVec(ref v) => v.as_ref(),
+            Self::ScSpecTypeMap(ref v) => v.as_ref(),
+            Self::ScSpecTypeSet(ref v) => v.as_ref(),
+            Self::ScSpecTypeTuple(ref v) => v.as_ref(),
+            Self::ScSpecTypeBytesN(ref v) => v.as_ref(),
+            Self::ScSpecTypeUdt(ref v) => v.as_ref(),
+            Self::ScSpecTypeDef(ref v) => v.as_ref(),
+            Self::ScSpecUdtStructFieldV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtStructV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtUnionCaseV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtUnionV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtEnumCaseV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtEnumV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtErrorEnumCaseV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtErrorEnumV0(ref v) => v.as_ref(),
+            Self::ScSpecFunctionInputV0(ref v) => v.as_ref(),
+            Self::ScSpecFunctionV0(ref v) => v.as_ref(),
+            Self::ScSpecEntryKind(ref v) => v.as_ref(),
+            Self::ScSpecEntry(ref v) => v.as_ref(),
+            Self::ScSymbol(ref v) => v.as_ref(),
+            Self::ScValType(ref v) => v.as_ref(),
+            Self::ScStatic(ref v) => v.as_ref(),
+            Self::ScStatusType(ref v) => v.as_ref(),
+            Self::ScHostValErrorCode(ref v) => v.as_ref(),
+            Self::ScHostObjErrorCode(ref v) => v.as_ref(),
+            Self::ScHostFnErrorCode(ref v) => v.as_ref(),
+            Self::ScHostStorageErrorCode(ref v) => v.as_ref(),
+            Self::ScHostContextErrorCode(ref v) => v.as_ref(),
+            Self::ScVmErrorCode(ref v) => v.as_ref(),
+            Self::ScUnknownErrorCode(ref v) => v.as_ref(),
+            Self::ScStatus(ref v) => v.as_ref(),
+            Self::ScVal(ref v) => v.as_ref(),
+            Self::ScObjectType(ref v) => v.as_ref(),
+            Self::ScMapEntry(ref v) => v.as_ref(),
+            Self::ScVec(ref v) => v.as_ref(),
+            Self::ScMap(ref v) => v.as_ref(),
+            Self::ScContractCodeType(ref v) => v.as_ref(),
+            Self::ScContractCode(ref v) => v.as_ref(),
+            Self::Int128Parts(ref v) => v.as_ref(),
+            Self::ScObject(ref v) => v.as_ref(),
             Self::StoredTransactionSet(ref v) => v.as_ref(),
             Self::PersistedScpStateV0(ref v) => v.as_ref(),
             Self::PersistedScpStateV1(ref v) => v.as_ref(),
             Self::PersistedScpState(ref v) => v.as_ref(),
-            Self::AccountId(ref v) => v.as_ref(),
             Self::Thresholds(ref v) => v.as_ref(),
             Self::String32(ref v) => v.as_ref(),
             Self::String64(ref v) => v.as_ref(),
@@ -36388,6 +45404,13 @@ impl Type {
             Self::LiquidityPoolEntry(ref v) => v.as_ref(),
             Self::LiquidityPoolEntryBody(ref v) => v.as_ref(),
             Self::LiquidityPoolEntryConstantProduct(ref v) => v.as_ref(),
+            Self::ContractDataEntry(ref v) => v.as_ref(),
+            Self::ContractCodeEntry(ref v) => v.as_ref(),
+            Self::ConfigSettingType(ref v) => v.as_ref(),
+            Self::ConfigSetting(ref v) => v.as_ref(),
+            Self::ConfigSettingId(ref v) => v.as_ref(),
+            Self::ConfigSettingEntry(ref v) => v.as_ref(),
+            Self::ConfigSettingEntryExt(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1Ext(ref v) => v.as_ref(),
             Self::LedgerEntry(ref v) => v.as_ref(),
@@ -36400,6 +45423,9 @@ impl Type {
             Self::LedgerKeyData(ref v) => v.as_ref(),
             Self::LedgerKeyClaimableBalance(ref v) => v.as_ref(),
             Self::LedgerKeyLiquidityPool(ref v) => v.as_ref(),
+            Self::LedgerKeyContractData(ref v) => v.as_ref(),
+            Self::LedgerKeyContractCode(ref v) => v.as_ref(),
+            Self::LedgerKeyConfigSetting(ref v) => v.as_ref(),
             Self::EnvelopeType(ref v) => v.as_ref(),
             Self::UpgradeType(ref v) => v.as_ref(),
             Self::StellarValueType(ref v) => v.as_ref(),
@@ -36413,6 +45439,7 @@ impl Type {
             Self::LedgerHeaderExt(ref v) => v.as_ref(),
             Self::LedgerUpgradeType(ref v) => v.as_ref(),
             Self::LedgerUpgrade(ref v) => v.as_ref(),
+            Self::LedgerUpgradeConfigSetting(ref v) => v.as_ref(),
             Self::BucketEntryType(ref v) => v.as_ref(),
             Self::BucketMetadata(ref v) => v.as_ref(),
             Self::BucketMetadataExt(ref v) => v.as_ref(),
@@ -36430,6 +45457,10 @@ impl Type {
             Self::TransactionHistoryEntryExt(ref v) => v.as_ref(),
             Self::TransactionHistoryResultEntry(ref v) => v.as_ref(),
             Self::TransactionHistoryResultEntryExt(ref v) => v.as_ref(),
+            Self::TransactionResultPairV2(ref v) => v.as_ref(),
+            Self::TransactionResultSetV2(ref v) => v.as_ref(),
+            Self::TransactionHistoryResultEntryV2(ref v) => v.as_ref(),
+            Self::TransactionHistoryResultEntryV2Ext(ref v) => v.as_ref(),
             Self::LedgerHeaderHistoryEntry(ref v) => v.as_ref(),
             Self::LedgerHeaderHistoryEntryExt(ref v) => v.as_ref(),
             Self::LedgerScpMessages(ref v) => v.as_ref(),
@@ -36441,11 +45472,19 @@ impl Type {
             Self::OperationMeta(ref v) => v.as_ref(),
             Self::TransactionMetaV1(ref v) => v.as_ref(),
             Self::TransactionMetaV2(ref v) => v.as_ref(),
+            Self::ContractEventType(ref v) => v.as_ref(),
+            Self::ContractEvent(ref v) => v.as_ref(),
+            Self::ContractEventBody(ref v) => v.as_ref(),
+            Self::ContractEventV0(ref v) => v.as_ref(),
+            Self::OperationEvents(ref v) => v.as_ref(),
+            Self::TransactionMetaV3(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
             Self::TransactionResultMeta(ref v) => v.as_ref(),
+            Self::TransactionResultMetaV2(ref v) => v.as_ref(),
             Self::UpgradeEntryMeta(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV0(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV1(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaV2(ref v) => v.as_ref(),
             Self::LedgerCloseMeta(ref v) => v.as_ref(),
             Self::ErrorCode(ref v) => v.as_ref(),
             Self::SError(ref v) => v.as_ref(),
@@ -36479,6 +45518,7 @@ impl Type {
             Self::MuxedAccount(ref v) => v.as_ref(),
             Self::MuxedAccountMed25519(ref v) => v.as_ref(),
             Self::DecoratedSignature(ref v) => v.as_ref(),
+            Self::LedgerFootprint(ref v) => v.as_ref(),
             Self::OperationType(ref v) => v.as_ref(),
             Self::CreateAccountOp(ref v) => v.as_ref(),
             Self::PaymentOp(ref v) => v.as_ref(),
@@ -36504,11 +45544,25 @@ impl Type {
             Self::SetTrustLineFlagsOp(ref v) => v.as_ref(),
             Self::LiquidityPoolDepositOp(ref v) => v.as_ref(),
             Self::LiquidityPoolWithdrawOp(ref v) => v.as_ref(),
+            Self::HostFunctionType(ref v) => v.as_ref(),
+            Self::ContractIdType(ref v) => v.as_ref(),
+            Self::ContractIdPublicKeyType(ref v) => v.as_ref(),
+            Self::InstallContractCodeArgs(ref v) => v.as_ref(),
+            Self::ContractId(ref v) => v.as_ref(),
+            Self::ContractIdFromEd25519PublicKey(ref v) => v.as_ref(),
+            Self::CreateContractArgs(ref v) => v.as_ref(),
+            Self::HostFunction(ref v) => v.as_ref(),
+            Self::InvokeHostFunctionOp(ref v) => v.as_ref(),
             Self::Operation(ref v) => v.as_ref(),
             Self::OperationBody(ref v) => v.as_ref(),
             Self::HashIdPreimage(ref v) => v.as_ref(),
             Self::HashIdPreimageOperationId(ref v) => v.as_ref(),
             Self::HashIdPreimageRevokeId(ref v) => v.as_ref(),
+            Self::HashIdPreimageEd25519ContractId(ref v) => v.as_ref(),
+            Self::HashIdPreimageContractId(ref v) => v.as_ref(),
+            Self::HashIdPreimageFromAsset(ref v) => v.as_ref(),
+            Self::HashIdPreimageSourceAccountContractId(ref v) => v.as_ref(),
+            Self::HashIdPreimageCreateContractArgs(ref v) => v.as_ref(),
             Self::MemoType(ref v) => v.as_ref(),
             Self::Memo(ref v) => v.as_ref(),
             Self::TimeBounds(ref v) => v.as_ref(),
@@ -36587,6 +45641,8 @@ impl Type {
             Self::LiquidityPoolDepositResult(ref v) => v.as_ref(),
             Self::LiquidityPoolWithdrawResultCode(ref v) => v.as_ref(),
             Self::LiquidityPoolWithdrawResult(ref v) => v.as_ref(),
+            Self::InvokeHostFunctionResultCode(ref v) => v.as_ref(),
+            Self::InvokeHostFunctionResult(ref v) => v.as_ref(),
             Self::OperationResultCode(ref v) => v.as_ref(),
             Self::OperationResult(ref v) => v.as_ref(),
             Self::OperationResultTr(ref v) => v.as_ref(),
@@ -36614,6 +45670,7 @@ impl Type {
             Self::Signature(ref v) => v.as_ref(),
             Self::SignatureHint(ref v) => v.as_ref(),
             Self::NodeId(ref v) => v.as_ref(),
+            Self::AccountId(ref v) => v.as_ref(),
             Self::Curve25519Secret(ref v) => v.as_ref(),
             Self::Curve25519Public(ref v) => v.as_ref(),
             Self::HmacSha256Key(ref v) => v.as_ref(),
@@ -36636,11 +45693,55 @@ impl Type {
             Self::ScpStatementExternalize(_) => "ScpStatementExternalize",
             Self::ScpEnvelope(_) => "ScpEnvelope",
             Self::ScpQuorumSet(_) => "ScpQuorumSet",
+            Self::ScEnvMetaKind(_) => "ScEnvMetaKind",
+            Self::ScEnvMetaEntry(_) => "ScEnvMetaEntry",
+            Self::ScSpecType(_) => "ScSpecType",
+            Self::ScSpecTypeOption(_) => "ScSpecTypeOption",
+            Self::ScSpecTypeResult(_) => "ScSpecTypeResult",
+            Self::ScSpecTypeVec(_) => "ScSpecTypeVec",
+            Self::ScSpecTypeMap(_) => "ScSpecTypeMap",
+            Self::ScSpecTypeSet(_) => "ScSpecTypeSet",
+            Self::ScSpecTypeTuple(_) => "ScSpecTypeTuple",
+            Self::ScSpecTypeBytesN(_) => "ScSpecTypeBytesN",
+            Self::ScSpecTypeUdt(_) => "ScSpecTypeUdt",
+            Self::ScSpecTypeDef(_) => "ScSpecTypeDef",
+            Self::ScSpecUdtStructFieldV0(_) => "ScSpecUdtStructFieldV0",
+            Self::ScSpecUdtStructV0(_) => "ScSpecUdtStructV0",
+            Self::ScSpecUdtUnionCaseV0(_) => "ScSpecUdtUnionCaseV0",
+            Self::ScSpecUdtUnionV0(_) => "ScSpecUdtUnionV0",
+            Self::ScSpecUdtEnumCaseV0(_) => "ScSpecUdtEnumCaseV0",
+            Self::ScSpecUdtEnumV0(_) => "ScSpecUdtEnumV0",
+            Self::ScSpecUdtErrorEnumCaseV0(_) => "ScSpecUdtErrorEnumCaseV0",
+            Self::ScSpecUdtErrorEnumV0(_) => "ScSpecUdtErrorEnumV0",
+            Self::ScSpecFunctionInputV0(_) => "ScSpecFunctionInputV0",
+            Self::ScSpecFunctionV0(_) => "ScSpecFunctionV0",
+            Self::ScSpecEntryKind(_) => "ScSpecEntryKind",
+            Self::ScSpecEntry(_) => "ScSpecEntry",
+            Self::ScSymbol(_) => "ScSymbol",
+            Self::ScValType(_) => "ScValType",
+            Self::ScStatic(_) => "ScStatic",
+            Self::ScStatusType(_) => "ScStatusType",
+            Self::ScHostValErrorCode(_) => "ScHostValErrorCode",
+            Self::ScHostObjErrorCode(_) => "ScHostObjErrorCode",
+            Self::ScHostFnErrorCode(_) => "ScHostFnErrorCode",
+            Self::ScHostStorageErrorCode(_) => "ScHostStorageErrorCode",
+            Self::ScHostContextErrorCode(_) => "ScHostContextErrorCode",
+            Self::ScVmErrorCode(_) => "ScVmErrorCode",
+            Self::ScUnknownErrorCode(_) => "ScUnknownErrorCode",
+            Self::ScStatus(_) => "ScStatus",
+            Self::ScVal(_) => "ScVal",
+            Self::ScObjectType(_) => "ScObjectType",
+            Self::ScMapEntry(_) => "ScMapEntry",
+            Self::ScVec(_) => "ScVec",
+            Self::ScMap(_) => "ScMap",
+            Self::ScContractCodeType(_) => "ScContractCodeType",
+            Self::ScContractCode(_) => "ScContractCode",
+            Self::Int128Parts(_) => "Int128Parts",
+            Self::ScObject(_) => "ScObject",
             Self::StoredTransactionSet(_) => "StoredTransactionSet",
             Self::PersistedScpStateV0(_) => "PersistedScpStateV0",
             Self::PersistedScpStateV1(_) => "PersistedScpStateV1",
             Self::PersistedScpState(_) => "PersistedScpState",
-            Self::AccountId(_) => "AccountId",
             Self::Thresholds(_) => "Thresholds",
             Self::String32(_) => "String32",
             Self::String64(_) => "String64",
@@ -36702,6 +45803,13 @@ impl Type {
             Self::LiquidityPoolEntry(_) => "LiquidityPoolEntry",
             Self::LiquidityPoolEntryBody(_) => "LiquidityPoolEntryBody",
             Self::LiquidityPoolEntryConstantProduct(_) => "LiquidityPoolEntryConstantProduct",
+            Self::ContractDataEntry(_) => "ContractDataEntry",
+            Self::ContractCodeEntry(_) => "ContractCodeEntry",
+            Self::ConfigSettingType(_) => "ConfigSettingType",
+            Self::ConfigSetting(_) => "ConfigSetting",
+            Self::ConfigSettingId(_) => "ConfigSettingId",
+            Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
+            Self::ConfigSettingEntryExt(_) => "ConfigSettingEntryExt",
             Self::LedgerEntryExtensionV1(_) => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext(_) => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry(_) => "LedgerEntry",
@@ -36714,6 +45822,9 @@ impl Type {
             Self::LedgerKeyData(_) => "LedgerKeyData",
             Self::LedgerKeyClaimableBalance(_) => "LedgerKeyClaimableBalance",
             Self::LedgerKeyLiquidityPool(_) => "LedgerKeyLiquidityPool",
+            Self::LedgerKeyContractData(_) => "LedgerKeyContractData",
+            Self::LedgerKeyContractCode(_) => "LedgerKeyContractCode",
+            Self::LedgerKeyConfigSetting(_) => "LedgerKeyConfigSetting",
             Self::EnvelopeType(_) => "EnvelopeType",
             Self::UpgradeType(_) => "UpgradeType",
             Self::StellarValueType(_) => "StellarValueType",
@@ -36727,6 +45838,7 @@ impl Type {
             Self::LedgerHeaderExt(_) => "LedgerHeaderExt",
             Self::LedgerUpgradeType(_) => "LedgerUpgradeType",
             Self::LedgerUpgrade(_) => "LedgerUpgrade",
+            Self::LedgerUpgradeConfigSetting(_) => "LedgerUpgradeConfigSetting",
             Self::BucketEntryType(_) => "BucketEntryType",
             Self::BucketMetadata(_) => "BucketMetadata",
             Self::BucketMetadataExt(_) => "BucketMetadataExt",
@@ -36744,6 +45856,10 @@ impl Type {
             Self::TransactionHistoryEntryExt(_) => "TransactionHistoryEntryExt",
             Self::TransactionHistoryResultEntry(_) => "TransactionHistoryResultEntry",
             Self::TransactionHistoryResultEntryExt(_) => "TransactionHistoryResultEntryExt",
+            Self::TransactionResultPairV2(_) => "TransactionResultPairV2",
+            Self::TransactionResultSetV2(_) => "TransactionResultSetV2",
+            Self::TransactionHistoryResultEntryV2(_) => "TransactionHistoryResultEntryV2",
+            Self::TransactionHistoryResultEntryV2Ext(_) => "TransactionHistoryResultEntryV2Ext",
             Self::LedgerHeaderHistoryEntry(_) => "LedgerHeaderHistoryEntry",
             Self::LedgerHeaderHistoryEntryExt(_) => "LedgerHeaderHistoryEntryExt",
             Self::LedgerScpMessages(_) => "LedgerScpMessages",
@@ -36755,11 +45871,19 @@ impl Type {
             Self::OperationMeta(_) => "OperationMeta",
             Self::TransactionMetaV1(_) => "TransactionMetaV1",
             Self::TransactionMetaV2(_) => "TransactionMetaV2",
+            Self::ContractEventType(_) => "ContractEventType",
+            Self::ContractEvent(_) => "ContractEvent",
+            Self::ContractEventBody(_) => "ContractEventBody",
+            Self::ContractEventV0(_) => "ContractEventV0",
+            Self::OperationEvents(_) => "OperationEvents",
+            Self::TransactionMetaV3(_) => "TransactionMetaV3",
             Self::TransactionMeta(_) => "TransactionMeta",
             Self::TransactionResultMeta(_) => "TransactionResultMeta",
+            Self::TransactionResultMetaV2(_) => "TransactionResultMetaV2",
             Self::UpgradeEntryMeta(_) => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0(_) => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaV1(_) => "LedgerCloseMetaV1",
+            Self::LedgerCloseMetaV2(_) => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta(_) => "LedgerCloseMeta",
             Self::ErrorCode(_) => "ErrorCode",
             Self::SError(_) => "SError",
@@ -36793,6 +45917,7 @@ impl Type {
             Self::MuxedAccount(_) => "MuxedAccount",
             Self::MuxedAccountMed25519(_) => "MuxedAccountMed25519",
             Self::DecoratedSignature(_) => "DecoratedSignature",
+            Self::LedgerFootprint(_) => "LedgerFootprint",
             Self::OperationType(_) => "OperationType",
             Self::CreateAccountOp(_) => "CreateAccountOp",
             Self::PaymentOp(_) => "PaymentOp",
@@ -36818,11 +45943,27 @@ impl Type {
             Self::SetTrustLineFlagsOp(_) => "SetTrustLineFlagsOp",
             Self::LiquidityPoolDepositOp(_) => "LiquidityPoolDepositOp",
             Self::LiquidityPoolWithdrawOp(_) => "LiquidityPoolWithdrawOp",
+            Self::HostFunctionType(_) => "HostFunctionType",
+            Self::ContractIdType(_) => "ContractIdType",
+            Self::ContractIdPublicKeyType(_) => "ContractIdPublicKeyType",
+            Self::InstallContractCodeArgs(_) => "InstallContractCodeArgs",
+            Self::ContractId(_) => "ContractId",
+            Self::ContractIdFromEd25519PublicKey(_) => "ContractIdFromEd25519PublicKey",
+            Self::CreateContractArgs(_) => "CreateContractArgs",
+            Self::HostFunction(_) => "HostFunction",
+            Self::InvokeHostFunctionOp(_) => "InvokeHostFunctionOp",
             Self::Operation(_) => "Operation",
             Self::OperationBody(_) => "OperationBody",
             Self::HashIdPreimage(_) => "HashIdPreimage",
             Self::HashIdPreimageOperationId(_) => "HashIdPreimageOperationId",
             Self::HashIdPreimageRevokeId(_) => "HashIdPreimageRevokeId",
+            Self::HashIdPreimageEd25519ContractId(_) => "HashIdPreimageEd25519ContractId",
+            Self::HashIdPreimageContractId(_) => "HashIdPreimageContractId",
+            Self::HashIdPreimageFromAsset(_) => "HashIdPreimageFromAsset",
+            Self::HashIdPreimageSourceAccountContractId(_) => {
+                "HashIdPreimageSourceAccountContractId"
+            }
+            Self::HashIdPreimageCreateContractArgs(_) => "HashIdPreimageCreateContractArgs",
             Self::MemoType(_) => "MemoType",
             Self::Memo(_) => "Memo",
             Self::TimeBounds(_) => "TimeBounds",
@@ -36909,6 +46050,8 @@ impl Type {
             Self::LiquidityPoolDepositResult(_) => "LiquidityPoolDepositResult",
             Self::LiquidityPoolWithdrawResultCode(_) => "LiquidityPoolWithdrawResultCode",
             Self::LiquidityPoolWithdrawResult(_) => "LiquidityPoolWithdrawResult",
+            Self::InvokeHostFunctionResultCode(_) => "InvokeHostFunctionResultCode",
+            Self::InvokeHostFunctionResult(_) => "InvokeHostFunctionResult",
             Self::OperationResultCode(_) => "OperationResultCode",
             Self::OperationResult(_) => "OperationResult",
             Self::OperationResultTr(_) => "OperationResultTr",
@@ -36936,6 +46079,7 @@ impl Type {
             Self::Signature(_) => "Signature",
             Self::SignatureHint(_) => "SignatureHint",
             Self::NodeId(_) => "NodeId",
+            Self::AccountId(_) => "AccountId",
             Self::Curve25519Secret(_) => "Curve25519Secret",
             Self::Curve25519Public(_) => "Curve25519Public",
             Self::HmacSha256Key(_) => "HmacSha256Key",
@@ -36945,7 +46089,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 305] {
+    pub const fn variants() -> [TypeVariant; 390] {
         Self::VARIANTS
     }
 
@@ -36964,11 +46108,55 @@ impl Type {
             Self::ScpStatementExternalize(_) => TypeVariant::ScpStatementExternalize,
             Self::ScpEnvelope(_) => TypeVariant::ScpEnvelope,
             Self::ScpQuorumSet(_) => TypeVariant::ScpQuorumSet,
+            Self::ScEnvMetaKind(_) => TypeVariant::ScEnvMetaKind,
+            Self::ScEnvMetaEntry(_) => TypeVariant::ScEnvMetaEntry,
+            Self::ScSpecType(_) => TypeVariant::ScSpecType,
+            Self::ScSpecTypeOption(_) => TypeVariant::ScSpecTypeOption,
+            Self::ScSpecTypeResult(_) => TypeVariant::ScSpecTypeResult,
+            Self::ScSpecTypeVec(_) => TypeVariant::ScSpecTypeVec,
+            Self::ScSpecTypeMap(_) => TypeVariant::ScSpecTypeMap,
+            Self::ScSpecTypeSet(_) => TypeVariant::ScSpecTypeSet,
+            Self::ScSpecTypeTuple(_) => TypeVariant::ScSpecTypeTuple,
+            Self::ScSpecTypeBytesN(_) => TypeVariant::ScSpecTypeBytesN,
+            Self::ScSpecTypeUdt(_) => TypeVariant::ScSpecTypeUdt,
+            Self::ScSpecTypeDef(_) => TypeVariant::ScSpecTypeDef,
+            Self::ScSpecUdtStructFieldV0(_) => TypeVariant::ScSpecUdtStructFieldV0,
+            Self::ScSpecUdtStructV0(_) => TypeVariant::ScSpecUdtStructV0,
+            Self::ScSpecUdtUnionCaseV0(_) => TypeVariant::ScSpecUdtUnionCaseV0,
+            Self::ScSpecUdtUnionV0(_) => TypeVariant::ScSpecUdtUnionV0,
+            Self::ScSpecUdtEnumCaseV0(_) => TypeVariant::ScSpecUdtEnumCaseV0,
+            Self::ScSpecUdtEnumV0(_) => TypeVariant::ScSpecUdtEnumV0,
+            Self::ScSpecUdtErrorEnumCaseV0(_) => TypeVariant::ScSpecUdtErrorEnumCaseV0,
+            Self::ScSpecUdtErrorEnumV0(_) => TypeVariant::ScSpecUdtErrorEnumV0,
+            Self::ScSpecFunctionInputV0(_) => TypeVariant::ScSpecFunctionInputV0,
+            Self::ScSpecFunctionV0(_) => TypeVariant::ScSpecFunctionV0,
+            Self::ScSpecEntryKind(_) => TypeVariant::ScSpecEntryKind,
+            Self::ScSpecEntry(_) => TypeVariant::ScSpecEntry,
+            Self::ScSymbol(_) => TypeVariant::ScSymbol,
+            Self::ScValType(_) => TypeVariant::ScValType,
+            Self::ScStatic(_) => TypeVariant::ScStatic,
+            Self::ScStatusType(_) => TypeVariant::ScStatusType,
+            Self::ScHostValErrorCode(_) => TypeVariant::ScHostValErrorCode,
+            Self::ScHostObjErrorCode(_) => TypeVariant::ScHostObjErrorCode,
+            Self::ScHostFnErrorCode(_) => TypeVariant::ScHostFnErrorCode,
+            Self::ScHostStorageErrorCode(_) => TypeVariant::ScHostStorageErrorCode,
+            Self::ScHostContextErrorCode(_) => TypeVariant::ScHostContextErrorCode,
+            Self::ScVmErrorCode(_) => TypeVariant::ScVmErrorCode,
+            Self::ScUnknownErrorCode(_) => TypeVariant::ScUnknownErrorCode,
+            Self::ScStatus(_) => TypeVariant::ScStatus,
+            Self::ScVal(_) => TypeVariant::ScVal,
+            Self::ScObjectType(_) => TypeVariant::ScObjectType,
+            Self::ScMapEntry(_) => TypeVariant::ScMapEntry,
+            Self::ScVec(_) => TypeVariant::ScVec,
+            Self::ScMap(_) => TypeVariant::ScMap,
+            Self::ScContractCodeType(_) => TypeVariant::ScContractCodeType,
+            Self::ScContractCode(_) => TypeVariant::ScContractCode,
+            Self::Int128Parts(_) => TypeVariant::Int128Parts,
+            Self::ScObject(_) => TypeVariant::ScObject,
             Self::StoredTransactionSet(_) => TypeVariant::StoredTransactionSet,
             Self::PersistedScpStateV0(_) => TypeVariant::PersistedScpStateV0,
             Self::PersistedScpStateV1(_) => TypeVariant::PersistedScpStateV1,
             Self::PersistedScpState(_) => TypeVariant::PersistedScpState,
-            Self::AccountId(_) => TypeVariant::AccountId,
             Self::Thresholds(_) => TypeVariant::Thresholds,
             Self::String32(_) => TypeVariant::String32,
             Self::String64(_) => TypeVariant::String64,
@@ -37036,6 +46224,13 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(_) => {
                 TypeVariant::LiquidityPoolEntryConstantProduct
             }
+            Self::ContractDataEntry(_) => TypeVariant::ContractDataEntry,
+            Self::ContractCodeEntry(_) => TypeVariant::ContractCodeEntry,
+            Self::ConfigSettingType(_) => TypeVariant::ConfigSettingType,
+            Self::ConfigSetting(_) => TypeVariant::ConfigSetting,
+            Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
+            Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
+            Self::ConfigSettingEntryExt(_) => TypeVariant::ConfigSettingEntryExt,
             Self::LedgerEntryExtensionV1(_) => TypeVariant::LedgerEntryExtensionV1,
             Self::LedgerEntryExtensionV1Ext(_) => TypeVariant::LedgerEntryExtensionV1Ext,
             Self::LedgerEntry(_) => TypeVariant::LedgerEntry,
@@ -37048,6 +46243,9 @@ impl Type {
             Self::LedgerKeyData(_) => TypeVariant::LedgerKeyData,
             Self::LedgerKeyClaimableBalance(_) => TypeVariant::LedgerKeyClaimableBalance,
             Self::LedgerKeyLiquidityPool(_) => TypeVariant::LedgerKeyLiquidityPool,
+            Self::LedgerKeyContractData(_) => TypeVariant::LedgerKeyContractData,
+            Self::LedgerKeyContractCode(_) => TypeVariant::LedgerKeyContractCode,
+            Self::LedgerKeyConfigSetting(_) => TypeVariant::LedgerKeyConfigSetting,
             Self::EnvelopeType(_) => TypeVariant::EnvelopeType,
             Self::UpgradeType(_) => TypeVariant::UpgradeType,
             Self::StellarValueType(_) => TypeVariant::StellarValueType,
@@ -37061,6 +46259,7 @@ impl Type {
             Self::LedgerHeaderExt(_) => TypeVariant::LedgerHeaderExt,
             Self::LedgerUpgradeType(_) => TypeVariant::LedgerUpgradeType,
             Self::LedgerUpgrade(_) => TypeVariant::LedgerUpgrade,
+            Self::LedgerUpgradeConfigSetting(_) => TypeVariant::LedgerUpgradeConfigSetting,
             Self::BucketEntryType(_) => TypeVariant::BucketEntryType,
             Self::BucketMetadata(_) => TypeVariant::BucketMetadata,
             Self::BucketMetadataExt(_) => TypeVariant::BucketMetadataExt,
@@ -37082,6 +46281,14 @@ impl Type {
             Self::TransactionHistoryResultEntryExt(_) => {
                 TypeVariant::TransactionHistoryResultEntryExt
             }
+            Self::TransactionResultPairV2(_) => TypeVariant::TransactionResultPairV2,
+            Self::TransactionResultSetV2(_) => TypeVariant::TransactionResultSetV2,
+            Self::TransactionHistoryResultEntryV2(_) => {
+                TypeVariant::TransactionHistoryResultEntryV2
+            }
+            Self::TransactionHistoryResultEntryV2Ext(_) => {
+                TypeVariant::TransactionHistoryResultEntryV2Ext
+            }
             Self::LedgerHeaderHistoryEntry(_) => TypeVariant::LedgerHeaderHistoryEntry,
             Self::LedgerHeaderHistoryEntryExt(_) => TypeVariant::LedgerHeaderHistoryEntryExt,
             Self::LedgerScpMessages(_) => TypeVariant::LedgerScpMessages,
@@ -37093,11 +46300,19 @@ impl Type {
             Self::OperationMeta(_) => TypeVariant::OperationMeta,
             Self::TransactionMetaV1(_) => TypeVariant::TransactionMetaV1,
             Self::TransactionMetaV2(_) => TypeVariant::TransactionMetaV2,
+            Self::ContractEventType(_) => TypeVariant::ContractEventType,
+            Self::ContractEvent(_) => TypeVariant::ContractEvent,
+            Self::ContractEventBody(_) => TypeVariant::ContractEventBody,
+            Self::ContractEventV0(_) => TypeVariant::ContractEventV0,
+            Self::OperationEvents(_) => TypeVariant::OperationEvents,
+            Self::TransactionMetaV3(_) => TypeVariant::TransactionMetaV3,
             Self::TransactionMeta(_) => TypeVariant::TransactionMeta,
             Self::TransactionResultMeta(_) => TypeVariant::TransactionResultMeta,
+            Self::TransactionResultMetaV2(_) => TypeVariant::TransactionResultMetaV2,
             Self::UpgradeEntryMeta(_) => TypeVariant::UpgradeEntryMeta,
             Self::LedgerCloseMetaV0(_) => TypeVariant::LedgerCloseMetaV0,
             Self::LedgerCloseMetaV1(_) => TypeVariant::LedgerCloseMetaV1,
+            Self::LedgerCloseMetaV2(_) => TypeVariant::LedgerCloseMetaV2,
             Self::LedgerCloseMeta(_) => TypeVariant::LedgerCloseMeta,
             Self::ErrorCode(_) => TypeVariant::ErrorCode,
             Self::SError(_) => TypeVariant::SError,
@@ -37131,6 +46346,7 @@ impl Type {
             Self::MuxedAccount(_) => TypeVariant::MuxedAccount,
             Self::MuxedAccountMed25519(_) => TypeVariant::MuxedAccountMed25519,
             Self::DecoratedSignature(_) => TypeVariant::DecoratedSignature,
+            Self::LedgerFootprint(_) => TypeVariant::LedgerFootprint,
             Self::OperationType(_) => TypeVariant::OperationType,
             Self::CreateAccountOp(_) => TypeVariant::CreateAccountOp,
             Self::PaymentOp(_) => TypeVariant::PaymentOp,
@@ -37158,11 +46374,31 @@ impl Type {
             Self::SetTrustLineFlagsOp(_) => TypeVariant::SetTrustLineFlagsOp,
             Self::LiquidityPoolDepositOp(_) => TypeVariant::LiquidityPoolDepositOp,
             Self::LiquidityPoolWithdrawOp(_) => TypeVariant::LiquidityPoolWithdrawOp,
+            Self::HostFunctionType(_) => TypeVariant::HostFunctionType,
+            Self::ContractIdType(_) => TypeVariant::ContractIdType,
+            Self::ContractIdPublicKeyType(_) => TypeVariant::ContractIdPublicKeyType,
+            Self::InstallContractCodeArgs(_) => TypeVariant::InstallContractCodeArgs,
+            Self::ContractId(_) => TypeVariant::ContractId,
+            Self::ContractIdFromEd25519PublicKey(_) => TypeVariant::ContractIdFromEd25519PublicKey,
+            Self::CreateContractArgs(_) => TypeVariant::CreateContractArgs,
+            Self::HostFunction(_) => TypeVariant::HostFunction,
+            Self::InvokeHostFunctionOp(_) => TypeVariant::InvokeHostFunctionOp,
             Self::Operation(_) => TypeVariant::Operation,
             Self::OperationBody(_) => TypeVariant::OperationBody,
             Self::HashIdPreimage(_) => TypeVariant::HashIdPreimage,
             Self::HashIdPreimageOperationId(_) => TypeVariant::HashIdPreimageOperationId,
             Self::HashIdPreimageRevokeId(_) => TypeVariant::HashIdPreimageRevokeId,
+            Self::HashIdPreimageEd25519ContractId(_) => {
+                TypeVariant::HashIdPreimageEd25519ContractId
+            }
+            Self::HashIdPreimageContractId(_) => TypeVariant::HashIdPreimageContractId,
+            Self::HashIdPreimageFromAsset(_) => TypeVariant::HashIdPreimageFromAsset,
+            Self::HashIdPreimageSourceAccountContractId(_) => {
+                TypeVariant::HashIdPreimageSourceAccountContractId
+            }
+            Self::HashIdPreimageCreateContractArgs(_) => {
+                TypeVariant::HashIdPreimageCreateContractArgs
+            }
             Self::MemoType(_) => TypeVariant::MemoType,
             Self::Memo(_) => TypeVariant::Memo,
             Self::TimeBounds(_) => TypeVariant::TimeBounds,
@@ -37267,6 +46503,8 @@ impl Type {
                 TypeVariant::LiquidityPoolWithdrawResultCode
             }
             Self::LiquidityPoolWithdrawResult(_) => TypeVariant::LiquidityPoolWithdrawResult,
+            Self::InvokeHostFunctionResultCode(_) => TypeVariant::InvokeHostFunctionResultCode,
+            Self::InvokeHostFunctionResult(_) => TypeVariant::InvokeHostFunctionResult,
             Self::OperationResultCode(_) => TypeVariant::OperationResultCode,
             Self::OperationResult(_) => TypeVariant::OperationResult,
             Self::OperationResultTr(_) => TypeVariant::OperationResultTr,
@@ -37294,6 +46532,7 @@ impl Type {
             Self::Signature(_) => TypeVariant::Signature,
             Self::SignatureHint(_) => TypeVariant::SignatureHint,
             Self::NodeId(_) => TypeVariant::NodeId,
+            Self::AccountId(_) => TypeVariant::AccountId,
             Self::Curve25519Secret(_) => TypeVariant::Curve25519Secret,
             Self::Curve25519Public(_) => TypeVariant::Curve25519Public,
             Self::HmacSha256Key(_) => TypeVariant::HmacSha256Key,

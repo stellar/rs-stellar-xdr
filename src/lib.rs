@@ -75,17 +75,17 @@
 //! #### Examples
 //!
 //! Parse a `TransactionEnvelope`:
-//! ```
+//! ```console
 //! echo -n 'AAAAA...' | stellar-xdr decode --type TransactionEnvelope
 //! ```
 //!
 //! Parse a `ScSpecEntry` stream from a contract:
-//! ```
+//! ```console
 //! echo -n 'AAAAA...' | stellar-xdr +next decode --type ScSpecEntry --input stream-base64 --output json-formatted
 //! ```
 //!
 //! Parse a `BucketEntry` framed stream from a bucket file:
-//! ```
+//! ```console
 //! stellar-xdr decode --type BucketEntry --input stream-framed --output json-formatted bucket.xdr
 //! ```
 

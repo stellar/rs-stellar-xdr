@@ -66,7 +66,7 @@ jobs:
       run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
     - if: "!github.ref_protected"
       run: echo 'CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary' >> $GITHUB_ENV
-    - run: make build
+    - run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
 
   test:
     strategy:
@@ -94,7 +94,7 @@ jobs:
       run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
     - if: "!github.ref_protected"
       run: echo 'CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary' >> $GITHUB_ENV
-    - run: make test
+    - run: cargo hack test $CARGO_HACK_ARGS
 
   publish-dry-run:
     if: startsWith(github.head_ref, 'release/')

@@ -1,4 +1,7 @@
-#![cfg(all(any(feature = "curr", feature = "next"), not(all(feature = "curr", feature = "next"))))]
+#![cfg(all(
+    any(feature = "curr", feature = "next"),
+    not(all(feature = "curr", feature = "next"))
+))]
 #![cfg(all(feature = "std", feature = "serde"))]
 
 use stellar_xdr::{BytesM, Hash, StringM, VecM};

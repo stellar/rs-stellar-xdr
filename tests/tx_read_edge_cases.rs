@@ -1,4 +1,7 @@
-#![cfg(all(any(feature = "curr", feature = "next"), not(all(feature = "curr", feature = "next"))))]
+#![cfg(all(
+    any(feature = "curr", feature = "next"),
+    not(all(feature = "curr", feature = "next"))
+))]
 #![cfg(all(feature = "std", feature = "base64"))]
 
 use std::io::{self, Cursor};

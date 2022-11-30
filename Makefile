@@ -11,7 +11,13 @@ test:
 
 build: generate
 	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets
-	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets --release --target wasm32-unknown-unknown
+	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets --release --target wasm32-unknown-unknown --exclude-features cli
+
+install-curr:
+	cargo install --path . --force --features cli
+
+install-next:
+	cargo install --path . --force --features cli,next
 
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'

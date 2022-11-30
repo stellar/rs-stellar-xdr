@@ -1,5 +1,4 @@
 use std::{
-    error::Error,
     fs::File,
     io::{stdin, Read},
     path::PathBuf,
@@ -10,6 +9,20 @@ use clap::{Args, ValueEnum};
 use serde::Serialize;
 
 use crate::Channel;
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("unknown type {0}, choose one of {1:?}")]
+    UnknownType(String, &'static [&'static str]),
+    #[error("error decoding XDR: {0}")]
+    ReadXdrCurr(#[from] stellar_xdr::curr::Error),
+    #[error("error decoding XDR: {0}")]
+    ReadXdrNext(#[from] stellar_xdr::next::Error),
+    #[error("error reading file: {0}")]
+    ReadFile(#[from] std::io::Error),
+    #[error("error generating JSON: {0}")]
+    GenerateJson(#[from] serde_json::Error),
+}
 
 #[derive(Args, Debug, Clone)]
 #[command()]
@@ -60,9 +73,14 @@ impl Default for OutputFormat {
 
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
-        fn $f(&self) -> Result<(), Box<dyn Error>> {
+        fn $f(&self) -> Result<(), Error> {
             let mut files = self.files()?;
-            let r#type = stellar_xdr::$m::TypeVariant::from_str(&self.r#type)?;
+            let r#type = stellar_xdr::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
+                Error::UnknownType(
+                    self.r#type.clone(),
+                    &stellar_xdr::$m::TypeVariant::VARIANTS_STR,
+                )
+            })?;
             for f in &mut files {
                 match self.input {
                     InputFormat::Single => {
@@ -96,7 +114,7 @@ macro_rules! run_x {
 }
 
 impl Cmd {
-    pub fn run(&self, channel: &Channel) -> Result<(), Box<dyn Error>> {
+    pub fn run(&self, channel: &Channel) -> Result<(), Error> {
         match channel {
             Channel::Curr => self.run_curr()?,
             Channel::Next => self.run_next()?,
@@ -107,7 +125,7 @@ impl Cmd {
     run_x!(run_curr, curr);
     run_x!(run_next, next);
 
-    fn files(&self) -> Result<Vec<Box<dyn Read>>, Box<dyn Error>> {
+    fn files(&self) -> Result<Vec<Box<dyn Read>>, Error> {
         if self.files.is_empty() {
             Ok(vec![Box::new(stdin())])
         } else {
@@ -122,7 +140,7 @@ impl Cmd {
         }
     }
 
-    fn out(&self, v: &impl Serialize) -> Result<(), Box<dyn Error>> {
+    fn out(&self, v: &impl Serialize) -> Result<(), Error> {
         match self.output {
             OutputFormat::Json => println!("{}", serde_json::to_string(v)?),
             OutputFormat::JsonFormatted => println!("{}", serde_json::to_string_pretty(v)?),

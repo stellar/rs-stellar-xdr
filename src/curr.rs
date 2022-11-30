@@ -90,6 +90,7 @@ use std::{
 #[derive(Debug)]
 pub enum Error {
     Invalid,
+    Unsupported,
     LengthExceedsMax,
     LengthMismatch,
     NonZeroPadding,
@@ -132,6 +133,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::Invalid => write!(f, "xdr value invalid"),
+            Error::Unsupported => write!(f, "xdr value unsupported"),
             Error::LengthExceedsMax => write!(f, "xdr value max length exceeded"),
             Error::LengthMismatch => write!(f, "xdr value length does not match"),
             Error::NonZeroPadding => write!(f, "xdr padding contains non-zero bytes"),
@@ -212,14 +214,14 @@ where
 }
 
 #[cfg(feature = "std")]
-pub struct ReadXdrIter<'r, R: Read, S: ReadXdr> {
-    reader: BufReader<&'r mut R>,
+pub struct ReadXdrIter<R: Read, S: ReadXdr> {
+    reader: BufReader<R>,
     _s: PhantomData<S>,
 }
 
 #[cfg(feature = "std")]
-impl<'r, R: Read, S: ReadXdr> ReadXdrIter<'r, R, S> {
-    fn new(r: &'r mut R) -> Self {
+impl<R: Read, S: ReadXdr> ReadXdrIter<R, S> {
+    fn new(r: R) -> Self {
         Self {
             reader: BufReader::new(r),
             _s: PhantomData,
@@ -228,7 +230,7 @@ impl<'r, R: Read, S: ReadXdr> ReadXdrIter<'r, R, S> {
 }
 
 #[cfg(feature = "std")]
-impl<'r, R: Read, S: ReadXdr> Iterator for ReadXdrIter<'r, R, S> {
+impl<R: Read, S: ReadXdr> Iterator for ReadXdrIter<R, S> {
     type Item = Result<S>;
 
     // Next reads the internal reader and XDR decodes it into the Self type. If
@@ -283,6 +285,17 @@ where
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self>;
 
+    /// Construct the type from the XDR bytes base64 encoded.
+    ///
+    /// An error is returned if the bytes are not completely consumed by the
+    /// deserialization.
+    #[cfg(feature = "base64")]
+    fn read_xdr_base64(r: &mut impl Read) -> Result<Self> {
+        let mut dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+        let t = Self::read_xdr(&mut dec)?;
+        Ok(t)
+    }
+
     /// Read the XDR and construct the type, and consider it an error if the
     /// read does not completely consume the read implementation.
     ///
@@ -311,6 +324,17 @@ where
         } else {
             Err(Error::Invalid)
         }
+    }
+
+    /// Construct the type from the XDR bytes base64 encoded.
+    ///
+    /// An error is returned if the bytes are not completely consumed by the
+    /// deserialization.
+    #[cfg(feature = "base64")]
+    fn read_xdr_base64_to_end(r: &mut impl Read) -> Result<Self> {
+        let mut dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+        let t = Self::read_xdr_to_end(&mut dec)?;
+        Ok(t)
     }
 
     /// Read the XDR and construct the type.
@@ -382,8 +406,18 @@ where
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
     #[cfg(feature = "std")]
-    fn read_xdr_iter<R: Read>(r: &mut R) -> ReadXdrIter<R, Self> {
+    fn read_xdr_iter<R: Read>(r: &mut R) -> ReadXdrIter<&mut R, Self> {
         ReadXdrIter::new(r)
+    }
+
+    /// Create an iterator that reads the read implementation as a stream of
+    /// values that are read into the implementing type.
+    #[cfg(feature = "base64")]
+    fn read_xdr_base64_iter<R: Read>(
+        r: &mut R,
+    ) -> ReadXdrIter<base64::read::DecoderReader<R>, Self> {
+        let dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+        ReadXdrIter::new(dec)
     }
 
     /// Construct the type from the XDR bytes.
@@ -1791,6 +1825,42 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
     }
 }
 
+// Frame ------------------------------------------------------------------------
+
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct Frame<T>(pub T)
+where
+    T: ReadXdr;
+
+impl<T> ReadXdr for Frame<T>
+where
+    T: ReadXdr,
+{
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        // Read the frame header value that contains 1 flag-bit and a 33-bit length.
+        //  - The 1 flag bit is 0 when there are more frames for the same record.
+        //  - The 31-bit length is the length of the bytes within the frame that
+        //  follow the frame header.
+        let header = u32::read_xdr(r)?;
+        // TODO: Use the length and cap the length we'll read from `r`.
+        let last_record = header >> 31 == 1;
+        if last_record {
+            // Read the record in the frame.
+            Ok(Self(T::read_xdr(r)?))
+        } else {
+            // TODO: Support reading those additional frames for the same
+            // record.
+            Err(Error::Unsupported)
+        }
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use std::io::Cursor;
@@ -1956,7 +2026,7 @@ mod test {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Value(pub BytesM);
 
@@ -2059,7 +2129,7 @@ impl AsRef<[u8]> for Value {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpBallot {
     pub counter: u32,
@@ -2101,7 +2171,7 @@ impl WriteXdr for ScpBallot {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ScpStatementType {
@@ -2211,7 +2281,7 @@ impl WriteXdr for ScpStatementType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpNomination {
     pub quorum_set_hash: Hash,
@@ -2257,7 +2327,7 @@ impl WriteXdr for ScpNomination {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpStatementPrepare {
     pub quorum_set_hash: Hash,
@@ -2311,7 +2381,7 @@ impl WriteXdr for ScpStatementPrepare {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpStatementConfirm {
     pub ballot: ScpBallot,
@@ -2360,7 +2430,7 @@ impl WriteXdr for ScpStatementConfirm {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpStatementExternalize {
     pub commit: ScpBallot,
@@ -2429,7 +2499,7 @@ impl WriteXdr for ScpStatementExternalize {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpStatementPledges {
@@ -2577,7 +2647,7 @@ impl WriteXdr for ScpStatementPledges {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpStatement {
     pub node_id: NodeId,
@@ -2619,7 +2689,7 @@ impl WriteXdr for ScpStatement {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpEnvelope {
     pub statement: ScpStatement,
@@ -2659,7 +2729,7 @@ impl WriteXdr for ScpEnvelope {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpQuorumSet {
     pub threshold: u32,
@@ -2704,7 +2774,7 @@ impl WriteXdr for ScpQuorumSet {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum StoredTransactionSet {
@@ -2803,7 +2873,7 @@ impl WriteXdr for StoredTransactionSet {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PersistedScpStateV0 {
     pub scp_envelopes: VecM<ScpEnvelope>,
@@ -2846,7 +2916,7 @@ impl WriteXdr for PersistedScpStateV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PersistedScpStateV1 {
     pub scp_envelopes: VecM<ScpEnvelope>,
@@ -2888,7 +2958,7 @@ impl WriteXdr for PersistedScpStateV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PersistedScpState {
@@ -2983,7 +3053,7 @@ impl WriteXdr for PersistedScpState {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AccountId(pub PublicKey);
 
@@ -3161,7 +3231,7 @@ pub type String64 = StringM<64>;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SequenceNumber(pub i64);
 
@@ -3212,7 +3282,7 @@ impl WriteXdr for SequenceNumber {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TimePoint(pub u64);
 
@@ -3263,7 +3333,7 @@ impl WriteXdr for TimePoint {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Duration(pub u64);
 
@@ -3314,7 +3384,7 @@ impl WriteXdr for Duration {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct DataValue(pub BytesM<64>);
 
@@ -3414,7 +3484,7 @@ impl AsRef<[u8]> for DataValue {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PoolId(pub Hash);
 
@@ -3701,7 +3771,7 @@ impl AsRef<[u8]> for AssetCode12 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum AssetType {
@@ -3817,7 +3887,7 @@ impl WriteXdr for AssetType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AssetCode {
@@ -3915,7 +3985,7 @@ impl WriteXdr for AssetCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AlphaNum4 {
     pub asset_code: AssetCode4,
@@ -3954,7 +4024,7 @@ impl WriteXdr for AlphaNum4 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AlphaNum12 {
     pub asset_code: AssetCode12,
@@ -4002,7 +4072,7 @@ impl WriteXdr for AlphaNum12 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum Asset {
@@ -4109,7 +4179,7 @@ impl WriteXdr for Asset {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Price {
     pub n: i32,
@@ -4148,7 +4218,7 @@ impl WriteXdr for Price {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Liabilities {
     pub buying: i64,
@@ -4190,7 +4260,7 @@ impl WriteXdr for Liabilities {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ThresholdIndexes {
@@ -4304,7 +4374,7 @@ impl WriteXdr for ThresholdIndexes {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LedgerEntryType {
@@ -4428,7 +4498,7 @@ impl WriteXdr for LedgerEntryType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Signer {
     pub key: SignerKey,
@@ -4480,7 +4550,7 @@ impl WriteXdr for Signer {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum AccountFlags {
@@ -4609,7 +4679,7 @@ pub const MAX_SIGNERS: u64 = 20;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SponsorshipDescriptor(pub Option<AccountId>);
 
@@ -4670,7 +4740,7 @@ impl WriteXdr for SponsorshipDescriptor {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AccountEntryExtensionV3 {
     pub ext: ExtensionPoint,
@@ -4715,7 +4785,7 @@ impl WriteXdr for AccountEntryExtensionV3 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExtensionV2Ext {
@@ -4823,7 +4893,7 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AccountEntryExtensionV2 {
     pub num_sponsored: u32,
@@ -4871,7 +4941,7 @@ impl WriteXdr for AccountEntryExtensionV2 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExtensionV1Ext {
@@ -4977,7 +5047,7 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AccountEntryExtensionV1 {
     pub liabilities: Liabilities,
@@ -5019,7 +5089,7 @@ impl WriteXdr for AccountEntryExtensionV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExt {
@@ -5140,7 +5210,7 @@ impl WriteXdr for AccountEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AccountEntry {
     pub account_id: AccountId,
@@ -5210,7 +5280,7 @@ impl WriteXdr for AccountEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum TrustLineFlags {
@@ -5337,7 +5407,7 @@ pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LiquidityPoolType {
@@ -5444,7 +5514,7 @@ impl WriteXdr for LiquidityPoolType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineAsset {
@@ -5559,7 +5629,7 @@ impl WriteXdr for TrustLineAsset {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryExtensionV2Ext {
@@ -5658,7 +5728,7 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TrustLineEntryExtensionV2 {
     pub liquidity_pool_use_count: i32,
@@ -5700,7 +5770,7 @@ impl WriteXdr for TrustLineEntryExtensionV2 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryV1Ext {
@@ -5806,7 +5876,7 @@ impl WriteXdr for TrustLineEntryV1Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TrustLineEntryV1 {
     pub liabilities: Liabilities,
@@ -5860,7 +5930,7 @@ impl WriteXdr for TrustLineEntryV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryExt {
@@ -5985,7 +6055,7 @@ impl WriteXdr for TrustLineEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TrustLineEntry {
     pub account_id: AccountId,
@@ -6038,7 +6108,7 @@ impl WriteXdr for TrustLineEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum OfferEntryFlags {
@@ -6140,7 +6210,7 @@ pub const MASK_OFFERENTRY_FLAGS: u64 = 1;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum OfferEntryExt {
@@ -6252,7 +6322,7 @@ impl WriteXdr for OfferEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct OfferEntry {
     pub seller_id: AccountId,
@@ -6310,7 +6380,7 @@ impl WriteXdr for OfferEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum DataEntryExt {
@@ -6412,7 +6482,7 @@ impl WriteXdr for DataEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct DataEntry {
     pub account_id: AccountId,
@@ -6462,7 +6532,7 @@ impl WriteXdr for DataEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimPredicateType {
@@ -6598,7 +6668,7 @@ impl WriteXdr for ClaimPredicateType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimPredicate {
@@ -6730,7 +6800,7 @@ impl WriteXdr for ClaimPredicate {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimantType {
@@ -6825,7 +6895,7 @@ impl WriteXdr for ClaimantType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimantV0 {
     pub destination: AccountId,
@@ -6869,7 +6939,7 @@ impl WriteXdr for ClaimantV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum Claimant {
@@ -6962,7 +7032,7 @@ impl WriteXdr for Claimant {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimableBalanceIdType {
@@ -7059,7 +7129,7 @@ impl WriteXdr for ClaimableBalanceIdType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceId {
@@ -7157,7 +7227,7 @@ impl WriteXdr for ClaimableBalanceId {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimableBalanceFlags {
@@ -7260,7 +7330,7 @@ pub const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceEntryExtensionV1Ext {
@@ -7359,7 +7429,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimableBalanceEntryExtensionV1 {
     pub ext: ClaimableBalanceEntryExtensionV1Ext,
@@ -7401,7 +7471,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceEntryExt {
@@ -7518,7 +7588,7 @@ impl WriteXdr for ClaimableBalanceEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimableBalanceEntry {
     pub balance_id: ClaimableBalanceId,
@@ -7567,7 +7637,7 @@ impl WriteXdr for ClaimableBalanceEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolConstantProductParameters {
     pub asset_a: Asset,
@@ -7614,7 +7684,7 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolEntryConstantProduct {
     pub params: LiquidityPoolConstantProductParameters,
@@ -7672,7 +7742,7 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolEntryBody {
@@ -7784,7 +7854,7 @@ impl WriteXdr for LiquidityPoolEntryBody {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolEntry {
     pub liquidity_pool_id: PoolId,
@@ -7824,7 +7894,7 @@ impl WriteXdr for LiquidityPoolEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryExtensionV1Ext {
@@ -7923,7 +7993,7 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerEntryExtensionV1 {
     pub sponsoring_id: SponsorshipDescriptor,
@@ -7973,7 +8043,7 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryData {
@@ -8110,7 +8180,7 @@ impl WriteXdr for LedgerEntryData {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryExt {
@@ -8234,7 +8304,7 @@ impl WriteXdr for LedgerEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerEntry {
     pub last_modified_ledger_seq: u32,
@@ -8275,7 +8345,7 @@ impl WriteXdr for LedgerEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyAccount {
     pub account_id: AccountId,
@@ -8311,7 +8381,7 @@ impl WriteXdr for LedgerKeyAccount {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyTrustLine {
     pub account_id: AccountId,
@@ -8350,7 +8420,7 @@ impl WriteXdr for LedgerKeyTrustLine {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyOffer {
     pub seller_id: AccountId,
@@ -8389,7 +8459,7 @@ impl WriteXdr for LedgerKeyOffer {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyData {
     pub account_id: AccountId,
@@ -8427,7 +8497,7 @@ impl WriteXdr for LedgerKeyData {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyClaimableBalance {
     pub balance_id: ClaimableBalanceId,
@@ -8462,7 +8532,7 @@ impl WriteXdr for LedgerKeyClaimableBalance {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyLiquidityPool {
     pub liquidity_pool_id: PoolId,
@@ -8535,7 +8605,7 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerKey {
@@ -8678,7 +8748,7 @@ impl WriteXdr for LedgerKey {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum EnvelopeType {
@@ -8809,7 +8879,7 @@ impl WriteXdr for EnvelopeType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct UpgradeType(pub BytesM<128>);
 
@@ -8913,7 +8983,7 @@ impl AsRef<[u8]> for UpgradeType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum StellarValueType {
@@ -9011,7 +9081,7 @@ impl WriteXdr for StellarValueType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerCloseValueSignature {
     pub node_id: NodeId,
@@ -9053,7 +9123,7 @@ impl WriteXdr for LedgerCloseValueSignature {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum StellarValueExt {
@@ -9168,7 +9238,7 @@ impl WriteXdr for StellarValueExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct StellarValue {
     pub tx_set_hash: Hash,
@@ -9221,7 +9291,7 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LedgerHeaderFlags {
@@ -9327,7 +9397,7 @@ impl WriteXdr for LedgerHeaderFlags {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderExtensionV1Ext {
@@ -9426,7 +9496,7 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerHeaderExtensionV1 {
     pub flags: u32,
@@ -9468,7 +9538,7 @@ impl WriteXdr for LedgerHeaderExtensionV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderExt {
@@ -9600,7 +9670,7 @@ impl WriteXdr for LedgerHeaderExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerHeader {
     pub ledger_version: u32,
@@ -9682,7 +9752,7 @@ impl WriteXdr for LedgerHeader {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LedgerUpgradeType {
@@ -9805,7 +9875,7 @@ impl WriteXdr for LedgerUpgradeType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerUpgrade {
@@ -9930,7 +10000,7 @@ impl WriteXdr for LedgerUpgrade {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum BucketEntryType {
@@ -10041,7 +10111,7 @@ impl WriteXdr for BucketEntryType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum BucketMetadataExt {
@@ -10142,7 +10212,7 @@ impl WriteXdr for BucketMetadataExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct BucketMetadata {
     pub ledger_version: u32,
@@ -10188,7 +10258,7 @@ impl WriteXdr for BucketMetadata {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum BucketEntry {
@@ -10304,7 +10374,7 @@ impl WriteXdr for BucketEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum TxSetComponentType {
@@ -10400,7 +10470,7 @@ impl WriteXdr for TxSetComponentType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TxSetComponentTxsMaybeDiscountedFee {
     pub base_fee: Option<i64>,
@@ -10444,7 +10514,7 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TxSetComponent {
@@ -10545,7 +10615,7 @@ impl WriteXdr for TxSetComponent {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionPhase {
@@ -10638,7 +10708,7 @@ impl WriteXdr for TransactionPhase {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionSet {
     pub previous_ledger_hash: Hash,
@@ -10677,7 +10747,7 @@ impl WriteXdr for TransactionSet {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionSetV1 {
     pub previous_ledger_hash: Hash,
@@ -10718,7 +10788,7 @@ impl WriteXdr for TransactionSetV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum GeneralizedTransactionSet {
@@ -10811,7 +10881,7 @@ impl WriteXdr for GeneralizedTransactionSet {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionResultPair {
     pub transaction_hash: Hash,
@@ -10849,7 +10919,7 @@ impl WriteXdr for TransactionResultPair {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionResultSet {
     pub results: VecM<TransactionResultPair>,
@@ -10888,7 +10958,7 @@ impl WriteXdr for TransactionResultSet {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryEntryExt {
@@ -10996,7 +11066,7 @@ impl WriteXdr for TransactionHistoryEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionHistoryEntry {
     pub ledger_seq: u32,
@@ -11039,7 +11109,7 @@ impl WriteXdr for TransactionHistoryEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryResultEntryExt {
@@ -11140,7 +11210,7 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionHistoryResultEntry {
     pub ledger_seq: u32,
@@ -11183,7 +11253,7 @@ impl WriteXdr for TransactionHistoryResultEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderHistoryEntryExt {
@@ -11284,7 +11354,7 @@ impl WriteXdr for LedgerHeaderHistoryEntryExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerHeaderHistoryEntry {
     pub hash: Hash,
@@ -11326,7 +11396,7 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerScpMessages {
     pub ledger_seq: u32,
@@ -11365,7 +11435,7 @@ impl WriteXdr for LedgerScpMessages {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ScpHistoryEntryV0 {
     pub quorum_sets: VecM<ScpQuorumSet>,
@@ -11405,7 +11475,7 @@ impl WriteXdr for ScpHistoryEntryV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpHistoryEntry {
@@ -11501,7 +11571,7 @@ impl WriteXdr for ScpHistoryEntry {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LedgerEntryChangeType {
@@ -11617,7 +11687,7 @@ impl WriteXdr for LedgerEntryChangeType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryChange {
@@ -11727,7 +11797,7 @@ impl WriteXdr for LedgerEntryChange {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerEntryChanges(pub VecM<LedgerEntryChange>);
 
@@ -11829,7 +11899,7 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct OperationMeta {
     pub changes: LedgerEntryChanges,
@@ -11865,7 +11935,7 @@ impl WriteXdr for OperationMeta {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionMetaV1 {
     pub tx_changes: LedgerEntryChanges,
@@ -11907,7 +11977,7 @@ impl WriteXdr for TransactionMetaV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionMetaV2 {
     pub tx_changes_before: LedgerEntryChanges,
@@ -11954,7 +12024,7 @@ impl WriteXdr for TransactionMetaV2 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionMeta {
@@ -12058,7 +12128,7 @@ impl WriteXdr for TransactionMeta {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionResultMeta {
     pub result: TransactionResultPair,
@@ -12100,7 +12170,7 @@ impl WriteXdr for TransactionResultMeta {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct UpgradeEntryMeta {
     pub upgrade: LedgerUpgrade,
@@ -12151,7 +12221,7 @@ impl WriteXdr for UpgradeEntryMeta {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerCloseMetaV0 {
     pub ledger_header: LedgerHeaderHistoryEntry,
@@ -12211,7 +12281,7 @@ impl WriteXdr for LedgerCloseMetaV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerCloseMetaV1 {
     pub ledger_header: LedgerHeaderHistoryEntry,
@@ -12262,7 +12332,7 @@ impl WriteXdr for LedgerCloseMetaV1 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerCloseMeta {
@@ -12364,7 +12434,7 @@ impl WriteXdr for LedgerCloseMeta {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ErrorCode {
@@ -12477,7 +12547,7 @@ impl WriteXdr for ErrorCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SError {
     pub code: ErrorCode,
@@ -12515,7 +12585,7 @@ impl WriteXdr for SError {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SendMore {
     pub num_messages: u32,
@@ -12552,7 +12622,7 @@ impl WriteXdr for SendMore {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AuthCert {
     pub pubkey: Curve25519Public,
@@ -12601,7 +12671,7 @@ impl WriteXdr for AuthCert {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Hello {
     pub ledger_version: u32,
@@ -12666,7 +12736,7 @@ pub const AUTH_MSG_FLAG_PULL_MODE_REQUESTED: u64 = 100;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Auth {
     pub flags: i32,
@@ -12703,7 +12773,7 @@ impl WriteXdr for Auth {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum IpAddrType {
@@ -12804,7 +12874,7 @@ impl WriteXdr for IpAddrType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PeerAddressIp {
@@ -12910,7 +12980,7 @@ impl WriteXdr for PeerAddressIp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PeerAddress {
     pub ip: PeerAddressIp,
@@ -12979,7 +13049,7 @@ impl WriteXdr for PeerAddress {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum MessageType {
@@ -13168,7 +13238,7 @@ impl WriteXdr for MessageType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct DontHave {
     pub type_: MessageType,
@@ -13207,7 +13277,7 @@ impl WriteXdr for DontHave {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum SurveyMessageCommandType {
@@ -13305,7 +13375,7 @@ impl WriteXdr for SurveyMessageCommandType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SurveyRequestMessage {
     pub surveyor_peer_id: NodeId,
@@ -13353,7 +13423,7 @@ impl WriteXdr for SurveyRequestMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SignedSurveyRequestMessage {
     pub request_signature: Signature,
@@ -13389,7 +13459,7 @@ impl WriteXdr for SignedSurveyRequestMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct EncryptedBody(pub BytesM<64000>);
 
@@ -13495,7 +13565,7 @@ impl AsRef<[u8]> for EncryptedBody {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SurveyResponseMessage {
     pub surveyor_peer_id: NodeId,
@@ -13543,7 +13613,7 @@ impl WriteXdr for SurveyResponseMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SignedSurveyResponseMessage {
     pub response_signature: Signature,
@@ -13597,7 +13667,7 @@ impl WriteXdr for SignedSurveyResponseMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PeerStats {
     pub id: NodeId,
@@ -13672,7 +13742,7 @@ impl WriteXdr for PeerStats {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PeerStatList(pub VecM<PeerStats, 25>);
 
@@ -13778,7 +13848,7 @@ impl AsRef<[PeerStats]> for PeerStatList {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TopologyResponseBody {
     pub inbound_peers: PeerStatList,
@@ -13824,7 +13894,7 @@ impl WriteXdr for TopologyResponseBody {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SurveyResponseBody {
@@ -13922,7 +13992,7 @@ pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TxAdvertVector(pub VecM<Hash, 1000>);
 
@@ -14024,7 +14094,7 @@ impl AsRef<[Hash]> for TxAdvertVector {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct FloodAdvert {
     pub tx_hashes: TxAdvertVector,
@@ -14063,7 +14133,7 @@ pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TxDemandVector(pub VecM<Hash, 1000>);
 
@@ -14165,7 +14235,7 @@ impl AsRef<[Hash]> for TxDemandVector {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct FloodDemand {
     pub tx_hashes: TxDemandVector,
@@ -14246,7 +14316,7 @@ impl WriteXdr for FloodDemand {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum StellarMessage {
@@ -14476,7 +14546,7 @@ impl WriteXdr for StellarMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AuthenticatedMessageV0 {
     pub sequence: u64,
@@ -14524,7 +14594,7 @@ impl WriteXdr for AuthenticatedMessageV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AuthenticatedMessage {
@@ -14618,7 +14688,7 @@ impl WriteXdr for AuthenticatedMessage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolParameters {
@@ -14715,7 +14785,7 @@ impl WriteXdr for LiquidityPoolParameters {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct MuxedAccountMed25519 {
     pub id: u64,
@@ -14761,7 +14831,7 @@ impl WriteXdr for MuxedAccountMed25519 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum MuxedAccount {
@@ -14859,7 +14929,7 @@ impl WriteXdr for MuxedAccount {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct DecoratedSignature {
     pub hint: SignatureHint,
@@ -14921,7 +14991,7 @@ impl WriteXdr for DecoratedSignature {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum OperationType {
@@ -15135,7 +15205,7 @@ impl WriteXdr for OperationType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct CreateAccountOp {
     pub destination: AccountId,
@@ -15175,7 +15245,7 @@ impl WriteXdr for CreateAccountOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PaymentOp {
     pub destination: MuxedAccount,
@@ -15225,7 +15295,7 @@ impl WriteXdr for PaymentOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictReceiveOp {
     pub send_asset: Asset,
@@ -15284,7 +15354,7 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictSendOp {
     pub send_asset: Asset,
@@ -15340,7 +15410,7 @@ impl WriteXdr for PathPaymentStrictSendOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ManageSellOfferOp {
     pub selling: Asset,
@@ -15394,7 +15464,7 @@ impl WriteXdr for ManageSellOfferOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ManageBuyOfferOp {
     pub selling: Asset,
@@ -15444,7 +15514,7 @@ impl WriteXdr for ManageBuyOfferOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct CreatePassiveSellOfferOp {
     pub selling: Asset,
@@ -15503,7 +15573,7 @@ impl WriteXdr for CreatePassiveSellOfferOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SetOptionsOp {
     pub inflation_dest: Option<AccountId>,
@@ -15575,7 +15645,7 @@ impl WriteXdr for SetOptionsOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ChangeTrustAsset {
@@ -15691,7 +15761,7 @@ impl WriteXdr for ChangeTrustAsset {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ChangeTrustOp {
     pub line: ChangeTrustAsset,
@@ -15733,7 +15803,7 @@ impl WriteXdr for ChangeTrustOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct AllowTrustOp {
     pub trustor: AccountId,
@@ -15775,7 +15845,7 @@ impl WriteXdr for AllowTrustOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ManageDataOp {
     pub data_name: StringM<64>,
@@ -15813,7 +15883,7 @@ impl WriteXdr for ManageDataOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct BumpSequenceOp {
     pub bump_to: SequenceNumber,
@@ -15850,7 +15920,7 @@ impl WriteXdr for BumpSequenceOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct CreateClaimableBalanceOp {
     pub asset: Asset,
@@ -15891,7 +15961,7 @@ impl WriteXdr for CreateClaimableBalanceOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
@@ -15926,7 +15996,7 @@ impl WriteXdr for ClaimClaimableBalanceOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct BeginSponsoringFutureReservesOp {
     pub sponsored_id: AccountId,
@@ -15963,7 +16033,7 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum RevokeSponsorshipType {
@@ -16064,7 +16134,7 @@ impl WriteXdr for RevokeSponsorshipType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct RevokeSponsorshipOpSigner {
     pub account_id: AccountId,
@@ -16110,7 +16180,7 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum RevokeSponsorshipOp {
@@ -16212,7 +16282,7 @@ impl WriteXdr for RevokeSponsorshipOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClawbackOp {
     pub asset: Asset,
@@ -16253,7 +16323,7 @@ impl WriteXdr for ClawbackOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClawbackClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
@@ -16292,7 +16362,7 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SetTrustLineFlagsOp {
     pub trustor: AccountId,
@@ -16346,7 +16416,7 @@ pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolDepositOp {
     pub liquidity_pool_id: PoolId,
@@ -16396,7 +16466,7 @@ impl WriteXdr for LiquidityPoolDepositOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolWithdrawOp {
     pub liquidity_pool_id: PoolId,
@@ -16488,7 +16558,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationBody {
@@ -16825,7 +16895,7 @@ impl WriteXdr for OperationBody {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Operation {
     pub source_account: Option<MuxedAccount>,
@@ -16865,7 +16935,7 @@ impl WriteXdr for Operation {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct HashIdPreimageOperationId {
     pub source_account: AccountId,
@@ -16910,7 +16980,7 @@ impl WriteXdr for HashIdPreimageOperationId {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct HashIdPreimageRevokeId {
     pub source_account: AccountId,
@@ -16973,7 +17043,7 @@ impl WriteXdr for HashIdPreimageRevokeId {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum HashIdPreimage {
@@ -17077,7 +17147,7 @@ impl WriteXdr for HashIdPreimage {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum MemoType {
@@ -17199,7 +17269,7 @@ impl WriteXdr for MemoType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum Memo {
@@ -17318,7 +17388,7 @@ impl WriteXdr for Memo {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TimeBounds {
     pub min_time: TimePoint,
@@ -17357,7 +17427,7 @@ impl WriteXdr for TimeBounds {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct LedgerBounds {
     pub min_ledger: u32,
@@ -17423,7 +17493,7 @@ impl WriteXdr for LedgerBounds {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PreconditionsV2 {
     pub time_bounds: Option<TimeBounds>,
@@ -17476,7 +17546,7 @@ impl WriteXdr for PreconditionsV2 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum PreconditionType {
@@ -17586,7 +17656,7 @@ impl WriteXdr for PreconditionType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum Preconditions {
@@ -17700,7 +17770,7 @@ pub const MAX_OPS_PER_TX: u64 = 100;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionV0Ext {
@@ -17803,7 +17873,7 @@ impl WriteXdr for TransactionV0Ext {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionV0 {
     pub source_account_ed25519: Uint256,
@@ -17859,7 +17929,7 @@ impl WriteXdr for TransactionV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionV0Envelope {
     pub tx: TransactionV0,
@@ -17899,7 +17969,7 @@ impl WriteXdr for TransactionV0Envelope {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionExt {
@@ -18013,7 +18083,7 @@ impl WriteXdr for TransactionExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Transaction {
     pub source_account: MuxedAccount,
@@ -18069,7 +18139,7 @@ impl WriteXdr for Transaction {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionV1Envelope {
     pub tx: Transaction,
@@ -18109,7 +18179,7 @@ impl WriteXdr for TransactionV1Envelope {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum FeeBumpTransactionInnerTx {
@@ -18203,7 +18273,7 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum FeeBumpTransactionExt {
@@ -18308,7 +18378,7 @@ impl WriteXdr for FeeBumpTransactionExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct FeeBumpTransaction {
     pub fee_source: MuxedAccount,
@@ -18355,7 +18425,7 @@ impl WriteXdr for FeeBumpTransaction {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct FeeBumpTransactionEnvelope {
     pub tx: FeeBumpTransaction,
@@ -18399,7 +18469,7 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionEnvelope {
@@ -18510,7 +18580,7 @@ impl WriteXdr for TransactionEnvelope {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionSignaturePayloadTaggedTransaction {
@@ -18616,7 +18686,7 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionSignaturePayload {
     pub network_id: Hash,
@@ -18657,7 +18727,7 @@ impl WriteXdr for TransactionSignaturePayload {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimAtomType {
@@ -18771,7 +18841,7 @@ impl WriteXdr for ClaimAtomType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimOfferAtomV0 {
     pub seller_ed25519: Uint256,
@@ -18831,7 +18901,7 @@ impl WriteXdr for ClaimOfferAtomV0 {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimOfferAtom {
     pub seller_id: AccountId,
@@ -18889,7 +18959,7 @@ impl WriteXdr for ClaimOfferAtom {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ClaimLiquidityAtom {
     pub liquidity_pool_id: PoolId,
@@ -18942,7 +19012,7 @@ impl WriteXdr for ClaimLiquidityAtom {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimAtom {
@@ -19057,7 +19127,7 @@ impl WriteXdr for ClaimAtom {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum CreateAccountResultCode {
@@ -19182,7 +19252,7 @@ impl WriteXdr for CreateAccountResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum CreateAccountResult {
@@ -19319,7 +19389,7 @@ impl WriteXdr for CreateAccountResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum PaymentResultCode {
@@ -19474,7 +19544,7 @@ impl WriteXdr for PaymentResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PaymentResult {
@@ -19658,7 +19728,7 @@ impl WriteXdr for PaymentResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum PathPaymentStrictReceiveResultCode {
@@ -19818,7 +19888,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SimplePaymentResult {
     pub destination: AccountId,
@@ -19860,7 +19930,7 @@ impl WriteXdr for SimplePaymentResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictReceiveResultSuccess {
     pub offers: VecM<ClaimAtom>,
@@ -19920,7 +19990,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PathPaymentStrictReceiveResult {
@@ -20127,7 +20197,7 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum PathPaymentStrictSendResultCode {
@@ -20286,7 +20356,7 @@ impl WriteXdr for PathPaymentStrictSendResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictSendResultSuccess {
     pub offers: VecM<ClaimAtom>,
@@ -20345,7 +20415,7 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PathPaymentStrictSendResult {
@@ -20551,7 +20621,7 @@ impl WriteXdr for PathPaymentStrictSendResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ManageSellOfferResultCode {
@@ -20712,7 +20782,7 @@ impl WriteXdr for ManageSellOfferResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ManageOfferEffect {
@@ -20821,7 +20891,7 @@ impl WriteXdr for ManageOfferEffect {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageOfferSuccessResultOffer {
@@ -20938,7 +21008,7 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct ManageOfferSuccessResult {
     pub offers_claimed: VecM<ClaimAtom>,
@@ -20991,7 +21061,7 @@ impl WriteXdr for ManageOfferSuccessResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageSellOfferResult {
@@ -21193,7 +21263,7 @@ impl WriteXdr for ManageSellOfferResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ManageBuyOfferResultCode {
@@ -21366,7 +21436,7 @@ impl WriteXdr for ManageBuyOfferResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageBuyOfferResult {
@@ -21562,7 +21632,7 @@ impl WriteXdr for ManageBuyOfferResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum SetOptionsResultCode {
@@ -21723,7 +21793,7 @@ impl WriteXdr for SetOptionsResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SetOptionsResult {
@@ -21904,7 +21974,7 @@ impl WriteXdr for SetOptionsResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ChangeTrustResultCode {
@@ -22053,7 +22123,7 @@ impl WriteXdr for ChangeTrustResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ChangeTrustResult {
@@ -22216,7 +22286,7 @@ impl WriteXdr for ChangeTrustResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum AllowTrustResultCode {
@@ -22353,7 +22423,7 @@ impl WriteXdr for AllowTrustResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AllowTrustResult {
@@ -22502,7 +22572,7 @@ impl WriteXdr for AllowTrustResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum AccountMergeResultCode {
@@ -22645,7 +22715,7 @@ impl WriteXdr for AccountMergeResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountMergeResult {
@@ -22794,7 +22864,7 @@ impl WriteXdr for AccountMergeResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum InflationResultCode {
@@ -22893,7 +22963,7 @@ impl WriteXdr for InflationResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct InflationPayout {
     pub destination: AccountId,
@@ -22935,7 +23005,7 @@ impl WriteXdr for InflationPayout {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum InflationResult {
@@ -23042,7 +23112,7 @@ impl WriteXdr for InflationResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ManageDataResultCode {
@@ -23167,7 +23237,7 @@ impl WriteXdr for ManageDataResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageDataResult {
@@ -23295,7 +23365,7 @@ impl WriteXdr for ManageDataResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum BumpSequenceResultCode {
@@ -23399,7 +23469,7 @@ impl WriteXdr for BumpSequenceResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum BumpSequenceResult {
@@ -23505,7 +23575,7 @@ impl WriteXdr for BumpSequenceResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum CreateClaimableBalanceResultCode {
@@ -23637,7 +23707,7 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum CreateClaimableBalanceResult {
@@ -23777,7 +23847,7 @@ impl WriteXdr for CreateClaimableBalanceResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClaimClaimableBalanceResultCode {
@@ -23908,7 +23978,7 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimClaimableBalanceResult {
@@ -24047,7 +24117,7 @@ impl WriteXdr for ClaimClaimableBalanceResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum BeginSponsoringFutureReservesResultCode {
@@ -24163,7 +24233,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum BeginSponsoringFutureReservesResult {
@@ -24282,7 +24352,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum EndSponsoringFutureReservesResultCode {
@@ -24387,7 +24457,7 @@ impl WriteXdr for EndSponsoringFutureReservesResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum EndSponsoringFutureReservesResult {
@@ -24497,7 +24567,7 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum RevokeSponsorshipResultCode {
@@ -24628,7 +24698,7 @@ impl WriteXdr for RevokeSponsorshipResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum RevokeSponsorshipResult {
@@ -24768,7 +24838,7 @@ impl WriteXdr for RevokeSponsorshipResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClawbackResultCode {
@@ -24893,7 +24963,7 @@ impl WriteXdr for ClawbackResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClawbackResult {
@@ -25024,7 +25094,7 @@ impl WriteXdr for ClawbackResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum ClawbackClaimableBalanceResultCode {
@@ -25140,7 +25210,7 @@ impl WriteXdr for ClawbackClaimableBalanceResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClawbackClaimableBalanceResult {
@@ -25264,7 +25334,7 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum SetTrustLineFlagsResultCode {
@@ -25395,7 +25465,7 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SetTrustLineFlagsResult {
@@ -25542,7 +25612,7 @@ impl WriteXdr for SetTrustLineFlagsResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LiquidityPoolDepositResultCode {
@@ -25685,7 +25755,7 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolDepositResult {
@@ -25843,7 +25913,7 @@ impl WriteXdr for LiquidityPoolDepositResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum LiquidityPoolWithdrawResultCode {
@@ -25974,7 +26044,7 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolWithdrawResult {
@@ -26114,7 +26184,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum OperationResultCode {
@@ -26290,7 +26360,7 @@ impl WriteXdr for OperationResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationResultTr {
@@ -26635,7 +26705,7 @@ impl WriteXdr for OperationResultTr {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationResult {
@@ -26796,7 +26866,7 @@ impl WriteXdr for OperationResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum TransactionResultCode {
@@ -26999,7 +27069,7 @@ impl WriteXdr for TransactionResultCode {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum InnerTransactionResultResult {
@@ -27206,7 +27276,7 @@ impl WriteXdr for InnerTransactionResultResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum InnerTransactionResultExt {
@@ -27332,7 +27402,7 @@ impl WriteXdr for InnerTransactionResultExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct InnerTransactionResult {
     pub fee_charged: i64,
@@ -27374,7 +27444,7 @@ impl WriteXdr for InnerTransactionResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct InnerTransactionResultPair {
     pub transaction_hash: Hash,
@@ -27434,7 +27504,7 @@ impl WriteXdr for InnerTransactionResultPair {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionResultResult {
@@ -27659,7 +27729,7 @@ impl WriteXdr for TransactionResultResult {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionResultExt {
@@ -27786,7 +27856,7 @@ impl WriteXdr for TransactionResultExt {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct TransactionResult {
     pub fee_charged: i64,
@@ -28083,7 +28153,7 @@ pub type Int64 = i64;
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ExtensionPoint {
@@ -28182,7 +28252,7 @@ impl WriteXdr for ExtensionPoint {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum CryptoKeyType {
@@ -28301,7 +28371,7 @@ impl WriteXdr for CryptoKeyType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum PublicKeyType {
@@ -28399,7 +28469,7 @@ impl WriteXdr for PublicKeyType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
 pub enum SignerKeyType {
@@ -28510,7 +28580,7 @@ impl WriteXdr for SignerKeyType {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PublicKey {
@@ -28607,7 +28677,7 @@ impl WriteXdr for PublicKey {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
@@ -28661,7 +28731,7 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SignerKey {
@@ -28774,7 +28844,7 @@ impl WriteXdr for SignerKey {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Signature(pub BytesM<64>);
 
@@ -28989,7 +29059,7 @@ impl AsRef<[u8]> for SignatureHint {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct NodeId(pub PublicKey);
 
@@ -29042,7 +29112,7 @@ impl WriteXdr for NodeId {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Curve25519Secret {
     pub key: [u8; 32],
@@ -29077,7 +29147,7 @@ impl WriteXdr for Curve25519Secret {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct Curve25519Public {
     pub key: [u8; 32],
@@ -29112,7 +29182,7 @@ impl WriteXdr for Curve25519Public {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct HmacSha256Key {
     pub key: [u8; 32],
@@ -29147,7 +29217,7 @@ impl WriteXdr for HmacSha256Key {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub struct HmacSha256Mac {
     pub mac: [u8; 32],
@@ -29174,7 +29244,7 @@ impl WriteXdr for HmacSha256Mac {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case")
 )]
 pub enum TypeVariant {
     Value,
@@ -30767,7 +30837,8 @@ impl core::str::FromStr for TypeVariant {
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "camelCase")
+    serde(rename_all = "snake_case"),
+    serde(untagged)
 )]
 pub enum Type {
     Value(Box<Value>),
@@ -32541,10 +32612,3691 @@ impl Type {
         }
     }
 
+    #[cfg(feature = "base64")]
+    pub fn read_xdr_base64(v: TypeVariant, r: &mut impl Read) -> Result<Self> {
+        let mut dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+        let t = Self::read_xdr(v, &mut dec)?;
+        Ok(t)
+    }
+
+    #[cfg(feature = "std")]
+    pub fn read_xdr_to_end(v: TypeVariant, r: &mut impl Read) -> Result<Self> {
+        let s = Self::read_xdr(v, r)?;
+        // Check that any further reads, such as this read of one byte, read no
+        // data, indicating EOF. If a byte is read the data is invalid.
+        if r.read(&mut [0u8; 1])? == 0 {
+            Ok(s)
+        } else {
+            Err(Error::Invalid)
+        }
+    }
+
+    #[cfg(feature = "base64")]
+    pub fn read_xdr_base64_to_end(v: TypeVariant, r: &mut impl Read) -> Result<Self> {
+        let mut dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+        let t = Self::read_xdr_to_end(v, &mut dec)?;
+        Ok(t)
+    }
+
+    #[cfg(feature = "std")]
+    #[allow(clippy::too_many_lines)]
+    pub fn read_xdr_iter<R: Read>(
+        v: TypeVariant,
+        r: &mut R,
+    ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
+        match v {
+            TypeVariant::Value => Box::new(
+                ReadXdrIter::<_, Value>::new(r).map(|r| r.map(|t| Self::Value(Box::new(t)))),
+            ),
+            TypeVariant::ScpBallot => Box::new(
+                ReadXdrIter::<_, ScpBallot>::new(r)
+                    .map(|r| r.map(|t| Self::ScpBallot(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatementType => Box::new(
+                ReadXdrIter::<_, ScpStatementType>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatementType(Box::new(t)))),
+            ),
+            TypeVariant::ScpNomination => Box::new(
+                ReadXdrIter::<_, ScpNomination>::new(r)
+                    .map(|r| r.map(|t| Self::ScpNomination(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatement => Box::new(
+                ReadXdrIter::<_, ScpStatement>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatement(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatementPledges => Box::new(
+                ReadXdrIter::<_, ScpStatementPledges>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatementPledges(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatementPrepare => Box::new(
+                ReadXdrIter::<_, ScpStatementPrepare>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatementPrepare(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatementConfirm => Box::new(
+                ReadXdrIter::<_, ScpStatementConfirm>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatementConfirm(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatementExternalize => Box::new(
+                ReadXdrIter::<_, ScpStatementExternalize>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatementExternalize(Box::new(t)))),
+            ),
+            TypeVariant::ScpEnvelope => Box::new(
+                ReadXdrIter::<_, ScpEnvelope>::new(r)
+                    .map(|r| r.map(|t| Self::ScpEnvelope(Box::new(t)))),
+            ),
+            TypeVariant::ScpQuorumSet => Box::new(
+                ReadXdrIter::<_, ScpQuorumSet>::new(r)
+                    .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
+            ),
+            TypeVariant::StoredTransactionSet => Box::new(
+                ReadXdrIter::<_, StoredTransactionSet>::new(r)
+                    .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
+            ),
+            TypeVariant::PersistedScpStateV0 => Box::new(
+                ReadXdrIter::<_, PersistedScpStateV0>::new(r)
+                    .map(|r| r.map(|t| Self::PersistedScpStateV0(Box::new(t)))),
+            ),
+            TypeVariant::PersistedScpStateV1 => Box::new(
+                ReadXdrIter::<_, PersistedScpStateV1>::new(r)
+                    .map(|r| r.map(|t| Self::PersistedScpStateV1(Box::new(t)))),
+            ),
+            TypeVariant::PersistedScpState => Box::new(
+                ReadXdrIter::<_, PersistedScpState>::new(r)
+                    .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t)))),
+            ),
+            TypeVariant::AccountId => Box::new(
+                ReadXdrIter::<_, AccountId>::new(r)
+                    .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
+            ),
+            TypeVariant::Thresholds => Box::new(
+                ReadXdrIter::<_, Thresholds>::new(r)
+                    .map(|r| r.map(|t| Self::Thresholds(Box::new(t)))),
+            ),
+            TypeVariant::String32 => Box::new(
+                ReadXdrIter::<_, String32>::new(r).map(|r| r.map(|t| Self::String32(Box::new(t)))),
+            ),
+            TypeVariant::String64 => Box::new(
+                ReadXdrIter::<_, String64>::new(r).map(|r| r.map(|t| Self::String64(Box::new(t)))),
+            ),
+            TypeVariant::SequenceNumber => Box::new(
+                ReadXdrIter::<_, SequenceNumber>::new(r)
+                    .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t)))),
+            ),
+            TypeVariant::TimePoint => Box::new(
+                ReadXdrIter::<_, TimePoint>::new(r)
+                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
+            ),
+            TypeVariant::Duration => Box::new(
+                ReadXdrIter::<_, Duration>::new(r).map(|r| r.map(|t| Self::Duration(Box::new(t)))),
+            ),
+            TypeVariant::DataValue => Box::new(
+                ReadXdrIter::<_, DataValue>::new(r)
+                    .map(|r| r.map(|t| Self::DataValue(Box::new(t)))),
+            ),
+            TypeVariant::PoolId => Box::new(
+                ReadXdrIter::<_, PoolId>::new(r).map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
+            ),
+            TypeVariant::AssetCode4 => Box::new(
+                ReadXdrIter::<_, AssetCode4>::new(r)
+                    .map(|r| r.map(|t| Self::AssetCode4(Box::new(t)))),
+            ),
+            TypeVariant::AssetCode12 => Box::new(
+                ReadXdrIter::<_, AssetCode12>::new(r)
+                    .map(|r| r.map(|t| Self::AssetCode12(Box::new(t)))),
+            ),
+            TypeVariant::AssetType => Box::new(
+                ReadXdrIter::<_, AssetType>::new(r)
+                    .map(|r| r.map(|t| Self::AssetType(Box::new(t)))),
+            ),
+            TypeVariant::AssetCode => Box::new(
+                ReadXdrIter::<_, AssetCode>::new(r)
+                    .map(|r| r.map(|t| Self::AssetCode(Box::new(t)))),
+            ),
+            TypeVariant::AlphaNum4 => Box::new(
+                ReadXdrIter::<_, AlphaNum4>::new(r)
+                    .map(|r| r.map(|t| Self::AlphaNum4(Box::new(t)))),
+            ),
+            TypeVariant::AlphaNum12 => Box::new(
+                ReadXdrIter::<_, AlphaNum12>::new(r)
+                    .map(|r| r.map(|t| Self::AlphaNum12(Box::new(t)))),
+            ),
+            TypeVariant::Asset => Box::new(
+                ReadXdrIter::<_, Asset>::new(r).map(|r| r.map(|t| Self::Asset(Box::new(t)))),
+            ),
+            TypeVariant::Price => Box::new(
+                ReadXdrIter::<_, Price>::new(r).map(|r| r.map(|t| Self::Price(Box::new(t)))),
+            ),
+            TypeVariant::Liabilities => Box::new(
+                ReadXdrIter::<_, Liabilities>::new(r)
+                    .map(|r| r.map(|t| Self::Liabilities(Box::new(t)))),
+            ),
+            TypeVariant::ThresholdIndexes => Box::new(
+                ReadXdrIter::<_, ThresholdIndexes>::new(r)
+                    .map(|r| r.map(|t| Self::ThresholdIndexes(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryType => Box::new(
+                ReadXdrIter::<_, LedgerEntryType>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryType(Box::new(t)))),
+            ),
+            TypeVariant::Signer => Box::new(
+                ReadXdrIter::<_, Signer>::new(r).map(|r| r.map(|t| Self::Signer(Box::new(t)))),
+            ),
+            TypeVariant::AccountFlags => Box::new(
+                ReadXdrIter::<_, AccountFlags>::new(r)
+                    .map(|r| r.map(|t| Self::AccountFlags(Box::new(t)))),
+            ),
+            TypeVariant::SponsorshipDescriptor => Box::new(
+                ReadXdrIter::<_, SponsorshipDescriptor>::new(r)
+                    .map(|r| r.map(|t| Self::SponsorshipDescriptor(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExtensionV3 => Box::new(
+                ReadXdrIter::<_, AccountEntryExtensionV3>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV3(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExtensionV2 => Box::new(
+                ReadXdrIter::<_, AccountEntryExtensionV2>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV2(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExtensionV2Ext => Box::new(
+                ReadXdrIter::<_, AccountEntryExtensionV2Ext>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExtensionV1 => Box::new(
+                ReadXdrIter::<_, AccountEntryExtensionV1>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV1(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, AccountEntryExtensionV1Ext>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntry => Box::new(
+                ReadXdrIter::<_, AccountEntry>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntry(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExt => Box::new(
+                ReadXdrIter::<_, AccountEntryExt>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineFlags => Box::new(
+                ReadXdrIter::<_, TrustLineFlags>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineFlags(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolType => Box::new(
+                ReadXdrIter::<_, LiquidityPoolType>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolType(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineAsset => Box::new(
+                ReadXdrIter::<_, TrustLineAsset>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineAsset(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntryExtensionV2 => Box::new(
+                ReadXdrIter::<_, TrustLineEntryExtensionV2>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntryExtensionV2Ext => Box::new(
+                ReadXdrIter::<_, TrustLineEntryExtensionV2Ext>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntry => Box::new(
+                ReadXdrIter::<_, TrustLineEntry>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntry(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntryExt => Box::new(
+                ReadXdrIter::<_, TrustLineEntryExt>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntryV1 => Box::new(
+                ReadXdrIter::<_, TrustLineEntryV1>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntryV1(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntryV1Ext => Box::new(
+                ReadXdrIter::<_, TrustLineEntryV1Ext>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntryV1Ext(Box::new(t)))),
+            ),
+            TypeVariant::OfferEntryFlags => Box::new(
+                ReadXdrIter::<_, OfferEntryFlags>::new(r)
+                    .map(|r| r.map(|t| Self::OfferEntryFlags(Box::new(t)))),
+            ),
+            TypeVariant::OfferEntry => Box::new(
+                ReadXdrIter::<_, OfferEntry>::new(r)
+                    .map(|r| r.map(|t| Self::OfferEntry(Box::new(t)))),
+            ),
+            TypeVariant::OfferEntryExt => Box::new(
+                ReadXdrIter::<_, OfferEntryExt>::new(r)
+                    .map(|r| r.map(|t| Self::OfferEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::DataEntry => Box::new(
+                ReadXdrIter::<_, DataEntry>::new(r)
+                    .map(|r| r.map(|t| Self::DataEntry(Box::new(t)))),
+            ),
+            TypeVariant::DataEntryExt => Box::new(
+                ReadXdrIter::<_, DataEntryExt>::new(r)
+                    .map(|r| r.map(|t| Self::DataEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::ClaimPredicateType => Box::new(
+                ReadXdrIter::<_, ClaimPredicateType>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimPredicateType(Box::new(t)))),
+            ),
+            TypeVariant::ClaimPredicate => Box::new(
+                ReadXdrIter::<_, ClaimPredicate>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimPredicate(Box::new(t)))),
+            ),
+            TypeVariant::ClaimantType => Box::new(
+                ReadXdrIter::<_, ClaimantType>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimantType(Box::new(t)))),
+            ),
+            TypeVariant::Claimant => Box::new(
+                ReadXdrIter::<_, Claimant>::new(r).map(|r| r.map(|t| Self::Claimant(Box::new(t)))),
+            ),
+            TypeVariant::ClaimantV0 => Box::new(
+                ReadXdrIter::<_, ClaimantV0>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceIdType => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceIdType>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceId => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceId>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceFlags => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceFlags>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceFlags(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceEntryExtensionV1 => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceEntryExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1Ext>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceEntry => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntry(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceEntryExt => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceEntryExt>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolConstantProductParameters => Box::new(
+                ReadXdrIter::<_, LiquidityPoolConstantProductParameters>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolEntry => Box::new(
+                ReadXdrIter::<_, LiquidityPoolEntry>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolEntry(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolEntryBody => Box::new(
+                ReadXdrIter::<_, LiquidityPoolEntryBody>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolEntryBody(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolEntryConstantProduct => Box::new(
+                ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryExtensionV1 => Box::new(
+                ReadXdrIter::<_, LedgerEntryExtensionV1>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, LedgerEntryExtensionV1Ext>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntry => Box::new(
+                ReadXdrIter::<_, LedgerEntry>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntry(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryData => Box::new(
+                ReadXdrIter::<_, LedgerEntryData>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryData(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryExt => Box::new(
+                ReadXdrIter::<_, LedgerEntryExt>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKey => Box::new(
+                ReadXdrIter::<_, LedgerKey>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKey(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyAccount => Box::new(
+                ReadXdrIter::<_, LedgerKeyAccount>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyAccount(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyTrustLine => Box::new(
+                ReadXdrIter::<_, LedgerKeyTrustLine>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyTrustLine(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyOffer => Box::new(
+                ReadXdrIter::<_, LedgerKeyOffer>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyOffer(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyData => Box::new(
+                ReadXdrIter::<_, LedgerKeyData>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyData(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyClaimableBalance => Box::new(
+                ReadXdrIter::<_, LedgerKeyClaimableBalance>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyClaimableBalance(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyLiquidityPool => Box::new(
+                ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))),
+            ),
+            TypeVariant::EnvelopeType => Box::new(
+                ReadXdrIter::<_, EnvelopeType>::new(r)
+                    .map(|r| r.map(|t| Self::EnvelopeType(Box::new(t)))),
+            ),
+            TypeVariant::UpgradeType => Box::new(
+                ReadXdrIter::<_, UpgradeType>::new(r)
+                    .map(|r| r.map(|t| Self::UpgradeType(Box::new(t)))),
+            ),
+            TypeVariant::StellarValueType => Box::new(
+                ReadXdrIter::<_, StellarValueType>::new(r)
+                    .map(|r| r.map(|t| Self::StellarValueType(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseValueSignature => Box::new(
+                ReadXdrIter::<_, LedgerCloseValueSignature>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerCloseValueSignature(Box::new(t)))),
+            ),
+            TypeVariant::StellarValue => Box::new(
+                ReadXdrIter::<_, StellarValue>::new(r)
+                    .map(|r| r.map(|t| Self::StellarValue(Box::new(t)))),
+            ),
+            TypeVariant::StellarValueExt => Box::new(
+                ReadXdrIter::<_, StellarValueExt>::new(r)
+                    .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderFlags => Box::new(
+                ReadXdrIter::<_, LedgerHeaderFlags>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderFlags(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderExtensionV1 => Box::new(
+                ReadXdrIter::<_, LedgerHeaderExtensionV1>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, LedgerHeaderExtensionV1Ext>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeader => Box::new(
+                ReadXdrIter::<_, LedgerHeader>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeader(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderExt => Box::new(
+                ReadXdrIter::<_, LedgerHeaderExt>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderExt(Box::new(t)))),
+            ),
+            TypeVariant::LedgerUpgradeType => Box::new(
+                ReadXdrIter::<_, LedgerUpgradeType>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
+            ),
+            TypeVariant::LedgerUpgrade => Box::new(
+                ReadXdrIter::<_, LedgerUpgrade>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
+            ),
+            TypeVariant::BucketEntryType => Box::new(
+                ReadXdrIter::<_, BucketEntryType>::new(r)
+                    .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t)))),
+            ),
+            TypeVariant::BucketMetadata => Box::new(
+                ReadXdrIter::<_, BucketMetadata>::new(r)
+                    .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t)))),
+            ),
+            TypeVariant::BucketMetadataExt => Box::new(
+                ReadXdrIter::<_, BucketMetadataExt>::new(r)
+                    .map(|r| r.map(|t| Self::BucketMetadataExt(Box::new(t)))),
+            ),
+            TypeVariant::BucketEntry => Box::new(
+                ReadXdrIter::<_, BucketEntry>::new(r)
+                    .map(|r| r.map(|t| Self::BucketEntry(Box::new(t)))),
+            ),
+            TypeVariant::TxSetComponentType => Box::new(
+                ReadXdrIter::<_, TxSetComponentType>::new(r)
+                    .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
+            ),
+            TypeVariant::TxSetComponent => Box::new(
+                ReadXdrIter::<_, TxSetComponent>::new(r)
+                    .map(|r| r.map(|t| Self::TxSetComponent(Box::new(t)))),
+            ),
+            TypeVariant::TxSetComponentTxsMaybeDiscountedFee => Box::new(
+                ReadXdrIter::<_, TxSetComponentTxsMaybeDiscountedFee>::new(r)
+                    .map(|r| r.map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t)))),
+            ),
+            TypeVariant::TransactionPhase => Box::new(
+                ReadXdrIter::<_, TransactionPhase>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionPhase(Box::new(t)))),
+            ),
+            TypeVariant::TransactionSet => Box::new(
+                ReadXdrIter::<_, TransactionSet>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionSet(Box::new(t)))),
+            ),
+            TypeVariant::TransactionSetV1 => Box::new(
+                ReadXdrIter::<_, TransactionSetV1>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionSetV1(Box::new(t)))),
+            ),
+            TypeVariant::GeneralizedTransactionSet => Box::new(
+                ReadXdrIter::<_, GeneralizedTransactionSet>::new(r)
+                    .map(|r| r.map(|t| Self::GeneralizedTransactionSet(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultPair => Box::new(
+                ReadXdrIter::<_, TransactionResultPair>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultPair(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultSet => Box::new(
+                ReadXdrIter::<_, TransactionResultSet>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultSet(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryEntry => Box::new(
+                ReadXdrIter::<_, TransactionHistoryEntry>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryEntry(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryEntryExt => Box::new(
+                ReadXdrIter::<_, TransactionHistoryEntryExt>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntry => Box::new(
+                ReadXdrIter::<_, TransactionHistoryResultEntry>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntry(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntryExt => Box::new(
+                ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderHistoryEntry => Box::new(
+                ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderHistoryEntryExt => Box::new(
+                ReadXdrIter::<_, LedgerHeaderHistoryEntryExt>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::LedgerScpMessages => Box::new(
+                ReadXdrIter::<_, LedgerScpMessages>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerScpMessages(Box::new(t)))),
+            ),
+            TypeVariant::ScpHistoryEntryV0 => Box::new(
+                ReadXdrIter::<_, ScpHistoryEntryV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScpHistoryEntryV0(Box::new(t)))),
+            ),
+            TypeVariant::ScpHistoryEntry => Box::new(
+                ReadXdrIter::<_, ScpHistoryEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ScpHistoryEntry(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryChangeType => Box::new(
+                ReadXdrIter::<_, LedgerEntryChangeType>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryChangeType(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryChange => Box::new(
+                ReadXdrIter::<_, LedgerEntryChange>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryChange(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryChanges => Box::new(
+                ReadXdrIter::<_, LedgerEntryChanges>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryChanges(Box::new(t)))),
+            ),
+            TypeVariant::OperationMeta => Box::new(
+                ReadXdrIter::<_, OperationMeta>::new(r)
+                    .map(|r| r.map(|t| Self::OperationMeta(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMetaV1 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV1>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionMetaV1(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMetaV2 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV2>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMeta => Box::new(
+                ReadXdrIter::<_, TransactionMeta>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultMeta => Box::new(
+                ReadXdrIter::<_, TransactionResultMeta>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
+            ),
+            TypeVariant::UpgradeEntryMeta => Box::new(
+                ReadXdrIter::<_, UpgradeEntryMeta>::new(r)
+                    .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaV0 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaV0>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV0(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaV1 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaV1>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMeta => Box::new(
+                ReadXdrIter::<_, LedgerCloseMeta>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t)))),
+            ),
+            TypeVariant::ErrorCode => Box::new(
+                ReadXdrIter::<_, ErrorCode>::new(r)
+                    .map(|r| r.map(|t| Self::ErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::SError => Box::new(
+                ReadXdrIter::<_, SError>::new(r).map(|r| r.map(|t| Self::SError(Box::new(t)))),
+            ),
+            TypeVariant::SendMore => Box::new(
+                ReadXdrIter::<_, SendMore>::new(r).map(|r| r.map(|t| Self::SendMore(Box::new(t)))),
+            ),
+            TypeVariant::AuthCert => Box::new(
+                ReadXdrIter::<_, AuthCert>::new(r).map(|r| r.map(|t| Self::AuthCert(Box::new(t)))),
+            ),
+            TypeVariant::Hello => Box::new(
+                ReadXdrIter::<_, Hello>::new(r).map(|r| r.map(|t| Self::Hello(Box::new(t)))),
+            ),
+            TypeVariant::Auth => {
+                Box::new(ReadXdrIter::<_, Auth>::new(r).map(|r| r.map(|t| Self::Auth(Box::new(t)))))
+            }
+            TypeVariant::IpAddrType => Box::new(
+                ReadXdrIter::<_, IpAddrType>::new(r)
+                    .map(|r| r.map(|t| Self::IpAddrType(Box::new(t)))),
+            ),
+            TypeVariant::PeerAddress => Box::new(
+                ReadXdrIter::<_, PeerAddress>::new(r)
+                    .map(|r| r.map(|t| Self::PeerAddress(Box::new(t)))),
+            ),
+            TypeVariant::PeerAddressIp => Box::new(
+                ReadXdrIter::<_, PeerAddressIp>::new(r)
+                    .map(|r| r.map(|t| Self::PeerAddressIp(Box::new(t)))),
+            ),
+            TypeVariant::MessageType => Box::new(
+                ReadXdrIter::<_, MessageType>::new(r)
+                    .map(|r| r.map(|t| Self::MessageType(Box::new(t)))),
+            ),
+            TypeVariant::DontHave => Box::new(
+                ReadXdrIter::<_, DontHave>::new(r).map(|r| r.map(|t| Self::DontHave(Box::new(t)))),
+            ),
+            TypeVariant::SurveyMessageCommandType => Box::new(
+                ReadXdrIter::<_, SurveyMessageCommandType>::new(r)
+                    .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t)))),
+            ),
+            TypeVariant::SurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, SurveyRequestMessage>::new(r)
+                    .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedSurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(r)
+                    .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t)))),
+            ),
+            TypeVariant::EncryptedBody => Box::new(
+                ReadXdrIter::<_, EncryptedBody>::new(r)
+                    .map(|r| r.map(|t| Self::EncryptedBody(Box::new(t)))),
+            ),
+            TypeVariant::SurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, SurveyResponseMessage>::new(r)
+                    .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedSurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(r)
+                    .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t)))),
+            ),
+            TypeVariant::PeerStats => Box::new(
+                ReadXdrIter::<_, PeerStats>::new(r)
+                    .map(|r| r.map(|t| Self::PeerStats(Box::new(t)))),
+            ),
+            TypeVariant::PeerStatList => Box::new(
+                ReadXdrIter::<_, PeerStatList>::new(r)
+                    .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
+            ),
+            TypeVariant::TopologyResponseBody => Box::new(
+                ReadXdrIter::<_, TopologyResponseBody>::new(r)
+                    .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t)))),
+            ),
+            TypeVariant::SurveyResponseBody => Box::new(
+                ReadXdrIter::<_, SurveyResponseBody>::new(r)
+                    .map(|r| r.map(|t| Self::SurveyResponseBody(Box::new(t)))),
+            ),
+            TypeVariant::TxAdvertVector => Box::new(
+                ReadXdrIter::<_, TxAdvertVector>::new(r)
+                    .map(|r| r.map(|t| Self::TxAdvertVector(Box::new(t)))),
+            ),
+            TypeVariant::FloodAdvert => Box::new(
+                ReadXdrIter::<_, FloodAdvert>::new(r)
+                    .map(|r| r.map(|t| Self::FloodAdvert(Box::new(t)))),
+            ),
+            TypeVariant::TxDemandVector => Box::new(
+                ReadXdrIter::<_, TxDemandVector>::new(r)
+                    .map(|r| r.map(|t| Self::TxDemandVector(Box::new(t)))),
+            ),
+            TypeVariant::FloodDemand => Box::new(
+                ReadXdrIter::<_, FloodDemand>::new(r)
+                    .map(|r| r.map(|t| Self::FloodDemand(Box::new(t)))),
+            ),
+            TypeVariant::StellarMessage => Box::new(
+                ReadXdrIter::<_, StellarMessage>::new(r)
+                    .map(|r| r.map(|t| Self::StellarMessage(Box::new(t)))),
+            ),
+            TypeVariant::AuthenticatedMessage => Box::new(
+                ReadXdrIter::<_, AuthenticatedMessage>::new(r)
+                    .map(|r| r.map(|t| Self::AuthenticatedMessage(Box::new(t)))),
+            ),
+            TypeVariant::AuthenticatedMessageV0 => Box::new(
+                ReadXdrIter::<_, AuthenticatedMessageV0>::new(r)
+                    .map(|r| r.map(|t| Self::AuthenticatedMessageV0(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolParameters => Box::new(
+                ReadXdrIter::<_, LiquidityPoolParameters>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolParameters(Box::new(t)))),
+            ),
+            TypeVariant::MuxedAccount => Box::new(
+                ReadXdrIter::<_, MuxedAccount>::new(r)
+                    .map(|r| r.map(|t| Self::MuxedAccount(Box::new(t)))),
+            ),
+            TypeVariant::MuxedAccountMed25519 => Box::new(
+                ReadXdrIter::<_, MuxedAccountMed25519>::new(r)
+                    .map(|r| r.map(|t| Self::MuxedAccountMed25519(Box::new(t)))),
+            ),
+            TypeVariant::DecoratedSignature => Box::new(
+                ReadXdrIter::<_, DecoratedSignature>::new(r)
+                    .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t)))),
+            ),
+            TypeVariant::OperationType => Box::new(
+                ReadXdrIter::<_, OperationType>::new(r)
+                    .map(|r| r.map(|t| Self::OperationType(Box::new(t)))),
+            ),
+            TypeVariant::CreateAccountOp => Box::new(
+                ReadXdrIter::<_, CreateAccountOp>::new(r)
+                    .map(|r| r.map(|t| Self::CreateAccountOp(Box::new(t)))),
+            ),
+            TypeVariant::PaymentOp => Box::new(
+                ReadXdrIter::<_, PaymentOp>::new(r)
+                    .map(|r| r.map(|t| Self::PaymentOp(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveOp => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictReceiveOp>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictSendOp => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictSendOp>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendOp(Box::new(t)))),
+            ),
+            TypeVariant::ManageSellOfferOp => Box::new(
+                ReadXdrIter::<_, ManageSellOfferOp>::new(r)
+                    .map(|r| r.map(|t| Self::ManageSellOfferOp(Box::new(t)))),
+            ),
+            TypeVariant::ManageBuyOfferOp => Box::new(
+                ReadXdrIter::<_, ManageBuyOfferOp>::new(r)
+                    .map(|r| r.map(|t| Self::ManageBuyOfferOp(Box::new(t)))),
+            ),
+            TypeVariant::CreatePassiveSellOfferOp => Box::new(
+                ReadXdrIter::<_, CreatePassiveSellOfferOp>::new(r)
+                    .map(|r| r.map(|t| Self::CreatePassiveSellOfferOp(Box::new(t)))),
+            ),
+            TypeVariant::SetOptionsOp => Box::new(
+                ReadXdrIter::<_, SetOptionsOp>::new(r)
+                    .map(|r| r.map(|t| Self::SetOptionsOp(Box::new(t)))),
+            ),
+            TypeVariant::ChangeTrustAsset => Box::new(
+                ReadXdrIter::<_, ChangeTrustAsset>::new(r)
+                    .map(|r| r.map(|t| Self::ChangeTrustAsset(Box::new(t)))),
+            ),
+            TypeVariant::ChangeTrustOp => Box::new(
+                ReadXdrIter::<_, ChangeTrustOp>::new(r)
+                    .map(|r| r.map(|t| Self::ChangeTrustOp(Box::new(t)))),
+            ),
+            TypeVariant::AllowTrustOp => Box::new(
+                ReadXdrIter::<_, AllowTrustOp>::new(r)
+                    .map(|r| r.map(|t| Self::AllowTrustOp(Box::new(t)))),
+            ),
+            TypeVariant::ManageDataOp => Box::new(
+                ReadXdrIter::<_, ManageDataOp>::new(r)
+                    .map(|r| r.map(|t| Self::ManageDataOp(Box::new(t)))),
+            ),
+            TypeVariant::BumpSequenceOp => Box::new(
+                ReadXdrIter::<_, BumpSequenceOp>::new(r)
+                    .map(|r| r.map(|t| Self::BumpSequenceOp(Box::new(t)))),
+            ),
+            TypeVariant::CreateClaimableBalanceOp => Box::new(
+                ReadXdrIter::<_, CreateClaimableBalanceOp>::new(r)
+                    .map(|r| r.map(|t| Self::CreateClaimableBalanceOp(Box::new(t)))),
+            ),
+            TypeVariant::ClaimClaimableBalanceOp => Box::new(
+                ReadXdrIter::<_, ClaimClaimableBalanceOp>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceOp(Box::new(t)))),
+            ),
+            TypeVariant::BeginSponsoringFutureReservesOp => Box::new(
+                ReadXdrIter::<_, BeginSponsoringFutureReservesOp>::new(r)
+                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t)))),
+            ),
+            TypeVariant::RevokeSponsorshipType => Box::new(
+                ReadXdrIter::<_, RevokeSponsorshipType>::new(r)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipType(Box::new(t)))),
+            ),
+            TypeVariant::RevokeSponsorshipOp => Box::new(
+                ReadXdrIter::<_, RevokeSponsorshipOp>::new(r)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipOp(Box::new(t)))),
+            ),
+            TypeVariant::RevokeSponsorshipOpSigner => Box::new(
+                ReadXdrIter::<_, RevokeSponsorshipOpSigner>::new(r)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackOp => Box::new(
+                ReadXdrIter::<_, ClawbackOp>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackOp(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackClaimableBalanceOp => Box::new(
+                ReadXdrIter::<_, ClawbackClaimableBalanceOp>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t)))),
+            ),
+            TypeVariant::SetTrustLineFlagsOp => Box::new(
+                ReadXdrIter::<_, SetTrustLineFlagsOp>::new(r)
+                    .map(|r| r.map(|t| Self::SetTrustLineFlagsOp(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolDepositOp => Box::new(
+                ReadXdrIter::<_, LiquidityPoolDepositOp>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolDepositOp(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolWithdrawOp => Box::new(
+                ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))),
+            ),
+            TypeVariant::Operation => Box::new(
+                ReadXdrIter::<_, Operation>::new(r)
+                    .map(|r| r.map(|t| Self::Operation(Box::new(t)))),
+            ),
+            TypeVariant::OperationBody => Box::new(
+                ReadXdrIter::<_, OperationBody>::new(r)
+                    .map(|r| r.map(|t| Self::OperationBody(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimage => Box::new(
+                ReadXdrIter::<_, HashIdPreimage>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimage(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageOperationId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageOperationId>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageOperationId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageRevokeId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageRevokeId>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
+            ),
+            TypeVariant::MemoType => Box::new(
+                ReadXdrIter::<_, MemoType>::new(r).map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
+            ),
+            TypeVariant::Memo => {
+                Box::new(ReadXdrIter::<_, Memo>::new(r).map(|r| r.map(|t| Self::Memo(Box::new(t)))))
+            }
+            TypeVariant::TimeBounds => Box::new(
+                ReadXdrIter::<_, TimeBounds>::new(r)
+                    .map(|r| r.map(|t| Self::TimeBounds(Box::new(t)))),
+            ),
+            TypeVariant::LedgerBounds => Box::new(
+                ReadXdrIter::<_, LedgerBounds>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerBounds(Box::new(t)))),
+            ),
+            TypeVariant::PreconditionsV2 => Box::new(
+                ReadXdrIter::<_, PreconditionsV2>::new(r)
+                    .map(|r| r.map(|t| Self::PreconditionsV2(Box::new(t)))),
+            ),
+            TypeVariant::PreconditionType => Box::new(
+                ReadXdrIter::<_, PreconditionType>::new(r)
+                    .map(|r| r.map(|t| Self::PreconditionType(Box::new(t)))),
+            ),
+            TypeVariant::Preconditions => Box::new(
+                ReadXdrIter::<_, Preconditions>::new(r)
+                    .map(|r| r.map(|t| Self::Preconditions(Box::new(t)))),
+            ),
+            TypeVariant::TransactionV0 => Box::new(
+                ReadXdrIter::<_, TransactionV0>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionV0(Box::new(t)))),
+            ),
+            TypeVariant::TransactionV0Ext => Box::new(
+                ReadXdrIter::<_, TransactionV0Ext>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionV0Ext(Box::new(t)))),
+            ),
+            TypeVariant::TransactionV0Envelope => Box::new(
+                ReadXdrIter::<_, TransactionV0Envelope>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionV0Envelope(Box::new(t)))),
+            ),
+            TypeVariant::Transaction => Box::new(
+                ReadXdrIter::<_, Transaction>::new(r)
+                    .map(|r| r.map(|t| Self::Transaction(Box::new(t)))),
+            ),
+            TypeVariant::TransactionExt => Box::new(
+                ReadXdrIter::<_, TransactionExt>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionExt(Box::new(t)))),
+            ),
+            TypeVariant::TransactionV1Envelope => Box::new(
+                ReadXdrIter::<_, TransactionV1Envelope>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionV1Envelope(Box::new(t)))),
+            ),
+            TypeVariant::FeeBumpTransaction => Box::new(
+                ReadXdrIter::<_, FeeBumpTransaction>::new(r)
+                    .map(|r| r.map(|t| Self::FeeBumpTransaction(Box::new(t)))),
+            ),
+            TypeVariant::FeeBumpTransactionInnerTx => Box::new(
+                ReadXdrIter::<_, FeeBumpTransactionInnerTx>::new(r)
+                    .map(|r| r.map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t)))),
+            ),
+            TypeVariant::FeeBumpTransactionExt => Box::new(
+                ReadXdrIter::<_, FeeBumpTransactionExt>::new(r)
+                    .map(|r| r.map(|t| Self::FeeBumpTransactionExt(Box::new(t)))),
+            ),
+            TypeVariant::FeeBumpTransactionEnvelope => Box::new(
+                ReadXdrIter::<_, FeeBumpTransactionEnvelope>::new(r)
+                    .map(|r| r.map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEnvelope => Box::new(
+                ReadXdrIter::<_, TransactionEnvelope>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionEnvelope(Box::new(t)))),
+            ),
+            TypeVariant::TransactionSignaturePayload => Box::new(
+                ReadXdrIter::<_, TransactionSignaturePayload>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionSignaturePayload(Box::new(t)))),
+            ),
+            TypeVariant::TransactionSignaturePayloadTaggedTransaction => Box::new(
+                ReadXdrIter::<_, TransactionSignaturePayloadTaggedTransaction>::new(r).map(|r| {
+                    r.map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t)))
+                }),
+            ),
+            TypeVariant::ClaimAtomType => Box::new(
+                ReadXdrIter::<_, ClaimAtomType>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimAtomType(Box::new(t)))),
+            ),
+            TypeVariant::ClaimOfferAtomV0 => Box::new(
+                ReadXdrIter::<_, ClaimOfferAtomV0>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimOfferAtomV0(Box::new(t)))),
+            ),
+            TypeVariant::ClaimOfferAtom => Box::new(
+                ReadXdrIter::<_, ClaimOfferAtom>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimOfferAtom(Box::new(t)))),
+            ),
+            TypeVariant::ClaimLiquidityAtom => Box::new(
+                ReadXdrIter::<_, ClaimLiquidityAtom>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimLiquidityAtom(Box::new(t)))),
+            ),
+            TypeVariant::ClaimAtom => Box::new(
+                ReadXdrIter::<_, ClaimAtom>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimAtom(Box::new(t)))),
+            ),
+            TypeVariant::CreateAccountResultCode => Box::new(
+                ReadXdrIter::<_, CreateAccountResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::CreateAccountResultCode(Box::new(t)))),
+            ),
+            TypeVariant::CreateAccountResult => Box::new(
+                ReadXdrIter::<_, CreateAccountResult>::new(r)
+                    .map(|r| r.map(|t| Self::CreateAccountResult(Box::new(t)))),
+            ),
+            TypeVariant::PaymentResultCode => Box::new(
+                ReadXdrIter::<_, PaymentResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::PaymentResultCode(Box::new(t)))),
+            ),
+            TypeVariant::PaymentResult => Box::new(
+                ReadXdrIter::<_, PaymentResult>::new(r)
+                    .map(|r| r.map(|t| Self::PaymentResult(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveResultCode => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictReceiveResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t)))),
+            ),
+            TypeVariant::SimplePaymentResult => Box::new(
+                ReadXdrIter::<_, SimplePaymentResult>::new(r)
+                    .map(|r| r.map(|t| Self::SimplePaymentResult(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveResult => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictReceiveResult>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveResultSuccess => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictReceiveResultSuccess>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictSendResultCode => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictSendResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictSendResult => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictSendResult>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResult(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictSendResultSuccess => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictSendResultSuccess>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t)))),
+            ),
+            TypeVariant::ManageSellOfferResultCode => Box::new(
+                ReadXdrIter::<_, ManageSellOfferResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::ManageSellOfferResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ManageOfferEffect => Box::new(
+                ReadXdrIter::<_, ManageOfferEffect>::new(r)
+                    .map(|r| r.map(|t| Self::ManageOfferEffect(Box::new(t)))),
+            ),
+            TypeVariant::ManageOfferSuccessResult => Box::new(
+                ReadXdrIter::<_, ManageOfferSuccessResult>::new(r)
+                    .map(|r| r.map(|t| Self::ManageOfferSuccessResult(Box::new(t)))),
+            ),
+            TypeVariant::ManageOfferSuccessResultOffer => Box::new(
+                ReadXdrIter::<_, ManageOfferSuccessResultOffer>::new(r)
+                    .map(|r| r.map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t)))),
+            ),
+            TypeVariant::ManageSellOfferResult => Box::new(
+                ReadXdrIter::<_, ManageSellOfferResult>::new(r)
+                    .map(|r| r.map(|t| Self::ManageSellOfferResult(Box::new(t)))),
+            ),
+            TypeVariant::ManageBuyOfferResultCode => Box::new(
+                ReadXdrIter::<_, ManageBuyOfferResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::ManageBuyOfferResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ManageBuyOfferResult => Box::new(
+                ReadXdrIter::<_, ManageBuyOfferResult>::new(r)
+                    .map(|r| r.map(|t| Self::ManageBuyOfferResult(Box::new(t)))),
+            ),
+            TypeVariant::SetOptionsResultCode => Box::new(
+                ReadXdrIter::<_, SetOptionsResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::SetOptionsResultCode(Box::new(t)))),
+            ),
+            TypeVariant::SetOptionsResult => Box::new(
+                ReadXdrIter::<_, SetOptionsResult>::new(r)
+                    .map(|r| r.map(|t| Self::SetOptionsResult(Box::new(t)))),
+            ),
+            TypeVariant::ChangeTrustResultCode => Box::new(
+                ReadXdrIter::<_, ChangeTrustResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::ChangeTrustResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ChangeTrustResult => Box::new(
+                ReadXdrIter::<_, ChangeTrustResult>::new(r)
+                    .map(|r| r.map(|t| Self::ChangeTrustResult(Box::new(t)))),
+            ),
+            TypeVariant::AllowTrustResultCode => Box::new(
+                ReadXdrIter::<_, AllowTrustResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::AllowTrustResultCode(Box::new(t)))),
+            ),
+            TypeVariant::AllowTrustResult => Box::new(
+                ReadXdrIter::<_, AllowTrustResult>::new(r)
+                    .map(|r| r.map(|t| Self::AllowTrustResult(Box::new(t)))),
+            ),
+            TypeVariant::AccountMergeResultCode => Box::new(
+                ReadXdrIter::<_, AccountMergeResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::AccountMergeResultCode(Box::new(t)))),
+            ),
+            TypeVariant::AccountMergeResult => Box::new(
+                ReadXdrIter::<_, AccountMergeResult>::new(r)
+                    .map(|r| r.map(|t| Self::AccountMergeResult(Box::new(t)))),
+            ),
+            TypeVariant::InflationResultCode => Box::new(
+                ReadXdrIter::<_, InflationResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::InflationResultCode(Box::new(t)))),
+            ),
+            TypeVariant::InflationPayout => Box::new(
+                ReadXdrIter::<_, InflationPayout>::new(r)
+                    .map(|r| r.map(|t| Self::InflationPayout(Box::new(t)))),
+            ),
+            TypeVariant::InflationResult => Box::new(
+                ReadXdrIter::<_, InflationResult>::new(r)
+                    .map(|r| r.map(|t| Self::InflationResult(Box::new(t)))),
+            ),
+            TypeVariant::ManageDataResultCode => Box::new(
+                ReadXdrIter::<_, ManageDataResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::ManageDataResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ManageDataResult => Box::new(
+                ReadXdrIter::<_, ManageDataResult>::new(r)
+                    .map(|r| r.map(|t| Self::ManageDataResult(Box::new(t)))),
+            ),
+            TypeVariant::BumpSequenceResultCode => Box::new(
+                ReadXdrIter::<_, BumpSequenceResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::BumpSequenceResultCode(Box::new(t)))),
+            ),
+            TypeVariant::BumpSequenceResult => Box::new(
+                ReadXdrIter::<_, BumpSequenceResult>::new(r)
+                    .map(|r| r.map(|t| Self::BumpSequenceResult(Box::new(t)))),
+            ),
+            TypeVariant::CreateClaimableBalanceResultCode => Box::new(
+                ReadXdrIter::<_, CreateClaimableBalanceResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t)))),
+            ),
+            TypeVariant::CreateClaimableBalanceResult => Box::new(
+                ReadXdrIter::<_, CreateClaimableBalanceResult>::new(r)
+                    .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t)))),
+            ),
+            TypeVariant::ClaimClaimableBalanceResultCode => Box::new(
+                ReadXdrIter::<_, ClaimClaimableBalanceResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ClaimClaimableBalanceResult => Box::new(
+                ReadXdrIter::<_, ClaimClaimableBalanceResult>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceResult(Box::new(t)))),
+            ),
+            TypeVariant::BeginSponsoringFutureReservesResultCode => Box::new(
+                ReadXdrIter::<_, BeginSponsoringFutureReservesResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t)))),
+            ),
+            TypeVariant::BeginSponsoringFutureReservesResult => Box::new(
+                ReadXdrIter::<_, BeginSponsoringFutureReservesResult>::new(r)
+                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t)))),
+            ),
+            TypeVariant::EndSponsoringFutureReservesResultCode => Box::new(
+                ReadXdrIter::<_, EndSponsoringFutureReservesResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t)))),
+            ),
+            TypeVariant::EndSponsoringFutureReservesResult => Box::new(
+                ReadXdrIter::<_, EndSponsoringFutureReservesResult>::new(r)
+                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t)))),
+            ),
+            TypeVariant::RevokeSponsorshipResultCode => Box::new(
+                ReadXdrIter::<_, RevokeSponsorshipResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipResultCode(Box::new(t)))),
+            ),
+            TypeVariant::RevokeSponsorshipResult => Box::new(
+                ReadXdrIter::<_, RevokeSponsorshipResult>::new(r)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipResult(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackResultCode => Box::new(
+                ReadXdrIter::<_, ClawbackResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackResult => Box::new(
+                ReadXdrIter::<_, ClawbackResult>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackResult(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackClaimableBalanceResultCode => Box::new(
+                ReadXdrIter::<_, ClawbackClaimableBalanceResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackClaimableBalanceResult => Box::new(
+                ReadXdrIter::<_, ClawbackClaimableBalanceResult>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t)))),
+            ),
+            TypeVariant::SetTrustLineFlagsResultCode => Box::new(
+                ReadXdrIter::<_, SetTrustLineFlagsResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t)))),
+            ),
+            TypeVariant::SetTrustLineFlagsResult => Box::new(
+                ReadXdrIter::<_, SetTrustLineFlagsResult>::new(r)
+                    .map(|r| r.map(|t| Self::SetTrustLineFlagsResult(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolDepositResultCode => Box::new(
+                ReadXdrIter::<_, LiquidityPoolDepositResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolDepositResult => Box::new(
+                ReadXdrIter::<_, LiquidityPoolDepositResult>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolDepositResult(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolWithdrawResultCode => Box::new(
+                ReadXdrIter::<_, LiquidityPoolWithdrawResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolWithdrawResult => Box::new(
+                ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))),
+            ),
+            TypeVariant::OperationResultCode => Box::new(
+                ReadXdrIter::<_, OperationResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t)))),
+            ),
+            TypeVariant::OperationResult => Box::new(
+                ReadXdrIter::<_, OperationResult>::new(r)
+                    .map(|r| r.map(|t| Self::OperationResult(Box::new(t)))),
+            ),
+            TypeVariant::OperationResultTr => Box::new(
+                ReadXdrIter::<_, OperationResultTr>::new(r)
+                    .map(|r| r.map(|t| Self::OperationResultTr(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultCode => Box::new(
+                ReadXdrIter::<_, TransactionResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultCode(Box::new(t)))),
+            ),
+            TypeVariant::InnerTransactionResult => Box::new(
+                ReadXdrIter::<_, InnerTransactionResult>::new(r)
+                    .map(|r| r.map(|t| Self::InnerTransactionResult(Box::new(t)))),
+            ),
+            TypeVariant::InnerTransactionResultResult => Box::new(
+                ReadXdrIter::<_, InnerTransactionResultResult>::new(r)
+                    .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t)))),
+            ),
+            TypeVariant::InnerTransactionResultExt => Box::new(
+                ReadXdrIter::<_, InnerTransactionResultExt>::new(r)
+                    .map(|r| r.map(|t| Self::InnerTransactionResultExt(Box::new(t)))),
+            ),
+            TypeVariant::InnerTransactionResultPair => Box::new(
+                ReadXdrIter::<_, InnerTransactionResultPair>::new(r)
+                    .map(|r| r.map(|t| Self::InnerTransactionResultPair(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResult => Box::new(
+                ReadXdrIter::<_, TransactionResult>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResult(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultResult => Box::new(
+                ReadXdrIter::<_, TransactionResultResult>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultResult(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultExt => Box::new(
+                ReadXdrIter::<_, TransactionResultExt>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultExt(Box::new(t)))),
+            ),
+            TypeVariant::Hash => {
+                Box::new(ReadXdrIter::<_, Hash>::new(r).map(|r| r.map(|t| Self::Hash(Box::new(t)))))
+            }
+            TypeVariant::Uint256 => Box::new(
+                ReadXdrIter::<_, Uint256>::new(r).map(|r| r.map(|t| Self::Uint256(Box::new(t)))),
+            ),
+            TypeVariant::Uint32 => Box::new(
+                ReadXdrIter::<_, Uint32>::new(r).map(|r| r.map(|t| Self::Uint32(Box::new(t)))),
+            ),
+            TypeVariant::Int32 => Box::new(
+                ReadXdrIter::<_, Int32>::new(r).map(|r| r.map(|t| Self::Int32(Box::new(t)))),
+            ),
+            TypeVariant::Uint64 => Box::new(
+                ReadXdrIter::<_, Uint64>::new(r).map(|r| r.map(|t| Self::Uint64(Box::new(t)))),
+            ),
+            TypeVariant::Int64 => Box::new(
+                ReadXdrIter::<_, Int64>::new(r).map(|r| r.map(|t| Self::Int64(Box::new(t)))),
+            ),
+            TypeVariant::ExtensionPoint => Box::new(
+                ReadXdrIter::<_, ExtensionPoint>::new(r)
+                    .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
+            ),
+            TypeVariant::CryptoKeyType => Box::new(
+                ReadXdrIter::<_, CryptoKeyType>::new(r)
+                    .map(|r| r.map(|t| Self::CryptoKeyType(Box::new(t)))),
+            ),
+            TypeVariant::PublicKeyType => Box::new(
+                ReadXdrIter::<_, PublicKeyType>::new(r)
+                    .map(|r| r.map(|t| Self::PublicKeyType(Box::new(t)))),
+            ),
+            TypeVariant::SignerKeyType => Box::new(
+                ReadXdrIter::<_, SignerKeyType>::new(r)
+                    .map(|r| r.map(|t| Self::SignerKeyType(Box::new(t)))),
+            ),
+            TypeVariant::PublicKey => Box::new(
+                ReadXdrIter::<_, PublicKey>::new(r)
+                    .map(|r| r.map(|t| Self::PublicKey(Box::new(t)))),
+            ),
+            TypeVariant::SignerKey => Box::new(
+                ReadXdrIter::<_, SignerKey>::new(r)
+                    .map(|r| r.map(|t| Self::SignerKey(Box::new(t)))),
+            ),
+            TypeVariant::SignerKeyEd25519SignedPayload => Box::new(
+                ReadXdrIter::<_, SignerKeyEd25519SignedPayload>::new(r)
+                    .map(|r| r.map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t)))),
+            ),
+            TypeVariant::Signature => Box::new(
+                ReadXdrIter::<_, Signature>::new(r)
+                    .map(|r| r.map(|t| Self::Signature(Box::new(t)))),
+            ),
+            TypeVariant::SignatureHint => Box::new(
+                ReadXdrIter::<_, SignatureHint>::new(r)
+                    .map(|r| r.map(|t| Self::SignatureHint(Box::new(t)))),
+            ),
+            TypeVariant::NodeId => Box::new(
+                ReadXdrIter::<_, NodeId>::new(r).map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
+            ),
+            TypeVariant::Curve25519Secret => Box::new(
+                ReadXdrIter::<_, Curve25519Secret>::new(r)
+                    .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t)))),
+            ),
+            TypeVariant::Curve25519Public => Box::new(
+                ReadXdrIter::<_, Curve25519Public>::new(r)
+                    .map(|r| r.map(|t| Self::Curve25519Public(Box::new(t)))),
+            ),
+            TypeVariant::HmacSha256Key => Box::new(
+                ReadXdrIter::<_, HmacSha256Key>::new(r)
+                    .map(|r| r.map(|t| Self::HmacSha256Key(Box::new(t)))),
+            ),
+            TypeVariant::HmacSha256Mac => Box::new(
+                ReadXdrIter::<_, HmacSha256Mac>::new(r)
+                    .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t)))),
+            ),
+        }
+    }
+
+    #[cfg(feature = "std")]
+    #[allow(clippy::too_many_lines)]
+    pub fn read_xdr_framed_iter<R: Read>(
+        v: TypeVariant,
+        r: &mut R,
+    ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
+        match v {
+            TypeVariant::Value => Box::new(
+                ReadXdrIter::<_, Frame<Value>>::new(r)
+                    .map(|r| r.map(|t| Self::Value(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpBallot => Box::new(
+                ReadXdrIter::<_, Frame<ScpBallot>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpBallot(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpStatementType => Box::new(
+                ReadXdrIter::<_, Frame<ScpStatementType>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatementType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpNomination => Box::new(
+                ReadXdrIter::<_, Frame<ScpNomination>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpNomination(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpStatement => Box::new(
+                ReadXdrIter::<_, Frame<ScpStatement>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatement(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpStatementPledges => Box::new(
+                ReadXdrIter::<_, Frame<ScpStatementPledges>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatementPledges(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpStatementPrepare => Box::new(
+                ReadXdrIter::<_, Frame<ScpStatementPrepare>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatementPrepare(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpStatementConfirm => Box::new(
+                ReadXdrIter::<_, Frame<ScpStatementConfirm>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatementConfirm(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpStatementExternalize => Box::new(
+                ReadXdrIter::<_, Frame<ScpStatementExternalize>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpStatementExternalize(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpEnvelope => Box::new(
+                ReadXdrIter::<_, Frame<ScpEnvelope>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpEnvelope(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpQuorumSet => Box::new(
+                ReadXdrIter::<_, Frame<ScpQuorumSet>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t.0)))),
+            ),
+            TypeVariant::StoredTransactionSet => Box::new(
+                ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(r)
+                    .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t.0)))),
+            ),
+            TypeVariant::PersistedScpStateV0 => Box::new(
+                ReadXdrIter::<_, Frame<PersistedScpStateV0>>::new(r)
+                    .map(|r| r.map(|t| Self::PersistedScpStateV0(Box::new(t.0)))),
+            ),
+            TypeVariant::PersistedScpStateV1 => Box::new(
+                ReadXdrIter::<_, Frame<PersistedScpStateV1>>::new(r)
+                    .map(|r| r.map(|t| Self::PersistedScpStateV1(Box::new(t.0)))),
+            ),
+            TypeVariant::PersistedScpState => Box::new(
+                ReadXdrIter::<_, Frame<PersistedScpState>>::new(r)
+                    .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountId => Box::new(
+                ReadXdrIter::<_, Frame<AccountId>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountId(Box::new(t.0)))),
+            ),
+            TypeVariant::Thresholds => Box::new(
+                ReadXdrIter::<_, Frame<Thresholds>>::new(r)
+                    .map(|r| r.map(|t| Self::Thresholds(Box::new(t.0)))),
+            ),
+            TypeVariant::String32 => Box::new(
+                ReadXdrIter::<_, Frame<String32>>::new(r)
+                    .map(|r| r.map(|t| Self::String32(Box::new(t.0)))),
+            ),
+            TypeVariant::String64 => Box::new(
+                ReadXdrIter::<_, Frame<String64>>::new(r)
+                    .map(|r| r.map(|t| Self::String64(Box::new(t.0)))),
+            ),
+            TypeVariant::SequenceNumber => Box::new(
+                ReadXdrIter::<_, Frame<SequenceNumber>>::new(r)
+                    .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t.0)))),
+            ),
+            TypeVariant::TimePoint => Box::new(
+                ReadXdrIter::<_, Frame<TimePoint>>::new(r)
+                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t.0)))),
+            ),
+            TypeVariant::Duration => Box::new(
+                ReadXdrIter::<_, Frame<Duration>>::new(r)
+                    .map(|r| r.map(|t| Self::Duration(Box::new(t.0)))),
+            ),
+            TypeVariant::DataValue => Box::new(
+                ReadXdrIter::<_, Frame<DataValue>>::new(r)
+                    .map(|r| r.map(|t| Self::DataValue(Box::new(t.0)))),
+            ),
+            TypeVariant::PoolId => Box::new(
+                ReadXdrIter::<_, Frame<PoolId>>::new(r)
+                    .map(|r| r.map(|t| Self::PoolId(Box::new(t.0)))),
+            ),
+            TypeVariant::AssetCode4 => Box::new(
+                ReadXdrIter::<_, Frame<AssetCode4>>::new(r)
+                    .map(|r| r.map(|t| Self::AssetCode4(Box::new(t.0)))),
+            ),
+            TypeVariant::AssetCode12 => Box::new(
+                ReadXdrIter::<_, Frame<AssetCode12>>::new(r)
+                    .map(|r| r.map(|t| Self::AssetCode12(Box::new(t.0)))),
+            ),
+            TypeVariant::AssetType => Box::new(
+                ReadXdrIter::<_, Frame<AssetType>>::new(r)
+                    .map(|r| r.map(|t| Self::AssetType(Box::new(t.0)))),
+            ),
+            TypeVariant::AssetCode => Box::new(
+                ReadXdrIter::<_, Frame<AssetCode>>::new(r)
+                    .map(|r| r.map(|t| Self::AssetCode(Box::new(t.0)))),
+            ),
+            TypeVariant::AlphaNum4 => Box::new(
+                ReadXdrIter::<_, Frame<AlphaNum4>>::new(r)
+                    .map(|r| r.map(|t| Self::AlphaNum4(Box::new(t.0)))),
+            ),
+            TypeVariant::AlphaNum12 => Box::new(
+                ReadXdrIter::<_, Frame<AlphaNum12>>::new(r)
+                    .map(|r| r.map(|t| Self::AlphaNum12(Box::new(t.0)))),
+            ),
+            TypeVariant::Asset => Box::new(
+                ReadXdrIter::<_, Frame<Asset>>::new(r)
+                    .map(|r| r.map(|t| Self::Asset(Box::new(t.0)))),
+            ),
+            TypeVariant::Price => Box::new(
+                ReadXdrIter::<_, Frame<Price>>::new(r)
+                    .map(|r| r.map(|t| Self::Price(Box::new(t.0)))),
+            ),
+            TypeVariant::Liabilities => Box::new(
+                ReadXdrIter::<_, Frame<Liabilities>>::new(r)
+                    .map(|r| r.map(|t| Self::Liabilities(Box::new(t.0)))),
+            ),
+            TypeVariant::ThresholdIndexes => Box::new(
+                ReadXdrIter::<_, Frame<ThresholdIndexes>>::new(r)
+                    .map(|r| r.map(|t| Self::ThresholdIndexes(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerEntryType => Box::new(
+                ReadXdrIter::<_, Frame<LedgerEntryType>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryType(Box::new(t.0)))),
+            ),
+            TypeVariant::Signer => Box::new(
+                ReadXdrIter::<_, Frame<Signer>>::new(r)
+                    .map(|r| r.map(|t| Self::Signer(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountFlags => Box::new(
+                ReadXdrIter::<_, Frame<AccountFlags>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountFlags(Box::new(t.0)))),
+            ),
+            TypeVariant::SponsorshipDescriptor => Box::new(
+                ReadXdrIter::<_, Frame<SponsorshipDescriptor>>::new(r)
+                    .map(|r| r.map(|t| Self::SponsorshipDescriptor(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountEntryExtensionV3 => Box::new(
+                ReadXdrIter::<_, Frame<AccountEntryExtensionV3>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV3(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountEntryExtensionV2 => Box::new(
+                ReadXdrIter::<_, Frame<AccountEntryExtensionV2>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV2(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountEntryExtensionV2Ext => Box::new(
+                ReadXdrIter::<_, Frame<AccountEntryExtensionV2Ext>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountEntryExtensionV1 => Box::new(
+                ReadXdrIter::<_, Frame<AccountEntryExtensionV1>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV1(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountEntryExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, Frame<AccountEntryExtensionV1Ext>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountEntry => Box::new(
+                ReadXdrIter::<_, Frame<AccountEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountEntryExt => Box::new(
+                ReadXdrIter::<_, Frame<AccountEntryExt>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountEntryExt(Box::new(t.0)))),
+            ),
+            TypeVariant::TrustLineFlags => Box::new(
+                ReadXdrIter::<_, Frame<TrustLineFlags>>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineFlags(Box::new(t.0)))),
+            ),
+            TypeVariant::LiquidityPoolType => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolType>>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolType(Box::new(t.0)))),
+            ),
+            TypeVariant::TrustLineAsset => Box::new(
+                ReadXdrIter::<_, Frame<TrustLineAsset>>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineAsset(Box::new(t.0)))),
+            ),
+            TypeVariant::TrustLineEntryExtensionV2 => Box::new(
+                ReadXdrIter::<_, Frame<TrustLineEntryExtensionV2>>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2(Box::new(t.0)))),
+            ),
+            TypeVariant::TrustLineEntryExtensionV2Ext => Box::new(
+                ReadXdrIter::<_, Frame<TrustLineEntryExtensionV2Ext>>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t.0)))),
+            ),
+            TypeVariant::TrustLineEntry => Box::new(
+                ReadXdrIter::<_, Frame<TrustLineEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::TrustLineEntryExt => Box::new(
+                ReadXdrIter::<_, Frame<TrustLineEntryExt>>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntryExt(Box::new(t.0)))),
+            ),
+            TypeVariant::TrustLineEntryV1 => Box::new(
+                ReadXdrIter::<_, Frame<TrustLineEntryV1>>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntryV1(Box::new(t.0)))),
+            ),
+            TypeVariant::TrustLineEntryV1Ext => Box::new(
+                ReadXdrIter::<_, Frame<TrustLineEntryV1Ext>>::new(r)
+                    .map(|r| r.map(|t| Self::TrustLineEntryV1Ext(Box::new(t.0)))),
+            ),
+            TypeVariant::OfferEntryFlags => Box::new(
+                ReadXdrIter::<_, Frame<OfferEntryFlags>>::new(r)
+                    .map(|r| r.map(|t| Self::OfferEntryFlags(Box::new(t.0)))),
+            ),
+            TypeVariant::OfferEntry => Box::new(
+                ReadXdrIter::<_, Frame<OfferEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::OfferEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::OfferEntryExt => Box::new(
+                ReadXdrIter::<_, Frame<OfferEntryExt>>::new(r)
+                    .map(|r| r.map(|t| Self::OfferEntryExt(Box::new(t.0)))),
+            ),
+            TypeVariant::DataEntry => Box::new(
+                ReadXdrIter::<_, Frame<DataEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::DataEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::DataEntryExt => Box::new(
+                ReadXdrIter::<_, Frame<DataEntryExt>>::new(r)
+                    .map(|r| r.map(|t| Self::DataEntryExt(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimPredicateType => Box::new(
+                ReadXdrIter::<_, Frame<ClaimPredicateType>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimPredicateType(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimPredicate => Box::new(
+                ReadXdrIter::<_, Frame<ClaimPredicate>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimPredicate(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimantType => Box::new(
+                ReadXdrIter::<_, Frame<ClaimantType>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimantType(Box::new(t.0)))),
+            ),
+            TypeVariant::Claimant => Box::new(
+                ReadXdrIter::<_, Frame<Claimant>>::new(r)
+                    .map(|r| r.map(|t| Self::Claimant(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimantV0 => Box::new(
+                ReadXdrIter::<_, Frame<ClaimantV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimableBalanceIdType => Box::new(
+                ReadXdrIter::<_, Frame<ClaimableBalanceIdType>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimableBalanceId => Box::new(
+                ReadXdrIter::<_, Frame<ClaimableBalanceId>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimableBalanceFlags => Box::new(
+                ReadXdrIter::<_, Frame<ClaimableBalanceFlags>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceFlags(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimableBalanceEntryExtensionV1 => Box::new(
+                ReadXdrIter::<_, Frame<ClaimableBalanceEntryExtensionV1>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimableBalanceEntryExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, Frame<ClaimableBalanceEntryExtensionV1Ext>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimableBalanceEntry => Box::new(
+                ReadXdrIter::<_, Frame<ClaimableBalanceEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimableBalanceEntryExt => Box::new(
+                ReadXdrIter::<_, Frame<ClaimableBalanceEntryExt>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExt(Box::new(t.0)))),
+            ),
+            TypeVariant::LiquidityPoolConstantProductParameters => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolConstantProductParameters>>::new(r).map(|r| {
+                    r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t.0)))
+                }),
+            ),
+            TypeVariant::LiquidityPoolEntry => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::LiquidityPoolEntryBody => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolEntryBody>>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolEntryBody(Box::new(t.0)))),
+            ),
+            TypeVariant::LiquidityPoolEntryConstantProduct => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolEntryConstantProduct>>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerEntryExtensionV1 => Box::new(
+                ReadXdrIter::<_, Frame<LedgerEntryExtensionV1>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerEntryExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, Frame<LedgerEntryExtensionV1Ext>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerEntry => Box::new(
+                ReadXdrIter::<_, Frame<LedgerEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerEntryData => Box::new(
+                ReadXdrIter::<_, Frame<LedgerEntryData>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryData(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerEntryExt => Box::new(
+                ReadXdrIter::<_, Frame<LedgerEntryExt>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryExt(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKey => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKey>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKey(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyAccount => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyAccount>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyAccount(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyTrustLine => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyTrustLine>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyTrustLine(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyOffer => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyOffer>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyOffer(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyData => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyData>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyData(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyClaimableBalance => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyClaimableBalance>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyClaimableBalance(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyLiquidityPool => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyLiquidityPool>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t.0)))),
+            ),
+            TypeVariant::EnvelopeType => Box::new(
+                ReadXdrIter::<_, Frame<EnvelopeType>>::new(r)
+                    .map(|r| r.map(|t| Self::EnvelopeType(Box::new(t.0)))),
+            ),
+            TypeVariant::UpgradeType => Box::new(
+                ReadXdrIter::<_, Frame<UpgradeType>>::new(r)
+                    .map(|r| r.map(|t| Self::UpgradeType(Box::new(t.0)))),
+            ),
+            TypeVariant::StellarValueType => Box::new(
+                ReadXdrIter::<_, Frame<StellarValueType>>::new(r)
+                    .map(|r| r.map(|t| Self::StellarValueType(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerCloseValueSignature => Box::new(
+                ReadXdrIter::<_, Frame<LedgerCloseValueSignature>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerCloseValueSignature(Box::new(t.0)))),
+            ),
+            TypeVariant::StellarValue => Box::new(
+                ReadXdrIter::<_, Frame<StellarValue>>::new(r)
+                    .map(|r| r.map(|t| Self::StellarValue(Box::new(t.0)))),
+            ),
+            TypeVariant::StellarValueExt => Box::new(
+                ReadXdrIter::<_, Frame<StellarValueExt>>::new(r)
+                    .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerHeaderFlags => Box::new(
+                ReadXdrIter::<_, Frame<LedgerHeaderFlags>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderFlags(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerHeaderExtensionV1 => Box::new(
+                ReadXdrIter::<_, Frame<LedgerHeaderExtensionV1>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerHeaderExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, Frame<LedgerHeaderExtensionV1Ext>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerHeader => Box::new(
+                ReadXdrIter::<_, Frame<LedgerHeader>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeader(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerHeaderExt => Box::new(
+                ReadXdrIter::<_, Frame<LedgerHeaderExt>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderExt(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerUpgradeType => Box::new(
+                ReadXdrIter::<_, Frame<LedgerUpgradeType>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerUpgrade => Box::new(
+                ReadXdrIter::<_, Frame<LedgerUpgrade>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t.0)))),
+            ),
+            TypeVariant::BucketEntryType => Box::new(
+                ReadXdrIter::<_, Frame<BucketEntryType>>::new(r)
+                    .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t.0)))),
+            ),
+            TypeVariant::BucketMetadata => Box::new(
+                ReadXdrIter::<_, Frame<BucketMetadata>>::new(r)
+                    .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t.0)))),
+            ),
+            TypeVariant::BucketMetadataExt => Box::new(
+                ReadXdrIter::<_, Frame<BucketMetadataExt>>::new(r)
+                    .map(|r| r.map(|t| Self::BucketMetadataExt(Box::new(t.0)))),
+            ),
+            TypeVariant::BucketEntry => Box::new(
+                ReadXdrIter::<_, Frame<BucketEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::BucketEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::TxSetComponentType => Box::new(
+                ReadXdrIter::<_, Frame<TxSetComponentType>>::new(r)
+                    .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t.0)))),
+            ),
+            TypeVariant::TxSetComponent => Box::new(
+                ReadXdrIter::<_, Frame<TxSetComponent>>::new(r)
+                    .map(|r| r.map(|t| Self::TxSetComponent(Box::new(t.0)))),
+            ),
+            TypeVariant::TxSetComponentTxsMaybeDiscountedFee => Box::new(
+                ReadXdrIter::<_, Frame<TxSetComponentTxsMaybeDiscountedFee>>::new(r)
+                    .map(|r| r.map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionPhase => Box::new(
+                ReadXdrIter::<_, Frame<TransactionPhase>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionPhase(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionSet => Box::new(
+                ReadXdrIter::<_, Frame<TransactionSet>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionSet(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionSetV1 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionSetV1>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionSetV1(Box::new(t.0)))),
+            ),
+            TypeVariant::GeneralizedTransactionSet => Box::new(
+                ReadXdrIter::<_, Frame<GeneralizedTransactionSet>>::new(r)
+                    .map(|r| r.map(|t| Self::GeneralizedTransactionSet(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionResultPair => Box::new(
+                ReadXdrIter::<_, Frame<TransactionResultPair>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultPair(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionResultSet => Box::new(
+                ReadXdrIter::<_, Frame<TransactionResultSet>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultSet(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionHistoryEntry => Box::new(
+                ReadXdrIter::<_, Frame<TransactionHistoryEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionHistoryEntryExt => Box::new(
+                ReadXdrIter::<_, Frame<TransactionHistoryEntryExt>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryEntryExt(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntry => Box::new(
+                ReadXdrIter::<_, Frame<TransactionHistoryResultEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntryExt => Box::new(
+                ReadXdrIter::<_, Frame<TransactionHistoryResultEntryExt>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerHeaderHistoryEntry => Box::new(
+                ReadXdrIter::<_, Frame<LedgerHeaderHistoryEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerHeaderHistoryEntryExt => Box::new(
+                ReadXdrIter::<_, Frame<LedgerHeaderHistoryEntryExt>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerScpMessages => Box::new(
+                ReadXdrIter::<_, Frame<LedgerScpMessages>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerScpMessages(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpHistoryEntryV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScpHistoryEntryV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpHistoryEntryV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScpHistoryEntry => Box::new(
+                ReadXdrIter::<_, Frame<ScpHistoryEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ScpHistoryEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerEntryChangeType => Box::new(
+                ReadXdrIter::<_, Frame<LedgerEntryChangeType>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryChangeType(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerEntryChange => Box::new(
+                ReadXdrIter::<_, Frame<LedgerEntryChange>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryChange(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerEntryChanges => Box::new(
+                ReadXdrIter::<_, Frame<LedgerEntryChanges>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerEntryChanges(Box::new(t.0)))),
+            ),
+            TypeVariant::OperationMeta => Box::new(
+                ReadXdrIter::<_, Frame<OperationMeta>>::new(r)
+                    .map(|r| r.map(|t| Self::OperationMeta(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionMetaV1 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionMetaV1>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionMetaV1(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionMetaV2 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionMetaV2>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionMeta => Box::new(
+                ReadXdrIter::<_, Frame<TransactionMeta>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionResultMeta => Box::new(
+                ReadXdrIter::<_, Frame<TransactionResultMeta>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t.0)))),
+            ),
+            TypeVariant::UpgradeEntryMeta => Box::new(
+                ReadXdrIter::<_, Frame<UpgradeEntryMeta>>::new(r)
+                    .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerCloseMetaV0 => Box::new(
+                ReadXdrIter::<_, Frame<LedgerCloseMetaV0>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV0(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerCloseMetaV1 => Box::new(
+                ReadXdrIter::<_, Frame<LedgerCloseMetaV1>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerCloseMeta => Box::new(
+                ReadXdrIter::<_, Frame<LedgerCloseMeta>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t.0)))),
+            ),
+            TypeVariant::ErrorCode => Box::new(
+                ReadXdrIter::<_, Frame<ErrorCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ErrorCode(Box::new(t.0)))),
+            ),
+            TypeVariant::SError => Box::new(
+                ReadXdrIter::<_, Frame<SError>>::new(r)
+                    .map(|r| r.map(|t| Self::SError(Box::new(t.0)))),
+            ),
+            TypeVariant::SendMore => Box::new(
+                ReadXdrIter::<_, Frame<SendMore>>::new(r)
+                    .map(|r| r.map(|t| Self::SendMore(Box::new(t.0)))),
+            ),
+            TypeVariant::AuthCert => Box::new(
+                ReadXdrIter::<_, Frame<AuthCert>>::new(r)
+                    .map(|r| r.map(|t| Self::AuthCert(Box::new(t.0)))),
+            ),
+            TypeVariant::Hello => Box::new(
+                ReadXdrIter::<_, Frame<Hello>>::new(r)
+                    .map(|r| r.map(|t| Self::Hello(Box::new(t.0)))),
+            ),
+            TypeVariant::Auth => Box::new(
+                ReadXdrIter::<_, Frame<Auth>>::new(r).map(|r| r.map(|t| Self::Auth(Box::new(t.0)))),
+            ),
+            TypeVariant::IpAddrType => Box::new(
+                ReadXdrIter::<_, Frame<IpAddrType>>::new(r)
+                    .map(|r| r.map(|t| Self::IpAddrType(Box::new(t.0)))),
+            ),
+            TypeVariant::PeerAddress => Box::new(
+                ReadXdrIter::<_, Frame<PeerAddress>>::new(r)
+                    .map(|r| r.map(|t| Self::PeerAddress(Box::new(t.0)))),
+            ),
+            TypeVariant::PeerAddressIp => Box::new(
+                ReadXdrIter::<_, Frame<PeerAddressIp>>::new(r)
+                    .map(|r| r.map(|t| Self::PeerAddressIp(Box::new(t.0)))),
+            ),
+            TypeVariant::MessageType => Box::new(
+                ReadXdrIter::<_, Frame<MessageType>>::new(r)
+                    .map(|r| r.map(|t| Self::MessageType(Box::new(t.0)))),
+            ),
+            TypeVariant::DontHave => Box::new(
+                ReadXdrIter::<_, Frame<DontHave>>::new(r)
+                    .map(|r| r.map(|t| Self::DontHave(Box::new(t.0)))),
+            ),
+            TypeVariant::SurveyMessageCommandType => Box::new(
+                ReadXdrIter::<_, Frame<SurveyMessageCommandType>>::new(r)
+                    .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t.0)))),
+            ),
+            TypeVariant::SurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, Frame<SurveyRequestMessage>>::new(r)
+                    .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t.0)))),
+            ),
+            TypeVariant::SignedSurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, Frame<SignedSurveyRequestMessage>>::new(r)
+                    .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t.0)))),
+            ),
+            TypeVariant::EncryptedBody => Box::new(
+                ReadXdrIter::<_, Frame<EncryptedBody>>::new(r)
+                    .map(|r| r.map(|t| Self::EncryptedBody(Box::new(t.0)))),
+            ),
+            TypeVariant::SurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, Frame<SurveyResponseMessage>>::new(r)
+                    .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t.0)))),
+            ),
+            TypeVariant::SignedSurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, Frame<SignedSurveyResponseMessage>>::new(r)
+                    .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t.0)))),
+            ),
+            TypeVariant::PeerStats => Box::new(
+                ReadXdrIter::<_, Frame<PeerStats>>::new(r)
+                    .map(|r| r.map(|t| Self::PeerStats(Box::new(t.0)))),
+            ),
+            TypeVariant::PeerStatList => Box::new(
+                ReadXdrIter::<_, Frame<PeerStatList>>::new(r)
+                    .map(|r| r.map(|t| Self::PeerStatList(Box::new(t.0)))),
+            ),
+            TypeVariant::TopologyResponseBody => Box::new(
+                ReadXdrIter::<_, Frame<TopologyResponseBody>>::new(r)
+                    .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t.0)))),
+            ),
+            TypeVariant::SurveyResponseBody => Box::new(
+                ReadXdrIter::<_, Frame<SurveyResponseBody>>::new(r)
+                    .map(|r| r.map(|t| Self::SurveyResponseBody(Box::new(t.0)))),
+            ),
+            TypeVariant::TxAdvertVector => Box::new(
+                ReadXdrIter::<_, Frame<TxAdvertVector>>::new(r)
+                    .map(|r| r.map(|t| Self::TxAdvertVector(Box::new(t.0)))),
+            ),
+            TypeVariant::FloodAdvert => Box::new(
+                ReadXdrIter::<_, Frame<FloodAdvert>>::new(r)
+                    .map(|r| r.map(|t| Self::FloodAdvert(Box::new(t.0)))),
+            ),
+            TypeVariant::TxDemandVector => Box::new(
+                ReadXdrIter::<_, Frame<TxDemandVector>>::new(r)
+                    .map(|r| r.map(|t| Self::TxDemandVector(Box::new(t.0)))),
+            ),
+            TypeVariant::FloodDemand => Box::new(
+                ReadXdrIter::<_, Frame<FloodDemand>>::new(r)
+                    .map(|r| r.map(|t| Self::FloodDemand(Box::new(t.0)))),
+            ),
+            TypeVariant::StellarMessage => Box::new(
+                ReadXdrIter::<_, Frame<StellarMessage>>::new(r)
+                    .map(|r| r.map(|t| Self::StellarMessage(Box::new(t.0)))),
+            ),
+            TypeVariant::AuthenticatedMessage => Box::new(
+                ReadXdrIter::<_, Frame<AuthenticatedMessage>>::new(r)
+                    .map(|r| r.map(|t| Self::AuthenticatedMessage(Box::new(t.0)))),
+            ),
+            TypeVariant::AuthenticatedMessageV0 => Box::new(
+                ReadXdrIter::<_, Frame<AuthenticatedMessageV0>>::new(r)
+                    .map(|r| r.map(|t| Self::AuthenticatedMessageV0(Box::new(t.0)))),
+            ),
+            TypeVariant::LiquidityPoolParameters => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolParameters>>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolParameters(Box::new(t.0)))),
+            ),
+            TypeVariant::MuxedAccount => Box::new(
+                ReadXdrIter::<_, Frame<MuxedAccount>>::new(r)
+                    .map(|r| r.map(|t| Self::MuxedAccount(Box::new(t.0)))),
+            ),
+            TypeVariant::MuxedAccountMed25519 => Box::new(
+                ReadXdrIter::<_, Frame<MuxedAccountMed25519>>::new(r)
+                    .map(|r| r.map(|t| Self::MuxedAccountMed25519(Box::new(t.0)))),
+            ),
+            TypeVariant::DecoratedSignature => Box::new(
+                ReadXdrIter::<_, Frame<DecoratedSignature>>::new(r)
+                    .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t.0)))),
+            ),
+            TypeVariant::OperationType => Box::new(
+                ReadXdrIter::<_, Frame<OperationType>>::new(r)
+                    .map(|r| r.map(|t| Self::OperationType(Box::new(t.0)))),
+            ),
+            TypeVariant::CreateAccountOp => Box::new(
+                ReadXdrIter::<_, Frame<CreateAccountOp>>::new(r)
+                    .map(|r| r.map(|t| Self::CreateAccountOp(Box::new(t.0)))),
+            ),
+            TypeVariant::PaymentOp => Box::new(
+                ReadXdrIter::<_, Frame<PaymentOp>>::new(r)
+                    .map(|r| r.map(|t| Self::PaymentOp(Box::new(t.0)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveOp => Box::new(
+                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveOp>>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t.0)))),
+            ),
+            TypeVariant::PathPaymentStrictSendOp => Box::new(
+                ReadXdrIter::<_, Frame<PathPaymentStrictSendOp>>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendOp(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageSellOfferOp => Box::new(
+                ReadXdrIter::<_, Frame<ManageSellOfferOp>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageSellOfferOp(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageBuyOfferOp => Box::new(
+                ReadXdrIter::<_, Frame<ManageBuyOfferOp>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageBuyOfferOp(Box::new(t.0)))),
+            ),
+            TypeVariant::CreatePassiveSellOfferOp => Box::new(
+                ReadXdrIter::<_, Frame<CreatePassiveSellOfferOp>>::new(r)
+                    .map(|r| r.map(|t| Self::CreatePassiveSellOfferOp(Box::new(t.0)))),
+            ),
+            TypeVariant::SetOptionsOp => Box::new(
+                ReadXdrIter::<_, Frame<SetOptionsOp>>::new(r)
+                    .map(|r| r.map(|t| Self::SetOptionsOp(Box::new(t.0)))),
+            ),
+            TypeVariant::ChangeTrustAsset => Box::new(
+                ReadXdrIter::<_, Frame<ChangeTrustAsset>>::new(r)
+                    .map(|r| r.map(|t| Self::ChangeTrustAsset(Box::new(t.0)))),
+            ),
+            TypeVariant::ChangeTrustOp => Box::new(
+                ReadXdrIter::<_, Frame<ChangeTrustOp>>::new(r)
+                    .map(|r| r.map(|t| Self::ChangeTrustOp(Box::new(t.0)))),
+            ),
+            TypeVariant::AllowTrustOp => Box::new(
+                ReadXdrIter::<_, Frame<AllowTrustOp>>::new(r)
+                    .map(|r| r.map(|t| Self::AllowTrustOp(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageDataOp => Box::new(
+                ReadXdrIter::<_, Frame<ManageDataOp>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageDataOp(Box::new(t.0)))),
+            ),
+            TypeVariant::BumpSequenceOp => Box::new(
+                ReadXdrIter::<_, Frame<BumpSequenceOp>>::new(r)
+                    .map(|r| r.map(|t| Self::BumpSequenceOp(Box::new(t.0)))),
+            ),
+            TypeVariant::CreateClaimableBalanceOp => Box::new(
+                ReadXdrIter::<_, Frame<CreateClaimableBalanceOp>>::new(r)
+                    .map(|r| r.map(|t| Self::CreateClaimableBalanceOp(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimClaimableBalanceOp => Box::new(
+                ReadXdrIter::<_, Frame<ClaimClaimableBalanceOp>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceOp(Box::new(t.0)))),
+            ),
+            TypeVariant::BeginSponsoringFutureReservesOp => Box::new(
+                ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesOp>>::new(r)
+                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t.0)))),
+            ),
+            TypeVariant::RevokeSponsorshipType => Box::new(
+                ReadXdrIter::<_, Frame<RevokeSponsorshipType>>::new(r)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipType(Box::new(t.0)))),
+            ),
+            TypeVariant::RevokeSponsorshipOp => Box::new(
+                ReadXdrIter::<_, Frame<RevokeSponsorshipOp>>::new(r)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipOp(Box::new(t.0)))),
+            ),
+            TypeVariant::RevokeSponsorshipOpSigner => Box::new(
+                ReadXdrIter::<_, Frame<RevokeSponsorshipOpSigner>>::new(r)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t.0)))),
+            ),
+            TypeVariant::ClawbackOp => Box::new(
+                ReadXdrIter::<_, Frame<ClawbackOp>>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackOp(Box::new(t.0)))),
+            ),
+            TypeVariant::ClawbackClaimableBalanceOp => Box::new(
+                ReadXdrIter::<_, Frame<ClawbackClaimableBalanceOp>>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t.0)))),
+            ),
+            TypeVariant::SetTrustLineFlagsOp => Box::new(
+                ReadXdrIter::<_, Frame<SetTrustLineFlagsOp>>::new(r)
+                    .map(|r| r.map(|t| Self::SetTrustLineFlagsOp(Box::new(t.0)))),
+            ),
+            TypeVariant::LiquidityPoolDepositOp => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolDepositOp>>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolDepositOp(Box::new(t.0)))),
+            ),
+            TypeVariant::LiquidityPoolWithdrawOp => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolWithdrawOp>>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t.0)))),
+            ),
+            TypeVariant::Operation => Box::new(
+                ReadXdrIter::<_, Frame<Operation>>::new(r)
+                    .map(|r| r.map(|t| Self::Operation(Box::new(t.0)))),
+            ),
+            TypeVariant::OperationBody => Box::new(
+                ReadXdrIter::<_, Frame<OperationBody>>::new(r)
+                    .map(|r| r.map(|t| Self::OperationBody(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimage => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimage>>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimage(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimageOperationId => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageOperationId>>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageOperationId(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimageRevokeId => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageRevokeId>>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t.0)))),
+            ),
+            TypeVariant::MemoType => Box::new(
+                ReadXdrIter::<_, Frame<MemoType>>::new(r)
+                    .map(|r| r.map(|t| Self::MemoType(Box::new(t.0)))),
+            ),
+            TypeVariant::Memo => Box::new(
+                ReadXdrIter::<_, Frame<Memo>>::new(r).map(|r| r.map(|t| Self::Memo(Box::new(t.0)))),
+            ),
+            TypeVariant::TimeBounds => Box::new(
+                ReadXdrIter::<_, Frame<TimeBounds>>::new(r)
+                    .map(|r| r.map(|t| Self::TimeBounds(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerBounds => Box::new(
+                ReadXdrIter::<_, Frame<LedgerBounds>>::new(r)
+                    .map(|r| r.map(|t| Self::LedgerBounds(Box::new(t.0)))),
+            ),
+            TypeVariant::PreconditionsV2 => Box::new(
+                ReadXdrIter::<_, Frame<PreconditionsV2>>::new(r)
+                    .map(|r| r.map(|t| Self::PreconditionsV2(Box::new(t.0)))),
+            ),
+            TypeVariant::PreconditionType => Box::new(
+                ReadXdrIter::<_, Frame<PreconditionType>>::new(r)
+                    .map(|r| r.map(|t| Self::PreconditionType(Box::new(t.0)))),
+            ),
+            TypeVariant::Preconditions => Box::new(
+                ReadXdrIter::<_, Frame<Preconditions>>::new(r)
+                    .map(|r| r.map(|t| Self::Preconditions(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionV0 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionV0>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionV0(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionV0Ext => Box::new(
+                ReadXdrIter::<_, Frame<TransactionV0Ext>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionV0Ext(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionV0Envelope => Box::new(
+                ReadXdrIter::<_, Frame<TransactionV0Envelope>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionV0Envelope(Box::new(t.0)))),
+            ),
+            TypeVariant::Transaction => Box::new(
+                ReadXdrIter::<_, Frame<Transaction>>::new(r)
+                    .map(|r| r.map(|t| Self::Transaction(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionExt => Box::new(
+                ReadXdrIter::<_, Frame<TransactionExt>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionExt(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionV1Envelope => Box::new(
+                ReadXdrIter::<_, Frame<TransactionV1Envelope>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionV1Envelope(Box::new(t.0)))),
+            ),
+            TypeVariant::FeeBumpTransaction => Box::new(
+                ReadXdrIter::<_, Frame<FeeBumpTransaction>>::new(r)
+                    .map(|r| r.map(|t| Self::FeeBumpTransaction(Box::new(t.0)))),
+            ),
+            TypeVariant::FeeBumpTransactionInnerTx => Box::new(
+                ReadXdrIter::<_, Frame<FeeBumpTransactionInnerTx>>::new(r)
+                    .map(|r| r.map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t.0)))),
+            ),
+            TypeVariant::FeeBumpTransactionExt => Box::new(
+                ReadXdrIter::<_, Frame<FeeBumpTransactionExt>>::new(r)
+                    .map(|r| r.map(|t| Self::FeeBumpTransactionExt(Box::new(t.0)))),
+            ),
+            TypeVariant::FeeBumpTransactionEnvelope => Box::new(
+                ReadXdrIter::<_, Frame<FeeBumpTransactionEnvelope>>::new(r)
+                    .map(|r| r.map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionEnvelope => Box::new(
+                ReadXdrIter::<_, Frame<TransactionEnvelope>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionEnvelope(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionSignaturePayload => Box::new(
+                ReadXdrIter::<_, Frame<TransactionSignaturePayload>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionSignaturePayload(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionSignaturePayloadTaggedTransaction => Box::new(
+                ReadXdrIter::<_, Frame<TransactionSignaturePayloadTaggedTransaction>>::new(r).map(
+                    |r| {
+                        r.map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t.0)))
+                    },
+                ),
+            ),
+            TypeVariant::ClaimAtomType => Box::new(
+                ReadXdrIter::<_, Frame<ClaimAtomType>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimAtomType(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimOfferAtomV0 => Box::new(
+                ReadXdrIter::<_, Frame<ClaimOfferAtomV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimOfferAtomV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimOfferAtom => Box::new(
+                ReadXdrIter::<_, Frame<ClaimOfferAtom>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimOfferAtom(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimLiquidityAtom => Box::new(
+                ReadXdrIter::<_, Frame<ClaimLiquidityAtom>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimLiquidityAtom(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimAtom => Box::new(
+                ReadXdrIter::<_, Frame<ClaimAtom>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimAtom(Box::new(t.0)))),
+            ),
+            TypeVariant::CreateAccountResultCode => Box::new(
+                ReadXdrIter::<_, Frame<CreateAccountResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::CreateAccountResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::CreateAccountResult => Box::new(
+                ReadXdrIter::<_, Frame<CreateAccountResult>>::new(r)
+                    .map(|r| r.map(|t| Self::CreateAccountResult(Box::new(t.0)))),
+            ),
+            TypeVariant::PaymentResultCode => Box::new(
+                ReadXdrIter::<_, Frame<PaymentResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::PaymentResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::PaymentResult => Box::new(
+                ReadXdrIter::<_, Frame<PaymentResult>>::new(r)
+                    .map(|r| r.map(|t| Self::PaymentResult(Box::new(t.0)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveResultCode => Box::new(
+                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::SimplePaymentResult => Box::new(
+                ReadXdrIter::<_, Frame<SimplePaymentResult>>::new(r)
+                    .map(|r| r.map(|t| Self::SimplePaymentResult(Box::new(t.0)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveResult => Box::new(
+                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResult>>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t.0)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveResultSuccess => Box::new(
+                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResultSuccess>>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t.0)))),
+            ),
+            TypeVariant::PathPaymentStrictSendResultCode => Box::new(
+                ReadXdrIter::<_, Frame<PathPaymentStrictSendResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::PathPaymentStrictSendResult => Box::new(
+                ReadXdrIter::<_, Frame<PathPaymentStrictSendResult>>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResult(Box::new(t.0)))),
+            ),
+            TypeVariant::PathPaymentStrictSendResultSuccess => Box::new(
+                ReadXdrIter::<_, Frame<PathPaymentStrictSendResultSuccess>>::new(r)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageSellOfferResultCode => Box::new(
+                ReadXdrIter::<_, Frame<ManageSellOfferResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageSellOfferResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageOfferEffect => Box::new(
+                ReadXdrIter::<_, Frame<ManageOfferEffect>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageOfferEffect(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageOfferSuccessResult => Box::new(
+                ReadXdrIter::<_, Frame<ManageOfferSuccessResult>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageOfferSuccessResult(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageOfferSuccessResultOffer => Box::new(
+                ReadXdrIter::<_, Frame<ManageOfferSuccessResultOffer>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageSellOfferResult => Box::new(
+                ReadXdrIter::<_, Frame<ManageSellOfferResult>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageSellOfferResult(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageBuyOfferResultCode => Box::new(
+                ReadXdrIter::<_, Frame<ManageBuyOfferResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageBuyOfferResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageBuyOfferResult => Box::new(
+                ReadXdrIter::<_, Frame<ManageBuyOfferResult>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageBuyOfferResult(Box::new(t.0)))),
+            ),
+            TypeVariant::SetOptionsResultCode => Box::new(
+                ReadXdrIter::<_, Frame<SetOptionsResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::SetOptionsResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::SetOptionsResult => Box::new(
+                ReadXdrIter::<_, Frame<SetOptionsResult>>::new(r)
+                    .map(|r| r.map(|t| Self::SetOptionsResult(Box::new(t.0)))),
+            ),
+            TypeVariant::ChangeTrustResultCode => Box::new(
+                ReadXdrIter::<_, Frame<ChangeTrustResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ChangeTrustResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ChangeTrustResult => Box::new(
+                ReadXdrIter::<_, Frame<ChangeTrustResult>>::new(r)
+                    .map(|r| r.map(|t| Self::ChangeTrustResult(Box::new(t.0)))),
+            ),
+            TypeVariant::AllowTrustResultCode => Box::new(
+                ReadXdrIter::<_, Frame<AllowTrustResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::AllowTrustResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::AllowTrustResult => Box::new(
+                ReadXdrIter::<_, Frame<AllowTrustResult>>::new(r)
+                    .map(|r| r.map(|t| Self::AllowTrustResult(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountMergeResultCode => Box::new(
+                ReadXdrIter::<_, Frame<AccountMergeResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountMergeResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountMergeResult => Box::new(
+                ReadXdrIter::<_, Frame<AccountMergeResult>>::new(r)
+                    .map(|r| r.map(|t| Self::AccountMergeResult(Box::new(t.0)))),
+            ),
+            TypeVariant::InflationResultCode => Box::new(
+                ReadXdrIter::<_, Frame<InflationResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::InflationResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::InflationPayout => Box::new(
+                ReadXdrIter::<_, Frame<InflationPayout>>::new(r)
+                    .map(|r| r.map(|t| Self::InflationPayout(Box::new(t.0)))),
+            ),
+            TypeVariant::InflationResult => Box::new(
+                ReadXdrIter::<_, Frame<InflationResult>>::new(r)
+                    .map(|r| r.map(|t| Self::InflationResult(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageDataResultCode => Box::new(
+                ReadXdrIter::<_, Frame<ManageDataResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageDataResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ManageDataResult => Box::new(
+                ReadXdrIter::<_, Frame<ManageDataResult>>::new(r)
+                    .map(|r| r.map(|t| Self::ManageDataResult(Box::new(t.0)))),
+            ),
+            TypeVariant::BumpSequenceResultCode => Box::new(
+                ReadXdrIter::<_, Frame<BumpSequenceResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::BumpSequenceResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::BumpSequenceResult => Box::new(
+                ReadXdrIter::<_, Frame<BumpSequenceResult>>::new(r)
+                    .map(|r| r.map(|t| Self::BumpSequenceResult(Box::new(t.0)))),
+            ),
+            TypeVariant::CreateClaimableBalanceResultCode => Box::new(
+                ReadXdrIter::<_, Frame<CreateClaimableBalanceResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::CreateClaimableBalanceResult => Box::new(
+                ReadXdrIter::<_, Frame<CreateClaimableBalanceResult>>::new(r)
+                    .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimClaimableBalanceResultCode => Box::new(
+                ReadXdrIter::<_, Frame<ClaimClaimableBalanceResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimClaimableBalanceResult => Box::new(
+                ReadXdrIter::<_, Frame<ClaimClaimableBalanceResult>>::new(r)
+                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceResult(Box::new(t.0)))),
+            ),
+            TypeVariant::BeginSponsoringFutureReservesResultCode => Box::new(
+                ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesResultCode>>::new(r).map(|r| {
+                    r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t.0)))
+                }),
+            ),
+            TypeVariant::BeginSponsoringFutureReservesResult => Box::new(
+                ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesResult>>::new(r)
+                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t.0)))),
+            ),
+            TypeVariant::EndSponsoringFutureReservesResultCode => Box::new(
+                ReadXdrIter::<_, Frame<EndSponsoringFutureReservesResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::EndSponsoringFutureReservesResult => Box::new(
+                ReadXdrIter::<_, Frame<EndSponsoringFutureReservesResult>>::new(r)
+                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t.0)))),
+            ),
+            TypeVariant::RevokeSponsorshipResultCode => Box::new(
+                ReadXdrIter::<_, Frame<RevokeSponsorshipResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::RevokeSponsorshipResult => Box::new(
+                ReadXdrIter::<_, Frame<RevokeSponsorshipResult>>::new(r)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipResult(Box::new(t.0)))),
+            ),
+            TypeVariant::ClawbackResultCode => Box::new(
+                ReadXdrIter::<_, Frame<ClawbackResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ClawbackResult => Box::new(
+                ReadXdrIter::<_, Frame<ClawbackResult>>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackResult(Box::new(t.0)))),
+            ),
+            TypeVariant::ClawbackClaimableBalanceResultCode => Box::new(
+                ReadXdrIter::<_, Frame<ClawbackClaimableBalanceResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ClawbackClaimableBalanceResult => Box::new(
+                ReadXdrIter::<_, Frame<ClawbackClaimableBalanceResult>>::new(r)
+                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t.0)))),
+            ),
+            TypeVariant::SetTrustLineFlagsResultCode => Box::new(
+                ReadXdrIter::<_, Frame<SetTrustLineFlagsResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::SetTrustLineFlagsResult => Box::new(
+                ReadXdrIter::<_, Frame<SetTrustLineFlagsResult>>::new(r)
+                    .map(|r| r.map(|t| Self::SetTrustLineFlagsResult(Box::new(t.0)))),
+            ),
+            TypeVariant::LiquidityPoolDepositResultCode => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolDepositResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::LiquidityPoolDepositResult => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolDepositResult>>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolDepositResult(Box::new(t.0)))),
+            ),
+            TypeVariant::LiquidityPoolWithdrawResultCode => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolWithdrawResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::LiquidityPoolWithdrawResult => Box::new(
+                ReadXdrIter::<_, Frame<LiquidityPoolWithdrawResult>>::new(r)
+                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t.0)))),
+            ),
+            TypeVariant::OperationResultCode => Box::new(
+                ReadXdrIter::<_, Frame<OperationResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::OperationResult => Box::new(
+                ReadXdrIter::<_, Frame<OperationResult>>::new(r)
+                    .map(|r| r.map(|t| Self::OperationResult(Box::new(t.0)))),
+            ),
+            TypeVariant::OperationResultTr => Box::new(
+                ReadXdrIter::<_, Frame<OperationResultTr>>::new(r)
+                    .map(|r| r.map(|t| Self::OperationResultTr(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionResultCode => Box::new(
+                ReadXdrIter::<_, Frame<TransactionResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::InnerTransactionResult => Box::new(
+                ReadXdrIter::<_, Frame<InnerTransactionResult>>::new(r)
+                    .map(|r| r.map(|t| Self::InnerTransactionResult(Box::new(t.0)))),
+            ),
+            TypeVariant::InnerTransactionResultResult => Box::new(
+                ReadXdrIter::<_, Frame<InnerTransactionResultResult>>::new(r)
+                    .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t.0)))),
+            ),
+            TypeVariant::InnerTransactionResultExt => Box::new(
+                ReadXdrIter::<_, Frame<InnerTransactionResultExt>>::new(r)
+                    .map(|r| r.map(|t| Self::InnerTransactionResultExt(Box::new(t.0)))),
+            ),
+            TypeVariant::InnerTransactionResultPair => Box::new(
+                ReadXdrIter::<_, Frame<InnerTransactionResultPair>>::new(r)
+                    .map(|r| r.map(|t| Self::InnerTransactionResultPair(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionResult => Box::new(
+                ReadXdrIter::<_, Frame<TransactionResult>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResult(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionResultResult => Box::new(
+                ReadXdrIter::<_, Frame<TransactionResultResult>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultResult(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionResultExt => Box::new(
+                ReadXdrIter::<_, Frame<TransactionResultExt>>::new(r)
+                    .map(|r| r.map(|t| Self::TransactionResultExt(Box::new(t.0)))),
+            ),
+            TypeVariant::Hash => Box::new(
+                ReadXdrIter::<_, Frame<Hash>>::new(r).map(|r| r.map(|t| Self::Hash(Box::new(t.0)))),
+            ),
+            TypeVariant::Uint256 => Box::new(
+                ReadXdrIter::<_, Frame<Uint256>>::new(r)
+                    .map(|r| r.map(|t| Self::Uint256(Box::new(t.0)))),
+            ),
+            TypeVariant::Uint32 => Box::new(
+                ReadXdrIter::<_, Frame<Uint32>>::new(r)
+                    .map(|r| r.map(|t| Self::Uint32(Box::new(t.0)))),
+            ),
+            TypeVariant::Int32 => Box::new(
+                ReadXdrIter::<_, Frame<Int32>>::new(r)
+                    .map(|r| r.map(|t| Self::Int32(Box::new(t.0)))),
+            ),
+            TypeVariant::Uint64 => Box::new(
+                ReadXdrIter::<_, Frame<Uint64>>::new(r)
+                    .map(|r| r.map(|t| Self::Uint64(Box::new(t.0)))),
+            ),
+            TypeVariant::Int64 => Box::new(
+                ReadXdrIter::<_, Frame<Int64>>::new(r)
+                    .map(|r| r.map(|t| Self::Int64(Box::new(t.0)))),
+            ),
+            TypeVariant::ExtensionPoint => Box::new(
+                ReadXdrIter::<_, Frame<ExtensionPoint>>::new(r)
+                    .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t.0)))),
+            ),
+            TypeVariant::CryptoKeyType => Box::new(
+                ReadXdrIter::<_, Frame<CryptoKeyType>>::new(r)
+                    .map(|r| r.map(|t| Self::CryptoKeyType(Box::new(t.0)))),
+            ),
+            TypeVariant::PublicKeyType => Box::new(
+                ReadXdrIter::<_, Frame<PublicKeyType>>::new(r)
+                    .map(|r| r.map(|t| Self::PublicKeyType(Box::new(t.0)))),
+            ),
+            TypeVariant::SignerKeyType => Box::new(
+                ReadXdrIter::<_, Frame<SignerKeyType>>::new(r)
+                    .map(|r| r.map(|t| Self::SignerKeyType(Box::new(t.0)))),
+            ),
+            TypeVariant::PublicKey => Box::new(
+                ReadXdrIter::<_, Frame<PublicKey>>::new(r)
+                    .map(|r| r.map(|t| Self::PublicKey(Box::new(t.0)))),
+            ),
+            TypeVariant::SignerKey => Box::new(
+                ReadXdrIter::<_, Frame<SignerKey>>::new(r)
+                    .map(|r| r.map(|t| Self::SignerKey(Box::new(t.0)))),
+            ),
+            TypeVariant::SignerKeyEd25519SignedPayload => Box::new(
+                ReadXdrIter::<_, Frame<SignerKeyEd25519SignedPayload>>::new(r)
+                    .map(|r| r.map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t.0)))),
+            ),
+            TypeVariant::Signature => Box::new(
+                ReadXdrIter::<_, Frame<Signature>>::new(r)
+                    .map(|r| r.map(|t| Self::Signature(Box::new(t.0)))),
+            ),
+            TypeVariant::SignatureHint => Box::new(
+                ReadXdrIter::<_, Frame<SignatureHint>>::new(r)
+                    .map(|r| r.map(|t| Self::SignatureHint(Box::new(t.0)))),
+            ),
+            TypeVariant::NodeId => Box::new(
+                ReadXdrIter::<_, Frame<NodeId>>::new(r)
+                    .map(|r| r.map(|t| Self::NodeId(Box::new(t.0)))),
+            ),
+            TypeVariant::Curve25519Secret => Box::new(
+                ReadXdrIter::<_, Frame<Curve25519Secret>>::new(r)
+                    .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t.0)))),
+            ),
+            TypeVariant::Curve25519Public => Box::new(
+                ReadXdrIter::<_, Frame<Curve25519Public>>::new(r)
+                    .map(|r| r.map(|t| Self::Curve25519Public(Box::new(t.0)))),
+            ),
+            TypeVariant::HmacSha256Key => Box::new(
+                ReadXdrIter::<_, Frame<HmacSha256Key>>::new(r)
+                    .map(|r| r.map(|t| Self::HmacSha256Key(Box::new(t.0)))),
+            ),
+            TypeVariant::HmacSha256Mac => Box::new(
+                ReadXdrIter::<_, Frame<HmacSha256Mac>>::new(r)
+                    .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t.0)))),
+            ),
+        }
+    }
+
+    #[cfg(feature = "base64")]
+    #[allow(clippy::too_many_lines)]
+    pub fn read_xdr_base64_iter<R: Read>(
+        v: TypeVariant,
+        r: &mut R,
+    ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
+        let dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+        match v {
+            TypeVariant::Value => Box::new(
+                ReadXdrIter::<_, Value>::new(dec).map(|r| r.map(|t| Self::Value(Box::new(t)))),
+            ),
+            TypeVariant::ScpBallot => Box::new(
+                ReadXdrIter::<_, ScpBallot>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpBallot(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatementType => Box::new(
+                ReadXdrIter::<_, ScpStatementType>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpStatementType(Box::new(t)))),
+            ),
+            TypeVariant::ScpNomination => Box::new(
+                ReadXdrIter::<_, ScpNomination>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpNomination(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatement => Box::new(
+                ReadXdrIter::<_, ScpStatement>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpStatement(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatementPledges => Box::new(
+                ReadXdrIter::<_, ScpStatementPledges>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpStatementPledges(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatementPrepare => Box::new(
+                ReadXdrIter::<_, ScpStatementPrepare>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpStatementPrepare(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatementConfirm => Box::new(
+                ReadXdrIter::<_, ScpStatementConfirm>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpStatementConfirm(Box::new(t)))),
+            ),
+            TypeVariant::ScpStatementExternalize => Box::new(
+                ReadXdrIter::<_, ScpStatementExternalize>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpStatementExternalize(Box::new(t)))),
+            ),
+            TypeVariant::ScpEnvelope => Box::new(
+                ReadXdrIter::<_, ScpEnvelope>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpEnvelope(Box::new(t)))),
+            ),
+            TypeVariant::ScpQuorumSet => Box::new(
+                ReadXdrIter::<_, ScpQuorumSet>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
+            ),
+            TypeVariant::StoredTransactionSet => Box::new(
+                ReadXdrIter::<_, StoredTransactionSet>::new(dec)
+                    .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
+            ),
+            TypeVariant::PersistedScpStateV0 => Box::new(
+                ReadXdrIter::<_, PersistedScpStateV0>::new(dec)
+                    .map(|r| r.map(|t| Self::PersistedScpStateV0(Box::new(t)))),
+            ),
+            TypeVariant::PersistedScpStateV1 => Box::new(
+                ReadXdrIter::<_, PersistedScpStateV1>::new(dec)
+                    .map(|r| r.map(|t| Self::PersistedScpStateV1(Box::new(t)))),
+            ),
+            TypeVariant::PersistedScpState => Box::new(
+                ReadXdrIter::<_, PersistedScpState>::new(dec)
+                    .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t)))),
+            ),
+            TypeVariant::AccountId => Box::new(
+                ReadXdrIter::<_, AccountId>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
+            ),
+            TypeVariant::Thresholds => Box::new(
+                ReadXdrIter::<_, Thresholds>::new(dec)
+                    .map(|r| r.map(|t| Self::Thresholds(Box::new(t)))),
+            ),
+            TypeVariant::String32 => Box::new(
+                ReadXdrIter::<_, String32>::new(dec)
+                    .map(|r| r.map(|t| Self::String32(Box::new(t)))),
+            ),
+            TypeVariant::String64 => Box::new(
+                ReadXdrIter::<_, String64>::new(dec)
+                    .map(|r| r.map(|t| Self::String64(Box::new(t)))),
+            ),
+            TypeVariant::SequenceNumber => Box::new(
+                ReadXdrIter::<_, SequenceNumber>::new(dec)
+                    .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t)))),
+            ),
+            TypeVariant::TimePoint => Box::new(
+                ReadXdrIter::<_, TimePoint>::new(dec)
+                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
+            ),
+            TypeVariant::Duration => Box::new(
+                ReadXdrIter::<_, Duration>::new(dec)
+                    .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
+            ),
+            TypeVariant::DataValue => Box::new(
+                ReadXdrIter::<_, DataValue>::new(dec)
+                    .map(|r| r.map(|t| Self::DataValue(Box::new(t)))),
+            ),
+            TypeVariant::PoolId => Box::new(
+                ReadXdrIter::<_, PoolId>::new(dec).map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
+            ),
+            TypeVariant::AssetCode4 => Box::new(
+                ReadXdrIter::<_, AssetCode4>::new(dec)
+                    .map(|r| r.map(|t| Self::AssetCode4(Box::new(t)))),
+            ),
+            TypeVariant::AssetCode12 => Box::new(
+                ReadXdrIter::<_, AssetCode12>::new(dec)
+                    .map(|r| r.map(|t| Self::AssetCode12(Box::new(t)))),
+            ),
+            TypeVariant::AssetType => Box::new(
+                ReadXdrIter::<_, AssetType>::new(dec)
+                    .map(|r| r.map(|t| Self::AssetType(Box::new(t)))),
+            ),
+            TypeVariant::AssetCode => Box::new(
+                ReadXdrIter::<_, AssetCode>::new(dec)
+                    .map(|r| r.map(|t| Self::AssetCode(Box::new(t)))),
+            ),
+            TypeVariant::AlphaNum4 => Box::new(
+                ReadXdrIter::<_, AlphaNum4>::new(dec)
+                    .map(|r| r.map(|t| Self::AlphaNum4(Box::new(t)))),
+            ),
+            TypeVariant::AlphaNum12 => Box::new(
+                ReadXdrIter::<_, AlphaNum12>::new(dec)
+                    .map(|r| r.map(|t| Self::AlphaNum12(Box::new(t)))),
+            ),
+            TypeVariant::Asset => Box::new(
+                ReadXdrIter::<_, Asset>::new(dec).map(|r| r.map(|t| Self::Asset(Box::new(t)))),
+            ),
+            TypeVariant::Price => Box::new(
+                ReadXdrIter::<_, Price>::new(dec).map(|r| r.map(|t| Self::Price(Box::new(t)))),
+            ),
+            TypeVariant::Liabilities => Box::new(
+                ReadXdrIter::<_, Liabilities>::new(dec)
+                    .map(|r| r.map(|t| Self::Liabilities(Box::new(t)))),
+            ),
+            TypeVariant::ThresholdIndexes => Box::new(
+                ReadXdrIter::<_, ThresholdIndexes>::new(dec)
+                    .map(|r| r.map(|t| Self::ThresholdIndexes(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryType => Box::new(
+                ReadXdrIter::<_, LedgerEntryType>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerEntryType(Box::new(t)))),
+            ),
+            TypeVariant::Signer => Box::new(
+                ReadXdrIter::<_, Signer>::new(dec).map(|r| r.map(|t| Self::Signer(Box::new(t)))),
+            ),
+            TypeVariant::AccountFlags => Box::new(
+                ReadXdrIter::<_, AccountFlags>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountFlags(Box::new(t)))),
+            ),
+            TypeVariant::SponsorshipDescriptor => Box::new(
+                ReadXdrIter::<_, SponsorshipDescriptor>::new(dec)
+                    .map(|r| r.map(|t| Self::SponsorshipDescriptor(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExtensionV3 => Box::new(
+                ReadXdrIter::<_, AccountEntryExtensionV3>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV3(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExtensionV2 => Box::new(
+                ReadXdrIter::<_, AccountEntryExtensionV2>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV2(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExtensionV2Ext => Box::new(
+                ReadXdrIter::<_, AccountEntryExtensionV2Ext>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExtensionV1 => Box::new(
+                ReadXdrIter::<_, AccountEntryExtensionV1>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV1(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, AccountEntryExtensionV1Ext>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntry => Box::new(
+                ReadXdrIter::<_, AccountEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountEntry(Box::new(t)))),
+            ),
+            TypeVariant::AccountEntryExt => Box::new(
+                ReadXdrIter::<_, AccountEntryExt>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineFlags => Box::new(
+                ReadXdrIter::<_, TrustLineFlags>::new(dec)
+                    .map(|r| r.map(|t| Self::TrustLineFlags(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolType => Box::new(
+                ReadXdrIter::<_, LiquidityPoolType>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolType(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineAsset => Box::new(
+                ReadXdrIter::<_, TrustLineAsset>::new(dec)
+                    .map(|r| r.map(|t| Self::TrustLineAsset(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntryExtensionV2 => Box::new(
+                ReadXdrIter::<_, TrustLineEntryExtensionV2>::new(dec)
+                    .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntryExtensionV2Ext => Box::new(
+                ReadXdrIter::<_, TrustLineEntryExtensionV2Ext>::new(dec)
+                    .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntry => Box::new(
+                ReadXdrIter::<_, TrustLineEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::TrustLineEntry(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntryExt => Box::new(
+                ReadXdrIter::<_, TrustLineEntryExt>::new(dec)
+                    .map(|r| r.map(|t| Self::TrustLineEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntryV1 => Box::new(
+                ReadXdrIter::<_, TrustLineEntryV1>::new(dec)
+                    .map(|r| r.map(|t| Self::TrustLineEntryV1(Box::new(t)))),
+            ),
+            TypeVariant::TrustLineEntryV1Ext => Box::new(
+                ReadXdrIter::<_, TrustLineEntryV1Ext>::new(dec)
+                    .map(|r| r.map(|t| Self::TrustLineEntryV1Ext(Box::new(t)))),
+            ),
+            TypeVariant::OfferEntryFlags => Box::new(
+                ReadXdrIter::<_, OfferEntryFlags>::new(dec)
+                    .map(|r| r.map(|t| Self::OfferEntryFlags(Box::new(t)))),
+            ),
+            TypeVariant::OfferEntry => Box::new(
+                ReadXdrIter::<_, OfferEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::OfferEntry(Box::new(t)))),
+            ),
+            TypeVariant::OfferEntryExt => Box::new(
+                ReadXdrIter::<_, OfferEntryExt>::new(dec)
+                    .map(|r| r.map(|t| Self::OfferEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::DataEntry => Box::new(
+                ReadXdrIter::<_, DataEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::DataEntry(Box::new(t)))),
+            ),
+            TypeVariant::DataEntryExt => Box::new(
+                ReadXdrIter::<_, DataEntryExt>::new(dec)
+                    .map(|r| r.map(|t| Self::DataEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::ClaimPredicateType => Box::new(
+                ReadXdrIter::<_, ClaimPredicateType>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimPredicateType(Box::new(t)))),
+            ),
+            TypeVariant::ClaimPredicate => Box::new(
+                ReadXdrIter::<_, ClaimPredicate>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimPredicate(Box::new(t)))),
+            ),
+            TypeVariant::ClaimantType => Box::new(
+                ReadXdrIter::<_, ClaimantType>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimantType(Box::new(t)))),
+            ),
+            TypeVariant::Claimant => Box::new(
+                ReadXdrIter::<_, Claimant>::new(dec)
+                    .map(|r| r.map(|t| Self::Claimant(Box::new(t)))),
+            ),
+            TypeVariant::ClaimantV0 => Box::new(
+                ReadXdrIter::<_, ClaimantV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceIdType => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceIdType>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceId => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceId>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceFlags => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceFlags>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceFlags(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceEntryExtensionV1 => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceEntryExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1Ext>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceEntry => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntry(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceEntryExt => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceEntryExt>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolConstantProductParameters => Box::new(
+                ReadXdrIter::<_, LiquidityPoolConstantProductParameters>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolEntry => Box::new(
+                ReadXdrIter::<_, LiquidityPoolEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolEntry(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolEntryBody => Box::new(
+                ReadXdrIter::<_, LiquidityPoolEntryBody>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolEntryBody(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolEntryConstantProduct => Box::new(
+                ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryExtensionV1 => Box::new(
+                ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, LedgerEntryExtensionV1Ext>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntry => Box::new(
+                ReadXdrIter::<_, LedgerEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerEntry(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryData => Box::new(
+                ReadXdrIter::<_, LedgerEntryData>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerEntryData(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryExt => Box::new(
+                ReadXdrIter::<_, LedgerEntryExt>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKey => Box::new(
+                ReadXdrIter::<_, LedgerKey>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerKey(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyAccount => Box::new(
+                ReadXdrIter::<_, LedgerKeyAccount>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerKeyAccount(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyTrustLine => Box::new(
+                ReadXdrIter::<_, LedgerKeyTrustLine>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerKeyTrustLine(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyOffer => Box::new(
+                ReadXdrIter::<_, LedgerKeyOffer>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerKeyOffer(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyData => Box::new(
+                ReadXdrIter::<_, LedgerKeyData>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerKeyData(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyClaimableBalance => Box::new(
+                ReadXdrIter::<_, LedgerKeyClaimableBalance>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerKeyClaimableBalance(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyLiquidityPool => Box::new(
+                ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))),
+            ),
+            TypeVariant::EnvelopeType => Box::new(
+                ReadXdrIter::<_, EnvelopeType>::new(dec)
+                    .map(|r| r.map(|t| Self::EnvelopeType(Box::new(t)))),
+            ),
+            TypeVariant::UpgradeType => Box::new(
+                ReadXdrIter::<_, UpgradeType>::new(dec)
+                    .map(|r| r.map(|t| Self::UpgradeType(Box::new(t)))),
+            ),
+            TypeVariant::StellarValueType => Box::new(
+                ReadXdrIter::<_, StellarValueType>::new(dec)
+                    .map(|r| r.map(|t| Self::StellarValueType(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseValueSignature => Box::new(
+                ReadXdrIter::<_, LedgerCloseValueSignature>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerCloseValueSignature(Box::new(t)))),
+            ),
+            TypeVariant::StellarValue => Box::new(
+                ReadXdrIter::<_, StellarValue>::new(dec)
+                    .map(|r| r.map(|t| Self::StellarValue(Box::new(t)))),
+            ),
+            TypeVariant::StellarValueExt => Box::new(
+                ReadXdrIter::<_, StellarValueExt>::new(dec)
+                    .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderFlags => Box::new(
+                ReadXdrIter::<_, LedgerHeaderFlags>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerHeaderFlags(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderExtensionV1 => Box::new(
+                ReadXdrIter::<_, LedgerHeaderExtensionV1>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderExtensionV1Ext => Box::new(
+                ReadXdrIter::<_, LedgerHeaderExtensionV1Ext>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeader => Box::new(
+                ReadXdrIter::<_, LedgerHeader>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerHeader(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderExt => Box::new(
+                ReadXdrIter::<_, LedgerHeaderExt>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerHeaderExt(Box::new(t)))),
+            ),
+            TypeVariant::LedgerUpgradeType => Box::new(
+                ReadXdrIter::<_, LedgerUpgradeType>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
+            ),
+            TypeVariant::LedgerUpgrade => Box::new(
+                ReadXdrIter::<_, LedgerUpgrade>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
+            ),
+            TypeVariant::BucketEntryType => Box::new(
+                ReadXdrIter::<_, BucketEntryType>::new(dec)
+                    .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t)))),
+            ),
+            TypeVariant::BucketMetadata => Box::new(
+                ReadXdrIter::<_, BucketMetadata>::new(dec)
+                    .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t)))),
+            ),
+            TypeVariant::BucketMetadataExt => Box::new(
+                ReadXdrIter::<_, BucketMetadataExt>::new(dec)
+                    .map(|r| r.map(|t| Self::BucketMetadataExt(Box::new(t)))),
+            ),
+            TypeVariant::BucketEntry => Box::new(
+                ReadXdrIter::<_, BucketEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::BucketEntry(Box::new(t)))),
+            ),
+            TypeVariant::TxSetComponentType => Box::new(
+                ReadXdrIter::<_, TxSetComponentType>::new(dec)
+                    .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
+            ),
+            TypeVariant::TxSetComponent => Box::new(
+                ReadXdrIter::<_, TxSetComponent>::new(dec)
+                    .map(|r| r.map(|t| Self::TxSetComponent(Box::new(t)))),
+            ),
+            TypeVariant::TxSetComponentTxsMaybeDiscountedFee => Box::new(
+                ReadXdrIter::<_, TxSetComponentTxsMaybeDiscountedFee>::new(dec)
+                    .map(|r| r.map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t)))),
+            ),
+            TypeVariant::TransactionPhase => Box::new(
+                ReadXdrIter::<_, TransactionPhase>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionPhase(Box::new(t)))),
+            ),
+            TypeVariant::TransactionSet => Box::new(
+                ReadXdrIter::<_, TransactionSet>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionSet(Box::new(t)))),
+            ),
+            TypeVariant::TransactionSetV1 => Box::new(
+                ReadXdrIter::<_, TransactionSetV1>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionSetV1(Box::new(t)))),
+            ),
+            TypeVariant::GeneralizedTransactionSet => Box::new(
+                ReadXdrIter::<_, GeneralizedTransactionSet>::new(dec)
+                    .map(|r| r.map(|t| Self::GeneralizedTransactionSet(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultPair => Box::new(
+                ReadXdrIter::<_, TransactionResultPair>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionResultPair(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultSet => Box::new(
+                ReadXdrIter::<_, TransactionResultSet>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionResultSet(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryEntry => Box::new(
+                ReadXdrIter::<_, TransactionHistoryEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionHistoryEntry(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryEntryExt => Box::new(
+                ReadXdrIter::<_, TransactionHistoryEntryExt>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionHistoryEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntry => Box::new(
+                ReadXdrIter::<_, TransactionHistoryResultEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntry(Box::new(t)))),
+            ),
+            TypeVariant::TransactionHistoryResultEntryExt => Box::new(
+                ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderHistoryEntry => Box::new(
+                ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))),
+            ),
+            TypeVariant::LedgerHeaderHistoryEntryExt => Box::new(
+                ReadXdrIter::<_, LedgerHeaderHistoryEntryExt>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::LedgerScpMessages => Box::new(
+                ReadXdrIter::<_, LedgerScpMessages>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerScpMessages(Box::new(t)))),
+            ),
+            TypeVariant::ScpHistoryEntryV0 => Box::new(
+                ReadXdrIter::<_, ScpHistoryEntryV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpHistoryEntryV0(Box::new(t)))),
+            ),
+            TypeVariant::ScpHistoryEntry => Box::new(
+                ReadXdrIter::<_, ScpHistoryEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ScpHistoryEntry(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryChangeType => Box::new(
+                ReadXdrIter::<_, LedgerEntryChangeType>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerEntryChangeType(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryChange => Box::new(
+                ReadXdrIter::<_, LedgerEntryChange>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerEntryChange(Box::new(t)))),
+            ),
+            TypeVariant::LedgerEntryChanges => Box::new(
+                ReadXdrIter::<_, LedgerEntryChanges>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerEntryChanges(Box::new(t)))),
+            ),
+            TypeVariant::OperationMeta => Box::new(
+                ReadXdrIter::<_, OperationMeta>::new(dec)
+                    .map(|r| r.map(|t| Self::OperationMeta(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMetaV1 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV1>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionMetaV1(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMetaV2 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV2>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMeta => Box::new(
+                ReadXdrIter::<_, TransactionMeta>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultMeta => Box::new(
+                ReadXdrIter::<_, TransactionResultMeta>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
+            ),
+            TypeVariant::UpgradeEntryMeta => Box::new(
+                ReadXdrIter::<_, UpgradeEntryMeta>::new(dec)
+                    .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaV0 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaV0>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV0(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMetaV1 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaV1>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
+            ),
+            TypeVariant::LedgerCloseMeta => Box::new(
+                ReadXdrIter::<_, LedgerCloseMeta>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t)))),
+            ),
+            TypeVariant::ErrorCode => Box::new(
+                ReadXdrIter::<_, ErrorCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::SError => Box::new(
+                ReadXdrIter::<_, SError>::new(dec).map(|r| r.map(|t| Self::SError(Box::new(t)))),
+            ),
+            TypeVariant::SendMore => Box::new(
+                ReadXdrIter::<_, SendMore>::new(dec)
+                    .map(|r| r.map(|t| Self::SendMore(Box::new(t)))),
+            ),
+            TypeVariant::AuthCert => Box::new(
+                ReadXdrIter::<_, AuthCert>::new(dec)
+                    .map(|r| r.map(|t| Self::AuthCert(Box::new(t)))),
+            ),
+            TypeVariant::Hello => Box::new(
+                ReadXdrIter::<_, Hello>::new(dec).map(|r| r.map(|t| Self::Hello(Box::new(t)))),
+            ),
+            TypeVariant::Auth => Box::new(
+                ReadXdrIter::<_, Auth>::new(dec).map(|r| r.map(|t| Self::Auth(Box::new(t)))),
+            ),
+            TypeVariant::IpAddrType => Box::new(
+                ReadXdrIter::<_, IpAddrType>::new(dec)
+                    .map(|r| r.map(|t| Self::IpAddrType(Box::new(t)))),
+            ),
+            TypeVariant::PeerAddress => Box::new(
+                ReadXdrIter::<_, PeerAddress>::new(dec)
+                    .map(|r| r.map(|t| Self::PeerAddress(Box::new(t)))),
+            ),
+            TypeVariant::PeerAddressIp => Box::new(
+                ReadXdrIter::<_, PeerAddressIp>::new(dec)
+                    .map(|r| r.map(|t| Self::PeerAddressIp(Box::new(t)))),
+            ),
+            TypeVariant::MessageType => Box::new(
+                ReadXdrIter::<_, MessageType>::new(dec)
+                    .map(|r| r.map(|t| Self::MessageType(Box::new(t)))),
+            ),
+            TypeVariant::DontHave => Box::new(
+                ReadXdrIter::<_, DontHave>::new(dec)
+                    .map(|r| r.map(|t| Self::DontHave(Box::new(t)))),
+            ),
+            TypeVariant::SurveyMessageCommandType => Box::new(
+                ReadXdrIter::<_, SurveyMessageCommandType>::new(dec)
+                    .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t)))),
+            ),
+            TypeVariant::SurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, SurveyRequestMessage>::new(dec)
+                    .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedSurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(dec)
+                    .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t)))),
+            ),
+            TypeVariant::EncryptedBody => Box::new(
+                ReadXdrIter::<_, EncryptedBody>::new(dec)
+                    .map(|r| r.map(|t| Self::EncryptedBody(Box::new(t)))),
+            ),
+            TypeVariant::SurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, SurveyResponseMessage>::new(dec)
+                    .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedSurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(dec)
+                    .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t)))),
+            ),
+            TypeVariant::PeerStats => Box::new(
+                ReadXdrIter::<_, PeerStats>::new(dec)
+                    .map(|r| r.map(|t| Self::PeerStats(Box::new(t)))),
+            ),
+            TypeVariant::PeerStatList => Box::new(
+                ReadXdrIter::<_, PeerStatList>::new(dec)
+                    .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
+            ),
+            TypeVariant::TopologyResponseBody => Box::new(
+                ReadXdrIter::<_, TopologyResponseBody>::new(dec)
+                    .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t)))),
+            ),
+            TypeVariant::SurveyResponseBody => Box::new(
+                ReadXdrIter::<_, SurveyResponseBody>::new(dec)
+                    .map(|r| r.map(|t| Self::SurveyResponseBody(Box::new(t)))),
+            ),
+            TypeVariant::TxAdvertVector => Box::new(
+                ReadXdrIter::<_, TxAdvertVector>::new(dec)
+                    .map(|r| r.map(|t| Self::TxAdvertVector(Box::new(t)))),
+            ),
+            TypeVariant::FloodAdvert => Box::new(
+                ReadXdrIter::<_, FloodAdvert>::new(dec)
+                    .map(|r| r.map(|t| Self::FloodAdvert(Box::new(t)))),
+            ),
+            TypeVariant::TxDemandVector => Box::new(
+                ReadXdrIter::<_, TxDemandVector>::new(dec)
+                    .map(|r| r.map(|t| Self::TxDemandVector(Box::new(t)))),
+            ),
+            TypeVariant::FloodDemand => Box::new(
+                ReadXdrIter::<_, FloodDemand>::new(dec)
+                    .map(|r| r.map(|t| Self::FloodDemand(Box::new(t)))),
+            ),
+            TypeVariant::StellarMessage => Box::new(
+                ReadXdrIter::<_, StellarMessage>::new(dec)
+                    .map(|r| r.map(|t| Self::StellarMessage(Box::new(t)))),
+            ),
+            TypeVariant::AuthenticatedMessage => Box::new(
+                ReadXdrIter::<_, AuthenticatedMessage>::new(dec)
+                    .map(|r| r.map(|t| Self::AuthenticatedMessage(Box::new(t)))),
+            ),
+            TypeVariant::AuthenticatedMessageV0 => Box::new(
+                ReadXdrIter::<_, AuthenticatedMessageV0>::new(dec)
+                    .map(|r| r.map(|t| Self::AuthenticatedMessageV0(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolParameters => Box::new(
+                ReadXdrIter::<_, LiquidityPoolParameters>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolParameters(Box::new(t)))),
+            ),
+            TypeVariant::MuxedAccount => Box::new(
+                ReadXdrIter::<_, MuxedAccount>::new(dec)
+                    .map(|r| r.map(|t| Self::MuxedAccount(Box::new(t)))),
+            ),
+            TypeVariant::MuxedAccountMed25519 => Box::new(
+                ReadXdrIter::<_, MuxedAccountMed25519>::new(dec)
+                    .map(|r| r.map(|t| Self::MuxedAccountMed25519(Box::new(t)))),
+            ),
+            TypeVariant::DecoratedSignature => Box::new(
+                ReadXdrIter::<_, DecoratedSignature>::new(dec)
+                    .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t)))),
+            ),
+            TypeVariant::OperationType => Box::new(
+                ReadXdrIter::<_, OperationType>::new(dec)
+                    .map(|r| r.map(|t| Self::OperationType(Box::new(t)))),
+            ),
+            TypeVariant::CreateAccountOp => Box::new(
+                ReadXdrIter::<_, CreateAccountOp>::new(dec)
+                    .map(|r| r.map(|t| Self::CreateAccountOp(Box::new(t)))),
+            ),
+            TypeVariant::PaymentOp => Box::new(
+                ReadXdrIter::<_, PaymentOp>::new(dec)
+                    .map(|r| r.map(|t| Self::PaymentOp(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveOp => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictReceiveOp>::new(dec)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictSendOp => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictSendOp>::new(dec)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendOp(Box::new(t)))),
+            ),
+            TypeVariant::ManageSellOfferOp => Box::new(
+                ReadXdrIter::<_, ManageSellOfferOp>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageSellOfferOp(Box::new(t)))),
+            ),
+            TypeVariant::ManageBuyOfferOp => Box::new(
+                ReadXdrIter::<_, ManageBuyOfferOp>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageBuyOfferOp(Box::new(t)))),
+            ),
+            TypeVariant::CreatePassiveSellOfferOp => Box::new(
+                ReadXdrIter::<_, CreatePassiveSellOfferOp>::new(dec)
+                    .map(|r| r.map(|t| Self::CreatePassiveSellOfferOp(Box::new(t)))),
+            ),
+            TypeVariant::SetOptionsOp => Box::new(
+                ReadXdrIter::<_, SetOptionsOp>::new(dec)
+                    .map(|r| r.map(|t| Self::SetOptionsOp(Box::new(t)))),
+            ),
+            TypeVariant::ChangeTrustAsset => Box::new(
+                ReadXdrIter::<_, ChangeTrustAsset>::new(dec)
+                    .map(|r| r.map(|t| Self::ChangeTrustAsset(Box::new(t)))),
+            ),
+            TypeVariant::ChangeTrustOp => Box::new(
+                ReadXdrIter::<_, ChangeTrustOp>::new(dec)
+                    .map(|r| r.map(|t| Self::ChangeTrustOp(Box::new(t)))),
+            ),
+            TypeVariant::AllowTrustOp => Box::new(
+                ReadXdrIter::<_, AllowTrustOp>::new(dec)
+                    .map(|r| r.map(|t| Self::AllowTrustOp(Box::new(t)))),
+            ),
+            TypeVariant::ManageDataOp => Box::new(
+                ReadXdrIter::<_, ManageDataOp>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageDataOp(Box::new(t)))),
+            ),
+            TypeVariant::BumpSequenceOp => Box::new(
+                ReadXdrIter::<_, BumpSequenceOp>::new(dec)
+                    .map(|r| r.map(|t| Self::BumpSequenceOp(Box::new(t)))),
+            ),
+            TypeVariant::CreateClaimableBalanceOp => Box::new(
+                ReadXdrIter::<_, CreateClaimableBalanceOp>::new(dec)
+                    .map(|r| r.map(|t| Self::CreateClaimableBalanceOp(Box::new(t)))),
+            ),
+            TypeVariant::ClaimClaimableBalanceOp => Box::new(
+                ReadXdrIter::<_, ClaimClaimableBalanceOp>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceOp(Box::new(t)))),
+            ),
+            TypeVariant::BeginSponsoringFutureReservesOp => Box::new(
+                ReadXdrIter::<_, BeginSponsoringFutureReservesOp>::new(dec)
+                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t)))),
+            ),
+            TypeVariant::RevokeSponsorshipType => Box::new(
+                ReadXdrIter::<_, RevokeSponsorshipType>::new(dec)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipType(Box::new(t)))),
+            ),
+            TypeVariant::RevokeSponsorshipOp => Box::new(
+                ReadXdrIter::<_, RevokeSponsorshipOp>::new(dec)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipOp(Box::new(t)))),
+            ),
+            TypeVariant::RevokeSponsorshipOpSigner => Box::new(
+                ReadXdrIter::<_, RevokeSponsorshipOpSigner>::new(dec)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackOp => Box::new(
+                ReadXdrIter::<_, ClawbackOp>::new(dec)
+                    .map(|r| r.map(|t| Self::ClawbackOp(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackClaimableBalanceOp => Box::new(
+                ReadXdrIter::<_, ClawbackClaimableBalanceOp>::new(dec)
+                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t)))),
+            ),
+            TypeVariant::SetTrustLineFlagsOp => Box::new(
+                ReadXdrIter::<_, SetTrustLineFlagsOp>::new(dec)
+                    .map(|r| r.map(|t| Self::SetTrustLineFlagsOp(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolDepositOp => Box::new(
+                ReadXdrIter::<_, LiquidityPoolDepositOp>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolDepositOp(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolWithdrawOp => Box::new(
+                ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))),
+            ),
+            TypeVariant::Operation => Box::new(
+                ReadXdrIter::<_, Operation>::new(dec)
+                    .map(|r| r.map(|t| Self::Operation(Box::new(t)))),
+            ),
+            TypeVariant::OperationBody => Box::new(
+                ReadXdrIter::<_, OperationBody>::new(dec)
+                    .map(|r| r.map(|t| Self::OperationBody(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimage => Box::new(
+                ReadXdrIter::<_, HashIdPreimage>::new(dec)
+                    .map(|r| r.map(|t| Self::HashIdPreimage(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageOperationId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageOperationId>::new(dec)
+                    .map(|r| r.map(|t| Self::HashIdPreimageOperationId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageRevokeId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageRevokeId>::new(dec)
+                    .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
+            ),
+            TypeVariant::MemoType => Box::new(
+                ReadXdrIter::<_, MemoType>::new(dec)
+                    .map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
+            ),
+            TypeVariant::Memo => Box::new(
+                ReadXdrIter::<_, Memo>::new(dec).map(|r| r.map(|t| Self::Memo(Box::new(t)))),
+            ),
+            TypeVariant::TimeBounds => Box::new(
+                ReadXdrIter::<_, TimeBounds>::new(dec)
+                    .map(|r| r.map(|t| Self::TimeBounds(Box::new(t)))),
+            ),
+            TypeVariant::LedgerBounds => Box::new(
+                ReadXdrIter::<_, LedgerBounds>::new(dec)
+                    .map(|r| r.map(|t| Self::LedgerBounds(Box::new(t)))),
+            ),
+            TypeVariant::PreconditionsV2 => Box::new(
+                ReadXdrIter::<_, PreconditionsV2>::new(dec)
+                    .map(|r| r.map(|t| Self::PreconditionsV2(Box::new(t)))),
+            ),
+            TypeVariant::PreconditionType => Box::new(
+                ReadXdrIter::<_, PreconditionType>::new(dec)
+                    .map(|r| r.map(|t| Self::PreconditionType(Box::new(t)))),
+            ),
+            TypeVariant::Preconditions => Box::new(
+                ReadXdrIter::<_, Preconditions>::new(dec)
+                    .map(|r| r.map(|t| Self::Preconditions(Box::new(t)))),
+            ),
+            TypeVariant::TransactionV0 => Box::new(
+                ReadXdrIter::<_, TransactionV0>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionV0(Box::new(t)))),
+            ),
+            TypeVariant::TransactionV0Ext => Box::new(
+                ReadXdrIter::<_, TransactionV0Ext>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionV0Ext(Box::new(t)))),
+            ),
+            TypeVariant::TransactionV0Envelope => Box::new(
+                ReadXdrIter::<_, TransactionV0Envelope>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionV0Envelope(Box::new(t)))),
+            ),
+            TypeVariant::Transaction => Box::new(
+                ReadXdrIter::<_, Transaction>::new(dec)
+                    .map(|r| r.map(|t| Self::Transaction(Box::new(t)))),
+            ),
+            TypeVariant::TransactionExt => Box::new(
+                ReadXdrIter::<_, TransactionExt>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionExt(Box::new(t)))),
+            ),
+            TypeVariant::TransactionV1Envelope => Box::new(
+                ReadXdrIter::<_, TransactionV1Envelope>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionV1Envelope(Box::new(t)))),
+            ),
+            TypeVariant::FeeBumpTransaction => Box::new(
+                ReadXdrIter::<_, FeeBumpTransaction>::new(dec)
+                    .map(|r| r.map(|t| Self::FeeBumpTransaction(Box::new(t)))),
+            ),
+            TypeVariant::FeeBumpTransactionInnerTx => Box::new(
+                ReadXdrIter::<_, FeeBumpTransactionInnerTx>::new(dec)
+                    .map(|r| r.map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t)))),
+            ),
+            TypeVariant::FeeBumpTransactionExt => Box::new(
+                ReadXdrIter::<_, FeeBumpTransactionExt>::new(dec)
+                    .map(|r| r.map(|t| Self::FeeBumpTransactionExt(Box::new(t)))),
+            ),
+            TypeVariant::FeeBumpTransactionEnvelope => Box::new(
+                ReadXdrIter::<_, FeeBumpTransactionEnvelope>::new(dec)
+                    .map(|r| r.map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t)))),
+            ),
+            TypeVariant::TransactionEnvelope => Box::new(
+                ReadXdrIter::<_, TransactionEnvelope>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionEnvelope(Box::new(t)))),
+            ),
+            TypeVariant::TransactionSignaturePayload => Box::new(
+                ReadXdrIter::<_, TransactionSignaturePayload>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionSignaturePayload(Box::new(t)))),
+            ),
+            TypeVariant::TransactionSignaturePayloadTaggedTransaction => Box::new(
+                ReadXdrIter::<_, TransactionSignaturePayloadTaggedTransaction>::new(dec).map(|r| {
+                    r.map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t)))
+                }),
+            ),
+            TypeVariant::ClaimAtomType => Box::new(
+                ReadXdrIter::<_, ClaimAtomType>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimAtomType(Box::new(t)))),
+            ),
+            TypeVariant::ClaimOfferAtomV0 => Box::new(
+                ReadXdrIter::<_, ClaimOfferAtomV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimOfferAtomV0(Box::new(t)))),
+            ),
+            TypeVariant::ClaimOfferAtom => Box::new(
+                ReadXdrIter::<_, ClaimOfferAtom>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimOfferAtom(Box::new(t)))),
+            ),
+            TypeVariant::ClaimLiquidityAtom => Box::new(
+                ReadXdrIter::<_, ClaimLiquidityAtom>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimLiquidityAtom(Box::new(t)))),
+            ),
+            TypeVariant::ClaimAtom => Box::new(
+                ReadXdrIter::<_, ClaimAtom>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimAtom(Box::new(t)))),
+            ),
+            TypeVariant::CreateAccountResultCode => Box::new(
+                ReadXdrIter::<_, CreateAccountResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::CreateAccountResultCode(Box::new(t)))),
+            ),
+            TypeVariant::CreateAccountResult => Box::new(
+                ReadXdrIter::<_, CreateAccountResult>::new(dec)
+                    .map(|r| r.map(|t| Self::CreateAccountResult(Box::new(t)))),
+            ),
+            TypeVariant::PaymentResultCode => Box::new(
+                ReadXdrIter::<_, PaymentResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::PaymentResultCode(Box::new(t)))),
+            ),
+            TypeVariant::PaymentResult => Box::new(
+                ReadXdrIter::<_, PaymentResult>::new(dec)
+                    .map(|r| r.map(|t| Self::PaymentResult(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveResultCode => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictReceiveResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t)))),
+            ),
+            TypeVariant::SimplePaymentResult => Box::new(
+                ReadXdrIter::<_, SimplePaymentResult>::new(dec)
+                    .map(|r| r.map(|t| Self::SimplePaymentResult(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveResult => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictReceiveResult>::new(dec)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictReceiveResultSuccess => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictReceiveResultSuccess>::new(dec)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictSendResultCode => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictSendResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictSendResult => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictSendResult>::new(dec)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResult(Box::new(t)))),
+            ),
+            TypeVariant::PathPaymentStrictSendResultSuccess => Box::new(
+                ReadXdrIter::<_, PathPaymentStrictSendResultSuccess>::new(dec)
+                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t)))),
+            ),
+            TypeVariant::ManageSellOfferResultCode => Box::new(
+                ReadXdrIter::<_, ManageSellOfferResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageSellOfferResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ManageOfferEffect => Box::new(
+                ReadXdrIter::<_, ManageOfferEffect>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageOfferEffect(Box::new(t)))),
+            ),
+            TypeVariant::ManageOfferSuccessResult => Box::new(
+                ReadXdrIter::<_, ManageOfferSuccessResult>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageOfferSuccessResult(Box::new(t)))),
+            ),
+            TypeVariant::ManageOfferSuccessResultOffer => Box::new(
+                ReadXdrIter::<_, ManageOfferSuccessResultOffer>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t)))),
+            ),
+            TypeVariant::ManageSellOfferResult => Box::new(
+                ReadXdrIter::<_, ManageSellOfferResult>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageSellOfferResult(Box::new(t)))),
+            ),
+            TypeVariant::ManageBuyOfferResultCode => Box::new(
+                ReadXdrIter::<_, ManageBuyOfferResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageBuyOfferResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ManageBuyOfferResult => Box::new(
+                ReadXdrIter::<_, ManageBuyOfferResult>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageBuyOfferResult(Box::new(t)))),
+            ),
+            TypeVariant::SetOptionsResultCode => Box::new(
+                ReadXdrIter::<_, SetOptionsResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::SetOptionsResultCode(Box::new(t)))),
+            ),
+            TypeVariant::SetOptionsResult => Box::new(
+                ReadXdrIter::<_, SetOptionsResult>::new(dec)
+                    .map(|r| r.map(|t| Self::SetOptionsResult(Box::new(t)))),
+            ),
+            TypeVariant::ChangeTrustResultCode => Box::new(
+                ReadXdrIter::<_, ChangeTrustResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ChangeTrustResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ChangeTrustResult => Box::new(
+                ReadXdrIter::<_, ChangeTrustResult>::new(dec)
+                    .map(|r| r.map(|t| Self::ChangeTrustResult(Box::new(t)))),
+            ),
+            TypeVariant::AllowTrustResultCode => Box::new(
+                ReadXdrIter::<_, AllowTrustResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::AllowTrustResultCode(Box::new(t)))),
+            ),
+            TypeVariant::AllowTrustResult => Box::new(
+                ReadXdrIter::<_, AllowTrustResult>::new(dec)
+                    .map(|r| r.map(|t| Self::AllowTrustResult(Box::new(t)))),
+            ),
+            TypeVariant::AccountMergeResultCode => Box::new(
+                ReadXdrIter::<_, AccountMergeResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountMergeResultCode(Box::new(t)))),
+            ),
+            TypeVariant::AccountMergeResult => Box::new(
+                ReadXdrIter::<_, AccountMergeResult>::new(dec)
+                    .map(|r| r.map(|t| Self::AccountMergeResult(Box::new(t)))),
+            ),
+            TypeVariant::InflationResultCode => Box::new(
+                ReadXdrIter::<_, InflationResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::InflationResultCode(Box::new(t)))),
+            ),
+            TypeVariant::InflationPayout => Box::new(
+                ReadXdrIter::<_, InflationPayout>::new(dec)
+                    .map(|r| r.map(|t| Self::InflationPayout(Box::new(t)))),
+            ),
+            TypeVariant::InflationResult => Box::new(
+                ReadXdrIter::<_, InflationResult>::new(dec)
+                    .map(|r| r.map(|t| Self::InflationResult(Box::new(t)))),
+            ),
+            TypeVariant::ManageDataResultCode => Box::new(
+                ReadXdrIter::<_, ManageDataResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageDataResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ManageDataResult => Box::new(
+                ReadXdrIter::<_, ManageDataResult>::new(dec)
+                    .map(|r| r.map(|t| Self::ManageDataResult(Box::new(t)))),
+            ),
+            TypeVariant::BumpSequenceResultCode => Box::new(
+                ReadXdrIter::<_, BumpSequenceResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::BumpSequenceResultCode(Box::new(t)))),
+            ),
+            TypeVariant::BumpSequenceResult => Box::new(
+                ReadXdrIter::<_, BumpSequenceResult>::new(dec)
+                    .map(|r| r.map(|t| Self::BumpSequenceResult(Box::new(t)))),
+            ),
+            TypeVariant::CreateClaimableBalanceResultCode => Box::new(
+                ReadXdrIter::<_, CreateClaimableBalanceResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t)))),
+            ),
+            TypeVariant::CreateClaimableBalanceResult => Box::new(
+                ReadXdrIter::<_, CreateClaimableBalanceResult>::new(dec)
+                    .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t)))),
+            ),
+            TypeVariant::ClaimClaimableBalanceResultCode => Box::new(
+                ReadXdrIter::<_, ClaimClaimableBalanceResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ClaimClaimableBalanceResult => Box::new(
+                ReadXdrIter::<_, ClaimClaimableBalanceResult>::new(dec)
+                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceResult(Box::new(t)))),
+            ),
+            TypeVariant::BeginSponsoringFutureReservesResultCode => Box::new(
+                ReadXdrIter::<_, BeginSponsoringFutureReservesResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t)))),
+            ),
+            TypeVariant::BeginSponsoringFutureReservesResult => Box::new(
+                ReadXdrIter::<_, BeginSponsoringFutureReservesResult>::new(dec)
+                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t)))),
+            ),
+            TypeVariant::EndSponsoringFutureReservesResultCode => Box::new(
+                ReadXdrIter::<_, EndSponsoringFutureReservesResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t)))),
+            ),
+            TypeVariant::EndSponsoringFutureReservesResult => Box::new(
+                ReadXdrIter::<_, EndSponsoringFutureReservesResult>::new(dec)
+                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t)))),
+            ),
+            TypeVariant::RevokeSponsorshipResultCode => Box::new(
+                ReadXdrIter::<_, RevokeSponsorshipResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipResultCode(Box::new(t)))),
+            ),
+            TypeVariant::RevokeSponsorshipResult => Box::new(
+                ReadXdrIter::<_, RevokeSponsorshipResult>::new(dec)
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipResult(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackResultCode => Box::new(
+                ReadXdrIter::<_, ClawbackResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ClawbackResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackResult => Box::new(
+                ReadXdrIter::<_, ClawbackResult>::new(dec)
+                    .map(|r| r.map(|t| Self::ClawbackResult(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackClaimableBalanceResultCode => Box::new(
+                ReadXdrIter::<_, ClawbackClaimableBalanceResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t)))),
+            ),
+            TypeVariant::ClawbackClaimableBalanceResult => Box::new(
+                ReadXdrIter::<_, ClawbackClaimableBalanceResult>::new(dec)
+                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t)))),
+            ),
+            TypeVariant::SetTrustLineFlagsResultCode => Box::new(
+                ReadXdrIter::<_, SetTrustLineFlagsResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t)))),
+            ),
+            TypeVariant::SetTrustLineFlagsResult => Box::new(
+                ReadXdrIter::<_, SetTrustLineFlagsResult>::new(dec)
+                    .map(|r| r.map(|t| Self::SetTrustLineFlagsResult(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolDepositResultCode => Box::new(
+                ReadXdrIter::<_, LiquidityPoolDepositResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolDepositResult => Box::new(
+                ReadXdrIter::<_, LiquidityPoolDepositResult>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolDepositResult(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolWithdrawResultCode => Box::new(
+                ReadXdrIter::<_, LiquidityPoolWithdrawResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t)))),
+            ),
+            TypeVariant::LiquidityPoolWithdrawResult => Box::new(
+                ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(dec)
+                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))),
+            ),
+            TypeVariant::OperationResultCode => Box::new(
+                ReadXdrIter::<_, OperationResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t)))),
+            ),
+            TypeVariant::OperationResult => Box::new(
+                ReadXdrIter::<_, OperationResult>::new(dec)
+                    .map(|r| r.map(|t| Self::OperationResult(Box::new(t)))),
+            ),
+            TypeVariant::OperationResultTr => Box::new(
+                ReadXdrIter::<_, OperationResultTr>::new(dec)
+                    .map(|r| r.map(|t| Self::OperationResultTr(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultCode => Box::new(
+                ReadXdrIter::<_, TransactionResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionResultCode(Box::new(t)))),
+            ),
+            TypeVariant::InnerTransactionResult => Box::new(
+                ReadXdrIter::<_, InnerTransactionResult>::new(dec)
+                    .map(|r| r.map(|t| Self::InnerTransactionResult(Box::new(t)))),
+            ),
+            TypeVariant::InnerTransactionResultResult => Box::new(
+                ReadXdrIter::<_, InnerTransactionResultResult>::new(dec)
+                    .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t)))),
+            ),
+            TypeVariant::InnerTransactionResultExt => Box::new(
+                ReadXdrIter::<_, InnerTransactionResultExt>::new(dec)
+                    .map(|r| r.map(|t| Self::InnerTransactionResultExt(Box::new(t)))),
+            ),
+            TypeVariant::InnerTransactionResultPair => Box::new(
+                ReadXdrIter::<_, InnerTransactionResultPair>::new(dec)
+                    .map(|r| r.map(|t| Self::InnerTransactionResultPair(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResult => Box::new(
+                ReadXdrIter::<_, TransactionResult>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionResult(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultResult => Box::new(
+                ReadXdrIter::<_, TransactionResultResult>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionResultResult(Box::new(t)))),
+            ),
+            TypeVariant::TransactionResultExt => Box::new(
+                ReadXdrIter::<_, TransactionResultExt>::new(dec)
+                    .map(|r| r.map(|t| Self::TransactionResultExt(Box::new(t)))),
+            ),
+            TypeVariant::Hash => Box::new(
+                ReadXdrIter::<_, Hash>::new(dec).map(|r| r.map(|t| Self::Hash(Box::new(t)))),
+            ),
+            TypeVariant::Uint256 => Box::new(
+                ReadXdrIter::<_, Uint256>::new(dec).map(|r| r.map(|t| Self::Uint256(Box::new(t)))),
+            ),
+            TypeVariant::Uint32 => Box::new(
+                ReadXdrIter::<_, Uint32>::new(dec).map(|r| r.map(|t| Self::Uint32(Box::new(t)))),
+            ),
+            TypeVariant::Int32 => Box::new(
+                ReadXdrIter::<_, Int32>::new(dec).map(|r| r.map(|t| Self::Int32(Box::new(t)))),
+            ),
+            TypeVariant::Uint64 => Box::new(
+                ReadXdrIter::<_, Uint64>::new(dec).map(|r| r.map(|t| Self::Uint64(Box::new(t)))),
+            ),
+            TypeVariant::Int64 => Box::new(
+                ReadXdrIter::<_, Int64>::new(dec).map(|r| r.map(|t| Self::Int64(Box::new(t)))),
+            ),
+            TypeVariant::ExtensionPoint => Box::new(
+                ReadXdrIter::<_, ExtensionPoint>::new(dec)
+                    .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
+            ),
+            TypeVariant::CryptoKeyType => Box::new(
+                ReadXdrIter::<_, CryptoKeyType>::new(dec)
+                    .map(|r| r.map(|t| Self::CryptoKeyType(Box::new(t)))),
+            ),
+            TypeVariant::PublicKeyType => Box::new(
+                ReadXdrIter::<_, PublicKeyType>::new(dec)
+                    .map(|r| r.map(|t| Self::PublicKeyType(Box::new(t)))),
+            ),
+            TypeVariant::SignerKeyType => Box::new(
+                ReadXdrIter::<_, SignerKeyType>::new(dec)
+                    .map(|r| r.map(|t| Self::SignerKeyType(Box::new(t)))),
+            ),
+            TypeVariant::PublicKey => Box::new(
+                ReadXdrIter::<_, PublicKey>::new(dec)
+                    .map(|r| r.map(|t| Self::PublicKey(Box::new(t)))),
+            ),
+            TypeVariant::SignerKey => Box::new(
+                ReadXdrIter::<_, SignerKey>::new(dec)
+                    .map(|r| r.map(|t| Self::SignerKey(Box::new(t)))),
+            ),
+            TypeVariant::SignerKeyEd25519SignedPayload => Box::new(
+                ReadXdrIter::<_, SignerKeyEd25519SignedPayload>::new(dec)
+                    .map(|r| r.map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t)))),
+            ),
+            TypeVariant::Signature => Box::new(
+                ReadXdrIter::<_, Signature>::new(dec)
+                    .map(|r| r.map(|t| Self::Signature(Box::new(t)))),
+            ),
+            TypeVariant::SignatureHint => Box::new(
+                ReadXdrIter::<_, SignatureHint>::new(dec)
+                    .map(|r| r.map(|t| Self::SignatureHint(Box::new(t)))),
+            ),
+            TypeVariant::NodeId => Box::new(
+                ReadXdrIter::<_, NodeId>::new(dec).map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
+            ),
+            TypeVariant::Curve25519Secret => Box::new(
+                ReadXdrIter::<_, Curve25519Secret>::new(dec)
+                    .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t)))),
+            ),
+            TypeVariant::Curve25519Public => Box::new(
+                ReadXdrIter::<_, Curve25519Public>::new(dec)
+                    .map(|r| r.map(|t| Self::Curve25519Public(Box::new(t)))),
+            ),
+            TypeVariant::HmacSha256Key => Box::new(
+                ReadXdrIter::<_, HmacSha256Key>::new(dec)
+                    .map(|r| r.map(|t| Self::HmacSha256Key(Box::new(t)))),
+            ),
+            TypeVariant::HmacSha256Mac => Box::new(
+                ReadXdrIter::<_, HmacSha256Mac>::new(dec)
+                    .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t)))),
+            ),
+        }
+    }
+
     #[cfg(feature = "std")]
     pub fn from_xdr<B: AsRef<[u8]>>(v: TypeVariant, bytes: B) -> Result<Self> {
         let mut cursor = Cursor::new(bytes.as_ref());
-        let t = Self::read_xdr(v, &mut cursor)?;
+        let t = Self::read_xdr_to_end(v, &mut cursor)?;
         Ok(t)
     }
 
@@ -32552,7 +36304,7 @@ impl Type {
     pub fn from_xdr_base64(v: TypeVariant, b64: String) -> Result<Self> {
         let mut b64_reader = Cursor::new(b64);
         let mut dec = base64::read::DecoderReader::new(&mut b64_reader, base64::STANDARD);
-        let t = Self::read_xdr(v, &mut dec)?;
+        let t = Self::read_xdr_to_end(v, &mut dec)?;
         Ok(t)
     }
 

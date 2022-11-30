@@ -40,7 +40,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "c1b43f57346f5ca124c79a1c05a33043bcb9a8185432efec848b7001afd3bb25",
+        "b19c10a07c9775594723ad12927259dd4bbd9ed9dfd0e70078662ec2e90e130d",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -17414,6 +17414,41 @@ impl WriteXdr for ContractEvent {
     }
 }
 
+// OperationEvents is an XDR Struct defines as:
+//
+//   struct OperationEvents
+//    {
+//        ContractEvent events<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct OperationEvents {
+    pub events: VecM<ContractEvent>,
+}
+
+impl ReadXdr for OperationEvents {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            events: VecM::<ContractEvent>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for OperationEvents {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.events.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // TransactionMetaV3 is an XDR Struct defines as:
 //
 //   struct TransactionMetaV3
@@ -17423,8 +17458,8 @@ impl WriteXdr for ContractEvent {
 //        OperationMeta operations<>;         // meta for each operation
 //        LedgerEntryChanges txChangesAfter;  // tx level changes after operations are
 //                                            // applied if any
-//        ContractEvent events<>;            // custom events populated by the
-//                                            // contracts themselves
+//        OperationEvents events<>;           // custom events populated by the
+//                                            // contracts themselves. One list per operation.
 //        TransactionResult txResult;
 //
 //        Hash hashes[3];                     // stores sha256(txChangesBefore, operations, txChangesAfter),
@@ -17442,7 +17477,7 @@ pub struct TransactionMetaV3 {
     pub tx_changes_before: LedgerEntryChanges,
     pub operations: VecM<OperationMeta>,
     pub tx_changes_after: LedgerEntryChanges,
-    pub events: VecM<ContractEvent>,
+    pub events: VecM<OperationEvents>,
     pub tx_result: TransactionResult,
     pub hashes: [Hash; 3],
 }
@@ -17454,7 +17489,7 @@ impl ReadXdr for TransactionMetaV3 {
             tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
             operations: VecM::<OperationMeta>::read_xdr(r)?,
             tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
-            events: VecM::<ContractEvent>::read_xdr(r)?,
+            events: VecM::<OperationEvents>::read_xdr(r)?,
             tx_result: TransactionResult::read_xdr(r)?,
             hashes: <[Hash; 3]>::read_xdr(r)?,
         })
@@ -36374,6 +36409,7 @@ pub enum TypeVariant {
     ContractEvent,
     ContractEventBody,
     ContractEventV0,
+    OperationEvents,
     TransactionMetaV3,
     TransactionMeta,
     TransactionResultMeta,
@@ -36575,7 +36611,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 389] = [
+    pub const VARIANTS: [TypeVariant; 390] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -36767,6 +36803,7 @@ impl TypeVariant {
         TypeVariant::ContractEvent,
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
+        TypeVariant::OperationEvents,
         TypeVariant::TransactionMetaV3,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
@@ -36966,7 +37003,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 389] = [
+    pub const VARIANTS_STR: [&'static str; 390] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -37158,6 +37195,7 @@ impl TypeVariant {
         "ContractEvent",
         "ContractEventBody",
         "ContractEventV0",
+        "OperationEvents",
         "TransactionMetaV3",
         "TransactionMeta",
         "TransactionResultMeta",
@@ -37555,6 +37593,7 @@ impl TypeVariant {
             Self::ContractEvent => "ContractEvent",
             Self::ContractEventBody => "ContractEventBody",
             Self::ContractEventV0 => "ContractEventV0",
+            Self::OperationEvents => "OperationEvents",
             Self::TransactionMetaV3 => "TransactionMetaV3",
             Self::TransactionMeta => "TransactionMeta",
             Self::TransactionResultMeta => "TransactionResultMeta",
@@ -37762,7 +37801,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 389] {
+    pub const fn variants() -> [TypeVariant; 390] {
         Self::VARIANTS
     }
 }
@@ -37978,6 +38017,7 @@ impl core::str::FromStr for TypeVariant {
             "ContractEvent" => Ok(Self::ContractEvent),
             "ContractEventBody" => Ok(Self::ContractEventBody),
             "ContractEventV0" => Ok(Self::ContractEventV0),
+            "OperationEvents" => Ok(Self::OperationEvents),
             "TransactionMetaV3" => Ok(Self::TransactionMetaV3),
             "TransactionMeta" => Ok(Self::TransactionMeta),
             "TransactionResultMeta" => Ok(Self::TransactionResultMeta),
@@ -38389,6 +38429,7 @@ pub enum Type {
     ContractEvent(Box<ContractEvent>),
     ContractEventBody(Box<ContractEventBody>),
     ContractEventV0(Box<ContractEventV0>),
+    OperationEvents(Box<OperationEvents>),
     TransactionMetaV3(Box<TransactionMetaV3>),
     TransactionMeta(Box<TransactionMeta>),
     TransactionResultMeta(Box<TransactionResultMeta>),
@@ -38590,7 +38631,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 389] = [
+    pub const VARIANTS: [TypeVariant; 390] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38782,6 +38823,7 @@ impl Type {
         TypeVariant::ContractEvent,
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
+        TypeVariant::OperationEvents,
         TypeVariant::TransactionMetaV3,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
@@ -38981,7 +39023,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 389] = [
+    pub const VARIANTS_STR: [&'static str; 390] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -39173,6 +39215,7 @@ impl Type {
         "ContractEvent",
         "ContractEventBody",
         "ContractEventV0",
+        "OperationEvents",
         "TransactionMetaV3",
         "TransactionMeta",
         "TransactionResultMeta",
@@ -39885,6 +39928,9 @@ impl Type {
             ))),
             TypeVariant::ContractEventV0 => Ok(Self::ContractEventV0(Box::new(
                 ContractEventV0::read_xdr(r)?,
+            ))),
+            TypeVariant::OperationEvents => Ok(Self::OperationEvents(Box::new(
+                OperationEvents::read_xdr(r)?,
             ))),
             TypeVariant::TransactionMetaV3 => Ok(Self::TransactionMetaV3(Box::new(
                 TransactionMetaV3::read_xdr(r)?,
@@ -40670,6 +40716,7 @@ impl Type {
             Self::ContractEvent(ref v) => v.as_ref(),
             Self::ContractEventBody(ref v) => v.as_ref(),
             Self::ContractEventV0(ref v) => v.as_ref(),
+            Self::OperationEvents(ref v) => v.as_ref(),
             Self::TransactionMetaV3(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
             Self::TransactionResultMeta(ref v) => v.as_ref(),
@@ -41068,6 +41115,7 @@ impl Type {
             Self::ContractEvent(_) => "ContractEvent",
             Self::ContractEventBody(_) => "ContractEventBody",
             Self::ContractEventV0(_) => "ContractEventV0",
+            Self::OperationEvents(_) => "OperationEvents",
             Self::TransactionMetaV3(_) => "TransactionMetaV3",
             Self::TransactionMeta(_) => "TransactionMeta",
             Self::TransactionResultMeta(_) => "TransactionResultMeta",
@@ -41281,7 +41329,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 389] {
+    pub const fn variants() -> [TypeVariant; 390] {
         Self::VARIANTS
     }
 
@@ -41496,6 +41544,7 @@ impl Type {
             Self::ContractEvent(_) => TypeVariant::ContractEvent,
             Self::ContractEventBody(_) => TypeVariant::ContractEventBody,
             Self::ContractEventV0(_) => TypeVariant::ContractEventV0,
+            Self::OperationEvents(_) => TypeVariant::OperationEvents,
             Self::TransactionMetaV3(_) => TypeVariant::TransactionMetaV3,
             Self::TransactionMeta(_) => TypeVariant::TransactionMeta,
             Self::TransactionResultMeta(_) => TypeVariant::TransactionResultMeta,

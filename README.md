@@ -19,7 +19,7 @@ and is receiving breaking changes frequently.**
 To use the library, include in your toml:
 
 ```toml
-stellar-xdr = { version = "...", default-features = true, features = [...] }
+stellar-xdr = { version = "...", default-features = true, features = [] }
 ```
 
 ##### Features

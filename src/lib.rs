@@ -14,25 +14,26 @@ pub struct Version<'a> {
 pub const VERSION: Version = Version {
     pkg: env!("CARGO_PKG_VERSION"),
     rev: env!("GIT_REVISION"),
-    xdr: {
-        #[cfg(not(feature = "next"))]
-        {
-            env!("XDR_CURR_VERSION")
-        }
-        #[cfg(feature = "next")]
-        {
-            env!("XDR_NEXT_VERSION")
-        }
+    xdr: if cfg!(feature = "next") {
+        "next"
+    } else {
+        "curr"
     },
     xdr_curr: env!("XDR_CURR_VERSION"),
     xdr_next: env!("XDR_NEXT_VERSION"),
 };
 
+#[cfg(not(any(feature = "curr", feature = "next")))]
 pub mod curr;
+#[cfg(not(any(feature = "curr", feature = "next")))]
 pub mod next;
 
-#[cfg(not(feature = "next"))]
+#[cfg(feature = "curr")]
+mod curr;
+#[cfg(feature = "curr")]
 pub use curr::*;
 
+#[cfg(feature = "next")]
+mod next;
 #[cfg(feature = "next")]
 pub use next::*;

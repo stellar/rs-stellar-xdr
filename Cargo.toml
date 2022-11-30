@@ -34,6 +34,7 @@ serde_json = "1.0.86"
 default = ["std"]
 std = ["alloc"]
 alloc = ["dep:hex"]
+curr = []
 next = []
 
 # Features dependent on optional dependencies.

@@ -1,3 +1,4 @@
+#![cfg(any(feature = "curr", feature = "next"))]
 #![cfg(all(feature = "std", feature = "serde"))]
 
 use stellar_xdr::{BytesM, Hash, StringM, VecM};

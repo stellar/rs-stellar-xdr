@@ -1,9 +1,10 @@
-mod dec;
+mod decode;
+mod types;
 mod version;
 
 use std::error::Error;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser, Debug, Clone)]
 #[command(
@@ -13,26 +14,48 @@ use clap::{Parser, Subcommand};
     long_about = None,
     disable_help_subcommand = true,
     disable_version_flag = true,
+    disable_colored_help = true,
+    infer_subcommands = true,
 )]
 struct Root {
+    /// Channel of XDR to operate on
+    #[arg(value_enum, default_value_t)]
+    channel: Channel,
     #[command(subcommand)]
     cmd: Cmd,
 }
 
+#[derive(ValueEnum, Debug, Clone)]
+pub enum Channel {
+    #[value(name = "+curr")]
+    Curr,
+    #[value(name = "+next")]
+    Next,
+}
+
+impl Default for Channel {
+    fn default() -> Self {
+        Self::Curr
+    }
+}
+
 #[derive(Subcommand, Debug, Clone)]
 enum Cmd {
+    /// View information about types
+    Types(types::Cmd),
     /// Decode XDR
-    Dec(dec::Cmd),
-    /// Version
-    Version(version::Cmd),
+    Decode(decode::Cmd),
+    /// Print version information
+    Version,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let root = Root::parse();
 
     match root.cmd {
-        Cmd::Dec(c) => c.run()?,
-        Cmd::Version(_) => version::Cmd::run(),
+        Cmd::Types(c) => c.run(&root.channel)?,
+        Cmd::Decode(c) => c.run(&root.channel)?,
+        Cmd::Version => version::Cmd::run(),
     }
 
     Ok(())

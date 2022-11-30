@@ -68,7 +68,7 @@
 //!
 //! To use the CLI:
 //!
-//! ```toml
+//! ```console
 //! cargo install --locked stellar-xdr --version ... --features cli
 //! ```
 //!

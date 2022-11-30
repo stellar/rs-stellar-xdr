@@ -48,3 +48,4 @@ cli = ["std", "curr", "next", "base64", "serde", "dep:clap", "dep:serde_json"]
 
 [package.metadata.docs.rs]
 all-features = true
+rustdoc-args = ["--cfg", "docs"]

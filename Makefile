@@ -15,8 +15,8 @@ build: generate
 	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets --release --target wasm32-unknown-unknown
 
 doc:
-	cargo +nightly test --doc --all-features
-	cargo +nightly doc --all-features $(CARGO_DOC_ARGS)
+	cargo test --doc --all-features
+	RUSTDOCFLAGS="--cfg docs" cargo +nightly doc --all-features $(CARGO_DOC_ARGS)
 
 install:
 	cargo install --path . --force --features cli

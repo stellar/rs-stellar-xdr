@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(doc, feature(doc_auto_cfg))]
+#![cfg_attr(docs, feature(doc_auto_cfg))]
 
 //! Library and CLI containing types and functionality for working with Stellar
 //! XDR.

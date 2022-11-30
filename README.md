@@ -73,17 +73,21 @@ cargo install --locked stellar-xdr --version ... --features cli
 ##### Examples
 
 Parse a `TransactionEnvelope`:
-```rust
-echo -n 'AAAAA...' | stellar-xdr decode --type TransactionEnvelope
+```console
+stellar-xdr decode --type TransactionEnvelope << -
+AAAAA...
+-
 ```
 
 Parse a `ScSpecEntry` stream from a contract:
-```rust
-echo -n 'AAAAA...' | stellar-xdr +next decode --type ScSpecEntry --input stream-base64 --output json-formatted
+```console
+stellar-xdr +next decode --type ScSpecEntry --input stream-base64 --output json-formatted << -
+AAAAA...
+-
 ```
 
 Parse a `BucketEntry` framed stream from a bucket file:
-```rust
+```console
 stellar-xdr decode --type BucketEntry --input stream-framed --output json-formatted bucket.xdr
 ```
 

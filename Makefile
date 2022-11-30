@@ -16,6 +16,9 @@ build: generate
 install:
 	cargo install --path . --force --features cli
 
+readme:
+	cargo readme > README.md
+
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 

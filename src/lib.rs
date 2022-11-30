@@ -21,7 +21,7 @@
 //! To use the library, include in your toml:
 //!
 //! ```toml
-//! stellar-xdr = { version = "...", default-features = true, features = [...] }
+//! stellar-xdr = { version = "...", default-features = true, features = [] }
 //! ```
 //!
 //! #### Features
@@ -68,7 +68,7 @@
 //!
 //! To use the CLI:
 //!
-//! ```toml
+//! ```console
 //! cargo install --locked stellar-xdr --version ... --features cli
 //! ```
 //!
@@ -76,12 +76,16 @@
 //!
 //! Parse a `TransactionEnvelope`:
 //! ```console
-//! echo -n 'AAAAA...' | stellar-xdr decode --type TransactionEnvelope
+//! stellar-xdr decode --type TransactionEnvelope << -
+//! AAAAA...
+//! -
 //! ```
 //!
 //! Parse a `ScSpecEntry` stream from a contract:
 //! ```console
-//! echo -n 'AAAAA...' | stellar-xdr +next decode --type ScSpecEntry --input stream-base64 --output json-formatted
+//! stellar-xdr +next decode --type ScSpecEntry --input stream-base64 --output json-formatted << -
+//! AAAAA...
+//! -
 //! ```
 //!
 //! Parse a `BucketEntry` framed stream from a bucket file:

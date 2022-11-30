@@ -52,6 +52,7 @@ jobs:
         # TODO: Address disk space usage problems and re-enable.
         # - os: windows-latest
         #   target: x86_64-pc-windows-msvc
+        features: [default, std, alloc, curr, next, base64, serde, arbitrary, cli]
     runs-on: ${{ matrix.sys.os }}
     steps:
     - uses: actions/checkout@v3
@@ -62,10 +63,11 @@ jobs:
       with:
         name: cargo-hack
         version: 0.5.16
-    - if: "github.ref_protected"
-      run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
-    - if: "!github.ref_protected"
-      run: echo 'CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary' >> $GITHUB_ENV
+    # - if: "github.ref_protected"
+    #   run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
+    # - if: "!github.ref_protected"
+    #   run: echo 'CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary' >> $GITHUB_ENV
+    - run: echo 'CARGO_HACK_ARGS=--features "${{ matrix.features }}"' >> $GITHUB_ENV
     - run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
 
   test:
@@ -80,6 +82,7 @@ jobs:
         # TODO: Address disk space usage problems and re-enable.
         # - os: windows-latest
         #   target: x86_64-pc-windows-msvc
+        features: [default, std, alloc, curr, next, base64, serde, arbitrary, cli]
     runs-on: ${{ matrix.sys.os }}
     steps:
     - uses: actions/checkout@v3
@@ -90,10 +93,11 @@ jobs:
       with:
         name: cargo-hack
         version: 0.5.16
-    - if: "github.ref_protected"
-      run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
-    - if: "!github.ref_protected"
-      run: echo 'CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary' >> $GITHUB_ENV
+    # - if: "github.ref_protected"
+    #   run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
+    # - if: "!github.ref_protected"
+    #   run: echo 'CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary' >> $GITHUB_ENV
+    - run: echo 'CARGO_HACK_ARGS=--features "${{ matrix.features }}"' >> $GITHUB_ENV
     - run: cargo hack test $CARGO_HACK_ARGS
 
   publish-dry-run:

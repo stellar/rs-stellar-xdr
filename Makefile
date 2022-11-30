@@ -3,6 +3,7 @@ export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex
 
 XDRGEN_VERSION=c4d72b59
+CARGO_DOC_ARGS?=--open
 
 all: build test
 
@@ -12,6 +13,10 @@ test:
 build: generate
 	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets
 	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets --release --target wasm32-unknown-unknown
+
+doc:
+	cargo +nightly test --doc --all-features
+	cargo +nightly doc --all-features $(CARGO_DOC_ARGS)
 
 install:
 	cargo install --path . --force --features cli

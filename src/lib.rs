@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(doc, feature(doc_auto_cfg))]
 
 //! Library and CLI containing types and functionality for working with Stellar
 //! XDR.
@@ -70,6 +71,10 @@
 //! If a single channel is enabled the types are available at the root of the
 //! crate. If multiple channels are enabled they are available in modules at
 //! the root of the crate.
+//!
+//! CLI features:
+//!
+//! - `cli` – Enables support for all features required by the CLI.
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

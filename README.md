@@ -70,4 +70,8 @@ If a single channel is enabled the types are available at the root of the
 crate. If multiple channels are enabled they are available in modules at
 the root of the crate.
 
+CLI features:
+
+- `cli` – Enables support for all features required by the CLI.
+
 License: Apache-2.0

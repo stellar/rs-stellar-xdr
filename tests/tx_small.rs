@@ -1,3 +1,8 @@
+#![cfg(all(
+    any(feature = "curr", feature = "next"),
+    not(all(feature = "curr", feature = "next"))
+))]
+
 use stellar_xdr::{
     Error, Memo, MuxedAccount, Preconditions, SequenceNumber, Transaction, TransactionEnvelope,
     TransactionExt, TransactionV1Envelope, Uint256,

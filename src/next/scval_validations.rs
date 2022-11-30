@@ -1,6 +1,6 @@
 #![allow(clippy::missing_errors_doc)]
 
-use crate::{Error, ScMap, ScObject, ScVal};
+use super::{Error, ScMap, ScObject, ScVal};
 
 pub trait Validate {
     type Error;
@@ -79,7 +79,7 @@ impl Validate for ScMap {
 
 #[cfg(test)]
 mod test {
-    use crate::{Error, ScVal, Validate};
+    use super::{Error, ScVal, Validate};
 
     #[test]
     fn u63() {
@@ -116,8 +116,8 @@ mod test {
     #[test]
     #[cfg(feature = "alloc")]
     fn map() {
+        use super::super::{ScMap, ScMapEntry, ScObject};
         extern crate alloc;
-        use crate::{ScMap, ScMapEntry, ScObject};
         use alloc::vec;
         // Maps should be sorted by key and have no duplicates. The sort order
         // is just the "normal" sort order on ScVal emitted by derive(PartialOrd).

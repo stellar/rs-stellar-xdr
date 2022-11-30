@@ -1,7 +1,7 @@
 #![cfg(all(feature = "next", feature = "arbitrary"))]
 
 use arbitrary::{Arbitrary, Unstructured};
-use stellar_xdr::ScMap;
+use stellar_xdr::next::ScMap;
 
 #[test]
 fn arb() {

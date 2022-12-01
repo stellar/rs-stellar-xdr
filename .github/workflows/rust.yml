@@ -62,10 +62,10 @@ jobs:
       with:
         name: cargo-hack
         version: 0.5.16
-    - if: "github.ref_protected"
-      run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
-    - if: "!github.ref_protected"
-      run: echo 'CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary' >> $GITHUB_ENV
+    - #if: "github.ref_protected"
+      run: echo 'CARGO_HACK_ARGS=--feature-powerset --clean-per-run' >> $GITHUB_ENV
+    # - if: "!github.ref_protected"
+    #   run: echo 'CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary' >> $GITHUB_ENV
     - run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
 
   test:
@@ -90,10 +90,10 @@ jobs:
       with:
         name: cargo-hack
         version: 0.5.16
-    - if: "github.ref_protected"
-      run: echo 'CARGO_HACK_ARGS=--feature-powerset' >> $GITHUB_ENV
-    - if: "!github.ref_protected"
-      run: echo 'CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary' >> $GITHUB_ENV
+    - #if: "github.ref_protected"
+      run: echo 'CARGO_HACK_ARGS=--feature-powerset --clean-per-run' >> $GITHUB_ENV
+    # - if: "!github.ref_protected"
+    #   run: echo 'CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary' >> $GITHUB_ENV
     - run: cargo hack test $CARGO_HACK_ARGS
 
   publish-dry-run:
@@ -109,3 +109,4 @@ jobs:
     with:
       runs-on: ${{ matrix.sys.os }}
       target: ${{ matrix.sys.target }}
+      cargo-hack-feature-options: --feature-powerset --clean-per-run

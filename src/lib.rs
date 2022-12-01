@@ -114,8 +114,8 @@ pub const VERSION: Version = Version {
     } else {
         ""
     },
-    xdr_curr: env!("XDR_CURR_VERSION"),
-    xdr_next: env!("XDR_NEXT_VERSION"),
+    xdr_curr: include_str!("../xdr/curr-version"),
+    xdr_next: include_str!("../xdr/next-version"),
 };
 
 #[cfg(feature = "curr")]

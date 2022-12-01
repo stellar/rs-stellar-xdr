@@ -27,7 +27,7 @@ readme:
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 
-generate: src/curr/generated.rs src/next/generated.rs
+generate: src/curr/generated.rs xdr/curr-version src/next/generated.rs xdr/next-version
 
 src/curr/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@
@@ -38,6 +38,9 @@ src/curr/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 		'
 	rustfmt $@
 
+xdr/curr-version: $(wildcard .git/modules/xdr/curr/**/*) $(wildcard xdr/curr/*.x)
+	git submodule status -- xdr/curr | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' > xdr/curr-version
+
 src/next/generated.rs: $(sort $(wildcard xdr/next/*.x))
 	> $@
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
@@ -47,9 +50,12 @@ src/next/generated.rs: $(sort $(wildcard xdr/next/*.x))
 		'
 	rustfmt $@
 
+xdr/next-version: $(wildcard .git/modules/xdr/next/**/*) $(wildcard xdr/next/*.x)
+	git submodule status -- xdr/next | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' > xdr/next-version
+
 clean:
-	rm -f src/curr/generated.rs
-	rm -f src/next/generated.rs
+	rm -f src/*/generated.rs
+	rm -f xdr/*-version
 	cargo clean
 
 fmt:

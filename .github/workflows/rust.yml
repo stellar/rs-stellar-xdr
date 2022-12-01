@@ -90,7 +90,7 @@ jobs:
     - run: cargo hack test $CARGO_HACK_ARGS
 
   publish-dry-run:
-    if: startsWith(github.head_ref, 'release/')
+    if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
     strategy:
       matrix:
         sys:

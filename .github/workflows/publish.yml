@@ -3,7 +3,6 @@ name: Publish
 on:
   release:
     types: [published]
-  pull_request:
 
 defaults:
   run:
@@ -11,10 +10,10 @@ defaults:
 
 jobs:
 
-  # publish:
-  #   uses: stellar/actions/.github/workflows/rust-publish.yml@main
-  #   secrets:
-  #     CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+  publish:
+    uses: stellar/actions/.github/workflows/rust-publish.yml@main
+    secrets:
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
   upload:
     strategy:
@@ -33,12 +32,10 @@ jobs:
             ext: .exe
     runs-on: ${{ matrix.os }}
     env:
-      VERSION: '0.0.8' # TODO: '${{ github.event.release.name }}'
-      NAME: 'stellar-xdr-0.0.8-${{ matrix.target }}' # TODO: 'stellar-xdr-${{ github.event.release.name }}-${{ matrix.target }}'
+      VERSION: '${{ github.event.release.name }}'
+      NAME: 'stellar-xdr-${{ github.event.release.name }}-${{ matrix.target }}'
     steps:
     - uses: actions/checkout@v3
-      with:
-        ref: 'v0.0.8' # TODO: Remove.
     - run: rustup update
     - run: rustup target add ${{ matrix.target }}
     - if: matrix.target == 'aarch64-unknown-linux-gnu'
@@ -60,12 +57,12 @@ jobs:
     - name: Upload
       uses: actions/github-script@v6
       with:
-        script: | # TODO: Use for release_id: ${{ github.event.release.id }}
+        script: |
           const fs = require('fs');
           await github.rest.repos.uploadReleaseAsset({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            release_id: '84659018',
+            release_id: ${{ github.event.release.id }},
             name: '${{ env.NAME }}${{ matrix.ext }}',
             data: fs.readFileSync('target/${{ matrix.target }}/release/stellar-xdr${{ matrix.ext }}'),
           });

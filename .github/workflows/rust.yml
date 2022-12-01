@@ -102,4 +102,4 @@ jobs:
     with:
       runs-on: ${{ matrix.sys.os }}
       target: ${{ matrix.sys.target }}
-      cargo-hack-feature-options: ${{ env.CARGO_HACK_ARGS }}
+      cargo-hack-feature-options: --feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex

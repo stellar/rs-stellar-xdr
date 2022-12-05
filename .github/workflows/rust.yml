@@ -37,7 +37,24 @@ jobs:
     - run: rustup update
     - run: cargo fmt --all --check
 
+  build-commands:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: stellar/actions/rust-cache@main
+    - run: rustup update
+    - run: cargo install --git https://github.com/taiki-e/cargo-hack --branch print-command-list cargo-hack
+    - id: build-commands
+      run: >-
+        echo "::set-output name=commands::$(
+          cargo hack --print-command-list clippy $CARGO_HACK_ARGS --all-targets
+          | jq -R -s -c 'split("\n") | _nwise(15) | join("\n")'
+        )"
+    outputs:
+      commands: ${{ steps.build-commands.outputs.commands }}
+
   build:
+    needs: build-commands
     strategy:
       matrix:
         sys:
@@ -53,6 +70,8 @@ jobs:
         # TODO: Address disk space usage problems and re-enable.
         # - os: windows-latest
         #   target: x86_64-pc-windows-msvc
+        include:
+          commands: ${{ fromJSON(steps.build-commands.outputs.commands) }}
     runs-on: ${{ matrix.sys.os }}
     steps:
     - uses: actions/checkout@v3
@@ -63,9 +82,26 @@ jobs:
       with:
         name: cargo-hack
         version: 0.5.16
-    - run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
+    - run: ${{ matrix.commands }} | xargs -I {} {} --target ${{ matrix.sys.target }}
+
+  test-commands:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: stellar/actions/rust-cache@main
+    - run: rustup update
+    - run: cargo install --git https://github.com/taiki-e/cargo-hack --branch print-command-list cargo-hack
+    - id: build-commands
+      run: >-
+        echo "::set-output name=commands::$(
+          cargo hack --print-command-list test $CARGO_HACK_ARGS --all-targets
+          | jq -R -s -c 'split("\n") | _nwise(15) | join("\n")'
+        )"
+    outputs:
+      commands: ${{ steps.build-commands.outputs.commands }}
 
   test:
+    needs: test-commands
     strategy:
       matrix:
         sys:
@@ -77,6 +113,8 @@ jobs:
         # TODO: Address disk space usage problems and re-enable.
         # - os: windows-latest
         #   target: x86_64-pc-windows-msvc
+        include:
+          commands: ${{ fromJSON(steps.build-commands.outputs.commands) }}
     runs-on: ${{ matrix.sys.os }}
     steps:
     - uses: actions/checkout@v3
@@ -88,6 +126,7 @@ jobs:
         name: cargo-hack
         version: 0.5.16
     - run: cargo hack test $CARGO_HACK_ARGS
+    - run: ${{ matrix.commands }} | xargs -I {} {} --target ${{ matrix.sys.target }}
 
   publish-dry-run:
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')

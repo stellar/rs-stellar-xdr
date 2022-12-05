@@ -43,7 +43,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
     - run: rustup update
-    - run: cargo install --git https://github.com/taiki-e/cargo-hack --branch print-command-list cargo-hack
+    - run: cargo install --git https://github.com/taiki-e/cargo-hack --rev 042bb37456e7e024428854c405974a0ff2067622 cargo-hack
     - id: build-commands
       run: >-
         echo "::set-output name=commands::$(
@@ -90,7 +90,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
     - run: rustup update
-    - run: cargo install --git https://github.com/taiki-e/cargo-hack --branch print-command-list cargo-hack
+    - run: cargo install --git https://github.com/taiki-e/cargo-hack --rev 042bb37456e7e024428854c405974a0ff2067622 cargo-hack
     - id: build-commands
       run: >-
         echo "::set-output name=commands::$(

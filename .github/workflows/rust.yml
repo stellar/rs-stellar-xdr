@@ -113,8 +113,7 @@ jobs:
         # TODO: Address disk space usage problems and re-enable.
         # - os: windows-latest
         #   target: x86_64-pc-windows-msvc
-        include:
-          commands: ${{ fromJSON(steps.build-commands.outputs.commands) }}
+        commands: ${{ fromJSON(needs.build-commands.outputs.commands) }}
     runs-on: ${{ matrix.sys.os }}
     steps:
     - uses: actions/checkout@v3

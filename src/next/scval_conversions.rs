@@ -1,5 +1,5 @@
 use super::{
-    AccountId, Int128Parts, ScMap, ScMapEntry, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec,
+    Int128Parts, ScMap, ScMapEntry, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec,
 };
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]

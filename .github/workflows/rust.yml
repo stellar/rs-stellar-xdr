@@ -49,6 +49,7 @@ jobs:
         echo "::set-output name=commands::$(
           cargo hack --print-command-list clippy $CARGO_HACK_ARGS --all-targets
           | jq -R -s -c 'split("\n") | _nwise(15) | join("\n")'
+          | jq -s
         )"
     outputs:
       commands: ${{ steps.build-commands.outputs.commands }}

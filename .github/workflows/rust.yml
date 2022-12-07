@@ -47,6 +47,7 @@ jobs:
       run: |
         echo "commands=$( \
           cargo hack --print-command-list clippy --feature-powerset --all-targets \
+          | sort \
           | jq -R -s -c 'split("\n") | _nwise(15) | join("\n")' \
           | jq -s -c \
         )" >> $GITHUB_OUTPUT
@@ -94,6 +95,7 @@ jobs:
       run: |
         echo "commands=$( \
           cargo hack --print-command-list test --feature-powerset --all-targets \
+          | sort \
           | jq -R -s -c 'split("\n") | _nwise(15) | join("\n")' \
           | jq -s -c \
         )" >> $GITHUB_OUTPUT

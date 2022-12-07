@@ -81,7 +81,7 @@ jobs:
       with:
         name: cargo-hack
         version: 0.5.16
-    - run: echo "${{ matrix.commands }}" | xargs -I{} '{} --target ${{ matrix.sys.target }}'
+    - run: echo "${{ matrix.commands }}" | xargs -I{} bash -c '{} --target ${{ matrix.sys.target }}'
 
   test-commands:
     runs-on: ubuntu-latest

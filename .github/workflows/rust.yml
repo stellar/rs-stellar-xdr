@@ -47,12 +47,12 @@ jobs:
       run: |
         build="$(cargo hack --print-command-list clippy --feature-powerset --all-targets \
           | sort \
-          | jq -R -s -c 'split("\n") | _nwise(20) | join("\n")' \
+          | jq -R -s -c 'split("\n") | _nwise(15) | join("\n")' \
           | jq -s -c \
         )"
         test="$(cargo hack --print-command-list test --feature-powerset --all-targets \
           | sort \
-          | jq -R -s -c 'split("\n") | _nwise(20) | join("\n")' \
+          | jq -R -s -c 'split("\n") | _nwise(15) | join("\n")' \
           | jq -s -c \
         )"
         zipped="$(echo {} | jq -c --argjson build "$build" --argjson test "$test" \

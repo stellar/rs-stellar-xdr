@@ -82,7 +82,7 @@ jobs:
       with:
         name: cargo-hack
         version: 0.5.16
-    - run: echo "${{ matrix.commands }}" | xargs -I{} {} --target ${{ matrix.sys.target }}
+    - run: echo "${{ matrix.commands }}" | xargs -I{} '{} --target ${{ matrix.sys.target }}'
 
   test-commands:
     runs-on: ubuntu-latest
@@ -126,7 +126,7 @@ jobs:
         name: cargo-hack
         version: 0.5.16
     - run: cargo hack test $CARGO_HACK_ARGS
-    - run: echo "${{ matrix.commands }}" | xargs -I{} {} --target ${{ matrix.sys.target }}
+    - run: echo "${{ matrix.commands }}" | xargs -I{} bash -c '{} --target ${{ matrix.sys.target }}'
 
   publish-dry-run:
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')

@@ -45,18 +45,22 @@ jobs:
     - run: cargo install --git https://github.com/taiki-e/cargo-hack --rev 042bb37456e7e024428854c405974a0ff2067622 cargo-hack
     - id: commands
       run: |
-        build="$(cargo hack --print-command-list clippy --feature-powerset --exclude-features default,cli --all-targets \
+        build="$({ \
+            cargo hack --print-command-list clippy --feature-powerset --exclude-features default,cli --all-targets \
+            & cargo hack --print-command-list clippy --features cli --all-targets; \
+          }\
           | sort \
           | jq -R -s -c 'split("\n") | _nwise(6) | join("\n")' \
           | jq -s -c \
-        )\n \
-        $(cargo hack --print-command-list clippy --features cli --all-targets)"
-        test="$(cargo hack --print-command-list test --feature-powerset --exclude-features default,cli --all-targets \
+        )"
+        test="$({ \
+            cargo hack --print-command-list test --feature-powerset --exclude-features default,cli --all-targets \
+            & cargo hack --print-command-list test --features cli --all-targets; \
+          }\
           | sort \
           | jq -R -s -c 'split("\n") | _nwise(6) | join("\n")' \
           | jq -s -c \
-        )\n \
-        $(cargo hack --print-command-list test --features cli --all-targets)"
+        )"
         zipped="$(echo {} | jq -c --argjson build "$build" --argjson test "$test" \
           '[$build,$test] | transpose | [.[] | {"build": .[0], "test": .[1]}]' \
         )"

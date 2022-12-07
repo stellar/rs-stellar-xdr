@@ -55,7 +55,7 @@ jobs:
           | jq -R -s -c 'split("\n") | _nwise(20) | join("\n")' \
           | jq -s -c \
         )"
-        zipped="$(echo {} | jq --argjson build "$build" --argjson test "$test" \
+        zipped="$(echo {} | jq -c --argjson build "$build" --argjson test "$test" \
           '[$build,$test] | transpose | [.[] | {"build": .[0], "test": .[1]}]' \
         )"
         echo "commands=$zipped" >> $GITHUB_OUTPUT

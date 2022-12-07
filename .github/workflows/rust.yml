@@ -45,24 +45,25 @@ jobs:
     - run: cargo install --git https://github.com/taiki-e/cargo-hack --rev 042bb37456e7e024428854c405974a0ff2067622 cargo-hack
     - id: commands
       run: |
-        echo "build=$( \
-          cargo hack --print-command-list clippy --feature-powerset --all-targets \
+        build="$(cargo hack --print-command-list clippy --feature-powerset --all-targets \
           | sort \
           | jq -R -s -c 'split("\n") | _nwise(20) | join("\n")' \
           | jq -s -c \
-        )" >> $GITHUB_OUTPUT
-        echo "test=$( \
-          cargo hack --print-command-list test --feature-powerset --all-targets \
+        )"
+        test="$(cargo hack --print-command-list test --feature-powerset --all-targets \
           | sort \
           | jq -R -s -c 'split("\n") | _nwise(20) | join("\n")' \
           | jq -s -c \
-        )" >> $GITHUB_OUTPUT
+        )"
+        zipped="$(echo {} | jq --argjson build "$build" --argjson test "$test" \
+          '[$build,$test] | transpose | [.[] | {"build": .[0], "test": .[1]}]' \
+        )"
+        echo "commands=$zipped" >> $GITHUB_OUTPUT
     outputs:
-      build: ${{ steps.commands.outputs.build }}
-      test: ${{ steps.commands.outputs.test }}
+      commands: ${{ steps.commands.outputs.commands }}
 
   build-and-test:
-    needs: build-commands
+    needs: commands
     strategy:
       matrix:
         sys:
@@ -80,9 +81,7 @@ jobs:
         # TODO: Address disk space usage problems and re-enable.
         # - os: windows-latest
         #   target: x86_64-pc-windows-msvc
-        commands:
-          build: ${{ fromJSON(needs.build-commands.outputs.commands) }}
-          test: ${{ fromJSON(needs.build-commands.outputs.commands) }}
+        commands: ${{ fromJSON(needs.commands.outputs.commands) }}
     runs-on: ${{ matrix.sys.os }}
     steps:
     - uses: actions/checkout@v3

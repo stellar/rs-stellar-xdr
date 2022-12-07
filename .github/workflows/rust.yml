@@ -94,10 +94,10 @@ jobs:
         name: cargo-hack
         version: 0.5.16
     - name: Build
-      run: echo "${{ matrix.commands.build }}" | xargs -I{} bash -c '{} --target ${{ matrix.sys.target }}'
+      run: echo "${{ matrix.commands.build }}" | xargs -I{} bash -x -c '{} --target ${{ matrix.sys.target }}'
     - name: Test
       if: matrix.sys.test
-      run: echo "${{ matrix.commands.test }}" | xargs -I{} bash -c '{} --target ${{ matrix.sys.target }}'
+      run: echo "${{ matrix.commands.test }}" | xargs -I{} bash -x -c '{} --target ${{ matrix.sys.target }}'
 
   publish-dry-run:
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')

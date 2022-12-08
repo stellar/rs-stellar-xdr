@@ -1,7 +1,7 @@
 mod decode;
+mod guess;
 mod types;
 mod version;
-mod guess;
 
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use std::{error::Error, fmt::Debug};

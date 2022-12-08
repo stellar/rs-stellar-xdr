@@ -70,41 +70,57 @@ macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
             let mut f = ResetRead::new(self.file()?);
-            for v in stellar_xdr::$m::TypeVariant::VARIANTS {
+            'variants: for v in stellar_xdr::$m::TypeVariant::VARIANTS {
                 f.reset();
-                let (ok, err) = match self.input {
+                let count: usize = match self.input {
                     InputFormat::Single => stellar_xdr::$m::Type::read_xdr_to_end(v, &mut f)
-                        .map(|_| (1, 0))
-                        .unwrap_or_else(|_| (0, 1)),
+                        .ok()
+                        .map(|_| 1)
+                        .unwrap_or_default(),
                     InputFormat::SingleBase64 => {
                         stellar_xdr::$m::Type::read_xdr_base64_to_end(v, &mut f)
-                            .map(|_| (1, 0))
-                            .unwrap_or_else(|_| (0, 1))
+                            .ok()
+                            .map(|_| 1)
+                            .unwrap_or_default()
                     }
-                    InputFormat::Stream => stellar_xdr::$m::Type::read_xdr_iter(v, &mut f)
-                        .take(self.certainty)
-                        .fold((0, 0), |c, v| match v {
-                            Ok(_) => (c.0 + 1, c.1),
-                            Err(_) => (c.0, c.1 + 1),
-                        }),
+                    InputFormat::Stream => {
+                        let iter =
+                            stellar_xdr::$m::Type::read_xdr_iter(v, &mut f).take(self.certainty);
+                        let mut count = 0;
+                        for v in iter {
+                            match v {
+                                Ok(_) => count += 1,
+                                Err(_) => continue 'variants,
+                            }
+                        }
+                        count
+                    }
                     InputFormat::StreamBase64 => {
-                        stellar_xdr::$m::Type::read_xdr_base64_iter(v, &mut f)
-                            .take(self.certainty)
-                            .fold((0, 0), |c, v| match v {
-                                Ok(_) => (c.0 + 1, c.1),
-                                Err(_) => (c.0, c.1 + 1),
-                            })
+                        let iter = stellar_xdr::$m::Type::read_xdr_base64_iter(v, &mut f)
+                            .take(self.certainty);
+                        let mut count = 0;
+                        for v in iter {
+                            match v {
+                                Ok(_) => count += 1,
+                                Err(_) => continue 'variants,
+                            }
+                        }
+                        count
                     }
                     InputFormat::StreamFramed => {
-                        stellar_xdr::$m::Type::read_xdr_framed_iter(v, &mut f)
-                            .take(self.certainty)
-                            .fold((0, 0), |c, v| match v {
-                                Ok(_) => (c.0 + 1, c.1),
-                                Err(_) => (c.0, c.1 + 1),
-                            })
+                        let iter = stellar_xdr::$m::Type::read_xdr_framed_iter(v, &mut f)
+                            .take(self.certainty);
+                        let mut count = 0;
+                        for v in iter {
+                            match v {
+                                Ok(_) => count += 1,
+                                Err(_) => continue 'variants,
+                            }
+                        }
+                        count
                     }
                 };
-                if err == 0 && ok > 0 {
+                if count > 0 {
                     println!("{}", v.name());
                 }
             }

@@ -55,7 +55,7 @@ pub enum InputFormat {
 
 impl Default for InputFormat {
     fn default() -> Self {
-        Self::SingleBase64
+        Self::StreamBase64
     }
 }
 

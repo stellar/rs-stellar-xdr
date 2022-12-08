@@ -17,6 +17,7 @@ jobs:
 
   upload:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest

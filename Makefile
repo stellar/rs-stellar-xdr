@@ -39,7 +39,7 @@ ifeq ($(LOCAL_XDRGEN),)
 		'
 else
 	docker run -i --rm -v $$PWD/../xdrgen:/xdrgen -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
-		pushd /xdrgen && bundle install && rake install && popd && \
+		pushd /xdrgen && bundle install --deployment && rake install && popd && \
 		xdrgen --language rust --namespace generated --output src/curr $^ \
 		'
 endif
@@ -58,7 +58,7 @@ ifeq ($(LOCAL_XDRGEN),)
 		'
 else
 	docker run -i --rm -v $$PWD/../xdrgen:/xdrgen -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
-		pushd /xdrgen && bundle install && rake install && popd && \
+		pushd /xdrgen && bundle install --deployment && rake install && popd && \
 		xdrgen --language rust --namespace generated --output src/next $^ \
 		'
 endif

@@ -1,4 +1,5 @@
 mod decode;
+mod guess;
 mod types;
 mod version;
 
@@ -42,6 +43,8 @@ impl Default for Channel {
 enum Cmd {
     /// View information about types
     Types(types::Cmd),
+    /// Guess the XDR type
+    Guess(guess::Cmd),
     /// Decode XDR
     Decode(decode::Cmd),
     /// Print version information
@@ -52,6 +55,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let root = Root::parse();
     match root.cmd {
         Cmd::Types(c) => c.run(&root.channel)?,
+        Cmd::Guess(c) => c.run(&root.channel)?,
         Cmd::Decode(c) => c.run(&root.channel)?,
         Cmd::Version => version::Cmd::run(),
     }

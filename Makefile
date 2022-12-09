@@ -31,11 +31,18 @@ generate: src/curr/generated.rs xdr/curr-version src/next/generated.rs xdr/next-
 
 src/curr/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@
+ifeq ($(LOCAL_XDRGEN),)
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
 		xdrgen --language rust --namespace generated --output src/curr $^ \
 		'
+else
+	docker run -i --rm -v $$PWD/../xdrgen:/xdrgen -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
+		pushd /xdrgen && bundle install && rake install && popd && \
+		xdrgen --language rust --namespace generated --output src/curr $^ \
+		'
+endif
 	rustfmt $@
 
 xdr/curr-version: $(wildcard .git/modules/xdr/curr/**/*) $(wildcard xdr/curr/*.x)
@@ -43,11 +50,18 @@ xdr/curr-version: $(wildcard .git/modules/xdr/curr/**/*) $(wildcard xdr/curr/*.x
 
 src/next/generated.rs: $(sort $(wildcard xdr/next/*.x))
 	> $@
+ifeq ($(LOCAL_XDRGEN),)
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.7 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
 		xdrgen --language rust --namespace generated --output src/next $^ \
 		'
+else
+	docker run -i --rm -v $$PWD/../xdrgen:/xdrgen -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
+		pushd /xdrgen && bundle install && rake install && popd && \
+		xdrgen --language rust --namespace generated --output src/next $^ \
+		'
+endif
 	rustfmt $@
 
 xdr/next-version: $(wildcard .git/modules/xdr/next/**/*) $(wildcard xdr/next/*.x)

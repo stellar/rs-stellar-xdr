@@ -30,7 +30,7 @@ impl Cmd {
         match self.output {
             OutputFormat::Plain => {
                 for t in types {
-                    println!("{}", t);
+                    println!("{t}");
                 }
             }
             OutputFormat::Json => {

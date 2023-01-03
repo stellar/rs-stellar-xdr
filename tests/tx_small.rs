@@ -34,9 +34,9 @@ fn test_build_small_tx_with_std() -> Result<(), Error> {
     assert_eq!(xdr, "AAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAB1N0ZWxsYXIAAAAAAAAAAAAAAAAA");
     let typ =
         Type::from_xdr_base64(TypeVariant::from_str("TransactionEnvelope").unwrap(), xdr).unwrap();
-    println!("{:?}", typ);
+    println!("{typ:?}");
     let any: &TransactionEnvelope = typ.value().downcast_ref().unwrap();
-    println!("{:?}", any);
+    println!("{any:?}");
 
     let xdr = te.to_xdr()?;
     assert_eq!(

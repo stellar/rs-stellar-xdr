@@ -2,7 +2,7 @@ export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
 CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex
 
-XDRGEN_VERSION=c4d72b59
+XDRGEN_VERSION=57beb46b
 CARGO_DOC_ARGS?=--open
 
 all: build test
@@ -33,7 +33,7 @@ src/curr/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@
 ifeq ($(LOCAL_XDRGEN),)
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
-		gem install specific_install -v 0.3.7 && \
+		gem install specific_install -v 0.3.8 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
 		xdrgen --language rust --namespace generated --output src/curr $^ \
 		'
@@ -52,7 +52,7 @@ src/next/generated.rs: $(sort $(wildcard xdr/next/*.x))
 	> $@
 ifeq ($(LOCAL_XDRGEN),)
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
-		gem install specific_install -v 0.3.7 && \
+		gem install specific_install -v 0.3.8 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
 		xdrgen --language rust --namespace generated --output src/next $^ \
 		'

@@ -54,7 +54,8 @@ impl Validate for ScVal {
                 | ScObject::I128(_)
                 | ScObject::Bytes(_)
                 | ScObject::ContractCode(_)
-                | ScObject::AccountId(_) => Ok(()),
+                | ScObject::Address(_)
+                | ScObject::NonceKey(_) => Ok(()),
             },
 
             // Other variants of ScVal are always valid.

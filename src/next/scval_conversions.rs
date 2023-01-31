@@ -1,6 +1,4 @@
-use super::{
-    Int128Parts, ScMap, ScMapEntry, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec,
-};
+use super::{Int128Parts, ScMap, ScMapEntry, ScObject, ScStatic, ScStatus, ScSymbol, ScVal, ScVec};
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;

@@ -16,43 +16,43 @@
 pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     (
         "xdr/next/Stellar-SCP.x",
-        "2b855c7f79b8e50cf15ca1e1aa89fb16bbb38117de0b1c969c80e675ae1ca4bb",
+        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
-        "8d30dbf039e41e149725b34f2c809fc034c0879adac9d85fc49b8371f9a0444f",
+        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "12426042317d65b8a101c9c178caa43fc626da3ffa20ddf5d3c7c7b2de21f899",
+        "f1b4562b21a38708e15b2e7f371d9171802ef7756bf5af2cb49b517149228e9c",
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "ebd884f862e6fb6076aa3fec952333eff0e061e1d6c58f1897b95c693b2833c4",
+        "5c254a97c31d08f0d1c5bd50867d71edad11338dd5653d87d3714475221e68d7",
     ),
     (
         "xdr/next/Stellar-internal.x",
-        "467d954846f88e50e690b64a0ef2dc138b92b03d24bdd66559df16f76535b288",
+        "368706dd6e2efafd16a8f63daf3374845b791d097b15c502aa7653a412b68b68",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "5091d3fdd56b4e568e3626e4be8a7bb10be6676140bb4ea53f4929ed7a9f97cf",
+        "dae8eead47f2ce6b74b87fc196080cde2b432eedba9e58893f1d5ad315155e4e",
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "d5fc8a5f97fef517ef030b8f1d0beeaa9f133503a512dae8d58f41f86338a9f7",
+        "b19c10a07c9775594723ad12927259dd4bbd9ed9dfd0e70078662ec2e90e130d",
     ),
     (
         "xdr/next/Stellar-overlay.x",
-        "abdb314b64e9f8df6f6f89b3d4fa5d104a41a04c39307ce23f7bf349b0729eef",
+        "972f38a9d4a064273f3362cbfa7d3c563293fd5396d5f0774ce6cc690e27645d",
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "99a6e4c0c72788ba2da9e928b805c77d9cf96adb6726d25770752af30b16be00",
+        "69d33701fac38c2e0ba861f8ff6c96ae126364a9606a8f21e36b823dceb6a004",
     ),
     (
         "xdr/next/Stellar-types.x",
-        "92991a74191509be836e0507081b8624f38bde51994d5c4554b0347c0c68ac6c",
+        "7b3e5470c4bcf7c19f9cc8f8bf81a494b540fc2157476329cf19863afab2343b",
     ),
 ];
 

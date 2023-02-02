@@ -24,7 +24,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "f1b4562b21a38708e15b2e7f371d9171802ef7756bf5af2cb49b517149228e9c",
+        "6991b6fa3df953848b7afa36ede63c22dbe643167cfca981c107ce5b1bb1f433",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -2962,6 +2962,12 @@ impl WriteXdr for ScEnvMetaEntry {
     }
 }
 
+// ScSpecDocLimit is an XDR Const defines as:
+//
+//   const SC_SPEC_DOC_LIMIT = 1024;
+//
+pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
+
 // ScSpecType is an XDR Enum defines as:
 //
 //   enum SCSpecType
@@ -3713,6 +3719,7 @@ impl WriteXdr for ScSpecTypeDef {
 //
 //   struct SCSpecUDTStructFieldV0
 //    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
 //        string name<30>;
 //        SCSpecTypeDef type;
 //    };
@@ -3725,6 +3732,7 @@ impl WriteXdr for ScSpecTypeDef {
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtStructFieldV0 {
+    pub doc: StringM<1024>,
     pub name: StringM<30>,
     pub type_: ScSpecTypeDef,
 }
@@ -3733,6 +3741,7 @@ impl ReadXdr for ScSpecUdtStructFieldV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            doc: StringM::<1024>::read_xdr(r)?,
             name: StringM::<30>::read_xdr(r)?,
             type_: ScSpecTypeDef::read_xdr(r)?,
         })
@@ -3742,6 +3751,7 @@ impl ReadXdr for ScSpecUdtStructFieldV0 {
 impl WriteXdr for ScSpecUdtStructFieldV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.type_.write_xdr(w)?;
         Ok(())
@@ -3752,6 +3762,7 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
 //
 //   struct SCSpecUDTStructV0
 //    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
 //        string lib<80>;
 //        string name<60>;
 //        SCSpecUDTStructFieldV0 fields<40>;
@@ -3765,6 +3776,7 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtStructV0 {
+    pub doc: StringM<1024>,
     pub lib: StringM<80>,
     pub name: StringM<60>,
     pub fields: VecM<ScSpecUdtStructFieldV0, 40>,
@@ -3774,6 +3786,7 @@ impl ReadXdr for ScSpecUdtStructV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            doc: StringM::<1024>::read_xdr(r)?,
             lib: StringM::<80>::read_xdr(r)?,
             name: StringM::<60>::read_xdr(r)?,
             fields: VecM::<ScSpecUdtStructFieldV0, 40>::read_xdr(r)?,
@@ -3784,6 +3797,7 @@ impl ReadXdr for ScSpecUdtStructV0 {
 impl WriteXdr for ScSpecUdtStructV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
         self.lib.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.fields.write_xdr(w)?;
@@ -3795,6 +3809,7 @@ impl WriteXdr for ScSpecUdtStructV0 {
 //
 //   struct SCSpecUDTUnionCaseV0
 //    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
 //        string name<60>;
 //        SCSpecTypeDef *type;
 //    };
@@ -3807,6 +3822,7 @@ impl WriteXdr for ScSpecUdtStructV0 {
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtUnionCaseV0 {
+    pub doc: StringM<1024>,
     pub name: StringM<60>,
     pub type_: Option<ScSpecTypeDef>,
 }
@@ -3815,6 +3831,7 @@ impl ReadXdr for ScSpecUdtUnionCaseV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            doc: StringM::<1024>::read_xdr(r)?,
             name: StringM::<60>::read_xdr(r)?,
             type_: Option::<ScSpecTypeDef>::read_xdr(r)?,
         })
@@ -3824,6 +3841,7 @@ impl ReadXdr for ScSpecUdtUnionCaseV0 {
 impl WriteXdr for ScSpecUdtUnionCaseV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.type_.write_xdr(w)?;
         Ok(())
@@ -3834,6 +3852,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
 //
 //   struct SCSpecUDTUnionV0
 //    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
 //        string lib<80>;
 //        string name<60>;
 //        SCSpecUDTUnionCaseV0 cases<50>;
@@ -3847,6 +3866,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtUnionV0 {
+    pub doc: StringM<1024>,
     pub lib: StringM<80>,
     pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtUnionCaseV0, 50>,
@@ -3856,6 +3876,7 @@ impl ReadXdr for ScSpecUdtUnionV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            doc: StringM::<1024>::read_xdr(r)?,
             lib: StringM::<80>::read_xdr(r)?,
             name: StringM::<60>::read_xdr(r)?,
             cases: VecM::<ScSpecUdtUnionCaseV0, 50>::read_xdr(r)?,
@@ -3866,6 +3887,7 @@ impl ReadXdr for ScSpecUdtUnionV0 {
 impl WriteXdr for ScSpecUdtUnionV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
         self.lib.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.cases.write_xdr(w)?;
@@ -3877,6 +3899,7 @@ impl WriteXdr for ScSpecUdtUnionV0 {
 //
 //   struct SCSpecUDTEnumCaseV0
 //    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
 //        string name<60>;
 //        uint32 value;
 //    };
@@ -3889,6 +3912,7 @@ impl WriteXdr for ScSpecUdtUnionV0 {
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtEnumCaseV0 {
+    pub doc: StringM<1024>,
     pub name: StringM<60>,
     pub value: u32,
 }
@@ -3897,6 +3921,7 @@ impl ReadXdr for ScSpecUdtEnumCaseV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            doc: StringM::<1024>::read_xdr(r)?,
             name: StringM::<60>::read_xdr(r)?,
             value: u32::read_xdr(r)?,
         })
@@ -3906,6 +3931,7 @@ impl ReadXdr for ScSpecUdtEnumCaseV0 {
 impl WriteXdr for ScSpecUdtEnumCaseV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.value.write_xdr(w)?;
         Ok(())
@@ -3916,6 +3942,7 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
 //
 //   struct SCSpecUDTEnumV0
 //    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
 //        string lib<80>;
 //        string name<60>;
 //        SCSpecUDTEnumCaseV0 cases<50>;
@@ -3929,6 +3956,7 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtEnumV0 {
+    pub doc: StringM<1024>,
     pub lib: StringM<80>,
     pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtEnumCaseV0, 50>,
@@ -3938,6 +3966,7 @@ impl ReadXdr for ScSpecUdtEnumV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            doc: StringM::<1024>::read_xdr(r)?,
             lib: StringM::<80>::read_xdr(r)?,
             name: StringM::<60>::read_xdr(r)?,
             cases: VecM::<ScSpecUdtEnumCaseV0, 50>::read_xdr(r)?,
@@ -3948,6 +3977,7 @@ impl ReadXdr for ScSpecUdtEnumV0 {
 impl WriteXdr for ScSpecUdtEnumV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
         self.lib.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.cases.write_xdr(w)?;
@@ -3959,6 +3989,7 @@ impl WriteXdr for ScSpecUdtEnumV0 {
 //
 //   struct SCSpecUDTErrorEnumCaseV0
 //    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
 //        string name<60>;
 //        uint32 value;
 //    };
@@ -3971,6 +4002,7 @@ impl WriteXdr for ScSpecUdtEnumV0 {
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtErrorEnumCaseV0 {
+    pub doc: StringM<1024>,
     pub name: StringM<60>,
     pub value: u32,
 }
@@ -3979,6 +4011,7 @@ impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            doc: StringM::<1024>::read_xdr(r)?,
             name: StringM::<60>::read_xdr(r)?,
             value: u32::read_xdr(r)?,
         })
@@ -3988,6 +4021,7 @@ impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
 impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.value.write_xdr(w)?;
         Ok(())
@@ -3998,6 +4032,7 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
 //
 //   struct SCSpecUDTErrorEnumV0
 //    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
 //        string lib<80>;
 //        string name<60>;
 //        SCSpecUDTErrorEnumCaseV0 cases<50>;
@@ -4011,6 +4046,7 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtErrorEnumV0 {
+    pub doc: StringM<1024>,
     pub lib: StringM<80>,
     pub name: StringM<60>,
     pub cases: VecM<ScSpecUdtErrorEnumCaseV0, 50>,
@@ -4020,6 +4056,7 @@ impl ReadXdr for ScSpecUdtErrorEnumV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            doc: StringM::<1024>::read_xdr(r)?,
             lib: StringM::<80>::read_xdr(r)?,
             name: StringM::<60>::read_xdr(r)?,
             cases: VecM::<ScSpecUdtErrorEnumCaseV0, 50>::read_xdr(r)?,
@@ -4030,6 +4067,7 @@ impl ReadXdr for ScSpecUdtErrorEnumV0 {
 impl WriteXdr for ScSpecUdtErrorEnumV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
         self.lib.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.cases.write_xdr(w)?;
@@ -4041,6 +4079,7 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
 //
 //   struct SCSpecFunctionInputV0
 //    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
 //        string name<30>;
 //        SCSpecTypeDef type;
 //    };
@@ -4053,6 +4092,7 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecFunctionInputV0 {
+    pub doc: StringM<1024>,
     pub name: StringM<30>,
     pub type_: ScSpecTypeDef,
 }
@@ -4061,6 +4101,7 @@ impl ReadXdr for ScSpecFunctionInputV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            doc: StringM::<1024>::read_xdr(r)?,
             name: StringM::<30>::read_xdr(r)?,
             type_: ScSpecTypeDef::read_xdr(r)?,
         })
@@ -4070,6 +4111,7 @@ impl ReadXdr for ScSpecFunctionInputV0 {
 impl WriteXdr for ScSpecFunctionInputV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.type_.write_xdr(w)?;
         Ok(())
@@ -4080,6 +4122,7 @@ impl WriteXdr for ScSpecFunctionInputV0 {
 //
 //   struct SCSpecFunctionV0
 //    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
 //        SCSymbol name;
 //        SCSpecFunctionInputV0 inputs<10>;
 //        SCSpecTypeDef outputs<1>;
@@ -4093,6 +4136,7 @@ impl WriteXdr for ScSpecFunctionInputV0 {
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecFunctionV0 {
+    pub doc: StringM<1024>,
     pub name: StringM<10>,
     pub inputs: VecM<ScSpecFunctionInputV0, 10>,
     pub outputs: VecM<ScSpecTypeDef, 1>,
@@ -4102,6 +4146,7 @@ impl ReadXdr for ScSpecFunctionV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            doc: StringM::<1024>::read_xdr(r)?,
             name: StringM::<10>::read_xdr(r)?,
             inputs: VecM::<ScSpecFunctionInputV0, 10>::read_xdr(r)?,
             outputs: VecM::<ScSpecTypeDef, 1>::read_xdr(r)?,
@@ -4112,6 +4157,7 @@ impl ReadXdr for ScSpecFunctionV0 {
 impl WriteXdr for ScSpecFunctionV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
         self.name.write_xdr(w)?;
         self.inputs.write_xdr(w)?;
         self.outputs.write_xdr(w)?;

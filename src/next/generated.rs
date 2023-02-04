@@ -24,7 +24,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "6991b6fa3df953848b7afa36ede63c22dbe643167cfca981c107ce5b1bb1f433",
+        "83f5adc57ccaea49a67063352b869641049c4caf198a3070c4825c5f6e82802a",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -3805,13 +3805,12 @@ impl WriteXdr for ScSpecUdtStructV0 {
     }
 }
 
-// ScSpecUdtUnionCaseV0 is an XDR Struct defines as:
+// ScSpecUdtUnionCaseVoidV0 is an XDR Struct defines as:
 //
-//   struct SCSpecUDTUnionCaseV0
+//   struct SCSpecUDTUnionCaseVoidV0
 //    {
 //        string doc<SC_SPEC_DOC_LIMIT>;
 //        string name<60>;
-//        SCSpecTypeDef *type;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -3821,29 +3820,279 @@ impl WriteXdr for ScSpecUdtStructV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct ScSpecUdtUnionCaseV0 {
+pub struct ScSpecUdtUnionCaseVoidV0 {
     pub doc: StringM<1024>,
     pub name: StringM<60>,
-    pub type_: Option<ScSpecTypeDef>,
 }
 
-impl ReadXdr for ScSpecUdtUnionCaseV0 {
+impl ReadXdr for ScSpecUdtUnionCaseVoidV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             doc: StringM::<1024>::read_xdr(r)?,
             name: StringM::<60>::read_xdr(r)?,
-            type_: Option::<ScSpecTypeDef>::read_xdr(r)?,
         })
+    }
+}
+
+impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
+        self.name.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecUdtUnionCaseTupleV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTUnionCaseTupleV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        string name<60>;
+//        SCSpecTypeDef type<12>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtUnionCaseTupleV0 {
+    pub doc: StringM<1024>,
+    pub name: StringM<60>,
+    pub type_: VecM<ScSpecTypeDef, 12>,
+}
+
+impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            doc: StringM::<1024>::read_xdr(r)?,
+            name: StringM::<60>::read_xdr(r)?,
+            type_: VecM::<ScSpecTypeDef, 12>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.doc.write_xdr(w)?;
+        self.name.write_xdr(w)?;
+        self.type_.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScSpecUdtUnionCaseV0Kind is an XDR Enum defines as:
+//
+//   enum SCSpecUDTUnionCaseV0Kind
+//    {
+//        SC_SPEC_UDT_UNION_CASE_VOID_V0 = 0,
+//        SC_SPEC_UDT_UNION_CASE_TUPLE_V0 = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScSpecUdtUnionCaseV0Kind {
+    VoidV0 = 0,
+    TupleV0 = 1,
+}
+
+impl ScSpecUdtUnionCaseV0Kind {
+    pub const VARIANTS: [ScSpecUdtUnionCaseV0Kind; 2] = [
+        ScSpecUdtUnionCaseV0Kind::VoidV0,
+        ScSpecUdtUnionCaseV0Kind::TupleV0,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["VoidV0", "TupleV0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::VoidV0 => "VoidV0",
+            Self::TupleV0 => "TupleV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecUdtUnionCaseV0Kind; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecUdtUnionCaseV0Kind {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0Kind {
+    fn variants() -> slice::Iter<'static, ScSpecUdtUnionCaseV0Kind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScSpecUdtUnionCaseV0Kind {}
+
+impl fmt::Display for ScSpecUdtUnionCaseV0Kind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScSpecUdtUnionCaseV0Kind {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScSpecUdtUnionCaseV0Kind::VoidV0,
+            1 => ScSpecUdtUnionCaseV0Kind::TupleV0,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScSpecUdtUnionCaseV0Kind> for i32 {
+    #[must_use]
+    fn from(e: ScSpecUdtUnionCaseV0Kind) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScSpecUdtUnionCaseV0Kind {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScSpecUdtUnionCaseV0 is an XDR Union defines as:
+//
+//   union SCSpecUDTUnionCaseV0 switch (SCSpecUDTUnionCaseV0Kind kind)
+//    {
+//    case SC_SPEC_UDT_UNION_CASE_VOID_V0:
+//        SCSpecUDTUnionCaseVoidV0 voidCase;
+//    case SC_SPEC_UDT_UNION_CASE_TUPLE_V0:
+//        SCSpecUDTUnionCaseTupleV0 tupleCase;
+//    };
+//
+// union with discriminant ScSpecUdtUnionCaseV0Kind
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScSpecUdtUnionCaseV0 {
+    VoidV0(ScSpecUdtUnionCaseVoidV0),
+    TupleV0(ScSpecUdtUnionCaseTupleV0),
+}
+
+impl ScSpecUdtUnionCaseV0 {
+    pub const VARIANTS: [ScSpecUdtUnionCaseV0Kind; 2] = [
+        ScSpecUdtUnionCaseV0Kind::VoidV0,
+        ScSpecUdtUnionCaseV0Kind::TupleV0,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["VoidV0", "TupleV0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::VoidV0(_) => "VoidV0",
+            Self::TupleV0(_) => "TupleV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScSpecUdtUnionCaseV0Kind {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::VoidV0(_) => ScSpecUdtUnionCaseV0Kind::VoidV0,
+            Self::TupleV0(_) => ScSpecUdtUnionCaseV0Kind::TupleV0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecUdtUnionCaseV0Kind; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecUdtUnionCaseV0 {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {
+    #[must_use]
+    fn discriminant(&self) -> ScSpecUdtUnionCaseV0Kind {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {
+    fn variants() -> slice::Iter<'static, ScSpecUdtUnionCaseV0Kind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {}
+
+impl ReadXdr for ScSpecUdtUnionCaseV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScSpecUdtUnionCaseV0Kind = <ScSpecUdtUnionCaseV0Kind as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScSpecUdtUnionCaseV0Kind::VoidV0 => {
+                Self::VoidV0(ScSpecUdtUnionCaseVoidV0::read_xdr(r)?)
+            }
+            ScSpecUdtUnionCaseV0Kind::TupleV0 => {
+                Self::TupleV0(ScSpecUdtUnionCaseTupleV0::read_xdr(r)?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
     }
 }
 
 impl WriteXdr for ScSpecUdtUnionCaseV0 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.doc.write_xdr(w)?;
-        self.name.write_xdr(w)?;
-        self.type_.write_xdr(w)?;
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::VoidV0(v) => v.write_xdr(w)?,
+            Self::TupleV0(v) => v.write_xdr(w)?,
+        };
         Ok(())
     }
 }
@@ -36884,6 +37133,9 @@ pub enum TypeVariant {
     ScSpecTypeDef,
     ScSpecUdtStructFieldV0,
     ScSpecUdtStructV0,
+    ScSpecUdtUnionCaseVoidV0,
+    ScSpecUdtUnionCaseTupleV0,
+    ScSpecUdtUnionCaseV0Kind,
     ScSpecUdtUnionCaseV0,
     ScSpecUdtUnionV0,
     ScSpecUdtEnumCaseV0,
@@ -37260,7 +37512,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 398] = [
+    pub const VARIANTS: [TypeVariant; 401] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -37286,6 +37538,9 @@ impl TypeVariant {
         TypeVariant::ScSpecTypeDef,
         TypeVariant::ScSpecUdtStructFieldV0,
         TypeVariant::ScSpecUdtStructV0,
+        TypeVariant::ScSpecUdtUnionCaseVoidV0,
+        TypeVariant::ScSpecUdtUnionCaseTupleV0,
+        TypeVariant::ScSpecUdtUnionCaseV0Kind,
         TypeVariant::ScSpecUdtUnionCaseV0,
         TypeVariant::ScSpecUdtUnionV0,
         TypeVariant::ScSpecUdtEnumCaseV0,
@@ -37660,7 +37915,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 398] = [
+    pub const VARIANTS_STR: [&'static str; 401] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -37686,6 +37941,9 @@ impl TypeVariant {
         "ScSpecTypeDef",
         "ScSpecUdtStructFieldV0",
         "ScSpecUdtStructV0",
+        "ScSpecUdtUnionCaseVoidV0",
+        "ScSpecUdtUnionCaseTupleV0",
+        "ScSpecUdtUnionCaseV0Kind",
         "ScSpecUdtUnionCaseV0",
         "ScSpecUdtUnionV0",
         "ScSpecUdtEnumCaseV0",
@@ -38090,6 +38348,9 @@ impl TypeVariant {
             Self::ScSpecTypeDef => "ScSpecTypeDef",
             Self::ScSpecUdtStructFieldV0 => "ScSpecUdtStructFieldV0",
             Self::ScSpecUdtStructV0 => "ScSpecUdtStructV0",
+            Self::ScSpecUdtUnionCaseVoidV0 => "ScSpecUdtUnionCaseVoidV0",
+            Self::ScSpecUdtUnionCaseTupleV0 => "ScSpecUdtUnionCaseTupleV0",
+            Self::ScSpecUdtUnionCaseV0Kind => "ScSpecUdtUnionCaseV0Kind",
             Self::ScSpecUdtUnionCaseV0 => "ScSpecUdtUnionCaseV0",
             Self::ScSpecUdtUnionV0 => "ScSpecUdtUnionV0",
             Self::ScSpecUdtEnumCaseV0 => "ScSpecUdtEnumCaseV0",
@@ -38474,7 +38735,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 398] {
+    pub const fn variants() -> [TypeVariant; 401] {
         Self::VARIANTS
     }
 }
@@ -38522,6 +38783,9 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecTypeDef" => Ok(Self::ScSpecTypeDef),
             "ScSpecUdtStructFieldV0" => Ok(Self::ScSpecUdtStructFieldV0),
             "ScSpecUdtStructV0" => Ok(Self::ScSpecUdtStructV0),
+            "ScSpecUdtUnionCaseVoidV0" => Ok(Self::ScSpecUdtUnionCaseVoidV0),
+            "ScSpecUdtUnionCaseTupleV0" => Ok(Self::ScSpecUdtUnionCaseTupleV0),
+            "ScSpecUdtUnionCaseV0Kind" => Ok(Self::ScSpecUdtUnionCaseV0Kind),
             "ScSpecUdtUnionCaseV0" => Ok(Self::ScSpecUdtUnionCaseV0),
             "ScSpecUdtUnionV0" => Ok(Self::ScSpecUdtUnionV0),
             "ScSpecUdtEnumCaseV0" => Ok(Self::ScSpecUdtEnumCaseV0),
@@ -38945,6 +39209,9 @@ pub enum Type {
     ScSpecTypeDef(Box<ScSpecTypeDef>),
     ScSpecUdtStructFieldV0(Box<ScSpecUdtStructFieldV0>),
     ScSpecUdtStructV0(Box<ScSpecUdtStructV0>),
+    ScSpecUdtUnionCaseVoidV0(Box<ScSpecUdtUnionCaseVoidV0>),
+    ScSpecUdtUnionCaseTupleV0(Box<ScSpecUdtUnionCaseTupleV0>),
+    ScSpecUdtUnionCaseV0Kind(Box<ScSpecUdtUnionCaseV0Kind>),
     ScSpecUdtUnionCaseV0(Box<ScSpecUdtUnionCaseV0>),
     ScSpecUdtUnionV0(Box<ScSpecUdtUnionV0>),
     ScSpecUdtEnumCaseV0(Box<ScSpecUdtEnumCaseV0>),
@@ -39321,7 +39588,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 398] = [
+    pub const VARIANTS: [TypeVariant; 401] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -39347,6 +39614,9 @@ impl Type {
         TypeVariant::ScSpecTypeDef,
         TypeVariant::ScSpecUdtStructFieldV0,
         TypeVariant::ScSpecUdtStructV0,
+        TypeVariant::ScSpecUdtUnionCaseVoidV0,
+        TypeVariant::ScSpecUdtUnionCaseTupleV0,
+        TypeVariant::ScSpecUdtUnionCaseV0Kind,
         TypeVariant::ScSpecUdtUnionCaseV0,
         TypeVariant::ScSpecUdtUnionV0,
         TypeVariant::ScSpecUdtEnumCaseV0,
@@ -39721,7 +39991,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 398] = [
+    pub const VARIANTS_STR: [&'static str; 401] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -39747,6 +40017,9 @@ impl Type {
         "ScSpecTypeDef",
         "ScSpecUdtStructFieldV0",
         "ScSpecUdtStructV0",
+        "ScSpecUdtUnionCaseVoidV0",
+        "ScSpecUdtUnionCaseTupleV0",
+        "ScSpecUdtUnionCaseV0Kind",
         "ScSpecUdtUnionCaseV0",
         "ScSpecUdtUnionV0",
         "ScSpecUdtEnumCaseV0",
@@ -40192,6 +40465,15 @@ impl Type {
             ))),
             TypeVariant::ScSpecUdtStructV0 => Ok(Self::ScSpecUdtStructV0(Box::new(
                 ScSpecUdtStructV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => Ok(Self::ScSpecUdtUnionCaseVoidV0(Box::new(
+                ScSpecUdtUnionCaseVoidV0::read_xdr(r)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => Ok(Self::ScSpecUdtUnionCaseTupleV0(
+                Box::new(ScSpecUdtUnionCaseTupleV0::read_xdr(r)?),
+            )),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => Ok(Self::ScSpecUdtUnionCaseV0Kind(Box::new(
+                ScSpecUdtUnionCaseV0Kind::read_xdr(r)?,
             ))),
             TypeVariant::ScSpecUdtUnionCaseV0 => Ok(Self::ScSpecUdtUnionCaseV0(Box::new(
                 ScSpecUdtUnionCaseV0::read_xdr(r)?,
@@ -41364,6 +41646,18 @@ impl Type {
             TypeVariant::ScSpecUdtStructV0 => Box::new(
                 ReadXdrIter::<_, ScSpecUdtStructV0>::new(r)
                     .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseVoidV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseVoidV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseTupleV0>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseTupleV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0Kind>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0Kind(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
                 ReadXdrIter::<_, ScSpecUdtUnionCaseV0>::new(r)
@@ -42937,6 +43231,18 @@ impl Type {
             TypeVariant::ScSpecUdtStructV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecUdtStructV0>>::new(r)
                     .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseVoidV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseVoidV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseTupleV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseTupleV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseV0Kind>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0Kind(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseV0>>::new(r)
@@ -44542,6 +44848,18 @@ impl Type {
                 ReadXdrIter::<_, ScSpecUdtStructV0>::new(dec)
                     .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t)))),
             ),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseVoidV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseVoidV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseTupleV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseTupleV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0Kind>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0Kind(Box::new(t)))),
+            ),
             TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
                 ReadXdrIter::<_, ScSpecUdtUnionCaseV0>::new(dec)
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t)))),
@@ -46065,6 +46383,9 @@ impl Type {
             Self::ScSpecTypeDef(ref v) => v.as_ref(),
             Self::ScSpecUdtStructFieldV0(ref v) => v.as_ref(),
             Self::ScSpecUdtStructV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtUnionCaseVoidV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtUnionCaseTupleV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtUnionCaseV0Kind(ref v) => v.as_ref(),
             Self::ScSpecUdtUnionCaseV0(ref v) => v.as_ref(),
             Self::ScSpecUdtUnionV0(ref v) => v.as_ref(),
             Self::ScSpecUdtEnumCaseV0(ref v) => v.as_ref(),
@@ -46470,6 +46791,9 @@ impl Type {
             Self::ScSpecTypeDef(_) => "ScSpecTypeDef",
             Self::ScSpecUdtStructFieldV0(_) => "ScSpecUdtStructFieldV0",
             Self::ScSpecUdtStructV0(_) => "ScSpecUdtStructV0",
+            Self::ScSpecUdtUnionCaseVoidV0(_) => "ScSpecUdtUnionCaseVoidV0",
+            Self::ScSpecUdtUnionCaseTupleV0(_) => "ScSpecUdtUnionCaseTupleV0",
+            Self::ScSpecUdtUnionCaseV0Kind(_) => "ScSpecUdtUnionCaseV0Kind",
             Self::ScSpecUdtUnionCaseV0(_) => "ScSpecUdtUnionCaseV0",
             Self::ScSpecUdtUnionV0(_) => "ScSpecUdtUnionV0",
             Self::ScSpecUdtEnumCaseV0(_) => "ScSpecUdtEnumCaseV0",
@@ -46860,7 +47184,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 398] {
+    pub const fn variants() -> [TypeVariant; 401] {
         Self::VARIANTS
     }
 
@@ -46893,6 +47217,9 @@ impl Type {
             Self::ScSpecTypeDef(_) => TypeVariant::ScSpecTypeDef,
             Self::ScSpecUdtStructFieldV0(_) => TypeVariant::ScSpecUdtStructFieldV0,
             Self::ScSpecUdtStructV0(_) => TypeVariant::ScSpecUdtStructV0,
+            Self::ScSpecUdtUnionCaseVoidV0(_) => TypeVariant::ScSpecUdtUnionCaseVoidV0,
+            Self::ScSpecUdtUnionCaseTupleV0(_) => TypeVariant::ScSpecUdtUnionCaseTupleV0,
+            Self::ScSpecUdtUnionCaseV0Kind(_) => TypeVariant::ScSpecUdtUnionCaseV0Kind,
             Self::ScSpecUdtUnionCaseV0(_) => TypeVariant::ScSpecUdtUnionCaseV0,
             Self::ScSpecUdtUnionV0(_) => TypeVariant::ScSpecUdtUnionV0,
             Self::ScSpecUdtEnumCaseV0(_) => TypeVariant::ScSpecUdtEnumCaseV0,

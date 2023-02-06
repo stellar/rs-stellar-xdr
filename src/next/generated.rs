@@ -28,7 +28,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "5c254a97c31d08f0d1c5bd50867d71edad11338dd5653d87d3714475221e68d7",
+        "99696979513d389fabe843874b84dd75a7fec8f8f329ca9ae833c600850dee2d",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -4937,7 +4937,8 @@ impl WriteXdr for ScStatic {
 //        SST_HOST_STORAGE_ERROR = 5,
 //        SST_HOST_CONTEXT_ERROR = 6,
 //        SST_VM_ERROR = 7,
-//        SST_CONTRACT_ERROR = 8
+//        SST_CONTRACT_ERROR = 8,
+//        SST_HOST_AUTH_ERROR = 9
 //        // TODO: add more
 //    };
 //
@@ -4960,10 +4961,11 @@ pub enum ScStatusType {
     HostContextError = 6,
     VmError = 7,
     ContractError = 8,
+    HostAuthError = 9,
 }
 
 impl ScStatusType {
-    pub const VARIANTS: [ScStatusType; 9] = [
+    pub const VARIANTS: [ScStatusType; 10] = [
         ScStatusType::Ok,
         ScStatusType::UnknownError,
         ScStatusType::HostValueError,
@@ -4973,8 +4975,9 @@ impl ScStatusType {
         ScStatusType::HostContextError,
         ScStatusType::VmError,
         ScStatusType::ContractError,
+        ScStatusType::HostAuthError,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "Ok",
         "UnknownError",
         "HostValueError",
@@ -4984,6 +4987,7 @@ impl ScStatusType {
         "HostContextError",
         "VmError",
         "ContractError",
+        "HostAuthError",
     ];
 
     #[must_use]
@@ -4998,11 +5002,12 @@ impl ScStatusType {
             Self::HostContextError => "HostContextError",
             Self::VmError => "VmError",
             Self::ContractError => "ContractError",
+            Self::HostAuthError => "HostAuthError",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScStatusType; 9] {
+    pub const fn variants() -> [ScStatusType; 10] {
         Self::VARIANTS
     }
 }
@@ -5042,6 +5047,7 @@ impl TryFrom<i32> for ScStatusType {
             6 => ScStatusType::HostContextError,
             7 => ScStatusType::VmError,
             8 => ScStatusType::ContractError,
+            9 => ScStatusType::HostAuthError,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5625,6 +5631,123 @@ impl WriteXdr for ScHostStorageErrorCode {
     }
 }
 
+// ScHostAuthErrorCode is an XDR Enum defines as:
+//
+//   enum SCHostAuthErrorCode
+//    {
+//        HOST_AUTH_UNKNOWN_ERROR = 0,
+//        HOST_AUTH_NONCE_ERROR = 1,
+//        HOST_AUTH_DUPLICATE_AUTHORIZATION = 2,
+//        HOST_AUTH_NOT_AUTHORIZED = 3
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScHostAuthErrorCode {
+    UnknownError = 0,
+    NonceError = 1,
+    DuplicateAuthorization = 2,
+    NotAuthorized = 3,
+}
+
+impl ScHostAuthErrorCode {
+    pub const VARIANTS: [ScHostAuthErrorCode; 4] = [
+        ScHostAuthErrorCode::UnknownError,
+        ScHostAuthErrorCode::NonceError,
+        ScHostAuthErrorCode::DuplicateAuthorization,
+        ScHostAuthErrorCode::NotAuthorized,
+    ];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "UnknownError",
+        "NonceError",
+        "DuplicateAuthorization",
+        "NotAuthorized",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::UnknownError => "UnknownError",
+            Self::NonceError => "NonceError",
+            Self::DuplicateAuthorization => "DuplicateAuthorization",
+            Self::NotAuthorized => "NotAuthorized",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScHostAuthErrorCode; 4] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScHostAuthErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScHostAuthErrorCode> for ScHostAuthErrorCode {
+    fn variants() -> slice::Iter<'static, ScHostAuthErrorCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScHostAuthErrorCode {}
+
+impl fmt::Display for ScHostAuthErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScHostAuthErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScHostAuthErrorCode::UnknownError,
+            1 => ScHostAuthErrorCode::NonceError,
+            2 => ScHostAuthErrorCode::DuplicateAuthorization,
+            3 => ScHostAuthErrorCode::NotAuthorized,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScHostAuthErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScHostAuthErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScHostAuthErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScHostAuthErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
 // ScHostContextErrorCode is an XDR Enum defines as:
 //
 //   enum SCHostContextErrorCode
@@ -6055,6 +6178,8 @@ impl WriteXdr for ScUnknownErrorCode {
 //        SCVmErrorCode vmCode;
 //    case SST_CONTRACT_ERROR:
 //        uint32 contractCode;
+//    case SST_HOST_AUTH_ERROR:
+//        SCHostAuthErrorCode authCode;
 //    };
 //
 // union with discriminant ScStatusType
@@ -6076,10 +6201,11 @@ pub enum ScStatus {
     HostContextError(ScHostContextErrorCode),
     VmError(ScVmErrorCode),
     ContractError(u32),
+    HostAuthError(ScHostAuthErrorCode),
 }
 
 impl ScStatus {
-    pub const VARIANTS: [ScStatusType; 9] = [
+    pub const VARIANTS: [ScStatusType; 10] = [
         ScStatusType::Ok,
         ScStatusType::UnknownError,
         ScStatusType::HostValueError,
@@ -6089,8 +6215,9 @@ impl ScStatus {
         ScStatusType::HostContextError,
         ScStatusType::VmError,
         ScStatusType::ContractError,
+        ScStatusType::HostAuthError,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "Ok",
         "UnknownError",
         "HostValueError",
@@ -6100,6 +6227,7 @@ impl ScStatus {
         "HostContextError",
         "VmError",
         "ContractError",
+        "HostAuthError",
     ];
 
     #[must_use]
@@ -6114,6 +6242,7 @@ impl ScStatus {
             Self::HostContextError(_) => "HostContextError",
             Self::VmError(_) => "VmError",
             Self::ContractError(_) => "ContractError",
+            Self::HostAuthError(_) => "HostAuthError",
         }
     }
 
@@ -6130,11 +6259,12 @@ impl ScStatus {
             Self::HostContextError(_) => ScStatusType::HostContextError,
             Self::VmError(_) => ScStatusType::VmError,
             Self::ContractError(_) => ScStatusType::ContractError,
+            Self::HostAuthError(_) => ScStatusType::HostAuthError,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScStatusType; 9] {
+    pub const fn variants() -> [ScStatusType; 10] {
         Self::VARIANTS
     }
 }
@@ -6184,6 +6314,7 @@ impl ReadXdr for ScStatus {
             }
             ScStatusType::VmError => Self::VmError(ScVmErrorCode::read_xdr(r)?),
             ScStatusType::ContractError => Self::ContractError(u32::read_xdr(r)?),
+            ScStatusType::HostAuthError => Self::HostAuthError(ScHostAuthErrorCode::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -6206,6 +6337,7 @@ impl WriteXdr for ScStatus {
             Self::HostContextError(v) => v.write_xdr(w)?,
             Self::VmError(v) => v.write_xdr(w)?,
             Self::ContractError(v) => v.write_xdr(w)?,
+            Self::HostAuthError(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -37154,6 +37286,7 @@ pub enum TypeVariant {
     ScHostObjErrorCode,
     ScHostFnErrorCode,
     ScHostStorageErrorCode,
+    ScHostAuthErrorCode,
     ScHostContextErrorCode,
     ScVmErrorCode,
     ScUnknownErrorCode,
@@ -37512,7 +37645,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 401] = [
+    pub const VARIANTS: [TypeVariant; 402] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -37559,6 +37692,7 @@ impl TypeVariant {
         TypeVariant::ScHostObjErrorCode,
         TypeVariant::ScHostFnErrorCode,
         TypeVariant::ScHostStorageErrorCode,
+        TypeVariant::ScHostAuthErrorCode,
         TypeVariant::ScHostContextErrorCode,
         TypeVariant::ScVmErrorCode,
         TypeVariant::ScUnknownErrorCode,
@@ -37915,7 +38049,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 401] = [
+    pub const VARIANTS_STR: [&'static str; 402] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -37962,6 +38096,7 @@ impl TypeVariant {
         "ScHostObjErrorCode",
         "ScHostFnErrorCode",
         "ScHostStorageErrorCode",
+        "ScHostAuthErrorCode",
         "ScHostContextErrorCode",
         "ScVmErrorCode",
         "ScUnknownErrorCode",
@@ -38369,6 +38504,7 @@ impl TypeVariant {
             Self::ScHostObjErrorCode => "ScHostObjErrorCode",
             Self::ScHostFnErrorCode => "ScHostFnErrorCode",
             Self::ScHostStorageErrorCode => "ScHostStorageErrorCode",
+            Self::ScHostAuthErrorCode => "ScHostAuthErrorCode",
             Self::ScHostContextErrorCode => "ScHostContextErrorCode",
             Self::ScVmErrorCode => "ScVmErrorCode",
             Self::ScUnknownErrorCode => "ScUnknownErrorCode",
@@ -38735,7 +38871,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 401] {
+    pub const fn variants() -> [TypeVariant; 402] {
         Self::VARIANTS
     }
 }
@@ -38804,6 +38940,7 @@ impl core::str::FromStr for TypeVariant {
             "ScHostObjErrorCode" => Ok(Self::ScHostObjErrorCode),
             "ScHostFnErrorCode" => Ok(Self::ScHostFnErrorCode),
             "ScHostStorageErrorCode" => Ok(Self::ScHostStorageErrorCode),
+            "ScHostAuthErrorCode" => Ok(Self::ScHostAuthErrorCode),
             "ScHostContextErrorCode" => Ok(Self::ScHostContextErrorCode),
             "ScVmErrorCode" => Ok(Self::ScVmErrorCode),
             "ScUnknownErrorCode" => Ok(Self::ScUnknownErrorCode),
@@ -39230,6 +39367,7 @@ pub enum Type {
     ScHostObjErrorCode(Box<ScHostObjErrorCode>),
     ScHostFnErrorCode(Box<ScHostFnErrorCode>),
     ScHostStorageErrorCode(Box<ScHostStorageErrorCode>),
+    ScHostAuthErrorCode(Box<ScHostAuthErrorCode>),
     ScHostContextErrorCode(Box<ScHostContextErrorCode>),
     ScVmErrorCode(Box<ScVmErrorCode>),
     ScUnknownErrorCode(Box<ScUnknownErrorCode>),
@@ -39588,7 +39726,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 401] = [
+    pub const VARIANTS: [TypeVariant; 402] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -39635,6 +39773,7 @@ impl Type {
         TypeVariant::ScHostObjErrorCode,
         TypeVariant::ScHostFnErrorCode,
         TypeVariant::ScHostStorageErrorCode,
+        TypeVariant::ScHostAuthErrorCode,
         TypeVariant::ScHostContextErrorCode,
         TypeVariant::ScVmErrorCode,
         TypeVariant::ScUnknownErrorCode,
@@ -39991,7 +40130,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 401] = [
+    pub const VARIANTS_STR: [&'static str; 402] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -40038,6 +40177,7 @@ impl Type {
         "ScHostObjErrorCode",
         "ScHostFnErrorCode",
         "ScHostStorageErrorCode",
+        "ScHostAuthErrorCode",
         "ScHostContextErrorCode",
         "ScVmErrorCode",
         "ScUnknownErrorCode",
@@ -40520,6 +40660,9 @@ impl Type {
             ))),
             TypeVariant::ScHostStorageErrorCode => Ok(Self::ScHostStorageErrorCode(Box::new(
                 ScHostStorageErrorCode::read_xdr(r)?,
+            ))),
+            TypeVariant::ScHostAuthErrorCode => Ok(Self::ScHostAuthErrorCode(Box::new(
+                ScHostAuthErrorCode::read_xdr(r)?,
             ))),
             TypeVariant::ScHostContextErrorCode => Ok(Self::ScHostContextErrorCode(Box::new(
                 ScHostContextErrorCode::read_xdr(r)?,
@@ -41728,6 +41871,10 @@ impl Type {
             TypeVariant::ScHostStorageErrorCode => Box::new(
                 ReadXdrIter::<_, ScHostStorageErrorCode>::new(r)
                     .map(|r| r.map(|t| Self::ScHostStorageErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScHostAuthErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostAuthErrorCode>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostAuthErrorCode(Box::new(t)))),
             ),
             TypeVariant::ScHostContextErrorCode => Box::new(
                 ReadXdrIter::<_, ScHostContextErrorCode>::new(r)
@@ -43315,6 +43462,10 @@ impl Type {
             TypeVariant::ScHostStorageErrorCode => Box::new(
                 ReadXdrIter::<_, Frame<ScHostStorageErrorCode>>::new(r)
                     .map(|r| r.map(|t| Self::ScHostStorageErrorCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ScHostAuthErrorCode => Box::new(
+                ReadXdrIter::<_, Frame<ScHostAuthErrorCode>>::new(r)
+                    .map(|r| r.map(|t| Self::ScHostAuthErrorCode(Box::new(t.0)))),
             ),
             TypeVariant::ScHostContextErrorCode => Box::new(
                 ReadXdrIter::<_, Frame<ScHostContextErrorCode>>::new(r)
@@ -44932,6 +45083,10 @@ impl Type {
                 ReadXdrIter::<_, ScHostStorageErrorCode>::new(dec)
                     .map(|r| r.map(|t| Self::ScHostStorageErrorCode(Box::new(t)))),
             ),
+            TypeVariant::ScHostAuthErrorCode => Box::new(
+                ReadXdrIter::<_, ScHostAuthErrorCode>::new(dec)
+                    .map(|r| r.map(|t| Self::ScHostAuthErrorCode(Box::new(t)))),
+            ),
             TypeVariant::ScHostContextErrorCode => Box::new(
                 ReadXdrIter::<_, ScHostContextErrorCode>::new(dec)
                     .map(|r| r.map(|t| Self::ScHostContextErrorCode(Box::new(t)))),
@@ -46404,6 +46559,7 @@ impl Type {
             Self::ScHostObjErrorCode(ref v) => v.as_ref(),
             Self::ScHostFnErrorCode(ref v) => v.as_ref(),
             Self::ScHostStorageErrorCode(ref v) => v.as_ref(),
+            Self::ScHostAuthErrorCode(ref v) => v.as_ref(),
             Self::ScHostContextErrorCode(ref v) => v.as_ref(),
             Self::ScVmErrorCode(ref v) => v.as_ref(),
             Self::ScUnknownErrorCode(ref v) => v.as_ref(),
@@ -46812,6 +46968,7 @@ impl Type {
             Self::ScHostObjErrorCode(_) => "ScHostObjErrorCode",
             Self::ScHostFnErrorCode(_) => "ScHostFnErrorCode",
             Self::ScHostStorageErrorCode(_) => "ScHostStorageErrorCode",
+            Self::ScHostAuthErrorCode(_) => "ScHostAuthErrorCode",
             Self::ScHostContextErrorCode(_) => "ScHostContextErrorCode",
             Self::ScVmErrorCode(_) => "ScVmErrorCode",
             Self::ScUnknownErrorCode(_) => "ScUnknownErrorCode",
@@ -47184,7 +47341,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 401] {
+    pub const fn variants() -> [TypeVariant; 402] {
         Self::VARIANTS
     }
 
@@ -47238,6 +47395,7 @@ impl Type {
             Self::ScHostObjErrorCode(_) => TypeVariant::ScHostObjErrorCode,
             Self::ScHostFnErrorCode(_) => TypeVariant::ScHostFnErrorCode,
             Self::ScHostStorageErrorCode(_) => TypeVariant::ScHostStorageErrorCode,
+            Self::ScHostAuthErrorCode(_) => TypeVariant::ScHostAuthErrorCode,
             Self::ScHostContextErrorCode(_) => TypeVariant::ScHostContextErrorCode,
             Self::ScVmErrorCode(_) => TypeVariant::ScVmErrorCode,
             Self::ScUnknownErrorCode(_) => TypeVariant::ScUnknownErrorCode,

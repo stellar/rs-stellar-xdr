@@ -16,7 +16,7 @@ required-features = ["cli"]
 doctest = false
 
 [build_dependencies]
-crate-git-revision = "0.0.4"
+crate-git-revision = "0.0.5"
 
 [dependencies]
 base64 = { version = "0.13.0", optional = true }

@@ -48,7 +48,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "69d33701fac38c2e0ba861f8ff6c96ae126364a9606a8f21e36b823dceb6a004",
+        "0ab9890a6ffbe3a7f0b4496f7f531606812c1207b862a0a7bc03b70e83dbdf72",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -24588,6 +24588,7 @@ impl WriteXdr for HashIdPreimageCreateContractArgs {
 //   struct
 //        {
 //            Hash networkID;
+//            uint64 nonce;
 //            AuthorizedInvocation invocation;
 //        }
 //
@@ -24600,6 +24601,7 @@ impl WriteXdr for HashIdPreimageCreateContractArgs {
 )]
 pub struct HashIdPreimageContractAuth {
     pub network_id: Hash,
+    pub nonce: u64,
     pub invocation: AuthorizedInvocation,
 }
 
@@ -24608,6 +24610,7 @@ impl ReadXdr for HashIdPreimageContractAuth {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             network_id: Hash::read_xdr(r)?,
+            nonce: u64::read_xdr(r)?,
             invocation: AuthorizedInvocation::read_xdr(r)?,
         })
     }
@@ -24617,6 +24620,7 @@ impl WriteXdr for HashIdPreimageContractAuth {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.network_id.write_xdr(w)?;
+        self.nonce.write_xdr(w)?;
         self.invocation.write_xdr(w)?;
         Ok(())
     }
@@ -24680,6 +24684,7 @@ impl WriteXdr for HashIdPreimageContractAuth {
 //        struct
 //        {
 //            Hash networkID;
+//            uint64 nonce;
 //            AuthorizedInvocation invocation;
 //        } contractAuth;
 //    };

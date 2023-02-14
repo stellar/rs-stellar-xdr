@@ -2018,101 +2018,7 @@ mod test {
 //
 //   typedef opaque Value<>;
 //
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct Value(pub BytesM);
-
-impl From<Value> for BytesM {
-    #[must_use]
-    fn from(x: Value) -> Self {
-        x.0
-    }
-}
-
-impl From<BytesM> for Value {
-    #[must_use]
-    fn from(x: BytesM) -> Self {
-        Value(x)
-    }
-}
-
-impl AsRef<BytesM> for Value {
-    #[must_use]
-    fn as_ref(&self) -> &BytesM {
-        &self.0
-    }
-}
-
-impl ReadXdr for Value {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = BytesM::read_xdr(r)?;
-        let v = Value(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for Value {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
-
-impl Deref for Value {
-    type Target = BytesM;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<Value> for Vec<u8> {
-    #[must_use]
-    fn from(x: Value) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Value {
-    type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
-        Ok(Value(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<u8>> for Value {
-    type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
-        Ok(Value(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<u8>> for Value {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<u8> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[u8]> for Value {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        self.0 .0
-    }
-}
+pub type Value = BytesM;
 
 // ScpBallot is an XDR Struct defines as:
 //
@@ -2130,7 +2036,7 @@ impl AsRef<[u8]> for Value {
     serde(rename_all = "snake_case")
 )]
 pub struct ScpBallot {
-    pub counter: u32,
+    pub counter: Uint32,
     pub value: Value,
 }
 
@@ -2138,7 +2044,7 @@ impl ReadXdr for ScpBallot {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            counter: u32::read_xdr(r)?,
+            counter: Uint32::read_xdr(r)?,
             value: Value::read_xdr(r)?,
         })
     }
@@ -2332,8 +2238,8 @@ pub struct ScpStatementPrepare {
     pub ballot: ScpBallot,
     pub prepared: Option<ScpBallot>,
     pub prepared_prime: Option<ScpBallot>,
-    pub n_c: u32,
-    pub n_h: u32,
+    pub n_c: Uint32,
+    pub n_h: Uint32,
 }
 
 impl ReadXdr for ScpStatementPrepare {
@@ -2344,8 +2250,8 @@ impl ReadXdr for ScpStatementPrepare {
             ballot: ScpBallot::read_xdr(r)?,
             prepared: Option::<ScpBallot>::read_xdr(r)?,
             prepared_prime: Option::<ScpBallot>::read_xdr(r)?,
-            n_c: u32::read_xdr(r)?,
-            n_h: u32::read_xdr(r)?,
+            n_c: Uint32::read_xdr(r)?,
+            n_h: Uint32::read_xdr(r)?,
         })
     }
 }
@@ -2383,9 +2289,9 @@ impl WriteXdr for ScpStatementPrepare {
 )]
 pub struct ScpStatementConfirm {
     pub ballot: ScpBallot,
-    pub n_prepared: u32,
-    pub n_commit: u32,
-    pub n_h: u32,
+    pub n_prepared: Uint32,
+    pub n_commit: Uint32,
+    pub n_h: Uint32,
     pub quorum_set_hash: Hash,
 }
 
@@ -2394,9 +2300,9 @@ impl ReadXdr for ScpStatementConfirm {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ballot: ScpBallot::read_xdr(r)?,
-            n_prepared: u32::read_xdr(r)?,
-            n_commit: u32::read_xdr(r)?,
-            n_h: u32::read_xdr(r)?,
+            n_prepared: Uint32::read_xdr(r)?,
+            n_commit: Uint32::read_xdr(r)?,
+            n_h: Uint32::read_xdr(r)?,
             quorum_set_hash: Hash::read_xdr(r)?,
         })
     }
@@ -2432,7 +2338,7 @@ impl WriteXdr for ScpStatementConfirm {
 )]
 pub struct ScpStatementExternalize {
     pub commit: ScpBallot,
-    pub n_h: u32,
+    pub n_h: Uint32,
     pub commit_quorum_set_hash: Hash,
 }
 
@@ -2441,7 +2347,7 @@ impl ReadXdr for ScpStatementExternalize {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             commit: ScpBallot::read_xdr(r)?,
-            n_h: u32::read_xdr(r)?,
+            n_h: Uint32::read_xdr(r)?,
             commit_quorum_set_hash: Hash::read_xdr(r)?,
         })
     }
@@ -2649,7 +2555,7 @@ impl WriteXdr for ScpStatementPledges {
 )]
 pub struct ScpStatement {
     pub node_id: NodeId,
-    pub slot_index: u64,
+    pub slot_index: Uint64,
     pub pledges: ScpStatementPledges,
 }
 
@@ -2658,7 +2564,7 @@ impl ReadXdr for ScpStatement {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             node_id: NodeId::read_xdr(r)?,
-            slot_index: u64::read_xdr(r)?,
+            slot_index: Uint64::read_xdr(r)?,
             pledges: ScpStatementPledges::read_xdr(r)?,
         })
     }
@@ -2730,7 +2636,7 @@ impl WriteXdr for ScpEnvelope {
     serde(rename_all = "snake_case")
 )]
 pub struct ScpQuorumSet {
-    pub threshold: u32,
+    pub threshold: Uint32,
     pub validators: VecM<NodeId>,
     pub inner_sets: VecM<ScpQuorumSet>,
 }
@@ -2739,7 +2645,7 @@ impl ReadXdr for ScpQuorumSet {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            threshold: u32::read_xdr(r)?,
+            threshold: Uint32::read_xdr(r)?,
             validators: VecM::<NodeId>::read_xdr(r)?,
             inner_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
         })
@@ -3231,25 +3137,25 @@ pub type String64 = StringM<64>;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct SequenceNumber(pub i64);
+pub struct SequenceNumber(pub Int64);
 
-impl From<SequenceNumber> for i64 {
+impl From<SequenceNumber> for Int64 {
     #[must_use]
     fn from(x: SequenceNumber) -> Self {
         x.0
     }
 }
 
-impl From<i64> for SequenceNumber {
+impl From<Int64> for SequenceNumber {
     #[must_use]
-    fn from(x: i64) -> Self {
+    fn from(x: Int64) -> Self {
         SequenceNumber(x)
     }
 }
 
-impl AsRef<i64> for SequenceNumber {
+impl AsRef<Int64> for SequenceNumber {
     #[must_use]
-    fn as_ref(&self) -> &i64 {
+    fn as_ref(&self) -> &Int64 {
         &self.0
     }
 }
@@ -3257,7 +3163,7 @@ impl AsRef<i64> for SequenceNumber {
 impl ReadXdr for SequenceNumber {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = i64::read_xdr(r)?;
+        let i = Int64::read_xdr(r)?;
         let v = SequenceNumber(i);
         Ok(v)
     }
@@ -3282,25 +3188,25 @@ impl WriteXdr for SequenceNumber {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct TimePoint(pub u64);
+pub struct TimePoint(pub Uint64);
 
-impl From<TimePoint> for u64 {
+impl From<TimePoint> for Uint64 {
     #[must_use]
     fn from(x: TimePoint) -> Self {
         x.0
     }
 }
 
-impl From<u64> for TimePoint {
+impl From<Uint64> for TimePoint {
     #[must_use]
-    fn from(x: u64) -> Self {
+    fn from(x: Uint64) -> Self {
         TimePoint(x)
     }
 }
 
-impl AsRef<u64> for TimePoint {
+impl AsRef<Uint64> for TimePoint {
     #[must_use]
-    fn as_ref(&self) -> &u64 {
+    fn as_ref(&self) -> &Uint64 {
         &self.0
     }
 }
@@ -3308,7 +3214,7 @@ impl AsRef<u64> for TimePoint {
 impl ReadXdr for TimePoint {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = u64::read_xdr(r)?;
+        let i = Uint64::read_xdr(r)?;
         let v = TimePoint(i);
         Ok(v)
     }
@@ -3333,25 +3239,25 @@ impl WriteXdr for TimePoint {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct Duration(pub u64);
+pub struct Duration(pub Uint64);
 
-impl From<Duration> for u64 {
+impl From<Duration> for Uint64 {
     #[must_use]
     fn from(x: Duration) -> Self {
         x.0
     }
 }
 
-impl From<u64> for Duration {
+impl From<Uint64> for Duration {
     #[must_use]
-    fn from(x: u64) -> Self {
+    fn from(x: Uint64) -> Self {
         Duration(x)
     }
 }
 
-impl AsRef<u64> for Duration {
+impl AsRef<Uint64> for Duration {
     #[must_use]
-    fn as_ref(&self) -> &u64 {
+    fn as_ref(&self) -> &Uint64 {
         &self.0
     }
 }
@@ -3359,7 +3265,7 @@ impl AsRef<u64> for Duration {
 impl ReadXdr for Duration {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = u64::read_xdr(r)?;
+        let i = Uint64::read_xdr(r)?;
         let v = Duration(i);
         Ok(v)
     }
@@ -3376,101 +3282,7 @@ impl WriteXdr for Duration {
 //
 //   typedef opaque DataValue<64>;
 //
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct DataValue(pub BytesM<64>);
-
-impl From<DataValue> for BytesM<64> {
-    #[must_use]
-    fn from(x: DataValue) -> Self {
-        x.0
-    }
-}
-
-impl From<BytesM<64>> for DataValue {
-    #[must_use]
-    fn from(x: BytesM<64>) -> Self {
-        DataValue(x)
-    }
-}
-
-impl AsRef<BytesM<64>> for DataValue {
-    #[must_use]
-    fn as_ref(&self) -> &BytesM<64> {
-        &self.0
-    }
-}
-
-impl ReadXdr for DataValue {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = BytesM::<64>::read_xdr(r)?;
-        let v = DataValue(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for DataValue {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
-
-impl Deref for DataValue {
-    type Target = BytesM<64>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<DataValue> for Vec<u8> {
-    #[must_use]
-    fn from(x: DataValue) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<u8>> for DataValue {
-    type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
-        Ok(DataValue(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<u8>> for DataValue {
-    type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
-        Ok(DataValue(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<u8>> for DataValue {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<u8> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[u8]> for DataValue {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        self.0 .0
-    }
-}
+pub type DataValue = BytesM<64>;
 
 // PoolId is an XDR Typedef defines as:
 //
@@ -4180,16 +3992,16 @@ impl WriteXdr for Asset {
     serde(rename_all = "snake_case")
 )]
 pub struct Price {
-    pub n: i32,
-    pub d: i32,
+    pub n: Int32,
+    pub d: Int32,
 }
 
 impl ReadXdr for Price {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            n: i32::read_xdr(r)?,
-            d: i32::read_xdr(r)?,
+            n: Int32::read_xdr(r)?,
+            d: Int32::read_xdr(r)?,
         })
     }
 }
@@ -4219,16 +4031,16 @@ impl WriteXdr for Price {
     serde(rename_all = "snake_case")
 )]
 pub struct Liabilities {
-    pub buying: i64,
-    pub selling: i64,
+    pub buying: Int64,
+    pub selling: Int64,
 }
 
 impl ReadXdr for Liabilities {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            buying: i64::read_xdr(r)?,
-            selling: i64::read_xdr(r)?,
+            buying: Int64::read_xdr(r)?,
+            selling: Int64::read_xdr(r)?,
         })
     }
 }
@@ -4500,7 +4312,7 @@ impl WriteXdr for LedgerEntryType {
 )]
 pub struct Signer {
     pub key: SignerKey,
-    pub weight: u32,
+    pub weight: Uint32,
 }
 
 impl ReadXdr for Signer {
@@ -4508,7 +4320,7 @@ impl ReadXdr for Signer {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             key: SignerKey::read_xdr(r)?,
-            weight: u32::read_xdr(r)?,
+            weight: Uint32::read_xdr(r)?,
         })
     }
 }
@@ -4742,7 +4554,7 @@ impl WriteXdr for SponsorshipDescriptor {
 )]
 pub struct AccountEntryExtensionV3 {
     pub ext: ExtensionPoint,
-    pub seq_ledger: u32,
+    pub seq_ledger: Uint32,
     pub seq_time: TimePoint,
 }
 
@@ -4751,7 +4563,7 @@ impl ReadXdr for AccountEntryExtensionV3 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ext: ExtensionPoint::read_xdr(r)?,
-            seq_ledger: u32::read_xdr(r)?,
+            seq_ledger: Uint32::read_xdr(r)?,
             seq_time: TimePoint::read_xdr(r)?,
         })
     }
@@ -4894,8 +4706,8 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
     serde(rename_all = "snake_case")
 )]
 pub struct AccountEntryExtensionV2 {
-    pub num_sponsored: u32,
-    pub num_sponsoring: u32,
+    pub num_sponsored: Uint32,
+    pub num_sponsoring: Uint32,
     pub signer_sponsoring_i_ds: VecM<SponsorshipDescriptor, 20>,
     pub ext: AccountEntryExtensionV2Ext,
 }
@@ -4904,8 +4716,8 @@ impl ReadXdr for AccountEntryExtensionV2 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            num_sponsored: u32::read_xdr(r)?,
-            num_sponsoring: u32::read_xdr(r)?,
+            num_sponsored: Uint32::read_xdr(r)?,
+            num_sponsoring: Uint32::read_xdr(r)?,
             signer_sponsoring_i_ds: VecM::<SponsorshipDescriptor, 20>::read_xdr(r)?,
             ext: AccountEntryExtensionV2Ext::read_xdr(r)?,
         })
@@ -5212,12 +5024,12 @@ impl WriteXdr for AccountEntryExt {
 )]
 pub struct AccountEntry {
     pub account_id: AccountId,
-    pub balance: i64,
+    pub balance: Int64,
     pub seq_num: SequenceNumber,
-    pub num_sub_entries: u32,
+    pub num_sub_entries: Uint32,
     pub inflation_dest: Option<AccountId>,
-    pub flags: u32,
-    pub home_domain: StringM<32>,
+    pub flags: Uint32,
+    pub home_domain: String32,
     pub thresholds: Thresholds,
     pub signers: VecM<Signer, 20>,
     pub ext: AccountEntryExt,
@@ -5228,12 +5040,12 @@ impl ReadXdr for AccountEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: AccountId::read_xdr(r)?,
-            balance: i64::read_xdr(r)?,
+            balance: Int64::read_xdr(r)?,
             seq_num: SequenceNumber::read_xdr(r)?,
-            num_sub_entries: u32::read_xdr(r)?,
+            num_sub_entries: Uint32::read_xdr(r)?,
             inflation_dest: Option::<AccountId>::read_xdr(r)?,
-            flags: u32::read_xdr(r)?,
-            home_domain: StringM::<32>::read_xdr(r)?,
+            flags: Uint32::read_xdr(r)?,
+            home_domain: String32::read_xdr(r)?,
             thresholds: Thresholds::read_xdr(r)?,
             signers: VecM::<Signer, 20>::read_xdr(r)?,
             ext: AccountEntryExt::read_xdr(r)?,
@@ -5729,7 +5541,7 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
     serde(rename_all = "snake_case")
 )]
 pub struct TrustLineEntryExtensionV2 {
-    pub liquidity_pool_use_count: i32,
+    pub liquidity_pool_use_count: Int32,
     pub ext: TrustLineEntryExtensionV2Ext,
 }
 
@@ -5737,7 +5549,7 @@ impl ReadXdr for TrustLineEntryExtensionV2 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            liquidity_pool_use_count: i32::read_xdr(r)?,
+            liquidity_pool_use_count: Int32::read_xdr(r)?,
             ext: TrustLineEntryExtensionV2Ext::read_xdr(r)?,
         })
     }
@@ -6058,9 +5870,9 @@ impl WriteXdr for TrustLineEntryExt {
 pub struct TrustLineEntry {
     pub account_id: AccountId,
     pub asset: TrustLineAsset,
-    pub balance: i64,
-    pub limit: i64,
-    pub flags: u32,
+    pub balance: Int64,
+    pub limit: Int64,
+    pub flags: Uint32,
     pub ext: TrustLineEntryExt,
 }
 
@@ -6070,9 +5882,9 @@ impl ReadXdr for TrustLineEntry {
         Ok(Self {
             account_id: AccountId::read_xdr(r)?,
             asset: TrustLineAsset::read_xdr(r)?,
-            balance: i64::read_xdr(r)?,
-            limit: i64::read_xdr(r)?,
-            flags: u32::read_xdr(r)?,
+            balance: Int64::read_xdr(r)?,
+            limit: Int64::read_xdr(r)?,
+            flags: Uint32::read_xdr(r)?,
             ext: TrustLineEntryExt::read_xdr(r)?,
         })
     }
@@ -6324,12 +6136,12 @@ impl WriteXdr for OfferEntryExt {
 )]
 pub struct OfferEntry {
     pub seller_id: AccountId,
-    pub offer_id: i64,
+    pub offer_id: Int64,
     pub selling: Asset,
     pub buying: Asset,
-    pub amount: i64,
+    pub amount: Int64,
     pub price: Price,
-    pub flags: u32,
+    pub flags: Uint32,
     pub ext: OfferEntryExt,
 }
 
@@ -6338,12 +6150,12 @@ impl ReadXdr for OfferEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             seller_id: AccountId::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
+            offer_id: Int64::read_xdr(r)?,
             selling: Asset::read_xdr(r)?,
             buying: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+            amount: Int64::read_xdr(r)?,
             price: Price::read_xdr(r)?,
-            flags: u32::read_xdr(r)?,
+            flags: Uint32::read_xdr(r)?,
             ext: OfferEntryExt::read_xdr(r)?,
         })
     }
@@ -6484,7 +6296,7 @@ impl WriteXdr for DataEntryExt {
 )]
 pub struct DataEntry {
     pub account_id: AccountId,
-    pub data_name: StringM<64>,
+    pub data_name: String64,
     pub data_value: DataValue,
     pub ext: DataEntryExt,
 }
@@ -6494,7 +6306,7 @@ impl ReadXdr for DataEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: AccountId::read_xdr(r)?,
-            data_name: StringM::<64>::read_xdr(r)?,
+            data_name: String64::read_xdr(r)?,
             data_value: DataValue::read_xdr(r)?,
             ext: DataEntryExt::read_xdr(r)?,
         })
@@ -6674,8 +6486,8 @@ pub enum ClaimPredicate {
     And(VecM<ClaimPredicate, 2>),
     Or(VecM<ClaimPredicate, 2>),
     Not(Option<Box<ClaimPredicate>>),
-    BeforeAbsoluteTime(i64),
-    BeforeRelativeTime(i64),
+    BeforeAbsoluteTime(Int64),
+    BeforeRelativeTime(Int64),
 }
 
 impl ClaimPredicate {
@@ -6759,8 +6571,8 @@ impl ReadXdr for ClaimPredicate {
             ClaimPredicateType::And => Self::And(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
             ClaimPredicateType::Or => Self::Or(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
             ClaimPredicateType::Not => Self::Not(Option::<Box<ClaimPredicate>>::read_xdr(r)?),
-            ClaimPredicateType::BeforeAbsoluteTime => Self::BeforeAbsoluteTime(i64::read_xdr(r)?),
-            ClaimPredicateType::BeforeRelativeTime => Self::BeforeRelativeTime(i64::read_xdr(r)?),
+            ClaimPredicateType::BeforeAbsoluteTime => Self::BeforeAbsoluteTime(Int64::read_xdr(r)?),
+            ClaimPredicateType::BeforeRelativeTime => Self::BeforeRelativeTime(Int64::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -7431,7 +7243,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
 )]
 pub struct ClaimableBalanceEntryExtensionV1 {
     pub ext: ClaimableBalanceEntryExtensionV1Ext,
-    pub flags: u32,
+    pub flags: Uint32,
 }
 
 impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
@@ -7439,7 +7251,7 @@ impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ext: ClaimableBalanceEntryExtensionV1Ext::read_xdr(r)?,
-            flags: u32::read_xdr(r)?,
+            flags: Uint32::read_xdr(r)?,
         })
     }
 }
@@ -7592,7 +7404,7 @@ pub struct ClaimableBalanceEntry {
     pub balance_id: ClaimableBalanceId,
     pub claimants: VecM<Claimant, 10>,
     pub asset: Asset,
-    pub amount: i64,
+    pub amount: Int64,
     pub ext: ClaimableBalanceEntryExt,
 }
 
@@ -7603,7 +7415,7 @@ impl ReadXdr for ClaimableBalanceEntry {
             balance_id: ClaimableBalanceId::read_xdr(r)?,
             claimants: VecM::<Claimant, 10>::read_xdr(r)?,
             asset: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+            amount: Int64::read_xdr(r)?,
             ext: ClaimableBalanceEntryExt::read_xdr(r)?,
         })
     }
@@ -7640,7 +7452,7 @@ impl WriteXdr for ClaimableBalanceEntry {
 pub struct LiquidityPoolConstantProductParameters {
     pub asset_a: Asset,
     pub asset_b: Asset,
-    pub fee: i32,
+    pub fee: Int32,
 }
 
 impl ReadXdr for LiquidityPoolConstantProductParameters {
@@ -7649,7 +7461,7 @@ impl ReadXdr for LiquidityPoolConstantProductParameters {
         Ok(Self {
             asset_a: Asset::read_xdr(r)?,
             asset_b: Asset::read_xdr(r)?,
-            fee: i32::read_xdr(r)?,
+            fee: Int32::read_xdr(r)?,
         })
     }
 }
@@ -7686,10 +7498,10 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
 )]
 pub struct LiquidityPoolEntryConstantProduct {
     pub params: LiquidityPoolConstantProductParameters,
-    pub reserve_a: i64,
-    pub reserve_b: i64,
-    pub total_pool_shares: i64,
-    pub pool_shares_trust_line_count: i64,
+    pub reserve_a: Int64,
+    pub reserve_b: Int64,
+    pub total_pool_shares: Int64,
+    pub pool_shares_trust_line_count: Int64,
 }
 
 impl ReadXdr for LiquidityPoolEntryConstantProduct {
@@ -7697,10 +7509,10 @@ impl ReadXdr for LiquidityPoolEntryConstantProduct {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             params: LiquidityPoolConstantProductParameters::read_xdr(r)?,
-            reserve_a: i64::read_xdr(r)?,
-            reserve_b: i64::read_xdr(r)?,
-            total_pool_shares: i64::read_xdr(r)?,
-            pool_shares_trust_line_count: i64::read_xdr(r)?,
+            reserve_a: Int64::read_xdr(r)?,
+            reserve_b: Int64::read_xdr(r)?,
+            total_pool_shares: Int64::read_xdr(r)?,
+            pool_shares_trust_line_count: Int64::read_xdr(r)?,
         })
     }
 }
@@ -8305,7 +8117,7 @@ impl WriteXdr for LedgerEntryExt {
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerEntry {
-    pub last_modified_ledger_seq: u32,
+    pub last_modified_ledger_seq: Uint32,
     pub data: LedgerEntryData,
     pub ext: LedgerEntryExt,
 }
@@ -8314,7 +8126,7 @@ impl ReadXdr for LedgerEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            last_modified_ledger_seq: u32::read_xdr(r)?,
+            last_modified_ledger_seq: Uint32::read_xdr(r)?,
             data: LedgerEntryData::read_xdr(r)?,
             ext: LedgerEntryExt::read_xdr(r)?,
         })
@@ -8422,7 +8234,7 @@ impl WriteXdr for LedgerKeyTrustLine {
 )]
 pub struct LedgerKeyOffer {
     pub seller_id: AccountId,
-    pub offer_id: i64,
+    pub offer_id: Int64,
 }
 
 impl ReadXdr for LedgerKeyOffer {
@@ -8430,7 +8242,7 @@ impl ReadXdr for LedgerKeyOffer {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             seller_id: AccountId::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
+            offer_id: Int64::read_xdr(r)?,
         })
     }
 }
@@ -8461,7 +8273,7 @@ impl WriteXdr for LedgerKeyOffer {
 )]
 pub struct LedgerKeyData {
     pub account_id: AccountId,
-    pub data_name: StringM<64>,
+    pub data_name: String64,
 }
 
 impl ReadXdr for LedgerKeyData {
@@ -8469,7 +8281,7 @@ impl ReadXdr for LedgerKeyData {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: AccountId::read_xdr(r)?,
-            data_name: StringM::<64>::read_xdr(r)?,
+            data_name: String64::read_xdr(r)?,
         })
     }
 }
@@ -8871,101 +8683,7 @@ impl WriteXdr for EnvelopeType {
 //
 //   typedef opaque UpgradeType<128>;
 //
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct UpgradeType(pub BytesM<128>);
-
-impl From<UpgradeType> for BytesM<128> {
-    #[must_use]
-    fn from(x: UpgradeType) -> Self {
-        x.0
-    }
-}
-
-impl From<BytesM<128>> for UpgradeType {
-    #[must_use]
-    fn from(x: BytesM<128>) -> Self {
-        UpgradeType(x)
-    }
-}
-
-impl AsRef<BytesM<128>> for UpgradeType {
-    #[must_use]
-    fn as_ref(&self) -> &BytesM<128> {
-        &self.0
-    }
-}
-
-impl ReadXdr for UpgradeType {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = BytesM::<128>::read_xdr(r)?;
-        let v = UpgradeType(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for UpgradeType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
-
-impl Deref for UpgradeType {
-    type Target = BytesM<128>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<UpgradeType> for Vec<u8> {
-    #[must_use]
-    fn from(x: UpgradeType) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<u8>> for UpgradeType {
-    type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
-        Ok(UpgradeType(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<u8>> for UpgradeType {
-    type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
-        Ok(UpgradeType(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<u8>> for UpgradeType {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<u8> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[u8]> for UpgradeType {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        self.0 .0
-    }
-}
+pub type UpgradeType = BytesM<128>;
 
 // StellarValueType is an XDR Enum defines as:
 //
@@ -9497,7 +9215,7 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerHeaderExtensionV1 {
-    pub flags: u32,
+    pub flags: Uint32,
     pub ext: LedgerHeaderExtensionV1Ext,
 }
 
@@ -9505,7 +9223,7 @@ impl ReadXdr for LedgerHeaderExtensionV1 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            flags: u32::read_xdr(r)?,
+            flags: Uint32::read_xdr(r)?,
             ext: LedgerHeaderExtensionV1Ext::read_xdr(r)?,
         })
     }
@@ -9671,19 +9389,19 @@ impl WriteXdr for LedgerHeaderExt {
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerHeader {
-    pub ledger_version: u32,
+    pub ledger_version: Uint32,
     pub previous_ledger_hash: Hash,
     pub scp_value: StellarValue,
     pub tx_set_result_hash: Hash,
     pub bucket_list_hash: Hash,
-    pub ledger_seq: u32,
-    pub total_coins: i64,
-    pub fee_pool: i64,
-    pub inflation_seq: u32,
-    pub id_pool: u64,
-    pub base_fee: u32,
-    pub base_reserve: u32,
-    pub max_tx_set_size: u32,
+    pub ledger_seq: Uint32,
+    pub total_coins: Int64,
+    pub fee_pool: Int64,
+    pub inflation_seq: Uint32,
+    pub id_pool: Uint64,
+    pub base_fee: Uint32,
+    pub base_reserve: Uint32,
+    pub max_tx_set_size: Uint32,
     pub skip_list: [Hash; 4],
     pub ext: LedgerHeaderExt,
 }
@@ -9692,19 +9410,19 @@ impl ReadXdr for LedgerHeader {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_version: u32::read_xdr(r)?,
+            ledger_version: Uint32::read_xdr(r)?,
             previous_ledger_hash: Hash::read_xdr(r)?,
             scp_value: StellarValue::read_xdr(r)?,
             tx_set_result_hash: Hash::read_xdr(r)?,
             bucket_list_hash: Hash::read_xdr(r)?,
-            ledger_seq: u32::read_xdr(r)?,
-            total_coins: i64::read_xdr(r)?,
-            fee_pool: i64::read_xdr(r)?,
-            inflation_seq: u32::read_xdr(r)?,
-            id_pool: u64::read_xdr(r)?,
-            base_fee: u32::read_xdr(r)?,
-            base_reserve: u32::read_xdr(r)?,
-            max_tx_set_size: u32::read_xdr(r)?,
+            ledger_seq: Uint32::read_xdr(r)?,
+            total_coins: Int64::read_xdr(r)?,
+            fee_pool: Int64::read_xdr(r)?,
+            inflation_seq: Uint32::read_xdr(r)?,
+            id_pool: Uint64::read_xdr(r)?,
+            base_fee: Uint32::read_xdr(r)?,
+            base_reserve: Uint32::read_xdr(r)?,
+            max_tx_set_size: Uint32::read_xdr(r)?,
             skip_list: <[Hash; 4]>::read_xdr(r)?,
             ext: LedgerHeaderExt::read_xdr(r)?,
         })
@@ -9877,11 +9595,11 @@ impl WriteXdr for LedgerUpgradeType {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerUpgrade {
-    Version(u32),
-    BaseFee(u32),
-    MaxTxSetSize(u32),
-    BaseReserve(u32),
-    Flags(u32),
+    Version(Uint32),
+    BaseFee(Uint32),
+    MaxTxSetSize(Uint32),
+    BaseReserve(Uint32),
+    Flags(Uint32),
 }
 
 impl LedgerUpgrade {
@@ -9952,11 +9670,11 @@ impl ReadXdr for LedgerUpgrade {
         let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            LedgerUpgradeType::Version => Self::Version(u32::read_xdr(r)?),
-            LedgerUpgradeType::BaseFee => Self::BaseFee(u32::read_xdr(r)?),
-            LedgerUpgradeType::MaxTxSetSize => Self::MaxTxSetSize(u32::read_xdr(r)?),
-            LedgerUpgradeType::BaseReserve => Self::BaseReserve(u32::read_xdr(r)?),
-            LedgerUpgradeType::Flags => Self::Flags(u32::read_xdr(r)?),
+            LedgerUpgradeType::Version => Self::Version(Uint32::read_xdr(r)?),
+            LedgerUpgradeType::BaseFee => Self::BaseFee(Uint32::read_xdr(r)?),
+            LedgerUpgradeType::MaxTxSetSize => Self::MaxTxSetSize(Uint32::read_xdr(r)?),
+            LedgerUpgradeType::BaseReserve => Self::BaseReserve(Uint32::read_xdr(r)?),
+            LedgerUpgradeType::Flags => Self::Flags(Uint32::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10213,7 +9931,7 @@ impl WriteXdr for BucketMetadataExt {
     serde(rename_all = "snake_case")
 )]
 pub struct BucketMetadata {
-    pub ledger_version: u32,
+    pub ledger_version: Uint32,
     pub ext: BucketMetadataExt,
 }
 
@@ -10221,7 +9939,7 @@ impl ReadXdr for BucketMetadata {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_version: u32::read_xdr(r)?,
+            ledger_version: Uint32::read_xdr(r)?,
             ext: BucketMetadataExt::read_xdr(r)?,
         })
     }
@@ -10471,7 +10189,7 @@ impl WriteXdr for TxSetComponentType {
     serde(rename_all = "snake_case")
 )]
 pub struct TxSetComponentTxsMaybeDiscountedFee {
-    pub base_fee: Option<i64>,
+    pub base_fee: Option<Int64>,
     pub txs: VecM<TransactionEnvelope>,
 }
 
@@ -10479,7 +10197,7 @@ impl ReadXdr for TxSetComponentTxsMaybeDiscountedFee {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            base_fee: Option::<i64>::read_xdr(r)?,
+            base_fee: Option::<Int64>::read_xdr(r)?,
             txs: VecM::<TransactionEnvelope>::read_xdr(r)?,
         })
     }
@@ -11067,7 +10785,7 @@ impl WriteXdr for TransactionHistoryEntryExt {
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionHistoryEntry {
-    pub ledger_seq: u32,
+    pub ledger_seq: Uint32,
     pub tx_set: TransactionSet,
     pub ext: TransactionHistoryEntryExt,
 }
@@ -11076,7 +10794,7 @@ impl ReadXdr for TransactionHistoryEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_seq: u32::read_xdr(r)?,
+            ledger_seq: Uint32::read_xdr(r)?,
             tx_set: TransactionSet::read_xdr(r)?,
             ext: TransactionHistoryEntryExt::read_xdr(r)?,
         })
@@ -11211,7 +10929,7 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionHistoryResultEntry {
-    pub ledger_seq: u32,
+    pub ledger_seq: Uint32,
     pub tx_result_set: TransactionResultSet,
     pub ext: TransactionHistoryResultEntryExt,
 }
@@ -11220,7 +10938,7 @@ impl ReadXdr for TransactionHistoryResultEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_seq: u32::read_xdr(r)?,
+            ledger_seq: Uint32::read_xdr(r)?,
             tx_result_set: TransactionResultSet::read_xdr(r)?,
             ext: TransactionHistoryResultEntryExt::read_xdr(r)?,
         })
@@ -11397,7 +11115,7 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerScpMessages {
-    pub ledger_seq: u32,
+    pub ledger_seq: Uint32,
     pub messages: VecM<ScpEnvelope>,
 }
 
@@ -11405,7 +11123,7 @@ impl ReadXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_seq: u32::read_xdr(r)?,
+            ledger_seq: Uint32::read_xdr(r)?,
             messages: VecM::<ScpEnvelope>::read_xdr(r)?,
         })
     }
@@ -12586,14 +12304,14 @@ impl WriteXdr for SError {
     serde(rename_all = "snake_case")
 )]
 pub struct SendMore {
-    pub num_messages: u32,
+    pub num_messages: Uint32,
 }
 
 impl ReadXdr for SendMore {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            num_messages: u32::read_xdr(r)?,
+            num_messages: Uint32::read_xdr(r)?,
         })
     }
 }
@@ -12624,7 +12342,7 @@ impl WriteXdr for SendMore {
 )]
 pub struct AuthCert {
     pub pubkey: Curve25519Public,
-    pub expiration: u64,
+    pub expiration: Uint64,
     pub sig: Signature,
 }
 
@@ -12633,7 +12351,7 @@ impl ReadXdr for AuthCert {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             pubkey: Curve25519Public::read_xdr(r)?,
-            expiration: u64::read_xdr(r)?,
+            expiration: Uint64::read_xdr(r)?,
             sig: Signature::read_xdr(r)?,
         })
     }
@@ -12672,9 +12390,9 @@ impl WriteXdr for AuthCert {
     serde(rename_all = "snake_case")
 )]
 pub struct Hello {
-    pub ledger_version: u32,
-    pub overlay_version: u32,
-    pub overlay_min_version: u32,
+    pub ledger_version: Uint32,
+    pub overlay_version: Uint32,
+    pub overlay_min_version: Uint32,
     pub network_id: Hash,
     pub version_str: StringM<100>,
     pub listening_port: i32,
@@ -12687,9 +12405,9 @@ impl ReadXdr for Hello {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            ledger_version: u32::read_xdr(r)?,
-            overlay_version: u32::read_xdr(r)?,
-            overlay_min_version: u32::read_xdr(r)?,
+            ledger_version: Uint32::read_xdr(r)?,
+            overlay_version: Uint32::read_xdr(r)?,
+            overlay_min_version: Uint32::read_xdr(r)?,
             network_id: Hash::read_xdr(r)?,
             version_str: StringM::<100>::read_xdr(r)?,
             listening_port: i32::read_xdr(r)?,
@@ -12982,8 +12700,8 @@ impl WriteXdr for PeerAddressIp {
 )]
 pub struct PeerAddress {
     pub ip: PeerAddressIp,
-    pub port: u32,
-    pub num_failures: u32,
+    pub port: Uint32,
+    pub num_failures: Uint32,
 }
 
 impl ReadXdr for PeerAddress {
@@ -12991,8 +12709,8 @@ impl ReadXdr for PeerAddress {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             ip: PeerAddressIp::read_xdr(r)?,
-            port: u32::read_xdr(r)?,
-            num_failures: u32::read_xdr(r)?,
+            port: Uint32::read_xdr(r)?,
+            num_failures: Uint32::read_xdr(r)?,
         })
     }
 }
@@ -13378,7 +13096,7 @@ impl WriteXdr for SurveyMessageCommandType {
 pub struct SurveyRequestMessage {
     pub surveyor_peer_id: NodeId,
     pub surveyed_peer_id: NodeId,
-    pub ledger_num: u32,
+    pub ledger_num: Uint32,
     pub encryption_key: Curve25519Public,
     pub command_type: SurveyMessageCommandType,
 }
@@ -13389,7 +13107,7 @@ impl ReadXdr for SurveyRequestMessage {
         Ok(Self {
             surveyor_peer_id: NodeId::read_xdr(r)?,
             surveyed_peer_id: NodeId::read_xdr(r)?,
-            ledger_num: u32::read_xdr(r)?,
+            ledger_num: Uint32::read_xdr(r)?,
             encryption_key: Curve25519Public::read_xdr(r)?,
             command_type: SurveyMessageCommandType::read_xdr(r)?,
         })
@@ -13451,101 +13169,7 @@ impl WriteXdr for SignedSurveyRequestMessage {
 //
 //   typedef opaque EncryptedBody<64000>;
 //
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct EncryptedBody(pub BytesM<64000>);
-
-impl From<EncryptedBody> for BytesM<64000> {
-    #[must_use]
-    fn from(x: EncryptedBody) -> Self {
-        x.0
-    }
-}
-
-impl From<BytesM<64000>> for EncryptedBody {
-    #[must_use]
-    fn from(x: BytesM<64000>) -> Self {
-        EncryptedBody(x)
-    }
-}
-
-impl AsRef<BytesM<64000>> for EncryptedBody {
-    #[must_use]
-    fn as_ref(&self) -> &BytesM<64000> {
-        &self.0
-    }
-}
-
-impl ReadXdr for EncryptedBody {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = BytesM::<64000>::read_xdr(r)?;
-        let v = EncryptedBody(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for EncryptedBody {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
-
-impl Deref for EncryptedBody {
-    type Target = BytesM<64000>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<EncryptedBody> for Vec<u8> {
-    #[must_use]
-    fn from(x: EncryptedBody) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<u8>> for EncryptedBody {
-    type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
-        Ok(EncryptedBody(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<u8>> for EncryptedBody {
-    type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
-        Ok(EncryptedBody(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<u8>> for EncryptedBody {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<u8> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[u8]> for EncryptedBody {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        self.0 .0
-    }
-}
+pub type EncryptedBody = BytesM<64000>;
 
 // SurveyResponseMessage is an XDR Struct defines as:
 //
@@ -13568,7 +13192,7 @@ impl AsRef<[u8]> for EncryptedBody {
 pub struct SurveyResponseMessage {
     pub surveyor_peer_id: NodeId,
     pub surveyed_peer_id: NodeId,
-    pub ledger_num: u32,
+    pub ledger_num: Uint32,
     pub command_type: SurveyMessageCommandType,
     pub encrypted_body: EncryptedBody,
 }
@@ -13579,7 +13203,7 @@ impl ReadXdr for SurveyResponseMessage {
         Ok(Self {
             surveyor_peer_id: NodeId::read_xdr(r)?,
             surveyed_peer_id: NodeId::read_xdr(r)?,
-            ledger_num: u32::read_xdr(r)?,
+            ledger_num: Uint32::read_xdr(r)?,
             command_type: SurveyMessageCommandType::read_xdr(r)?,
             encrypted_body: EncryptedBody::read_xdr(r)?,
         })
@@ -13670,19 +13294,19 @@ impl WriteXdr for SignedSurveyResponseMessage {
 pub struct PeerStats {
     pub id: NodeId,
     pub version_str: StringM<100>,
-    pub messages_read: u64,
-    pub messages_written: u64,
-    pub bytes_read: u64,
-    pub bytes_written: u64,
-    pub seconds_connected: u64,
-    pub unique_flood_bytes_recv: u64,
-    pub duplicate_flood_bytes_recv: u64,
-    pub unique_fetch_bytes_recv: u64,
-    pub duplicate_fetch_bytes_recv: u64,
-    pub unique_flood_message_recv: u64,
-    pub duplicate_flood_message_recv: u64,
-    pub unique_fetch_message_recv: u64,
-    pub duplicate_fetch_message_recv: u64,
+    pub messages_read: Uint64,
+    pub messages_written: Uint64,
+    pub bytes_read: Uint64,
+    pub bytes_written: Uint64,
+    pub seconds_connected: Uint64,
+    pub unique_flood_bytes_recv: Uint64,
+    pub duplicate_flood_bytes_recv: Uint64,
+    pub unique_fetch_bytes_recv: Uint64,
+    pub duplicate_fetch_bytes_recv: Uint64,
+    pub unique_flood_message_recv: Uint64,
+    pub duplicate_flood_message_recv: Uint64,
+    pub unique_fetch_message_recv: Uint64,
+    pub duplicate_fetch_message_recv: Uint64,
 }
 
 impl ReadXdr for PeerStats {
@@ -13691,19 +13315,19 @@ impl ReadXdr for PeerStats {
         Ok(Self {
             id: NodeId::read_xdr(r)?,
             version_str: StringM::<100>::read_xdr(r)?,
-            messages_read: u64::read_xdr(r)?,
-            messages_written: u64::read_xdr(r)?,
-            bytes_read: u64::read_xdr(r)?,
-            bytes_written: u64::read_xdr(r)?,
-            seconds_connected: u64::read_xdr(r)?,
-            unique_flood_bytes_recv: u64::read_xdr(r)?,
-            duplicate_flood_bytes_recv: u64::read_xdr(r)?,
-            unique_fetch_bytes_recv: u64::read_xdr(r)?,
-            duplicate_fetch_bytes_recv: u64::read_xdr(r)?,
-            unique_flood_message_recv: u64::read_xdr(r)?,
-            duplicate_flood_message_recv: u64::read_xdr(r)?,
-            unique_fetch_message_recv: u64::read_xdr(r)?,
-            duplicate_fetch_message_recv: u64::read_xdr(r)?,
+            messages_read: Uint64::read_xdr(r)?,
+            messages_written: Uint64::read_xdr(r)?,
+            bytes_read: Uint64::read_xdr(r)?,
+            bytes_written: Uint64::read_xdr(r)?,
+            seconds_connected: Uint64::read_xdr(r)?,
+            unique_flood_bytes_recv: Uint64::read_xdr(r)?,
+            duplicate_flood_bytes_recv: Uint64::read_xdr(r)?,
+            unique_fetch_bytes_recv: Uint64::read_xdr(r)?,
+            duplicate_fetch_bytes_recv: Uint64::read_xdr(r)?,
+            unique_flood_message_recv: Uint64::read_xdr(r)?,
+            duplicate_flood_message_recv: Uint64::read_xdr(r)?,
+            unique_fetch_message_recv: Uint64::read_xdr(r)?,
+            duplicate_fetch_message_recv: Uint64::read_xdr(r)?,
         })
     }
 }
@@ -13851,8 +13475,8 @@ impl AsRef<[PeerStats]> for PeerStatList {
 pub struct TopologyResponseBody {
     pub inbound_peers: PeerStatList,
     pub outbound_peers: PeerStatList,
-    pub total_inbound_peer_count: u32,
-    pub total_outbound_peer_count: u32,
+    pub total_inbound_peer_count: Uint32,
+    pub total_outbound_peer_count: Uint32,
 }
 
 impl ReadXdr for TopologyResponseBody {
@@ -13861,8 +13485,8 @@ impl ReadXdr for TopologyResponseBody {
         Ok(Self {
             inbound_peers: PeerStatList::read_xdr(r)?,
             outbound_peers: PeerStatList::read_xdr(r)?,
-            total_inbound_peer_count: u32::read_xdr(r)?,
-            total_outbound_peer_count: u32::read_xdr(r)?,
+            total_inbound_peer_count: Uint32::read_xdr(r)?,
+            total_outbound_peer_count: Uint32::read_xdr(r)?,
         })
     }
 }
@@ -14333,7 +13957,7 @@ pub enum StellarMessage {
     GetScpQuorumset(Uint256),
     ScpQuorumset(ScpQuorumSet),
     ScpMessage(ScpEnvelope),
-    GetScpState(u32),
+    GetScpState(Uint32),
     SendMore(SendMore),
     FloodAdvert(FloodAdvert),
     FloodDemand(FloodDemand),
@@ -14489,7 +14113,7 @@ impl ReadXdr for StellarMessage {
             MessageType::GetScpQuorumset => Self::GetScpQuorumset(Uint256::read_xdr(r)?),
             MessageType::ScpQuorumset => Self::ScpQuorumset(ScpQuorumSet::read_xdr(r)?),
             MessageType::ScpMessage => Self::ScpMessage(ScpEnvelope::read_xdr(r)?),
-            MessageType::GetScpState => Self::GetScpState(u32::read_xdr(r)?),
+            MessageType::GetScpState => Self::GetScpState(Uint32::read_xdr(r)?),
             MessageType::SendMore => Self::SendMore(SendMore::read_xdr(r)?),
             MessageType::FloodAdvert => Self::FloodAdvert(FloodAdvert::read_xdr(r)?),
             MessageType::FloodDemand => Self::FloodDemand(FloodDemand::read_xdr(r)?),
@@ -14547,7 +14171,7 @@ impl WriteXdr for StellarMessage {
     serde(rename_all = "snake_case")
 )]
 pub struct AuthenticatedMessageV0 {
-    pub sequence: u64,
+    pub sequence: Uint64,
     pub message: StellarMessage,
     pub mac: HmacSha256Mac,
 }
@@ -14556,7 +14180,7 @@ impl ReadXdr for AuthenticatedMessageV0 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            sequence: u64::read_xdr(r)?,
+            sequence: Uint64::read_xdr(r)?,
             message: StellarMessage::read_xdr(r)?,
             mac: HmacSha256Mac::read_xdr(r)?,
         })
@@ -14586,7 +14210,7 @@ impl WriteXdr for AuthenticatedMessageV0 {
 //        } v0;
 //    };
 //
-// union with discriminant u32
+// union with discriminant Uint32
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14600,7 +14224,7 @@ pub enum AuthenticatedMessage {
 }
 
 impl AuthenticatedMessage {
-    pub const VARIANTS: [u32; 1] = [0];
+    pub const VARIANTS: [Uint32; 1] = [0];
     pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
 
     #[must_use]
@@ -14611,7 +14235,7 @@ impl AuthenticatedMessage {
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> u32 {
+    pub const fn discriminant(&self) -> Uint32 {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
@@ -14619,7 +14243,7 @@ impl AuthenticatedMessage {
     }
 
     #[must_use]
-    pub const fn variants() -> [u32; 1] {
+    pub const fn variants() -> [Uint32; 1] {
         Self::VARIANTS
     }
 }
@@ -14631,25 +14255,25 @@ impl Name for AuthenticatedMessage {
     }
 }
 
-impl Discriminant<u32> for AuthenticatedMessage {
+impl Discriminant<Uint32> for AuthenticatedMessage {
     #[must_use]
-    fn discriminant(&self) -> u32 {
+    fn discriminant(&self) -> Uint32 {
         Self::discriminant(self)
     }
 }
 
-impl Variants<u32> for AuthenticatedMessage {
-    fn variants() -> slice::Iter<'static, u32> {
+impl Variants<Uint32> for AuthenticatedMessage {
+    fn variants() -> slice::Iter<'static, Uint32> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<u32> for AuthenticatedMessage {}
+impl Union<Uint32> for AuthenticatedMessage {}
 
 impl ReadXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: u32 = <u32 as ReadXdr>::read_xdr(r)?;
+        let dv: Uint32 = <Uint32 as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             0 => Self::V0(AuthenticatedMessageV0::read_xdr(r)?),
@@ -14786,7 +14410,7 @@ impl WriteXdr for LiquidityPoolParameters {
     serde(rename_all = "snake_case")
 )]
 pub struct MuxedAccountMed25519 {
-    pub id: u64,
+    pub id: Uint64,
     pub ed25519: Uint256,
 }
 
@@ -14794,7 +14418,7 @@ impl ReadXdr for MuxedAccountMed25519 {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            id: u64::read_xdr(r)?,
+            id: Uint64::read_xdr(r)?,
             ed25519: Uint256::read_xdr(r)?,
         })
     }
@@ -15207,7 +14831,7 @@ impl WriteXdr for OperationType {
 )]
 pub struct CreateAccountOp {
     pub destination: AccountId,
-    pub starting_balance: i64,
+    pub starting_balance: Int64,
 }
 
 impl ReadXdr for CreateAccountOp {
@@ -15215,7 +14839,7 @@ impl ReadXdr for CreateAccountOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             destination: AccountId::read_xdr(r)?,
-            starting_balance: i64::read_xdr(r)?,
+            starting_balance: Int64::read_xdr(r)?,
         })
     }
 }
@@ -15248,7 +14872,7 @@ impl WriteXdr for CreateAccountOp {
 pub struct PaymentOp {
     pub destination: MuxedAccount,
     pub asset: Asset,
-    pub amount: i64,
+    pub amount: Int64,
 }
 
 impl ReadXdr for PaymentOp {
@@ -15257,7 +14881,7 @@ impl ReadXdr for PaymentOp {
         Ok(Self {
             destination: MuxedAccount::read_xdr(r)?,
             asset: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+            amount: Int64::read_xdr(r)?,
         })
     }
 }
@@ -15297,10 +14921,10 @@ impl WriteXdr for PaymentOp {
 )]
 pub struct PathPaymentStrictReceiveOp {
     pub send_asset: Asset,
-    pub send_max: i64,
+    pub send_max: Int64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
-    pub dest_amount: i64,
+    pub dest_amount: Int64,
     pub path: VecM<Asset, 5>,
 }
 
@@ -15309,10 +14933,10 @@ impl ReadXdr for PathPaymentStrictReceiveOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             send_asset: Asset::read_xdr(r)?,
-            send_max: i64::read_xdr(r)?,
+            send_max: Int64::read_xdr(r)?,
             destination: MuxedAccount::read_xdr(r)?,
             dest_asset: Asset::read_xdr(r)?,
-            dest_amount: i64::read_xdr(r)?,
+            dest_amount: Int64::read_xdr(r)?,
             path: VecM::<Asset, 5>::read_xdr(r)?,
         })
     }
@@ -15356,10 +14980,10 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
 )]
 pub struct PathPaymentStrictSendOp {
     pub send_asset: Asset,
-    pub send_amount: i64,
+    pub send_amount: Int64,
     pub destination: MuxedAccount,
     pub dest_asset: Asset,
-    pub dest_min: i64,
+    pub dest_min: Int64,
     pub path: VecM<Asset, 5>,
 }
 
@@ -15368,10 +14992,10 @@ impl ReadXdr for PathPaymentStrictSendOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             send_asset: Asset::read_xdr(r)?,
-            send_amount: i64::read_xdr(r)?,
+            send_amount: Int64::read_xdr(r)?,
             destination: MuxedAccount::read_xdr(r)?,
             dest_asset: Asset::read_xdr(r)?,
-            dest_min: i64::read_xdr(r)?,
+            dest_min: Int64::read_xdr(r)?,
             path: VecM::<Asset, 5>::read_xdr(r)?,
         })
     }
@@ -15413,9 +15037,9 @@ impl WriteXdr for PathPaymentStrictSendOp {
 pub struct ManageSellOfferOp {
     pub selling: Asset,
     pub buying: Asset,
-    pub amount: i64,
+    pub amount: Int64,
     pub price: Price,
-    pub offer_id: i64,
+    pub offer_id: Int64,
 }
 
 impl ReadXdr for ManageSellOfferOp {
@@ -15424,9 +15048,9 @@ impl ReadXdr for ManageSellOfferOp {
         Ok(Self {
             selling: Asset::read_xdr(r)?,
             buying: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+            amount: Int64::read_xdr(r)?,
             price: Price::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
+            offer_id: Int64::read_xdr(r)?,
         })
     }
 }
@@ -15467,9 +15091,9 @@ impl WriteXdr for ManageSellOfferOp {
 pub struct ManageBuyOfferOp {
     pub selling: Asset,
     pub buying: Asset,
-    pub buy_amount: i64,
+    pub buy_amount: Int64,
     pub price: Price,
-    pub offer_id: i64,
+    pub offer_id: Int64,
 }
 
 impl ReadXdr for ManageBuyOfferOp {
@@ -15478,9 +15102,9 @@ impl ReadXdr for ManageBuyOfferOp {
         Ok(Self {
             selling: Asset::read_xdr(r)?,
             buying: Asset::read_xdr(r)?,
-            buy_amount: i64::read_xdr(r)?,
+            buy_amount: Int64::read_xdr(r)?,
             price: Price::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
+            offer_id: Int64::read_xdr(r)?,
         })
     }
 }
@@ -15517,7 +15141,7 @@ impl WriteXdr for ManageBuyOfferOp {
 pub struct CreatePassiveSellOfferOp {
     pub selling: Asset,
     pub buying: Asset,
-    pub amount: i64,
+    pub amount: Int64,
     pub price: Price,
 }
 
@@ -15527,7 +15151,7 @@ impl ReadXdr for CreatePassiveSellOfferOp {
         Ok(Self {
             selling: Asset::read_xdr(r)?,
             buying: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+            amount: Int64::read_xdr(r)?,
             price: Price::read_xdr(r)?,
         })
     }
@@ -15575,13 +15199,13 @@ impl WriteXdr for CreatePassiveSellOfferOp {
 )]
 pub struct SetOptionsOp {
     pub inflation_dest: Option<AccountId>,
-    pub clear_flags: Option<u32>,
-    pub set_flags: Option<u32>,
-    pub master_weight: Option<u32>,
-    pub low_threshold: Option<u32>,
-    pub med_threshold: Option<u32>,
-    pub high_threshold: Option<u32>,
-    pub home_domain: Option<StringM<32>>,
+    pub clear_flags: Option<Uint32>,
+    pub set_flags: Option<Uint32>,
+    pub master_weight: Option<Uint32>,
+    pub low_threshold: Option<Uint32>,
+    pub med_threshold: Option<Uint32>,
+    pub high_threshold: Option<Uint32>,
+    pub home_domain: Option<String32>,
     pub signer: Option<Signer>,
 }
 
@@ -15590,13 +15214,13 @@ impl ReadXdr for SetOptionsOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             inflation_dest: Option::<AccountId>::read_xdr(r)?,
-            clear_flags: Option::<u32>::read_xdr(r)?,
-            set_flags: Option::<u32>::read_xdr(r)?,
-            master_weight: Option::<u32>::read_xdr(r)?,
-            low_threshold: Option::<u32>::read_xdr(r)?,
-            med_threshold: Option::<u32>::read_xdr(r)?,
-            high_threshold: Option::<u32>::read_xdr(r)?,
-            home_domain: Option::<StringM<32>>::read_xdr(r)?,
+            clear_flags: Option::<Uint32>::read_xdr(r)?,
+            set_flags: Option::<Uint32>::read_xdr(r)?,
+            master_weight: Option::<Uint32>::read_xdr(r)?,
+            low_threshold: Option::<Uint32>::read_xdr(r)?,
+            med_threshold: Option::<Uint32>::read_xdr(r)?,
+            high_threshold: Option::<Uint32>::read_xdr(r)?,
+            home_domain: Option::<String32>::read_xdr(r)?,
             signer: Option::<Signer>::read_xdr(r)?,
         })
     }
@@ -15763,7 +15387,7 @@ impl WriteXdr for ChangeTrustAsset {
 )]
 pub struct ChangeTrustOp {
     pub line: ChangeTrustAsset,
-    pub limit: i64,
+    pub limit: Int64,
 }
 
 impl ReadXdr for ChangeTrustOp {
@@ -15771,7 +15395,7 @@ impl ReadXdr for ChangeTrustOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             line: ChangeTrustAsset::read_xdr(r)?,
-            limit: i64::read_xdr(r)?,
+            limit: Int64::read_xdr(r)?,
         })
     }
 }
@@ -15806,7 +15430,7 @@ impl WriteXdr for ChangeTrustOp {
 pub struct AllowTrustOp {
     pub trustor: AccountId,
     pub asset: AssetCode,
-    pub authorize: u32,
+    pub authorize: Uint32,
 }
 
 impl ReadXdr for AllowTrustOp {
@@ -15815,7 +15439,7 @@ impl ReadXdr for AllowTrustOp {
         Ok(Self {
             trustor: AccountId::read_xdr(r)?,
             asset: AssetCode::read_xdr(r)?,
-            authorize: u32::read_xdr(r)?,
+            authorize: Uint32::read_xdr(r)?,
         })
     }
 }
@@ -15846,7 +15470,7 @@ impl WriteXdr for AllowTrustOp {
     serde(rename_all = "snake_case")
 )]
 pub struct ManageDataOp {
-    pub data_name: StringM<64>,
+    pub data_name: String64,
     pub data_value: Option<DataValue>,
 }
 
@@ -15854,7 +15478,7 @@ impl ReadXdr for ManageDataOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            data_name: StringM::<64>::read_xdr(r)?,
+            data_name: String64::read_xdr(r)?,
             data_value: Option::<DataValue>::read_xdr(r)?,
         })
     }
@@ -15922,7 +15546,7 @@ impl WriteXdr for BumpSequenceOp {
 )]
 pub struct CreateClaimableBalanceOp {
     pub asset: Asset,
-    pub amount: i64,
+    pub amount: Int64,
     pub claimants: VecM<Claimant, 10>,
 }
 
@@ -15931,7 +15555,7 @@ impl ReadXdr for CreateClaimableBalanceOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             asset: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+            amount: Int64::read_xdr(r)?,
             claimants: VecM::<Claimant, 10>::read_xdr(r)?,
         })
     }
@@ -16285,7 +15909,7 @@ impl WriteXdr for RevokeSponsorshipOp {
 pub struct ClawbackOp {
     pub asset: Asset,
     pub from: MuxedAccount,
-    pub amount: i64,
+    pub amount: Int64,
 }
 
 impl ReadXdr for ClawbackOp {
@@ -16294,7 +15918,7 @@ impl ReadXdr for ClawbackOp {
         Ok(Self {
             asset: Asset::read_xdr(r)?,
             from: MuxedAccount::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+            amount: Int64::read_xdr(r)?,
         })
     }
 }
@@ -16365,8 +15989,8 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
 pub struct SetTrustLineFlagsOp {
     pub trustor: AccountId,
     pub asset: Asset,
-    pub clear_flags: u32,
-    pub set_flags: u32,
+    pub clear_flags: Uint32,
+    pub set_flags: Uint32,
 }
 
 impl ReadXdr for SetTrustLineFlagsOp {
@@ -16375,8 +15999,8 @@ impl ReadXdr for SetTrustLineFlagsOp {
         Ok(Self {
             trustor: AccountId::read_xdr(r)?,
             asset: Asset::read_xdr(r)?,
-            clear_flags: u32::read_xdr(r)?,
-            set_flags: u32::read_xdr(r)?,
+            clear_flags: Uint32::read_xdr(r)?,
+            set_flags: Uint32::read_xdr(r)?,
         })
     }
 }
@@ -16418,8 +16042,8 @@ pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
 )]
 pub struct LiquidityPoolDepositOp {
     pub liquidity_pool_id: PoolId,
-    pub max_amount_a: i64,
-    pub max_amount_b: i64,
+    pub max_amount_a: Int64,
+    pub max_amount_b: Int64,
     pub min_price: Price,
     pub max_price: Price,
 }
@@ -16429,8 +16053,8 @@ impl ReadXdr for LiquidityPoolDepositOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             liquidity_pool_id: PoolId::read_xdr(r)?,
-            max_amount_a: i64::read_xdr(r)?,
-            max_amount_b: i64::read_xdr(r)?,
+            max_amount_a: Int64::read_xdr(r)?,
+            max_amount_b: Int64::read_xdr(r)?,
             min_price: Price::read_xdr(r)?,
             max_price: Price::read_xdr(r)?,
         })
@@ -16468,9 +16092,9 @@ impl WriteXdr for LiquidityPoolDepositOp {
 )]
 pub struct LiquidityPoolWithdrawOp {
     pub liquidity_pool_id: PoolId,
-    pub amount: i64,
-    pub min_amount_a: i64,
-    pub min_amount_b: i64,
+    pub amount: Int64,
+    pub min_amount_a: Int64,
+    pub min_amount_b: Int64,
 }
 
 impl ReadXdr for LiquidityPoolWithdrawOp {
@@ -16478,9 +16102,9 @@ impl ReadXdr for LiquidityPoolWithdrawOp {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             liquidity_pool_id: PoolId::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
-            min_amount_a: i64::read_xdr(r)?,
-            min_amount_b: i64::read_xdr(r)?,
+            amount: Int64::read_xdr(r)?,
+            min_amount_a: Int64::read_xdr(r)?,
+            min_amount_b: Int64::read_xdr(r)?,
         })
     }
 }
@@ -16938,7 +16562,7 @@ impl WriteXdr for Operation {
 pub struct HashIdPreimageOperationId {
     pub source_account: AccountId,
     pub seq_num: SequenceNumber,
-    pub op_num: u32,
+    pub op_num: Uint32,
 }
 
 impl ReadXdr for HashIdPreimageOperationId {
@@ -16947,7 +16571,7 @@ impl ReadXdr for HashIdPreimageOperationId {
         Ok(Self {
             source_account: AccountId::read_xdr(r)?,
             seq_num: SequenceNumber::read_xdr(r)?,
-            op_num: u32::read_xdr(r)?,
+            op_num: Uint32::read_xdr(r)?,
         })
     }
 }
@@ -16983,7 +16607,7 @@ impl WriteXdr for HashIdPreimageOperationId {
 pub struct HashIdPreimageRevokeId {
     pub source_account: AccountId,
     pub seq_num: SequenceNumber,
-    pub op_num: u32,
+    pub op_num: Uint32,
     pub liquidity_pool_id: PoolId,
     pub asset: Asset,
 }
@@ -16994,7 +16618,7 @@ impl ReadXdr for HashIdPreimageRevokeId {
         Ok(Self {
             source_account: AccountId::read_xdr(r)?,
             seq_num: SequenceNumber::read_xdr(r)?,
-            op_num: u32::read_xdr(r)?,
+            op_num: Uint32::read_xdr(r)?,
             liquidity_pool_id: PoolId::read_xdr(r)?,
             asset: Asset::read_xdr(r)?,
         })
@@ -17273,7 +16897,7 @@ impl WriteXdr for MemoType {
 pub enum Memo {
     None,
     Text(StringM<28>),
-    Id(u64),
+    Id(Uint64),
     Hash(Hash),
     Return(Hash),
 }
@@ -17347,7 +16971,7 @@ impl ReadXdr for Memo {
         let v = match dv {
             MemoType::None => Self::None,
             MemoType::Text => Self::Text(StringM::<28>::read_xdr(r)?),
-            MemoType::Id => Self::Id(u64::read_xdr(r)?),
+            MemoType::Id => Self::Id(Uint64::read_xdr(r)?),
             MemoType::Hash => Self::Hash(Hash::read_xdr(r)?),
             MemoType::Return => Self::Return(Hash::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -17428,16 +17052,16 @@ impl WriteXdr for TimeBounds {
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerBounds {
-    pub min_ledger: u32,
-    pub max_ledger: u32,
+    pub min_ledger: Uint32,
+    pub max_ledger: Uint32,
 }
 
 impl ReadXdr for LedgerBounds {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            min_ledger: u32::read_xdr(r)?,
-            max_ledger: u32::read_xdr(r)?,
+            min_ledger: Uint32::read_xdr(r)?,
+            max_ledger: Uint32::read_xdr(r)?,
         })
     }
 }
@@ -17498,7 +17122,7 @@ pub struct PreconditionsV2 {
     pub ledger_bounds: Option<LedgerBounds>,
     pub min_seq_num: Option<SequenceNumber>,
     pub min_seq_age: Duration,
-    pub min_seq_ledger_gap: u32,
+    pub min_seq_ledger_gap: Uint32,
     pub extra_signers: VecM<SignerKey, 2>,
 }
 
@@ -17510,7 +17134,7 @@ impl ReadXdr for PreconditionsV2 {
             ledger_bounds: Option::<LedgerBounds>::read_xdr(r)?,
             min_seq_num: Option::<SequenceNumber>::read_xdr(r)?,
             min_seq_age: Duration::read_xdr(r)?,
-            min_seq_ledger_gap: u32::read_xdr(r)?,
+            min_seq_ledger_gap: Uint32::read_xdr(r)?,
             extra_signers: VecM::<SignerKey, 2>::read_xdr(r)?,
         })
     }
@@ -17875,7 +17499,7 @@ impl WriteXdr for TransactionV0Ext {
 )]
 pub struct TransactionV0 {
     pub source_account_ed25519: Uint256,
-    pub fee: u32,
+    pub fee: Uint32,
     pub seq_num: SequenceNumber,
     pub time_bounds: Option<TimeBounds>,
     pub memo: Memo,
@@ -17888,7 +17512,7 @@ impl ReadXdr for TransactionV0 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             source_account_ed25519: Uint256::read_xdr(r)?,
-            fee: u32::read_xdr(r)?,
+            fee: Uint32::read_xdr(r)?,
             seq_num: SequenceNumber::read_xdr(r)?,
             time_bounds: Option::<TimeBounds>::read_xdr(r)?,
             memo: Memo::read_xdr(r)?,
@@ -18085,7 +17709,7 @@ impl WriteXdr for TransactionExt {
 )]
 pub struct Transaction {
     pub source_account: MuxedAccount,
-    pub fee: u32,
+    pub fee: Uint32,
     pub seq_num: SequenceNumber,
     pub cond: Preconditions,
     pub memo: Memo,
@@ -18098,7 +17722,7 @@ impl ReadXdr for Transaction {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             source_account: MuxedAccount::read_xdr(r)?,
-            fee: u32::read_xdr(r)?,
+            fee: Uint32::read_xdr(r)?,
             seq_num: SequenceNumber::read_xdr(r)?,
             cond: Preconditions::read_xdr(r)?,
             memo: Memo::read_xdr(r)?,
@@ -18380,7 +18004,7 @@ impl WriteXdr for FeeBumpTransactionExt {
 )]
 pub struct FeeBumpTransaction {
     pub fee_source: MuxedAccount,
-    pub fee: i64,
+    pub fee: Int64,
     pub inner_tx: FeeBumpTransactionInnerTx,
     pub ext: FeeBumpTransactionExt,
 }
@@ -18390,7 +18014,7 @@ impl ReadXdr for FeeBumpTransaction {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             fee_source: MuxedAccount::read_xdr(r)?,
-            fee: i64::read_xdr(r)?,
+            fee: Int64::read_xdr(r)?,
             inner_tx: FeeBumpTransactionInnerTx::read_xdr(r)?,
             ext: FeeBumpTransactionExt::read_xdr(r)?,
         })
@@ -18843,11 +18467,11 @@ impl WriteXdr for ClaimAtomType {
 )]
 pub struct ClaimOfferAtomV0 {
     pub seller_ed25519: Uint256,
-    pub offer_id: i64,
+    pub offer_id: Int64,
     pub asset_sold: Asset,
-    pub amount_sold: i64,
+    pub amount_sold: Int64,
     pub asset_bought: Asset,
-    pub amount_bought: i64,
+    pub amount_bought: Int64,
 }
 
 impl ReadXdr for ClaimOfferAtomV0 {
@@ -18855,11 +18479,11 @@ impl ReadXdr for ClaimOfferAtomV0 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             seller_ed25519: Uint256::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
+            offer_id: Int64::read_xdr(r)?,
             asset_sold: Asset::read_xdr(r)?,
-            amount_sold: i64::read_xdr(r)?,
+            amount_sold: Int64::read_xdr(r)?,
             asset_bought: Asset::read_xdr(r)?,
-            amount_bought: i64::read_xdr(r)?,
+            amount_bought: Int64::read_xdr(r)?,
         })
     }
 }
@@ -18903,11 +18527,11 @@ impl WriteXdr for ClaimOfferAtomV0 {
 )]
 pub struct ClaimOfferAtom {
     pub seller_id: AccountId,
-    pub offer_id: i64,
+    pub offer_id: Int64,
     pub asset_sold: Asset,
-    pub amount_sold: i64,
+    pub amount_sold: Int64,
     pub asset_bought: Asset,
-    pub amount_bought: i64,
+    pub amount_bought: Int64,
 }
 
 impl ReadXdr for ClaimOfferAtom {
@@ -18915,11 +18539,11 @@ impl ReadXdr for ClaimOfferAtom {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             seller_id: AccountId::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
+            offer_id: Int64::read_xdr(r)?,
             asset_sold: Asset::read_xdr(r)?,
-            amount_sold: i64::read_xdr(r)?,
+            amount_sold: Int64::read_xdr(r)?,
             asset_bought: Asset::read_xdr(r)?,
-            amount_bought: i64::read_xdr(r)?,
+            amount_bought: Int64::read_xdr(r)?,
         })
     }
 }
@@ -18962,9 +18586,9 @@ impl WriteXdr for ClaimOfferAtom {
 pub struct ClaimLiquidityAtom {
     pub liquidity_pool_id: PoolId,
     pub asset_sold: Asset,
-    pub amount_sold: i64,
+    pub amount_sold: Int64,
     pub asset_bought: Asset,
-    pub amount_bought: i64,
+    pub amount_bought: Int64,
 }
 
 impl ReadXdr for ClaimLiquidityAtom {
@@ -18973,9 +18597,9 @@ impl ReadXdr for ClaimLiquidityAtom {
         Ok(Self {
             liquidity_pool_id: PoolId::read_xdr(r)?,
             asset_sold: Asset::read_xdr(r)?,
-            amount_sold: i64::read_xdr(r)?,
+            amount_sold: Int64::read_xdr(r)?,
             asset_bought: Asset::read_xdr(r)?,
-            amount_bought: i64::read_xdr(r)?,
+            amount_bought: Int64::read_xdr(r)?,
         })
     }
 }
@@ -19891,7 +19515,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
 pub struct SimplePaymentResult {
     pub destination: AccountId,
     pub asset: Asset,
-    pub amount: i64,
+    pub amount: Int64,
 }
 
 impl ReadXdr for SimplePaymentResult {
@@ -19900,7 +19524,7 @@ impl ReadXdr for SimplePaymentResult {
         Ok(Self {
             destination: AccountId::read_xdr(r)?,
             asset: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+            amount: Int64::read_xdr(r)?,
         })
     }
 }
@@ -22717,7 +22341,7 @@ impl WriteXdr for AccountMergeResultCode {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountMergeResult {
-    Success(i64),
+    Success(Int64),
     Malformed,
     NoAccount,
     ImmutableSet,
@@ -22812,7 +22436,7 @@ impl ReadXdr for AccountMergeResult {
         let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            AccountMergeResultCode::Success => Self::Success(i64::read_xdr(r)?),
+            AccountMergeResultCode::Success => Self::Success(Int64::read_xdr(r)?),
             AccountMergeResultCode::Malformed => Self::Malformed,
             AccountMergeResultCode::NoAccount => Self::NoAccount,
             AccountMergeResultCode::ImmutableSet => Self::ImmutableSet,
@@ -22965,7 +22589,7 @@ impl WriteXdr for InflationResultCode {
 )]
 pub struct InflationPayout {
     pub destination: AccountId,
-    pub amount: i64,
+    pub amount: Int64,
 }
 
 impl ReadXdr for InflationPayout {
@@ -22973,7 +22597,7 @@ impl ReadXdr for InflationPayout {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             destination: AccountId::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+            amount: Int64::read_xdr(r)?,
         })
     }
 }
@@ -27403,7 +27027,7 @@ impl WriteXdr for InnerTransactionResultExt {
     serde(rename_all = "snake_case")
 )]
 pub struct InnerTransactionResult {
-    pub fee_charged: i64,
+    pub fee_charged: Int64,
     pub result: InnerTransactionResultResult,
     pub ext: InnerTransactionResultExt,
 }
@@ -27412,7 +27036,7 @@ impl ReadXdr for InnerTransactionResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            fee_charged: i64::read_xdr(r)?,
+            fee_charged: Int64::read_xdr(r)?,
             result: InnerTransactionResultResult::read_xdr(r)?,
             ext: InnerTransactionResultExt::read_xdr(r)?,
         })
@@ -27857,7 +27481,7 @@ impl WriteXdr for TransactionResultExt {
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionResult {
-    pub fee_charged: i64,
+    pub fee_charged: Int64,
     pub result: TransactionResultResult,
     pub ext: TransactionResultExt,
 }
@@ -27866,7 +27490,7 @@ impl ReadXdr for TransactionResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            fee_charged: i64::read_xdr(r)?,
+            fee_charged: Int64::read_xdr(r)?,
             result: TransactionResultResult::read_xdr(r)?,
             ext: TransactionResultExt::read_xdr(r)?,
         })
@@ -28836,101 +28460,7 @@ impl WriteXdr for SignerKey {
 //
 //   typedef opaque Signature<64>;
 //
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct Signature(pub BytesM<64>);
-
-impl From<Signature> for BytesM<64> {
-    #[must_use]
-    fn from(x: Signature) -> Self {
-        x.0
-    }
-}
-
-impl From<BytesM<64>> for Signature {
-    #[must_use]
-    fn from(x: BytesM<64>) -> Self {
-        Signature(x)
-    }
-}
-
-impl AsRef<BytesM<64>> for Signature {
-    #[must_use]
-    fn as_ref(&self) -> &BytesM<64> {
-        &self.0
-    }
-}
-
-impl ReadXdr for Signature {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = BytesM::<64>::read_xdr(r)?;
-        let v = Signature(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for Signature {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
-
-impl Deref for Signature {
-    type Target = BytesM<64>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<Signature> for Vec<u8> {
-    #[must_use]
-    fn from(x: Signature) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<u8>> for Signature {
-    type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
-        Ok(Signature(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<u8>> for Signature {
-    type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
-        Ok(Signature(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<u8>> for Signature {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<u8> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[u8]> for Signature {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        self.0 .0
-    }
-}
+pub type Signature = BytesM<64>;
 
 // SignatureHint is an XDR Typedef defines as:
 //
@@ -36310,6 +35840,7 @@ impl Type {
     #[must_use]
     #[allow(clippy::too_many_lines)]
     pub fn value(&self) -> &dyn core::any::Any {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Value(ref v) => v.as_ref(),
             Self::ScpBallot(ref v) => v.as_ref(),

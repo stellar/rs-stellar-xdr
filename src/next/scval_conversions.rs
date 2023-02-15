@@ -414,7 +414,7 @@ impl TryFrom<ScVal> for ScSymbol {
 impl TryFrom<String> for ScVal {
     type Error = ();
     fn try_from(v: String) -> Result<Self, Self::Error> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+        Ok(ScVal::Symbol(ScSymbol(v.try_into().map_err(|_| ())?)))
     }
 }
 
@@ -422,7 +422,7 @@ impl TryFrom<String> for ScVal {
 impl TryFrom<&String> for ScVal {
     type Error = ();
     fn try_from(v: &String) -> Result<Self, Self::Error> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+        Ok(ScVal::Symbol(ScSymbol(v.try_into().map_err(|_| ())?)))
     }
 }
 
@@ -430,7 +430,7 @@ impl TryFrom<&String> for ScVal {
 impl TryFrom<&str> for ScVal {
     type Error = ();
     fn try_from(v: &str) -> Result<Self, Self::Error> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+        Ok(ScVal::Symbol(ScSymbol(v.try_into().map_err(|_| ())?)))
     }
 }
 
@@ -438,7 +438,7 @@ impl TryFrom<&str> for ScVal {
 impl TryFrom<&'static str> for ScVal {
     type Error = ();
     fn try_from(v: &'static str) -> Result<Self, Self::Error> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+        Ok(ScVal::Symbol(ScSymbol(v.try_into().map_err(|_| ())?)))
     }
 }
 
@@ -449,7 +449,7 @@ impl TryFrom<ScVal> for String {
         if let ScVal::Symbol(s) = v {
             // TODO: It might be worth distinguishing the error case where this
             // is an invalid symbol with invalid characters.
-            Ok(s.into_string().map_err(|_| ())?)
+            Ok(s.0.into_string().map_err(|_| ())?)
         } else {
             Err(())
         }

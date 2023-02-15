@@ -80,6 +80,8 @@ impl Validate for ScMap {
 
 #[cfg(test)]
 mod test {
+    use crate::next::ScSymbol;
+
     use super::{Error, ScVal, Validate};
 
     #[test]
@@ -92,10 +94,16 @@ mod test {
 
     #[test]
     fn symbol() {
-        assert_eq!(ScVal::Symbol("".try_into().unwrap()).validate(), Ok(()));
-        assert_eq!(ScVal::Symbol("a0A_".try_into().unwrap()).validate(), Ok(()));
         assert_eq!(
-            ScVal::Symbol("]".try_into().unwrap()).validate(),
+            ScVal::Symbol(ScSymbol("".try_into().unwrap())).validate(),
+            Ok(())
+        );
+        assert_eq!(
+            ScVal::Symbol(ScSymbol("a0A_".try_into().unwrap())).validate(),
+            Ok(())
+        );
+        assert_eq!(
+            ScVal::Symbol(ScSymbol("]".try_into().unwrap())).validate(),
             Err(Error::Invalid)
         );
     }

@@ -4386,7 +4386,7 @@ impl WriteXdr for ScSpecFunctionInputV0 {
 )]
 pub struct ScSpecFunctionV0 {
     pub doc: StringM<1024>,
-    pub name: StringM<10>,
+    pub name: ScSymbol,
     pub inputs: VecM<ScSpecFunctionInputV0, 10>,
     pub outputs: VecM<ScSpecTypeDef, 1>,
 }
@@ -4396,7 +4396,7 @@ impl ReadXdr for ScSpecFunctionV0 {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             doc: StringM::<1024>::read_xdr(r)?,
-            name: StringM::<10>::read_xdr(r)?,
+            name: ScSymbol::read_xdr(r)?,
             inputs: VecM::<ScSpecFunctionInputV0, 10>::read_xdr(r)?,
             outputs: VecM::<ScSpecTypeDef, 1>::read_xdr(r)?,
         })
@@ -4677,7 +4677,101 @@ impl WriteXdr for ScSpecEntry {
 //
 //   typedef string SCSymbol<10>;
 //
-pub type ScSymbol = StringM<10>;
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSymbol(pub StringM<10>);
+
+impl From<ScSymbol> for StringM<10> {
+    #[must_use]
+    fn from(x: ScSymbol) -> Self {
+        x.0
+    }
+}
+
+impl From<StringM<10>> for ScSymbol {
+    #[must_use]
+    fn from(x: StringM<10>) -> Self {
+        ScSymbol(x)
+    }
+}
+
+impl AsRef<StringM<10>> for ScSymbol {
+    #[must_use]
+    fn as_ref(&self) -> &StringM<10> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScSymbol {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = StringM::<10>::read_xdr(r)?;
+        let v = ScSymbol(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScSymbol {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for ScSymbol {
+    type Target = StringM<10>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScSymbol> for Vec<u8> {
+    #[must_use]
+    fn from(x: ScSymbol) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for ScSymbol {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(ScSymbol(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for ScSymbol {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(ScSymbol(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for ScSymbol {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for ScSymbol {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
 
 // ScValType is an XDR Enum defines as:
 //
@@ -6380,7 +6474,7 @@ pub enum ScVal {
     I32(i32),
     Static(ScStatic),
     Object(Option<ScObject>),
-    Symbol(StringM<10>),
+    Symbol(ScSymbol),
     Bitset(u64),
     Status(ScStatus),
 }
@@ -6468,7 +6562,7 @@ impl ReadXdr for ScVal {
             ScValType::I32 => Self::I32(i32::read_xdr(r)?),
             ScValType::Static => Self::Static(ScStatic::read_xdr(r)?),
             ScValType::Object => Self::Object(Option::<ScObject>::read_xdr(r)?),
-            ScValType::Symbol => Self::Symbol(StringM::<10>::read_xdr(r)?),
+            ScValType::Symbol => Self::Symbol(ScSymbol::read_xdr(r)?),
             ScValType::Bitset => Self::Bitset(u64::read_xdr(r)?),
             ScValType::Status => Self::Status(ScStatus::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -7926,13 +8020,201 @@ impl AsRef<[u8]> for Thresholds {
 //
 //   typedef string string32<32>;
 //
-pub type String32 = StringM<32>;
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct String32(pub StringM<32>);
+
+impl From<String32> for StringM<32> {
+    #[must_use]
+    fn from(x: String32) -> Self {
+        x.0
+    }
+}
+
+impl From<StringM<32>> for String32 {
+    #[must_use]
+    fn from(x: StringM<32>) -> Self {
+        String32(x)
+    }
+}
+
+impl AsRef<StringM<32>> for String32 {
+    #[must_use]
+    fn as_ref(&self) -> &StringM<32> {
+        &self.0
+    }
+}
+
+impl ReadXdr for String32 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = StringM::<32>::read_xdr(r)?;
+        let v = String32(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for String32 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for String32 {
+    type Target = StringM<32>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<String32> for Vec<u8> {
+    #[must_use]
+    fn from(x: String32) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for String32 {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(String32(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for String32 {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(String32(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for String32 {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for String32 {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
 
 // String64 is an XDR Typedef defines as:
 //
 //   typedef string string64<64>;
 //
-pub type String64 = StringM<64>;
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct String64(pub StringM<64>);
+
+impl From<String64> for StringM<64> {
+    #[must_use]
+    fn from(x: String64) -> Self {
+        x.0
+    }
+}
+
+impl From<StringM<64>> for String64 {
+    #[must_use]
+    fn from(x: StringM<64>) -> Self {
+        String64(x)
+    }
+}
+
+impl AsRef<StringM<64>> for String64 {
+    #[must_use]
+    fn as_ref(&self) -> &StringM<64> {
+        &self.0
+    }
+}
+
+impl ReadXdr for String64 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = StringM::<64>::read_xdr(r)?;
+        let v = String64(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for String64 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for String64 {
+    type Target = StringM<64>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<String64> for Vec<u8> {
+    #[must_use]
+    fn from(x: String64) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for String64 {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(String64(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for String64 {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(String64(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for String64 {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for String64 {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
 
 // SequenceNumber is an XDR Typedef defines as:
 //
@@ -9950,7 +10232,7 @@ pub struct AccountEntry {
     pub num_sub_entries: u32,
     pub inflation_dest: Option<AccountId>,
     pub flags: u32,
-    pub home_domain: StringM<32>,
+    pub home_domain: String32,
     pub thresholds: Thresholds,
     pub signers: VecM<Signer, 20>,
     pub ext: AccountEntryExt,
@@ -9966,7 +10248,7 @@ impl ReadXdr for AccountEntry {
             num_sub_entries: u32::read_xdr(r)?,
             inflation_dest: Option::<AccountId>::read_xdr(r)?,
             flags: u32::read_xdr(r)?,
-            home_domain: StringM::<32>::read_xdr(r)?,
+            home_domain: String32::read_xdr(r)?,
             thresholds: Thresholds::read_xdr(r)?,
             signers: VecM::<Signer, 20>::read_xdr(r)?,
             ext: AccountEntryExt::read_xdr(r)?,
@@ -11217,7 +11499,7 @@ impl WriteXdr for DataEntryExt {
 )]
 pub struct DataEntry {
     pub account_id: AccountId,
-    pub data_name: StringM<64>,
+    pub data_name: String64,
     pub data_value: DataValue,
     pub ext: DataEntryExt,
 }
@@ -11227,7 +11509,7 @@ impl ReadXdr for DataEntry {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: AccountId::read_xdr(r)?,
-            data_name: StringM::<64>::read_xdr(r)?,
+            data_name: String64::read_xdr(r)?,
             data_value: DataValue::read_xdr(r)?,
             ext: DataEntryExt::read_xdr(r)?,
         })
@@ -13741,7 +14023,7 @@ impl WriteXdr for LedgerKeyOffer {
 )]
 pub struct LedgerKeyData {
     pub account_id: AccountId,
-    pub data_name: StringM<64>,
+    pub data_name: String64,
 }
 
 impl ReadXdr for LedgerKeyData {
@@ -13749,7 +14031,7 @@ impl ReadXdr for LedgerKeyData {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             account_id: AccountId::read_xdr(r)?,
-            data_name: StringM::<64>::read_xdr(r)?,
+            data_name: String64::read_xdr(r)?,
         })
     }
 }
@@ -22081,7 +22363,7 @@ pub struct SetOptionsOp {
     pub low_threshold: Option<u32>,
     pub med_threshold: Option<u32>,
     pub high_threshold: Option<u32>,
-    pub home_domain: Option<StringM<32>>,
+    pub home_domain: Option<String32>,
     pub signer: Option<Signer>,
 }
 
@@ -22096,7 +22378,7 @@ impl ReadXdr for SetOptionsOp {
             low_threshold: Option::<u32>::read_xdr(r)?,
             med_threshold: Option::<u32>::read_xdr(r)?,
             high_threshold: Option::<u32>::read_xdr(r)?,
-            home_domain: Option::<StringM<32>>::read_xdr(r)?,
+            home_domain: Option::<String32>::read_xdr(r)?,
             signer: Option::<Signer>::read_xdr(r)?,
         })
     }
@@ -22346,7 +22628,7 @@ impl WriteXdr for AllowTrustOp {
     serde(rename_all = "snake_case")
 )]
 pub struct ManageDataOp {
-    pub data_name: StringM<64>,
+    pub data_name: String64,
     pub data_value: Option<DataValue>,
 }
 
@@ -22354,7 +22636,7 @@ impl ReadXdr for ManageDataOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            data_name: StringM::<64>::read_xdr(r)?,
+            data_name: String64::read_xdr(r)?,
             data_value: Option::<DataValue>::read_xdr(r)?,
         })
     }
@@ -23685,7 +23967,7 @@ impl WriteXdr for HostFunction {
 )]
 pub struct AuthorizedInvocation {
     pub contract_id: Hash,
-    pub function_name: StringM<10>,
+    pub function_name: ScSymbol,
     pub args: ScVec,
     pub sub_invocations: VecM<AuthorizedInvocation>,
 }
@@ -23695,7 +23977,7 @@ impl ReadXdr for AuthorizedInvocation {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             contract_id: Hash::read_xdr(r)?,
-            function_name: StringM::<10>::read_xdr(r)?,
+            function_name: ScSymbol::read_xdr(r)?,
             args: ScVec::read_xdr(r)?,
             sub_invocations: VecM::<AuthorizedInvocation>::read_xdr(r)?,
         })
@@ -46517,6 +46799,7 @@ impl Type {
     #[must_use]
     #[allow(clippy::too_many_lines)]
     pub fn value(&self) -> &dyn core::any::Any {
+        #[allow(clippy::match_same_arms)]
         match self {
             Self::Value(ref v) => v.as_ref(),
             Self::ScpBallot(ref v) => v.as_ref(),

@@ -57,6 +57,8 @@ jobs:
     - uses: stellar/actions/rust-cache@main
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
+    - run: which cargo
+    - run: echo $PATH
     - uses: stellar/binaries@v12
       with:
         name: cargo-hack

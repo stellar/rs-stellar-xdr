@@ -62,11 +62,12 @@ jobs:
     - run: rustup target add ${{ matrix.sys.target }}
     - run: which cargo
     - run: echo $PATH
+    - run: cargo --list
     - uses: stellar/binaries@v12
       with:
         name: cargo-hack
         version: 0.5.16
-    - run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
+    - run: cargo-hack hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
 
   test:
     strategy:

@@ -1,6 +1,6 @@
 #![allow(clippy::missing_errors_doc)]
 
-use super::{Error, ScMap, ScObject, ScVal};
+use super::{Error, ScMap, ScVal};
 
 pub trait Validate {
     type Error;
@@ -12,14 +12,26 @@ impl Validate for ScVal {
 
     fn validate(&self) -> Result<(), Self::Error> {
         match self {
-            ScVal::U63(i) => {
-                // U63 is defined as valid per https://stellar.org/protocol/cap-46#comparison.
-                if *i >= 0 {
-                    Ok(())
-                } else {
-                    Err(Error::Invalid)
-                }
-            }
+            ScVal::U32(_)
+            | ScVal::I32(_)
+            | ScVal::Status(_)
+            | ScVal::Bool(_)
+            | ScVal::Void
+            | ScVal::U64(_)
+            | ScVal::I64(_)
+            | ScVal::Timepoint(_)
+            | ScVal::Duration(_)
+            | ScVal::U128(_)
+            | ScVal::I128(_)
+            | ScVal::U256(_)
+            | ScVal::I256(_)
+            | ScVal::Bytes(_)
+            | ScVal::String(_)
+            | ScVal::Vec(Some(_))
+            | ScVal::ContractExecutable(_)
+            | ScVal::Address(_)
+            | ScVal::LedgerKeyContractExecutable
+            | ScVal::LedgerKeyNonce(_) => Ok(()),
 
             ScVal::Symbol(s) => {
                 // Symbol is defined as valid per https://github.com/stellar/rs-stellar-contract-env/blob/94c1717516c8fad4ad65caa148183b9fcbc408db/stellar-contract-env-common/src/symbol.rs#L107-L111.
@@ -31,35 +43,8 @@ impl Validate for ScVal {
                     Err(Error::Invalid)
                 }
             }
-
-            ScVal::Bitset(b) => {
-                // Bitset is defined as valid per https://github.com/stellar/rs-stellar-contract-env/blob/94c1717516c8fad4ad65caa148183b9fcbc408db/stellar-contract-env-common/src/bitset.rs#L53-L60.
-                if b & 0x0fff_ffff_ffff_ffff == *b {
-                    Ok(())
-                } else {
-                    Err(Error::Invalid)
-                }
-            }
-
-            ScVal::Object(None) => Err(Error::Invalid),
-
-            ScVal::Object(Some(o)) => match o {
-                ScObject::Map(m) => m.validate(),
-
-                // Other variants of ScObject are always valid.
-                ScObject::Vec(_)
-                | ScObject::U64(_)
-                | ScObject::I64(_)
-                | ScObject::U128(_)
-                | ScObject::I128(_)
-                | ScObject::Bytes(_)
-                | ScObject::ContractCode(_)
-                | ScObject::Address(_)
-                | ScObject::NonceKey(_) => Ok(()),
-            },
-
-            // Other variants of ScVal are always valid.
-            ScVal::U32(_) | ScVal::I32(_) | ScVal::Static(_) | ScVal::Status(_) => Ok(()),
+            ScVal::Vec(None) | ScVal::Map(None) => Err(Error::Invalid),
+            ScVal::Map(Some(m)) => m.validate(),
         }
     }
 }
@@ -85,14 +70,6 @@ mod test {
     use super::{Error, ScVal, Validate};
 
     #[test]
-    fn u63() {
-        assert_eq!(ScVal::U63(0).validate(), Ok(()));
-        assert_eq!(ScVal::U63(1).validate(), Ok(()));
-        assert_eq!(ScVal::U63(i64::MAX).validate(), Ok(()));
-        assert_eq!(ScVal::U63(-1).validate(), Err(Error::Invalid));
-    }
-
-    #[test]
     fn symbol() {
         assert_eq!(
             ScVal::Symbol(ScSymbol("".try_into().unwrap())).validate(),
@@ -109,96 +86,82 @@ mod test {
     }
 
     #[test]
-    fn bitset() {
-        assert_eq!(ScVal::Bitset(0x0000_0000_0000_0000).validate(), Ok(()));
-        assert_eq!(ScVal::Bitset(0x0fff_ffff_ffff_ffff).validate(), Ok(()));
-        assert_eq!(
-            ScVal::Bitset(0x1000_0000_0000_0000).validate(),
-            Err(Error::Invalid)
-        );
-        assert_eq!(
-            ScVal::Bitset(0x1fff_ffff_ffff_ffff).validate(),
-            Err(Error::Invalid)
-        );
-    }
-
-    #[test]
     #[cfg(feature = "alloc")]
     fn map() {
-        use super::super::{ScMap, ScMapEntry, ScObject};
+        use super::super::{ScMap, ScMapEntry};
         extern crate alloc;
         use alloc::vec;
         // Maps should be sorted by key and have no duplicates. The sort order
         // is just the "normal" sort order on ScVal emitted by derive(PartialOrd).
         assert_eq!(
-            ScVal::Object(Some(ScObject::Map(ScMap(
+            ScVal::Map(Some(ScMap(
                 vec![
                     ScMapEntry {
-                        key: ScVal::U63(0),
+                        key: ScVal::I64(0),
                         val: ScVal::U32(1),
                     },
                     ScMapEntry {
-                        key: ScVal::U63(1),
-                        val: ScVal::U63(1),
+                        key: ScVal::I64(1),
+                        val: ScVal::I64(1),
                     }
                 ]
                 .try_into()
                 .unwrap()
-            ))))
+            )))
             .validate(),
             Ok(())
         );
         assert_eq!(
-            ScVal::Object(Some(ScObject::Map(ScMap(
+            ScVal::Map(Some(ScMap(
                 vec![
                     ScMapEntry {
-                        key: ScVal::U63(0),
-                        val: ScVal::U63(1),
+                        key: ScVal::I64(0),
+                        val: ScVal::I64(1),
                     },
                     ScMapEntry {
-                        key: ScVal::U63(1),
-                        val: ScVal::U63(1),
+                        key: ScVal::I64(1),
+                        val: ScVal::I64(1),
                     }
                 ]
                 .try_into()
                 .unwrap()
-            ))))
+            )))
             .validate(),
             Ok(())
         );
         assert_eq!(
-            ScVal::Object(Some(ScObject::Map(ScMap(
+            ScVal::Map(Some(ScMap(
                 vec![
                     ScMapEntry {
-                        key: ScVal::U63(2),
-                        val: ScVal::U63(1),
+                        key: ScVal::I64(2),
+                        val: ScVal::I64(1),
                     },
                     ScMapEntry {
-                        key: ScVal::U63(1),
-                        val: ScVal::U63(1),
+                        key: ScVal::I64(1),
+                        val: ScVal::I64(1),
                     }
                 ]
                 .try_into()
                 .unwrap()
-            ))))
+            )))
             .validate(),
             Err(Error::Invalid)
         );
         assert_eq!(
-            ScVal::Object(Some(ScObject::Map(ScMap(
+            ScVal::Map(Some(ScMap(
                 vec![
                     ScMapEntry {
-                        key: ScVal::U32(1),
-                        val: ScVal::U63(1),
+                        key: ScVal::I64(2),
+                        val: ScVal::I64(1),
                     },
                     ScMapEntry {
-                        key: ScVal::U63(2),
-                        val: ScVal::U63(1),
+                        key: ScVal::U32(1),
+                        val: ScVal::I64(1),
                     },
                 ]
                 .try_into()
                 .unwrap()
-            ))))
+            )))
             .validate(),
             Err(Error::Invalid)
         );

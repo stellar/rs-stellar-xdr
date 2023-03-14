@@ -40,7 +40,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "b19c10a07c9775594723ad12927259dd4bbd9ed9dfd0e70078662ec2e90e130d",
+        "968fff69d58c70dbd27edf4635c4d7f99f7667981076ce29548e6ef289de3df5",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -18138,7 +18138,8 @@ impl WriteXdr for TransactionMetaV2 {
 //   enum ContractEventType
 //    {
 //        SYSTEM = 0,
-//        CONTRACT = 1
+//        CONTRACT = 1,
+//        DIAGNOSTIC = 2
 //    };
 //
 // enum
@@ -18153,23 +18154,28 @@ impl WriteXdr for TransactionMetaV2 {
 pub enum ContractEventType {
     System = 0,
     Contract = 1,
+    Diagnostic = 2,
 }
 
 impl ContractEventType {
-    pub const VARIANTS: [ContractEventType; 2] =
-        [ContractEventType::System, ContractEventType::Contract];
-    pub const VARIANTS_STR: [&'static str; 2] = ["System", "Contract"];
+    pub const VARIANTS: [ContractEventType; 3] = [
+        ContractEventType::System,
+        ContractEventType::Contract,
+        ContractEventType::Diagnostic,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["System", "Contract", "Diagnostic"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::System => "System",
             Self::Contract => "Contract",
+            Self::Diagnostic => "Diagnostic",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractEventType; 2] {
+    pub const fn variants() -> [ContractEventType; 3] {
         Self::VARIANTS
     }
 }
@@ -18202,6 +18208,7 @@ impl TryFrom<i32> for ContractEventType {
         let e = match i {
             0 => ContractEventType::System,
             1 => ContractEventType::Contract,
+            2 => ContractEventType::Diagnostic,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -18430,6 +18437,80 @@ impl WriteXdr for ContractEvent {
     }
 }
 
+// DiagnosticEvent is an XDR Struct defines as:
+//
+//   struct DiagnosticEvent
+//    {
+//        bool inSuccessfulContractCall;
+//        ContractEvent event;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct DiagnosticEvent {
+    pub in_successful_contract_call: bool,
+    pub event: ContractEvent,
+}
+
+impl ReadXdr for DiagnosticEvent {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            in_successful_contract_call: bool::read_xdr(r)?,
+            event: ContractEvent::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for DiagnosticEvent {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.in_successful_contract_call.write_xdr(w)?;
+        self.event.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// OperationDiagnosticEvents is an XDR Struct defines as:
+//
+//   struct OperationDiagnosticEvents
+//    {
+//        DiagnosticEvent events<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct OperationDiagnosticEvents {
+    pub events: VecM<DiagnosticEvent>,
+}
+
+impl ReadXdr for OperationDiagnosticEvents {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            events: VecM::<DiagnosticEvent>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for OperationDiagnosticEvents {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.events.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // OperationEvents is an XDR Struct defines as:
 //
 //   struct OperationEvents
@@ -18480,6 +18561,11 @@ impl WriteXdr for OperationEvents {
 //
 //        Hash hashes[3];                     // stores sha256(txChangesBefore, operations, txChangesAfter),
 //                                            // sha256(events), and sha256(txResult)
+//
+//        // Diagnostics events that are not hashed. One list per operation.
+//        // This will contain all contract and diagnostic events. Even ones
+//        // that were emitted in a failed contract call.
+//        OperationDiagnosticEvents diagnosticEvents<>;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -18496,6 +18582,7 @@ pub struct TransactionMetaV3 {
     pub events: VecM<OperationEvents>,
     pub tx_result: TransactionResult,
     pub hashes: [Hash; 3],
+    pub diagnostic_events: VecM<OperationDiagnosticEvents>,
 }
 
 impl ReadXdr for TransactionMetaV3 {
@@ -18508,6 +18595,7 @@ impl ReadXdr for TransactionMetaV3 {
             events: VecM::<OperationEvents>::read_xdr(r)?,
             tx_result: TransactionResult::read_xdr(r)?,
             hashes: <[Hash; 3]>::read_xdr(r)?,
+            diagnostic_events: VecM::<OperationDiagnosticEvents>::read_xdr(r)?,
         })
     }
 }
@@ -18521,6 +18609,7 @@ impl WriteXdr for TransactionMetaV3 {
         self.events.write_xdr(w)?;
         self.tx_result.write_xdr(w)?;
         self.hashes.write_xdr(w)?;
+        self.diagnostic_events.write_xdr(w)?;
         Ok(())
     }
 }
@@ -37888,6 +37977,8 @@ pub enum TypeVariant {
     ContractEvent,
     ContractEventBody,
     ContractEventV0,
+    DiagnosticEvent,
+    OperationDiagnosticEvents,
     OperationEvents,
     TransactionMetaV3,
     TransactionMeta,
@@ -38098,7 +38189,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 402] = [
+    pub const VARIANTS: [TypeVariant; 404] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38294,6 +38385,8 @@ impl TypeVariant {
         TypeVariant::ContractEvent,
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
+        TypeVariant::DiagnosticEvent,
+        TypeVariant::OperationDiagnosticEvents,
         TypeVariant::OperationEvents,
         TypeVariant::TransactionMetaV3,
         TypeVariant::TransactionMeta,
@@ -38502,7 +38595,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 402] = [
+    pub const VARIANTS_STR: [&'static str; 404] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -38698,6 +38791,8 @@ impl TypeVariant {
         "ContractEvent",
         "ContractEventBody",
         "ContractEventV0",
+        "DiagnosticEvent",
+        "OperationDiagnosticEvents",
         "OperationEvents",
         "TransactionMetaV3",
         "TransactionMeta",
@@ -39108,6 +39203,8 @@ impl TypeVariant {
             Self::ContractEvent => "ContractEvent",
             Self::ContractEventBody => "ContractEventBody",
             Self::ContractEventV0 => "ContractEventV0",
+            Self::DiagnosticEvent => "DiagnosticEvent",
+            Self::OperationDiagnosticEvents => "OperationDiagnosticEvents",
             Self::OperationEvents => "OperationEvents",
             Self::TransactionMetaV3 => "TransactionMetaV3",
             Self::TransactionMeta => "TransactionMeta",
@@ -39324,7 +39421,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 402] {
+    pub const fn variants() -> [TypeVariant; 404] {
         Self::VARIANTS
     }
 }
@@ -39544,6 +39641,8 @@ impl core::str::FromStr for TypeVariant {
             "ContractEvent" => Ok(Self::ContractEvent),
             "ContractEventBody" => Ok(Self::ContractEventBody),
             "ContractEventV0" => Ok(Self::ContractEventV0),
+            "DiagnosticEvent" => Ok(Self::DiagnosticEvent),
+            "OperationDiagnosticEvents" => Ok(Self::OperationDiagnosticEvents),
             "OperationEvents" => Ok(Self::OperationEvents),
             "TransactionMetaV3" => Ok(Self::TransactionMetaV3),
             "TransactionMeta" => Ok(Self::TransactionMeta),
@@ -39969,6 +40068,8 @@ pub enum Type {
     ContractEvent(Box<ContractEvent>),
     ContractEventBody(Box<ContractEventBody>),
     ContractEventV0(Box<ContractEventV0>),
+    DiagnosticEvent(Box<DiagnosticEvent>),
+    OperationDiagnosticEvents(Box<OperationDiagnosticEvents>),
     OperationEvents(Box<OperationEvents>),
     TransactionMetaV3(Box<TransactionMetaV3>),
     TransactionMeta(Box<TransactionMeta>),
@@ -40179,7 +40280,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 402] = [
+    pub const VARIANTS: [TypeVariant; 404] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -40375,6 +40476,8 @@ impl Type {
         TypeVariant::ContractEvent,
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
+        TypeVariant::DiagnosticEvent,
+        TypeVariant::OperationDiagnosticEvents,
         TypeVariant::OperationEvents,
         TypeVariant::TransactionMetaV3,
         TypeVariant::TransactionMeta,
@@ -40583,7 +40686,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 402] = [
+    pub const VARIANTS_STR: [&'static str; 404] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -40779,6 +40882,8 @@ impl Type {
         "ContractEvent",
         "ContractEventBody",
         "ContractEventV0",
+        "DiagnosticEvent",
+        "OperationDiagnosticEvents",
         "OperationEvents",
         "TransactionMetaV3",
         "TransactionMeta",
@@ -41513,6 +41618,12 @@ impl Type {
             TypeVariant::ContractEventV0 => Ok(Self::ContractEventV0(Box::new(
                 ContractEventV0::read_xdr(r)?,
             ))),
+            TypeVariant::DiagnosticEvent => Ok(Self::DiagnosticEvent(Box::new(
+                DiagnosticEvent::read_xdr(r)?,
+            ))),
+            TypeVariant::OperationDiagnosticEvents => Ok(Self::OperationDiagnosticEvents(
+                Box::new(OperationDiagnosticEvents::read_xdr(r)?),
+            )),
             TypeVariant::OperationEvents => Ok(Self::OperationEvents(Box::new(
                 OperationEvents::read_xdr(r)?,
             ))),
@@ -42906,6 +43017,14 @@ impl Type {
             TypeVariant::ContractEventV0 => Box::new(
                 ReadXdrIter::<_, ContractEventV0>::new(r)
                     .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t)))),
+            ),
+            TypeVariant::DiagnosticEvent => Box::new(
+                ReadXdrIter::<_, DiagnosticEvent>::new(r)
+                    .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
+            ),
+            TypeVariant::OperationDiagnosticEvents => Box::new(
+                ReadXdrIter::<_, OperationDiagnosticEvents>::new(r)
+                    .map(|r| r.map(|t| Self::OperationDiagnosticEvents(Box::new(t)))),
             ),
             TypeVariant::OperationEvents => Box::new(
                 ReadXdrIter::<_, OperationEvents>::new(r)
@@ -44510,6 +44629,14 @@ impl Type {
             TypeVariant::ContractEventV0 => Box::new(
                 ReadXdrIter::<_, Frame<ContractEventV0>>::new(r)
                     .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t.0)))),
+            ),
+            TypeVariant::DiagnosticEvent => Box::new(
+                ReadXdrIter::<_, Frame<DiagnosticEvent>>::new(r)
+                    .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t.0)))),
+            ),
+            TypeVariant::OperationDiagnosticEvents => Box::new(
+                ReadXdrIter::<_, Frame<OperationDiagnosticEvents>>::new(r)
+                    .map(|r| r.map(|t| Self::OperationDiagnosticEvents(Box::new(t.0)))),
             ),
             TypeVariant::OperationEvents => Box::new(
                 ReadXdrIter::<_, Frame<OperationEvents>>::new(r)
@@ -46122,6 +46249,14 @@ impl Type {
                 ReadXdrIter::<_, ContractEventV0>::new(dec)
                     .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t)))),
             ),
+            TypeVariant::DiagnosticEvent => Box::new(
+                ReadXdrIter::<_, DiagnosticEvent>::new(dec)
+                    .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
+            ),
+            TypeVariant::OperationDiagnosticEvents => Box::new(
+                ReadXdrIter::<_, OperationDiagnosticEvents>::new(dec)
+                    .map(|r| r.map(|t| Self::OperationDiagnosticEvents(Box::new(t)))),
+            ),
             TypeVariant::OperationEvents => Box::new(
                 ReadXdrIter::<_, OperationEvents>::new(dec)
                     .map(|r| r.map(|t| Self::OperationEvents(Box::new(t)))),
@@ -47159,6 +47294,8 @@ impl Type {
             Self::ContractEvent(ref v) => v.as_ref(),
             Self::ContractEventBody(ref v) => v.as_ref(),
             Self::ContractEventV0(ref v) => v.as_ref(),
+            Self::DiagnosticEvent(ref v) => v.as_ref(),
+            Self::OperationDiagnosticEvents(ref v) => v.as_ref(),
             Self::OperationEvents(ref v) => v.as_ref(),
             Self::TransactionMetaV3(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
@@ -47570,6 +47707,8 @@ impl Type {
             Self::ContractEvent(_) => "ContractEvent",
             Self::ContractEventBody(_) => "ContractEventBody",
             Self::ContractEventV0(_) => "ContractEventV0",
+            Self::DiagnosticEvent(_) => "DiagnosticEvent",
+            Self::OperationDiagnosticEvents(_) => "OperationDiagnosticEvents",
             Self::OperationEvents(_) => "OperationEvents",
             Self::TransactionMetaV3(_) => "TransactionMetaV3",
             Self::TransactionMeta(_) => "TransactionMeta",
@@ -47792,7 +47931,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 402] {
+    pub const fn variants() -> [TypeVariant; 404] {
         Self::VARIANTS
     }
 
@@ -48011,6 +48150,8 @@ impl Type {
             Self::ContractEvent(_) => TypeVariant::ContractEvent,
             Self::ContractEventBody(_) => TypeVariant::ContractEventBody,
             Self::ContractEventV0(_) => TypeVariant::ContractEventV0,
+            Self::DiagnosticEvent(_) => TypeVariant::DiagnosticEvent,
+            Self::OperationDiagnosticEvents(_) => TypeVariant::OperationDiagnosticEvents,
             Self::OperationEvents(_) => TypeVariant::OperationEvents,
             Self::TransactionMetaV3(_) => TypeVariant::TransactionMetaV3,
             Self::TransactionMeta(_) => TypeVariant::TransactionMeta,

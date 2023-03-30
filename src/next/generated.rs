@@ -36,11 +36,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "40ea6015526933dfa49a459b62e1f0f1fbd950ef95949f7faabec4b89d5a9241",
+        "a6265e158b549d7a9916e42d4ba8ad2ea4d5e85016163b2eddf810e4d254392d",
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "968fff69d58c70dbd27edf4635c4d7f99f7667981076ce29548e6ef289de3df5",
+        "cd4ac7622931831291ed848004328d926d8a317122ca966f4bc105367819cd6c",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -13042,202 +13042,11 @@ impl WriteXdr for ContractCodeEntry {
     }
 }
 
-// ConfigSettingType is an XDR Enum defines as:
-//
-//   enum ConfigSettingType
-//    {
-//        CONFIG_SETTING_TYPE_UINT32 = 0
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[repr(i32)]
-pub enum ConfigSettingType {
-    ConfigSettingTypeUint32 = 0,
-}
-
-impl ConfigSettingType {
-    pub const VARIANTS: [ConfigSettingType; 1] = [ConfigSettingType::ConfigSettingTypeUint32];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingTypeUint32"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::ConfigSettingTypeUint32 => "ConfigSettingTypeUint32",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ConfigSettingType; 1] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ConfigSettingType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ConfigSettingType> for ConfigSettingType {
-    fn variants() -> slice::Iter<'static, ConfigSettingType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ConfigSettingType {}
-
-impl fmt::Display for ConfigSettingType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ConfigSettingType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ConfigSettingType::ConfigSettingTypeUint32,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ConfigSettingType> for i32 {
-    #[must_use]
-    fn from(e: ConfigSettingType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ConfigSettingType {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ConfigSettingType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// ConfigSetting is an XDR Union defines as:
-//
-//   union ConfigSetting switch (ConfigSettingType type)
-//    {
-//    case CONFIG_SETTING_TYPE_UINT32:
-//        uint32 uint32Val;
-//    };
-//
-// union with discriminant ConfigSettingType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum ConfigSetting {
-    ConfigSettingTypeUint32(u32),
-}
-
-impl ConfigSetting {
-    pub const VARIANTS: [ConfigSettingType; 1] = [ConfigSettingType::ConfigSettingTypeUint32];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingTypeUint32"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::ConfigSettingTypeUint32(_) => "ConfigSettingTypeUint32",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ConfigSettingType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::ConfigSettingTypeUint32(_) => ConfigSettingType::ConfigSettingTypeUint32,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ConfigSettingType; 1] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ConfigSetting {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ConfigSettingType> for ConfigSetting {
-    #[must_use]
-    fn discriminant(&self) -> ConfigSettingType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ConfigSettingType> for ConfigSetting {
-    fn variants() -> slice::Iter<'static, ConfigSettingType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ConfigSettingType> for ConfigSetting {}
-
-impl ReadXdr for ConfigSetting {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ConfigSettingType = <ConfigSettingType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ConfigSettingType::ConfigSettingTypeUint32 => {
-                Self::ConfigSettingTypeUint32(u32::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ConfigSetting {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::ConfigSettingTypeUint32(v) => v.write_xdr(w)?,
-        };
-        Ok(())
-    }
-}
-
 // ConfigSettingId is an XDR Enum defines as:
 //
 //   enum ConfigSettingID
 //    {
-//        CONFIG_SETTING_CONTRACT_MAX_SIZE = 0
+//        CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0
 //    };
 //
 // enum
@@ -13250,17 +13059,17 @@ impl WriteXdr for ConfigSetting {
 )]
 #[repr(i32)]
 pub enum ConfigSettingId {
-    ConfigSettingContractMaxSize = 0,
+    ConfigSettingContractMaxSizeBytes = 0,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 1] = [ConfigSettingId::ConfigSettingContractMaxSize];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingContractMaxSize"];
+    pub const VARIANTS: [ConfigSettingId; 1] = [ConfigSettingId::ConfigSettingContractMaxSizeBytes];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingContractMaxSizeBytes"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::ConfigSettingContractMaxSize => "ConfigSettingContractMaxSize",
+            Self::ConfigSettingContractMaxSizeBytes => "ConfigSettingContractMaxSizeBytes",
         }
     }
 
@@ -13296,7 +13105,7 @@ impl TryFrom<i32> for ConfigSettingId {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ConfigSettingId::ConfigSettingContractMaxSize,
+            0 => ConfigSettingId::ConfigSettingContractMaxSizeBytes,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13328,15 +13137,15 @@ impl WriteXdr for ConfigSettingId {
     }
 }
 
-// ConfigSettingEntryExt is an XDR NestedUnion defines as:
+// ConfigSettingEntry is an XDR Union defines as:
 //
-//   union switch (int v)
-//        {
-//        case 0:
-//            void;
-//        }
+//   union ConfigSettingEntry switch (ConfigSettingID configSettingID)
+//    {
+//    case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES:
+//        uint32 contractMaxSizeBytes;
+//    };
 //
-// union with discriminant i32
+// union with discriminant ConfigSettingId
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -13345,64 +13154,68 @@ impl WriteXdr for ConfigSettingId {
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
-pub enum ConfigSettingEntryExt {
-    V0,
+pub enum ConfigSettingEntry {
+    ConfigSettingContractMaxSizeBytes(u32),
 }
 
-impl ConfigSettingEntryExt {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+impl ConfigSettingEntry {
+    pub const VARIANTS: [ConfigSettingId; 1] = [ConfigSettingId::ConfigSettingContractMaxSizeBytes];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingContractMaxSizeBytes"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::V0 => "V0",
+            Self::ConfigSettingContractMaxSizeBytes(_) => "ConfigSettingContractMaxSizeBytes",
         }
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> ConfigSettingId {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::V0 => 0,
+            Self::ConfigSettingContractMaxSizeBytes(_) => {
+                ConfigSettingId::ConfigSettingContractMaxSizeBytes
+            }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> [ConfigSettingId; 1] {
         Self::VARIANTS
     }
 }
 
-impl Name for ConfigSettingEntryExt {
+impl Name for ConfigSettingEntry {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Discriminant<i32> for ConfigSettingEntryExt {
+impl Discriminant<ConfigSettingId> for ConfigSettingEntry {
     #[must_use]
-    fn discriminant(&self) -> i32 {
+    fn discriminant(&self) -> ConfigSettingId {
         Self::discriminant(self)
     }
 }
 
-impl Variants<i32> for ConfigSettingEntryExt {
-    fn variants() -> slice::Iter<'static, i32> {
+impl Variants<ConfigSettingId> for ConfigSettingEntry {
+    fn variants() -> slice::Iter<'static, ConfigSettingId> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<i32> for ConfigSettingEntryExt {}
+impl Union<ConfigSettingId> for ConfigSettingEntry {}
 
-impl ReadXdr for ConfigSettingEntryExt {
+impl ReadXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            0 => Self::V0,
+            ConfigSettingId::ConfigSettingContractMaxSizeBytes => {
+                Self::ConfigSettingContractMaxSizeBytes(u32::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13410,63 +13223,14 @@ impl ReadXdr for ConfigSettingEntryExt {
     }
 }
 
-impl WriteXdr for ConfigSettingEntryExt {
+impl WriteXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::V0 => ().write_xdr(w)?,
+            Self::ConfigSettingContractMaxSizeBytes(v) => v.write_xdr(w)?,
         };
-        Ok(())
-    }
-}
-
-// ConfigSettingEntry is an XDR Struct defines as:
-//
-//   struct ConfigSettingEntry
-//    {
-//        union switch (int v)
-//        {
-//        case 0:
-//            void;
-//        }
-//        ext;
-//
-//        ConfigSettingID configSettingID;
-//        ConfigSetting setting;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ConfigSettingEntry {
-    pub ext: ConfigSettingEntryExt,
-    pub config_setting_id: ConfigSettingId,
-    pub setting: ConfigSetting,
-}
-
-impl ReadXdr for ConfigSettingEntry {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ext: ConfigSettingEntryExt::read_xdr(r)?,
-            config_setting_id: ConfigSettingId::read_xdr(r)?,
-            setting: ConfigSetting::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ConfigSettingEntry {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ext.write_xdr(w)?;
-        self.config_setting_id.write_xdr(w)?;
-        self.setting.write_xdr(w)?;
         Ok(())
     }
 }
@@ -15704,13 +15468,12 @@ impl WriteXdr for LedgerUpgradeType {
     }
 }
 
-// LedgerUpgradeConfigSetting is an XDR NestedStruct defines as:
+// ConfigUpgradeSetKey is an XDR Struct defines as:
 //
-//   struct
-//        {
-//            ConfigSettingID id; // id to update
-//            ConfigSetting setting; // new value
-//        }
+//   struct ConfigUpgradeSetKey {
+//        Hash contractID;
+//        Hash contentHash;
+//    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
@@ -15719,26 +15482,26 @@ impl WriteXdr for LedgerUpgradeType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct LedgerUpgradeConfigSetting {
-    pub id: ConfigSettingId,
-    pub setting: ConfigSetting,
+pub struct ConfigUpgradeSetKey {
+    pub contract_id: Hash,
+    pub content_hash: Hash,
 }
 
-impl ReadXdr for LedgerUpgradeConfigSetting {
+impl ReadXdr for ConfigUpgradeSetKey {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            id: ConfigSettingId::read_xdr(r)?,
-            setting: ConfigSetting::read_xdr(r)?,
+            contract_id: Hash::read_xdr(r)?,
+            content_hash: Hash::read_xdr(r)?,
         })
     }
 }
 
-impl WriteXdr for LedgerUpgradeConfigSetting {
+impl WriteXdr for ConfigUpgradeSetKey {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.id.write_xdr(w)?;
-        self.setting.write_xdr(w)?;
+        self.contract_id.write_xdr(w)?;
+        self.content_hash.write_xdr(w)?;
         Ok(())
     }
 }
@@ -15758,11 +15521,7 @@ impl WriteXdr for LedgerUpgradeConfigSetting {
 //    case LEDGER_UPGRADE_FLAGS:
 //        uint32 newFlags; // update flags
 //    case LEDGER_UPGRADE_CONFIG:
-//        struct
-//        {
-//            ConfigSettingID id; // id to update
-//            ConfigSetting setting; // new value
-//        } configSetting;
+//        ConfigUpgradeSetKey newConfig;
 //    };
 //
 // union with discriminant LedgerUpgradeType
@@ -15780,7 +15539,7 @@ pub enum LedgerUpgrade {
     MaxTxSetSize(u32),
     BaseReserve(u32),
     Flags(u32),
-    Config(LedgerUpgradeConfigSetting),
+    Config(ConfigUpgradeSetKey),
 }
 
 impl LedgerUpgrade {
@@ -15865,7 +15624,7 @@ impl ReadXdr for LedgerUpgrade {
             LedgerUpgradeType::MaxTxSetSize => Self::MaxTxSetSize(u32::read_xdr(r)?),
             LedgerUpgradeType::BaseReserve => Self::BaseReserve(u32::read_xdr(r)?),
             LedgerUpgradeType::Flags => Self::Flags(u32::read_xdr(r)?),
-            LedgerUpgradeType::Config => Self::Config(LedgerUpgradeConfigSetting::read_xdr(r)?),
+            LedgerUpgradeType::Config => Self::Config(ConfigUpgradeSetKey::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -15886,6 +15645,40 @@ impl WriteXdr for LedgerUpgrade {
             Self::Flags(v) => v.write_xdr(w)?,
             Self::Config(v) => v.write_xdr(w)?,
         };
+        Ok(())
+    }
+}
+
+// ConfigUpgradeSet is an XDR Struct defines as:
+//
+//   struct ConfigUpgradeSet {
+//        ConfigSettingEntry updatedEntry<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigUpgradeSet {
+    pub updated_entry: VecM<ConfigSettingEntry>,
+}
+
+impl ReadXdr for ConfigUpgradeSet {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            updated_entry: VecM::<ConfigSettingEntry>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigUpgradeSet {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.updated_entry.write_xdr(w)?;
         Ok(())
     }
 }
@@ -37907,11 +37700,8 @@ pub enum TypeVariant {
     LiquidityPoolEntryConstantProduct,
     ContractDataEntry,
     ContractCodeEntry,
-    ConfigSettingType,
-    ConfigSetting,
     ConfigSettingId,
     ConfigSettingEntry,
-    ConfigSettingEntryExt,
     LedgerEntryExtensionV1,
     LedgerEntryExtensionV1Ext,
     LedgerEntry,
@@ -37939,8 +37729,9 @@ pub enum TypeVariant {
     LedgerHeader,
     LedgerHeaderExt,
     LedgerUpgradeType,
+    ConfigUpgradeSetKey,
     LedgerUpgrade,
-    LedgerUpgradeConfigSetting,
+    ConfigUpgradeSet,
     BucketEntryType,
     BucketMetadata,
     BucketMetadataExt,
@@ -38189,7 +37980,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 404] = [
+    pub const VARIANTS: [TypeVariant; 402] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38315,11 +38106,8 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolEntryConstantProduct,
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractCodeEntry,
-        TypeVariant::ConfigSettingType,
-        TypeVariant::ConfigSetting,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
-        TypeVariant::ConfigSettingEntryExt,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -38347,8 +38135,9 @@ impl TypeVariant {
         TypeVariant::LedgerHeader,
         TypeVariant::LedgerHeaderExt,
         TypeVariant::LedgerUpgradeType,
+        TypeVariant::ConfigUpgradeSetKey,
         TypeVariant::LedgerUpgrade,
-        TypeVariant::LedgerUpgradeConfigSetting,
+        TypeVariant::ConfigUpgradeSet,
         TypeVariant::BucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
@@ -38595,7 +38384,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 404] = [
+    pub const VARIANTS_STR: [&'static str; 402] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -38721,11 +38510,8 @@ impl TypeVariant {
         "LiquidityPoolEntryConstantProduct",
         "ContractDataEntry",
         "ContractCodeEntry",
-        "ConfigSettingType",
-        "ConfigSetting",
         "ConfigSettingId",
         "ConfigSettingEntry",
-        "ConfigSettingEntryExt",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -38753,8 +38539,9 @@ impl TypeVariant {
         "LedgerHeader",
         "LedgerHeaderExt",
         "LedgerUpgradeType",
+        "ConfigUpgradeSetKey",
         "LedgerUpgrade",
-        "LedgerUpgradeConfigSetting",
+        "ConfigUpgradeSet",
         "BucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
@@ -39133,11 +38920,8 @@ impl TypeVariant {
             Self::LiquidityPoolEntryConstantProduct => "LiquidityPoolEntryConstantProduct",
             Self::ContractDataEntry => "ContractDataEntry",
             Self::ContractCodeEntry => "ContractCodeEntry",
-            Self::ConfigSettingType => "ConfigSettingType",
-            Self::ConfigSetting => "ConfigSetting",
             Self::ConfigSettingId => "ConfigSettingId",
             Self::ConfigSettingEntry => "ConfigSettingEntry",
-            Self::ConfigSettingEntryExt => "ConfigSettingEntryExt",
             Self::LedgerEntryExtensionV1 => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry => "LedgerEntry",
@@ -39165,8 +38949,9 @@ impl TypeVariant {
             Self::LedgerHeader => "LedgerHeader",
             Self::LedgerHeaderExt => "LedgerHeaderExt",
             Self::LedgerUpgradeType => "LedgerUpgradeType",
+            Self::ConfigUpgradeSetKey => "ConfigUpgradeSetKey",
             Self::LedgerUpgrade => "LedgerUpgrade",
-            Self::LedgerUpgradeConfigSetting => "LedgerUpgradeConfigSetting",
+            Self::ConfigUpgradeSet => "ConfigUpgradeSet",
             Self::BucketEntryType => "BucketEntryType",
             Self::BucketMetadata => "BucketMetadata",
             Self::BucketMetadataExt => "BucketMetadataExt",
@@ -39421,7 +39206,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 404] {
+    pub const fn variants() -> [TypeVariant; 402] {
         Self::VARIANTS
     }
 }
@@ -39571,11 +39356,8 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolEntryConstantProduct" => Ok(Self::LiquidityPoolEntryConstantProduct),
             "ContractDataEntry" => Ok(Self::ContractDataEntry),
             "ContractCodeEntry" => Ok(Self::ContractCodeEntry),
-            "ConfigSettingType" => Ok(Self::ConfigSettingType),
-            "ConfigSetting" => Ok(Self::ConfigSetting),
             "ConfigSettingId" => Ok(Self::ConfigSettingId),
             "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
-            "ConfigSettingEntryExt" => Ok(Self::ConfigSettingEntryExt),
             "LedgerEntryExtensionV1" => Ok(Self::LedgerEntryExtensionV1),
             "LedgerEntryExtensionV1Ext" => Ok(Self::LedgerEntryExtensionV1Ext),
             "LedgerEntry" => Ok(Self::LedgerEntry),
@@ -39603,8 +39385,9 @@ impl core::str::FromStr for TypeVariant {
             "LedgerHeader" => Ok(Self::LedgerHeader),
             "LedgerHeaderExt" => Ok(Self::LedgerHeaderExt),
             "LedgerUpgradeType" => Ok(Self::LedgerUpgradeType),
+            "ConfigUpgradeSetKey" => Ok(Self::ConfigUpgradeSetKey),
             "LedgerUpgrade" => Ok(Self::LedgerUpgrade),
-            "LedgerUpgradeConfigSetting" => Ok(Self::LedgerUpgradeConfigSetting),
+            "ConfigUpgradeSet" => Ok(Self::ConfigUpgradeSet),
             "BucketEntryType" => Ok(Self::BucketEntryType),
             "BucketMetadata" => Ok(Self::BucketMetadata),
             "BucketMetadataExt" => Ok(Self::BucketMetadataExt),
@@ -39998,11 +39781,8 @@ pub enum Type {
     LiquidityPoolEntryConstantProduct(Box<LiquidityPoolEntryConstantProduct>),
     ContractDataEntry(Box<ContractDataEntry>),
     ContractCodeEntry(Box<ContractCodeEntry>),
-    ConfigSettingType(Box<ConfigSettingType>),
-    ConfigSetting(Box<ConfigSetting>),
     ConfigSettingId(Box<ConfigSettingId>),
     ConfigSettingEntry(Box<ConfigSettingEntry>),
-    ConfigSettingEntryExt(Box<ConfigSettingEntryExt>),
     LedgerEntryExtensionV1(Box<LedgerEntryExtensionV1>),
     LedgerEntryExtensionV1Ext(Box<LedgerEntryExtensionV1Ext>),
     LedgerEntry(Box<LedgerEntry>),
@@ -40030,8 +39810,9 @@ pub enum Type {
     LedgerHeader(Box<LedgerHeader>),
     LedgerHeaderExt(Box<LedgerHeaderExt>),
     LedgerUpgradeType(Box<LedgerUpgradeType>),
+    ConfigUpgradeSetKey(Box<ConfigUpgradeSetKey>),
     LedgerUpgrade(Box<LedgerUpgrade>),
-    LedgerUpgradeConfigSetting(Box<LedgerUpgradeConfigSetting>),
+    ConfigUpgradeSet(Box<ConfigUpgradeSet>),
     BucketEntryType(Box<BucketEntryType>),
     BucketMetadata(Box<BucketMetadata>),
     BucketMetadataExt(Box<BucketMetadataExt>),
@@ -40280,7 +40061,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 404] = [
+    pub const VARIANTS: [TypeVariant; 402] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -40406,11 +40187,8 @@ impl Type {
         TypeVariant::LiquidityPoolEntryConstantProduct,
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractCodeEntry,
-        TypeVariant::ConfigSettingType,
-        TypeVariant::ConfigSetting,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
-        TypeVariant::ConfigSettingEntryExt,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -40438,8 +40216,9 @@ impl Type {
         TypeVariant::LedgerHeader,
         TypeVariant::LedgerHeaderExt,
         TypeVariant::LedgerUpgradeType,
+        TypeVariant::ConfigUpgradeSetKey,
         TypeVariant::LedgerUpgrade,
-        TypeVariant::LedgerUpgradeConfigSetting,
+        TypeVariant::ConfigUpgradeSet,
         TypeVariant::BucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
@@ -40686,7 +40465,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 404] = [
+    pub const VARIANTS_STR: [&'static str; 402] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -40812,11 +40591,8 @@ impl Type {
         "LiquidityPoolEntryConstantProduct",
         "ContractDataEntry",
         "ContractCodeEntry",
-        "ConfigSettingType",
-        "ConfigSetting",
         "ConfigSettingId",
         "ConfigSettingEntry",
-        "ConfigSettingEntryExt",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -40844,8 +40620,9 @@ impl Type {
         "LedgerHeader",
         "LedgerHeaderExt",
         "LedgerUpgradeType",
+        "ConfigUpgradeSetKey",
         "LedgerUpgrade",
-        "LedgerUpgradeConfigSetting",
+        "ConfigUpgradeSet",
         "BucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
@@ -41408,20 +41185,11 @@ impl Type {
             TypeVariant::ContractCodeEntry => Ok(Self::ContractCodeEntry(Box::new(
                 ContractCodeEntry::read_xdr(r)?,
             ))),
-            TypeVariant::ConfigSettingType => Ok(Self::ConfigSettingType(Box::new(
-                ConfigSettingType::read_xdr(r)?,
-            ))),
-            TypeVariant::ConfigSetting => {
-                Ok(Self::ConfigSetting(Box::new(ConfigSetting::read_xdr(r)?)))
-            }
             TypeVariant::ConfigSettingId => Ok(Self::ConfigSettingId(Box::new(
                 ConfigSettingId::read_xdr(r)?,
             ))),
             TypeVariant::ConfigSettingEntry => Ok(Self::ConfigSettingEntry(Box::new(
                 ConfigSettingEntry::read_xdr(r)?,
-            ))),
-            TypeVariant::ConfigSettingEntryExt => Ok(Self::ConfigSettingEntryExt(Box::new(
-                ConfigSettingEntryExt::read_xdr(r)?,
             ))),
             TypeVariant::LedgerEntryExtensionV1 => Ok(Self::LedgerEntryExtensionV1(Box::new(
                 LedgerEntryExtensionV1::read_xdr(r)?,
@@ -41498,12 +41266,15 @@ impl Type {
             TypeVariant::LedgerUpgradeType => Ok(Self::LedgerUpgradeType(Box::new(
                 LedgerUpgradeType::read_xdr(r)?,
             ))),
+            TypeVariant::ConfigUpgradeSetKey => Ok(Self::ConfigUpgradeSetKey(Box::new(
+                ConfigUpgradeSetKey::read_xdr(r)?,
+            ))),
             TypeVariant::LedgerUpgrade => {
                 Ok(Self::LedgerUpgrade(Box::new(LedgerUpgrade::read_xdr(r)?)))
             }
-            TypeVariant::LedgerUpgradeConfigSetting => Ok(Self::LedgerUpgradeConfigSetting(
-                Box::new(LedgerUpgradeConfigSetting::read_xdr(r)?),
-            )),
+            TypeVariant::ConfigUpgradeSet => Ok(Self::ConfigUpgradeSet(Box::new(
+                ConfigUpgradeSet::read_xdr(r)?,
+            ))),
             TypeVariant::BucketEntryType => Ok(Self::BucketEntryType(Box::new(
                 BucketEntryType::read_xdr(r)?,
             ))),
@@ -42738,14 +42509,6 @@ impl Type {
                 ReadXdrIter::<_, ContractCodeEntry>::new(r)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
             ),
-            TypeVariant::ConfigSettingType => Box::new(
-                ReadXdrIter::<_, ConfigSettingType>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingType(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSetting => Box::new(
-                ReadXdrIter::<_, ConfigSetting>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSetting(Box::new(t)))),
-            ),
             TypeVariant::ConfigSettingId => Box::new(
                 ReadXdrIter::<_, ConfigSettingId>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
@@ -42753,10 +42516,6 @@ impl Type {
             TypeVariant::ConfigSettingEntry => Box::new(
                 ReadXdrIter::<_, ConfigSettingEntry>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingEntryExt => Box::new(
-                ReadXdrIter::<_, ConfigSettingEntryExt>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(r)
@@ -42866,13 +42625,17 @@ impl Type {
                 ReadXdrIter::<_, LedgerUpgradeType>::new(r)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
             ),
+            TypeVariant::ConfigUpgradeSetKey => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSetKey>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t)))),
+            ),
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, LedgerUpgrade>::new(r)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
             ),
-            TypeVariant::LedgerUpgradeConfigSetting => Box::new(
-                ReadXdrIter::<_, LedgerUpgradeConfigSetting>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerUpgradeConfigSetting(Box::new(t)))),
+            TypeVariant::ConfigUpgradeSet => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSet>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, BucketEntryType>::new(r)
@@ -44350,14 +44113,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<ContractCodeEntry>>::new(r)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t.0)))),
             ),
-            TypeVariant::ConfigSettingType => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingType>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingType(Box::new(t.0)))),
-            ),
-            TypeVariant::ConfigSetting => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSetting>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSetting(Box::new(t.0)))),
-            ),
             TypeVariant::ConfigSettingId => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingId>>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t.0)))),
@@ -44365,10 +44120,6 @@ impl Type {
             TypeVariant::ConfigSettingEntry => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingEntry>>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t.0)))),
-            ),
-            TypeVariant::ConfigSettingEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingEntryExt>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerEntryExtensionV1>>::new(r)
@@ -44478,13 +44229,17 @@ impl Type {
                 ReadXdrIter::<_, Frame<LedgerUpgradeType>>::new(r)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t.0)))),
             ),
+            TypeVariant::ConfigUpgradeSetKey => Box::new(
+                ReadXdrIter::<_, Frame<ConfigUpgradeSetKey>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t.0)))),
+            ),
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, Frame<LedgerUpgrade>>::new(r)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t.0)))),
             ),
-            TypeVariant::LedgerUpgradeConfigSetting => Box::new(
-                ReadXdrIter::<_, Frame<LedgerUpgradeConfigSetting>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerUpgradeConfigSetting(Box::new(t.0)))),
+            TypeVariant::ConfigUpgradeSet => Box::new(
+                ReadXdrIter::<_, Frame<ConfigUpgradeSet>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t.0)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, Frame<BucketEntryType>>::new(r)
@@ -45969,14 +45724,6 @@ impl Type {
                 ReadXdrIter::<_, ContractCodeEntry>::new(dec)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
             ),
-            TypeVariant::ConfigSettingType => Box::new(
-                ReadXdrIter::<_, ConfigSettingType>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSettingType(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSetting => Box::new(
-                ReadXdrIter::<_, ConfigSetting>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSetting(Box::new(t)))),
-            ),
             TypeVariant::ConfigSettingId => Box::new(
                 ReadXdrIter::<_, ConfigSettingId>::new(dec)
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
@@ -45984,10 +45731,6 @@ impl Type {
             TypeVariant::ConfigSettingEntry => Box::new(
                 ReadXdrIter::<_, ConfigSettingEntry>::new(dec)
                     .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingEntryExt => Box::new(
-                ReadXdrIter::<_, ConfigSettingEntryExt>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSettingEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec)
@@ -46097,13 +45840,17 @@ impl Type {
                 ReadXdrIter::<_, LedgerUpgradeType>::new(dec)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
             ),
+            TypeVariant::ConfigUpgradeSetKey => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSetKey>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t)))),
+            ),
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, LedgerUpgrade>::new(dec)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
             ),
-            TypeVariant::LedgerUpgradeConfigSetting => Box::new(
-                ReadXdrIter::<_, LedgerUpgradeConfigSetting>::new(dec)
-                    .map(|r| r.map(|t| Self::LedgerUpgradeConfigSetting(Box::new(t)))),
+            TypeVariant::ConfigUpgradeSet => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSet>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, BucketEntryType>::new(dec)
@@ -47224,11 +46971,8 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(ref v) => v.as_ref(),
             Self::ContractDataEntry(ref v) => v.as_ref(),
             Self::ContractCodeEntry(ref v) => v.as_ref(),
-            Self::ConfigSettingType(ref v) => v.as_ref(),
-            Self::ConfigSetting(ref v) => v.as_ref(),
             Self::ConfigSettingId(ref v) => v.as_ref(),
             Self::ConfigSettingEntry(ref v) => v.as_ref(),
-            Self::ConfigSettingEntryExt(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1Ext(ref v) => v.as_ref(),
             Self::LedgerEntry(ref v) => v.as_ref(),
@@ -47256,8 +47000,9 @@ impl Type {
             Self::LedgerHeader(ref v) => v.as_ref(),
             Self::LedgerHeaderExt(ref v) => v.as_ref(),
             Self::LedgerUpgradeType(ref v) => v.as_ref(),
+            Self::ConfigUpgradeSetKey(ref v) => v.as_ref(),
             Self::LedgerUpgrade(ref v) => v.as_ref(),
-            Self::LedgerUpgradeConfigSetting(ref v) => v.as_ref(),
+            Self::ConfigUpgradeSet(ref v) => v.as_ref(),
             Self::BucketEntryType(ref v) => v.as_ref(),
             Self::BucketMetadata(ref v) => v.as_ref(),
             Self::BucketMetadataExt(ref v) => v.as_ref(),
@@ -47637,11 +47382,8 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(_) => "LiquidityPoolEntryConstantProduct",
             Self::ContractDataEntry(_) => "ContractDataEntry",
             Self::ContractCodeEntry(_) => "ContractCodeEntry",
-            Self::ConfigSettingType(_) => "ConfigSettingType",
-            Self::ConfigSetting(_) => "ConfigSetting",
             Self::ConfigSettingId(_) => "ConfigSettingId",
             Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
-            Self::ConfigSettingEntryExt(_) => "ConfigSettingEntryExt",
             Self::LedgerEntryExtensionV1(_) => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext(_) => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry(_) => "LedgerEntry",
@@ -47669,8 +47411,9 @@ impl Type {
             Self::LedgerHeader(_) => "LedgerHeader",
             Self::LedgerHeaderExt(_) => "LedgerHeaderExt",
             Self::LedgerUpgradeType(_) => "LedgerUpgradeType",
+            Self::ConfigUpgradeSetKey(_) => "ConfigUpgradeSetKey",
             Self::LedgerUpgrade(_) => "LedgerUpgrade",
-            Self::LedgerUpgradeConfigSetting(_) => "LedgerUpgradeConfigSetting",
+            Self::ConfigUpgradeSet(_) => "ConfigUpgradeSet",
             Self::BucketEntryType(_) => "BucketEntryType",
             Self::BucketMetadata(_) => "BucketMetadata",
             Self::BucketMetadataExt(_) => "BucketMetadataExt",
@@ -47931,7 +47674,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 404] {
+    pub const fn variants() -> [TypeVariant; 402] {
         Self::VARIANTS
     }
 
@@ -48072,11 +47815,8 @@ impl Type {
             }
             Self::ContractDataEntry(_) => TypeVariant::ContractDataEntry,
             Self::ContractCodeEntry(_) => TypeVariant::ContractCodeEntry,
-            Self::ConfigSettingType(_) => TypeVariant::ConfigSettingType,
-            Self::ConfigSetting(_) => TypeVariant::ConfigSetting,
             Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
             Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
-            Self::ConfigSettingEntryExt(_) => TypeVariant::ConfigSettingEntryExt,
             Self::LedgerEntryExtensionV1(_) => TypeVariant::LedgerEntryExtensionV1,
             Self::LedgerEntryExtensionV1Ext(_) => TypeVariant::LedgerEntryExtensionV1Ext,
             Self::LedgerEntry(_) => TypeVariant::LedgerEntry,
@@ -48104,8 +47844,9 @@ impl Type {
             Self::LedgerHeader(_) => TypeVariant::LedgerHeader,
             Self::LedgerHeaderExt(_) => TypeVariant::LedgerHeaderExt,
             Self::LedgerUpgradeType(_) => TypeVariant::LedgerUpgradeType,
+            Self::ConfigUpgradeSetKey(_) => TypeVariant::ConfigUpgradeSetKey,
             Self::LedgerUpgrade(_) => TypeVariant::LedgerUpgrade,
-            Self::LedgerUpgradeConfigSetting(_) => TypeVariant::LedgerUpgradeConfigSetting,
+            Self::ConfigUpgradeSet(_) => TypeVariant::ConfigUpgradeSet,
             Self::BucketEntryType(_) => TypeVariant::BucketEntryType,
             Self::BucketMetadata(_) => TypeVariant::BucketMetadata,
             Self::BucketMetadataExt(_) => TypeVariant::BucketMetadataExt,

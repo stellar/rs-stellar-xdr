@@ -24,11 +24,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "83f5adc57ccaea49a67063352b869641049c4caf198a3070c4825c5f6e82802a",
+        "6268629577238adf6210d6e919e41375a3b380e941d0c7acb662013c6f8aa575",
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "99696979513d389fabe843874b84dd75a7fec8f8f329ca9ae833c600850dee2d",
+        "7ec20def7e005a7d90357ac7b39d616435ab5835dc806989515faecdb506f51d",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -36,11 +36,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "dae8eead47f2ce6b74b87fc196080cde2b432eedba9e58893f1d5ad315155e4e",
+        "a6265e158b549d7a9916e42d4ba8ad2ea4d5e85016163b2eddf810e4d254392d",
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "b19c10a07c9775594723ad12927259dd4bbd9ed9dfd0e70078662ec2e90e130d",
+        "cd4ac7622931831291ed848004328d926d8a317122ca966f4bc105367819cd6c",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -48,11 +48,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "0ab9890a6ffbe3a7f0b4496f7f531606812c1207b862a0a7bc03b70e83dbdf72",
+        "4fee5c1982810aa1746dbaf81dd6d84f1fe8193cb535bf0839da3509e7907547",
     ),
     (
         "xdr/next/Stellar-types.x",
-        "7b3e5470c4bcf7c19f9cc8f8bf81a494b540fc2157476329cf19863afab2343b",
+        "6e3b13f0d3e360b09fa5e2b0e55d43f4d974a769df66afb34e8aecbb329d3f15",
     ),
 ];
 
@@ -2975,19 +2975,23 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 //        SC_SPEC_TYPE_VAL = 0,
 //
 //        // Types with no parameters.
-//        SC_SPEC_TYPE_U32 = 1,
-//        SC_SPEC_TYPE_I32 = 2,
-//        SC_SPEC_TYPE_U64 = 3,
-//        SC_SPEC_TYPE_I64 = 4,
-//        SC_SPEC_TYPE_U128 = 5,
-//        SC_SPEC_TYPE_I128 = 6,
-//        SC_SPEC_TYPE_BOOL = 7,
-//        SC_SPEC_TYPE_SYMBOL = 8,
-//        SC_SPEC_TYPE_BITSET = 9,
-//        SC_SPEC_TYPE_STATUS = 10,
-//        SC_SPEC_TYPE_BYTES = 11,
-//        SC_SPEC_TYPE_INVOKER = 12,
-//        SC_SPEC_TYPE_ADDRESS = 13,
+//        SC_SPEC_TYPE_BOOL = 1,
+//        SC_SPEC_TYPE_VOID = 2,
+//        SC_SPEC_TYPE_STATUS = 3,
+//        SC_SPEC_TYPE_U32 = 4,
+//        SC_SPEC_TYPE_I32 = 5,
+//        SC_SPEC_TYPE_U64 = 6,
+//        SC_SPEC_TYPE_I64 = 7,
+//        SC_SPEC_TYPE_TIMEPOINT = 8,
+//        SC_SPEC_TYPE_DURATION = 9,
+//        SC_SPEC_TYPE_U128 = 10,
+//        SC_SPEC_TYPE_I128 = 11,
+//        SC_SPEC_TYPE_U256 = 12,
+//        SC_SPEC_TYPE_I256 = 13,
+//        SC_SPEC_TYPE_BYTES = 14,
+//        SC_SPEC_TYPE_STRING = 16,
+//        SC_SPEC_TYPE_SYMBOL = 17,
+//        SC_SPEC_TYPE_ADDRESS = 19,
 //
 //        // Types with parameters.
 //        SC_SPEC_TYPE_OPTION = 1000,
@@ -3013,19 +3017,23 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 #[repr(i32)]
 pub enum ScSpecType {
     Val = 0,
-    U32 = 1,
-    I32 = 2,
-    U64 = 3,
-    I64 = 4,
-    U128 = 5,
-    I128 = 6,
-    Bool = 7,
-    Symbol = 8,
-    Bitset = 9,
-    Status = 10,
-    Bytes = 11,
-    Invoker = 12,
-    Address = 13,
+    Bool = 1,
+    Void = 2,
+    Status = 3,
+    U32 = 4,
+    I32 = 5,
+    U64 = 6,
+    I64 = 7,
+    Timepoint = 8,
+    Duration = 9,
+    U128 = 10,
+    I128 = 11,
+    U256 = 12,
+    I256 = 13,
+    Bytes = 14,
+    String = 16,
+    Symbol = 17,
+    Address = 19,
     Option = 1000,
     Result = 1001,
     Vec = 1002,
@@ -3037,20 +3045,24 @@ pub enum ScSpecType {
 }
 
 impl ScSpecType {
-    pub const VARIANTS: [ScSpecType; 22] = [
+    pub const VARIANTS: [ScSpecType; 26] = [
         ScSpecType::Val,
+        ScSpecType::Bool,
+        ScSpecType::Void,
+        ScSpecType::Status,
         ScSpecType::U32,
         ScSpecType::I32,
         ScSpecType::U64,
         ScSpecType::I64,
+        ScSpecType::Timepoint,
+        ScSpecType::Duration,
         ScSpecType::U128,
         ScSpecType::I128,
-        ScSpecType::Bool,
-        ScSpecType::Symbol,
-        ScSpecType::Bitset,
-        ScSpecType::Status,
+        ScSpecType::U256,
+        ScSpecType::I256,
         ScSpecType::Bytes,
-        ScSpecType::Invoker,
+        ScSpecType::String,
+        ScSpecType::Symbol,
         ScSpecType::Address,
         ScSpecType::Option,
         ScSpecType::Result,
@@ -3061,9 +3073,32 @@ impl ScSpecType {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 22] = [
-        "Val", "U32", "I32", "U64", "I64", "U128", "I128", "Bool", "Symbol", "Bitset", "Status",
-        "Bytes", "Invoker", "Address", "Option", "Result", "Vec", "Set", "Map", "Tuple", "BytesN",
+    pub const VARIANTS_STR: [&'static str; 26] = [
+        "Val",
+        "Bool",
+        "Void",
+        "Status",
+        "U32",
+        "I32",
+        "U64",
+        "I64",
+        "Timepoint",
+        "Duration",
+        "U128",
+        "I128",
+        "U256",
+        "I256",
+        "Bytes",
+        "String",
+        "Symbol",
+        "Address",
+        "Option",
+        "Result",
+        "Vec",
+        "Set",
+        "Map",
+        "Tuple",
+        "BytesN",
         "Udt",
     ];
 
@@ -3071,18 +3106,22 @@ impl ScSpecType {
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Val => "Val",
+            Self::Bool => "Bool",
+            Self::Void => "Void",
+            Self::Status => "Status",
             Self::U32 => "U32",
             Self::I32 => "I32",
             Self::U64 => "U64",
             Self::I64 => "I64",
+            Self::Timepoint => "Timepoint",
+            Self::Duration => "Duration",
             Self::U128 => "U128",
             Self::I128 => "I128",
-            Self::Bool => "Bool",
-            Self::Symbol => "Symbol",
-            Self::Bitset => "Bitset",
-            Self::Status => "Status",
+            Self::U256 => "U256",
+            Self::I256 => "I256",
             Self::Bytes => "Bytes",
-            Self::Invoker => "Invoker",
+            Self::String => "String",
+            Self::Symbol => "Symbol",
             Self::Address => "Address",
             Self::Option => "Option",
             Self::Result => "Result",
@@ -3096,7 +3135,7 @@ impl ScSpecType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 22] {
+    pub const fn variants() -> [ScSpecType; 26] {
         Self::VARIANTS
     }
 }
@@ -3128,19 +3167,23 @@ impl TryFrom<i32> for ScSpecType {
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
             0 => ScSpecType::Val,
-            1 => ScSpecType::U32,
-            2 => ScSpecType::I32,
-            3 => ScSpecType::U64,
-            4 => ScSpecType::I64,
-            5 => ScSpecType::U128,
-            6 => ScSpecType::I128,
-            7 => ScSpecType::Bool,
-            8 => ScSpecType::Symbol,
-            9 => ScSpecType::Bitset,
-            10 => ScSpecType::Status,
-            11 => ScSpecType::Bytes,
-            12 => ScSpecType::Invoker,
-            13 => ScSpecType::Address,
+            1 => ScSpecType::Bool,
+            2 => ScSpecType::Void,
+            3 => ScSpecType::Status,
+            4 => ScSpecType::U32,
+            5 => ScSpecType::I32,
+            6 => ScSpecType::U64,
+            7 => ScSpecType::I64,
+            8 => ScSpecType::Timepoint,
+            9 => ScSpecType::Duration,
+            10 => ScSpecType::U128,
+            11 => ScSpecType::I128,
+            12 => ScSpecType::U256,
+            13 => ScSpecType::I256,
+            14 => ScSpecType::Bytes,
+            16 => ScSpecType::String,
+            17 => ScSpecType::Symbol,
+            19 => ScSpecType::Address,
             1000 => ScSpecType::Option,
             1001 => ScSpecType::Result,
             1002 => ScSpecType::Vec,
@@ -3473,17 +3516,22 @@ impl WriteXdr for ScSpecTypeUdt {
 //   union SCSpecTypeDef switch (SCSpecType type)
 //    {
 //    case SC_SPEC_TYPE_VAL:
-//    case SC_SPEC_TYPE_U64:
-//    case SC_SPEC_TYPE_I64:
-//    case SC_SPEC_TYPE_U128:
-//    case SC_SPEC_TYPE_I128:
+//    case SC_SPEC_TYPE_BOOL:
+//    case SC_SPEC_TYPE_VOID:
+//    case SC_SPEC_TYPE_STATUS:
 //    case SC_SPEC_TYPE_U32:
 //    case SC_SPEC_TYPE_I32:
-//    case SC_SPEC_TYPE_BOOL:
-//    case SC_SPEC_TYPE_SYMBOL:
-//    case SC_SPEC_TYPE_BITSET:
-//    case SC_SPEC_TYPE_STATUS:
+//    case SC_SPEC_TYPE_U64:
+//    case SC_SPEC_TYPE_I64:
+//    case SC_SPEC_TYPE_TIMEPOINT:
+//    case SC_SPEC_TYPE_DURATION:
+//    case SC_SPEC_TYPE_U128:
+//    case SC_SPEC_TYPE_I128:
+//    case SC_SPEC_TYPE_U256:
+//    case SC_SPEC_TYPE_I256:
 //    case SC_SPEC_TYPE_BYTES:
+//    case SC_SPEC_TYPE_STRING:
+//    case SC_SPEC_TYPE_SYMBOL:
 //    case SC_SPEC_TYPE_ADDRESS:
 //        void;
 //    case SC_SPEC_TYPE_OPTION:
@@ -3515,17 +3563,22 @@ impl WriteXdr for ScSpecTypeUdt {
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecTypeDef {
     Val,
-    U64,
-    I64,
-    U128,
-    I128,
+    Bool,
+    Void,
+    Status,
     U32,
     I32,
-    Bool,
-    Symbol,
-    Bitset,
-    Status,
+    U64,
+    I64,
+    Timepoint,
+    Duration,
+    U128,
+    I128,
+    U256,
+    I256,
     Bytes,
+    String,
+    Symbol,
     Address,
     Option(Box<ScSpecTypeOption>),
     Result(Box<ScSpecTypeResult>),
@@ -3538,19 +3591,24 @@ pub enum ScSpecTypeDef {
 }
 
 impl ScSpecTypeDef {
-    pub const VARIANTS: [ScSpecType; 21] = [
+    pub const VARIANTS: [ScSpecType; 26] = [
         ScSpecType::Val,
-        ScSpecType::U64,
-        ScSpecType::I64,
-        ScSpecType::U128,
-        ScSpecType::I128,
+        ScSpecType::Bool,
+        ScSpecType::Void,
+        ScSpecType::Status,
         ScSpecType::U32,
         ScSpecType::I32,
-        ScSpecType::Bool,
-        ScSpecType::Symbol,
-        ScSpecType::Bitset,
-        ScSpecType::Status,
+        ScSpecType::U64,
+        ScSpecType::I64,
+        ScSpecType::Timepoint,
+        ScSpecType::Duration,
+        ScSpecType::U128,
+        ScSpecType::I128,
+        ScSpecType::U256,
+        ScSpecType::I256,
         ScSpecType::Bytes,
+        ScSpecType::String,
+        ScSpecType::Symbol,
         ScSpecType::Address,
         ScSpecType::Option,
         ScSpecType::Result,
@@ -3561,26 +3619,55 @@ impl ScSpecTypeDef {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 21] = [
-        "Val", "U64", "I64", "U128", "I128", "U32", "I32", "Bool", "Symbol", "Bitset", "Status",
-        "Bytes", "Address", "Option", "Result", "Vec", "Map", "Set", "Tuple", "BytesN", "Udt",
+    pub const VARIANTS_STR: [&'static str; 26] = [
+        "Val",
+        "Bool",
+        "Void",
+        "Status",
+        "U32",
+        "I32",
+        "U64",
+        "I64",
+        "Timepoint",
+        "Duration",
+        "U128",
+        "I128",
+        "U256",
+        "I256",
+        "Bytes",
+        "String",
+        "Symbol",
+        "Address",
+        "Option",
+        "Result",
+        "Vec",
+        "Map",
+        "Set",
+        "Tuple",
+        "BytesN",
+        "Udt",
     ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Val => "Val",
-            Self::U64 => "U64",
-            Self::I64 => "I64",
-            Self::U128 => "U128",
-            Self::I128 => "I128",
+            Self::Bool => "Bool",
+            Self::Void => "Void",
+            Self::Status => "Status",
             Self::U32 => "U32",
             Self::I32 => "I32",
-            Self::Bool => "Bool",
-            Self::Symbol => "Symbol",
-            Self::Bitset => "Bitset",
-            Self::Status => "Status",
+            Self::U64 => "U64",
+            Self::I64 => "I64",
+            Self::Timepoint => "Timepoint",
+            Self::Duration => "Duration",
+            Self::U128 => "U128",
+            Self::I128 => "I128",
+            Self::U256 => "U256",
+            Self::I256 => "I256",
             Self::Bytes => "Bytes",
+            Self::String => "String",
+            Self::Symbol => "Symbol",
             Self::Address => "Address",
             Self::Option(_) => "Option",
             Self::Result(_) => "Result",
@@ -3598,17 +3685,22 @@ impl ScSpecTypeDef {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Val => ScSpecType::Val,
-            Self::U64 => ScSpecType::U64,
-            Self::I64 => ScSpecType::I64,
-            Self::U128 => ScSpecType::U128,
-            Self::I128 => ScSpecType::I128,
+            Self::Bool => ScSpecType::Bool,
+            Self::Void => ScSpecType::Void,
+            Self::Status => ScSpecType::Status,
             Self::U32 => ScSpecType::U32,
             Self::I32 => ScSpecType::I32,
-            Self::Bool => ScSpecType::Bool,
-            Self::Symbol => ScSpecType::Symbol,
-            Self::Bitset => ScSpecType::Bitset,
-            Self::Status => ScSpecType::Status,
+            Self::U64 => ScSpecType::U64,
+            Self::I64 => ScSpecType::I64,
+            Self::Timepoint => ScSpecType::Timepoint,
+            Self::Duration => ScSpecType::Duration,
+            Self::U128 => ScSpecType::U128,
+            Self::I128 => ScSpecType::I128,
+            Self::U256 => ScSpecType::U256,
+            Self::I256 => ScSpecType::I256,
             Self::Bytes => ScSpecType::Bytes,
+            Self::String => ScSpecType::String,
+            Self::Symbol => ScSpecType::Symbol,
             Self::Address => ScSpecType::Address,
             Self::Option(_) => ScSpecType::Option,
             Self::Result(_) => ScSpecType::Result,
@@ -3622,7 +3714,7 @@ impl ScSpecTypeDef {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 21] {
+    pub const fn variants() -> [ScSpecType; 26] {
         Self::VARIANTS
     }
 }
@@ -3656,17 +3748,22 @@ impl ReadXdr for ScSpecTypeDef {
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
             ScSpecType::Val => Self::Val,
-            ScSpecType::U64 => Self::U64,
-            ScSpecType::I64 => Self::I64,
-            ScSpecType::U128 => Self::U128,
-            ScSpecType::I128 => Self::I128,
+            ScSpecType::Bool => Self::Bool,
+            ScSpecType::Void => Self::Void,
+            ScSpecType::Status => Self::Status,
             ScSpecType::U32 => Self::U32,
             ScSpecType::I32 => Self::I32,
-            ScSpecType::Bool => Self::Bool,
-            ScSpecType::Symbol => Self::Symbol,
-            ScSpecType::Bitset => Self::Bitset,
-            ScSpecType::Status => Self::Status,
+            ScSpecType::U64 => Self::U64,
+            ScSpecType::I64 => Self::I64,
+            ScSpecType::Timepoint => Self::Timepoint,
+            ScSpecType::Duration => Self::Duration,
+            ScSpecType::U128 => Self::U128,
+            ScSpecType::I128 => Self::I128,
+            ScSpecType::U256 => Self::U256,
+            ScSpecType::I256 => Self::I256,
             ScSpecType::Bytes => Self::Bytes,
+            ScSpecType::String => Self::String,
+            ScSpecType::Symbol => Self::Symbol,
             ScSpecType::Address => Self::Address,
             ScSpecType::Option => Self::Option(Box::<ScSpecTypeOption>::read_xdr(r)?),
             ScSpecType::Result => Self::Result(Box::<ScSpecTypeResult>::read_xdr(r)?),
@@ -3690,17 +3787,22 @@ impl WriteXdr for ScSpecTypeDef {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Val => ().write_xdr(w)?,
-            Self::U64 => ().write_xdr(w)?,
-            Self::I64 => ().write_xdr(w)?,
-            Self::U128 => ().write_xdr(w)?,
-            Self::I128 => ().write_xdr(w)?,
+            Self::Bool => ().write_xdr(w)?,
+            Self::Void => ().write_xdr(w)?,
+            Self::Status => ().write_xdr(w)?,
             Self::U32 => ().write_xdr(w)?,
             Self::I32 => ().write_xdr(w)?,
-            Self::Bool => ().write_xdr(w)?,
-            Self::Symbol => ().write_xdr(w)?,
-            Self::Bitset => ().write_xdr(w)?,
-            Self::Status => ().write_xdr(w)?,
+            Self::U64 => ().write_xdr(w)?,
+            Self::I64 => ().write_xdr(w)?,
+            Self::Timepoint => ().write_xdr(w)?,
+            Self::Duration => ().write_xdr(w)?,
+            Self::U128 => ().write_xdr(w)?,
+            Self::I128 => ().write_xdr(w)?,
+            Self::U256 => ().write_xdr(w)?,
+            Self::I256 => ().write_xdr(w)?,
             Self::Bytes => ().write_xdr(w)?,
+            Self::String => ().write_xdr(w)?,
+            Self::Symbol => ().write_xdr(w)?,
             Self::Address => ().write_xdr(w)?,
             Self::Option(v) => v.write_xdr(w)?,
             Self::Result(v) => v.write_xdr(w)?,
@@ -4673,118 +4775,62 @@ impl WriteXdr for ScSpecEntry {
     }
 }
 
-// ScSymbol is an XDR Typedef defines as:
-//
-//   typedef string SCSymbol<10>;
-//
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ScSymbol(pub StringM<10>);
-
-impl From<ScSymbol> for StringM<10> {
-    #[must_use]
-    fn from(x: ScSymbol) -> Self {
-        x.0
-    }
-}
-
-impl From<StringM<10>> for ScSymbol {
-    #[must_use]
-    fn from(x: StringM<10>) -> Self {
-        ScSymbol(x)
-    }
-}
-
-impl AsRef<StringM<10>> for ScSymbol {
-    #[must_use]
-    fn as_ref(&self) -> &StringM<10> {
-        &self.0
-    }
-}
-
-impl ReadXdr for ScSymbol {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = StringM::<10>::read_xdr(r)?;
-        let v = ScSymbol(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScSymbol {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
-
-impl Deref for ScSymbol {
-    type Target = StringM<10>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<ScSymbol> for Vec<u8> {
-    #[must_use]
-    fn from(x: ScSymbol) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<u8>> for ScSymbol {
-    type Error = Error;
-    fn try_from(x: Vec<u8>) -> Result<Self> {
-        Ok(ScSymbol(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<u8>> for ScSymbol {
-    type Error = Error;
-    fn try_from(x: &Vec<u8>) -> Result<Self> {
-        Ok(ScSymbol(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<u8>> for ScSymbol {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<u8> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[u8]> for ScSymbol {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[u8] {
-        self.0 .0
-    }
-}
-
 // ScValType is an XDR Enum defines as:
 //
 //   enum SCValType
 //    {
-//        SCV_U63 = 0,
-//        SCV_U32 = 1,
-//        SCV_I32 = 2,
-//        SCV_STATIC = 3,
-//        SCV_OBJECT = 4,
-//        SCV_SYMBOL = 5,
-//        SCV_BITSET = 6,
-//        SCV_STATUS = 7
+//        SCV_BOOL = 0,
+//        SCV_VOID = 1,
+//        SCV_STATUS = 2,
+//
+//        // 32 bits is the smallest type in WASM or XDR; no need for u8/u16.
+//        SCV_U32 = 3,
+//        SCV_I32 = 4,
+//
+//        // 64 bits is naturally supported by both WASM and XDR also.
+//        SCV_U64 = 5,
+//        SCV_I64 = 6,
+//
+//        // Time-related u64 subtypes with their own functions and formatting.
+//        SCV_TIMEPOINT = 7,
+//        SCV_DURATION = 8,
+//
+//        // 128 bits is naturally supported by Rust and we use it for Soroban
+//        // fixed-point arithmetic prices / balances / similar "quantities". These
+//        // are represented in XDR as a pair of 2 u64s, unlike {u,i}256 which is
+//        // represented as an array of 32 bytes.
+//        SCV_U128 = 9,
+//        SCV_I128 = 10,
+//
+//        // 256 bits is the size of sha256 output, ed25519 keys, and the EVM machine
+//        // word, so for interop use we include this even though it requires a small
+//        // amount of Rust guest and/or host library code.
+//        SCV_U256 = 11,
+//        SCV_I256 = 12,
+//
+//        // TODO: possibly allocate subtypes of i64, i128 and/or u256 for
+//        // fixed-precision with a specific number of decimals.
+//
+//        // Bytes come in 3 flavors, 2 of which have meaningfully different
+//        // formatting and validity-checking / domain-restriction.
+//        SCV_BYTES = 13,
+//        SCV_STRING = 14,
+//        SCV_SYMBOL = 15,
+//
+//        // Vecs and maps are just polymorphic containers of other ScVals.
+//        SCV_VEC = 16,
+//        SCV_MAP = 17,
+//
+//        // SCContractExecutable and SCAddressType are types that gets used separately from
+//        // SCVal so we do not flatten their structures into separate SCVal cases.
+//        SCV_CONTRACT_EXECUTABLE = 18,
+//        SCV_ADDRESS = 19,
+//
+//        // SCV_LEDGER_KEY_CONTRACT_EXECUTABLE and SCV_LEDGER_KEY_NONCE are unique
+//        // symbolic SCVals used as the key for ledger entries for a contract's code
+//        // and an address' nonce, respectively.
+//        SCV_LEDGER_KEY_CONTRACT_EXECUTABLE = 20,
+//        SCV_LEDGER_KEY_NONCE = 21
 //    };
 //
 // enum
@@ -4797,47 +4843,110 @@ impl AsRef<[u8]> for ScSymbol {
 )]
 #[repr(i32)]
 pub enum ScValType {
-    U63 = 0,
-    U32 = 1,
-    I32 = 2,
-    Static = 3,
-    Object = 4,
-    Symbol = 5,
-    Bitset = 6,
-    Status = 7,
+    Bool = 0,
+    Void = 1,
+    Status = 2,
+    U32 = 3,
+    I32 = 4,
+    U64 = 5,
+    I64 = 6,
+    Timepoint = 7,
+    Duration = 8,
+    U128 = 9,
+    I128 = 10,
+    U256 = 11,
+    I256 = 12,
+    Bytes = 13,
+    String = 14,
+    Symbol = 15,
+    Vec = 16,
+    Map = 17,
+    ContractExecutable = 18,
+    Address = 19,
+    LedgerKeyContractExecutable = 20,
+    LedgerKeyNonce = 21,
 }
 
 impl ScValType {
-    pub const VARIANTS: [ScValType; 8] = [
-        ScValType::U63,
+    pub const VARIANTS: [ScValType; 22] = [
+        ScValType::Bool,
+        ScValType::Void,
+        ScValType::Status,
         ScValType::U32,
         ScValType::I32,
-        ScValType::Static,
-        ScValType::Object,
+        ScValType::U64,
+        ScValType::I64,
+        ScValType::Timepoint,
+        ScValType::Duration,
+        ScValType::U128,
+        ScValType::I128,
+        ScValType::U256,
+        ScValType::I256,
+        ScValType::Bytes,
+        ScValType::String,
         ScValType::Symbol,
-        ScValType::Bitset,
-        ScValType::Status,
+        ScValType::Vec,
+        ScValType::Map,
+        ScValType::ContractExecutable,
+        ScValType::Address,
+        ScValType::LedgerKeyContractExecutable,
+        ScValType::LedgerKeyNonce,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
-        "U63", "U32", "I32", "Static", "Object", "Symbol", "Bitset", "Status",
+    pub const VARIANTS_STR: [&'static str; 22] = [
+        "Bool",
+        "Void",
+        "Status",
+        "U32",
+        "I32",
+        "U64",
+        "I64",
+        "Timepoint",
+        "Duration",
+        "U128",
+        "I128",
+        "U256",
+        "I256",
+        "Bytes",
+        "String",
+        "Symbol",
+        "Vec",
+        "Map",
+        "ContractExecutable",
+        "Address",
+        "LedgerKeyContractExecutable",
+        "LedgerKeyNonce",
     ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::U63 => "U63",
+            Self::Bool => "Bool",
+            Self::Void => "Void",
+            Self::Status => "Status",
             Self::U32 => "U32",
             Self::I32 => "I32",
-            Self::Static => "Static",
-            Self::Object => "Object",
+            Self::U64 => "U64",
+            Self::I64 => "I64",
+            Self::Timepoint => "Timepoint",
+            Self::Duration => "Duration",
+            Self::U128 => "U128",
+            Self::I128 => "I128",
+            Self::U256 => "U256",
+            Self::I256 => "I256",
+            Self::Bytes => "Bytes",
+            Self::String => "String",
             Self::Symbol => "Symbol",
-            Self::Bitset => "Bitset",
-            Self::Status => "Status",
+            Self::Vec => "Vec",
+            Self::Map => "Map",
+            Self::ContractExecutable => "ContractExecutable",
+            Self::Address => "Address",
+            Self::LedgerKeyContractExecutable => "LedgerKeyContractExecutable",
+            Self::LedgerKeyNonce => "LedgerKeyNonce",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScValType; 8] {
+    pub const fn variants() -> [ScValType; 22] {
         Self::VARIANTS
     }
 }
@@ -4868,14 +4977,28 @@ impl TryFrom<i32> for ScValType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScValType::U63,
-            1 => ScValType::U32,
-            2 => ScValType::I32,
-            3 => ScValType::Static,
-            4 => ScValType::Object,
-            5 => ScValType::Symbol,
-            6 => ScValType::Bitset,
-            7 => ScValType::Status,
+            0 => ScValType::Bool,
+            1 => ScValType::Void,
+            2 => ScValType::Status,
+            3 => ScValType::U32,
+            4 => ScValType::I32,
+            5 => ScValType::U64,
+            6 => ScValType::I64,
+            7 => ScValType::Timepoint,
+            8 => ScValType::Duration,
+            9 => ScValType::U128,
+            10 => ScValType::I128,
+            11 => ScValType::U256,
+            12 => ScValType::I256,
+            13 => ScValType::Bytes,
+            14 => ScValType::String,
+            15 => ScValType::Symbol,
+            16 => ScValType::Vec,
+            17 => ScValType::Map,
+            18 => ScValType::ContractExecutable,
+            19 => ScValType::Address,
+            20 => ScValType::LedgerKeyContractExecutable,
+            21 => ScValType::LedgerKeyNonce,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -4900,118 +5023,6 @@ impl ReadXdr for ScValType {
 }
 
 impl WriteXdr for ScValType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// ScStatic is an XDR Enum defines as:
-//
-//   enum SCStatic
-//    {
-//        SCS_VOID = 0,
-//        SCS_TRUE = 1,
-//        SCS_FALSE = 2,
-//        SCS_LEDGER_KEY_CONTRACT_CODE = 3
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[repr(i32)]
-pub enum ScStatic {
-    Void = 0,
-    True = 1,
-    False = 2,
-    LedgerKeyContractCode = 3,
-}
-
-impl ScStatic {
-    pub const VARIANTS: [ScStatic; 4] = [
-        ScStatic::Void,
-        ScStatic::True,
-        ScStatic::False,
-        ScStatic::LedgerKeyContractCode,
-    ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["Void", "True", "False", "LedgerKeyContractCode"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Void => "Void",
-            Self::True => "True",
-            Self::False => "False",
-            Self::LedgerKeyContractCode => "LedgerKeyContractCode",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScStatic; 4] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ScStatic {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ScStatic> for ScStatic {
-    fn variants() -> slice::Iter<'static, ScStatic> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ScStatic {}
-
-impl fmt::Display for ScStatic {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ScStatic {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ScStatic::Void,
-            1 => ScStatic::True,
-            2 => ScStatic::False,
-            3 => ScStatic::LedgerKeyContractCode,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ScStatic> for i32 {
-    #[must_use]
-    fn from(e: ScStatic) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ScStatic {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScStatic {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -6437,765 +6448,6 @@ impl WriteXdr for ScStatus {
     }
 }
 
-// ScVal is an XDR Union defines as:
-//
-//   union SCVal switch (SCValType type)
-//    {
-//    case SCV_U63:
-//        int64 u63;
-//    case SCV_U32:
-//        uint32 u32;
-//    case SCV_I32:
-//        int32 i32;
-//    case SCV_STATIC:
-//        SCStatic ic;
-//    case SCV_OBJECT:
-//        SCObject* obj;
-//    case SCV_SYMBOL:
-//        SCSymbol sym;
-//    case SCV_BITSET:
-//        uint64 bits;
-//    case SCV_STATUS:
-//        SCStatus status;
-//    };
-//
-// union with discriminant ScValType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum ScVal {
-    U63(i64),
-    U32(u32),
-    I32(i32),
-    Static(ScStatic),
-    Object(Option<ScObject>),
-    Symbol(ScSymbol),
-    Bitset(u64),
-    Status(ScStatus),
-}
-
-impl ScVal {
-    pub const VARIANTS: [ScValType; 8] = [
-        ScValType::U63,
-        ScValType::U32,
-        ScValType::I32,
-        ScValType::Static,
-        ScValType::Object,
-        ScValType::Symbol,
-        ScValType::Bitset,
-        ScValType::Status,
-    ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
-        "U63", "U32", "I32", "Static", "Object", "Symbol", "Bitset", "Status",
-    ];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::U63(_) => "U63",
-            Self::U32(_) => "U32",
-            Self::I32(_) => "I32",
-            Self::Static(_) => "Static",
-            Self::Object(_) => "Object",
-            Self::Symbol(_) => "Symbol",
-            Self::Bitset(_) => "Bitset",
-            Self::Status(_) => "Status",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ScValType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::U63(_) => ScValType::U63,
-            Self::U32(_) => ScValType::U32,
-            Self::I32(_) => ScValType::I32,
-            Self::Static(_) => ScValType::Static,
-            Self::Object(_) => ScValType::Object,
-            Self::Symbol(_) => ScValType::Symbol,
-            Self::Bitset(_) => ScValType::Bitset,
-            Self::Status(_) => ScValType::Status,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScValType; 8] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ScVal {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ScValType> for ScVal {
-    #[must_use]
-    fn discriminant(&self) -> ScValType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ScValType> for ScVal {
-    fn variants() -> slice::Iter<'static, ScValType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ScValType> for ScVal {}
-
-impl ReadXdr for ScVal {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ScValType::U63 => Self::U63(i64::read_xdr(r)?),
-            ScValType::U32 => Self::U32(u32::read_xdr(r)?),
-            ScValType::I32 => Self::I32(i32::read_xdr(r)?),
-            ScValType::Static => Self::Static(ScStatic::read_xdr(r)?),
-            ScValType::Object => Self::Object(Option::<ScObject>::read_xdr(r)?),
-            ScValType::Symbol => Self::Symbol(ScSymbol::read_xdr(r)?),
-            ScValType::Bitset => Self::Bitset(u64::read_xdr(r)?),
-            ScValType::Status => Self::Status(ScStatus::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScVal {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::U63(v) => v.write_xdr(w)?,
-            Self::U32(v) => v.write_xdr(w)?,
-            Self::I32(v) => v.write_xdr(w)?,
-            Self::Static(v) => v.write_xdr(w)?,
-            Self::Object(v) => v.write_xdr(w)?,
-            Self::Symbol(v) => v.write_xdr(w)?,
-            Self::Bitset(v) => v.write_xdr(w)?,
-            Self::Status(v) => v.write_xdr(w)?,
-        };
-        Ok(())
-    }
-}
-
-// ScObjectType is an XDR Enum defines as:
-//
-//   enum SCObjectType
-//    {
-//        // We have a few objects that represent non-stellar-specific concepts
-//        // like general-purpose maps, vectors, numbers, blobs.
-//
-//        SCO_VEC = 0,
-//        SCO_MAP = 1,
-//        SCO_U64 = 2,
-//        SCO_I64 = 3,
-//        SCO_U128 = 4,
-//        SCO_I128 = 5,
-//        SCO_BYTES = 6,
-//        SCO_CONTRACT_CODE = 7,
-//        SCO_ADDRESS = 8,
-//        SCO_NONCE_KEY = 9
-//
-//        // TODO: add more
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[repr(i32)]
-pub enum ScObjectType {
-    Vec = 0,
-    Map = 1,
-    U64 = 2,
-    I64 = 3,
-    U128 = 4,
-    I128 = 5,
-    Bytes = 6,
-    ContractCode = 7,
-    Address = 8,
-    NonceKey = 9,
-}
-
-impl ScObjectType {
-    pub const VARIANTS: [ScObjectType; 10] = [
-        ScObjectType::Vec,
-        ScObjectType::Map,
-        ScObjectType::U64,
-        ScObjectType::I64,
-        ScObjectType::U128,
-        ScObjectType::I128,
-        ScObjectType::Bytes,
-        ScObjectType::ContractCode,
-        ScObjectType::Address,
-        ScObjectType::NonceKey,
-    ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
-        "Vec",
-        "Map",
-        "U64",
-        "I64",
-        "U128",
-        "I128",
-        "Bytes",
-        "ContractCode",
-        "Address",
-        "NonceKey",
-    ];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Vec => "Vec",
-            Self::Map => "Map",
-            Self::U64 => "U64",
-            Self::I64 => "I64",
-            Self::U128 => "U128",
-            Self::I128 => "I128",
-            Self::Bytes => "Bytes",
-            Self::ContractCode => "ContractCode",
-            Self::Address => "Address",
-            Self::NonceKey => "NonceKey",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScObjectType; 10] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ScObjectType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ScObjectType> for ScObjectType {
-    fn variants() -> slice::Iter<'static, ScObjectType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ScObjectType {}
-
-impl fmt::Display for ScObjectType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ScObjectType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ScObjectType::Vec,
-            1 => ScObjectType::Map,
-            2 => ScObjectType::U64,
-            3 => ScObjectType::I64,
-            4 => ScObjectType::U128,
-            5 => ScObjectType::I128,
-            6 => ScObjectType::Bytes,
-            7 => ScObjectType::ContractCode,
-            8 => ScObjectType::Address,
-            9 => ScObjectType::NonceKey,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ScObjectType> for i32 {
-    #[must_use]
-    fn from(e: ScObjectType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ScObjectType {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScObjectType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// ScMapEntry is an XDR Struct defines as:
-//
-//   struct SCMapEntry
-//    {
-//        SCVal key;
-//        SCVal val;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ScMapEntry {
-    pub key: ScVal,
-    pub val: ScVal,
-}
-
-impl ReadXdr for ScMapEntry {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            key: ScVal::read_xdr(r)?,
-            val: ScVal::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ScMapEntry {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
-        self.val.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ScvalLimit is an XDR Const defines as:
-//
-//   const SCVAL_LIMIT = 256000;
-//
-pub const SCVAL_LIMIT: u64 = 256000;
-
-// ScVec is an XDR Typedef defines as:
-//
-//   typedef SCVal SCVec<SCVAL_LIMIT>;
-//
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ScVec(pub VecM<ScVal, 256000>);
-
-impl From<ScVec> for VecM<ScVal, 256000> {
-    #[must_use]
-    fn from(x: ScVec) -> Self {
-        x.0
-    }
-}
-
-impl From<VecM<ScVal, 256000>> for ScVec {
-    #[must_use]
-    fn from(x: VecM<ScVal, 256000>) -> Self {
-        ScVec(x)
-    }
-}
-
-impl AsRef<VecM<ScVal, 256000>> for ScVec {
-    #[must_use]
-    fn as_ref(&self) -> &VecM<ScVal, 256000> {
-        &self.0
-    }
-}
-
-impl ReadXdr for ScVec {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<ScVal, 256000>::read_xdr(r)?;
-        let v = ScVec(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScVec {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
-
-impl Deref for ScVec {
-    type Target = VecM<ScVal, 256000>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<ScVec> for Vec<ScVal> {
-    #[must_use]
-    fn from(x: ScVec) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<ScVal>> for ScVec {
-    type Error = Error;
-    fn try_from(x: Vec<ScVal>) -> Result<Self> {
-        Ok(ScVec(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<ScVal>> for ScVec {
-    type Error = Error;
-    fn try_from(x: &Vec<ScVal>) -> Result<Self> {
-        Ok(ScVec(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<ScVal>> for ScVec {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<ScVal> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[ScVal]> for ScVec {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[ScVal] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[ScVal] {
-        self.0 .0
-    }
-}
-
-// ScMap is an XDR Typedef defines as:
-//
-//   typedef SCMapEntry SCMap<SCVAL_LIMIT>;
-//
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ScMap(pub VecM<ScMapEntry, 256000>);
-
-impl From<ScMap> for VecM<ScMapEntry, 256000> {
-    #[must_use]
-    fn from(x: ScMap) -> Self {
-        x.0
-    }
-}
-
-impl From<VecM<ScMapEntry, 256000>> for ScMap {
-    #[must_use]
-    fn from(x: VecM<ScMapEntry, 256000>) -> Self {
-        ScMap(x)
-    }
-}
-
-impl AsRef<VecM<ScMapEntry, 256000>> for ScMap {
-    #[must_use]
-    fn as_ref(&self) -> &VecM<ScMapEntry, 256000> {
-        &self.0
-    }
-}
-
-impl ReadXdr for ScMap {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<ScMapEntry, 256000>::read_xdr(r)?;
-        let v = ScMap(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScMap {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
-
-impl Deref for ScMap {
-    type Target = VecM<ScMapEntry, 256000>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<ScMap> for Vec<ScMapEntry> {
-    #[must_use]
-    fn from(x: ScMap) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<ScMapEntry>> for ScMap {
-    type Error = Error;
-    fn try_from(x: Vec<ScMapEntry>) -> Result<Self> {
-        Ok(ScMap(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<ScMapEntry>> for ScMap {
-    type Error = Error;
-    fn try_from(x: &Vec<ScMapEntry>) -> Result<Self> {
-        Ok(ScMap(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<ScMapEntry>> for ScMap {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<ScMapEntry> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[ScMapEntry]> for ScMap {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[ScMapEntry] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[ScMapEntry] {
-        self.0 .0
-    }
-}
-
-// ScContractCodeType is an XDR Enum defines as:
-//
-//   enum SCContractCodeType
-//    {
-//        SCCONTRACT_CODE_WASM_REF = 0,
-//        SCCONTRACT_CODE_TOKEN = 1
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[repr(i32)]
-pub enum ScContractCodeType {
-    WasmRef = 0,
-    Token = 1,
-}
-
-impl ScContractCodeType {
-    pub const VARIANTS: [ScContractCodeType; 2] =
-        [ScContractCodeType::WasmRef, ScContractCodeType::Token];
-    pub const VARIANTS_STR: [&'static str; 2] = ["WasmRef", "Token"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::WasmRef => "WasmRef",
-            Self::Token => "Token",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScContractCodeType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ScContractCodeType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ScContractCodeType> for ScContractCodeType {
-    fn variants() -> slice::Iter<'static, ScContractCodeType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ScContractCodeType {}
-
-impl fmt::Display for ScContractCodeType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ScContractCodeType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ScContractCodeType::WasmRef,
-            1 => ScContractCodeType::Token,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ScContractCodeType> for i32 {
-    #[must_use]
-    fn from(e: ScContractCodeType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ScContractCodeType {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScContractCodeType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// ScContractCode is an XDR Union defines as:
-//
-//   union SCContractCode switch (SCContractCodeType type)
-//    {
-//    case SCCONTRACT_CODE_WASM_REF:
-//        Hash wasm_id;
-//    case SCCONTRACT_CODE_TOKEN:
-//        void;
-//    };
-//
-// union with discriminant ScContractCodeType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum ScContractCode {
-    WasmRef(Hash),
-    Token,
-}
-
-impl ScContractCode {
-    pub const VARIANTS: [ScContractCodeType; 2] =
-        [ScContractCodeType::WasmRef, ScContractCodeType::Token];
-    pub const VARIANTS_STR: [&'static str; 2] = ["WasmRef", "Token"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::WasmRef(_) => "WasmRef",
-            Self::Token => "Token",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ScContractCodeType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::WasmRef(_) => ScContractCodeType::WasmRef,
-            Self::Token => ScContractCodeType::Token,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ScContractCodeType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ScContractCode {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ScContractCodeType> for ScContractCode {
-    #[must_use]
-    fn discriminant(&self) -> ScContractCodeType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ScContractCodeType> for ScContractCode {
-    fn variants() -> slice::Iter<'static, ScContractCodeType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ScContractCodeType> for ScContractCode {}
-
-impl ReadXdr for ScContractCode {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ScContractCodeType = <ScContractCodeType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ScContractCodeType::WasmRef => Self::WasmRef(Hash::read_xdr(r)?),
-            ScContractCodeType::Token => Self::Token,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ScContractCode {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::WasmRef(v) => v.write_xdr(w)?,
-            Self::Token => ().write_xdr(w)?,
-        };
-        Ok(())
-    }
-}
-
 // Int128Parts is an XDR Struct defines as:
 //
 //   struct Int128Parts {
@@ -7233,6 +6485,212 @@ impl WriteXdr for Int128Parts {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.lo.write_xdr(w)?;
         self.hi.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScContractExecutableType is an XDR Enum defines as:
+//
+//   enum SCContractExecutableType
+//    {
+//        SCCONTRACT_EXECUTABLE_WASM_REF = 0,
+//        SCCONTRACT_EXECUTABLE_TOKEN = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScContractExecutableType {
+    WasmRef = 0,
+    Token = 1,
+}
+
+impl ScContractExecutableType {
+    pub const VARIANTS: [ScContractExecutableType; 2] = [
+        ScContractExecutableType::WasmRef,
+        ScContractExecutableType::Token,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["WasmRef", "Token"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::WasmRef => "WasmRef",
+            Self::Token => "Token",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScContractExecutableType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScContractExecutableType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScContractExecutableType> for ScContractExecutableType {
+    fn variants() -> slice::Iter<'static, ScContractExecutableType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScContractExecutableType {}
+
+impl fmt::Display for ScContractExecutableType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScContractExecutableType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScContractExecutableType::WasmRef,
+            1 => ScContractExecutableType::Token,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScContractExecutableType> for i32 {
+    #[must_use]
+    fn from(e: ScContractExecutableType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScContractExecutableType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScContractExecutableType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScContractExecutable is an XDR Union defines as:
+//
+//   union SCContractExecutable switch (SCContractExecutableType type)
+//    {
+//    case SCCONTRACT_EXECUTABLE_WASM_REF:
+//        Hash wasm_id;
+//    case SCCONTRACT_EXECUTABLE_TOKEN:
+//        void;
+//    };
+//
+// union with discriminant ScContractExecutableType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScContractExecutable {
+    WasmRef(Hash),
+    Token,
+}
+
+impl ScContractExecutable {
+    pub const VARIANTS: [ScContractExecutableType; 2] = [
+        ScContractExecutableType::WasmRef,
+        ScContractExecutableType::Token,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["WasmRef", "Token"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::WasmRef(_) => "WasmRef",
+            Self::Token => "Token",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScContractExecutableType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::WasmRef(_) => ScContractExecutableType::WasmRef,
+            Self::Token => ScContractExecutableType::Token,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScContractExecutableType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScContractExecutable {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScContractExecutableType> for ScContractExecutable {
+    #[must_use]
+    fn discriminant(&self) -> ScContractExecutableType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScContractExecutableType> for ScContractExecutable {
+    fn variants() -> slice::Iter<'static, ScContractExecutableType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScContractExecutableType> for ScContractExecutable {}
+
+impl ReadXdr for ScContractExecutable {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScContractExecutableType = <ScContractExecutableType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScContractExecutableType::WasmRef => Self::WasmRef(Hash::read_xdr(r)?),
+            ScContractExecutableType::Token => Self::Token,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScContractExecutable {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::WasmRef(v) => v.write_xdr(w)?,
+            Self::Token => ().write_xdr(w)?,
+        };
         Ok(())
     }
 }
@@ -7437,33 +6895,616 @@ impl WriteXdr for ScAddress {
     }
 }
 
-// ScObject is an XDR Union defines as:
+// ScvalLimit is an XDR Const defines as:
 //
-//   union SCObject switch (SCObjectType type)
-//    {
-//    case SCO_VEC:
-//        SCVec vec;
-//    case SCO_MAP:
-//        SCMap map;
-//    case SCO_U64:
-//        uint64 u64;
-//    case SCO_I64:
-//        int64 i64;
-//    case SCO_U128:
-//        Int128Parts u128;
-//    case SCO_I128:
-//        Int128Parts i128;
-//    case SCO_BYTES:
-//        opaque bin<SCVAL_LIMIT>;
-//    case SCO_CONTRACT_CODE:
-//        SCContractCode contractCode;
-//    case SCO_ADDRESS:
-//        SCAddress address;
-//    case SCO_NONCE_KEY:
-//        SCAddress nonceAddress;
+//   const SCVAL_LIMIT = 256000;
+//
+pub const SCVAL_LIMIT: u64 = 256000;
+
+// ScsymbolLimit is an XDR Const defines as:
+//
+//   const SCSYMBOL_LIMIT = 32;
+//
+pub const SCSYMBOL_LIMIT: u64 = 32;
+
+// ScVec is an XDR Typedef defines as:
+//
+//   typedef SCVal SCVec<SCVAL_LIMIT>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScVec(pub VecM<ScVal, 256000>);
+
+impl From<ScVec> for VecM<ScVal, 256000> {
+    #[must_use]
+    fn from(x: ScVec) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<ScVal, 256000>> for ScVec {
+    #[must_use]
+    fn from(x: VecM<ScVal, 256000>) -> Self {
+        ScVec(x)
+    }
+}
+
+impl AsRef<VecM<ScVal, 256000>> for ScVec {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<ScVal, 256000> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScVec {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = VecM::<ScVal, 256000>::read_xdr(r)?;
+        let v = ScVec(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScVec {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for ScVec {
+    type Target = VecM<ScVal, 256000>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScVec> for Vec<ScVal> {
+    #[must_use]
+    fn from(x: ScVec) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ScVal>> for ScVec {
+    type Error = Error;
+    fn try_from(x: Vec<ScVal>) -> Result<Self> {
+        Ok(ScVec(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<ScVal>> for ScVec {
+    type Error = Error;
+    fn try_from(x: &Vec<ScVal>) -> Result<Self> {
+        Ok(ScVec(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ScVal>> for ScVec {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<ScVal> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ScVal]> for ScVec {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[ScVal] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ScVal] {
+        self.0 .0
+    }
+}
+
+// ScMap is an XDR Typedef defines as:
+//
+//   typedef SCMapEntry SCMap<SCVAL_LIMIT>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScMap(pub VecM<ScMapEntry, 256000>);
+
+impl From<ScMap> for VecM<ScMapEntry, 256000> {
+    #[must_use]
+    fn from(x: ScMap) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<ScMapEntry, 256000>> for ScMap {
+    #[must_use]
+    fn from(x: VecM<ScMapEntry, 256000>) -> Self {
+        ScMap(x)
+    }
+}
+
+impl AsRef<VecM<ScMapEntry, 256000>> for ScMap {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<ScMapEntry, 256000> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScMap {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = VecM::<ScMapEntry, 256000>::read_xdr(r)?;
+        let v = ScMap(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScMap {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for ScMap {
+    type Target = VecM<ScMapEntry, 256000>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScMap> for Vec<ScMapEntry> {
+    #[must_use]
+    fn from(x: ScMap) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ScMapEntry>> for ScMap {
+    type Error = Error;
+    fn try_from(x: Vec<ScMapEntry>) -> Result<Self> {
+        Ok(ScMap(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<ScMapEntry>> for ScMap {
+    type Error = Error;
+    fn try_from(x: &Vec<ScMapEntry>) -> Result<Self> {
+        Ok(ScMap(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ScMapEntry>> for ScMap {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<ScMapEntry> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ScMapEntry]> for ScMap {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[ScMapEntry] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ScMapEntry] {
+        self.0 .0
+    }
+}
+
+// ScBytes is an XDR Typedef defines as:
+//
+//   typedef opaque SCBytes<SCVAL_LIMIT>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScBytes(pub BytesM<256000>);
+
+impl From<ScBytes> for BytesM<256000> {
+    #[must_use]
+    fn from(x: ScBytes) -> Self {
+        x.0
+    }
+}
+
+impl From<BytesM<256000>> for ScBytes {
+    #[must_use]
+    fn from(x: BytesM<256000>) -> Self {
+        ScBytes(x)
+    }
+}
+
+impl AsRef<BytesM<256000>> for ScBytes {
+    #[must_use]
+    fn as_ref(&self) -> &BytesM<256000> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScBytes {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = BytesM::<256000>::read_xdr(r)?;
+        let v = ScBytes(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScBytes {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for ScBytes {
+    type Target = BytesM<256000>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScBytes> for Vec<u8> {
+    #[must_use]
+    fn from(x: ScBytes) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for ScBytes {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(ScBytes(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for ScBytes {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(ScBytes(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for ScBytes {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for ScBytes {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
+
+// ScString is an XDR Typedef defines as:
+//
+//   typedef string SCString<SCVAL_LIMIT>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScString(pub StringM<256000>);
+
+impl From<ScString> for StringM<256000> {
+    #[must_use]
+    fn from(x: ScString) -> Self {
+        x.0
+    }
+}
+
+impl From<StringM<256000>> for ScString {
+    #[must_use]
+    fn from(x: StringM<256000>) -> Self {
+        ScString(x)
+    }
+}
+
+impl AsRef<StringM<256000>> for ScString {
+    #[must_use]
+    fn as_ref(&self) -> &StringM<256000> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScString {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = StringM::<256000>::read_xdr(r)?;
+        let v = ScString(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScString {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for ScString {
+    type Target = StringM<256000>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScString> for Vec<u8> {
+    #[must_use]
+    fn from(x: ScString) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for ScString {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(ScString(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for ScString {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(ScString(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for ScString {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for ScString {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
+
+// ScSymbol is an XDR Typedef defines as:
+//
+//   typedef string SCSymbol<SCSYMBOL_LIMIT>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSymbol(pub StringM<32>);
+
+impl From<ScSymbol> for StringM<32> {
+    #[must_use]
+    fn from(x: ScSymbol) -> Self {
+        x.0
+    }
+}
+
+impl From<StringM<32>> for ScSymbol {
+    #[must_use]
+    fn from(x: StringM<32>) -> Self {
+        ScSymbol(x)
+    }
+}
+
+impl AsRef<StringM<32>> for ScSymbol {
+    #[must_use]
+    fn as_ref(&self) -> &StringM<32> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScSymbol {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = StringM::<32>::read_xdr(r)?;
+        let v = ScSymbol(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScSymbol {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for ScSymbol {
+    type Target = StringM<32>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScSymbol> for Vec<u8> {
+    #[must_use]
+    fn from(x: ScSymbol) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for ScSymbol {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(ScSymbol(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for ScSymbol {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(ScSymbol(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for ScSymbol {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for ScSymbol {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
+
+// ScNonceKey is an XDR Struct defines as:
+//
+//   struct SCNonceKey {
+//        SCAddress nonce_address;
 //    };
 //
-// union with discriminant ScObjectType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScNonceKey {
+    pub nonce_address: ScAddress,
+}
+
+impl ReadXdr for ScNonceKey {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            nonce_address: ScAddress::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScNonceKey {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.nonce_address.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScVal is an XDR Union defines as:
+//
+//   union SCVal switch (SCValType type)
+//    {
+//
+//    case SCV_BOOL:
+//        bool b;
+//    case SCV_VOID:
+//        void;
+//    case SCV_STATUS:
+//        SCStatus error;
+//
+//    case SCV_U32:
+//        uint32 u32;
+//    case SCV_I32:
+//        int32 i32;
+//
+//    case SCV_U64:
+//        uint64 u64;
+//    case SCV_I64:
+//        int64 i64;
+//    case SCV_TIMEPOINT:
+//        TimePoint timepoint;
+//    case SCV_DURATION:
+//        Duration duration;
+//
+//    case SCV_U128:
+//        Int128Parts u128;
+//    case SCV_I128:
+//        Int128Parts i128;
+//
+//    case SCV_U256:
+//        uint256 u256;
+//    case SCV_I256:
+//        uint256 i256;
+//
+//    case SCV_BYTES:
+//        SCBytes bytes;
+//    case SCV_STRING:
+//        SCString str;
+//    case SCV_SYMBOL:
+//        SCSymbol sym;
+//
+//    // Vec and Map are recursive so need to live
+//    // behind an option, due to xdrpp limitations.
+//    case SCV_VEC:
+//        SCVec *vec;
+//    case SCV_MAP:
+//        SCMap *map;
+//
+//    case SCV_CONTRACT_EXECUTABLE:
+//        SCContractExecutable exec;
+//    case SCV_ADDRESS:
+//        SCAddress address;
+//
+//    // Special SCVals reserved for system-constructed contract-data
+//    // ledger keys, not generally usable elsewhere.
+//    case SCV_LEDGER_KEY_CONTRACT_EXECUTABLE:
+//        void;
+//    case SCV_LEDGER_KEY_NONCE:
+//        SCNonceKey nonce_key;
+//    };
+//
+// union with discriminant ScValType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7472,122 +7513,196 @@ impl WriteXdr for ScAddress {
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
-pub enum ScObject {
-    Vec(ScVec),
-    Map(ScMap),
+pub enum ScVal {
+    Bool(bool),
+    Void,
+    Status(ScStatus),
+    U32(u32),
+    I32(i32),
     U64(u64),
     I64(i64),
+    Timepoint(TimePoint),
+    Duration(Duration),
     U128(Int128Parts),
     I128(Int128Parts),
-    Bytes(BytesM<256000>),
-    ContractCode(ScContractCode),
+    U256(Uint256),
+    I256(Uint256),
+    Bytes(ScBytes),
+    String(ScString),
+    Symbol(ScSymbol),
+    Vec(Option<ScVec>),
+    Map(Option<ScMap>),
+    ContractExecutable(ScContractExecutable),
     Address(ScAddress),
-    NonceKey(ScAddress),
+    LedgerKeyContractExecutable,
+    LedgerKeyNonce(ScNonceKey),
 }
 
-impl ScObject {
-    pub const VARIANTS: [ScObjectType; 10] = [
-        ScObjectType::Vec,
-        ScObjectType::Map,
-        ScObjectType::U64,
-        ScObjectType::I64,
-        ScObjectType::U128,
-        ScObjectType::I128,
-        ScObjectType::Bytes,
-        ScObjectType::ContractCode,
-        ScObjectType::Address,
-        ScObjectType::NonceKey,
+impl ScVal {
+    pub const VARIANTS: [ScValType; 22] = [
+        ScValType::Bool,
+        ScValType::Void,
+        ScValType::Status,
+        ScValType::U32,
+        ScValType::I32,
+        ScValType::U64,
+        ScValType::I64,
+        ScValType::Timepoint,
+        ScValType::Duration,
+        ScValType::U128,
+        ScValType::I128,
+        ScValType::U256,
+        ScValType::I256,
+        ScValType::Bytes,
+        ScValType::String,
+        ScValType::Symbol,
+        ScValType::Vec,
+        ScValType::Map,
+        ScValType::ContractExecutable,
+        ScValType::Address,
+        ScValType::LedgerKeyContractExecutable,
+        ScValType::LedgerKeyNonce,
     ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
-        "Vec",
-        "Map",
+    pub const VARIANTS_STR: [&'static str; 22] = [
+        "Bool",
+        "Void",
+        "Status",
+        "U32",
+        "I32",
         "U64",
         "I64",
+        "Timepoint",
+        "Duration",
         "U128",
         "I128",
+        "U256",
+        "I256",
         "Bytes",
-        "ContractCode",
+        "String",
+        "Symbol",
+        "Vec",
+        "Map",
+        "ContractExecutable",
         "Address",
-        "NonceKey",
+        "LedgerKeyContractExecutable",
+        "LedgerKeyNonce",
     ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::Vec(_) => "Vec",
-            Self::Map(_) => "Map",
+            Self::Bool(_) => "Bool",
+            Self::Void => "Void",
+            Self::Status(_) => "Status",
+            Self::U32(_) => "U32",
+            Self::I32(_) => "I32",
             Self::U64(_) => "U64",
             Self::I64(_) => "I64",
+            Self::Timepoint(_) => "Timepoint",
+            Self::Duration(_) => "Duration",
             Self::U128(_) => "U128",
             Self::I128(_) => "I128",
+            Self::U256(_) => "U256",
+            Self::I256(_) => "I256",
             Self::Bytes(_) => "Bytes",
-            Self::ContractCode(_) => "ContractCode",
+            Self::String(_) => "String",
+            Self::Symbol(_) => "Symbol",
+            Self::Vec(_) => "Vec",
+            Self::Map(_) => "Map",
+            Self::ContractExecutable(_) => "ContractExecutable",
             Self::Address(_) => "Address",
-            Self::NonceKey(_) => "NonceKey",
+            Self::LedgerKeyContractExecutable => "LedgerKeyContractExecutable",
+            Self::LedgerKeyNonce(_) => "LedgerKeyNonce",
         }
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> ScObjectType {
+    pub const fn discriminant(&self) -> ScValType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Vec(_) => ScObjectType::Vec,
-            Self::Map(_) => ScObjectType::Map,
-            Self::U64(_) => ScObjectType::U64,
-            Self::I64(_) => ScObjectType::I64,
-            Self::U128(_) => ScObjectType::U128,
-            Self::I128(_) => ScObjectType::I128,
-            Self::Bytes(_) => ScObjectType::Bytes,
-            Self::ContractCode(_) => ScObjectType::ContractCode,
-            Self::Address(_) => ScObjectType::Address,
-            Self::NonceKey(_) => ScObjectType::NonceKey,
+            Self::Bool(_) => ScValType::Bool,
+            Self::Void => ScValType::Void,
+            Self::Status(_) => ScValType::Status,
+            Self::U32(_) => ScValType::U32,
+            Self::I32(_) => ScValType::I32,
+            Self::U64(_) => ScValType::U64,
+            Self::I64(_) => ScValType::I64,
+            Self::Timepoint(_) => ScValType::Timepoint,
+            Self::Duration(_) => ScValType::Duration,
+            Self::U128(_) => ScValType::U128,
+            Self::I128(_) => ScValType::I128,
+            Self::U256(_) => ScValType::U256,
+            Self::I256(_) => ScValType::I256,
+            Self::Bytes(_) => ScValType::Bytes,
+            Self::String(_) => ScValType::String,
+            Self::Symbol(_) => ScValType::Symbol,
+            Self::Vec(_) => ScValType::Vec,
+            Self::Map(_) => ScValType::Map,
+            Self::ContractExecutable(_) => ScValType::ContractExecutable,
+            Self::Address(_) => ScValType::Address,
+            Self::LedgerKeyContractExecutable => ScValType::LedgerKeyContractExecutable,
+            Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScObjectType; 10] {
+    pub const fn variants() -> [ScValType; 22] {
         Self::VARIANTS
     }
 }
 
-impl Name for ScObject {
+impl Name for ScVal {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Discriminant<ScObjectType> for ScObject {
+impl Discriminant<ScValType> for ScVal {
     #[must_use]
-    fn discriminant(&self) -> ScObjectType {
+    fn discriminant(&self) -> ScValType {
         Self::discriminant(self)
     }
 }
 
-impl Variants<ScObjectType> for ScObject {
-    fn variants() -> slice::Iter<'static, ScObjectType> {
+impl Variants<ScValType> for ScVal {
+    fn variants() -> slice::Iter<'static, ScValType> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<ScObjectType> for ScObject {}
+impl Union<ScValType> for ScVal {}
 
-impl ReadXdr for ScObject {
+impl ReadXdr for ScVal {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ScObjectType = <ScObjectType as ReadXdr>::read_xdr(r)?;
+        let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            ScObjectType::Vec => Self::Vec(ScVec::read_xdr(r)?),
-            ScObjectType::Map => Self::Map(ScMap::read_xdr(r)?),
-            ScObjectType::U64 => Self::U64(u64::read_xdr(r)?),
-            ScObjectType::I64 => Self::I64(i64::read_xdr(r)?),
-            ScObjectType::U128 => Self::U128(Int128Parts::read_xdr(r)?),
-            ScObjectType::I128 => Self::I128(Int128Parts::read_xdr(r)?),
-            ScObjectType::Bytes => Self::Bytes(BytesM::<256000>::read_xdr(r)?),
-            ScObjectType::ContractCode => Self::ContractCode(ScContractCode::read_xdr(r)?),
-            ScObjectType::Address => Self::Address(ScAddress::read_xdr(r)?),
-            ScObjectType::NonceKey => Self::NonceKey(ScAddress::read_xdr(r)?),
+            ScValType::Bool => Self::Bool(bool::read_xdr(r)?),
+            ScValType::Void => Self::Void,
+            ScValType::Status => Self::Status(ScStatus::read_xdr(r)?),
+            ScValType::U32 => Self::U32(u32::read_xdr(r)?),
+            ScValType::I32 => Self::I32(i32::read_xdr(r)?),
+            ScValType::U64 => Self::U64(u64::read_xdr(r)?),
+            ScValType::I64 => Self::I64(i64::read_xdr(r)?),
+            ScValType::Timepoint => Self::Timepoint(TimePoint::read_xdr(r)?),
+            ScValType::Duration => Self::Duration(Duration::read_xdr(r)?),
+            ScValType::U128 => Self::U128(Int128Parts::read_xdr(r)?),
+            ScValType::I128 => Self::I128(Int128Parts::read_xdr(r)?),
+            ScValType::U256 => Self::U256(Uint256::read_xdr(r)?),
+            ScValType::I256 => Self::I256(Uint256::read_xdr(r)?),
+            ScValType::Bytes => Self::Bytes(ScBytes::read_xdr(r)?),
+            ScValType::String => Self::String(ScString::read_xdr(r)?),
+            ScValType::Symbol => Self::Symbol(ScSymbol::read_xdr(r)?),
+            ScValType::Vec => Self::Vec(Option::<ScVec>::read_xdr(r)?),
+            ScValType::Map => Self::Map(Option::<ScMap>::read_xdr(r)?),
+            ScValType::ContractExecutable => {
+                Self::ContractExecutable(ScContractExecutable::read_xdr(r)?)
+            }
+            ScValType::Address => Self::Address(ScAddress::read_xdr(r)?),
+            ScValType::LedgerKeyContractExecutable => Self::LedgerKeyContractExecutable,
+            ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -7595,23 +7710,74 @@ impl ReadXdr for ScObject {
     }
 }
 
-impl WriteXdr for ScObject {
+impl WriteXdr for ScVal {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Vec(v) => v.write_xdr(w)?,
-            Self::Map(v) => v.write_xdr(w)?,
+            Self::Bool(v) => v.write_xdr(w)?,
+            Self::Void => ().write_xdr(w)?,
+            Self::Status(v) => v.write_xdr(w)?,
+            Self::U32(v) => v.write_xdr(w)?,
+            Self::I32(v) => v.write_xdr(w)?,
             Self::U64(v) => v.write_xdr(w)?,
             Self::I64(v) => v.write_xdr(w)?,
+            Self::Timepoint(v) => v.write_xdr(w)?,
+            Self::Duration(v) => v.write_xdr(w)?,
             Self::U128(v) => v.write_xdr(w)?,
             Self::I128(v) => v.write_xdr(w)?,
+            Self::U256(v) => v.write_xdr(w)?,
+            Self::I256(v) => v.write_xdr(w)?,
             Self::Bytes(v) => v.write_xdr(w)?,
-            Self::ContractCode(v) => v.write_xdr(w)?,
+            Self::String(v) => v.write_xdr(w)?,
+            Self::Symbol(v) => v.write_xdr(w)?,
+            Self::Vec(v) => v.write_xdr(w)?,
+            Self::Map(v) => v.write_xdr(w)?,
+            Self::ContractExecutable(v) => v.write_xdr(w)?,
             Self::Address(v) => v.write_xdr(w)?,
-            Self::NonceKey(v) => v.write_xdr(w)?,
+            Self::LedgerKeyContractExecutable => ().write_xdr(w)?,
+            Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
         };
+        Ok(())
+    }
+}
+
+// ScMapEntry is an XDR Struct defines as:
+//
+//   struct SCMapEntry
+//    {
+//        SCVal key;
+//        SCVal val;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScMapEntry {
+    pub key: ScVal,
+    pub val: ScVal,
+}
+
+impl ReadXdr for ScMapEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            key: ScVal::read_xdr(r)?,
+            val: ScVal::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScMapEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.key.write_xdr(w)?;
+        self.val.write_xdr(w)?;
         Ok(())
     }
 }
@@ -8261,108 +8427,6 @@ impl ReadXdr for SequenceNumber {
 }
 
 impl WriteXdr for SequenceNumber {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
-
-// TimePoint is an XDR Typedef defines as:
-//
-//   typedef uint64 TimePoint;
-//
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct TimePoint(pub u64);
-
-impl From<TimePoint> for u64 {
-    #[must_use]
-    fn from(x: TimePoint) -> Self {
-        x.0
-    }
-}
-
-impl From<u64> for TimePoint {
-    #[must_use]
-    fn from(x: u64) -> Self {
-        TimePoint(x)
-    }
-}
-
-impl AsRef<u64> for TimePoint {
-    #[must_use]
-    fn as_ref(&self) -> &u64 {
-        &self.0
-    }
-}
-
-impl ReadXdr for TimePoint {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = u64::read_xdr(r)?;
-        let v = TimePoint(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for TimePoint {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
-    }
-}
-
-// Duration is an XDR Typedef defines as:
-//
-//   typedef uint64 Duration;
-//
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct Duration(pub u64);
-
-impl From<Duration> for u64 {
-    #[must_use]
-    fn from(x: Duration) -> Self {
-        x.0
-    }
-}
-
-impl From<u64> for Duration {
-    #[must_use]
-    fn from(x: u64) -> Self {
-        Duration(x)
-    }
-}
-
-impl AsRef<u64> for Duration {
-    #[must_use]
-    fn as_ref(&self) -> &u64 {
-        &self.0
-    }
-}
-
-impl ReadXdr for Duration {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = u64::read_xdr(r)?;
-        let v = Duration(i);
-        Ok(v)
-    }
-}
-
-impl WriteXdr for Duration {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.0.write_xdr(w)
@@ -12978,202 +13042,11 @@ impl WriteXdr for ContractCodeEntry {
     }
 }
 
-// ConfigSettingType is an XDR Enum defines as:
-//
-//   enum ConfigSettingType
-//    {
-//        CONFIG_SETTING_TYPE_UINT32 = 0
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[repr(i32)]
-pub enum ConfigSettingType {
-    ConfigSettingTypeUint32 = 0,
-}
-
-impl ConfigSettingType {
-    pub const VARIANTS: [ConfigSettingType; 1] = [ConfigSettingType::ConfigSettingTypeUint32];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingTypeUint32"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::ConfigSettingTypeUint32 => "ConfigSettingTypeUint32",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ConfigSettingType; 1] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ConfigSettingType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ConfigSettingType> for ConfigSettingType {
-    fn variants() -> slice::Iter<'static, ConfigSettingType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ConfigSettingType {}
-
-impl fmt::Display for ConfigSettingType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ConfigSettingType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ConfigSettingType::ConfigSettingTypeUint32,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ConfigSettingType> for i32 {
-    #[must_use]
-    fn from(e: ConfigSettingType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ConfigSettingType {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ConfigSettingType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// ConfigSetting is an XDR Union defines as:
-//
-//   union ConfigSetting switch (ConfigSettingType type)
-//    {
-//    case CONFIG_SETTING_TYPE_UINT32:
-//        uint32 uint32Val;
-//    };
-//
-// union with discriminant ConfigSettingType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum ConfigSetting {
-    ConfigSettingTypeUint32(u32),
-}
-
-impl ConfigSetting {
-    pub const VARIANTS: [ConfigSettingType; 1] = [ConfigSettingType::ConfigSettingTypeUint32];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingTypeUint32"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::ConfigSettingTypeUint32(_) => "ConfigSettingTypeUint32",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ConfigSettingType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::ConfigSettingTypeUint32(_) => ConfigSettingType::ConfigSettingTypeUint32,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ConfigSettingType; 1] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ConfigSetting {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ConfigSettingType> for ConfigSetting {
-    #[must_use]
-    fn discriminant(&self) -> ConfigSettingType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ConfigSettingType> for ConfigSetting {
-    fn variants() -> slice::Iter<'static, ConfigSettingType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ConfigSettingType> for ConfigSetting {}
-
-impl ReadXdr for ConfigSetting {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ConfigSettingType = <ConfigSettingType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ConfigSettingType::ConfigSettingTypeUint32 => {
-                Self::ConfigSettingTypeUint32(u32::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ConfigSetting {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::ConfigSettingTypeUint32(v) => v.write_xdr(w)?,
-        };
-        Ok(())
-    }
-}
-
 // ConfigSettingId is an XDR Enum defines as:
 //
 //   enum ConfigSettingID
 //    {
-//        CONFIG_SETTING_CONTRACT_MAX_SIZE = 0
+//        CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0
 //    };
 //
 // enum
@@ -13186,17 +13059,17 @@ impl WriteXdr for ConfigSetting {
 )]
 #[repr(i32)]
 pub enum ConfigSettingId {
-    ConfigSettingContractMaxSize = 0,
+    ConfigSettingContractMaxSizeBytes = 0,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 1] = [ConfigSettingId::ConfigSettingContractMaxSize];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingContractMaxSize"];
+    pub const VARIANTS: [ConfigSettingId; 1] = [ConfigSettingId::ConfigSettingContractMaxSizeBytes];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingContractMaxSizeBytes"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::ConfigSettingContractMaxSize => "ConfigSettingContractMaxSize",
+            Self::ConfigSettingContractMaxSizeBytes => "ConfigSettingContractMaxSizeBytes",
         }
     }
 
@@ -13232,7 +13105,7 @@ impl TryFrom<i32> for ConfigSettingId {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ConfigSettingId::ConfigSettingContractMaxSize,
+            0 => ConfigSettingId::ConfigSettingContractMaxSizeBytes,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13264,15 +13137,15 @@ impl WriteXdr for ConfigSettingId {
     }
 }
 
-// ConfigSettingEntryExt is an XDR NestedUnion defines as:
+// ConfigSettingEntry is an XDR Union defines as:
 //
-//   union switch (int v)
-//        {
-//        case 0:
-//            void;
-//        }
+//   union ConfigSettingEntry switch (ConfigSettingID configSettingID)
+//    {
+//    case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES:
+//        uint32 contractMaxSizeBytes;
+//    };
 //
-// union with discriminant i32
+// union with discriminant ConfigSettingId
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -13281,64 +13154,68 @@ impl WriteXdr for ConfigSettingId {
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
-pub enum ConfigSettingEntryExt {
-    V0,
+pub enum ConfigSettingEntry {
+    ConfigSettingContractMaxSizeBytes(u32),
 }
 
-impl ConfigSettingEntryExt {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+impl ConfigSettingEntry {
+    pub const VARIANTS: [ConfigSettingId; 1] = [ConfigSettingId::ConfigSettingContractMaxSizeBytes];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingContractMaxSizeBytes"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::V0 => "V0",
+            Self::ConfigSettingContractMaxSizeBytes(_) => "ConfigSettingContractMaxSizeBytes",
         }
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> i32 {
+    pub const fn discriminant(&self) -> ConfigSettingId {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::V0 => 0,
+            Self::ConfigSettingContractMaxSizeBytes(_) => {
+                ConfigSettingId::ConfigSettingContractMaxSizeBytes
+            }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> [ConfigSettingId; 1] {
         Self::VARIANTS
     }
 }
 
-impl Name for ConfigSettingEntryExt {
+impl Name for ConfigSettingEntry {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Discriminant<i32> for ConfigSettingEntryExt {
+impl Discriminant<ConfigSettingId> for ConfigSettingEntry {
     #[must_use]
-    fn discriminant(&self) -> i32 {
+    fn discriminant(&self) -> ConfigSettingId {
         Self::discriminant(self)
     }
 }
 
-impl Variants<i32> for ConfigSettingEntryExt {
-    fn variants() -> slice::Iter<'static, i32> {
+impl Variants<ConfigSettingId> for ConfigSettingEntry {
+    fn variants() -> slice::Iter<'static, ConfigSettingId> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<i32> for ConfigSettingEntryExt {}
+impl Union<ConfigSettingId> for ConfigSettingEntry {}
 
-impl ReadXdr for ConfigSettingEntryExt {
+impl ReadXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+        let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            0 => Self::V0,
+            ConfigSettingId::ConfigSettingContractMaxSizeBytes => {
+                Self::ConfigSettingContractMaxSizeBytes(u32::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13346,63 +13223,14 @@ impl ReadXdr for ConfigSettingEntryExt {
     }
 }
 
-impl WriteXdr for ConfigSettingEntryExt {
+impl WriteXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::V0 => ().write_xdr(w)?,
+            Self::ConfigSettingContractMaxSizeBytes(v) => v.write_xdr(w)?,
         };
-        Ok(())
-    }
-}
-
-// ConfigSettingEntry is an XDR Struct defines as:
-//
-//   struct ConfigSettingEntry
-//    {
-//        union switch (int v)
-//        {
-//        case 0:
-//            void;
-//        }
-//        ext;
-//
-//        ConfigSettingID configSettingID;
-//        ConfigSetting setting;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ConfigSettingEntry {
-    pub ext: ConfigSettingEntryExt,
-    pub config_setting_id: ConfigSettingId,
-    pub setting: ConfigSetting,
-}
-
-impl ReadXdr for ConfigSettingEntry {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ext: ConfigSettingEntryExt::read_xdr(r)?,
-            config_setting_id: ConfigSettingId::read_xdr(r)?,
-            setting: ConfigSetting::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ConfigSettingEntry {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ext.write_xdr(w)?;
-        self.config_setting_id.write_xdr(w)?;
-        self.setting.write_xdr(w)?;
         Ok(())
     }
 }
@@ -15640,13 +15468,12 @@ impl WriteXdr for LedgerUpgradeType {
     }
 }
 
-// LedgerUpgradeConfigSetting is an XDR NestedStruct defines as:
+// ConfigUpgradeSetKey is an XDR Struct defines as:
 //
-//   struct
-//        {
-//            ConfigSettingID id; // id to update
-//            ConfigSetting setting; // new value
-//        }
+//   struct ConfigUpgradeSetKey {
+//        Hash contractID;
+//        Hash contentHash;
+//    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
@@ -15655,26 +15482,26 @@ impl WriteXdr for LedgerUpgradeType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct LedgerUpgradeConfigSetting {
-    pub id: ConfigSettingId,
-    pub setting: ConfigSetting,
+pub struct ConfigUpgradeSetKey {
+    pub contract_id: Hash,
+    pub content_hash: Hash,
 }
 
-impl ReadXdr for LedgerUpgradeConfigSetting {
+impl ReadXdr for ConfigUpgradeSetKey {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            id: ConfigSettingId::read_xdr(r)?,
-            setting: ConfigSetting::read_xdr(r)?,
+            contract_id: Hash::read_xdr(r)?,
+            content_hash: Hash::read_xdr(r)?,
         })
     }
 }
 
-impl WriteXdr for LedgerUpgradeConfigSetting {
+impl WriteXdr for ConfigUpgradeSetKey {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.id.write_xdr(w)?;
-        self.setting.write_xdr(w)?;
+        self.contract_id.write_xdr(w)?;
+        self.content_hash.write_xdr(w)?;
         Ok(())
     }
 }
@@ -15694,11 +15521,7 @@ impl WriteXdr for LedgerUpgradeConfigSetting {
 //    case LEDGER_UPGRADE_FLAGS:
 //        uint32 newFlags; // update flags
 //    case LEDGER_UPGRADE_CONFIG:
-//        struct
-//        {
-//            ConfigSettingID id; // id to update
-//            ConfigSetting setting; // new value
-//        } configSetting;
+//        ConfigUpgradeSetKey newConfig;
 //    };
 //
 // union with discriminant LedgerUpgradeType
@@ -15716,7 +15539,7 @@ pub enum LedgerUpgrade {
     MaxTxSetSize(u32),
     BaseReserve(u32),
     Flags(u32),
-    Config(LedgerUpgradeConfigSetting),
+    Config(ConfigUpgradeSetKey),
 }
 
 impl LedgerUpgrade {
@@ -15801,7 +15624,7 @@ impl ReadXdr for LedgerUpgrade {
             LedgerUpgradeType::MaxTxSetSize => Self::MaxTxSetSize(u32::read_xdr(r)?),
             LedgerUpgradeType::BaseReserve => Self::BaseReserve(u32::read_xdr(r)?),
             LedgerUpgradeType::Flags => Self::Flags(u32::read_xdr(r)?),
-            LedgerUpgradeType::Config => Self::Config(LedgerUpgradeConfigSetting::read_xdr(r)?),
+            LedgerUpgradeType::Config => Self::Config(ConfigUpgradeSetKey::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -15822,6 +15645,40 @@ impl WriteXdr for LedgerUpgrade {
             Self::Flags(v) => v.write_xdr(w)?,
             Self::Config(v) => v.write_xdr(w)?,
         };
+        Ok(())
+    }
+}
+
+// ConfigUpgradeSet is an XDR Struct defines as:
+//
+//   struct ConfigUpgradeSet {
+//        ConfigSettingEntry updatedEntry<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigUpgradeSet {
+    pub updated_entry: VecM<ConfigSettingEntry>,
+}
+
+impl ReadXdr for ConfigUpgradeSet {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            updated_entry: VecM::<ConfigSettingEntry>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigUpgradeSet {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.updated_entry.write_xdr(w)?;
         Ok(())
     }
 }
@@ -18074,7 +17931,8 @@ impl WriteXdr for TransactionMetaV2 {
 //   enum ContractEventType
 //    {
 //        SYSTEM = 0,
-//        CONTRACT = 1
+//        CONTRACT = 1,
+//        DIAGNOSTIC = 2
 //    };
 //
 // enum
@@ -18089,23 +17947,28 @@ impl WriteXdr for TransactionMetaV2 {
 pub enum ContractEventType {
     System = 0,
     Contract = 1,
+    Diagnostic = 2,
 }
 
 impl ContractEventType {
-    pub const VARIANTS: [ContractEventType; 2] =
-        [ContractEventType::System, ContractEventType::Contract];
-    pub const VARIANTS_STR: [&'static str; 2] = ["System", "Contract"];
+    pub const VARIANTS: [ContractEventType; 3] = [
+        ContractEventType::System,
+        ContractEventType::Contract,
+        ContractEventType::Diagnostic,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["System", "Contract", "Diagnostic"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::System => "System",
             Self::Contract => "Contract",
+            Self::Diagnostic => "Diagnostic",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractEventType; 2] {
+    pub const fn variants() -> [ContractEventType; 3] {
         Self::VARIANTS
     }
 }
@@ -18138,6 +18001,7 @@ impl TryFrom<i32> for ContractEventType {
         let e = match i {
             0 => ContractEventType::System,
             1 => ContractEventType::Contract,
+            2 => ContractEventType::Diagnostic,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -18366,6 +18230,80 @@ impl WriteXdr for ContractEvent {
     }
 }
 
+// DiagnosticEvent is an XDR Struct defines as:
+//
+//   struct DiagnosticEvent
+//    {
+//        bool inSuccessfulContractCall;
+//        ContractEvent event;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct DiagnosticEvent {
+    pub in_successful_contract_call: bool,
+    pub event: ContractEvent,
+}
+
+impl ReadXdr for DiagnosticEvent {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            in_successful_contract_call: bool::read_xdr(r)?,
+            event: ContractEvent::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for DiagnosticEvent {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.in_successful_contract_call.write_xdr(w)?;
+        self.event.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// OperationDiagnosticEvents is an XDR Struct defines as:
+//
+//   struct OperationDiagnosticEvents
+//    {
+//        DiagnosticEvent events<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct OperationDiagnosticEvents {
+    pub events: VecM<DiagnosticEvent>,
+}
+
+impl ReadXdr for OperationDiagnosticEvents {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            events: VecM::<DiagnosticEvent>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for OperationDiagnosticEvents {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.events.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // OperationEvents is an XDR Struct defines as:
 //
 //   struct OperationEvents
@@ -18416,6 +18354,11 @@ impl WriteXdr for OperationEvents {
 //
 //        Hash hashes[3];                     // stores sha256(txChangesBefore, operations, txChangesAfter),
 //                                            // sha256(events), and sha256(txResult)
+//
+//        // Diagnostics events that are not hashed. One list per operation.
+//        // This will contain all contract and diagnostic events. Even ones
+//        // that were emitted in a failed contract call.
+//        OperationDiagnosticEvents diagnosticEvents<>;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -18432,6 +18375,7 @@ pub struct TransactionMetaV3 {
     pub events: VecM<OperationEvents>,
     pub tx_result: TransactionResult,
     pub hashes: [Hash; 3],
+    pub diagnostic_events: VecM<OperationDiagnosticEvents>,
 }
 
 impl ReadXdr for TransactionMetaV3 {
@@ -18444,6 +18388,7 @@ impl ReadXdr for TransactionMetaV3 {
             events: VecM::<OperationEvents>::read_xdr(r)?,
             tx_result: TransactionResult::read_xdr(r)?,
             hashes: <[Hash; 3]>::read_xdr(r)?,
+            diagnostic_events: VecM::<OperationDiagnosticEvents>::read_xdr(r)?,
         })
     }
 }
@@ -18457,6 +18402,7 @@ impl WriteXdr for TransactionMetaV3 {
         self.events.write_xdr(w)?;
         self.tx_result.write_xdr(w)?;
         self.hashes.write_xdr(w)?;
+        self.diagnostic_events.write_xdr(w)?;
         Ok(())
     }
 }
@@ -23797,7 +23743,7 @@ impl WriteXdr for ContractId {
 //   struct CreateContractArgs
 //    {
 //        ContractID contractID;
-//        SCContractCode source;
+//        SCContractExecutable source;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -23809,7 +23755,7 @@ impl WriteXdr for ContractId {
 )]
 pub struct CreateContractArgs {
     pub contract_id: ContractId,
-    pub source: ScContractCode,
+    pub source: ScContractExecutable,
 }
 
 impl ReadXdr for CreateContractArgs {
@@ -23817,7 +23763,7 @@ impl ReadXdr for CreateContractArgs {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             contract_id: ContractId::read_xdr(r)?,
-            source: ScContractCode::read_xdr(r)?,
+            source: ScContractExecutable::read_xdr(r)?,
         })
     }
 }
@@ -24827,7 +24773,7 @@ impl WriteXdr for HashIdPreimageSourceAccountContractId {
 //   struct
 //        {
 //            Hash networkID;
-//            SCContractCode source;
+//            SCContractExecutable source;
 //            uint256 salt;
 //        }
 //
@@ -24840,7 +24786,7 @@ impl WriteXdr for HashIdPreimageSourceAccountContractId {
 )]
 pub struct HashIdPreimageCreateContractArgs {
     pub network_id: Hash,
-    pub source: ScContractCode,
+    pub source: ScContractExecutable,
     pub salt: Uint256,
 }
 
@@ -24849,7 +24795,7 @@ impl ReadXdr for HashIdPreimageCreateContractArgs {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             network_id: Hash::read_xdr(r)?,
-            source: ScContractCode::read_xdr(r)?,
+            source: ScContractExecutable::read_xdr(r)?,
             salt: Uint256::read_xdr(r)?,
         })
     }
@@ -24959,7 +24905,7 @@ impl WriteXdr for HashIdPreimageContractAuth {
 //        struct
 //        {
 //            Hash networkID;
-//            SCContractCode source;
+//            SCContractExecutable source;
 //            uint256 salt;
 //        } createContractArgs;
 //    case ENVELOPE_TYPE_CONTRACT_AUTH:
@@ -36368,6 +36314,108 @@ pub type Uint64 = u64;
 //
 pub type Int64 = i64;
 
+// TimePoint is an XDR Typedef defines as:
+//
+//   typedef uint64 TimePoint;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct TimePoint(pub u64);
+
+impl From<TimePoint> for u64 {
+    #[must_use]
+    fn from(x: TimePoint) -> Self {
+        x.0
+    }
+}
+
+impl From<u64> for TimePoint {
+    #[must_use]
+    fn from(x: u64) -> Self {
+        TimePoint(x)
+    }
+}
+
+impl AsRef<u64> for TimePoint {
+    #[must_use]
+    fn as_ref(&self) -> &u64 {
+        &self.0
+    }
+}
+
+impl ReadXdr for TimePoint {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = u64::read_xdr(r)?;
+        let v = TimePoint(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for TimePoint {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+// Duration is an XDR Typedef defines as:
+//
+//   typedef uint64 Duration;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct Duration(pub u64);
+
+impl From<Duration> for u64 {
+    #[must_use]
+    fn from(x: Duration) -> Self {
+        x.0
+    }
+}
+
+impl From<u64> for Duration {
+    #[must_use]
+    fn from(x: u64) -> Self {
+        Duration(x)
+    }
+}
+
+impl AsRef<u64> for Duration {
+    #[must_use]
+    fn as_ref(&self) -> &u64 {
+        &self.0
+    }
+}
+
+impl ReadXdr for Duration {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = u64::read_xdr(r)?;
+        let v = Duration(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for Duration {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
 // ExtensionPoint is an XDR Union defines as:
 //
 //   union ExtensionPoint switch (int v)
@@ -37565,9 +37613,7 @@ pub enum TypeVariant {
     ScSpecFunctionV0,
     ScSpecEntryKind,
     ScSpecEntry,
-    ScSymbol,
     ScValType,
-    ScStatic,
     ScStatusType,
     ScHostValErrorCode,
     ScHostObjErrorCode,
@@ -37578,17 +37624,19 @@ pub enum TypeVariant {
     ScVmErrorCode,
     ScUnknownErrorCode,
     ScStatus,
-    ScVal,
-    ScObjectType,
-    ScMapEntry,
-    ScVec,
-    ScMap,
-    ScContractCodeType,
-    ScContractCode,
     Int128Parts,
+    ScContractExecutableType,
+    ScContractExecutable,
     ScAddressType,
     ScAddress,
-    ScObject,
+    ScVec,
+    ScMap,
+    ScBytes,
+    ScString,
+    ScSymbol,
+    ScNonceKey,
+    ScVal,
+    ScMapEntry,
     StoredTransactionSet,
     PersistedScpStateV0,
     PersistedScpStateV1,
@@ -37597,8 +37645,6 @@ pub enum TypeVariant {
     String32,
     String64,
     SequenceNumber,
-    TimePoint,
-    Duration,
     DataValue,
     PoolId,
     AssetCode4,
@@ -37654,11 +37700,8 @@ pub enum TypeVariant {
     LiquidityPoolEntryConstantProduct,
     ContractDataEntry,
     ContractCodeEntry,
-    ConfigSettingType,
-    ConfigSetting,
     ConfigSettingId,
     ConfigSettingEntry,
-    ConfigSettingEntryExt,
     LedgerEntryExtensionV1,
     LedgerEntryExtensionV1Ext,
     LedgerEntry,
@@ -37686,8 +37729,9 @@ pub enum TypeVariant {
     LedgerHeader,
     LedgerHeaderExt,
     LedgerUpgradeType,
+    ConfigUpgradeSetKey,
     LedgerUpgrade,
-    LedgerUpgradeConfigSetting,
+    ConfigUpgradeSet,
     BucketEntryType,
     BucketMetadata,
     BucketMetadataExt,
@@ -37724,6 +37768,8 @@ pub enum TypeVariant {
     ContractEvent,
     ContractEventBody,
     ContractEventV0,
+    DiagnosticEvent,
+    OperationDiagnosticEvents,
     OperationEvents,
     TransactionMetaV3,
     TransactionMeta,
@@ -37914,6 +37960,8 @@ pub enum TypeVariant {
     Int32,
     Uint64,
     Int64,
+    TimePoint,
+    Duration,
     ExtensionPoint,
     CryptoKeyType,
     PublicKeyType,
@@ -37971,9 +38019,7 @@ impl TypeVariant {
         TypeVariant::ScSpecFunctionV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
-        TypeVariant::ScSymbol,
         TypeVariant::ScValType,
-        TypeVariant::ScStatic,
         TypeVariant::ScStatusType,
         TypeVariant::ScHostValErrorCode,
         TypeVariant::ScHostObjErrorCode,
@@ -37984,17 +38030,19 @@ impl TypeVariant {
         TypeVariant::ScVmErrorCode,
         TypeVariant::ScUnknownErrorCode,
         TypeVariant::ScStatus,
-        TypeVariant::ScVal,
-        TypeVariant::ScObjectType,
-        TypeVariant::ScMapEntry,
-        TypeVariant::ScVec,
-        TypeVariant::ScMap,
-        TypeVariant::ScContractCodeType,
-        TypeVariant::ScContractCode,
         TypeVariant::Int128Parts,
+        TypeVariant::ScContractExecutableType,
+        TypeVariant::ScContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::ScAddress,
-        TypeVariant::ScObject,
+        TypeVariant::ScVec,
+        TypeVariant::ScMap,
+        TypeVariant::ScBytes,
+        TypeVariant::ScString,
+        TypeVariant::ScSymbol,
+        TypeVariant::ScNonceKey,
+        TypeVariant::ScVal,
+        TypeVariant::ScMapEntry,
         TypeVariant::StoredTransactionSet,
         TypeVariant::PersistedScpStateV0,
         TypeVariant::PersistedScpStateV1,
@@ -38003,8 +38051,6 @@ impl TypeVariant {
         TypeVariant::String32,
         TypeVariant::String64,
         TypeVariant::SequenceNumber,
-        TypeVariant::TimePoint,
-        TypeVariant::Duration,
         TypeVariant::DataValue,
         TypeVariant::PoolId,
         TypeVariant::AssetCode4,
@@ -38060,11 +38106,8 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolEntryConstantProduct,
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractCodeEntry,
-        TypeVariant::ConfigSettingType,
-        TypeVariant::ConfigSetting,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
-        TypeVariant::ConfigSettingEntryExt,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -38092,8 +38135,9 @@ impl TypeVariant {
         TypeVariant::LedgerHeader,
         TypeVariant::LedgerHeaderExt,
         TypeVariant::LedgerUpgradeType,
+        TypeVariant::ConfigUpgradeSetKey,
         TypeVariant::LedgerUpgrade,
-        TypeVariant::LedgerUpgradeConfigSetting,
+        TypeVariant::ConfigUpgradeSet,
         TypeVariant::BucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
@@ -38130,6 +38174,8 @@ impl TypeVariant {
         TypeVariant::ContractEvent,
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
+        TypeVariant::DiagnosticEvent,
+        TypeVariant::OperationDiagnosticEvents,
         TypeVariant::OperationEvents,
         TypeVariant::TransactionMetaV3,
         TypeVariant::TransactionMeta,
@@ -38320,6 +38366,8 @@ impl TypeVariant {
         TypeVariant::Int32,
         TypeVariant::Uint64,
         TypeVariant::Int64,
+        TypeVariant::TimePoint,
+        TypeVariant::Duration,
         TypeVariant::ExtensionPoint,
         TypeVariant::CryptoKeyType,
         TypeVariant::PublicKeyType,
@@ -38375,9 +38423,7 @@ impl TypeVariant {
         "ScSpecFunctionV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
-        "ScSymbol",
         "ScValType",
-        "ScStatic",
         "ScStatusType",
         "ScHostValErrorCode",
         "ScHostObjErrorCode",
@@ -38388,17 +38434,19 @@ impl TypeVariant {
         "ScVmErrorCode",
         "ScUnknownErrorCode",
         "ScStatus",
-        "ScVal",
-        "ScObjectType",
-        "ScMapEntry",
-        "ScVec",
-        "ScMap",
-        "ScContractCodeType",
-        "ScContractCode",
         "Int128Parts",
+        "ScContractExecutableType",
+        "ScContractExecutable",
         "ScAddressType",
         "ScAddress",
-        "ScObject",
+        "ScVec",
+        "ScMap",
+        "ScBytes",
+        "ScString",
+        "ScSymbol",
+        "ScNonceKey",
+        "ScVal",
+        "ScMapEntry",
         "StoredTransactionSet",
         "PersistedScpStateV0",
         "PersistedScpStateV1",
@@ -38407,8 +38455,6 @@ impl TypeVariant {
         "String32",
         "String64",
         "SequenceNumber",
-        "TimePoint",
-        "Duration",
         "DataValue",
         "PoolId",
         "AssetCode4",
@@ -38464,11 +38510,8 @@ impl TypeVariant {
         "LiquidityPoolEntryConstantProduct",
         "ContractDataEntry",
         "ContractCodeEntry",
-        "ConfigSettingType",
-        "ConfigSetting",
         "ConfigSettingId",
         "ConfigSettingEntry",
-        "ConfigSettingEntryExt",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -38496,8 +38539,9 @@ impl TypeVariant {
         "LedgerHeader",
         "LedgerHeaderExt",
         "LedgerUpgradeType",
+        "ConfigUpgradeSetKey",
         "LedgerUpgrade",
-        "LedgerUpgradeConfigSetting",
+        "ConfigUpgradeSet",
         "BucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
@@ -38534,6 +38578,8 @@ impl TypeVariant {
         "ContractEvent",
         "ContractEventBody",
         "ContractEventV0",
+        "DiagnosticEvent",
+        "OperationDiagnosticEvents",
         "OperationEvents",
         "TransactionMetaV3",
         "TransactionMeta",
@@ -38724,6 +38770,8 @@ impl TypeVariant {
         "Int32",
         "Uint64",
         "Int64",
+        "TimePoint",
+        "Duration",
         "ExtensionPoint",
         "CryptoKeyType",
         "PublicKeyType",
@@ -38783,9 +38831,7 @@ impl TypeVariant {
             Self::ScSpecFunctionV0 => "ScSpecFunctionV0",
             Self::ScSpecEntryKind => "ScSpecEntryKind",
             Self::ScSpecEntry => "ScSpecEntry",
-            Self::ScSymbol => "ScSymbol",
             Self::ScValType => "ScValType",
-            Self::ScStatic => "ScStatic",
             Self::ScStatusType => "ScStatusType",
             Self::ScHostValErrorCode => "ScHostValErrorCode",
             Self::ScHostObjErrorCode => "ScHostObjErrorCode",
@@ -38796,17 +38842,19 @@ impl TypeVariant {
             Self::ScVmErrorCode => "ScVmErrorCode",
             Self::ScUnknownErrorCode => "ScUnknownErrorCode",
             Self::ScStatus => "ScStatus",
-            Self::ScVal => "ScVal",
-            Self::ScObjectType => "ScObjectType",
-            Self::ScMapEntry => "ScMapEntry",
-            Self::ScVec => "ScVec",
-            Self::ScMap => "ScMap",
-            Self::ScContractCodeType => "ScContractCodeType",
-            Self::ScContractCode => "ScContractCode",
             Self::Int128Parts => "Int128Parts",
+            Self::ScContractExecutableType => "ScContractExecutableType",
+            Self::ScContractExecutable => "ScContractExecutable",
             Self::ScAddressType => "ScAddressType",
             Self::ScAddress => "ScAddress",
-            Self::ScObject => "ScObject",
+            Self::ScVec => "ScVec",
+            Self::ScMap => "ScMap",
+            Self::ScBytes => "ScBytes",
+            Self::ScString => "ScString",
+            Self::ScSymbol => "ScSymbol",
+            Self::ScNonceKey => "ScNonceKey",
+            Self::ScVal => "ScVal",
+            Self::ScMapEntry => "ScMapEntry",
             Self::StoredTransactionSet => "StoredTransactionSet",
             Self::PersistedScpStateV0 => "PersistedScpStateV0",
             Self::PersistedScpStateV1 => "PersistedScpStateV1",
@@ -38815,8 +38863,6 @@ impl TypeVariant {
             Self::String32 => "String32",
             Self::String64 => "String64",
             Self::SequenceNumber => "SequenceNumber",
-            Self::TimePoint => "TimePoint",
-            Self::Duration => "Duration",
             Self::DataValue => "DataValue",
             Self::PoolId => "PoolId",
             Self::AssetCode4 => "AssetCode4",
@@ -38874,11 +38920,8 @@ impl TypeVariant {
             Self::LiquidityPoolEntryConstantProduct => "LiquidityPoolEntryConstantProduct",
             Self::ContractDataEntry => "ContractDataEntry",
             Self::ContractCodeEntry => "ContractCodeEntry",
-            Self::ConfigSettingType => "ConfigSettingType",
-            Self::ConfigSetting => "ConfigSetting",
             Self::ConfigSettingId => "ConfigSettingId",
             Self::ConfigSettingEntry => "ConfigSettingEntry",
-            Self::ConfigSettingEntryExt => "ConfigSettingEntryExt",
             Self::LedgerEntryExtensionV1 => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry => "LedgerEntry",
@@ -38906,8 +38949,9 @@ impl TypeVariant {
             Self::LedgerHeader => "LedgerHeader",
             Self::LedgerHeaderExt => "LedgerHeaderExt",
             Self::LedgerUpgradeType => "LedgerUpgradeType",
+            Self::ConfigUpgradeSetKey => "ConfigUpgradeSetKey",
             Self::LedgerUpgrade => "LedgerUpgrade",
-            Self::LedgerUpgradeConfigSetting => "LedgerUpgradeConfigSetting",
+            Self::ConfigUpgradeSet => "ConfigUpgradeSet",
             Self::BucketEntryType => "BucketEntryType",
             Self::BucketMetadata => "BucketMetadata",
             Self::BucketMetadataExt => "BucketMetadataExt",
@@ -38944,6 +38988,8 @@ impl TypeVariant {
             Self::ContractEvent => "ContractEvent",
             Self::ContractEventBody => "ContractEventBody",
             Self::ContractEventV0 => "ContractEventV0",
+            Self::DiagnosticEvent => "DiagnosticEvent",
+            Self::OperationDiagnosticEvents => "OperationDiagnosticEvents",
             Self::OperationEvents => "OperationEvents",
             Self::TransactionMetaV3 => "TransactionMetaV3",
             Self::TransactionMeta => "TransactionMeta",
@@ -39138,6 +39184,8 @@ impl TypeVariant {
             Self::Int32 => "Int32",
             Self::Uint64 => "Uint64",
             Self::Int64 => "Int64",
+            Self::TimePoint => "TimePoint",
+            Self::Duration => "Duration",
             Self::ExtensionPoint => "ExtensionPoint",
             Self::CryptoKeyType => "CryptoKeyType",
             Self::PublicKeyType => "PublicKeyType",
@@ -39219,9 +39267,7 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecFunctionV0" => Ok(Self::ScSpecFunctionV0),
             "ScSpecEntryKind" => Ok(Self::ScSpecEntryKind),
             "ScSpecEntry" => Ok(Self::ScSpecEntry),
-            "ScSymbol" => Ok(Self::ScSymbol),
             "ScValType" => Ok(Self::ScValType),
-            "ScStatic" => Ok(Self::ScStatic),
             "ScStatusType" => Ok(Self::ScStatusType),
             "ScHostValErrorCode" => Ok(Self::ScHostValErrorCode),
             "ScHostObjErrorCode" => Ok(Self::ScHostObjErrorCode),
@@ -39232,17 +39278,19 @@ impl core::str::FromStr for TypeVariant {
             "ScVmErrorCode" => Ok(Self::ScVmErrorCode),
             "ScUnknownErrorCode" => Ok(Self::ScUnknownErrorCode),
             "ScStatus" => Ok(Self::ScStatus),
-            "ScVal" => Ok(Self::ScVal),
-            "ScObjectType" => Ok(Self::ScObjectType),
-            "ScMapEntry" => Ok(Self::ScMapEntry),
-            "ScVec" => Ok(Self::ScVec),
-            "ScMap" => Ok(Self::ScMap),
-            "ScContractCodeType" => Ok(Self::ScContractCodeType),
-            "ScContractCode" => Ok(Self::ScContractCode),
             "Int128Parts" => Ok(Self::Int128Parts),
+            "ScContractExecutableType" => Ok(Self::ScContractExecutableType),
+            "ScContractExecutable" => Ok(Self::ScContractExecutable),
             "ScAddressType" => Ok(Self::ScAddressType),
             "ScAddress" => Ok(Self::ScAddress),
-            "ScObject" => Ok(Self::ScObject),
+            "ScVec" => Ok(Self::ScVec),
+            "ScMap" => Ok(Self::ScMap),
+            "ScBytes" => Ok(Self::ScBytes),
+            "ScString" => Ok(Self::ScString),
+            "ScSymbol" => Ok(Self::ScSymbol),
+            "ScNonceKey" => Ok(Self::ScNonceKey),
+            "ScVal" => Ok(Self::ScVal),
+            "ScMapEntry" => Ok(Self::ScMapEntry),
             "StoredTransactionSet" => Ok(Self::StoredTransactionSet),
             "PersistedScpStateV0" => Ok(Self::PersistedScpStateV0),
             "PersistedScpStateV1" => Ok(Self::PersistedScpStateV1),
@@ -39251,8 +39299,6 @@ impl core::str::FromStr for TypeVariant {
             "String32" => Ok(Self::String32),
             "String64" => Ok(Self::String64),
             "SequenceNumber" => Ok(Self::SequenceNumber),
-            "TimePoint" => Ok(Self::TimePoint),
-            "Duration" => Ok(Self::Duration),
             "DataValue" => Ok(Self::DataValue),
             "PoolId" => Ok(Self::PoolId),
             "AssetCode4" => Ok(Self::AssetCode4),
@@ -39310,11 +39356,8 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolEntryConstantProduct" => Ok(Self::LiquidityPoolEntryConstantProduct),
             "ContractDataEntry" => Ok(Self::ContractDataEntry),
             "ContractCodeEntry" => Ok(Self::ContractCodeEntry),
-            "ConfigSettingType" => Ok(Self::ConfigSettingType),
-            "ConfigSetting" => Ok(Self::ConfigSetting),
             "ConfigSettingId" => Ok(Self::ConfigSettingId),
             "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
-            "ConfigSettingEntryExt" => Ok(Self::ConfigSettingEntryExt),
             "LedgerEntryExtensionV1" => Ok(Self::LedgerEntryExtensionV1),
             "LedgerEntryExtensionV1Ext" => Ok(Self::LedgerEntryExtensionV1Ext),
             "LedgerEntry" => Ok(Self::LedgerEntry),
@@ -39342,8 +39385,9 @@ impl core::str::FromStr for TypeVariant {
             "LedgerHeader" => Ok(Self::LedgerHeader),
             "LedgerHeaderExt" => Ok(Self::LedgerHeaderExt),
             "LedgerUpgradeType" => Ok(Self::LedgerUpgradeType),
+            "ConfigUpgradeSetKey" => Ok(Self::ConfigUpgradeSetKey),
             "LedgerUpgrade" => Ok(Self::LedgerUpgrade),
-            "LedgerUpgradeConfigSetting" => Ok(Self::LedgerUpgradeConfigSetting),
+            "ConfigUpgradeSet" => Ok(Self::ConfigUpgradeSet),
             "BucketEntryType" => Ok(Self::BucketEntryType),
             "BucketMetadata" => Ok(Self::BucketMetadata),
             "BucketMetadataExt" => Ok(Self::BucketMetadataExt),
@@ -39380,6 +39424,8 @@ impl core::str::FromStr for TypeVariant {
             "ContractEvent" => Ok(Self::ContractEvent),
             "ContractEventBody" => Ok(Self::ContractEventBody),
             "ContractEventV0" => Ok(Self::ContractEventV0),
+            "DiagnosticEvent" => Ok(Self::DiagnosticEvent),
+            "OperationDiagnosticEvents" => Ok(Self::OperationDiagnosticEvents),
             "OperationEvents" => Ok(Self::OperationEvents),
             "TransactionMetaV3" => Ok(Self::TransactionMetaV3),
             "TransactionMeta" => Ok(Self::TransactionMeta),
@@ -39580,6 +39626,8 @@ impl core::str::FromStr for TypeVariant {
             "Int32" => Ok(Self::Int32),
             "Uint64" => Ok(Self::Uint64),
             "Int64" => Ok(Self::Int64),
+            "TimePoint" => Ok(Self::TimePoint),
+            "Duration" => Ok(Self::Duration),
             "ExtensionPoint" => Ok(Self::ExtensionPoint),
             "CryptoKeyType" => Ok(Self::CryptoKeyType),
             "PublicKeyType" => Ok(Self::PublicKeyType),
@@ -39646,9 +39694,7 @@ pub enum Type {
     ScSpecFunctionV0(Box<ScSpecFunctionV0>),
     ScSpecEntryKind(Box<ScSpecEntryKind>),
     ScSpecEntry(Box<ScSpecEntry>),
-    ScSymbol(Box<ScSymbol>),
     ScValType(Box<ScValType>),
-    ScStatic(Box<ScStatic>),
     ScStatusType(Box<ScStatusType>),
     ScHostValErrorCode(Box<ScHostValErrorCode>),
     ScHostObjErrorCode(Box<ScHostObjErrorCode>),
@@ -39659,17 +39705,19 @@ pub enum Type {
     ScVmErrorCode(Box<ScVmErrorCode>),
     ScUnknownErrorCode(Box<ScUnknownErrorCode>),
     ScStatus(Box<ScStatus>),
-    ScVal(Box<ScVal>),
-    ScObjectType(Box<ScObjectType>),
-    ScMapEntry(Box<ScMapEntry>),
-    ScVec(Box<ScVec>),
-    ScMap(Box<ScMap>),
-    ScContractCodeType(Box<ScContractCodeType>),
-    ScContractCode(Box<ScContractCode>),
     Int128Parts(Box<Int128Parts>),
+    ScContractExecutableType(Box<ScContractExecutableType>),
+    ScContractExecutable(Box<ScContractExecutable>),
     ScAddressType(Box<ScAddressType>),
     ScAddress(Box<ScAddress>),
-    ScObject(Box<ScObject>),
+    ScVec(Box<ScVec>),
+    ScMap(Box<ScMap>),
+    ScBytes(Box<ScBytes>),
+    ScString(Box<ScString>),
+    ScSymbol(Box<ScSymbol>),
+    ScNonceKey(Box<ScNonceKey>),
+    ScVal(Box<ScVal>),
+    ScMapEntry(Box<ScMapEntry>),
     StoredTransactionSet(Box<StoredTransactionSet>),
     PersistedScpStateV0(Box<PersistedScpStateV0>),
     PersistedScpStateV1(Box<PersistedScpStateV1>),
@@ -39678,8 +39726,6 @@ pub enum Type {
     String32(Box<String32>),
     String64(Box<String64>),
     SequenceNumber(Box<SequenceNumber>),
-    TimePoint(Box<TimePoint>),
-    Duration(Box<Duration>),
     DataValue(Box<DataValue>),
     PoolId(Box<PoolId>),
     AssetCode4(Box<AssetCode4>),
@@ -39735,11 +39781,8 @@ pub enum Type {
     LiquidityPoolEntryConstantProduct(Box<LiquidityPoolEntryConstantProduct>),
     ContractDataEntry(Box<ContractDataEntry>),
     ContractCodeEntry(Box<ContractCodeEntry>),
-    ConfigSettingType(Box<ConfigSettingType>),
-    ConfigSetting(Box<ConfigSetting>),
     ConfigSettingId(Box<ConfigSettingId>),
     ConfigSettingEntry(Box<ConfigSettingEntry>),
-    ConfigSettingEntryExt(Box<ConfigSettingEntryExt>),
     LedgerEntryExtensionV1(Box<LedgerEntryExtensionV1>),
     LedgerEntryExtensionV1Ext(Box<LedgerEntryExtensionV1Ext>),
     LedgerEntry(Box<LedgerEntry>),
@@ -39767,8 +39810,9 @@ pub enum Type {
     LedgerHeader(Box<LedgerHeader>),
     LedgerHeaderExt(Box<LedgerHeaderExt>),
     LedgerUpgradeType(Box<LedgerUpgradeType>),
+    ConfigUpgradeSetKey(Box<ConfigUpgradeSetKey>),
     LedgerUpgrade(Box<LedgerUpgrade>),
-    LedgerUpgradeConfigSetting(Box<LedgerUpgradeConfigSetting>),
+    ConfigUpgradeSet(Box<ConfigUpgradeSet>),
     BucketEntryType(Box<BucketEntryType>),
     BucketMetadata(Box<BucketMetadata>),
     BucketMetadataExt(Box<BucketMetadataExt>),
@@ -39805,6 +39849,8 @@ pub enum Type {
     ContractEvent(Box<ContractEvent>),
     ContractEventBody(Box<ContractEventBody>),
     ContractEventV0(Box<ContractEventV0>),
+    DiagnosticEvent(Box<DiagnosticEvent>),
+    OperationDiagnosticEvents(Box<OperationDiagnosticEvents>),
     OperationEvents(Box<OperationEvents>),
     TransactionMetaV3(Box<TransactionMetaV3>),
     TransactionMeta(Box<TransactionMeta>),
@@ -39995,6 +40041,8 @@ pub enum Type {
     Int32(Box<Int32>),
     Uint64(Box<Uint64>),
     Int64(Box<Int64>),
+    TimePoint(Box<TimePoint>),
+    Duration(Box<Duration>),
     ExtensionPoint(Box<ExtensionPoint>),
     CryptoKeyType(Box<CryptoKeyType>),
     PublicKeyType(Box<PublicKeyType>),
@@ -40052,9 +40100,7 @@ impl Type {
         TypeVariant::ScSpecFunctionV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
-        TypeVariant::ScSymbol,
         TypeVariant::ScValType,
-        TypeVariant::ScStatic,
         TypeVariant::ScStatusType,
         TypeVariant::ScHostValErrorCode,
         TypeVariant::ScHostObjErrorCode,
@@ -40065,17 +40111,19 @@ impl Type {
         TypeVariant::ScVmErrorCode,
         TypeVariant::ScUnknownErrorCode,
         TypeVariant::ScStatus,
-        TypeVariant::ScVal,
-        TypeVariant::ScObjectType,
-        TypeVariant::ScMapEntry,
-        TypeVariant::ScVec,
-        TypeVariant::ScMap,
-        TypeVariant::ScContractCodeType,
-        TypeVariant::ScContractCode,
         TypeVariant::Int128Parts,
+        TypeVariant::ScContractExecutableType,
+        TypeVariant::ScContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::ScAddress,
-        TypeVariant::ScObject,
+        TypeVariant::ScVec,
+        TypeVariant::ScMap,
+        TypeVariant::ScBytes,
+        TypeVariant::ScString,
+        TypeVariant::ScSymbol,
+        TypeVariant::ScNonceKey,
+        TypeVariant::ScVal,
+        TypeVariant::ScMapEntry,
         TypeVariant::StoredTransactionSet,
         TypeVariant::PersistedScpStateV0,
         TypeVariant::PersistedScpStateV1,
@@ -40084,8 +40132,6 @@ impl Type {
         TypeVariant::String32,
         TypeVariant::String64,
         TypeVariant::SequenceNumber,
-        TypeVariant::TimePoint,
-        TypeVariant::Duration,
         TypeVariant::DataValue,
         TypeVariant::PoolId,
         TypeVariant::AssetCode4,
@@ -40141,11 +40187,8 @@ impl Type {
         TypeVariant::LiquidityPoolEntryConstantProduct,
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractCodeEntry,
-        TypeVariant::ConfigSettingType,
-        TypeVariant::ConfigSetting,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
-        TypeVariant::ConfigSettingEntryExt,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -40173,8 +40216,9 @@ impl Type {
         TypeVariant::LedgerHeader,
         TypeVariant::LedgerHeaderExt,
         TypeVariant::LedgerUpgradeType,
+        TypeVariant::ConfigUpgradeSetKey,
         TypeVariant::LedgerUpgrade,
-        TypeVariant::LedgerUpgradeConfigSetting,
+        TypeVariant::ConfigUpgradeSet,
         TypeVariant::BucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
@@ -40211,6 +40255,8 @@ impl Type {
         TypeVariant::ContractEvent,
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
+        TypeVariant::DiagnosticEvent,
+        TypeVariant::OperationDiagnosticEvents,
         TypeVariant::OperationEvents,
         TypeVariant::TransactionMetaV3,
         TypeVariant::TransactionMeta,
@@ -40401,6 +40447,8 @@ impl Type {
         TypeVariant::Int32,
         TypeVariant::Uint64,
         TypeVariant::Int64,
+        TypeVariant::TimePoint,
+        TypeVariant::Duration,
         TypeVariant::ExtensionPoint,
         TypeVariant::CryptoKeyType,
         TypeVariant::PublicKeyType,
@@ -40456,9 +40504,7 @@ impl Type {
         "ScSpecFunctionV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
-        "ScSymbol",
         "ScValType",
-        "ScStatic",
         "ScStatusType",
         "ScHostValErrorCode",
         "ScHostObjErrorCode",
@@ -40469,17 +40515,19 @@ impl Type {
         "ScVmErrorCode",
         "ScUnknownErrorCode",
         "ScStatus",
-        "ScVal",
-        "ScObjectType",
-        "ScMapEntry",
-        "ScVec",
-        "ScMap",
-        "ScContractCodeType",
-        "ScContractCode",
         "Int128Parts",
+        "ScContractExecutableType",
+        "ScContractExecutable",
         "ScAddressType",
         "ScAddress",
-        "ScObject",
+        "ScVec",
+        "ScMap",
+        "ScBytes",
+        "ScString",
+        "ScSymbol",
+        "ScNonceKey",
+        "ScVal",
+        "ScMapEntry",
         "StoredTransactionSet",
         "PersistedScpStateV0",
         "PersistedScpStateV1",
@@ -40488,8 +40536,6 @@ impl Type {
         "String32",
         "String64",
         "SequenceNumber",
-        "TimePoint",
-        "Duration",
         "DataValue",
         "PoolId",
         "AssetCode4",
@@ -40545,11 +40591,8 @@ impl Type {
         "LiquidityPoolEntryConstantProduct",
         "ContractDataEntry",
         "ContractCodeEntry",
-        "ConfigSettingType",
-        "ConfigSetting",
         "ConfigSettingId",
         "ConfigSettingEntry",
-        "ConfigSettingEntryExt",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -40577,8 +40620,9 @@ impl Type {
         "LedgerHeader",
         "LedgerHeaderExt",
         "LedgerUpgradeType",
+        "ConfigUpgradeSetKey",
         "LedgerUpgrade",
-        "LedgerUpgradeConfigSetting",
+        "ConfigUpgradeSet",
         "BucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
@@ -40615,6 +40659,8 @@ impl Type {
         "ContractEvent",
         "ContractEventBody",
         "ContractEventV0",
+        "DiagnosticEvent",
+        "OperationDiagnosticEvents",
         "OperationEvents",
         "TransactionMetaV3",
         "TransactionMeta",
@@ -40805,6 +40851,8 @@ impl Type {
         "Int32",
         "Uint64",
         "Int64",
+        "TimePoint",
+        "Duration",
         "ExtensionPoint",
         "CryptoKeyType",
         "PublicKeyType",
@@ -40930,9 +40978,7 @@ impl Type {
                 ScSpecEntryKind::read_xdr(r)?,
             ))),
             TypeVariant::ScSpecEntry => Ok(Self::ScSpecEntry(Box::new(ScSpecEntry::read_xdr(r)?))),
-            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(ScSymbol::read_xdr(r)?))),
             TypeVariant::ScValType => Ok(Self::ScValType(Box::new(ScValType::read_xdr(r)?))),
-            TypeVariant::ScStatic => Ok(Self::ScStatic(Box::new(ScStatic::read_xdr(r)?))),
             TypeVariant::ScStatusType => {
                 Ok(Self::ScStatusType(Box::new(ScStatusType::read_xdr(r)?)))
             }
@@ -40961,25 +41007,25 @@ impl Type {
                 ScUnknownErrorCode::read_xdr(r)?,
             ))),
             TypeVariant::ScStatus => Ok(Self::ScStatus(Box::new(ScStatus::read_xdr(r)?))),
-            TypeVariant::ScVal => Ok(Self::ScVal(Box::new(ScVal::read_xdr(r)?))),
-            TypeVariant::ScObjectType => {
-                Ok(Self::ScObjectType(Box::new(ScObjectType::read_xdr(r)?)))
-            }
-            TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(ScMapEntry::read_xdr(r)?))),
-            TypeVariant::ScVec => Ok(Self::ScVec(Box::new(ScVec::read_xdr(r)?))),
-            TypeVariant::ScMap => Ok(Self::ScMap(Box::new(ScMap::read_xdr(r)?))),
-            TypeVariant::ScContractCodeType => Ok(Self::ScContractCodeType(Box::new(
-                ScContractCodeType::read_xdr(r)?,
-            ))),
-            TypeVariant::ScContractCode => {
-                Ok(Self::ScContractCode(Box::new(ScContractCode::read_xdr(r)?)))
-            }
             TypeVariant::Int128Parts => Ok(Self::Int128Parts(Box::new(Int128Parts::read_xdr(r)?))),
+            TypeVariant::ScContractExecutableType => Ok(Self::ScContractExecutableType(Box::new(
+                ScContractExecutableType::read_xdr(r)?,
+            ))),
+            TypeVariant::ScContractExecutable => Ok(Self::ScContractExecutable(Box::new(
+                ScContractExecutable::read_xdr(r)?,
+            ))),
             TypeVariant::ScAddressType => {
                 Ok(Self::ScAddressType(Box::new(ScAddressType::read_xdr(r)?)))
             }
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(ScAddress::read_xdr(r)?))),
-            TypeVariant::ScObject => Ok(Self::ScObject(Box::new(ScObject::read_xdr(r)?))),
+            TypeVariant::ScVec => Ok(Self::ScVec(Box::new(ScVec::read_xdr(r)?))),
+            TypeVariant::ScMap => Ok(Self::ScMap(Box::new(ScMap::read_xdr(r)?))),
+            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(ScBytes::read_xdr(r)?))),
+            TypeVariant::ScString => Ok(Self::ScString(Box::new(ScString::read_xdr(r)?))),
+            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(ScSymbol::read_xdr(r)?))),
+            TypeVariant::ScNonceKey => Ok(Self::ScNonceKey(Box::new(ScNonceKey::read_xdr(r)?))),
+            TypeVariant::ScVal => Ok(Self::ScVal(Box::new(ScVal::read_xdr(r)?))),
+            TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(ScMapEntry::read_xdr(r)?))),
             TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
                 StoredTransactionSet::read_xdr(r)?,
             ))),
@@ -40998,8 +41044,6 @@ impl Type {
             TypeVariant::SequenceNumber => {
                 Ok(Self::SequenceNumber(Box::new(SequenceNumber::read_xdr(r)?)))
             }
-            TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(TimePoint::read_xdr(r)?))),
-            TypeVariant::Duration => Ok(Self::Duration(Box::new(Duration::read_xdr(r)?))),
             TypeVariant::DataValue => Ok(Self::DataValue(Box::new(DataValue::read_xdr(r)?))),
             TypeVariant::PoolId => Ok(Self::PoolId(Box::new(PoolId::read_xdr(r)?))),
             TypeVariant::AssetCode4 => Ok(Self::AssetCode4(Box::new(AssetCode4::read_xdr(r)?))),
@@ -41141,20 +41185,11 @@ impl Type {
             TypeVariant::ContractCodeEntry => Ok(Self::ContractCodeEntry(Box::new(
                 ContractCodeEntry::read_xdr(r)?,
             ))),
-            TypeVariant::ConfigSettingType => Ok(Self::ConfigSettingType(Box::new(
-                ConfigSettingType::read_xdr(r)?,
-            ))),
-            TypeVariant::ConfigSetting => {
-                Ok(Self::ConfigSetting(Box::new(ConfigSetting::read_xdr(r)?)))
-            }
             TypeVariant::ConfigSettingId => Ok(Self::ConfigSettingId(Box::new(
                 ConfigSettingId::read_xdr(r)?,
             ))),
             TypeVariant::ConfigSettingEntry => Ok(Self::ConfigSettingEntry(Box::new(
                 ConfigSettingEntry::read_xdr(r)?,
-            ))),
-            TypeVariant::ConfigSettingEntryExt => Ok(Self::ConfigSettingEntryExt(Box::new(
-                ConfigSettingEntryExt::read_xdr(r)?,
             ))),
             TypeVariant::LedgerEntryExtensionV1 => Ok(Self::LedgerEntryExtensionV1(Box::new(
                 LedgerEntryExtensionV1::read_xdr(r)?,
@@ -41231,12 +41266,15 @@ impl Type {
             TypeVariant::LedgerUpgradeType => Ok(Self::LedgerUpgradeType(Box::new(
                 LedgerUpgradeType::read_xdr(r)?,
             ))),
+            TypeVariant::ConfigUpgradeSetKey => Ok(Self::ConfigUpgradeSetKey(Box::new(
+                ConfigUpgradeSetKey::read_xdr(r)?,
+            ))),
             TypeVariant::LedgerUpgrade => {
                 Ok(Self::LedgerUpgrade(Box::new(LedgerUpgrade::read_xdr(r)?)))
             }
-            TypeVariant::LedgerUpgradeConfigSetting => Ok(Self::LedgerUpgradeConfigSetting(
-                Box::new(LedgerUpgradeConfigSetting::read_xdr(r)?),
-            )),
+            TypeVariant::ConfigUpgradeSet => Ok(Self::ConfigUpgradeSet(Box::new(
+                ConfigUpgradeSet::read_xdr(r)?,
+            ))),
             TypeVariant::BucketEntryType => Ok(Self::BucketEntryType(Box::new(
                 BucketEntryType::read_xdr(r)?,
             ))),
@@ -41351,6 +41389,12 @@ impl Type {
             TypeVariant::ContractEventV0 => Ok(Self::ContractEventV0(Box::new(
                 ContractEventV0::read_xdr(r)?,
             ))),
+            TypeVariant::DiagnosticEvent => Ok(Self::DiagnosticEvent(Box::new(
+                DiagnosticEvent::read_xdr(r)?,
+            ))),
+            TypeVariant::OperationDiagnosticEvents => Ok(Self::OperationDiagnosticEvents(
+                Box::new(OperationDiagnosticEvents::read_xdr(r)?),
+            )),
             TypeVariant::OperationEvents => Ok(Self::OperationEvents(Box::new(
                 OperationEvents::read_xdr(r)?,
             ))),
@@ -41907,6 +41951,8 @@ impl Type {
             TypeVariant::Int32 => Ok(Self::Int32(Box::new(Int32::read_xdr(r)?))),
             TypeVariant::Uint64 => Ok(Self::Uint64(Box::new(Uint64::read_xdr(r)?))),
             TypeVariant::Int64 => Ok(Self::Int64(Box::new(Int64::read_xdr(r)?))),
+            TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(TimePoint::read_xdr(r)?))),
+            TypeVariant::Duration => Ok(Self::Duration(Box::new(Duration::read_xdr(r)?))),
             TypeVariant::ExtensionPoint => {
                 Ok(Self::ExtensionPoint(Box::new(ExtensionPoint::read_xdr(r)?)))
             }
@@ -42129,15 +42175,9 @@ impl Type {
                 ReadXdrIter::<_, ScSpecEntry>::new(r)
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
             ),
-            TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, ScSymbol>::new(r).map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
-            ),
             TypeVariant::ScValType => Box::new(
                 ReadXdrIter::<_, ScValType>::new(r)
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
-            ),
-            TypeVariant::ScStatic => Box::new(
-                ReadXdrIter::<_, ScStatic>::new(r).map(|r| r.map(|t| Self::ScStatic(Box::new(t)))),
             ),
             TypeVariant::ScStatusType => Box::new(
                 ReadXdrIter::<_, ScStatusType>::new(r)
@@ -42178,34 +42218,17 @@ impl Type {
             TypeVariant::ScStatus => Box::new(
                 ReadXdrIter::<_, ScStatus>::new(r).map(|r| r.map(|t| Self::ScStatus(Box::new(t)))),
             ),
-            TypeVariant::ScVal => Box::new(
-                ReadXdrIter::<_, ScVal>::new(r).map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
-            ),
-            TypeVariant::ScObjectType => Box::new(
-                ReadXdrIter::<_, ScObjectType>::new(r)
-                    .map(|r| r.map(|t| Self::ScObjectType(Box::new(t)))),
-            ),
-            TypeVariant::ScMapEntry => Box::new(
-                ReadXdrIter::<_, ScMapEntry>::new(r)
-                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
-            ),
-            TypeVariant::ScVec => Box::new(
-                ReadXdrIter::<_, ScVec>::new(r).map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
-            ),
-            TypeVariant::ScMap => Box::new(
-                ReadXdrIter::<_, ScMap>::new(r).map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
-            ),
-            TypeVariant::ScContractCodeType => Box::new(
-                ReadXdrIter::<_, ScContractCodeType>::new(r)
-                    .map(|r| r.map(|t| Self::ScContractCodeType(Box::new(t)))),
-            ),
-            TypeVariant::ScContractCode => Box::new(
-                ReadXdrIter::<_, ScContractCode>::new(r)
-                    .map(|r| r.map(|t| Self::ScContractCode(Box::new(t)))),
-            ),
             TypeVariant::Int128Parts => Box::new(
                 ReadXdrIter::<_, Int128Parts>::new(r)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
+            ),
+            TypeVariant::ScContractExecutableType => Box::new(
+                ReadXdrIter::<_, ScContractExecutableType>::new(r)
+                    .map(|r| r.map(|t| Self::ScContractExecutableType(Box::new(t)))),
+            ),
+            TypeVariant::ScContractExecutable => Box::new(
+                ReadXdrIter::<_, ScContractExecutable>::new(r)
+                    .map(|r| r.map(|t| Self::ScContractExecutable(Box::new(t)))),
             ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, ScAddressType>::new(r)
@@ -42215,8 +42238,31 @@ impl Type {
                 ReadXdrIter::<_, ScAddress>::new(r)
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
             ),
-            TypeVariant::ScObject => Box::new(
-                ReadXdrIter::<_, ScObject>::new(r).map(|r| r.map(|t| Self::ScObject(Box::new(t)))),
+            TypeVariant::ScVec => Box::new(
+                ReadXdrIter::<_, ScVec>::new(r).map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
+            ),
+            TypeVariant::ScMap => Box::new(
+                ReadXdrIter::<_, ScMap>::new(r).map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
+            ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, ScBytes>::new(r).map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, ScString>::new(r).map(|r| r.map(|t| Self::ScString(Box::new(t)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, ScSymbol>::new(r).map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
+            ),
+            TypeVariant::ScNonceKey => Box::new(
+                ReadXdrIter::<_, ScNonceKey>::new(r)
+                    .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t)))),
+            ),
+            TypeVariant::ScVal => Box::new(
+                ReadXdrIter::<_, ScVal>::new(r).map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
+            ),
+            TypeVariant::ScMapEntry => Box::new(
+                ReadXdrIter::<_, ScMapEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(r)
@@ -42247,13 +42293,6 @@ impl Type {
             TypeVariant::SequenceNumber => Box::new(
                 ReadXdrIter::<_, SequenceNumber>::new(r)
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t)))),
-            ),
-            TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, TimePoint>::new(r)
-                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
-            ),
-            TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Duration>::new(r).map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
             TypeVariant::DataValue => Box::new(
                 ReadXdrIter::<_, DataValue>::new(r)
@@ -42470,14 +42509,6 @@ impl Type {
                 ReadXdrIter::<_, ContractCodeEntry>::new(r)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
             ),
-            TypeVariant::ConfigSettingType => Box::new(
-                ReadXdrIter::<_, ConfigSettingType>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingType(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSetting => Box::new(
-                ReadXdrIter::<_, ConfigSetting>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSetting(Box::new(t)))),
-            ),
             TypeVariant::ConfigSettingId => Box::new(
                 ReadXdrIter::<_, ConfigSettingId>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
@@ -42485,10 +42516,6 @@ impl Type {
             TypeVariant::ConfigSettingEntry => Box::new(
                 ReadXdrIter::<_, ConfigSettingEntry>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingEntryExt => Box::new(
-                ReadXdrIter::<_, ConfigSettingEntryExt>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(r)
@@ -42598,13 +42625,17 @@ impl Type {
                 ReadXdrIter::<_, LedgerUpgradeType>::new(r)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
             ),
+            TypeVariant::ConfigUpgradeSetKey => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSetKey>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t)))),
+            ),
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, LedgerUpgrade>::new(r)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
             ),
-            TypeVariant::LedgerUpgradeConfigSetting => Box::new(
-                ReadXdrIter::<_, LedgerUpgradeConfigSetting>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerUpgradeConfigSetting(Box::new(t)))),
+            TypeVariant::ConfigUpgradeSet => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSet>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, BucketEntryType>::new(r)
@@ -42749,6 +42780,14 @@ impl Type {
             TypeVariant::ContractEventV0 => Box::new(
                 ReadXdrIter::<_, ContractEventV0>::new(r)
                     .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t)))),
+            ),
+            TypeVariant::DiagnosticEvent => Box::new(
+                ReadXdrIter::<_, DiagnosticEvent>::new(r)
+                    .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
+            ),
+            TypeVariant::OperationDiagnosticEvents => Box::new(
+                ReadXdrIter::<_, OperationDiagnosticEvents>::new(r)
+                    .map(|r| r.map(|t| Self::OperationDiagnosticEvents(Box::new(t)))),
             ),
             TypeVariant::OperationEvents => Box::new(
                 ReadXdrIter::<_, OperationEvents>::new(r)
@@ -43497,6 +43536,13 @@ impl Type {
             TypeVariant::Int64 => Box::new(
                 ReadXdrIter::<_, Int64>::new(r).map(|r| r.map(|t| Self::Int64(Box::new(t)))),
             ),
+            TypeVariant::TimePoint => Box::new(
+                ReadXdrIter::<_, TimePoint>::new(r)
+                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
+            ),
+            TypeVariant::Duration => Box::new(
+                ReadXdrIter::<_, Duration>::new(r).map(|r| r.map(|t| Self::Duration(Box::new(t)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, ExtensionPoint>::new(r)
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
@@ -43718,17 +43764,9 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScSpecEntry>>::new(r)
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t.0)))),
             ),
-            TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, Frame<ScSymbol>>::new(r)
-                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t.0)))),
-            ),
             TypeVariant::ScValType => Box::new(
                 ReadXdrIter::<_, Frame<ScValType>>::new(r)
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t.0)))),
-            ),
-            TypeVariant::ScStatic => Box::new(
-                ReadXdrIter::<_, Frame<ScStatic>>::new(r)
-                    .map(|r| r.map(|t| Self::ScStatic(Box::new(t.0)))),
             ),
             TypeVariant::ScStatusType => Box::new(
                 ReadXdrIter::<_, Frame<ScStatusType>>::new(r)
@@ -43770,37 +43808,17 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScStatus>>::new(r)
                     .map(|r| r.map(|t| Self::ScStatus(Box::new(t.0)))),
             ),
-            TypeVariant::ScVal => Box::new(
-                ReadXdrIter::<_, Frame<ScVal>>::new(r)
-                    .map(|r| r.map(|t| Self::ScVal(Box::new(t.0)))),
-            ),
-            TypeVariant::ScObjectType => Box::new(
-                ReadXdrIter::<_, Frame<ScObjectType>>::new(r)
-                    .map(|r| r.map(|t| Self::ScObjectType(Box::new(t.0)))),
-            ),
-            TypeVariant::ScMapEntry => Box::new(
-                ReadXdrIter::<_, Frame<ScMapEntry>>::new(r)
-                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t.0)))),
-            ),
-            TypeVariant::ScVec => Box::new(
-                ReadXdrIter::<_, Frame<ScVec>>::new(r)
-                    .map(|r| r.map(|t| Self::ScVec(Box::new(t.0)))),
-            ),
-            TypeVariant::ScMap => Box::new(
-                ReadXdrIter::<_, Frame<ScMap>>::new(r)
-                    .map(|r| r.map(|t| Self::ScMap(Box::new(t.0)))),
-            ),
-            TypeVariant::ScContractCodeType => Box::new(
-                ReadXdrIter::<_, Frame<ScContractCodeType>>::new(r)
-                    .map(|r| r.map(|t| Self::ScContractCodeType(Box::new(t.0)))),
-            ),
-            TypeVariant::ScContractCode => Box::new(
-                ReadXdrIter::<_, Frame<ScContractCode>>::new(r)
-                    .map(|r| r.map(|t| Self::ScContractCode(Box::new(t.0)))),
-            ),
             TypeVariant::Int128Parts => Box::new(
                 ReadXdrIter::<_, Frame<Int128Parts>>::new(r)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t.0)))),
+            ),
+            TypeVariant::ScContractExecutableType => Box::new(
+                ReadXdrIter::<_, Frame<ScContractExecutableType>>::new(r)
+                    .map(|r| r.map(|t| Self::ScContractExecutableType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScContractExecutable => Box::new(
+                ReadXdrIter::<_, Frame<ScContractExecutable>>::new(r)
+                    .map(|r| r.map(|t| Self::ScContractExecutable(Box::new(t.0)))),
             ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, Frame<ScAddressType>>::new(r)
@@ -43810,9 +43828,37 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScAddress>>::new(r)
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t.0)))),
             ),
-            TypeVariant::ScObject => Box::new(
-                ReadXdrIter::<_, Frame<ScObject>>::new(r)
-                    .map(|r| r.map(|t| Self::ScObject(Box::new(t.0)))),
+            TypeVariant::ScVec => Box::new(
+                ReadXdrIter::<_, Frame<ScVec>>::new(r)
+                    .map(|r| r.map(|t| Self::ScVec(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMap => Box::new(
+                ReadXdrIter::<_, Frame<ScMap>>::new(r)
+                    .map(|r| r.map(|t| Self::ScMap(Box::new(t.0)))),
+            ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, Frame<ScBytes>>::new(r)
+                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t.0)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, Frame<ScString>>::new(r)
+                    .map(|r| r.map(|t| Self::ScString(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, Frame<ScSymbol>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t.0)))),
+            ),
+            TypeVariant::ScNonceKey => Box::new(
+                ReadXdrIter::<_, Frame<ScNonceKey>>::new(r)
+                    .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t.0)))),
+            ),
+            TypeVariant::ScVal => Box::new(
+                ReadXdrIter::<_, Frame<ScVal>>::new(r)
+                    .map(|r| r.map(|t| Self::ScVal(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMapEntry => Box::new(
+                ReadXdrIter::<_, Frame<ScMapEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t.0)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(r)
@@ -43845,14 +43891,6 @@ impl Type {
             TypeVariant::SequenceNumber => Box::new(
                 ReadXdrIter::<_, Frame<SequenceNumber>>::new(r)
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t.0)))),
-            ),
-            TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, Frame<TimePoint>>::new(r)
-                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t.0)))),
-            ),
-            TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Frame<Duration>>::new(r)
-                    .map(|r| r.map(|t| Self::Duration(Box::new(t.0)))),
             ),
             TypeVariant::DataValue => Box::new(
                 ReadXdrIter::<_, Frame<DataValue>>::new(r)
@@ -44075,14 +44113,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<ContractCodeEntry>>::new(r)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t.0)))),
             ),
-            TypeVariant::ConfigSettingType => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingType>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingType(Box::new(t.0)))),
-            ),
-            TypeVariant::ConfigSetting => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSetting>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSetting(Box::new(t.0)))),
-            ),
             TypeVariant::ConfigSettingId => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingId>>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t.0)))),
@@ -44090,10 +44120,6 @@ impl Type {
             TypeVariant::ConfigSettingEntry => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingEntry>>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t.0)))),
-            ),
-            TypeVariant::ConfigSettingEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingEntryExt>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerEntryExtensionV1>>::new(r)
@@ -44203,13 +44229,17 @@ impl Type {
                 ReadXdrIter::<_, Frame<LedgerUpgradeType>>::new(r)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t.0)))),
             ),
+            TypeVariant::ConfigUpgradeSetKey => Box::new(
+                ReadXdrIter::<_, Frame<ConfigUpgradeSetKey>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t.0)))),
+            ),
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, Frame<LedgerUpgrade>>::new(r)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t.0)))),
             ),
-            TypeVariant::LedgerUpgradeConfigSetting => Box::new(
-                ReadXdrIter::<_, Frame<LedgerUpgradeConfigSetting>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerUpgradeConfigSetting(Box::new(t.0)))),
+            TypeVariant::ConfigUpgradeSet => Box::new(
+                ReadXdrIter::<_, Frame<ConfigUpgradeSet>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t.0)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, Frame<BucketEntryType>>::new(r)
@@ -44354,6 +44384,14 @@ impl Type {
             TypeVariant::ContractEventV0 => Box::new(
                 ReadXdrIter::<_, Frame<ContractEventV0>>::new(r)
                     .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t.0)))),
+            ),
+            TypeVariant::DiagnosticEvent => Box::new(
+                ReadXdrIter::<_, Frame<DiagnosticEvent>>::new(r)
+                    .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t.0)))),
+            ),
+            TypeVariant::OperationDiagnosticEvents => Box::new(
+                ReadXdrIter::<_, Frame<OperationDiagnosticEvents>>::new(r)
+                    .map(|r| r.map(|t| Self::OperationDiagnosticEvents(Box::new(t.0)))),
             ),
             TypeVariant::OperationEvents => Box::new(
                 ReadXdrIter::<_, Frame<OperationEvents>>::new(r)
@@ -45116,6 +45154,14 @@ impl Type {
                 ReadXdrIter::<_, Frame<Int64>>::new(r)
                     .map(|r| r.map(|t| Self::Int64(Box::new(t.0)))),
             ),
+            TypeVariant::TimePoint => Box::new(
+                ReadXdrIter::<_, Frame<TimePoint>>::new(r)
+                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t.0)))),
+            ),
+            TypeVariant::Duration => Box::new(
+                ReadXdrIter::<_, Frame<Duration>>::new(r)
+                    .map(|r| r.map(|t| Self::Duration(Box::new(t.0)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, Frame<ExtensionPoint>>::new(r)
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t.0)))),
@@ -45338,17 +45384,9 @@ impl Type {
                 ReadXdrIter::<_, ScSpecEntry>::new(dec)
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
             ),
-            TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, ScSymbol>::new(dec)
-                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
-            ),
             TypeVariant::ScValType => Box::new(
                 ReadXdrIter::<_, ScValType>::new(dec)
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
-            ),
-            TypeVariant::ScStatic => Box::new(
-                ReadXdrIter::<_, ScStatic>::new(dec)
-                    .map(|r| r.map(|t| Self::ScStatic(Box::new(t)))),
             ),
             TypeVariant::ScStatusType => Box::new(
                 ReadXdrIter::<_, ScStatusType>::new(dec)
@@ -45390,34 +45428,17 @@ impl Type {
                 ReadXdrIter::<_, ScStatus>::new(dec)
                     .map(|r| r.map(|t| Self::ScStatus(Box::new(t)))),
             ),
-            TypeVariant::ScVal => Box::new(
-                ReadXdrIter::<_, ScVal>::new(dec).map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
-            ),
-            TypeVariant::ScObjectType => Box::new(
-                ReadXdrIter::<_, ScObjectType>::new(dec)
-                    .map(|r| r.map(|t| Self::ScObjectType(Box::new(t)))),
-            ),
-            TypeVariant::ScMapEntry => Box::new(
-                ReadXdrIter::<_, ScMapEntry>::new(dec)
-                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
-            ),
-            TypeVariant::ScVec => Box::new(
-                ReadXdrIter::<_, ScVec>::new(dec).map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
-            ),
-            TypeVariant::ScMap => Box::new(
-                ReadXdrIter::<_, ScMap>::new(dec).map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
-            ),
-            TypeVariant::ScContractCodeType => Box::new(
-                ReadXdrIter::<_, ScContractCodeType>::new(dec)
-                    .map(|r| r.map(|t| Self::ScContractCodeType(Box::new(t)))),
-            ),
-            TypeVariant::ScContractCode => Box::new(
-                ReadXdrIter::<_, ScContractCode>::new(dec)
-                    .map(|r| r.map(|t| Self::ScContractCode(Box::new(t)))),
-            ),
             TypeVariant::Int128Parts => Box::new(
                 ReadXdrIter::<_, Int128Parts>::new(dec)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
+            ),
+            TypeVariant::ScContractExecutableType => Box::new(
+                ReadXdrIter::<_, ScContractExecutableType>::new(dec)
+                    .map(|r| r.map(|t| Self::ScContractExecutableType(Box::new(t)))),
+            ),
+            TypeVariant::ScContractExecutable => Box::new(
+                ReadXdrIter::<_, ScContractExecutable>::new(dec)
+                    .map(|r| r.map(|t| Self::ScContractExecutable(Box::new(t)))),
             ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, ScAddressType>::new(dec)
@@ -45427,9 +45448,33 @@ impl Type {
                 ReadXdrIter::<_, ScAddress>::new(dec)
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
             ),
-            TypeVariant::ScObject => Box::new(
-                ReadXdrIter::<_, ScObject>::new(dec)
-                    .map(|r| r.map(|t| Self::ScObject(Box::new(t)))),
+            TypeVariant::ScVec => Box::new(
+                ReadXdrIter::<_, ScVec>::new(dec).map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
+            ),
+            TypeVariant::ScMap => Box::new(
+                ReadXdrIter::<_, ScMap>::new(dec).map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
+            ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, ScBytes>::new(dec).map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, ScString>::new(dec)
+                    .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, ScSymbol>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
+            ),
+            TypeVariant::ScNonceKey => Box::new(
+                ReadXdrIter::<_, ScNonceKey>::new(dec)
+                    .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t)))),
+            ),
+            TypeVariant::ScVal => Box::new(
+                ReadXdrIter::<_, ScVal>::new(dec).map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
+            ),
+            TypeVariant::ScMapEntry => Box::new(
+                ReadXdrIter::<_, ScMapEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(dec)
@@ -45462,14 +45507,6 @@ impl Type {
             TypeVariant::SequenceNumber => Box::new(
                 ReadXdrIter::<_, SequenceNumber>::new(dec)
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t)))),
-            ),
-            TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, TimePoint>::new(dec)
-                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
-            ),
-            TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Duration>::new(dec)
-                    .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
             TypeVariant::DataValue => Box::new(
                 ReadXdrIter::<_, DataValue>::new(dec)
@@ -45687,14 +45724,6 @@ impl Type {
                 ReadXdrIter::<_, ContractCodeEntry>::new(dec)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
             ),
-            TypeVariant::ConfigSettingType => Box::new(
-                ReadXdrIter::<_, ConfigSettingType>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSettingType(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSetting => Box::new(
-                ReadXdrIter::<_, ConfigSetting>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSetting(Box::new(t)))),
-            ),
             TypeVariant::ConfigSettingId => Box::new(
                 ReadXdrIter::<_, ConfigSettingId>::new(dec)
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
@@ -45702,10 +45731,6 @@ impl Type {
             TypeVariant::ConfigSettingEntry => Box::new(
                 ReadXdrIter::<_, ConfigSettingEntry>::new(dec)
                     .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingEntryExt => Box::new(
-                ReadXdrIter::<_, ConfigSettingEntryExt>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSettingEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec)
@@ -45815,13 +45840,17 @@ impl Type {
                 ReadXdrIter::<_, LedgerUpgradeType>::new(dec)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
             ),
+            TypeVariant::ConfigUpgradeSetKey => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSetKey>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t)))),
+            ),
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, LedgerUpgrade>::new(dec)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
             ),
-            TypeVariant::LedgerUpgradeConfigSetting => Box::new(
-                ReadXdrIter::<_, LedgerUpgradeConfigSetting>::new(dec)
-                    .map(|r| r.map(|t| Self::LedgerUpgradeConfigSetting(Box::new(t)))),
+            TypeVariant::ConfigUpgradeSet => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSet>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, BucketEntryType>::new(dec)
@@ -45966,6 +45995,14 @@ impl Type {
             TypeVariant::ContractEventV0 => Box::new(
                 ReadXdrIter::<_, ContractEventV0>::new(dec)
                     .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t)))),
+            ),
+            TypeVariant::DiagnosticEvent => Box::new(
+                ReadXdrIter::<_, DiagnosticEvent>::new(dec)
+                    .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
+            ),
+            TypeVariant::OperationDiagnosticEvents => Box::new(
+                ReadXdrIter::<_, OperationDiagnosticEvents>::new(dec)
+                    .map(|r| r.map(|t| Self::OperationDiagnosticEvents(Box::new(t)))),
             ),
             TypeVariant::OperationEvents => Box::new(
                 ReadXdrIter::<_, OperationEvents>::new(dec)
@@ -46718,6 +46755,14 @@ impl Type {
             TypeVariant::Int64 => Box::new(
                 ReadXdrIter::<_, Int64>::new(dec).map(|r| r.map(|t| Self::Int64(Box::new(t)))),
             ),
+            TypeVariant::TimePoint => Box::new(
+                ReadXdrIter::<_, TimePoint>::new(dec)
+                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
+            ),
+            TypeVariant::Duration => Box::new(
+                ReadXdrIter::<_, Duration>::new(dec)
+                    .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, ExtensionPoint>::new(dec)
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
@@ -46839,9 +46884,7 @@ impl Type {
             Self::ScSpecFunctionV0(ref v) => v.as_ref(),
             Self::ScSpecEntryKind(ref v) => v.as_ref(),
             Self::ScSpecEntry(ref v) => v.as_ref(),
-            Self::ScSymbol(ref v) => v.as_ref(),
             Self::ScValType(ref v) => v.as_ref(),
-            Self::ScStatic(ref v) => v.as_ref(),
             Self::ScStatusType(ref v) => v.as_ref(),
             Self::ScHostValErrorCode(ref v) => v.as_ref(),
             Self::ScHostObjErrorCode(ref v) => v.as_ref(),
@@ -46852,17 +46895,19 @@ impl Type {
             Self::ScVmErrorCode(ref v) => v.as_ref(),
             Self::ScUnknownErrorCode(ref v) => v.as_ref(),
             Self::ScStatus(ref v) => v.as_ref(),
-            Self::ScVal(ref v) => v.as_ref(),
-            Self::ScObjectType(ref v) => v.as_ref(),
-            Self::ScMapEntry(ref v) => v.as_ref(),
-            Self::ScVec(ref v) => v.as_ref(),
-            Self::ScMap(ref v) => v.as_ref(),
-            Self::ScContractCodeType(ref v) => v.as_ref(),
-            Self::ScContractCode(ref v) => v.as_ref(),
             Self::Int128Parts(ref v) => v.as_ref(),
+            Self::ScContractExecutableType(ref v) => v.as_ref(),
+            Self::ScContractExecutable(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
             Self::ScAddress(ref v) => v.as_ref(),
-            Self::ScObject(ref v) => v.as_ref(),
+            Self::ScVec(ref v) => v.as_ref(),
+            Self::ScMap(ref v) => v.as_ref(),
+            Self::ScBytes(ref v) => v.as_ref(),
+            Self::ScString(ref v) => v.as_ref(),
+            Self::ScSymbol(ref v) => v.as_ref(),
+            Self::ScNonceKey(ref v) => v.as_ref(),
+            Self::ScVal(ref v) => v.as_ref(),
+            Self::ScMapEntry(ref v) => v.as_ref(),
             Self::StoredTransactionSet(ref v) => v.as_ref(),
             Self::PersistedScpStateV0(ref v) => v.as_ref(),
             Self::PersistedScpStateV1(ref v) => v.as_ref(),
@@ -46871,8 +46916,6 @@ impl Type {
             Self::String32(ref v) => v.as_ref(),
             Self::String64(ref v) => v.as_ref(),
             Self::SequenceNumber(ref v) => v.as_ref(),
-            Self::TimePoint(ref v) => v.as_ref(),
-            Self::Duration(ref v) => v.as_ref(),
             Self::DataValue(ref v) => v.as_ref(),
             Self::PoolId(ref v) => v.as_ref(),
             Self::AssetCode4(ref v) => v.as_ref(),
@@ -46928,11 +46971,8 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(ref v) => v.as_ref(),
             Self::ContractDataEntry(ref v) => v.as_ref(),
             Self::ContractCodeEntry(ref v) => v.as_ref(),
-            Self::ConfigSettingType(ref v) => v.as_ref(),
-            Self::ConfigSetting(ref v) => v.as_ref(),
             Self::ConfigSettingId(ref v) => v.as_ref(),
             Self::ConfigSettingEntry(ref v) => v.as_ref(),
-            Self::ConfigSettingEntryExt(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1Ext(ref v) => v.as_ref(),
             Self::LedgerEntry(ref v) => v.as_ref(),
@@ -46960,8 +47000,9 @@ impl Type {
             Self::LedgerHeader(ref v) => v.as_ref(),
             Self::LedgerHeaderExt(ref v) => v.as_ref(),
             Self::LedgerUpgradeType(ref v) => v.as_ref(),
+            Self::ConfigUpgradeSetKey(ref v) => v.as_ref(),
             Self::LedgerUpgrade(ref v) => v.as_ref(),
-            Self::LedgerUpgradeConfigSetting(ref v) => v.as_ref(),
+            Self::ConfigUpgradeSet(ref v) => v.as_ref(),
             Self::BucketEntryType(ref v) => v.as_ref(),
             Self::BucketMetadata(ref v) => v.as_ref(),
             Self::BucketMetadataExt(ref v) => v.as_ref(),
@@ -46998,6 +47039,8 @@ impl Type {
             Self::ContractEvent(ref v) => v.as_ref(),
             Self::ContractEventBody(ref v) => v.as_ref(),
             Self::ContractEventV0(ref v) => v.as_ref(),
+            Self::DiagnosticEvent(ref v) => v.as_ref(),
+            Self::OperationDiagnosticEvents(ref v) => v.as_ref(),
             Self::OperationEvents(ref v) => v.as_ref(),
             Self::TransactionMetaV3(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
@@ -47188,6 +47231,8 @@ impl Type {
             Self::Int32(ref v) => v.as_ref(),
             Self::Uint64(ref v) => v.as_ref(),
             Self::Int64(ref v) => v.as_ref(),
+            Self::TimePoint(ref v) => v.as_ref(),
+            Self::Duration(ref v) => v.as_ref(),
             Self::ExtensionPoint(ref v) => v.as_ref(),
             Self::CryptoKeyType(ref v) => v.as_ref(),
             Self::PublicKeyType(ref v) => v.as_ref(),
@@ -47248,9 +47293,7 @@ impl Type {
             Self::ScSpecFunctionV0(_) => "ScSpecFunctionV0",
             Self::ScSpecEntryKind(_) => "ScSpecEntryKind",
             Self::ScSpecEntry(_) => "ScSpecEntry",
-            Self::ScSymbol(_) => "ScSymbol",
             Self::ScValType(_) => "ScValType",
-            Self::ScStatic(_) => "ScStatic",
             Self::ScStatusType(_) => "ScStatusType",
             Self::ScHostValErrorCode(_) => "ScHostValErrorCode",
             Self::ScHostObjErrorCode(_) => "ScHostObjErrorCode",
@@ -47261,17 +47304,19 @@ impl Type {
             Self::ScVmErrorCode(_) => "ScVmErrorCode",
             Self::ScUnknownErrorCode(_) => "ScUnknownErrorCode",
             Self::ScStatus(_) => "ScStatus",
-            Self::ScVal(_) => "ScVal",
-            Self::ScObjectType(_) => "ScObjectType",
-            Self::ScMapEntry(_) => "ScMapEntry",
-            Self::ScVec(_) => "ScVec",
-            Self::ScMap(_) => "ScMap",
-            Self::ScContractCodeType(_) => "ScContractCodeType",
-            Self::ScContractCode(_) => "ScContractCode",
             Self::Int128Parts(_) => "Int128Parts",
+            Self::ScContractExecutableType(_) => "ScContractExecutableType",
+            Self::ScContractExecutable(_) => "ScContractExecutable",
             Self::ScAddressType(_) => "ScAddressType",
             Self::ScAddress(_) => "ScAddress",
-            Self::ScObject(_) => "ScObject",
+            Self::ScVec(_) => "ScVec",
+            Self::ScMap(_) => "ScMap",
+            Self::ScBytes(_) => "ScBytes",
+            Self::ScString(_) => "ScString",
+            Self::ScSymbol(_) => "ScSymbol",
+            Self::ScNonceKey(_) => "ScNonceKey",
+            Self::ScVal(_) => "ScVal",
+            Self::ScMapEntry(_) => "ScMapEntry",
             Self::StoredTransactionSet(_) => "StoredTransactionSet",
             Self::PersistedScpStateV0(_) => "PersistedScpStateV0",
             Self::PersistedScpStateV1(_) => "PersistedScpStateV1",
@@ -47280,8 +47325,6 @@ impl Type {
             Self::String32(_) => "String32",
             Self::String64(_) => "String64",
             Self::SequenceNumber(_) => "SequenceNumber",
-            Self::TimePoint(_) => "TimePoint",
-            Self::Duration(_) => "Duration",
             Self::DataValue(_) => "DataValue",
             Self::PoolId(_) => "PoolId",
             Self::AssetCode4(_) => "AssetCode4",
@@ -47339,11 +47382,8 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(_) => "LiquidityPoolEntryConstantProduct",
             Self::ContractDataEntry(_) => "ContractDataEntry",
             Self::ContractCodeEntry(_) => "ContractCodeEntry",
-            Self::ConfigSettingType(_) => "ConfigSettingType",
-            Self::ConfigSetting(_) => "ConfigSetting",
             Self::ConfigSettingId(_) => "ConfigSettingId",
             Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
-            Self::ConfigSettingEntryExt(_) => "ConfigSettingEntryExt",
             Self::LedgerEntryExtensionV1(_) => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext(_) => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry(_) => "LedgerEntry",
@@ -47371,8 +47411,9 @@ impl Type {
             Self::LedgerHeader(_) => "LedgerHeader",
             Self::LedgerHeaderExt(_) => "LedgerHeaderExt",
             Self::LedgerUpgradeType(_) => "LedgerUpgradeType",
+            Self::ConfigUpgradeSetKey(_) => "ConfigUpgradeSetKey",
             Self::LedgerUpgrade(_) => "LedgerUpgrade",
-            Self::LedgerUpgradeConfigSetting(_) => "LedgerUpgradeConfigSetting",
+            Self::ConfigUpgradeSet(_) => "ConfigUpgradeSet",
             Self::BucketEntryType(_) => "BucketEntryType",
             Self::BucketMetadata(_) => "BucketMetadata",
             Self::BucketMetadataExt(_) => "BucketMetadataExt",
@@ -47409,6 +47450,8 @@ impl Type {
             Self::ContractEvent(_) => "ContractEvent",
             Self::ContractEventBody(_) => "ContractEventBody",
             Self::ContractEventV0(_) => "ContractEventV0",
+            Self::DiagnosticEvent(_) => "DiagnosticEvent",
+            Self::OperationDiagnosticEvents(_) => "OperationDiagnosticEvents",
             Self::OperationEvents(_) => "OperationEvents",
             Self::TransactionMetaV3(_) => "TransactionMetaV3",
             Self::TransactionMeta(_) => "TransactionMeta",
@@ -47609,6 +47652,8 @@ impl Type {
             Self::Int32(_) => "Int32",
             Self::Uint64(_) => "Uint64",
             Self::Int64(_) => "Int64",
+            Self::TimePoint(_) => "TimePoint",
+            Self::Duration(_) => "Duration",
             Self::ExtensionPoint(_) => "ExtensionPoint",
             Self::CryptoKeyType(_) => "CryptoKeyType",
             Self::PublicKeyType(_) => "PublicKeyType",
@@ -47675,9 +47720,7 @@ impl Type {
             Self::ScSpecFunctionV0(_) => TypeVariant::ScSpecFunctionV0,
             Self::ScSpecEntryKind(_) => TypeVariant::ScSpecEntryKind,
             Self::ScSpecEntry(_) => TypeVariant::ScSpecEntry,
-            Self::ScSymbol(_) => TypeVariant::ScSymbol,
             Self::ScValType(_) => TypeVariant::ScValType,
-            Self::ScStatic(_) => TypeVariant::ScStatic,
             Self::ScStatusType(_) => TypeVariant::ScStatusType,
             Self::ScHostValErrorCode(_) => TypeVariant::ScHostValErrorCode,
             Self::ScHostObjErrorCode(_) => TypeVariant::ScHostObjErrorCode,
@@ -47688,17 +47731,19 @@ impl Type {
             Self::ScVmErrorCode(_) => TypeVariant::ScVmErrorCode,
             Self::ScUnknownErrorCode(_) => TypeVariant::ScUnknownErrorCode,
             Self::ScStatus(_) => TypeVariant::ScStatus,
-            Self::ScVal(_) => TypeVariant::ScVal,
-            Self::ScObjectType(_) => TypeVariant::ScObjectType,
-            Self::ScMapEntry(_) => TypeVariant::ScMapEntry,
-            Self::ScVec(_) => TypeVariant::ScVec,
-            Self::ScMap(_) => TypeVariant::ScMap,
-            Self::ScContractCodeType(_) => TypeVariant::ScContractCodeType,
-            Self::ScContractCode(_) => TypeVariant::ScContractCode,
             Self::Int128Parts(_) => TypeVariant::Int128Parts,
+            Self::ScContractExecutableType(_) => TypeVariant::ScContractExecutableType,
+            Self::ScContractExecutable(_) => TypeVariant::ScContractExecutable,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,
             Self::ScAddress(_) => TypeVariant::ScAddress,
-            Self::ScObject(_) => TypeVariant::ScObject,
+            Self::ScVec(_) => TypeVariant::ScVec,
+            Self::ScMap(_) => TypeVariant::ScMap,
+            Self::ScBytes(_) => TypeVariant::ScBytes,
+            Self::ScString(_) => TypeVariant::ScString,
+            Self::ScSymbol(_) => TypeVariant::ScSymbol,
+            Self::ScNonceKey(_) => TypeVariant::ScNonceKey,
+            Self::ScVal(_) => TypeVariant::ScVal,
+            Self::ScMapEntry(_) => TypeVariant::ScMapEntry,
             Self::StoredTransactionSet(_) => TypeVariant::StoredTransactionSet,
             Self::PersistedScpStateV0(_) => TypeVariant::PersistedScpStateV0,
             Self::PersistedScpStateV1(_) => TypeVariant::PersistedScpStateV1,
@@ -47707,8 +47752,6 @@ impl Type {
             Self::String32(_) => TypeVariant::String32,
             Self::String64(_) => TypeVariant::String64,
             Self::SequenceNumber(_) => TypeVariant::SequenceNumber,
-            Self::TimePoint(_) => TypeVariant::TimePoint,
-            Self::Duration(_) => TypeVariant::Duration,
             Self::DataValue(_) => TypeVariant::DataValue,
             Self::PoolId(_) => TypeVariant::PoolId,
             Self::AssetCode4(_) => TypeVariant::AssetCode4,
@@ -47772,11 +47815,8 @@ impl Type {
             }
             Self::ContractDataEntry(_) => TypeVariant::ContractDataEntry,
             Self::ContractCodeEntry(_) => TypeVariant::ContractCodeEntry,
-            Self::ConfigSettingType(_) => TypeVariant::ConfigSettingType,
-            Self::ConfigSetting(_) => TypeVariant::ConfigSetting,
             Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
             Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
-            Self::ConfigSettingEntryExt(_) => TypeVariant::ConfigSettingEntryExt,
             Self::LedgerEntryExtensionV1(_) => TypeVariant::LedgerEntryExtensionV1,
             Self::LedgerEntryExtensionV1Ext(_) => TypeVariant::LedgerEntryExtensionV1Ext,
             Self::LedgerEntry(_) => TypeVariant::LedgerEntry,
@@ -47804,8 +47844,9 @@ impl Type {
             Self::LedgerHeader(_) => TypeVariant::LedgerHeader,
             Self::LedgerHeaderExt(_) => TypeVariant::LedgerHeaderExt,
             Self::LedgerUpgradeType(_) => TypeVariant::LedgerUpgradeType,
+            Self::ConfigUpgradeSetKey(_) => TypeVariant::ConfigUpgradeSetKey,
             Self::LedgerUpgrade(_) => TypeVariant::LedgerUpgrade,
-            Self::LedgerUpgradeConfigSetting(_) => TypeVariant::LedgerUpgradeConfigSetting,
+            Self::ConfigUpgradeSet(_) => TypeVariant::ConfigUpgradeSet,
             Self::BucketEntryType(_) => TypeVariant::BucketEntryType,
             Self::BucketMetadata(_) => TypeVariant::BucketMetadata,
             Self::BucketMetadataExt(_) => TypeVariant::BucketMetadataExt,
@@ -47850,6 +47891,8 @@ impl Type {
             Self::ContractEvent(_) => TypeVariant::ContractEvent,
             Self::ContractEventBody(_) => TypeVariant::ContractEventBody,
             Self::ContractEventV0(_) => TypeVariant::ContractEventV0,
+            Self::DiagnosticEvent(_) => TypeVariant::DiagnosticEvent,
+            Self::OperationDiagnosticEvents(_) => TypeVariant::OperationDiagnosticEvents,
             Self::OperationEvents(_) => TypeVariant::OperationEvents,
             Self::TransactionMetaV3(_) => TypeVariant::TransactionMetaV3,
             Self::TransactionMeta(_) => TypeVariant::TransactionMeta,
@@ -48074,6 +48117,8 @@ impl Type {
             Self::Int32(_) => TypeVariant::Int32,
             Self::Uint64(_) => TypeVariant::Uint64,
             Self::Int64(_) => TypeVariant::Int64,
+            Self::TimePoint(_) => TypeVariant::TimePoint,
+            Self::Duration(_) => TypeVariant::Duration,
             Self::ExtensionPoint(_) => TypeVariant::ExtensionPoint,
             Self::CryptoKeyType(_) => TypeVariant::CryptoKeyType,
             Self::PublicKeyType(_) => TypeVariant::PublicKeyType,

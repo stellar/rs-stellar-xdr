@@ -1,4 +1,6 @@
-use super::{Int128Parts, ScBytes, ScMap, ScMapEntry, ScStatus, ScSymbol, ScVal, ScVec};
+use super::{
+    Int128Parts, ScBytes, ScMap, ScMapEntry, ScStatus, ScSymbol, ScVal, ScVec, UInt128Parts,
+};
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
@@ -166,36 +168,47 @@ pub mod int128_helpers {
     #[must_use]
     #[inline(always)]
     #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
-    pub fn u128_lo(u: u128) -> u64 {
-        u as u64
-    }
-
-    #[must_use]
-    #[inline(always)]
-    #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
     pub fn u128_hi(u: u128) -> u64 {
         (u >> 64) as u64
     }
 
     #[must_use]
     #[inline(always)]
+    #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
+    pub fn u128_lo(u: u128) -> u64 {
+        u as u64
+    }
+
+    #[must_use]
+    #[inline(always)]
     #[allow(clippy::inline_always)]
-    pub fn u128_from_pieces(lo: u64, hi: u64) -> u128 {
-        u128::from(lo) | (u128::from(hi) << 64)
+    pub fn u128_from_pieces(hi: u64, lo: u64) -> u128 {
+        (u128::from(hi) << 64) | u128::from(lo)
     }
 
     #[must_use]
     #[inline(always)]
-    #[allow(clippy::inline_always, clippy::cast_sign_loss)]
-    pub fn u128_from_i128(i: i128) -> u128 {
-        i as u128
+    #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
+    pub fn i128_hi(i: i128) -> i64 {
+        (i >> 64) as i64
     }
 
     #[must_use]
     #[inline(always)]
-    #[allow(clippy::inline_always, clippy::cast_possible_wrap)]
-    pub fn i128_from_u128(u: u128) -> i128 {
-        u as i128
+    #[allow(
+        clippy::inline_always,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
+    pub fn i128_lo(i: i128) -> u64 {
+        i as u64
+    }
+
+    #[must_use]
+    #[inline(always)]
+    #[allow(clippy::inline_always)]
+    pub fn i128_from_pieces(hi: i64, lo: u64) -> i128 {
+        (i128::from(hi) << 64) | i128::from(lo)
     }
 }
 
@@ -204,9 +217,9 @@ use int128_helpers::*;
 
 impl From<u128> for ScVal {
     fn from(v: u128) -> Self {
-        ScVal::U128(Int128Parts {
-            lo: u128_lo(v),
+        ScVal::U128(UInt128Parts {
             hi: u128_hi(v),
+            lo: u128_lo(v),
         })
     }
 }
@@ -217,9 +230,9 @@ impl From<&u128> for ScVal {
     }
 }
 
-impl From<&Int128Parts> for u128 {
-    fn from(v: &Int128Parts) -> Self {
-        u128_from_pieces(v.lo, v.hi)
+impl From<&UInt128Parts> for u128 {
+    fn from(v: &UInt128Parts) -> Self {
+        u128_from_pieces(v.hi, v.lo)
     }
 }
 
@@ -236,10 +249,9 @@ impl TryFrom<ScVal> for u128 {
 
 impl From<i128> for ScVal {
     fn from(v: i128) -> Self {
-        let v = u128_from_i128(v);
         ScVal::I128(Int128Parts {
-            lo: u128_lo(v),
-            hi: u128_hi(v),
+            hi: i128_hi(v),
+            lo: i128_lo(v),
         })
     }
 }
@@ -252,7 +264,7 @@ impl From<&i128> for ScVal {
 
 impl From<&Int128Parts> for i128 {
     fn from(v: &Int128Parts) -> Self {
-        i128_from_u128(u128_from_pieces(v.lo, v.hi))
+        i128_from_pieces(v.hi, v.lo)
     }
 }
 

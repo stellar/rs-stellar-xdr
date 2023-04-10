@@ -183,7 +183,7 @@ pub mod int128_helpers {
     #[inline(always)]
     #[allow(clippy::inline_always)]
     pub fn u128_from_pieces(hi: u64, lo: u64) -> u128 {
-        (u128::from(hi) << 64) | u128::from(lo)
+        ((hi as u128) << 64) | lo as u128
     }
 
     #[must_use]
@@ -208,7 +208,7 @@ pub mod int128_helpers {
     #[inline(always)]
     #[allow(clippy::inline_always)]
     pub fn i128_from_pieces(hi: i64, lo: u64) -> i128 {
-        (i128::from(hi) << 64) | i128::from(lo)
+        ((hi as u128) << 64 | lo as u128) as i128
     }
 }
 

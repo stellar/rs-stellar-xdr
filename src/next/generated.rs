@@ -16,43 +16,43 @@
 pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     (
         "xdr/next/Stellar-SCP.x",
-        "2b855c7f79b8e50cf15ca1e1aa89fb16bbb38117de0b1c969c80e675ae1ca4bb",
+        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
-        "8d30dbf039e41e149725b34f2c809fc034c0879adac9d85fc49b8371f9a0444f",
+        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "b3796263f44c7803f123502577afbea32fd7771d68bb279666914b8611a39c0b",
+        "6268629577238adf6210d6e919e41375a3b380e941d0c7acb662013c6f8aa575",
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "278a2122c00865a0b7aeafe7a62fc85a7798b0d2da16277d9ea0a5bb851866a4",
+        "d618ba1a958d2dc50ddab1c986ab1a660a0b638a382a98bfe42d2f62b24aea05",
     ),
     (
         "xdr/next/Stellar-internal.x",
-        "467d954846f88e50e690b64a0ef2dc138b92b03d24bdd66559df16f76535b288",
+        "368706dd6e2efafd16a8f63daf3374845b791d097b15c502aa7653a412b68b68",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "b298144b7e32b4d1d472abace8ec2d63b5e1877251805b94da12a1b798688a9d",
+        "9eb048be6afaf9f19989f57f7f1bc457e639afe97e30fee84bbb144970b5cd16",
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "689416449e68f83d468d2e62dc4c6b62d08290af2ec11cfdaf0426f9bb03c06b",
+        "cd4ac7622931831291ed848004328d926d8a317122ca966f4bc105367819cd6c",
     ),
     (
         "xdr/next/Stellar-overlay.x",
-        "abdb314b64e9f8df6f6f89b3d4fa5d104a41a04c39307ce23f7bf349b0729eef",
+        "972f38a9d4a064273f3362cbfa7d3c563293fd5396d5f0774ce6cc690e27645d",
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "c28c6afcb3b99660e8cfff15712a1ef62f371e7fd3bbe3363e2ef8bf2fe2d87c",
+        "4fee5c1982810aa1746dbaf81dd6d84f1fe8193cb535bf0839da3509e7907547",
     ),
     (
         "xdr/next/Stellar-types.x",
-        "af94781a7058a2a780206ebc22da63281013d34662a47f4473a227e701a41f27",
+        "6e3b13f0d3e360b09fa5e2b0e55d43f4d974a769df66afb34e8aecbb329d3f15",
     ),
 ];
 

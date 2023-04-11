@@ -181,7 +181,11 @@ pub mod int128_helpers {
 
     #[must_use]
     #[inline(always)]
-    #[allow(clippy::inline_always, clippy::cast_sign_loss)]
+    #[allow(
+        clippy::inline_always,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     pub fn i128_lo(i: i128) -> u64 {
         i as u64
     }
@@ -206,7 +210,11 @@ pub mod int128_helpers {
 
     #[must_use]
     #[inline(always)]
-    #[allow(clippy::inline_always, clippy::cast_sign_loss)]
+    #[allow(
+        clippy::inline_always,
+        clippy::cast_sign_loss,
+        clippy::cast_possible_wrap
+    )]
     pub fn i128_from_pieces(lo: u64, hi: i64) -> i128 {
         (u128::from(lo) | (u128::from(hi as u64) << 64)) as i128
     }

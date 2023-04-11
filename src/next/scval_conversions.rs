@@ -183,7 +183,7 @@ pub mod int128_helpers {
     #[inline(always)]
     #[allow(clippy::inline_always)]
     pub fn u128_from_pieces(hi: u64, lo: u64) -> u128 {
-        ((hi as u128) << 64) | lo as u128
+        (u128::from(hi) << 64) | u128::from(lo)
     }
 
     #[must_use]
@@ -206,9 +206,13 @@ pub mod int128_helpers {
 
     #[must_use]
     #[inline(always)]
-    #[allow(clippy::inline_always)]
+    #[allow(
+        clippy::inline_always,
+        clippy::cast_sign_loss,
+        clippy::cast_possible_wrap
+    )]
     pub fn i128_from_pieces(hi: i64, lo: u64) -> i128 {
-        ((hi as u128) << 64 | lo as u128) as i128
+        ((hi as u128) << 64 | u128::from(lo)) as i128
     }
 }
 
@@ -709,6 +713,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
     fn i128() {
         let part1 = 0x00ab_cdef_9876_5432u64; // some positive int64
         let part2 = 0xfedc_ba98_7654_3210u64; // some negative int64

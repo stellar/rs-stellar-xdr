@@ -212,7 +212,7 @@ pub mod int128_helpers {
         clippy::cast_possible_wrap
     )]
     pub fn i128_from_pieces(hi: i64, lo: u64) -> i128 {
-        ((hi as u128) << 64 | u128::from(lo)) as i128
+        (u128::from(hi as u64) << 64 | u128::from(lo)) as i128
     }
 }
 

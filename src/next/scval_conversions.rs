@@ -191,7 +191,7 @@ pub mod int128_helpers {
     #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
     pub fn i128_hi(i: i128) -> i64 {
         ((i as u128) >> 64) as i64
-    }    
+    }
 
     #[must_use]
     #[inline(always)]

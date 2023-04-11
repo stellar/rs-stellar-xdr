@@ -16,43 +16,43 @@
 pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     (
         "xdr/next/Stellar-SCP.x",
-        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+        "2b855c7f79b8e50cf15ca1e1aa89fb16bbb38117de0b1c969c80e675ae1ca4bb",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
-        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
+        "8d30dbf039e41e149725b34f2c809fc034c0879adac9d85fc49b8371f9a0444f",
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "6268629577238adf6210d6e919e41375a3b380e941d0c7acb662013c6f8aa575",
+        "b3796263f44c7803f123502577afbea32fd7771d68bb279666914b8611a39c0b",
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "7ec20def7e005a7d90357ac7b39d616435ab5835dc806989515faecdb506f51d",
+        "278a2122c00865a0b7aeafe7a62fc85a7798b0d2da16277d9ea0a5bb851866a4",
     ),
     (
         "xdr/next/Stellar-internal.x",
-        "368706dd6e2efafd16a8f63daf3374845b791d097b15c502aa7653a412b68b68",
+        "467d954846f88e50e690b64a0ef2dc138b92b03d24bdd66559df16f76535b288",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "a6265e158b549d7a9916e42d4ba8ad2ea4d5e85016163b2eddf810e4d254392d",
+        "b298144b7e32b4d1d472abace8ec2d63b5e1877251805b94da12a1b798688a9d",
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "cd4ac7622931831291ed848004328d926d8a317122ca966f4bc105367819cd6c",
+        "689416449e68f83d468d2e62dc4c6b62d08290af2ec11cfdaf0426f9bb03c06b",
     ),
     (
         "xdr/next/Stellar-overlay.x",
-        "972f38a9d4a064273f3362cbfa7d3c563293fd5396d5f0774ce6cc690e27645d",
+        "abdb314b64e9f8df6f6f89b3d4fa5d104a41a04c39307ce23f7bf349b0729eef",
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "4fee5c1982810aa1746dbaf81dd6d84f1fe8193cb535bf0839da3509e7907547",
+        "c28c6afcb3b99660e8cfff15712a1ef62f371e7fd3bbe3363e2ef8bf2fe2d87c",
     ),
     (
         "xdr/next/Stellar-types.x",
-        "6e3b13f0d3e360b09fa5e2b0e55d43f4d974a769df66afb34e8aecbb329d3f15",
+        "af94781a7058a2a780206ebc22da63281013d34662a47f4473a227e701a41f27",
     ),
 ];
 
@@ -6448,14 +6448,49 @@ impl WriteXdr for ScStatus {
     }
 }
 
+// UInt128Parts is an XDR Struct defines as:
+//
+//   struct UInt128Parts {
+//        uint64 hi;
+//        uint64 lo;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct UInt128Parts {
+    pub hi: u64,
+    pub lo: u64,
+}
+
+impl ReadXdr for UInt128Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            hi: u64::read_xdr(r)?,
+            lo: u64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for UInt128Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.hi.write_xdr(w)?;
+        self.lo.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // Int128Parts is an XDR Struct defines as:
 //
 //   struct Int128Parts {
-//        // Both signed and unsigned 128-bit ints
-//        // are transported in a pair of uint64s
-//        // to reduce the risk of sign-extension.
+//        int64 hi;
 //        uint64 lo;
-//        uint64 hi;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -6466,16 +6501,16 @@ impl WriteXdr for ScStatus {
     serde(rename_all = "snake_case")
 )]
 pub struct Int128Parts {
+    pub hi: i64,
     pub lo: u64,
-    pub hi: u64,
 }
 
 impl ReadXdr for Int128Parts {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            hi: i64::read_xdr(r)?,
             lo: u64::read_xdr(r)?,
-            hi: u64::read_xdr(r)?,
         })
     }
 }
@@ -6483,8 +6518,100 @@ impl ReadXdr for Int128Parts {
 impl WriteXdr for Int128Parts {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.lo.write_xdr(w)?;
         self.hi.write_xdr(w)?;
+        self.lo.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// UInt256Parts is an XDR Struct defines as:
+//
+//   struct UInt256Parts {
+//        uint64 hi_hi;
+//        uint64 hi_lo;
+//        uint64 lo_hi;
+//        uint64 lo_lo;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct UInt256Parts {
+    pub hi_hi: u64,
+    pub hi_lo: u64,
+    pub lo_hi: u64,
+    pub lo_lo: u64,
+}
+
+impl ReadXdr for UInt256Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            hi_hi: u64::read_xdr(r)?,
+            hi_lo: u64::read_xdr(r)?,
+            lo_hi: u64::read_xdr(r)?,
+            lo_lo: u64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for UInt256Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.hi_hi.write_xdr(w)?;
+        self.hi_lo.write_xdr(w)?;
+        self.lo_hi.write_xdr(w)?;
+        self.lo_lo.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// Int256Parts is an XDR Struct defines as:
+//
+//   struct Int256Parts {
+//        int64 hi_hi;
+//        uint64 hi_lo;
+//        uint64 lo_hi;
+//        uint64 lo_lo;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct Int256Parts {
+    pub hi_hi: i64,
+    pub hi_lo: u64,
+    pub lo_hi: u64,
+    pub lo_lo: u64,
+}
+
+impl ReadXdr for Int256Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            hi_hi: i64::read_xdr(r)?,
+            hi_lo: u64::read_xdr(r)?,
+            lo_hi: u64::read_xdr(r)?,
+            lo_lo: u64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for Int256Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.hi_hi.write_xdr(w)?;
+        self.hi_lo.write_xdr(w)?;
+        self.lo_hi.write_xdr(w)?;
+        self.lo_lo.write_xdr(w)?;
         Ok(())
     }
 }
@@ -7468,14 +7595,14 @@ impl WriteXdr for ScNonceKey {
 //        Duration duration;
 //
 //    case SCV_U128:
-//        Int128Parts u128;
+//        UInt128Parts u128;
 //    case SCV_I128:
 //        Int128Parts i128;
 //
 //    case SCV_U256:
-//        uint256 u256;
+//        UInt256Parts u256;
 //    case SCV_I256:
-//        uint256 i256;
+//        Int256Parts i256;
 //
 //    case SCV_BYTES:
 //        SCBytes bytes;
@@ -7523,10 +7650,10 @@ pub enum ScVal {
     I64(i64),
     Timepoint(TimePoint),
     Duration(Duration),
-    U128(Int128Parts),
+    U128(UInt128Parts),
     I128(Int128Parts),
-    U256(Uint256),
-    I256(Uint256),
+    U256(UInt256Parts),
+    I256(Int256Parts),
     Bytes(ScBytes),
     String(ScString),
     Symbol(ScSymbol),
@@ -7688,10 +7815,10 @@ impl ReadXdr for ScVal {
             ScValType::I64 => Self::I64(i64::read_xdr(r)?),
             ScValType::Timepoint => Self::Timepoint(TimePoint::read_xdr(r)?),
             ScValType::Duration => Self::Duration(Duration::read_xdr(r)?),
-            ScValType::U128 => Self::U128(Int128Parts::read_xdr(r)?),
+            ScValType::U128 => Self::U128(UInt128Parts::read_xdr(r)?),
             ScValType::I128 => Self::I128(Int128Parts::read_xdr(r)?),
-            ScValType::U256 => Self::U256(Uint256::read_xdr(r)?),
-            ScValType::I256 => Self::I256(Uint256::read_xdr(r)?),
+            ScValType::U256 => Self::U256(UInt256Parts::read_xdr(r)?),
+            ScValType::I256 => Self::I256(Int256Parts::read_xdr(r)?),
             ScValType::Bytes => Self::Bytes(ScBytes::read_xdr(r)?),
             ScValType::String => Self::String(ScString::read_xdr(r)?),
             ScValType::Symbol => Self::Symbol(ScSymbol::read_xdr(r)?),
@@ -13046,7 +13173,12 @@ impl WriteXdr for ContractCodeEntry {
 //
 //   enum ConfigSettingID
 //    {
-//        CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0
+//        CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0,
+//        CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1,
+//        CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2,
+//        CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3,
+//        CONFIG_SETTING_CONTRACT_META_DATA_V0 = 4,
+//        CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5
 //    };
 //
 // enum
@@ -13059,22 +13191,46 @@ impl WriteXdr for ContractCodeEntry {
 )]
 #[repr(i32)]
 pub enum ConfigSettingId {
-    ConfigSettingContractMaxSizeBytes = 0,
+    MaxSizeBytes = 0,
+    ComputeV0 = 1,
+    LedgerCostV0 = 2,
+    HistoricalDataV0 = 3,
+    MetaDataV0 = 4,
+    BandwidthV0 = 5,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 1] = [ConfigSettingId::ConfigSettingContractMaxSizeBytes];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingContractMaxSizeBytes"];
+    pub const VARIANTS: [ConfigSettingId; 6] = [
+        ConfigSettingId::MaxSizeBytes,
+        ConfigSettingId::ComputeV0,
+        ConfigSettingId::LedgerCostV0,
+        ConfigSettingId::HistoricalDataV0,
+        ConfigSettingId::MetaDataV0,
+        ConfigSettingId::BandwidthV0,
+    ];
+    pub const VARIANTS_STR: [&'static str; 6] = [
+        "MaxSizeBytes",
+        "ComputeV0",
+        "LedgerCostV0",
+        "HistoricalDataV0",
+        "MetaDataV0",
+        "BandwidthV0",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::ConfigSettingContractMaxSizeBytes => "ConfigSettingContractMaxSizeBytes",
+            Self::MaxSizeBytes => "MaxSizeBytes",
+            Self::ComputeV0 => "ComputeV0",
+            Self::LedgerCostV0 => "LedgerCostV0",
+            Self::HistoricalDataV0 => "HistoricalDataV0",
+            Self::MetaDataV0 => "MetaDataV0",
+            Self::BandwidthV0 => "BandwidthV0",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 1] {
+    pub const fn variants() -> [ConfigSettingId; 6] {
         Self::VARIANTS
     }
 }
@@ -13105,7 +13261,12 @@ impl TryFrom<i32> for ConfigSettingId {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ConfigSettingId::ConfigSettingContractMaxSizeBytes,
+            0 => ConfigSettingId::MaxSizeBytes,
+            1 => ConfigSettingId::ComputeV0,
+            2 => ConfigSettingId::LedgerCostV0,
+            3 => ConfigSettingId::HistoricalDataV0,
+            4 => ConfigSettingId::MetaDataV0,
+            5 => ConfigSettingId::BandwidthV0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13137,12 +13298,311 @@ impl WriteXdr for ConfigSettingId {
     }
 }
 
+// ConfigSettingContractComputeV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractComputeV0
+//    {
+//        // Maximum instructions per ledger
+//        int64 ledgerMaxInstructions;
+//        // Maximum instructions per transaction
+//        int64 txMaxInstructions;
+//        // Cost of 10000 instructions
+//        int64 feeRatePerInstructionsIncrement;
+//
+//        // Memory limit per contract/host function invocation. Unlike
+//        // instructions, there is no fee for memory and it's not
+//        // accumulated between operations - the same limit is applied
+//        // to every operation.
+//        uint32 memoryLimit;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractComputeV0 {
+    pub ledger_max_instructions: i64,
+    pub tx_max_instructions: i64,
+    pub fee_rate_per_instructions_increment: i64,
+    pub memory_limit: u32,
+}
+
+impl ReadXdr for ConfigSettingContractComputeV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_max_instructions: i64::read_xdr(r)?,
+            tx_max_instructions: i64::read_xdr(r)?,
+            fee_rate_per_instructions_increment: i64::read_xdr(r)?,
+            memory_limit: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractComputeV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_max_instructions.write_xdr(w)?;
+        self.tx_max_instructions.write_xdr(w)?;
+        self.fee_rate_per_instructions_increment.write_xdr(w)?;
+        self.memory_limit.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractLedgerCostV0
+//    {
+//        // Maximum number of ledger entry read operations per ledger
+//        uint32 ledgerMaxReadLedgerEntries;
+//        // Maximum number of bytes that can be read per ledger
+//        uint32 ledgerMaxReadBytes;
+//        // Maximum number of ledger entry write operations per ledger
+//        uint32 ledgerMaxWriteLedgerEntries;
+//        // Maximum number of bytes that can be written per ledger
+//        uint32 ledgerMaxWriteBytes;
+//
+//        // Maximum number of ledger entry read operations per transaction
+//        uint32 txMaxReadLedgerEntries;
+//        // Maximum number of bytes that can be read per transaction
+//        uint32 txMaxReadBytes;
+//        // Maximum number of ledger entry write operations per transaction
+//        uint32 txMaxWriteLedgerEntries;
+//        // Maximum number of bytes that can be written per transaction
+//        uint32 txMaxWriteBytes;
+//
+//        int64 feeReadLedgerEntry;  // Fee per ledger entry read
+//        int64 feeWriteLedgerEntry; // Fee per ledger entry write
+//
+//        int64 feeRead1KB;  // Fee for reading 1KB
+//        int64 feeWrite1KB; // Fee for writing 1KB
+//
+//        // Bucket list fees grow slowly up to that size
+//        int64 bucketListSizeBytes;
+//        // Fee rate in stroops when the bucket list is empty
+//        int64 bucketListFeeRateLow;
+//        // Fee rate in stroops when the bucket list reached bucketListSizeBytes
+//        int64 bucketListFeeRateHigh;
+//        // Rate multiplier for any additional data past the first bucketListSizeBytes
+//        uint32 bucketListGrowthFactor;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractLedgerCostV0 {
+    pub ledger_max_read_ledger_entries: u32,
+    pub ledger_max_read_bytes: u32,
+    pub ledger_max_write_ledger_entries: u32,
+    pub ledger_max_write_bytes: u32,
+    pub tx_max_read_ledger_entries: u32,
+    pub tx_max_read_bytes: u32,
+    pub tx_max_write_ledger_entries: u32,
+    pub tx_max_write_bytes: u32,
+    pub fee_read_ledger_entry: i64,
+    pub fee_write_ledger_entry: i64,
+    pub fee_read1_kb: i64,
+    pub fee_write1_kb: i64,
+    pub bucket_list_size_bytes: i64,
+    pub bucket_list_fee_rate_low: i64,
+    pub bucket_list_fee_rate_high: i64,
+    pub bucket_list_growth_factor: u32,
+}
+
+impl ReadXdr for ConfigSettingContractLedgerCostV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_max_read_ledger_entries: u32::read_xdr(r)?,
+            ledger_max_read_bytes: u32::read_xdr(r)?,
+            ledger_max_write_ledger_entries: u32::read_xdr(r)?,
+            ledger_max_write_bytes: u32::read_xdr(r)?,
+            tx_max_read_ledger_entries: u32::read_xdr(r)?,
+            tx_max_read_bytes: u32::read_xdr(r)?,
+            tx_max_write_ledger_entries: u32::read_xdr(r)?,
+            tx_max_write_bytes: u32::read_xdr(r)?,
+            fee_read_ledger_entry: i64::read_xdr(r)?,
+            fee_write_ledger_entry: i64::read_xdr(r)?,
+            fee_read1_kb: i64::read_xdr(r)?,
+            fee_write1_kb: i64::read_xdr(r)?,
+            bucket_list_size_bytes: i64::read_xdr(r)?,
+            bucket_list_fee_rate_low: i64::read_xdr(r)?,
+            bucket_list_fee_rate_high: i64::read_xdr(r)?,
+            bucket_list_growth_factor: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractLedgerCostV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_max_read_ledger_entries.write_xdr(w)?;
+        self.ledger_max_read_bytes.write_xdr(w)?;
+        self.ledger_max_write_ledger_entries.write_xdr(w)?;
+        self.ledger_max_write_bytes.write_xdr(w)?;
+        self.tx_max_read_ledger_entries.write_xdr(w)?;
+        self.tx_max_read_bytes.write_xdr(w)?;
+        self.tx_max_write_ledger_entries.write_xdr(w)?;
+        self.tx_max_write_bytes.write_xdr(w)?;
+        self.fee_read_ledger_entry.write_xdr(w)?;
+        self.fee_write_ledger_entry.write_xdr(w)?;
+        self.fee_read1_kb.write_xdr(w)?;
+        self.fee_write1_kb.write_xdr(w)?;
+        self.bucket_list_size_bytes.write_xdr(w)?;
+        self.bucket_list_fee_rate_low.write_xdr(w)?;
+        self.bucket_list_fee_rate_high.write_xdr(w)?;
+        self.bucket_list_growth_factor.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ConfigSettingContractHistoricalDataV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractHistoricalDataV0
+//    {
+//        int64 feeHistorical1KB; // Fee for storing 1KB in archives
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractHistoricalDataV0 {
+    pub fee_historical1_kb: i64,
+}
+
+impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            fee_historical1_kb: i64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.fee_historical1_kb.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ConfigSettingContractMetaDataV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractMetaDataV0
+//    {
+//        // Maximum size of extended meta data produced by a transaction
+//        uint32 txMaxExtendedMetaDataSizeBytes;
+//        // Fee for generating 1KB of extended meta data
+//        int64 feeExtendedMetaData1KB;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractMetaDataV0 {
+    pub tx_max_extended_meta_data_size_bytes: u32,
+    pub fee_extended_meta_data1_kb: i64,
+}
+
+impl ReadXdr for ConfigSettingContractMetaDataV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            tx_max_extended_meta_data_size_bytes: u32::read_xdr(r)?,
+            fee_extended_meta_data1_kb: i64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractMetaDataV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.tx_max_extended_meta_data_size_bytes.write_xdr(w)?;
+        self.fee_extended_meta_data1_kb.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ConfigSettingContractBandwidthV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractBandwidthV0
+//    {
+//        // Maximum size in bytes to propagate per ledger
+//        uint32 ledgerMaxPropagateSizeBytes;
+//        // Maximum size in bytes for a transaction
+//        uint32 txMaxSizeBytes;
+//
+//        // Fee for propagating 1KB of data
+//        int64 feePropagateData1KB;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractBandwidthV0 {
+    pub ledger_max_propagate_size_bytes: u32,
+    pub tx_max_size_bytes: u32,
+    pub fee_propagate_data1_kb: i64,
+}
+
+impl ReadXdr for ConfigSettingContractBandwidthV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_max_propagate_size_bytes: u32::read_xdr(r)?,
+            tx_max_size_bytes: u32::read_xdr(r)?,
+            fee_propagate_data1_kb: i64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractBandwidthV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_max_propagate_size_bytes.write_xdr(w)?;
+        self.tx_max_size_bytes.write_xdr(w)?;
+        self.fee_propagate_data1_kb.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // ConfigSettingEntry is an XDR Union defines as:
 //
 //   union ConfigSettingEntry switch (ConfigSettingID configSettingID)
 //    {
 //    case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES:
 //        uint32 contractMaxSizeBytes;
+//    case CONFIG_SETTING_CONTRACT_COMPUTE_V0:
+//        ConfigSettingContractComputeV0 contractCompute;
+//    case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0:
+//        ConfigSettingContractLedgerCostV0 contractLedgerCost;
+//    case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0:
+//        ConfigSettingContractHistoricalDataV0 contractHistoricalData;
+//    case CONFIG_SETTING_CONTRACT_META_DATA_V0:
+//        ConfigSettingContractMetaDataV0 contractMetaData;
+//    case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0:
+//        ConfigSettingContractBandwidthV0 contractBandwidth;
 //    };
 //
 // union with discriminant ConfigSettingId
@@ -13155,17 +13615,41 @@ impl WriteXdr for ConfigSettingId {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ConfigSettingEntry {
-    ConfigSettingContractMaxSizeBytes(u32),
+    MaxSizeBytes(u32),
+    ComputeV0(ConfigSettingContractComputeV0),
+    LedgerCostV0(ConfigSettingContractLedgerCostV0),
+    HistoricalDataV0(ConfigSettingContractHistoricalDataV0),
+    MetaDataV0(ConfigSettingContractMetaDataV0),
+    BandwidthV0(ConfigSettingContractBandwidthV0),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 1] = [ConfigSettingId::ConfigSettingContractMaxSizeBytes];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ConfigSettingContractMaxSizeBytes"];
+    pub const VARIANTS: [ConfigSettingId; 6] = [
+        ConfigSettingId::MaxSizeBytes,
+        ConfigSettingId::ComputeV0,
+        ConfigSettingId::LedgerCostV0,
+        ConfigSettingId::HistoricalDataV0,
+        ConfigSettingId::MetaDataV0,
+        ConfigSettingId::BandwidthV0,
+    ];
+    pub const VARIANTS_STR: [&'static str; 6] = [
+        "MaxSizeBytes",
+        "ComputeV0",
+        "LedgerCostV0",
+        "HistoricalDataV0",
+        "MetaDataV0",
+        "BandwidthV0",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::ConfigSettingContractMaxSizeBytes(_) => "ConfigSettingContractMaxSizeBytes",
+            Self::MaxSizeBytes(_) => "MaxSizeBytes",
+            Self::ComputeV0(_) => "ComputeV0",
+            Self::LedgerCostV0(_) => "LedgerCostV0",
+            Self::HistoricalDataV0(_) => "HistoricalDataV0",
+            Self::MetaDataV0(_) => "MetaDataV0",
+            Self::BandwidthV0(_) => "BandwidthV0",
         }
     }
 
@@ -13173,14 +13657,17 @@ impl ConfigSettingEntry {
     pub const fn discriminant(&self) -> ConfigSettingId {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::ConfigSettingContractMaxSizeBytes(_) => {
-                ConfigSettingId::ConfigSettingContractMaxSizeBytes
-            }
+            Self::MaxSizeBytes(_) => ConfigSettingId::MaxSizeBytes,
+            Self::ComputeV0(_) => ConfigSettingId::ComputeV0,
+            Self::LedgerCostV0(_) => ConfigSettingId::LedgerCostV0,
+            Self::HistoricalDataV0(_) => ConfigSettingId::HistoricalDataV0,
+            Self::MetaDataV0(_) => ConfigSettingId::MetaDataV0,
+            Self::BandwidthV0(_) => ConfigSettingId::BandwidthV0,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 1] {
+    pub const fn variants() -> [ConfigSettingId; 6] {
         Self::VARIANTS
     }
 }
@@ -13213,8 +13700,21 @@ impl ReadXdr for ConfigSettingEntry {
         let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            ConfigSettingId::ConfigSettingContractMaxSizeBytes => {
-                Self::ConfigSettingContractMaxSizeBytes(u32::read_xdr(r)?)
+            ConfigSettingId::MaxSizeBytes => Self::MaxSizeBytes(u32::read_xdr(r)?),
+            ConfigSettingId::ComputeV0 => {
+                Self::ComputeV0(ConfigSettingContractComputeV0::read_xdr(r)?)
+            }
+            ConfigSettingId::LedgerCostV0 => {
+                Self::LedgerCostV0(ConfigSettingContractLedgerCostV0::read_xdr(r)?)
+            }
+            ConfigSettingId::HistoricalDataV0 => {
+                Self::HistoricalDataV0(ConfigSettingContractHistoricalDataV0::read_xdr(r)?)
+            }
+            ConfigSettingId::MetaDataV0 => {
+                Self::MetaDataV0(ConfigSettingContractMetaDataV0::read_xdr(r)?)
+            }
+            ConfigSettingId::BandwidthV0 => {
+                Self::BandwidthV0(ConfigSettingContractBandwidthV0::read_xdr(r)?)
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -13229,7 +13729,12 @@ impl WriteXdr for ConfigSettingEntry {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::ConfigSettingContractMaxSizeBytes(v) => v.write_xdr(w)?,
+            Self::MaxSizeBytes(v) => v.write_xdr(w)?,
+            Self::ComputeV0(v) => v.write_xdr(w)?,
+            Self::LedgerCostV0(v) => v.write_xdr(w)?,
+            Self::HistoricalDataV0(v) => v.write_xdr(w)?,
+            Self::MetaDataV0(v) => v.write_xdr(w)?,
+            Self::BandwidthV0(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -37624,7 +38129,10 @@ pub enum TypeVariant {
     ScVmErrorCode,
     ScUnknownErrorCode,
     ScStatus,
+    UInt128Parts,
     Int128Parts,
+    UInt256Parts,
+    Int256Parts,
     ScContractExecutableType,
     ScContractExecutable,
     ScAddressType,
@@ -37701,6 +38209,11 @@ pub enum TypeVariant {
     ContractDataEntry,
     ContractCodeEntry,
     ConfigSettingId,
+    ConfigSettingContractComputeV0,
+    ConfigSettingContractLedgerCostV0,
+    ConfigSettingContractHistoricalDataV0,
+    ConfigSettingContractMetaDataV0,
+    ConfigSettingContractBandwidthV0,
     ConfigSettingEntry,
     LedgerEntryExtensionV1,
     LedgerEntryExtensionV1Ext,
@@ -37980,7 +38493,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 402] = [
+    pub const VARIANTS: [TypeVariant; 410] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38030,7 +38543,10 @@ impl TypeVariant {
         TypeVariant::ScVmErrorCode,
         TypeVariant::ScUnknownErrorCode,
         TypeVariant::ScStatus,
+        TypeVariant::UInt128Parts,
         TypeVariant::Int128Parts,
+        TypeVariant::UInt256Parts,
+        TypeVariant::Int256Parts,
         TypeVariant::ScContractExecutableType,
         TypeVariant::ScContractExecutable,
         TypeVariant::ScAddressType,
@@ -38107,6 +38623,11 @@ impl TypeVariant {
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractCodeEntry,
         TypeVariant::ConfigSettingId,
+        TypeVariant::ConfigSettingContractComputeV0,
+        TypeVariant::ConfigSettingContractLedgerCostV0,
+        TypeVariant::ConfigSettingContractHistoricalDataV0,
+        TypeVariant::ConfigSettingContractMetaDataV0,
+        TypeVariant::ConfigSettingContractBandwidthV0,
         TypeVariant::ConfigSettingEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
@@ -38384,7 +38905,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 402] = [
+    pub const VARIANTS_STR: [&'static str; 410] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -38434,7 +38955,10 @@ impl TypeVariant {
         "ScVmErrorCode",
         "ScUnknownErrorCode",
         "ScStatus",
+        "UInt128Parts",
         "Int128Parts",
+        "UInt256Parts",
+        "Int256Parts",
         "ScContractExecutableType",
         "ScContractExecutable",
         "ScAddressType",
@@ -38511,6 +39035,11 @@ impl TypeVariant {
         "ContractDataEntry",
         "ContractCodeEntry",
         "ConfigSettingId",
+        "ConfigSettingContractComputeV0",
+        "ConfigSettingContractLedgerCostV0",
+        "ConfigSettingContractHistoricalDataV0",
+        "ConfigSettingContractMetaDataV0",
+        "ConfigSettingContractBandwidthV0",
         "ConfigSettingEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
@@ -38842,7 +39371,10 @@ impl TypeVariant {
             Self::ScVmErrorCode => "ScVmErrorCode",
             Self::ScUnknownErrorCode => "ScUnknownErrorCode",
             Self::ScStatus => "ScStatus",
+            Self::UInt128Parts => "UInt128Parts",
             Self::Int128Parts => "Int128Parts",
+            Self::UInt256Parts => "UInt256Parts",
+            Self::Int256Parts => "Int256Parts",
             Self::ScContractExecutableType => "ScContractExecutableType",
             Self::ScContractExecutable => "ScContractExecutable",
             Self::ScAddressType => "ScAddressType",
@@ -38921,6 +39453,11 @@ impl TypeVariant {
             Self::ContractDataEntry => "ContractDataEntry",
             Self::ContractCodeEntry => "ContractCodeEntry",
             Self::ConfigSettingId => "ConfigSettingId",
+            Self::ConfigSettingContractComputeV0 => "ConfigSettingContractComputeV0",
+            Self::ConfigSettingContractLedgerCostV0 => "ConfigSettingContractLedgerCostV0",
+            Self::ConfigSettingContractHistoricalDataV0 => "ConfigSettingContractHistoricalDataV0",
+            Self::ConfigSettingContractMetaDataV0 => "ConfigSettingContractMetaDataV0",
+            Self::ConfigSettingContractBandwidthV0 => "ConfigSettingContractBandwidthV0",
             Self::ConfigSettingEntry => "ConfigSettingEntry",
             Self::LedgerEntryExtensionV1 => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext => "LedgerEntryExtensionV1Ext",
@@ -39206,7 +39743,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 402] {
+    pub const fn variants() -> [TypeVariant; 410] {
         Self::VARIANTS
     }
 }
@@ -39278,7 +39815,10 @@ impl core::str::FromStr for TypeVariant {
             "ScVmErrorCode" => Ok(Self::ScVmErrorCode),
             "ScUnknownErrorCode" => Ok(Self::ScUnknownErrorCode),
             "ScStatus" => Ok(Self::ScStatus),
+            "UInt128Parts" => Ok(Self::UInt128Parts),
             "Int128Parts" => Ok(Self::Int128Parts),
+            "UInt256Parts" => Ok(Self::UInt256Parts),
+            "Int256Parts" => Ok(Self::Int256Parts),
             "ScContractExecutableType" => Ok(Self::ScContractExecutableType),
             "ScContractExecutable" => Ok(Self::ScContractExecutable),
             "ScAddressType" => Ok(Self::ScAddressType),
@@ -39357,6 +39897,13 @@ impl core::str::FromStr for TypeVariant {
             "ContractDataEntry" => Ok(Self::ContractDataEntry),
             "ContractCodeEntry" => Ok(Self::ContractCodeEntry),
             "ConfigSettingId" => Ok(Self::ConfigSettingId),
+            "ConfigSettingContractComputeV0" => Ok(Self::ConfigSettingContractComputeV0),
+            "ConfigSettingContractLedgerCostV0" => Ok(Self::ConfigSettingContractLedgerCostV0),
+            "ConfigSettingContractHistoricalDataV0" => {
+                Ok(Self::ConfigSettingContractHistoricalDataV0)
+            }
+            "ConfigSettingContractMetaDataV0" => Ok(Self::ConfigSettingContractMetaDataV0),
+            "ConfigSettingContractBandwidthV0" => Ok(Self::ConfigSettingContractBandwidthV0),
             "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
             "LedgerEntryExtensionV1" => Ok(Self::LedgerEntryExtensionV1),
             "LedgerEntryExtensionV1Ext" => Ok(Self::LedgerEntryExtensionV1Ext),
@@ -39705,7 +40252,10 @@ pub enum Type {
     ScVmErrorCode(Box<ScVmErrorCode>),
     ScUnknownErrorCode(Box<ScUnknownErrorCode>),
     ScStatus(Box<ScStatus>),
+    UInt128Parts(Box<UInt128Parts>),
     Int128Parts(Box<Int128Parts>),
+    UInt256Parts(Box<UInt256Parts>),
+    Int256Parts(Box<Int256Parts>),
     ScContractExecutableType(Box<ScContractExecutableType>),
     ScContractExecutable(Box<ScContractExecutable>),
     ScAddressType(Box<ScAddressType>),
@@ -39782,6 +40332,11 @@ pub enum Type {
     ContractDataEntry(Box<ContractDataEntry>),
     ContractCodeEntry(Box<ContractCodeEntry>),
     ConfigSettingId(Box<ConfigSettingId>),
+    ConfigSettingContractComputeV0(Box<ConfigSettingContractComputeV0>),
+    ConfigSettingContractLedgerCostV0(Box<ConfigSettingContractLedgerCostV0>),
+    ConfigSettingContractHistoricalDataV0(Box<ConfigSettingContractHistoricalDataV0>),
+    ConfigSettingContractMetaDataV0(Box<ConfigSettingContractMetaDataV0>),
+    ConfigSettingContractBandwidthV0(Box<ConfigSettingContractBandwidthV0>),
     ConfigSettingEntry(Box<ConfigSettingEntry>),
     LedgerEntryExtensionV1(Box<LedgerEntryExtensionV1>),
     LedgerEntryExtensionV1Ext(Box<LedgerEntryExtensionV1Ext>),
@@ -40061,7 +40616,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 402] = [
+    pub const VARIANTS: [TypeVariant; 410] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -40111,7 +40666,10 @@ impl Type {
         TypeVariant::ScVmErrorCode,
         TypeVariant::ScUnknownErrorCode,
         TypeVariant::ScStatus,
+        TypeVariant::UInt128Parts,
         TypeVariant::Int128Parts,
+        TypeVariant::UInt256Parts,
+        TypeVariant::Int256Parts,
         TypeVariant::ScContractExecutableType,
         TypeVariant::ScContractExecutable,
         TypeVariant::ScAddressType,
@@ -40188,6 +40746,11 @@ impl Type {
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractCodeEntry,
         TypeVariant::ConfigSettingId,
+        TypeVariant::ConfigSettingContractComputeV0,
+        TypeVariant::ConfigSettingContractLedgerCostV0,
+        TypeVariant::ConfigSettingContractHistoricalDataV0,
+        TypeVariant::ConfigSettingContractMetaDataV0,
+        TypeVariant::ConfigSettingContractBandwidthV0,
         TypeVariant::ConfigSettingEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
@@ -40465,7 +41028,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 402] = [
+    pub const VARIANTS_STR: [&'static str; 410] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -40515,7 +41078,10 @@ impl Type {
         "ScVmErrorCode",
         "ScUnknownErrorCode",
         "ScStatus",
+        "UInt128Parts",
         "Int128Parts",
+        "UInt256Parts",
+        "Int256Parts",
         "ScContractExecutableType",
         "ScContractExecutable",
         "ScAddressType",
@@ -40592,6 +41158,11 @@ impl Type {
         "ContractDataEntry",
         "ContractCodeEntry",
         "ConfigSettingId",
+        "ConfigSettingContractComputeV0",
+        "ConfigSettingContractLedgerCostV0",
+        "ConfigSettingContractHistoricalDataV0",
+        "ConfigSettingContractMetaDataV0",
+        "ConfigSettingContractBandwidthV0",
         "ConfigSettingEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
@@ -41007,7 +41578,14 @@ impl Type {
                 ScUnknownErrorCode::read_xdr(r)?,
             ))),
             TypeVariant::ScStatus => Ok(Self::ScStatus(Box::new(ScStatus::read_xdr(r)?))),
+            TypeVariant::UInt128Parts => {
+                Ok(Self::UInt128Parts(Box::new(UInt128Parts::read_xdr(r)?)))
+            }
             TypeVariant::Int128Parts => Ok(Self::Int128Parts(Box::new(Int128Parts::read_xdr(r)?))),
+            TypeVariant::UInt256Parts => {
+                Ok(Self::UInt256Parts(Box::new(UInt256Parts::read_xdr(r)?)))
+            }
+            TypeVariant::Int256Parts => Ok(Self::Int256Parts(Box::new(Int256Parts::read_xdr(r)?))),
             TypeVariant::ScContractExecutableType => Ok(Self::ScContractExecutableType(Box::new(
                 ScContractExecutableType::read_xdr(r)?,
             ))),
@@ -41188,6 +41766,31 @@ impl Type {
             TypeVariant::ConfigSettingId => Ok(Self::ConfigSettingId(Box::new(
                 ConfigSettingId::read_xdr(r)?,
             ))),
+            TypeVariant::ConfigSettingContractComputeV0 => {
+                Ok(Self::ConfigSettingContractComputeV0(Box::new(
+                    ConfigSettingContractComputeV0::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractLedgerCostV0 => {
+                Ok(Self::ConfigSettingContractLedgerCostV0(Box::new(
+                    ConfigSettingContractLedgerCostV0::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => {
+                Ok(Self::ConfigSettingContractHistoricalDataV0(Box::new(
+                    ConfigSettingContractHistoricalDataV0::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractMetaDataV0 => {
+                Ok(Self::ConfigSettingContractMetaDataV0(Box::new(
+                    ConfigSettingContractMetaDataV0::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractBandwidthV0 => {
+                Ok(Self::ConfigSettingContractBandwidthV0(Box::new(
+                    ConfigSettingContractBandwidthV0::read_xdr(r)?,
+                )))
+            }
             TypeVariant::ConfigSettingEntry => Ok(Self::ConfigSettingEntry(Box::new(
                 ConfigSettingEntry::read_xdr(r)?,
             ))),
@@ -42218,9 +42821,21 @@ impl Type {
             TypeVariant::ScStatus => Box::new(
                 ReadXdrIter::<_, ScStatus>::new(r).map(|r| r.map(|t| Self::ScStatus(Box::new(t)))),
             ),
+            TypeVariant::UInt128Parts => Box::new(
+                ReadXdrIter::<_, UInt128Parts>::new(r)
+                    .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t)))),
+            ),
             TypeVariant::Int128Parts => Box::new(
                 ReadXdrIter::<_, Int128Parts>::new(r)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
+            ),
+            TypeVariant::UInt256Parts => Box::new(
+                ReadXdrIter::<_, UInt256Parts>::new(r)
+                    .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t)))),
+            ),
+            TypeVariant::Int256Parts => Box::new(
+                ReadXdrIter::<_, Int256Parts>::new(r)
+                    .map(|r| r.map(|t| Self::Int256Parts(Box::new(t)))),
             ),
             TypeVariant::ScContractExecutableType => Box::new(
                 ReadXdrIter::<_, ScContractExecutableType>::new(r)
@@ -42512,6 +43127,26 @@ impl Type {
             TypeVariant::ConfigSettingId => Box::new(
                 ReadXdrIter::<_, ConfigSettingId>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractMetaDataV0>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingEntry => Box::new(
                 ReadXdrIter::<_, ConfigSettingEntry>::new(r)
@@ -43808,9 +44443,21 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScStatus>>::new(r)
                     .map(|r| r.map(|t| Self::ScStatus(Box::new(t.0)))),
             ),
+            TypeVariant::UInt128Parts => Box::new(
+                ReadXdrIter::<_, Frame<UInt128Parts>>::new(r)
+                    .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t.0)))),
+            ),
             TypeVariant::Int128Parts => Box::new(
                 ReadXdrIter::<_, Frame<Int128Parts>>::new(r)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t.0)))),
+            ),
+            TypeVariant::UInt256Parts => Box::new(
+                ReadXdrIter::<_, Frame<UInt256Parts>>::new(r)
+                    .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t.0)))),
+            ),
+            TypeVariant::Int256Parts => Box::new(
+                ReadXdrIter::<_, Frame<Int256Parts>>::new(r)
+                    .map(|r| r.map(|t| Self::Int256Parts(Box::new(t.0)))),
             ),
             TypeVariant::ScContractExecutableType => Box::new(
                 ReadXdrIter::<_, Frame<ScContractExecutableType>>::new(r)
@@ -44116,6 +44763,26 @@ impl Type {
             TypeVariant::ConfigSettingId => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingId>>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractComputeV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractLedgerCostV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractHistoricalDataV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractMetaDataV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractBandwidthV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingEntry => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingEntry>>::new(r)
@@ -45428,9 +46095,21 @@ impl Type {
                 ReadXdrIter::<_, ScStatus>::new(dec)
                     .map(|r| r.map(|t| Self::ScStatus(Box::new(t)))),
             ),
+            TypeVariant::UInt128Parts => Box::new(
+                ReadXdrIter::<_, UInt128Parts>::new(dec)
+                    .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t)))),
+            ),
             TypeVariant::Int128Parts => Box::new(
                 ReadXdrIter::<_, Int128Parts>::new(dec)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
+            ),
+            TypeVariant::UInt256Parts => Box::new(
+                ReadXdrIter::<_, UInt256Parts>::new(dec)
+                    .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t)))),
+            ),
+            TypeVariant::Int256Parts => Box::new(
+                ReadXdrIter::<_, Int256Parts>::new(dec)
+                    .map(|r| r.map(|t| Self::Int256Parts(Box::new(t)))),
             ),
             TypeVariant::ScContractExecutableType => Box::new(
                 ReadXdrIter::<_, ScContractExecutableType>::new(dec)
@@ -45727,6 +46406,26 @@ impl Type {
             TypeVariant::ConfigSettingId => Box::new(
                 ReadXdrIter::<_, ConfigSettingId>::new(dec)
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractMetaDataV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingEntry => Box::new(
                 ReadXdrIter::<_, ConfigSettingEntry>::new(dec)
@@ -46895,7 +47594,10 @@ impl Type {
             Self::ScVmErrorCode(ref v) => v.as_ref(),
             Self::ScUnknownErrorCode(ref v) => v.as_ref(),
             Self::ScStatus(ref v) => v.as_ref(),
+            Self::UInt128Parts(ref v) => v.as_ref(),
             Self::Int128Parts(ref v) => v.as_ref(),
+            Self::UInt256Parts(ref v) => v.as_ref(),
+            Self::Int256Parts(ref v) => v.as_ref(),
             Self::ScContractExecutableType(ref v) => v.as_ref(),
             Self::ScContractExecutable(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
@@ -46972,6 +47674,11 @@ impl Type {
             Self::ContractDataEntry(ref v) => v.as_ref(),
             Self::ContractCodeEntry(ref v) => v.as_ref(),
             Self::ConfigSettingId(ref v) => v.as_ref(),
+            Self::ConfigSettingContractComputeV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractLedgerCostV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractHistoricalDataV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractMetaDataV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractBandwidthV0(ref v) => v.as_ref(),
             Self::ConfigSettingEntry(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1Ext(ref v) => v.as_ref(),
@@ -47304,7 +48011,10 @@ impl Type {
             Self::ScVmErrorCode(_) => "ScVmErrorCode",
             Self::ScUnknownErrorCode(_) => "ScUnknownErrorCode",
             Self::ScStatus(_) => "ScStatus",
+            Self::UInt128Parts(_) => "UInt128Parts",
             Self::Int128Parts(_) => "Int128Parts",
+            Self::UInt256Parts(_) => "UInt256Parts",
+            Self::Int256Parts(_) => "Int256Parts",
             Self::ScContractExecutableType(_) => "ScContractExecutableType",
             Self::ScContractExecutable(_) => "ScContractExecutable",
             Self::ScAddressType(_) => "ScAddressType",
@@ -47383,6 +48093,13 @@ impl Type {
             Self::ContractDataEntry(_) => "ContractDataEntry",
             Self::ContractCodeEntry(_) => "ContractCodeEntry",
             Self::ConfigSettingId(_) => "ConfigSettingId",
+            Self::ConfigSettingContractComputeV0(_) => "ConfigSettingContractComputeV0",
+            Self::ConfigSettingContractLedgerCostV0(_) => "ConfigSettingContractLedgerCostV0",
+            Self::ConfigSettingContractHistoricalDataV0(_) => {
+                "ConfigSettingContractHistoricalDataV0"
+            }
+            Self::ConfigSettingContractMetaDataV0(_) => "ConfigSettingContractMetaDataV0",
+            Self::ConfigSettingContractBandwidthV0(_) => "ConfigSettingContractBandwidthV0",
             Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
             Self::LedgerEntryExtensionV1(_) => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext(_) => "LedgerEntryExtensionV1Ext",
@@ -47674,7 +48391,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 402] {
+    pub const fn variants() -> [TypeVariant; 410] {
         Self::VARIANTS
     }
 
@@ -47731,7 +48448,10 @@ impl Type {
             Self::ScVmErrorCode(_) => TypeVariant::ScVmErrorCode,
             Self::ScUnknownErrorCode(_) => TypeVariant::ScUnknownErrorCode,
             Self::ScStatus(_) => TypeVariant::ScStatus,
+            Self::UInt128Parts(_) => TypeVariant::UInt128Parts,
             Self::Int128Parts(_) => TypeVariant::Int128Parts,
+            Self::UInt256Parts(_) => TypeVariant::UInt256Parts,
+            Self::Int256Parts(_) => TypeVariant::Int256Parts,
             Self::ScContractExecutableType(_) => TypeVariant::ScContractExecutableType,
             Self::ScContractExecutable(_) => TypeVariant::ScContractExecutable,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,
@@ -47816,6 +48536,19 @@ impl Type {
             Self::ContractDataEntry(_) => TypeVariant::ContractDataEntry,
             Self::ContractCodeEntry(_) => TypeVariant::ContractCodeEntry,
             Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
+            Self::ConfigSettingContractComputeV0(_) => TypeVariant::ConfigSettingContractComputeV0,
+            Self::ConfigSettingContractLedgerCostV0(_) => {
+                TypeVariant::ConfigSettingContractLedgerCostV0
+            }
+            Self::ConfigSettingContractHistoricalDataV0(_) => {
+                TypeVariant::ConfigSettingContractHistoricalDataV0
+            }
+            Self::ConfigSettingContractMetaDataV0(_) => {
+                TypeVariant::ConfigSettingContractMetaDataV0
+            }
+            Self::ConfigSettingContractBandwidthV0(_) => {
+                TypeVariant::ConfigSettingContractBandwidthV0
+            }
             Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
             Self::LedgerEntryExtensionV1(_) => TypeVariant::LedgerEntryExtensionV1,
             Self::LedgerEntryExtensionV1Ext(_) => TypeVariant::LedgerEntryExtensionV1Ext,

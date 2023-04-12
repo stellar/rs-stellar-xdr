@@ -1,4 +1,6 @@
-use super::{Int128Parts, ScBytes, ScMap, ScMapEntry, ScStatus, ScSymbol, ScVal, ScVec};
+use super::{
+    Int128Parts, ScBytes, ScMap, ScMapEntry, ScStatus, ScSymbol, ScVal, ScVec, UInt128Parts,
+};
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
@@ -166,36 +168,51 @@ pub mod int128_helpers {
     #[must_use]
     #[inline(always)]
     #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
-    pub fn u128_lo(u: u128) -> u64 {
-        u as u64
-    }
-
-    #[must_use]
-    #[inline(always)]
-    #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
     pub fn u128_hi(u: u128) -> u64 {
         (u >> 64) as u64
     }
 
     #[must_use]
     #[inline(always)]
+    #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
+    pub fn u128_lo(u: u128) -> u64 {
+        u as u64
+    }
+
+    #[must_use]
+    #[inline(always)]
     #[allow(clippy::inline_always)]
-    pub fn u128_from_pieces(lo: u64, hi: u64) -> u128 {
-        u128::from(lo) | (u128::from(hi) << 64)
+    pub fn u128_from_pieces(hi: u64, lo: u64) -> u128 {
+        (u128::from(hi) << 64) | u128::from(lo)
     }
 
     #[must_use]
     #[inline(always)]
-    #[allow(clippy::inline_always, clippy::cast_sign_loss)]
-    pub fn u128_from_i128(i: i128) -> u128 {
-        i as u128
+    #[allow(clippy::inline_always, clippy::cast_possible_truncation)]
+    pub fn i128_hi(i: i128) -> i64 {
+        (i >> 64) as i64
     }
 
     #[must_use]
     #[inline(always)]
-    #[allow(clippy::inline_always, clippy::cast_possible_wrap)]
-    pub fn i128_from_u128(u: u128) -> i128 {
-        u as i128
+    #[allow(
+        clippy::inline_always,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
+    pub fn i128_lo(i: i128) -> u64 {
+        i as u64
+    }
+
+    #[must_use]
+    #[inline(always)]
+    #[allow(
+        clippy::inline_always,
+        clippy::cast_sign_loss,
+        clippy::cast_possible_wrap
+    )]
+    pub fn i128_from_pieces(hi: i64, lo: u64) -> i128 {
+        (u128::from(hi as u64) << 64 | u128::from(lo)) as i128
     }
 }
 
@@ -204,9 +221,9 @@ use int128_helpers::*;
 
 impl From<u128> for ScVal {
     fn from(v: u128) -> Self {
-        ScVal::U128(Int128Parts {
-            lo: u128_lo(v),
+        ScVal::U128(UInt128Parts {
             hi: u128_hi(v),
+            lo: u128_lo(v),
         })
     }
 }
@@ -217,9 +234,9 @@ impl From<&u128> for ScVal {
     }
 }
 
-impl From<&Int128Parts> for u128 {
-    fn from(v: &Int128Parts) -> Self {
-        u128_from_pieces(v.lo, v.hi)
+impl From<&UInt128Parts> for u128 {
+    fn from(v: &UInt128Parts) -> Self {
+        u128_from_pieces(v.hi, v.lo)
     }
 }
 
@@ -236,10 +253,9 @@ impl TryFrom<ScVal> for u128 {
 
 impl From<i128> for ScVal {
     fn from(v: i128) -> Self {
-        let v = u128_from_i128(v);
         ScVal::I128(Int128Parts {
-            lo: u128_lo(v),
-            hi: u128_hi(v),
+            hi: i128_hi(v),
+            lo: i128_lo(v),
         })
     }
 }
@@ -252,7 +268,7 @@ impl From<&i128> for ScVal {
 
 impl From<&Int128Parts> for i128 {
     fn from(v: &Int128Parts) -> Self {
-        i128_from_u128(u128_from_pieces(v.lo, v.hi))
+        i128_from_pieces(v.hi, v.lo)
     }
 }
 
@@ -623,7 +639,7 @@ impl_for_tuple! { 13 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 T10 10 T1
 
 #[cfg(test)]
 mod test {
-    use super::ScVal;
+    use super::{int128_helpers, Int128Parts, ScVal, UInt128Parts};
 
     #[test]
     fn i32_pos() {
@@ -679,6 +695,59 @@ mod test {
         assert_eq!(val, ScVal::U64(5));
         let roundtrip: u64 = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
+    }
+
+    #[test]
+    fn u128() {
+        let hi = 0x1234_5678_9abc_def0u64;
+        let lo = 0xfedc_ba98_7654_3210u64;
+        let u = int128_helpers::u128_from_pieces(hi, lo);
+        assert_eq!(u, 0x1234_5678_9abc_def0_fedc_ba98_7654_3210);
+        assert_eq!(int128_helpers::u128_hi(u), hi);
+        assert_eq!(int128_helpers::u128_lo(u), lo);
+
+        let val: ScVal = u.try_into().unwrap();
+        assert_eq!(val, ScVal::U128(UInt128Parts { hi, lo }));
+        let roundtrip: u128 = val.try_into().unwrap();
+        assert_eq!(u, roundtrip);
+    }
+
+    #[test]
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+    fn i128() {
+        let part1 = 0x00ab_cdef_9876_5432u64; // some positive int64
+        let part2 = 0xfedc_ba98_7654_3210u64; // some negative int64
+        let roundtrip = |hi: i64, lo: u64, ref_i128: i128| {
+            let i = int128_helpers::i128_from_pieces(hi, lo);
+            assert_eq!(i, ref_i128);
+            assert_eq!(int128_helpers::i128_hi(i), hi);
+            assert_eq!(int128_helpers::i128_lo(i), lo);
+
+            let val: ScVal = i.try_into().unwrap();
+            assert_eq!(val, ScVal::I128(Int128Parts { hi, lo }));
+            let roundtrip: i128 = val.try_into().unwrap();
+            assert_eq!(i, roundtrip);
+        };
+        roundtrip(
+            part1 as i64,
+            part1,
+            0x00ab_cdef_9876_5432_00ab_cdef_9876_5432,
+        );
+        roundtrip(
+            part2 as i64,
+            part2,
+            0xfedc_ba98_7654_3210_fedc_ba98_7654_3210u128 as i128,
+        );
+        roundtrip(
+            part1 as i64,
+            part2,
+            0x00ab_cdef_9876_5432_fedc_ba98_7654_3210,
+        );
+        roundtrip(
+            part2 as i64,
+            part1,
+            0xfedc_ba98_7654_3210_00ab_cdef_9876_5432u128 as i128,
+        );
     }
 
     #[cfg(feature = "alloc")]

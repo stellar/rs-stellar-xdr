@@ -28,7 +28,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "7ec20def7e005a7d90357ac7b39d616435ab5835dc806989515faecdb506f51d",
+        "d618ba1a958d2dc50ddab1c986ab1a660a0b638a382a98bfe42d2f62b24aea05",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -6448,14 +6448,49 @@ impl WriteXdr for ScStatus {
     }
 }
 
+// UInt128Parts is an XDR Struct defines as:
+//
+//   struct UInt128Parts {
+//        uint64 hi;
+//        uint64 lo;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct UInt128Parts {
+    pub hi: u64,
+    pub lo: u64,
+}
+
+impl ReadXdr for UInt128Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            hi: u64::read_xdr(r)?,
+            lo: u64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for UInt128Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.hi.write_xdr(w)?;
+        self.lo.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // Int128Parts is an XDR Struct defines as:
 //
 //   struct Int128Parts {
-//        // Both signed and unsigned 128-bit ints
-//        // are transported in a pair of uint64s
-//        // to reduce the risk of sign-extension.
+//        int64 hi;
 //        uint64 lo;
-//        uint64 hi;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -6466,16 +6501,16 @@ impl WriteXdr for ScStatus {
     serde(rename_all = "snake_case")
 )]
 pub struct Int128Parts {
+    pub hi: i64,
     pub lo: u64,
-    pub hi: u64,
 }
 
 impl ReadXdr for Int128Parts {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            hi: i64::read_xdr(r)?,
             lo: u64::read_xdr(r)?,
-            hi: u64::read_xdr(r)?,
         })
     }
 }
@@ -6483,8 +6518,100 @@ impl ReadXdr for Int128Parts {
 impl WriteXdr for Int128Parts {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.lo.write_xdr(w)?;
         self.hi.write_xdr(w)?;
+        self.lo.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// UInt256Parts is an XDR Struct defines as:
+//
+//   struct UInt256Parts {
+//        uint64 hi_hi;
+//        uint64 hi_lo;
+//        uint64 lo_hi;
+//        uint64 lo_lo;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct UInt256Parts {
+    pub hi_hi: u64,
+    pub hi_lo: u64,
+    pub lo_hi: u64,
+    pub lo_lo: u64,
+}
+
+impl ReadXdr for UInt256Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            hi_hi: u64::read_xdr(r)?,
+            hi_lo: u64::read_xdr(r)?,
+            lo_hi: u64::read_xdr(r)?,
+            lo_lo: u64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for UInt256Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.hi_hi.write_xdr(w)?;
+        self.hi_lo.write_xdr(w)?;
+        self.lo_hi.write_xdr(w)?;
+        self.lo_lo.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// Int256Parts is an XDR Struct defines as:
+//
+//   struct Int256Parts {
+//        int64 hi_hi;
+//        uint64 hi_lo;
+//        uint64 lo_hi;
+//        uint64 lo_lo;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct Int256Parts {
+    pub hi_hi: i64,
+    pub hi_lo: u64,
+    pub lo_hi: u64,
+    pub lo_lo: u64,
+}
+
+impl ReadXdr for Int256Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            hi_hi: i64::read_xdr(r)?,
+            hi_lo: u64::read_xdr(r)?,
+            lo_hi: u64::read_xdr(r)?,
+            lo_lo: u64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for Int256Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.hi_hi.write_xdr(w)?;
+        self.hi_lo.write_xdr(w)?;
+        self.lo_hi.write_xdr(w)?;
+        self.lo_lo.write_xdr(w)?;
         Ok(())
     }
 }
@@ -7468,14 +7595,14 @@ impl WriteXdr for ScNonceKey {
 //        Duration duration;
 //
 //    case SCV_U128:
-//        Int128Parts u128;
+//        UInt128Parts u128;
 //    case SCV_I128:
 //        Int128Parts i128;
 //
 //    case SCV_U256:
-//        uint256 u256;
+//        UInt256Parts u256;
 //    case SCV_I256:
-//        uint256 i256;
+//        Int256Parts i256;
 //
 //    case SCV_BYTES:
 //        SCBytes bytes;
@@ -7523,10 +7650,10 @@ pub enum ScVal {
     I64(i64),
     Timepoint(TimePoint),
     Duration(Duration),
-    U128(Int128Parts),
+    U128(UInt128Parts),
     I128(Int128Parts),
-    U256(Uint256),
-    I256(Uint256),
+    U256(UInt256Parts),
+    I256(Int256Parts),
     Bytes(ScBytes),
     String(ScString),
     Symbol(ScSymbol),
@@ -7688,10 +7815,10 @@ impl ReadXdr for ScVal {
             ScValType::I64 => Self::I64(i64::read_xdr(r)?),
             ScValType::Timepoint => Self::Timepoint(TimePoint::read_xdr(r)?),
             ScValType::Duration => Self::Duration(Duration::read_xdr(r)?),
-            ScValType::U128 => Self::U128(Int128Parts::read_xdr(r)?),
+            ScValType::U128 => Self::U128(UInt128Parts::read_xdr(r)?),
             ScValType::I128 => Self::I128(Int128Parts::read_xdr(r)?),
-            ScValType::U256 => Self::U256(Uint256::read_xdr(r)?),
-            ScValType::I256 => Self::I256(Uint256::read_xdr(r)?),
+            ScValType::U256 => Self::U256(UInt256Parts::read_xdr(r)?),
+            ScValType::I256 => Self::I256(Int256Parts::read_xdr(r)?),
             ScValType::Bytes => Self::Bytes(ScBytes::read_xdr(r)?),
             ScValType::String => Self::String(ScString::read_xdr(r)?),
             ScValType::Symbol => Self::Symbol(ScSymbol::read_xdr(r)?),
@@ -37624,7 +37751,10 @@ pub enum TypeVariant {
     ScVmErrorCode,
     ScUnknownErrorCode,
     ScStatus,
+    UInt128Parts,
     Int128Parts,
+    UInt256Parts,
+    Int256Parts,
     ScContractExecutableType,
     ScContractExecutable,
     ScAddressType,
@@ -37980,7 +38110,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 402] = [
+    pub const VARIANTS: [TypeVariant; 405] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38030,7 +38160,10 @@ impl TypeVariant {
         TypeVariant::ScVmErrorCode,
         TypeVariant::ScUnknownErrorCode,
         TypeVariant::ScStatus,
+        TypeVariant::UInt128Parts,
         TypeVariant::Int128Parts,
+        TypeVariant::UInt256Parts,
+        TypeVariant::Int256Parts,
         TypeVariant::ScContractExecutableType,
         TypeVariant::ScContractExecutable,
         TypeVariant::ScAddressType,
@@ -38384,7 +38517,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 402] = [
+    pub const VARIANTS_STR: [&'static str; 405] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -38434,7 +38567,10 @@ impl TypeVariant {
         "ScVmErrorCode",
         "ScUnknownErrorCode",
         "ScStatus",
+        "UInt128Parts",
         "Int128Parts",
+        "UInt256Parts",
+        "Int256Parts",
         "ScContractExecutableType",
         "ScContractExecutable",
         "ScAddressType",
@@ -38842,7 +38978,10 @@ impl TypeVariant {
             Self::ScVmErrorCode => "ScVmErrorCode",
             Self::ScUnknownErrorCode => "ScUnknownErrorCode",
             Self::ScStatus => "ScStatus",
+            Self::UInt128Parts => "UInt128Parts",
             Self::Int128Parts => "Int128Parts",
+            Self::UInt256Parts => "UInt256Parts",
+            Self::Int256Parts => "Int256Parts",
             Self::ScContractExecutableType => "ScContractExecutableType",
             Self::ScContractExecutable => "ScContractExecutable",
             Self::ScAddressType => "ScAddressType",
@@ -39206,7 +39345,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 402] {
+    pub const fn variants() -> [TypeVariant; 405] {
         Self::VARIANTS
     }
 }
@@ -39278,7 +39417,10 @@ impl core::str::FromStr for TypeVariant {
             "ScVmErrorCode" => Ok(Self::ScVmErrorCode),
             "ScUnknownErrorCode" => Ok(Self::ScUnknownErrorCode),
             "ScStatus" => Ok(Self::ScStatus),
+            "UInt128Parts" => Ok(Self::UInt128Parts),
             "Int128Parts" => Ok(Self::Int128Parts),
+            "UInt256Parts" => Ok(Self::UInt256Parts),
+            "Int256Parts" => Ok(Self::Int256Parts),
             "ScContractExecutableType" => Ok(Self::ScContractExecutableType),
             "ScContractExecutable" => Ok(Self::ScContractExecutable),
             "ScAddressType" => Ok(Self::ScAddressType),
@@ -39705,7 +39847,10 @@ pub enum Type {
     ScVmErrorCode(Box<ScVmErrorCode>),
     ScUnknownErrorCode(Box<ScUnknownErrorCode>),
     ScStatus(Box<ScStatus>),
+    UInt128Parts(Box<UInt128Parts>),
     Int128Parts(Box<Int128Parts>),
+    UInt256Parts(Box<UInt256Parts>),
+    Int256Parts(Box<Int256Parts>),
     ScContractExecutableType(Box<ScContractExecutableType>),
     ScContractExecutable(Box<ScContractExecutable>),
     ScAddressType(Box<ScAddressType>),
@@ -40061,7 +40206,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 402] = [
+    pub const VARIANTS: [TypeVariant; 405] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -40111,7 +40256,10 @@ impl Type {
         TypeVariant::ScVmErrorCode,
         TypeVariant::ScUnknownErrorCode,
         TypeVariant::ScStatus,
+        TypeVariant::UInt128Parts,
         TypeVariant::Int128Parts,
+        TypeVariant::UInt256Parts,
+        TypeVariant::Int256Parts,
         TypeVariant::ScContractExecutableType,
         TypeVariant::ScContractExecutable,
         TypeVariant::ScAddressType,
@@ -40465,7 +40613,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 402] = [
+    pub const VARIANTS_STR: [&'static str; 405] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -40515,7 +40663,10 @@ impl Type {
         "ScVmErrorCode",
         "ScUnknownErrorCode",
         "ScStatus",
+        "UInt128Parts",
         "Int128Parts",
+        "UInt256Parts",
+        "Int256Parts",
         "ScContractExecutableType",
         "ScContractExecutable",
         "ScAddressType",
@@ -41007,7 +41158,14 @@ impl Type {
                 ScUnknownErrorCode::read_xdr(r)?,
             ))),
             TypeVariant::ScStatus => Ok(Self::ScStatus(Box::new(ScStatus::read_xdr(r)?))),
+            TypeVariant::UInt128Parts => {
+                Ok(Self::UInt128Parts(Box::new(UInt128Parts::read_xdr(r)?)))
+            }
             TypeVariant::Int128Parts => Ok(Self::Int128Parts(Box::new(Int128Parts::read_xdr(r)?))),
+            TypeVariant::UInt256Parts => {
+                Ok(Self::UInt256Parts(Box::new(UInt256Parts::read_xdr(r)?)))
+            }
+            TypeVariant::Int256Parts => Ok(Self::Int256Parts(Box::new(Int256Parts::read_xdr(r)?))),
             TypeVariant::ScContractExecutableType => Ok(Self::ScContractExecutableType(Box::new(
                 ScContractExecutableType::read_xdr(r)?,
             ))),
@@ -42218,9 +42376,21 @@ impl Type {
             TypeVariant::ScStatus => Box::new(
                 ReadXdrIter::<_, ScStatus>::new(r).map(|r| r.map(|t| Self::ScStatus(Box::new(t)))),
             ),
+            TypeVariant::UInt128Parts => Box::new(
+                ReadXdrIter::<_, UInt128Parts>::new(r)
+                    .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t)))),
+            ),
             TypeVariant::Int128Parts => Box::new(
                 ReadXdrIter::<_, Int128Parts>::new(r)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
+            ),
+            TypeVariant::UInt256Parts => Box::new(
+                ReadXdrIter::<_, UInt256Parts>::new(r)
+                    .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t)))),
+            ),
+            TypeVariant::Int256Parts => Box::new(
+                ReadXdrIter::<_, Int256Parts>::new(r)
+                    .map(|r| r.map(|t| Self::Int256Parts(Box::new(t)))),
             ),
             TypeVariant::ScContractExecutableType => Box::new(
                 ReadXdrIter::<_, ScContractExecutableType>::new(r)
@@ -43808,9 +43978,21 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScStatus>>::new(r)
                     .map(|r| r.map(|t| Self::ScStatus(Box::new(t.0)))),
             ),
+            TypeVariant::UInt128Parts => Box::new(
+                ReadXdrIter::<_, Frame<UInt128Parts>>::new(r)
+                    .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t.0)))),
+            ),
             TypeVariant::Int128Parts => Box::new(
                 ReadXdrIter::<_, Frame<Int128Parts>>::new(r)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t.0)))),
+            ),
+            TypeVariant::UInt256Parts => Box::new(
+                ReadXdrIter::<_, Frame<UInt256Parts>>::new(r)
+                    .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t.0)))),
+            ),
+            TypeVariant::Int256Parts => Box::new(
+                ReadXdrIter::<_, Frame<Int256Parts>>::new(r)
+                    .map(|r| r.map(|t| Self::Int256Parts(Box::new(t.0)))),
             ),
             TypeVariant::ScContractExecutableType => Box::new(
                 ReadXdrIter::<_, Frame<ScContractExecutableType>>::new(r)
@@ -45428,9 +45610,21 @@ impl Type {
                 ReadXdrIter::<_, ScStatus>::new(dec)
                     .map(|r| r.map(|t| Self::ScStatus(Box::new(t)))),
             ),
+            TypeVariant::UInt128Parts => Box::new(
+                ReadXdrIter::<_, UInt128Parts>::new(dec)
+                    .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t)))),
+            ),
             TypeVariant::Int128Parts => Box::new(
                 ReadXdrIter::<_, Int128Parts>::new(dec)
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
+            ),
+            TypeVariant::UInt256Parts => Box::new(
+                ReadXdrIter::<_, UInt256Parts>::new(dec)
+                    .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t)))),
+            ),
+            TypeVariant::Int256Parts => Box::new(
+                ReadXdrIter::<_, Int256Parts>::new(dec)
+                    .map(|r| r.map(|t| Self::Int256Parts(Box::new(t)))),
             ),
             TypeVariant::ScContractExecutableType => Box::new(
                 ReadXdrIter::<_, ScContractExecutableType>::new(dec)
@@ -46895,7 +47089,10 @@ impl Type {
             Self::ScVmErrorCode(ref v) => v.as_ref(),
             Self::ScUnknownErrorCode(ref v) => v.as_ref(),
             Self::ScStatus(ref v) => v.as_ref(),
+            Self::UInt128Parts(ref v) => v.as_ref(),
             Self::Int128Parts(ref v) => v.as_ref(),
+            Self::UInt256Parts(ref v) => v.as_ref(),
+            Self::Int256Parts(ref v) => v.as_ref(),
             Self::ScContractExecutableType(ref v) => v.as_ref(),
             Self::ScContractExecutable(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
@@ -47304,7 +47501,10 @@ impl Type {
             Self::ScVmErrorCode(_) => "ScVmErrorCode",
             Self::ScUnknownErrorCode(_) => "ScUnknownErrorCode",
             Self::ScStatus(_) => "ScStatus",
+            Self::UInt128Parts(_) => "UInt128Parts",
             Self::Int128Parts(_) => "Int128Parts",
+            Self::UInt256Parts(_) => "UInt256Parts",
+            Self::Int256Parts(_) => "Int256Parts",
             Self::ScContractExecutableType(_) => "ScContractExecutableType",
             Self::ScContractExecutable(_) => "ScContractExecutable",
             Self::ScAddressType(_) => "ScAddressType",
@@ -47674,7 +47874,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 402] {
+    pub const fn variants() -> [TypeVariant; 405] {
         Self::VARIANTS
     }
 
@@ -47731,7 +47931,10 @@ impl Type {
             Self::ScVmErrorCode(_) => TypeVariant::ScVmErrorCode,
             Self::ScUnknownErrorCode(_) => TypeVariant::ScUnknownErrorCode,
             Self::ScStatus(_) => TypeVariant::ScStatus,
+            Self::UInt128Parts(_) => TypeVariant::UInt128Parts,
             Self::Int128Parts(_) => TypeVariant::Int128Parts,
+            Self::UInt256Parts(_) => TypeVariant::UInt256Parts,
+            Self::Int256Parts(_) => TypeVariant::Int256Parts,
             Self::ScContractExecutableType(_) => TypeVariant::ScContractExecutableType,
             Self::ScContractExecutable(_) => TypeVariant::ScContractExecutable,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,

@@ -1,6 +1,7 @@
 // Module  is generated from:
 //  xdr/next/Stellar-SCP.x
 //  xdr/next/Stellar-contract-env-meta.x
+//  xdr/next/Stellar-contract-meta.x
 //  xdr/next/Stellar-contract-spec.x
 //  xdr/next/Stellar-contract.x
 //  xdr/next/Stellar-internal.x
@@ -13,7 +14,7 @@
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
-pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
+pub const XDR_FILES_SHA256: [(&str, &str); 11] = [
     (
         "xdr/next/Stellar-SCP.x",
         "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
@@ -21,6 +22,10 @@ pub const XDR_FILES_SHA256: [(&str, &str); 10] = [
     (
         "xdr/next/Stellar-contract-env-meta.x",
         "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
+    ),
+    (
+        "xdr/next/Stellar-contract-meta.x",
+        "f01532c11ca044e19d9f9f16fe373e9af64835da473be556b9a807ee3319ae0d",
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
@@ -2957,6 +2962,234 @@ impl WriteXdr for ScEnvMetaEntry {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::ScEnvMetaKindInterfaceVersion(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ScMetaV0 is an XDR Struct defines as:
+//
+//   struct SCMetaV0
+//    {
+//        string key<>;
+//        string val<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScMetaV0 {
+    pub key: StringM,
+    pub val: StringM,
+}
+
+impl ReadXdr for ScMetaV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            key: StringM::read_xdr(r)?,
+            val: StringM::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScMetaV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.key.write_xdr(w)?;
+        self.val.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ScMetaKind is an XDR Enum defines as:
+//
+//   enum SCMetaKind
+//    {
+//        SC_META_V0 = 0
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScMetaKind {
+    ScMetaV0 = 0,
+}
+
+impl ScMetaKind {
+    pub const VARIANTS: [ScMetaKind; 1] = [ScMetaKind::ScMetaV0];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ScMetaV0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ScMetaV0 => "ScMetaV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScMetaKind; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScMetaKind {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScMetaKind> for ScMetaKind {
+    fn variants() -> slice::Iter<'static, ScMetaKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScMetaKind {}
+
+impl fmt::Display for ScMetaKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScMetaKind {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScMetaKind::ScMetaV0,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScMetaKind> for i32 {
+    #[must_use]
+    fn from(e: ScMetaKind) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScMetaKind {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScMetaKind {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ScMetaEntry is an XDR Union defines as:
+//
+//   union SCMetaEntry switch (SCMetaKind kind)
+//    {
+//    case SC_META_V0:
+//        SCMetaV0 v0;
+//    };
+//
+// union with discriminant ScMetaKind
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScMetaEntry {
+    ScMetaV0(ScMetaV0),
+}
+
+impl ScMetaEntry {
+    pub const VARIANTS: [ScMetaKind; 1] = [ScMetaKind::ScMetaV0];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ScMetaV0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ScMetaV0(_) => "ScMetaV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScMetaKind {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ScMetaV0(_) => ScMetaKind::ScMetaV0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScMetaKind; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScMetaEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScMetaKind> for ScMetaEntry {
+    #[must_use]
+    fn discriminant(&self) -> ScMetaKind {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScMetaKind> for ScMetaEntry {
+    fn variants() -> slice::Iter<'static, ScMetaKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScMetaKind> for ScMetaEntry {}
+
+impl ReadXdr for ScMetaEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ScMetaKind = <ScMetaKind as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ScMetaKind::ScMetaV0 => Self::ScMetaV0(ScMetaV0::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScMetaEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ScMetaV0(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -38108,6 +38341,9 @@ pub enum TypeVariant {
     ScpQuorumSet,
     ScEnvMetaKind,
     ScEnvMetaEntry,
+    ScMetaV0,
+    ScMetaKind,
+    ScMetaEntry,
     ScSpecType,
     ScSpecTypeOption,
     ScSpecTypeResult,
@@ -38508,7 +38744,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 410] = [
+    pub const VARIANTS: [TypeVariant; 413] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38522,6 +38758,9 @@ impl TypeVariant {
         TypeVariant::ScpQuorumSet,
         TypeVariant::ScEnvMetaKind,
         TypeVariant::ScEnvMetaEntry,
+        TypeVariant::ScMetaV0,
+        TypeVariant::ScMetaKind,
+        TypeVariant::ScMetaEntry,
         TypeVariant::ScSpecType,
         TypeVariant::ScSpecTypeOption,
         TypeVariant::ScSpecTypeResult,
@@ -38920,7 +39159,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 410] = [
+    pub const VARIANTS_STR: [&'static str; 413] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -38934,6 +39173,9 @@ impl TypeVariant {
         "ScpQuorumSet",
         "ScEnvMetaKind",
         "ScEnvMetaEntry",
+        "ScMetaV0",
+        "ScMetaKind",
+        "ScMetaEntry",
         "ScSpecType",
         "ScSpecTypeOption",
         "ScSpecTypeResult",
@@ -39350,6 +39592,9 @@ impl TypeVariant {
             Self::ScpQuorumSet => "ScpQuorumSet",
             Self::ScEnvMetaKind => "ScEnvMetaKind",
             Self::ScEnvMetaEntry => "ScEnvMetaEntry",
+            Self::ScMetaV0 => "ScMetaV0",
+            Self::ScMetaKind => "ScMetaKind",
+            Self::ScMetaEntry => "ScMetaEntry",
             Self::ScSpecType => "ScSpecType",
             Self::ScSpecTypeOption => "ScSpecTypeOption",
             Self::ScSpecTypeResult => "ScSpecTypeResult",
@@ -39758,7 +40003,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 410] {
+    pub const fn variants() -> [TypeVariant; 413] {
         Self::VARIANTS
     }
 }
@@ -39794,6 +40039,9 @@ impl core::str::FromStr for TypeVariant {
             "ScpQuorumSet" => Ok(Self::ScpQuorumSet),
             "ScEnvMetaKind" => Ok(Self::ScEnvMetaKind),
             "ScEnvMetaEntry" => Ok(Self::ScEnvMetaEntry),
+            "ScMetaV0" => Ok(Self::ScMetaV0),
+            "ScMetaKind" => Ok(Self::ScMetaKind),
+            "ScMetaEntry" => Ok(Self::ScMetaEntry),
             "ScSpecType" => Ok(Self::ScSpecType),
             "ScSpecTypeOption" => Ok(Self::ScSpecTypeOption),
             "ScSpecTypeResult" => Ok(Self::ScSpecTypeResult),
@@ -40231,6 +40479,9 @@ pub enum Type {
     ScpQuorumSet(Box<ScpQuorumSet>),
     ScEnvMetaKind(Box<ScEnvMetaKind>),
     ScEnvMetaEntry(Box<ScEnvMetaEntry>),
+    ScMetaV0(Box<ScMetaV0>),
+    ScMetaKind(Box<ScMetaKind>),
+    ScMetaEntry(Box<ScMetaEntry>),
     ScSpecType(Box<ScSpecType>),
     ScSpecTypeOption(Box<ScSpecTypeOption>),
     ScSpecTypeResult(Box<ScSpecTypeResult>),
@@ -40631,7 +40882,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 410] = [
+    pub const VARIANTS: [TypeVariant; 413] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -40645,6 +40896,9 @@ impl Type {
         TypeVariant::ScpQuorumSet,
         TypeVariant::ScEnvMetaKind,
         TypeVariant::ScEnvMetaEntry,
+        TypeVariant::ScMetaV0,
+        TypeVariant::ScMetaKind,
+        TypeVariant::ScMetaEntry,
         TypeVariant::ScSpecType,
         TypeVariant::ScSpecTypeOption,
         TypeVariant::ScSpecTypeResult,
@@ -41043,7 +41297,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 410] = [
+    pub const VARIANTS_STR: [&'static str; 413] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -41057,6 +41311,9 @@ impl Type {
         "ScpQuorumSet",
         "ScEnvMetaKind",
         "ScEnvMetaEntry",
+        "ScMetaV0",
+        "ScMetaKind",
+        "ScMetaEntry",
         "ScSpecType",
         "ScSpecTypeOption",
         "ScSpecTypeResult",
@@ -41493,6 +41750,9 @@ impl Type {
             TypeVariant::ScEnvMetaEntry => {
                 Ok(Self::ScEnvMetaEntry(Box::new(ScEnvMetaEntry::read_xdr(r)?)))
             }
+            TypeVariant::ScMetaV0 => Ok(Self::ScMetaV0(Box::new(ScMetaV0::read_xdr(r)?))),
+            TypeVariant::ScMetaKind => Ok(Self::ScMetaKind(Box::new(ScMetaKind::read_xdr(r)?))),
+            TypeVariant::ScMetaEntry => Ok(Self::ScMetaEntry(Box::new(ScMetaEntry::read_xdr(r)?))),
             TypeVariant::ScSpecType => Ok(Self::ScSpecType(Box::new(ScSpecType::read_xdr(r)?))),
             TypeVariant::ScSpecTypeOption => Ok(Self::ScSpecTypeOption(Box::new(
                 ScSpecTypeOption::read_xdr(r)?,
@@ -42692,6 +42952,17 @@ impl Type {
             TypeVariant::ScEnvMetaEntry => Box::new(
                 ReadXdrIter::<_, ScEnvMetaEntry>::new(r)
                     .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScMetaV0 => Box::new(
+                ReadXdrIter::<_, ScMetaV0>::new(r).map(|r| r.map(|t| Self::ScMetaV0(Box::new(t)))),
+            ),
+            TypeVariant::ScMetaKind => Box::new(
+                ReadXdrIter::<_, ScMetaKind>::new(r)
+                    .map(|r| r.map(|t| Self::ScMetaKind(Box::new(t)))),
+            ),
+            TypeVariant::ScMetaEntry => Box::new(
+                ReadXdrIter::<_, ScMetaEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ScMetaEntry(Box::new(t)))),
             ),
             TypeVariant::ScSpecType => Box::new(
                 ReadXdrIter::<_, ScSpecType>::new(r)
@@ -44313,6 +44584,18 @@ impl Type {
             TypeVariant::ScEnvMetaEntry => Box::new(
                 ReadXdrIter::<_, Frame<ScEnvMetaEntry>>::new(r)
                     .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMetaV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScMetaV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ScMetaV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMetaKind => Box::new(
+                ReadXdrIter::<_, Frame<ScMetaKind>>::new(r)
+                    .map(|r| r.map(|t| Self::ScMetaKind(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMetaEntry => Box::new(
+                ReadXdrIter::<_, Frame<ScMetaEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ScMetaEntry(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecType => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecType>>::new(r)
@@ -45966,6 +46249,18 @@ impl Type {
                 ReadXdrIter::<_, ScEnvMetaEntry>::new(dec)
                     .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t)))),
             ),
+            TypeVariant::ScMetaV0 => Box::new(
+                ReadXdrIter::<_, ScMetaV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ScMetaV0(Box::new(t)))),
+            ),
+            TypeVariant::ScMetaKind => Box::new(
+                ReadXdrIter::<_, ScMetaKind>::new(dec)
+                    .map(|r| r.map(|t| Self::ScMetaKind(Box::new(t)))),
+            ),
+            TypeVariant::ScMetaEntry => Box::new(
+                ReadXdrIter::<_, ScMetaEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ScMetaEntry(Box::new(t)))),
+            ),
             TypeVariant::ScSpecType => Box::new(
                 ReadXdrIter::<_, ScSpecType>::new(dec)
                     .map(|r| r.map(|t| Self::ScSpecType(Box::new(t)))),
@@ -47573,6 +47868,9 @@ impl Type {
             Self::ScpQuorumSet(ref v) => v.as_ref(),
             Self::ScEnvMetaKind(ref v) => v.as_ref(),
             Self::ScEnvMetaEntry(ref v) => v.as_ref(),
+            Self::ScMetaV0(ref v) => v.as_ref(),
+            Self::ScMetaKind(ref v) => v.as_ref(),
+            Self::ScMetaEntry(ref v) => v.as_ref(),
             Self::ScSpecType(ref v) => v.as_ref(),
             Self::ScSpecTypeOption(ref v) => v.as_ref(),
             Self::ScSpecTypeResult(ref v) => v.as_ref(),
@@ -47990,6 +48288,9 @@ impl Type {
             Self::ScpQuorumSet(_) => "ScpQuorumSet",
             Self::ScEnvMetaKind(_) => "ScEnvMetaKind",
             Self::ScEnvMetaEntry(_) => "ScEnvMetaEntry",
+            Self::ScMetaV0(_) => "ScMetaV0",
+            Self::ScMetaKind(_) => "ScMetaKind",
+            Self::ScMetaEntry(_) => "ScMetaEntry",
             Self::ScSpecType(_) => "ScSpecType",
             Self::ScSpecTypeOption(_) => "ScSpecTypeOption",
             Self::ScSpecTypeResult(_) => "ScSpecTypeResult",
@@ -48406,7 +48707,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 410] {
+    pub const fn variants() -> [TypeVariant; 413] {
         Self::VARIANTS
     }
 
@@ -48427,6 +48728,9 @@ impl Type {
             Self::ScpQuorumSet(_) => TypeVariant::ScpQuorumSet,
             Self::ScEnvMetaKind(_) => TypeVariant::ScEnvMetaKind,
             Self::ScEnvMetaEntry(_) => TypeVariant::ScEnvMetaEntry,
+            Self::ScMetaV0(_) => TypeVariant::ScMetaV0,
+            Self::ScMetaKind(_) => TypeVariant::ScMetaKind,
+            Self::ScMetaEntry(_) => TypeVariant::ScMetaEntry,
             Self::ScSpecType(_) => TypeVariant::ScSpecType,
             Self::ScSpecTypeOption(_) => TypeVariant::ScSpecTypeOption,
             Self::ScSpecTypeResult(_) => TypeVariant::ScSpecTypeResult,

@@ -73,7 +73,7 @@ fn test_build_small_tx_with_alloc() -> Result<(), Error> {
 #[cfg(not(feature = "alloc"))]
 #[test]
 fn test_build_small_tx_with_alloc() -> Result<(), Error> {
-    let _ = TransactionEnvelope::Tx(TransactionV1Envelope {
+    let _tx = TransactionEnvelope::Tx(TransactionV1Envelope {
         tx: Transaction {
             source_account: MuxedAccount::Ed25519(Uint256([0; 32])),
             fee: 0,

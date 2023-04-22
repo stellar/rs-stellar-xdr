@@ -1,5 +1,6 @@
 // Module  is generated from:
 //  xdr/next/Stellar-SCP.x
+//  xdr/next/Stellar-contract-config-setting.x
 //  xdr/next/Stellar-contract-env-meta.x
 //  xdr/next/Stellar-contract-meta.x
 //  xdr/next/Stellar-contract-spec.x
@@ -14,10 +15,14 @@
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
-pub const XDR_FILES_SHA256: [(&str, &str); 11] = [
+pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     (
         "xdr/next/Stellar-SCP.x",
         "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+    ),
+    (
+        "xdr/next/Stellar-contract-config-setting.x",
+        "04e9fb33297a384441eb0f90dbd886c8749336d25848cfedbd5cce910135caeb",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -41,7 +46,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 11] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "73145d35602132ba63f538c21adcdddff6aebbc6bc7033cda4f6c496d30bf5be",
+        "95ab2a488911a6c1a3342e68f88f2fa44ec4bc48af9c9227ccb07bb9b682d3fd",
     ),
     (
         "xdr/next/Stellar-ledger.x",
@@ -2772,6 +2777,1017 @@ impl WriteXdr for ScpQuorumSet {
         self.threshold.write_xdr(w)?;
         self.validators.write_xdr(w)?;
         self.inner_sets.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ConfigSettingContractComputeV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractComputeV0
+//    {
+//        // Maximum instructions per ledger
+//        int64 ledgerMaxInstructions;
+//        // Maximum instructions per transaction
+//        int64 txMaxInstructions;
+//        // Cost of 10000 instructions
+//        int64 feeRatePerInstructionsIncrement;
+//
+//        // Memory limit per contract/host function invocation. Unlike
+//        // instructions, there is no fee for memory and it's not
+//        // accumulated between operations - the same limit is applied
+//        // to every operation.
+//        uint32 memoryLimit;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractComputeV0 {
+    pub ledger_max_instructions: i64,
+    pub tx_max_instructions: i64,
+    pub fee_rate_per_instructions_increment: i64,
+    pub memory_limit: u32,
+}
+
+impl ReadXdr for ConfigSettingContractComputeV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_max_instructions: i64::read_xdr(r)?,
+            tx_max_instructions: i64::read_xdr(r)?,
+            fee_rate_per_instructions_increment: i64::read_xdr(r)?,
+            memory_limit: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractComputeV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_max_instructions.write_xdr(w)?;
+        self.tx_max_instructions.write_xdr(w)?;
+        self.fee_rate_per_instructions_increment.write_xdr(w)?;
+        self.memory_limit.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractLedgerCostV0
+//    {
+//        // Maximum number of ledger entry read operations per ledger
+//        uint32 ledgerMaxReadLedgerEntries;
+//        // Maximum number of bytes that can be read per ledger
+//        uint32 ledgerMaxReadBytes;
+//        // Maximum number of ledger entry write operations per ledger
+//        uint32 ledgerMaxWriteLedgerEntries;
+//        // Maximum number of bytes that can be written per ledger
+//        uint32 ledgerMaxWriteBytes;
+//
+//        // Maximum number of ledger entry read operations per transaction
+//        uint32 txMaxReadLedgerEntries;
+//        // Maximum number of bytes that can be read per transaction
+//        uint32 txMaxReadBytes;
+//        // Maximum number of ledger entry write operations per transaction
+//        uint32 txMaxWriteLedgerEntries;
+//        // Maximum number of bytes that can be written per transaction
+//        uint32 txMaxWriteBytes;
+//
+//        int64 feeReadLedgerEntry;  // Fee per ledger entry read
+//        int64 feeWriteLedgerEntry; // Fee per ledger entry write
+//
+//        int64 feeRead1KB;  // Fee for reading 1KB
+//        int64 feeWrite1KB; // Fee for writing 1KB
+//
+//        // Bucket list fees grow slowly up to that size
+//        int64 bucketListSizeBytes;
+//        // Fee rate in stroops when the bucket list is empty
+//        int64 bucketListFeeRateLow;
+//        // Fee rate in stroops when the bucket list reached bucketListSizeBytes
+//        int64 bucketListFeeRateHigh;
+//        // Rate multiplier for any additional data past the first bucketListSizeBytes
+//        uint32 bucketListGrowthFactor;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractLedgerCostV0 {
+    pub ledger_max_read_ledger_entries: u32,
+    pub ledger_max_read_bytes: u32,
+    pub ledger_max_write_ledger_entries: u32,
+    pub ledger_max_write_bytes: u32,
+    pub tx_max_read_ledger_entries: u32,
+    pub tx_max_read_bytes: u32,
+    pub tx_max_write_ledger_entries: u32,
+    pub tx_max_write_bytes: u32,
+    pub fee_read_ledger_entry: i64,
+    pub fee_write_ledger_entry: i64,
+    pub fee_read1_kb: i64,
+    pub fee_write1_kb: i64,
+    pub bucket_list_size_bytes: i64,
+    pub bucket_list_fee_rate_low: i64,
+    pub bucket_list_fee_rate_high: i64,
+    pub bucket_list_growth_factor: u32,
+}
+
+impl ReadXdr for ConfigSettingContractLedgerCostV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_max_read_ledger_entries: u32::read_xdr(r)?,
+            ledger_max_read_bytes: u32::read_xdr(r)?,
+            ledger_max_write_ledger_entries: u32::read_xdr(r)?,
+            ledger_max_write_bytes: u32::read_xdr(r)?,
+            tx_max_read_ledger_entries: u32::read_xdr(r)?,
+            tx_max_read_bytes: u32::read_xdr(r)?,
+            tx_max_write_ledger_entries: u32::read_xdr(r)?,
+            tx_max_write_bytes: u32::read_xdr(r)?,
+            fee_read_ledger_entry: i64::read_xdr(r)?,
+            fee_write_ledger_entry: i64::read_xdr(r)?,
+            fee_read1_kb: i64::read_xdr(r)?,
+            fee_write1_kb: i64::read_xdr(r)?,
+            bucket_list_size_bytes: i64::read_xdr(r)?,
+            bucket_list_fee_rate_low: i64::read_xdr(r)?,
+            bucket_list_fee_rate_high: i64::read_xdr(r)?,
+            bucket_list_growth_factor: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractLedgerCostV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_max_read_ledger_entries.write_xdr(w)?;
+        self.ledger_max_read_bytes.write_xdr(w)?;
+        self.ledger_max_write_ledger_entries.write_xdr(w)?;
+        self.ledger_max_write_bytes.write_xdr(w)?;
+        self.tx_max_read_ledger_entries.write_xdr(w)?;
+        self.tx_max_read_bytes.write_xdr(w)?;
+        self.tx_max_write_ledger_entries.write_xdr(w)?;
+        self.tx_max_write_bytes.write_xdr(w)?;
+        self.fee_read_ledger_entry.write_xdr(w)?;
+        self.fee_write_ledger_entry.write_xdr(w)?;
+        self.fee_read1_kb.write_xdr(w)?;
+        self.fee_write1_kb.write_xdr(w)?;
+        self.bucket_list_size_bytes.write_xdr(w)?;
+        self.bucket_list_fee_rate_low.write_xdr(w)?;
+        self.bucket_list_fee_rate_high.write_xdr(w)?;
+        self.bucket_list_growth_factor.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ConfigSettingContractHistoricalDataV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractHistoricalDataV0
+//    {
+//        int64 feeHistorical1KB; // Fee for storing 1KB in archives
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractHistoricalDataV0 {
+    pub fee_historical1_kb: i64,
+}
+
+impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            fee_historical1_kb: i64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.fee_historical1_kb.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ConfigSettingContractMetaDataV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractMetaDataV0
+//    {
+//        // Maximum size of extended meta data produced by a transaction
+//        uint32 txMaxExtendedMetaDataSizeBytes;
+//        // Fee for generating 1KB of extended meta data
+//        int64 feeExtendedMetaData1KB;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractMetaDataV0 {
+    pub tx_max_extended_meta_data_size_bytes: u32,
+    pub fee_extended_meta_data1_kb: i64,
+}
+
+impl ReadXdr for ConfigSettingContractMetaDataV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            tx_max_extended_meta_data_size_bytes: u32::read_xdr(r)?,
+            fee_extended_meta_data1_kb: i64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractMetaDataV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.tx_max_extended_meta_data_size_bytes.write_xdr(w)?;
+        self.fee_extended_meta_data1_kb.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ConfigSettingContractBandwidthV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractBandwidthV0
+//    {
+//        // Maximum size in bytes to propagate per ledger
+//        uint32 ledgerMaxPropagateSizeBytes;
+//        // Maximum size in bytes for a transaction
+//        uint32 txMaxSizeBytes;
+//
+//        // Fee for propagating 1KB of data
+//        int64 feePropagateData1KB;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractBandwidthV0 {
+    pub ledger_max_propagate_size_bytes: u32,
+    pub tx_max_size_bytes: u32,
+    pub fee_propagate_data1_kb: i64,
+}
+
+impl ReadXdr for ConfigSettingContractBandwidthV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_max_propagate_size_bytes: u32::read_xdr(r)?,
+            tx_max_size_bytes: u32::read_xdr(r)?,
+            fee_propagate_data1_kb: i64::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractBandwidthV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_max_propagate_size_bytes.write_xdr(w)?;
+        self.tx_max_size_bytes.write_xdr(w)?;
+        self.fee_propagate_data1_kb.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ContractCostType is an XDR Enum defines as:
+//
+//   enum ContractCostType {
+//        // Cost of running 1 wasm instruction
+//        WasmInsnExec = 0,
+//        // Cost of growing wasm linear memory by 1 page
+//        WasmMemAlloc = 1,
+//        // Cost of allocating a chuck of host memory (in bytes)
+//        HostMemAlloc = 2,
+//        // Cost of copying a chuck of bytes into a pre-allocated host memory
+//        HostMemCpy = 3,
+//        // Cost of comparing two slices of host memory
+//        HostMemCmp = 4,
+//        // Cost of a host function invocation, not including the actual work done by the function
+//        InvokeHostFunction = 5,
+//        // Cost of visiting a host object from the host object storage
+//        // Only thing to make sure is the guest can't visitObject repeatly without incurring some charges elsewhere.
+//        VisitObject = 6,
+//        // Tracks a single Val (RawVal or primative Object like U64) <=> ScVal
+//        // conversion cost. Most of these Val counterparts in ScVal (except e.g.
+//        // Symbol) consumes a single int64 and therefore is a constant overhead.
+//        ValXdrConv = 7,
+//        // Cost of serializing an xdr object to bytes
+//        ValSer = 8,
+//        // Cost of deserializing an xdr object from bytes
+//        ValDeser = 9,
+//        // Cost of computing the sha256 hash from bytes
+//        ComputeSha256Hash = 10,
+//        // Cost of computing the ed25519 pubkey from bytes
+//        ComputeEd25519PubKey = 11,
+//        // Cost of accessing an entry in a Map.
+//        MapEntry = 12,
+//        // Cost of accessing an entry in a Vec
+//        VecEntry = 13,
+//        // Cost of guarding a frame, which involves pushing and poping a frame and capturing a rollback point.
+//        GuardFrame = 14,
+//        // Cost of verifying ed25519 signature of a payload.
+//        VerifyEd25519Sig = 15,
+//        // Cost of reading a slice of vm linear memory
+//        VmMemRead = 16,
+//        // Cost of writing to a slice of vm linear memory
+//        VmMemWrite = 17,
+//        // Cost of instantiation a VM from wasm bytes code.
+//        VmInstantiation = 18,
+//        // Roundtrip cost of invoking a VM function from the host.
+//        InvokeVmFunction = 19,
+//        // Cost of charging a value to the budgeting system.
+//        ChargeBudget = 20
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ContractCostType {
+    WasmInsnExec = 0,
+    WasmMemAlloc = 1,
+    HostMemAlloc = 2,
+    HostMemCpy = 3,
+    HostMemCmp = 4,
+    InvokeHostFunction = 5,
+    VisitObject = 6,
+    ValXdrConv = 7,
+    ValSer = 8,
+    ValDeser = 9,
+    ComputeSha256Hash = 10,
+    ComputeEd25519PubKey = 11,
+    MapEntry = 12,
+    VecEntry = 13,
+    GuardFrame = 14,
+    VerifyEd25519Sig = 15,
+    VmMemRead = 16,
+    VmMemWrite = 17,
+    VmInstantiation = 18,
+    InvokeVmFunction = 19,
+    ChargeBudget = 20,
+}
+
+impl ContractCostType {
+    pub const VARIANTS: [ContractCostType; 21] = [
+        ContractCostType::WasmInsnExec,
+        ContractCostType::WasmMemAlloc,
+        ContractCostType::HostMemAlloc,
+        ContractCostType::HostMemCpy,
+        ContractCostType::HostMemCmp,
+        ContractCostType::InvokeHostFunction,
+        ContractCostType::VisitObject,
+        ContractCostType::ValXdrConv,
+        ContractCostType::ValSer,
+        ContractCostType::ValDeser,
+        ContractCostType::ComputeSha256Hash,
+        ContractCostType::ComputeEd25519PubKey,
+        ContractCostType::MapEntry,
+        ContractCostType::VecEntry,
+        ContractCostType::GuardFrame,
+        ContractCostType::VerifyEd25519Sig,
+        ContractCostType::VmMemRead,
+        ContractCostType::VmMemWrite,
+        ContractCostType::VmInstantiation,
+        ContractCostType::InvokeVmFunction,
+        ContractCostType::ChargeBudget,
+    ];
+    pub const VARIANTS_STR: [&'static str; 21] = [
+        "WasmInsnExec",
+        "WasmMemAlloc",
+        "HostMemAlloc",
+        "HostMemCpy",
+        "HostMemCmp",
+        "InvokeHostFunction",
+        "VisitObject",
+        "ValXdrConv",
+        "ValSer",
+        "ValDeser",
+        "ComputeSha256Hash",
+        "ComputeEd25519PubKey",
+        "MapEntry",
+        "VecEntry",
+        "GuardFrame",
+        "VerifyEd25519Sig",
+        "VmMemRead",
+        "VmMemWrite",
+        "VmInstantiation",
+        "InvokeVmFunction",
+        "ChargeBudget",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::WasmInsnExec => "WasmInsnExec",
+            Self::WasmMemAlloc => "WasmMemAlloc",
+            Self::HostMemAlloc => "HostMemAlloc",
+            Self::HostMemCpy => "HostMemCpy",
+            Self::HostMemCmp => "HostMemCmp",
+            Self::InvokeHostFunction => "InvokeHostFunction",
+            Self::VisitObject => "VisitObject",
+            Self::ValXdrConv => "ValXdrConv",
+            Self::ValSer => "ValSer",
+            Self::ValDeser => "ValDeser",
+            Self::ComputeSha256Hash => "ComputeSha256Hash",
+            Self::ComputeEd25519PubKey => "ComputeEd25519PubKey",
+            Self::MapEntry => "MapEntry",
+            Self::VecEntry => "VecEntry",
+            Self::GuardFrame => "GuardFrame",
+            Self::VerifyEd25519Sig => "VerifyEd25519Sig",
+            Self::VmMemRead => "VmMemRead",
+            Self::VmMemWrite => "VmMemWrite",
+            Self::VmInstantiation => "VmInstantiation",
+            Self::InvokeVmFunction => "InvokeVmFunction",
+            Self::ChargeBudget => "ChargeBudget",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractCostType; 21] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractCostType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ContractCostType> for ContractCostType {
+    fn variants() -> slice::Iter<'static, ContractCostType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ContractCostType {}
+
+impl fmt::Display for ContractCostType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ContractCostType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ContractCostType::WasmInsnExec,
+            1 => ContractCostType::WasmMemAlloc,
+            2 => ContractCostType::HostMemAlloc,
+            3 => ContractCostType::HostMemCpy,
+            4 => ContractCostType::HostMemCmp,
+            5 => ContractCostType::InvokeHostFunction,
+            6 => ContractCostType::VisitObject,
+            7 => ContractCostType::ValXdrConv,
+            8 => ContractCostType::ValSer,
+            9 => ContractCostType::ValDeser,
+            10 => ContractCostType::ComputeSha256Hash,
+            11 => ContractCostType::ComputeEd25519PubKey,
+            12 => ContractCostType::MapEntry,
+            13 => ContractCostType::VecEntry,
+            14 => ContractCostType::GuardFrame,
+            15 => ContractCostType::VerifyEd25519Sig,
+            16 => ContractCostType::VmMemRead,
+            17 => ContractCostType::VmMemWrite,
+            18 => ContractCostType::VmInstantiation,
+            19 => ContractCostType::InvokeVmFunction,
+            20 => ContractCostType::ChargeBudget,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ContractCostType> for i32 {
+    #[must_use]
+    fn from(e: ContractCostType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ContractCostType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ContractCostType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ContractCostParamEntry is an XDR Struct defines as:
+//
+//   struct ContractCostParamEntry {
+//        int32 constTerm;
+//        int32 linearTerm;
+//        // use `ext` to add more terms (e.g. higher order polynomials) in the future
+//        ExtensionPoint ext;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractCostParamEntry {
+    pub const_term: i32,
+    pub linear_term: i32,
+    pub ext: ExtensionPoint,
+}
+
+impl ReadXdr for ContractCostParamEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            const_term: i32::read_xdr(r)?,
+            linear_term: i32::read_xdr(r)?,
+            ext: ExtensionPoint::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ContractCostParamEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.const_term.write_xdr(w)?;
+        self.linear_term.write_xdr(w)?;
+        self.ext.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// ContractCostCountLimit is an XDR Const defines as:
+//
+//   const CONTRACT_COST_COUNT_LIMIT = 1024;
+//
+pub const CONTRACT_COST_COUNT_LIMIT: u64 = 1024;
+
+// ContractCostParams is an XDR Typedef defines as:
+//
+//   typedef ContractCostParamEntry ContractCostParams<CONTRACT_COST_COUNT_LIMIT>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractCostParams(pub VecM<ContractCostParamEntry, 1024>);
+
+impl From<ContractCostParams> for VecM<ContractCostParamEntry, 1024> {
+    #[must_use]
+    fn from(x: ContractCostParams) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<ContractCostParamEntry, 1024>> for ContractCostParams {
+    #[must_use]
+    fn from(x: VecM<ContractCostParamEntry, 1024>) -> Self {
+        ContractCostParams(x)
+    }
+}
+
+impl AsRef<VecM<ContractCostParamEntry, 1024>> for ContractCostParams {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<ContractCostParamEntry, 1024> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ContractCostParams {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let i = VecM::<ContractCostParamEntry, 1024>::read_xdr(r)?;
+        let v = ContractCostParams(i);
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ContractCostParams {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.0.write_xdr(w)
+    }
+}
+
+impl Deref for ContractCostParams {
+    type Target = VecM<ContractCostParamEntry, 1024>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ContractCostParams> for Vec<ContractCostParamEntry> {
+    #[must_use]
+    fn from(x: ContractCostParams) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ContractCostParamEntry>> for ContractCostParams {
+    type Error = Error;
+    fn try_from(x: Vec<ContractCostParamEntry>) -> Result<Self> {
+        Ok(ContractCostParams(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<ContractCostParamEntry>> for ContractCostParams {
+    type Error = Error;
+    fn try_from(x: &Vec<ContractCostParamEntry>) -> Result<Self> {
+        Ok(ContractCostParams(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ContractCostParamEntry>> for ContractCostParams {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<ContractCostParamEntry> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[ContractCostParamEntry] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ContractCostParamEntry] {
+        self.0 .0
+    }
+}
+
+// ConfigSettingId is an XDR Enum defines as:
+//
+//   enum ConfigSettingID
+//    {
+//        CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0,
+//        CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1,
+//        CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2,
+//        CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3,
+//        CONFIG_SETTING_CONTRACT_META_DATA_V0 = 4,
+//        CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5,
+//        CONFIG_SETTING_CONTRACT_HOST_LOGIC_VERSION = 6,
+//        CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 7,
+//        CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 8
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ConfigSettingId {
+    MaxSizeBytes = 0,
+    ComputeV0 = 1,
+    LedgerCostV0 = 2,
+    HistoricalDataV0 = 3,
+    MetaDataV0 = 4,
+    BandwidthV0 = 5,
+    HostLogicVersion = 6,
+    CostParamsCpuInstructions = 7,
+    CostParamsMemoryBytes = 8,
+}
+
+impl ConfigSettingId {
+    pub const VARIANTS: [ConfigSettingId; 9] = [
+        ConfigSettingId::MaxSizeBytes,
+        ConfigSettingId::ComputeV0,
+        ConfigSettingId::LedgerCostV0,
+        ConfigSettingId::HistoricalDataV0,
+        ConfigSettingId::MetaDataV0,
+        ConfigSettingId::BandwidthV0,
+        ConfigSettingId::HostLogicVersion,
+        ConfigSettingId::CostParamsCpuInstructions,
+        ConfigSettingId::CostParamsMemoryBytes,
+    ];
+    pub const VARIANTS_STR: [&'static str; 9] = [
+        "MaxSizeBytes",
+        "ComputeV0",
+        "LedgerCostV0",
+        "HistoricalDataV0",
+        "MetaDataV0",
+        "BandwidthV0",
+        "HostLogicVersion",
+        "CostParamsCpuInstructions",
+        "CostParamsMemoryBytes",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::MaxSizeBytes => "MaxSizeBytes",
+            Self::ComputeV0 => "ComputeV0",
+            Self::LedgerCostV0 => "LedgerCostV0",
+            Self::HistoricalDataV0 => "HistoricalDataV0",
+            Self::MetaDataV0 => "MetaDataV0",
+            Self::BandwidthV0 => "BandwidthV0",
+            Self::HostLogicVersion => "HostLogicVersion",
+            Self::CostParamsCpuInstructions => "CostParamsCpuInstructions",
+            Self::CostParamsMemoryBytes => "CostParamsMemoryBytes",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ConfigSettingId; 9] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ConfigSettingId {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ConfigSettingId> for ConfigSettingId {
+    fn variants() -> slice::Iter<'static, ConfigSettingId> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ConfigSettingId {}
+
+impl fmt::Display for ConfigSettingId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ConfigSettingId {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ConfigSettingId::MaxSizeBytes,
+            1 => ConfigSettingId::ComputeV0,
+            2 => ConfigSettingId::LedgerCostV0,
+            3 => ConfigSettingId::HistoricalDataV0,
+            4 => ConfigSettingId::MetaDataV0,
+            5 => ConfigSettingId::BandwidthV0,
+            6 => ConfigSettingId::HostLogicVersion,
+            7 => ConfigSettingId::CostParamsCpuInstructions,
+            8 => ConfigSettingId::CostParamsMemoryBytes,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ConfigSettingId> for i32 {
+    #[must_use]
+    fn from(e: ConfigSettingId) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ConfigSettingId {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ConfigSettingId {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// ConfigSettingEntry is an XDR Union defines as:
+//
+//   union ConfigSettingEntry switch (ConfigSettingID configSettingID)
+//    {
+//    case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES:
+//        uint32 contractMaxSizeBytes;
+//    case CONFIG_SETTING_CONTRACT_COMPUTE_V0:
+//        ConfigSettingContractComputeV0 contractCompute;
+//    case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0:
+//        ConfigSettingContractLedgerCostV0 contractLedgerCost;
+//    case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0:
+//        ConfigSettingContractHistoricalDataV0 contractHistoricalData;
+//    case CONFIG_SETTING_CONTRACT_META_DATA_V0:
+//        ConfigSettingContractMetaDataV0 contractMetaData;
+//    case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0:
+//        ConfigSettingContractBandwidthV0 contractBandwidth;
+//    case CONFIG_SETTING_CONTRACT_HOST_LOGIC_VERSION:
+//        uint32 contractHostLogicVersion;
+//    case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS:
+//        ContractCostParams contractCostParamsCpuInsns;
+//    case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES:
+//        ContractCostParams contractCostParamsMemBytes;
+//    };
+//
+// union with discriminant ConfigSettingId
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ConfigSettingEntry {
+    MaxSizeBytes(u32),
+    ComputeV0(ConfigSettingContractComputeV0),
+    LedgerCostV0(ConfigSettingContractLedgerCostV0),
+    HistoricalDataV0(ConfigSettingContractHistoricalDataV0),
+    MetaDataV0(ConfigSettingContractMetaDataV0),
+    BandwidthV0(ConfigSettingContractBandwidthV0),
+    HostLogicVersion(u32),
+    CostParamsCpuInstructions(ContractCostParams),
+    CostParamsMemoryBytes(ContractCostParams),
+}
+
+impl ConfigSettingEntry {
+    pub const VARIANTS: [ConfigSettingId; 9] = [
+        ConfigSettingId::MaxSizeBytes,
+        ConfigSettingId::ComputeV0,
+        ConfigSettingId::LedgerCostV0,
+        ConfigSettingId::HistoricalDataV0,
+        ConfigSettingId::MetaDataV0,
+        ConfigSettingId::BandwidthV0,
+        ConfigSettingId::HostLogicVersion,
+        ConfigSettingId::CostParamsCpuInstructions,
+        ConfigSettingId::CostParamsMemoryBytes,
+    ];
+    pub const VARIANTS_STR: [&'static str; 9] = [
+        "MaxSizeBytes",
+        "ComputeV0",
+        "LedgerCostV0",
+        "HistoricalDataV0",
+        "MetaDataV0",
+        "BandwidthV0",
+        "HostLogicVersion",
+        "CostParamsCpuInstructions",
+        "CostParamsMemoryBytes",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::MaxSizeBytes(_) => "MaxSizeBytes",
+            Self::ComputeV0(_) => "ComputeV0",
+            Self::LedgerCostV0(_) => "LedgerCostV0",
+            Self::HistoricalDataV0(_) => "HistoricalDataV0",
+            Self::MetaDataV0(_) => "MetaDataV0",
+            Self::BandwidthV0(_) => "BandwidthV0",
+            Self::HostLogicVersion(_) => "HostLogicVersion",
+            Self::CostParamsCpuInstructions(_) => "CostParamsCpuInstructions",
+            Self::CostParamsMemoryBytes(_) => "CostParamsMemoryBytes",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ConfigSettingId {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::MaxSizeBytes(_) => ConfigSettingId::MaxSizeBytes,
+            Self::ComputeV0(_) => ConfigSettingId::ComputeV0,
+            Self::LedgerCostV0(_) => ConfigSettingId::LedgerCostV0,
+            Self::HistoricalDataV0(_) => ConfigSettingId::HistoricalDataV0,
+            Self::MetaDataV0(_) => ConfigSettingId::MetaDataV0,
+            Self::BandwidthV0(_) => ConfigSettingId::BandwidthV0,
+            Self::HostLogicVersion(_) => ConfigSettingId::HostLogicVersion,
+            Self::CostParamsCpuInstructions(_) => ConfigSettingId::CostParamsCpuInstructions,
+            Self::CostParamsMemoryBytes(_) => ConfigSettingId::CostParamsMemoryBytes,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ConfigSettingId; 9] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ConfigSettingEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ConfigSettingId> for ConfigSettingEntry {
+    #[must_use]
+    fn discriminant(&self) -> ConfigSettingId {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ConfigSettingId> for ConfigSettingEntry {
+    fn variants() -> slice::Iter<'static, ConfigSettingId> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ConfigSettingId> for ConfigSettingEntry {}
+
+impl ReadXdr for ConfigSettingEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            ConfigSettingId::MaxSizeBytes => Self::MaxSizeBytes(u32::read_xdr(r)?),
+            ConfigSettingId::ComputeV0 => {
+                Self::ComputeV0(ConfigSettingContractComputeV0::read_xdr(r)?)
+            }
+            ConfigSettingId::LedgerCostV0 => {
+                Self::LedgerCostV0(ConfigSettingContractLedgerCostV0::read_xdr(r)?)
+            }
+            ConfigSettingId::HistoricalDataV0 => {
+                Self::HistoricalDataV0(ConfigSettingContractHistoricalDataV0::read_xdr(r)?)
+            }
+            ConfigSettingId::MetaDataV0 => {
+                Self::MetaDataV0(ConfigSettingContractMetaDataV0::read_xdr(r)?)
+            }
+            ConfigSettingId::BandwidthV0 => {
+                Self::BandwidthV0(ConfigSettingContractBandwidthV0::read_xdr(r)?)
+            }
+            ConfigSettingId::HostLogicVersion => Self::HostLogicVersion(u32::read_xdr(r)?),
+            ConfigSettingId::CostParamsCpuInstructions => {
+                Self::CostParamsCpuInstructions(ContractCostParams::read_xdr(r)?)
+            }
+            ConfigSettingId::CostParamsMemoryBytes => {
+                Self::CostParamsMemoryBytes(ContractCostParams::read_xdr(r)?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ConfigSettingEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::MaxSizeBytes(v) => v.write_xdr(w)?,
+            Self::ComputeV0(v) => v.write_xdr(w)?,
+            Self::LedgerCostV0(v) => v.write_xdr(w)?,
+            Self::HistoricalDataV0(v) => v.write_xdr(w)?,
+            Self::MetaDataV0(v) => v.write_xdr(w)?,
+            Self::BandwidthV0(v) => v.write_xdr(w)?,
+            Self::HostLogicVersion(v) => v.write_xdr(w)?,
+            Self::CostParamsCpuInstructions(v) => v.write_xdr(w)?,
+            Self::CostParamsMemoryBytes(v) => v.write_xdr(w)?,
+        };
         Ok(())
     }
 }
@@ -13398,592 +14414,6 @@ impl WriteXdr for ContractCodeEntry {
         self.ext.write_xdr(w)?;
         self.hash.write_xdr(w)?;
         self.code.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ConfigSettingId is an XDR Enum defines as:
-//
-//   enum ConfigSettingID
-//    {
-//        CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0,
-//        CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1,
-//        CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2,
-//        CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3,
-//        CONFIG_SETTING_CONTRACT_META_DATA_V0 = 4,
-//        CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5,
-//        CONFIG_SETTING_CONTRACT_HOST_LOGIC_VERSION = 6
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[repr(i32)]
-pub enum ConfigSettingId {
-    MaxSizeBytes = 0,
-    ComputeV0 = 1,
-    LedgerCostV0 = 2,
-    HistoricalDataV0 = 3,
-    MetaDataV0 = 4,
-    BandwidthV0 = 5,
-    HostLogicVersion = 6,
-}
-
-impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 7] = [
-        ConfigSettingId::MaxSizeBytes,
-        ConfigSettingId::ComputeV0,
-        ConfigSettingId::LedgerCostV0,
-        ConfigSettingId::HistoricalDataV0,
-        ConfigSettingId::MetaDataV0,
-        ConfigSettingId::BandwidthV0,
-        ConfigSettingId::HostLogicVersion,
-    ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
-        "MaxSizeBytes",
-        "ComputeV0",
-        "LedgerCostV0",
-        "HistoricalDataV0",
-        "MetaDataV0",
-        "BandwidthV0",
-        "HostLogicVersion",
-    ];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::MaxSizeBytes => "MaxSizeBytes",
-            Self::ComputeV0 => "ComputeV0",
-            Self::LedgerCostV0 => "LedgerCostV0",
-            Self::HistoricalDataV0 => "HistoricalDataV0",
-            Self::MetaDataV0 => "MetaDataV0",
-            Self::BandwidthV0 => "BandwidthV0",
-            Self::HostLogicVersion => "HostLogicVersion",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 7] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ConfigSettingId {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ConfigSettingId> for ConfigSettingId {
-    fn variants() -> slice::Iter<'static, ConfigSettingId> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ConfigSettingId {}
-
-impl fmt::Display for ConfigSettingId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ConfigSettingId {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ConfigSettingId::MaxSizeBytes,
-            1 => ConfigSettingId::ComputeV0,
-            2 => ConfigSettingId::LedgerCostV0,
-            3 => ConfigSettingId::HistoricalDataV0,
-            4 => ConfigSettingId::MetaDataV0,
-            5 => ConfigSettingId::BandwidthV0,
-            6 => ConfigSettingId::HostLogicVersion,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ConfigSettingId> for i32 {
-    #[must_use]
-    fn from(e: ConfigSettingId) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ConfigSettingId {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ConfigSettingId {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// ConfigSettingContractComputeV0 is an XDR Struct defines as:
-//
-//   struct ConfigSettingContractComputeV0
-//    {
-//        // Maximum instructions per ledger
-//        int64 ledgerMaxInstructions;
-//        // Maximum instructions per transaction
-//        int64 txMaxInstructions;
-//        // Cost of 10000 instructions
-//        int64 feeRatePerInstructionsIncrement;
-//
-//        // Memory limit per contract/host function invocation. Unlike
-//        // instructions, there is no fee for memory and it's not
-//        // accumulated between operations - the same limit is applied
-//        // to every operation.
-//        uint32 memoryLimit;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ConfigSettingContractComputeV0 {
-    pub ledger_max_instructions: i64,
-    pub tx_max_instructions: i64,
-    pub fee_rate_per_instructions_increment: i64,
-    pub memory_limit: u32,
-}
-
-impl ReadXdr for ConfigSettingContractComputeV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_max_instructions: i64::read_xdr(r)?,
-            tx_max_instructions: i64::read_xdr(r)?,
-            fee_rate_per_instructions_increment: i64::read_xdr(r)?,
-            memory_limit: u32::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ConfigSettingContractComputeV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_max_instructions.write_xdr(w)?;
-        self.tx_max_instructions.write_xdr(w)?;
-        self.fee_rate_per_instructions_increment.write_xdr(w)?;
-        self.memory_limit.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:
-//
-//   struct ConfigSettingContractLedgerCostV0
-//    {
-//        // Maximum number of ledger entry read operations per ledger
-//        uint32 ledgerMaxReadLedgerEntries;
-//        // Maximum number of bytes that can be read per ledger
-//        uint32 ledgerMaxReadBytes;
-//        // Maximum number of ledger entry write operations per ledger
-//        uint32 ledgerMaxWriteLedgerEntries;
-//        // Maximum number of bytes that can be written per ledger
-//        uint32 ledgerMaxWriteBytes;
-//
-//        // Maximum number of ledger entry read operations per transaction
-//        uint32 txMaxReadLedgerEntries;
-//        // Maximum number of bytes that can be read per transaction
-//        uint32 txMaxReadBytes;
-//        // Maximum number of ledger entry write operations per transaction
-//        uint32 txMaxWriteLedgerEntries;
-//        // Maximum number of bytes that can be written per transaction
-//        uint32 txMaxWriteBytes;
-//
-//        int64 feeReadLedgerEntry;  // Fee per ledger entry read
-//        int64 feeWriteLedgerEntry; // Fee per ledger entry write
-//
-//        int64 feeRead1KB;  // Fee for reading 1KB
-//        int64 feeWrite1KB; // Fee for writing 1KB
-//
-//        // Bucket list fees grow slowly up to that size
-//        int64 bucketListSizeBytes;
-//        // Fee rate in stroops when the bucket list is empty
-//        int64 bucketListFeeRateLow;
-//        // Fee rate in stroops when the bucket list reached bucketListSizeBytes
-//        int64 bucketListFeeRateHigh;
-//        // Rate multiplier for any additional data past the first bucketListSizeBytes
-//        uint32 bucketListGrowthFactor;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ConfigSettingContractLedgerCostV0 {
-    pub ledger_max_read_ledger_entries: u32,
-    pub ledger_max_read_bytes: u32,
-    pub ledger_max_write_ledger_entries: u32,
-    pub ledger_max_write_bytes: u32,
-    pub tx_max_read_ledger_entries: u32,
-    pub tx_max_read_bytes: u32,
-    pub tx_max_write_ledger_entries: u32,
-    pub tx_max_write_bytes: u32,
-    pub fee_read_ledger_entry: i64,
-    pub fee_write_ledger_entry: i64,
-    pub fee_read1_kb: i64,
-    pub fee_write1_kb: i64,
-    pub bucket_list_size_bytes: i64,
-    pub bucket_list_fee_rate_low: i64,
-    pub bucket_list_fee_rate_high: i64,
-    pub bucket_list_growth_factor: u32,
-}
-
-impl ReadXdr for ConfigSettingContractLedgerCostV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_max_read_ledger_entries: u32::read_xdr(r)?,
-            ledger_max_read_bytes: u32::read_xdr(r)?,
-            ledger_max_write_ledger_entries: u32::read_xdr(r)?,
-            ledger_max_write_bytes: u32::read_xdr(r)?,
-            tx_max_read_ledger_entries: u32::read_xdr(r)?,
-            tx_max_read_bytes: u32::read_xdr(r)?,
-            tx_max_write_ledger_entries: u32::read_xdr(r)?,
-            tx_max_write_bytes: u32::read_xdr(r)?,
-            fee_read_ledger_entry: i64::read_xdr(r)?,
-            fee_write_ledger_entry: i64::read_xdr(r)?,
-            fee_read1_kb: i64::read_xdr(r)?,
-            fee_write1_kb: i64::read_xdr(r)?,
-            bucket_list_size_bytes: i64::read_xdr(r)?,
-            bucket_list_fee_rate_low: i64::read_xdr(r)?,
-            bucket_list_fee_rate_high: i64::read_xdr(r)?,
-            bucket_list_growth_factor: u32::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ConfigSettingContractLedgerCostV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_max_read_ledger_entries.write_xdr(w)?;
-        self.ledger_max_read_bytes.write_xdr(w)?;
-        self.ledger_max_write_ledger_entries.write_xdr(w)?;
-        self.ledger_max_write_bytes.write_xdr(w)?;
-        self.tx_max_read_ledger_entries.write_xdr(w)?;
-        self.tx_max_read_bytes.write_xdr(w)?;
-        self.tx_max_write_ledger_entries.write_xdr(w)?;
-        self.tx_max_write_bytes.write_xdr(w)?;
-        self.fee_read_ledger_entry.write_xdr(w)?;
-        self.fee_write_ledger_entry.write_xdr(w)?;
-        self.fee_read1_kb.write_xdr(w)?;
-        self.fee_write1_kb.write_xdr(w)?;
-        self.bucket_list_size_bytes.write_xdr(w)?;
-        self.bucket_list_fee_rate_low.write_xdr(w)?;
-        self.bucket_list_fee_rate_high.write_xdr(w)?;
-        self.bucket_list_growth_factor.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ConfigSettingContractHistoricalDataV0 is an XDR Struct defines as:
-//
-//   struct ConfigSettingContractHistoricalDataV0
-//    {
-//        int64 feeHistorical1KB; // Fee for storing 1KB in archives
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ConfigSettingContractHistoricalDataV0 {
-    pub fee_historical1_kb: i64,
-}
-
-impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            fee_historical1_kb: i64::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.fee_historical1_kb.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ConfigSettingContractMetaDataV0 is an XDR Struct defines as:
-//
-//   struct ConfigSettingContractMetaDataV0
-//    {
-//        // Maximum size of extended meta data produced by a transaction
-//        uint32 txMaxExtendedMetaDataSizeBytes;
-//        // Fee for generating 1KB of extended meta data
-//        int64 feeExtendedMetaData1KB;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ConfigSettingContractMetaDataV0 {
-    pub tx_max_extended_meta_data_size_bytes: u32,
-    pub fee_extended_meta_data1_kb: i64,
-}
-
-impl ReadXdr for ConfigSettingContractMetaDataV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            tx_max_extended_meta_data_size_bytes: u32::read_xdr(r)?,
-            fee_extended_meta_data1_kb: i64::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ConfigSettingContractMetaDataV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx_max_extended_meta_data_size_bytes.write_xdr(w)?;
-        self.fee_extended_meta_data1_kb.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ConfigSettingContractBandwidthV0 is an XDR Struct defines as:
-//
-//   struct ConfigSettingContractBandwidthV0
-//    {
-//        // Maximum size in bytes to propagate per ledger
-//        uint32 ledgerMaxPropagateSizeBytes;
-//        // Maximum size in bytes for a transaction
-//        uint32 txMaxSizeBytes;
-//
-//        // Fee for propagating 1KB of data
-//        int64 feePropagateData1KB;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ConfigSettingContractBandwidthV0 {
-    pub ledger_max_propagate_size_bytes: u32,
-    pub tx_max_size_bytes: u32,
-    pub fee_propagate_data1_kb: i64,
-}
-
-impl ReadXdr for ConfigSettingContractBandwidthV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_max_propagate_size_bytes: u32::read_xdr(r)?,
-            tx_max_size_bytes: u32::read_xdr(r)?,
-            fee_propagate_data1_kb: i64::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for ConfigSettingContractBandwidthV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_max_propagate_size_bytes.write_xdr(w)?;
-        self.tx_max_size_bytes.write_xdr(w)?;
-        self.fee_propagate_data1_kb.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ConfigSettingEntry is an XDR Union defines as:
-//
-//   union ConfigSettingEntry switch (ConfigSettingID configSettingID)
-//    {
-//    case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES:
-//        uint32 contractMaxSizeBytes;
-//    case CONFIG_SETTING_CONTRACT_COMPUTE_V0:
-//        ConfigSettingContractComputeV0 contractCompute;
-//    case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0:
-//        ConfigSettingContractLedgerCostV0 contractLedgerCost;
-//    case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0:
-//        ConfigSettingContractHistoricalDataV0 contractHistoricalData;
-//    case CONFIG_SETTING_CONTRACT_META_DATA_V0:
-//        ConfigSettingContractMetaDataV0 contractMetaData;
-//    case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0:
-//        ConfigSettingContractBandwidthV0 contractBandwidth;
-//    case CONFIG_SETTING_CONTRACT_HOST_LOGIC_VERSION:
-//        uint32 contractHostLogicVersion;
-//    };
-//
-// union with discriminant ConfigSettingId
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum ConfigSettingEntry {
-    MaxSizeBytes(u32),
-    ComputeV0(ConfigSettingContractComputeV0),
-    LedgerCostV0(ConfigSettingContractLedgerCostV0),
-    HistoricalDataV0(ConfigSettingContractHistoricalDataV0),
-    MetaDataV0(ConfigSettingContractMetaDataV0),
-    BandwidthV0(ConfigSettingContractBandwidthV0),
-    HostLogicVersion(u32),
-}
-
-impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 7] = [
-        ConfigSettingId::MaxSizeBytes,
-        ConfigSettingId::ComputeV0,
-        ConfigSettingId::LedgerCostV0,
-        ConfigSettingId::HistoricalDataV0,
-        ConfigSettingId::MetaDataV0,
-        ConfigSettingId::BandwidthV0,
-        ConfigSettingId::HostLogicVersion,
-    ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
-        "MaxSizeBytes",
-        "ComputeV0",
-        "LedgerCostV0",
-        "HistoricalDataV0",
-        "MetaDataV0",
-        "BandwidthV0",
-        "HostLogicVersion",
-    ];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::MaxSizeBytes(_) => "MaxSizeBytes",
-            Self::ComputeV0(_) => "ComputeV0",
-            Self::LedgerCostV0(_) => "LedgerCostV0",
-            Self::HistoricalDataV0(_) => "HistoricalDataV0",
-            Self::MetaDataV0(_) => "MetaDataV0",
-            Self::BandwidthV0(_) => "BandwidthV0",
-            Self::HostLogicVersion(_) => "HostLogicVersion",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ConfigSettingId {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::MaxSizeBytes(_) => ConfigSettingId::MaxSizeBytes,
-            Self::ComputeV0(_) => ConfigSettingId::ComputeV0,
-            Self::LedgerCostV0(_) => ConfigSettingId::LedgerCostV0,
-            Self::HistoricalDataV0(_) => ConfigSettingId::HistoricalDataV0,
-            Self::MetaDataV0(_) => ConfigSettingId::MetaDataV0,
-            Self::BandwidthV0(_) => ConfigSettingId::BandwidthV0,
-            Self::HostLogicVersion(_) => ConfigSettingId::HostLogicVersion,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 7] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ConfigSettingEntry {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ConfigSettingId> for ConfigSettingEntry {
-    #[must_use]
-    fn discriminant(&self) -> ConfigSettingId {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ConfigSettingId> for ConfigSettingEntry {
-    fn variants() -> slice::Iter<'static, ConfigSettingId> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ConfigSettingId> for ConfigSettingEntry {}
-
-impl ReadXdr for ConfigSettingEntry {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ConfigSettingId::MaxSizeBytes => Self::MaxSizeBytes(u32::read_xdr(r)?),
-            ConfigSettingId::ComputeV0 => {
-                Self::ComputeV0(ConfigSettingContractComputeV0::read_xdr(r)?)
-            }
-            ConfigSettingId::LedgerCostV0 => {
-                Self::LedgerCostV0(ConfigSettingContractLedgerCostV0::read_xdr(r)?)
-            }
-            ConfigSettingId::HistoricalDataV0 => {
-                Self::HistoricalDataV0(ConfigSettingContractHistoricalDataV0::read_xdr(r)?)
-            }
-            ConfigSettingId::MetaDataV0 => {
-                Self::MetaDataV0(ConfigSettingContractMetaDataV0::read_xdr(r)?)
-            }
-            ConfigSettingId::BandwidthV0 => {
-                Self::BandwidthV0(ConfigSettingContractBandwidthV0::read_xdr(r)?)
-            }
-            ConfigSettingId::HostLogicVersion => Self::HostLogicVersion(u32::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ConfigSettingEntry {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::MaxSizeBytes(v) => v.write_xdr(w)?,
-            Self::ComputeV0(v) => v.write_xdr(w)?,
-            Self::LedgerCostV0(v) => v.write_xdr(w)?,
-            Self::HistoricalDataV0(v) => v.write_xdr(w)?,
-            Self::MetaDataV0(v) => v.write_xdr(w)?,
-            Self::BandwidthV0(v) => v.write_xdr(w)?,
-            Self::HostLogicVersion(v) => v.write_xdr(w)?,
-        };
         Ok(())
     }
 }
@@ -38339,6 +38769,16 @@ pub enum TypeVariant {
     ScpStatementExternalize,
     ScpEnvelope,
     ScpQuorumSet,
+    ConfigSettingContractComputeV0,
+    ConfigSettingContractLedgerCostV0,
+    ConfigSettingContractHistoricalDataV0,
+    ConfigSettingContractMetaDataV0,
+    ConfigSettingContractBandwidthV0,
+    ContractCostType,
+    ContractCostParamEntry,
+    ContractCostParams,
+    ConfigSettingId,
+    ConfigSettingEntry,
     ScEnvMetaKind,
     ScEnvMetaEntry,
     ScMetaV0,
@@ -38459,13 +38899,6 @@ pub enum TypeVariant {
     LiquidityPoolEntryConstantProduct,
     ContractDataEntry,
     ContractCodeEntry,
-    ConfigSettingId,
-    ConfigSettingContractComputeV0,
-    ConfigSettingContractLedgerCostV0,
-    ConfigSettingContractHistoricalDataV0,
-    ConfigSettingContractMetaDataV0,
-    ConfigSettingContractBandwidthV0,
-    ConfigSettingEntry,
     LedgerEntryExtensionV1,
     LedgerEntryExtensionV1Ext,
     LedgerEntry,
@@ -38744,7 +39177,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 413] = [
+    pub const VARIANTS: [TypeVariant; 416] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38756,6 +39189,16 @@ impl TypeVariant {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::ConfigSettingContractComputeV0,
+        TypeVariant::ConfigSettingContractLedgerCostV0,
+        TypeVariant::ConfigSettingContractHistoricalDataV0,
+        TypeVariant::ConfigSettingContractMetaDataV0,
+        TypeVariant::ConfigSettingContractBandwidthV0,
+        TypeVariant::ContractCostType,
+        TypeVariant::ContractCostParamEntry,
+        TypeVariant::ContractCostParams,
+        TypeVariant::ConfigSettingId,
+        TypeVariant::ConfigSettingEntry,
         TypeVariant::ScEnvMetaKind,
         TypeVariant::ScEnvMetaEntry,
         TypeVariant::ScMetaV0,
@@ -38876,13 +39319,6 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolEntryConstantProduct,
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractCodeEntry,
-        TypeVariant::ConfigSettingId,
-        TypeVariant::ConfigSettingContractComputeV0,
-        TypeVariant::ConfigSettingContractLedgerCostV0,
-        TypeVariant::ConfigSettingContractHistoricalDataV0,
-        TypeVariant::ConfigSettingContractMetaDataV0,
-        TypeVariant::ConfigSettingContractBandwidthV0,
-        TypeVariant::ConfigSettingEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -39159,7 +39595,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 413] = [
+    pub const VARIANTS_STR: [&'static str; 416] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -39171,6 +39607,16 @@ impl TypeVariant {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "ConfigSettingContractComputeV0",
+        "ConfigSettingContractLedgerCostV0",
+        "ConfigSettingContractHistoricalDataV0",
+        "ConfigSettingContractMetaDataV0",
+        "ConfigSettingContractBandwidthV0",
+        "ContractCostType",
+        "ContractCostParamEntry",
+        "ContractCostParams",
+        "ConfigSettingId",
+        "ConfigSettingEntry",
         "ScEnvMetaKind",
         "ScEnvMetaEntry",
         "ScMetaV0",
@@ -39291,13 +39737,6 @@ impl TypeVariant {
         "LiquidityPoolEntryConstantProduct",
         "ContractDataEntry",
         "ContractCodeEntry",
-        "ConfigSettingId",
-        "ConfigSettingContractComputeV0",
-        "ConfigSettingContractLedgerCostV0",
-        "ConfigSettingContractHistoricalDataV0",
-        "ConfigSettingContractMetaDataV0",
-        "ConfigSettingContractBandwidthV0",
-        "ConfigSettingEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -39590,6 +40029,16 @@ impl TypeVariant {
             Self::ScpStatementExternalize => "ScpStatementExternalize",
             Self::ScpEnvelope => "ScpEnvelope",
             Self::ScpQuorumSet => "ScpQuorumSet",
+            Self::ConfigSettingContractComputeV0 => "ConfigSettingContractComputeV0",
+            Self::ConfigSettingContractLedgerCostV0 => "ConfigSettingContractLedgerCostV0",
+            Self::ConfigSettingContractHistoricalDataV0 => "ConfigSettingContractHistoricalDataV0",
+            Self::ConfigSettingContractMetaDataV0 => "ConfigSettingContractMetaDataV0",
+            Self::ConfigSettingContractBandwidthV0 => "ConfigSettingContractBandwidthV0",
+            Self::ContractCostType => "ContractCostType",
+            Self::ContractCostParamEntry => "ContractCostParamEntry",
+            Self::ContractCostParams => "ContractCostParams",
+            Self::ConfigSettingId => "ConfigSettingId",
+            Self::ConfigSettingEntry => "ConfigSettingEntry",
             Self::ScEnvMetaKind => "ScEnvMetaKind",
             Self::ScEnvMetaEntry => "ScEnvMetaEntry",
             Self::ScMetaV0 => "ScMetaV0",
@@ -39712,13 +40161,6 @@ impl TypeVariant {
             Self::LiquidityPoolEntryConstantProduct => "LiquidityPoolEntryConstantProduct",
             Self::ContractDataEntry => "ContractDataEntry",
             Self::ContractCodeEntry => "ContractCodeEntry",
-            Self::ConfigSettingId => "ConfigSettingId",
-            Self::ConfigSettingContractComputeV0 => "ConfigSettingContractComputeV0",
-            Self::ConfigSettingContractLedgerCostV0 => "ConfigSettingContractLedgerCostV0",
-            Self::ConfigSettingContractHistoricalDataV0 => "ConfigSettingContractHistoricalDataV0",
-            Self::ConfigSettingContractMetaDataV0 => "ConfigSettingContractMetaDataV0",
-            Self::ConfigSettingContractBandwidthV0 => "ConfigSettingContractBandwidthV0",
-            Self::ConfigSettingEntry => "ConfigSettingEntry",
             Self::LedgerEntryExtensionV1 => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry => "LedgerEntry",
@@ -40003,7 +40445,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 413] {
+    pub const fn variants() -> [TypeVariant; 416] {
         Self::VARIANTS
     }
 }
@@ -40037,6 +40479,18 @@ impl core::str::FromStr for TypeVariant {
             "ScpStatementExternalize" => Ok(Self::ScpStatementExternalize),
             "ScpEnvelope" => Ok(Self::ScpEnvelope),
             "ScpQuorumSet" => Ok(Self::ScpQuorumSet),
+            "ConfigSettingContractComputeV0" => Ok(Self::ConfigSettingContractComputeV0),
+            "ConfigSettingContractLedgerCostV0" => Ok(Self::ConfigSettingContractLedgerCostV0),
+            "ConfigSettingContractHistoricalDataV0" => {
+                Ok(Self::ConfigSettingContractHistoricalDataV0)
+            }
+            "ConfigSettingContractMetaDataV0" => Ok(Self::ConfigSettingContractMetaDataV0),
+            "ConfigSettingContractBandwidthV0" => Ok(Self::ConfigSettingContractBandwidthV0),
+            "ContractCostType" => Ok(Self::ContractCostType),
+            "ContractCostParamEntry" => Ok(Self::ContractCostParamEntry),
+            "ContractCostParams" => Ok(Self::ContractCostParams),
+            "ConfigSettingId" => Ok(Self::ConfigSettingId),
+            "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
             "ScEnvMetaKind" => Ok(Self::ScEnvMetaKind),
             "ScEnvMetaEntry" => Ok(Self::ScEnvMetaEntry),
             "ScMetaV0" => Ok(Self::ScMetaV0),
@@ -40159,15 +40613,6 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolEntryConstantProduct" => Ok(Self::LiquidityPoolEntryConstantProduct),
             "ContractDataEntry" => Ok(Self::ContractDataEntry),
             "ContractCodeEntry" => Ok(Self::ContractCodeEntry),
-            "ConfigSettingId" => Ok(Self::ConfigSettingId),
-            "ConfigSettingContractComputeV0" => Ok(Self::ConfigSettingContractComputeV0),
-            "ConfigSettingContractLedgerCostV0" => Ok(Self::ConfigSettingContractLedgerCostV0),
-            "ConfigSettingContractHistoricalDataV0" => {
-                Ok(Self::ConfigSettingContractHistoricalDataV0)
-            }
-            "ConfigSettingContractMetaDataV0" => Ok(Self::ConfigSettingContractMetaDataV0),
-            "ConfigSettingContractBandwidthV0" => Ok(Self::ConfigSettingContractBandwidthV0),
-            "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
             "LedgerEntryExtensionV1" => Ok(Self::LedgerEntryExtensionV1),
             "LedgerEntryExtensionV1Ext" => Ok(Self::LedgerEntryExtensionV1Ext),
             "LedgerEntry" => Ok(Self::LedgerEntry),
@@ -40477,6 +40922,16 @@ pub enum Type {
     ScpStatementExternalize(Box<ScpStatementExternalize>),
     ScpEnvelope(Box<ScpEnvelope>),
     ScpQuorumSet(Box<ScpQuorumSet>),
+    ConfigSettingContractComputeV0(Box<ConfigSettingContractComputeV0>),
+    ConfigSettingContractLedgerCostV0(Box<ConfigSettingContractLedgerCostV0>),
+    ConfigSettingContractHistoricalDataV0(Box<ConfigSettingContractHistoricalDataV0>),
+    ConfigSettingContractMetaDataV0(Box<ConfigSettingContractMetaDataV0>),
+    ConfigSettingContractBandwidthV0(Box<ConfigSettingContractBandwidthV0>),
+    ContractCostType(Box<ContractCostType>),
+    ContractCostParamEntry(Box<ContractCostParamEntry>),
+    ContractCostParams(Box<ContractCostParams>),
+    ConfigSettingId(Box<ConfigSettingId>),
+    ConfigSettingEntry(Box<ConfigSettingEntry>),
     ScEnvMetaKind(Box<ScEnvMetaKind>),
     ScEnvMetaEntry(Box<ScEnvMetaEntry>),
     ScMetaV0(Box<ScMetaV0>),
@@ -40597,13 +41052,6 @@ pub enum Type {
     LiquidityPoolEntryConstantProduct(Box<LiquidityPoolEntryConstantProduct>),
     ContractDataEntry(Box<ContractDataEntry>),
     ContractCodeEntry(Box<ContractCodeEntry>),
-    ConfigSettingId(Box<ConfigSettingId>),
-    ConfigSettingContractComputeV0(Box<ConfigSettingContractComputeV0>),
-    ConfigSettingContractLedgerCostV0(Box<ConfigSettingContractLedgerCostV0>),
-    ConfigSettingContractHistoricalDataV0(Box<ConfigSettingContractHistoricalDataV0>),
-    ConfigSettingContractMetaDataV0(Box<ConfigSettingContractMetaDataV0>),
-    ConfigSettingContractBandwidthV0(Box<ConfigSettingContractBandwidthV0>),
-    ConfigSettingEntry(Box<ConfigSettingEntry>),
     LedgerEntryExtensionV1(Box<LedgerEntryExtensionV1>),
     LedgerEntryExtensionV1Ext(Box<LedgerEntryExtensionV1Ext>),
     LedgerEntry(Box<LedgerEntry>),
@@ -40882,7 +41330,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 413] = [
+    pub const VARIANTS: [TypeVariant; 416] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -40894,6 +41342,16 @@ impl Type {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::ConfigSettingContractComputeV0,
+        TypeVariant::ConfigSettingContractLedgerCostV0,
+        TypeVariant::ConfigSettingContractHistoricalDataV0,
+        TypeVariant::ConfigSettingContractMetaDataV0,
+        TypeVariant::ConfigSettingContractBandwidthV0,
+        TypeVariant::ContractCostType,
+        TypeVariant::ContractCostParamEntry,
+        TypeVariant::ContractCostParams,
+        TypeVariant::ConfigSettingId,
+        TypeVariant::ConfigSettingEntry,
         TypeVariant::ScEnvMetaKind,
         TypeVariant::ScEnvMetaEntry,
         TypeVariant::ScMetaV0,
@@ -41014,13 +41472,6 @@ impl Type {
         TypeVariant::LiquidityPoolEntryConstantProduct,
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractCodeEntry,
-        TypeVariant::ConfigSettingId,
-        TypeVariant::ConfigSettingContractComputeV0,
-        TypeVariant::ConfigSettingContractLedgerCostV0,
-        TypeVariant::ConfigSettingContractHistoricalDataV0,
-        TypeVariant::ConfigSettingContractMetaDataV0,
-        TypeVariant::ConfigSettingContractBandwidthV0,
-        TypeVariant::ConfigSettingEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -41297,7 +41748,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 413] = [
+    pub const VARIANTS_STR: [&'static str; 416] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -41309,6 +41760,16 @@ impl Type {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "ConfigSettingContractComputeV0",
+        "ConfigSettingContractLedgerCostV0",
+        "ConfigSettingContractHistoricalDataV0",
+        "ConfigSettingContractMetaDataV0",
+        "ConfigSettingContractBandwidthV0",
+        "ContractCostType",
+        "ContractCostParamEntry",
+        "ContractCostParams",
+        "ConfigSettingId",
+        "ConfigSettingEntry",
         "ScEnvMetaKind",
         "ScEnvMetaEntry",
         "ScMetaV0",
@@ -41429,13 +41890,6 @@ impl Type {
         "LiquidityPoolEntryConstantProduct",
         "ContractDataEntry",
         "ContractCodeEntry",
-        "ConfigSettingId",
-        "ConfigSettingContractComputeV0",
-        "ConfigSettingContractLedgerCostV0",
-        "ConfigSettingContractHistoricalDataV0",
-        "ConfigSettingContractMetaDataV0",
-        "ConfigSettingContractBandwidthV0",
-        "ConfigSettingEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -41744,6 +42198,46 @@ impl Type {
             TypeVariant::ScpQuorumSet => {
                 Ok(Self::ScpQuorumSet(Box::new(ScpQuorumSet::read_xdr(r)?)))
             }
+            TypeVariant::ConfigSettingContractComputeV0 => {
+                Ok(Self::ConfigSettingContractComputeV0(Box::new(
+                    ConfigSettingContractComputeV0::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractLedgerCostV0 => {
+                Ok(Self::ConfigSettingContractLedgerCostV0(Box::new(
+                    ConfigSettingContractLedgerCostV0::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => {
+                Ok(Self::ConfigSettingContractHistoricalDataV0(Box::new(
+                    ConfigSettingContractHistoricalDataV0::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractMetaDataV0 => {
+                Ok(Self::ConfigSettingContractMetaDataV0(Box::new(
+                    ConfigSettingContractMetaDataV0::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractBandwidthV0 => {
+                Ok(Self::ConfigSettingContractBandwidthV0(Box::new(
+                    ConfigSettingContractBandwidthV0::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::ContractCostType => Ok(Self::ContractCostType(Box::new(
+                ContractCostType::read_xdr(r)?,
+            ))),
+            TypeVariant::ContractCostParamEntry => Ok(Self::ContractCostParamEntry(Box::new(
+                ContractCostParamEntry::read_xdr(r)?,
+            ))),
+            TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
+                ContractCostParams::read_xdr(r)?,
+            ))),
+            TypeVariant::ConfigSettingId => Ok(Self::ConfigSettingId(Box::new(
+                ConfigSettingId::read_xdr(r)?,
+            ))),
+            TypeVariant::ConfigSettingEntry => Ok(Self::ConfigSettingEntry(Box::new(
+                ConfigSettingEntry::read_xdr(r)?,
+            ))),
             TypeVariant::ScEnvMetaKind => {
                 Ok(Self::ScEnvMetaKind(Box::new(ScEnvMetaKind::read_xdr(r)?)))
             }
@@ -42037,37 +42531,6 @@ impl Type {
             ))),
             TypeVariant::ContractCodeEntry => Ok(Self::ContractCodeEntry(Box::new(
                 ContractCodeEntry::read_xdr(r)?,
-            ))),
-            TypeVariant::ConfigSettingId => Ok(Self::ConfigSettingId(Box::new(
-                ConfigSettingId::read_xdr(r)?,
-            ))),
-            TypeVariant::ConfigSettingContractComputeV0 => {
-                Ok(Self::ConfigSettingContractComputeV0(Box::new(
-                    ConfigSettingContractComputeV0::read_xdr(r)?,
-                )))
-            }
-            TypeVariant::ConfigSettingContractLedgerCostV0 => {
-                Ok(Self::ConfigSettingContractLedgerCostV0(Box::new(
-                    ConfigSettingContractLedgerCostV0::read_xdr(r)?,
-                )))
-            }
-            TypeVariant::ConfigSettingContractHistoricalDataV0 => {
-                Ok(Self::ConfigSettingContractHistoricalDataV0(Box::new(
-                    ConfigSettingContractHistoricalDataV0::read_xdr(r)?,
-                )))
-            }
-            TypeVariant::ConfigSettingContractMetaDataV0 => {
-                Ok(Self::ConfigSettingContractMetaDataV0(Box::new(
-                    ConfigSettingContractMetaDataV0::read_xdr(r)?,
-                )))
-            }
-            TypeVariant::ConfigSettingContractBandwidthV0 => {
-                Ok(Self::ConfigSettingContractBandwidthV0(Box::new(
-                    ConfigSettingContractBandwidthV0::read_xdr(r)?,
-                )))
-            }
-            TypeVariant::ConfigSettingEntry => Ok(Self::ConfigSettingEntry(Box::new(
-                ConfigSettingEntry::read_xdr(r)?,
             ))),
             TypeVariant::LedgerEntryExtensionV1 => Ok(Self::LedgerEntryExtensionV1(Box::new(
                 LedgerEntryExtensionV1::read_xdr(r)?,
@@ -42945,6 +43408,46 @@ impl Type {
                 ReadXdrIter::<_, ScpQuorumSet>::new(r)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
+            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractMetaDataV0>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostType => Box::new(
+                ReadXdrIter::<_, ContractCostType>::new(r)
+                    .map(|r| r.map(|t| Self::ContractCostType(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostParamEntry => Box::new(
+                ReadXdrIter::<_, ContractCostParamEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostParams => Box::new(
+                ReadXdrIter::<_, ContractCostParams>::new(r)
+                    .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingId => Box::new(
+                ReadXdrIter::<_, ConfigSettingId>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingEntry => Box::new(
+                ReadXdrIter::<_, ConfigSettingEntry>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
+            ),
             TypeVariant::ScEnvMetaKind => Box::new(
                 ReadXdrIter::<_, ScEnvMetaKind>::new(r)
                     .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t)))),
@@ -43409,34 +43912,6 @@ impl Type {
             TypeVariant::ContractCodeEntry => Box::new(
                 ReadXdrIter::<_, ContractCodeEntry>::new(r)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingId => Box::new(
-                ReadXdrIter::<_, ConfigSettingId>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractMetaDataV0>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingEntry => Box::new(
-                ReadXdrIter::<_, ConfigSettingEntry>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(r)
@@ -44577,6 +45052,46 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScpQuorumSet>>::new(r)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t.0)))),
             ),
+            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractComputeV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractLedgerCostV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractHistoricalDataV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractMetaDataV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractBandwidthV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractCostType => Box::new(
+                ReadXdrIter::<_, Frame<ContractCostType>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractCostType(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractCostParamEntry => Box::new(
+                ReadXdrIter::<_, Frame<ContractCostParamEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractCostParams => Box::new(
+                ReadXdrIter::<_, Frame<ContractCostParams>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingId => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingId>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingEntry => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t.0)))),
+            ),
             TypeVariant::ScEnvMetaKind => Box::new(
                 ReadXdrIter::<_, Frame<ScEnvMetaKind>>::new(r)
                     .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t.0)))),
@@ -45057,34 +45572,6 @@ impl Type {
             TypeVariant::ContractCodeEntry => Box::new(
                 ReadXdrIter::<_, Frame<ContractCodeEntry>>::new(r)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t.0)))),
-            ),
-            TypeVariant::ConfigSettingId => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingId>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t.0)))),
-            ),
-            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingContractComputeV0>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t.0)))),
-            ),
-            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingContractLedgerCostV0>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t.0)))),
-            ),
-            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingContractHistoricalDataV0>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t.0)))),
-            ),
-            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingContractMetaDataV0>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t.0)))),
-            ),
-            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingContractBandwidthV0>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t.0)))),
-            ),
-            TypeVariant::ConfigSettingEntry => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingEntry>>::new(r)
-                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerEntryExtensionV1>>::new(r)
@@ -46241,6 +46728,46 @@ impl Type {
                 ReadXdrIter::<_, ScpQuorumSet>::new(dec)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
+            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractMetaDataV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostType => Box::new(
+                ReadXdrIter::<_, ContractCostType>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractCostType(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostParamEntry => Box::new(
+                ReadXdrIter::<_, ContractCostParamEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostParams => Box::new(
+                ReadXdrIter::<_, ContractCostParams>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingId => Box::new(
+                ReadXdrIter::<_, ConfigSettingId>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingEntry => Box::new(
+                ReadXdrIter::<_, ConfigSettingEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
+            ),
             TypeVariant::ScEnvMetaKind => Box::new(
                 ReadXdrIter::<_, ScEnvMetaKind>::new(dec)
                     .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t)))),
@@ -46712,34 +47239,6 @@ impl Type {
             TypeVariant::ContractCodeEntry => Box::new(
                 ReadXdrIter::<_, ContractCodeEntry>::new(dec)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingId => Box::new(
-                ReadXdrIter::<_, ConfigSettingId>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractMetaDataV0>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))),
-            ),
-            TypeVariant::ConfigSettingEntry => Box::new(
-                ReadXdrIter::<_, ConfigSettingEntry>::new(dec)
-                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec)
@@ -47866,6 +48365,16 @@ impl Type {
             Self::ScpStatementExternalize(ref v) => v.as_ref(),
             Self::ScpEnvelope(ref v) => v.as_ref(),
             Self::ScpQuorumSet(ref v) => v.as_ref(),
+            Self::ConfigSettingContractComputeV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractLedgerCostV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractHistoricalDataV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractMetaDataV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractBandwidthV0(ref v) => v.as_ref(),
+            Self::ContractCostType(ref v) => v.as_ref(),
+            Self::ContractCostParamEntry(ref v) => v.as_ref(),
+            Self::ContractCostParams(ref v) => v.as_ref(),
+            Self::ConfigSettingId(ref v) => v.as_ref(),
+            Self::ConfigSettingEntry(ref v) => v.as_ref(),
             Self::ScEnvMetaKind(ref v) => v.as_ref(),
             Self::ScEnvMetaEntry(ref v) => v.as_ref(),
             Self::ScMetaV0(ref v) => v.as_ref(),
@@ -47986,13 +48495,6 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(ref v) => v.as_ref(),
             Self::ContractDataEntry(ref v) => v.as_ref(),
             Self::ContractCodeEntry(ref v) => v.as_ref(),
-            Self::ConfigSettingId(ref v) => v.as_ref(),
-            Self::ConfigSettingContractComputeV0(ref v) => v.as_ref(),
-            Self::ConfigSettingContractLedgerCostV0(ref v) => v.as_ref(),
-            Self::ConfigSettingContractHistoricalDataV0(ref v) => v.as_ref(),
-            Self::ConfigSettingContractMetaDataV0(ref v) => v.as_ref(),
-            Self::ConfigSettingContractBandwidthV0(ref v) => v.as_ref(),
-            Self::ConfigSettingEntry(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1Ext(ref v) => v.as_ref(),
             Self::LedgerEntry(ref v) => v.as_ref(),
@@ -48286,6 +48788,18 @@ impl Type {
             Self::ScpStatementExternalize(_) => "ScpStatementExternalize",
             Self::ScpEnvelope(_) => "ScpEnvelope",
             Self::ScpQuorumSet(_) => "ScpQuorumSet",
+            Self::ConfigSettingContractComputeV0(_) => "ConfigSettingContractComputeV0",
+            Self::ConfigSettingContractLedgerCostV0(_) => "ConfigSettingContractLedgerCostV0",
+            Self::ConfigSettingContractHistoricalDataV0(_) => {
+                "ConfigSettingContractHistoricalDataV0"
+            }
+            Self::ConfigSettingContractMetaDataV0(_) => "ConfigSettingContractMetaDataV0",
+            Self::ConfigSettingContractBandwidthV0(_) => "ConfigSettingContractBandwidthV0",
+            Self::ContractCostType(_) => "ContractCostType",
+            Self::ContractCostParamEntry(_) => "ContractCostParamEntry",
+            Self::ContractCostParams(_) => "ContractCostParams",
+            Self::ConfigSettingId(_) => "ConfigSettingId",
+            Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
             Self::ScEnvMetaKind(_) => "ScEnvMetaKind",
             Self::ScEnvMetaEntry(_) => "ScEnvMetaEntry",
             Self::ScMetaV0(_) => "ScMetaV0",
@@ -48408,15 +48922,6 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(_) => "LiquidityPoolEntryConstantProduct",
             Self::ContractDataEntry(_) => "ContractDataEntry",
             Self::ContractCodeEntry(_) => "ContractCodeEntry",
-            Self::ConfigSettingId(_) => "ConfigSettingId",
-            Self::ConfigSettingContractComputeV0(_) => "ConfigSettingContractComputeV0",
-            Self::ConfigSettingContractLedgerCostV0(_) => "ConfigSettingContractLedgerCostV0",
-            Self::ConfigSettingContractHistoricalDataV0(_) => {
-                "ConfigSettingContractHistoricalDataV0"
-            }
-            Self::ConfigSettingContractMetaDataV0(_) => "ConfigSettingContractMetaDataV0",
-            Self::ConfigSettingContractBandwidthV0(_) => "ConfigSettingContractBandwidthV0",
-            Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
             Self::LedgerEntryExtensionV1(_) => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext(_) => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry(_) => "LedgerEntry",
@@ -48707,7 +49212,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 413] {
+    pub const fn variants() -> [TypeVariant; 416] {
         Self::VARIANTS
     }
 
@@ -48726,6 +49231,24 @@ impl Type {
             Self::ScpStatementExternalize(_) => TypeVariant::ScpStatementExternalize,
             Self::ScpEnvelope(_) => TypeVariant::ScpEnvelope,
             Self::ScpQuorumSet(_) => TypeVariant::ScpQuorumSet,
+            Self::ConfigSettingContractComputeV0(_) => TypeVariant::ConfigSettingContractComputeV0,
+            Self::ConfigSettingContractLedgerCostV0(_) => {
+                TypeVariant::ConfigSettingContractLedgerCostV0
+            }
+            Self::ConfigSettingContractHistoricalDataV0(_) => {
+                TypeVariant::ConfigSettingContractHistoricalDataV0
+            }
+            Self::ConfigSettingContractMetaDataV0(_) => {
+                TypeVariant::ConfigSettingContractMetaDataV0
+            }
+            Self::ConfigSettingContractBandwidthV0(_) => {
+                TypeVariant::ConfigSettingContractBandwidthV0
+            }
+            Self::ContractCostType(_) => TypeVariant::ContractCostType,
+            Self::ContractCostParamEntry(_) => TypeVariant::ContractCostParamEntry,
+            Self::ContractCostParams(_) => TypeVariant::ContractCostParams,
+            Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
+            Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
             Self::ScEnvMetaKind(_) => TypeVariant::ScEnvMetaKind,
             Self::ScEnvMetaEntry(_) => TypeVariant::ScEnvMetaEntry,
             Self::ScMetaV0(_) => TypeVariant::ScMetaV0,
@@ -48854,21 +49377,6 @@ impl Type {
             }
             Self::ContractDataEntry(_) => TypeVariant::ContractDataEntry,
             Self::ContractCodeEntry(_) => TypeVariant::ContractCodeEntry,
-            Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
-            Self::ConfigSettingContractComputeV0(_) => TypeVariant::ConfigSettingContractComputeV0,
-            Self::ConfigSettingContractLedgerCostV0(_) => {
-                TypeVariant::ConfigSettingContractLedgerCostV0
-            }
-            Self::ConfigSettingContractHistoricalDataV0(_) => {
-                TypeVariant::ConfigSettingContractHistoricalDataV0
-            }
-            Self::ConfigSettingContractMetaDataV0(_) => {
-                TypeVariant::ConfigSettingContractMetaDataV0
-            }
-            Self::ConfigSettingContractBandwidthV0(_) => {
-                TypeVariant::ConfigSettingContractBandwidthV0
-            }
-            Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
             Self::LedgerEntryExtensionV1(_) => TypeVariant::LedgerEntryExtensionV1,
             Self::LedgerEntryExtensionV1Ext(_) => TypeVariant::LedgerEntryExtensionV1Ext,
             Self::LedgerEntry(_) => TypeVariant::LedgerEntry,

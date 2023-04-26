@@ -46,7 +46,7 @@ endif
 	rustfmt $@
 
 xdr/curr-version: $(wildcard .git/modules/xdr/curr/**/*) $(wildcard xdr/curr/*.x)
-	git submodule status -- xdr/curr | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' > xdr/curr-version
+	git submodule status -- xdr/curr | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' | tr -d '+' > xdr/curr-version
 
 src/next/generated.rs: $(sort $(wildcard xdr/next/*.x))
 	> $@
@@ -65,7 +65,7 @@ endif
 	rustfmt $@
 
 xdr/next-version: $(wildcard .git/modules/xdr/next/**/*) $(wildcard xdr/next/*.x)
-	git submodule status -- xdr/next | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' > xdr/next-version
+	git submodule status -- xdr/next | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' | tr -d '+' > xdr/next-version
 
 clean:
 	rm -f src/*/generated.rs

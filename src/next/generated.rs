@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "350bf4f54a9fd3a335fe6c72f03540766ead5fd86fa99d9036fe27a51231e942",
+        "d860aa186e9794b7e10e77e1d680a5134c7eb6d9438be305eaebe7652eacf87d",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -3469,9 +3469,8 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 //        CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3,
 //        CONFIG_SETTING_CONTRACT_META_DATA_V0 = 4,
 //        CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5,
-//        CONFIG_SETTING_CONTRACT_HOST_LOGIC_VERSION = 6,
-//        CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 7,
-//        CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 8
+//        CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6,
+//        CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7
 //    };
 //
 // enum
@@ -3490,31 +3489,28 @@ pub enum ConfigSettingId {
     HistoricalDataV0 = 3,
     MetaDataV0 = 4,
     BandwidthV0 = 5,
-    HostLogicVersion = 6,
-    CostParamsCpuInstructions = 7,
-    CostParamsMemoryBytes = 8,
+    CostParamsCpuInstructions = 6,
+    CostParamsMemoryBytes = 7,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 9] = [
+    pub const VARIANTS: [ConfigSettingId; 8] = [
         ConfigSettingId::MaxSizeBytes,
         ConfigSettingId::ComputeV0,
         ConfigSettingId::LedgerCostV0,
         ConfigSettingId::HistoricalDataV0,
         ConfigSettingId::MetaDataV0,
         ConfigSettingId::BandwidthV0,
-        ConfigSettingId::HostLogicVersion,
         ConfigSettingId::CostParamsCpuInstructions,
         ConfigSettingId::CostParamsMemoryBytes,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 8] = [
         "MaxSizeBytes",
         "ComputeV0",
         "LedgerCostV0",
         "HistoricalDataV0",
         "MetaDataV0",
         "BandwidthV0",
-        "HostLogicVersion",
         "CostParamsCpuInstructions",
         "CostParamsMemoryBytes",
     ];
@@ -3528,14 +3524,13 @@ impl ConfigSettingId {
             Self::HistoricalDataV0 => "HistoricalDataV0",
             Self::MetaDataV0 => "MetaDataV0",
             Self::BandwidthV0 => "BandwidthV0",
-            Self::HostLogicVersion => "HostLogicVersion",
             Self::CostParamsCpuInstructions => "CostParamsCpuInstructions",
             Self::CostParamsMemoryBytes => "CostParamsMemoryBytes",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 9] {
+    pub const fn variants() -> [ConfigSettingId; 8] {
         Self::VARIANTS
     }
 }
@@ -3572,9 +3567,8 @@ impl TryFrom<i32> for ConfigSettingId {
             3 => ConfigSettingId::HistoricalDataV0,
             4 => ConfigSettingId::MetaDataV0,
             5 => ConfigSettingId::BandwidthV0,
-            6 => ConfigSettingId::HostLogicVersion,
-            7 => ConfigSettingId::CostParamsCpuInstructions,
-            8 => ConfigSettingId::CostParamsMemoryBytes,
+            6 => ConfigSettingId::CostParamsCpuInstructions,
+            7 => ConfigSettingId::CostParamsMemoryBytes,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -3622,8 +3616,6 @@ impl WriteXdr for ConfigSettingId {
 //        ConfigSettingContractMetaDataV0 contractMetaData;
 //    case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0:
 //        ConfigSettingContractBandwidthV0 contractBandwidth;
-//    case CONFIG_SETTING_CONTRACT_HOST_LOGIC_VERSION:
-//        uint32 contractHostLogicVersion;
 //    case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS:
 //        ContractCostParams contractCostParamsCpuInsns;
 //    case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES:
@@ -3646,31 +3638,28 @@ pub enum ConfigSettingEntry {
     HistoricalDataV0(ConfigSettingContractHistoricalDataV0),
     MetaDataV0(ConfigSettingContractMetaDataV0),
     BandwidthV0(ConfigSettingContractBandwidthV0),
-    HostLogicVersion(u32),
     CostParamsCpuInstructions(ContractCostParams),
     CostParamsMemoryBytes(ContractCostParams),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 9] = [
+    pub const VARIANTS: [ConfigSettingId; 8] = [
         ConfigSettingId::MaxSizeBytes,
         ConfigSettingId::ComputeV0,
         ConfigSettingId::LedgerCostV0,
         ConfigSettingId::HistoricalDataV0,
         ConfigSettingId::MetaDataV0,
         ConfigSettingId::BandwidthV0,
-        ConfigSettingId::HostLogicVersion,
         ConfigSettingId::CostParamsCpuInstructions,
         ConfigSettingId::CostParamsMemoryBytes,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 8] = [
         "MaxSizeBytes",
         "ComputeV0",
         "LedgerCostV0",
         "HistoricalDataV0",
         "MetaDataV0",
         "BandwidthV0",
-        "HostLogicVersion",
         "CostParamsCpuInstructions",
         "CostParamsMemoryBytes",
     ];
@@ -3684,7 +3673,6 @@ impl ConfigSettingEntry {
             Self::HistoricalDataV0(_) => "HistoricalDataV0",
             Self::MetaDataV0(_) => "MetaDataV0",
             Self::BandwidthV0(_) => "BandwidthV0",
-            Self::HostLogicVersion(_) => "HostLogicVersion",
             Self::CostParamsCpuInstructions(_) => "CostParamsCpuInstructions",
             Self::CostParamsMemoryBytes(_) => "CostParamsMemoryBytes",
         }
@@ -3700,14 +3688,13 @@ impl ConfigSettingEntry {
             Self::HistoricalDataV0(_) => ConfigSettingId::HistoricalDataV0,
             Self::MetaDataV0(_) => ConfigSettingId::MetaDataV0,
             Self::BandwidthV0(_) => ConfigSettingId::BandwidthV0,
-            Self::HostLogicVersion(_) => ConfigSettingId::HostLogicVersion,
             Self::CostParamsCpuInstructions(_) => ConfigSettingId::CostParamsCpuInstructions,
             Self::CostParamsMemoryBytes(_) => ConfigSettingId::CostParamsMemoryBytes,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 9] {
+    pub const fn variants() -> [ConfigSettingId; 8] {
         Self::VARIANTS
     }
 }
@@ -3756,7 +3743,6 @@ impl ReadXdr for ConfigSettingEntry {
             ConfigSettingId::BandwidthV0 => {
                 Self::BandwidthV0(ConfigSettingContractBandwidthV0::read_xdr(r)?)
             }
-            ConfigSettingId::HostLogicVersion => Self::HostLogicVersion(u32::read_xdr(r)?),
             ConfigSettingId::CostParamsCpuInstructions => {
                 Self::CostParamsCpuInstructions(ContractCostParams::read_xdr(r)?)
             }
@@ -3782,7 +3768,6 @@ impl WriteXdr for ConfigSettingEntry {
             Self::HistoricalDataV0(v) => v.write_xdr(w)?,
             Self::MetaDataV0(v) => v.write_xdr(w)?,
             Self::BandwidthV0(v) => v.write_xdr(w)?,
-            Self::HostLogicVersion(v) => v.write_xdr(w)?,
             Self::CostParamsCpuInstructions(v) => v.write_xdr(w)?,
             Self::CostParamsMemoryBytes(v) => v.write_xdr(w)?,
         };

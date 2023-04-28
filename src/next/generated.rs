@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "d860aa186e9794b7e10e77e1d680a5134c7eb6d9438be305eaebe7652eacf87d",
+        "6d49b1fcd416277808ca7578b7e4efa525f47779e9b80139db27a5a2dafdb615",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -3313,8 +3313,8 @@ impl WriteXdr for ContractCostType {
 // ContractCostParamEntry is an XDR Struct defines as:
 //
 //   struct ContractCostParamEntry {
-//        int32 constTerm;
-//        int32 linearTerm;
+//        int64 constTerm;
+//        int64 linearTerm;
 //        // use `ext` to add more terms (e.g. higher order polynomials) in the future
 //        ExtensionPoint ext;
 //    };
@@ -3327,8 +3327,8 @@ impl WriteXdr for ContractCostType {
     serde(rename_all = "snake_case")
 )]
 pub struct ContractCostParamEntry {
-    pub const_term: i32,
-    pub linear_term: i32,
+    pub const_term: i64,
+    pub linear_term: i64,
     pub ext: ExtensionPoint,
 }
 
@@ -3336,8 +3336,8 @@ impl ReadXdr for ContractCostParamEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            const_term: i32::read_xdr(r)?,
-            linear_term: i32::read_xdr(r)?,
+            const_term: i64::read_xdr(r)?,
+            linear_term: i64::read_xdr(r)?,
             ext: ExtensionPoint::read_xdr(r)?,
         })
     }

@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "6d49b1fcd416277808ca7578b7e4efa525f47779e9b80139db27a5a2dafdb615",
+        "45dc460924dae4c150567c215b43f21977618b48e6667edd814da2c05dd05a7e",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -3470,7 +3470,9 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 //        CONFIG_SETTING_CONTRACT_META_DATA_V0 = 4,
 //        CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5,
 //        CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6,
-//        CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7
+//        CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7,
+//        CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8,
+//        CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9
 //    };
 //
 // enum
@@ -3491,10 +3493,12 @@ pub enum ConfigSettingId {
     BandwidthV0 = 5,
     CostParamsCpuInstructions = 6,
     CostParamsMemoryBytes = 7,
+    DataKeySizeBytes = 8,
+    DataEntrySizeBytes = 9,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 8] = [
+    pub const VARIANTS: [ConfigSettingId; 10] = [
         ConfigSettingId::MaxSizeBytes,
         ConfigSettingId::ComputeV0,
         ConfigSettingId::LedgerCostV0,
@@ -3503,8 +3507,10 @@ impl ConfigSettingId {
         ConfigSettingId::BandwidthV0,
         ConfigSettingId::CostParamsCpuInstructions,
         ConfigSettingId::CostParamsMemoryBytes,
+        ConfigSettingId::DataKeySizeBytes,
+        ConfigSettingId::DataEntrySizeBytes,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "MaxSizeBytes",
         "ComputeV0",
         "LedgerCostV0",
@@ -3513,6 +3519,8 @@ impl ConfigSettingId {
         "BandwidthV0",
         "CostParamsCpuInstructions",
         "CostParamsMemoryBytes",
+        "DataKeySizeBytes",
+        "DataEntrySizeBytes",
     ];
 
     #[must_use]
@@ -3526,11 +3534,13 @@ impl ConfigSettingId {
             Self::BandwidthV0 => "BandwidthV0",
             Self::CostParamsCpuInstructions => "CostParamsCpuInstructions",
             Self::CostParamsMemoryBytes => "CostParamsMemoryBytes",
+            Self::DataKeySizeBytes => "DataKeySizeBytes",
+            Self::DataEntrySizeBytes => "DataEntrySizeBytes",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 8] {
+    pub const fn variants() -> [ConfigSettingId; 10] {
         Self::VARIANTS
     }
 }
@@ -3569,6 +3579,8 @@ impl TryFrom<i32> for ConfigSettingId {
             5 => ConfigSettingId::BandwidthV0,
             6 => ConfigSettingId::CostParamsCpuInstructions,
             7 => ConfigSettingId::CostParamsMemoryBytes,
+            8 => ConfigSettingId::DataKeySizeBytes,
+            9 => ConfigSettingId::DataEntrySizeBytes,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -3620,6 +3632,10 @@ impl WriteXdr for ConfigSettingId {
 //        ContractCostParams contractCostParamsCpuInsns;
 //    case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES:
 //        ContractCostParams contractCostParamsMemBytes;
+//    case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES:
+//        uint32 contractDataKeySizeBytes;
+//    case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES:
+//        uint32 contractDataEntrySizeBytes;
 //    };
 //
 // union with discriminant ConfigSettingId
@@ -3640,10 +3656,12 @@ pub enum ConfigSettingEntry {
     BandwidthV0(ConfigSettingContractBandwidthV0),
     CostParamsCpuInstructions(ContractCostParams),
     CostParamsMemoryBytes(ContractCostParams),
+    DataKeySizeBytes(u32),
+    DataEntrySizeBytes(u32),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 8] = [
+    pub const VARIANTS: [ConfigSettingId; 10] = [
         ConfigSettingId::MaxSizeBytes,
         ConfigSettingId::ComputeV0,
         ConfigSettingId::LedgerCostV0,
@@ -3652,8 +3670,10 @@ impl ConfigSettingEntry {
         ConfigSettingId::BandwidthV0,
         ConfigSettingId::CostParamsCpuInstructions,
         ConfigSettingId::CostParamsMemoryBytes,
+        ConfigSettingId::DataKeySizeBytes,
+        ConfigSettingId::DataEntrySizeBytes,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "MaxSizeBytes",
         "ComputeV0",
         "LedgerCostV0",
@@ -3662,6 +3682,8 @@ impl ConfigSettingEntry {
         "BandwidthV0",
         "CostParamsCpuInstructions",
         "CostParamsMemoryBytes",
+        "DataKeySizeBytes",
+        "DataEntrySizeBytes",
     ];
 
     #[must_use]
@@ -3675,6 +3697,8 @@ impl ConfigSettingEntry {
             Self::BandwidthV0(_) => "BandwidthV0",
             Self::CostParamsCpuInstructions(_) => "CostParamsCpuInstructions",
             Self::CostParamsMemoryBytes(_) => "CostParamsMemoryBytes",
+            Self::DataKeySizeBytes(_) => "DataKeySizeBytes",
+            Self::DataEntrySizeBytes(_) => "DataEntrySizeBytes",
         }
     }
 
@@ -3690,11 +3714,13 @@ impl ConfigSettingEntry {
             Self::BandwidthV0(_) => ConfigSettingId::BandwidthV0,
             Self::CostParamsCpuInstructions(_) => ConfigSettingId::CostParamsCpuInstructions,
             Self::CostParamsMemoryBytes(_) => ConfigSettingId::CostParamsMemoryBytes,
+            Self::DataKeySizeBytes(_) => ConfigSettingId::DataKeySizeBytes,
+            Self::DataEntrySizeBytes(_) => ConfigSettingId::DataEntrySizeBytes,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 8] {
+    pub const fn variants() -> [ConfigSettingId; 10] {
         Self::VARIANTS
     }
 }
@@ -3749,6 +3775,8 @@ impl ReadXdr for ConfigSettingEntry {
             ConfigSettingId::CostParamsMemoryBytes => {
                 Self::CostParamsMemoryBytes(ContractCostParams::read_xdr(r)?)
             }
+            ConfigSettingId::DataKeySizeBytes => Self::DataKeySizeBytes(u32::read_xdr(r)?),
+            ConfigSettingId::DataEntrySizeBytes => Self::DataEntrySizeBytes(u32::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -3770,6 +3798,8 @@ impl WriteXdr for ConfigSettingEntry {
             Self::BandwidthV0(v) => v.write_xdr(w)?,
             Self::CostParamsCpuInstructions(v) => v.write_xdr(w)?,
             Self::CostParamsMemoryBytes(v) => v.write_xdr(w)?,
+            Self::DataKeySizeBytes(v) => v.write_xdr(w)?,
+            Self::DataEntrySizeBytes(v) => v.write_xdr(w)?,
         };
         Ok(())
     }

@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "77f857e3cf6d0bfc8eba00de25bcffb368954ad006dbd5ef092d15795148feb0",
+        "dcb90dcd0e7832f38a0db70d65dc603f308c4fc816ed7219c299e481b29897ce",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -36600,6 +36600,7 @@ impl WriteXdr for TransactionResultCode {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
 //            void;
 //        }
 //
@@ -36629,10 +36630,11 @@ pub enum InnerTransactionResultResult {
     TxBadSponsorship,
     TxBadMinSeqAgeOrGap,
     TxMalformed,
+    TxSorobanResourceLimitExceeded,
 }
 
 impl InnerTransactionResultResult {
-    pub const VARIANTS: [TransactionResultCode; 16] = [
+    pub const VARIANTS: [TransactionResultCode; 17] = [
         TransactionResultCode::TxSuccess,
         TransactionResultCode::TxFailed,
         TransactionResultCode::TxTooEarly,
@@ -36649,8 +36651,9 @@ impl InnerTransactionResultResult {
         TransactionResultCode::TxBadSponsorship,
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
+        TransactionResultCode::TxSorobanResourceLimitExceeded,
     ];
-    pub const VARIANTS_STR: [&'static str; 16] = [
+    pub const VARIANTS_STR: [&'static str; 17] = [
         "TxSuccess",
         "TxFailed",
         "TxTooEarly",
@@ -36667,6 +36670,7 @@ impl InnerTransactionResultResult {
         "TxBadSponsorship",
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
+        "TxSorobanResourceLimitExceeded",
     ];
 
     #[must_use]
@@ -36688,6 +36692,7 @@ impl InnerTransactionResultResult {
             Self::TxBadSponsorship => "TxBadSponsorship",
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
+            Self::TxSorobanResourceLimitExceeded => "TxSorobanResourceLimitExceeded",
         }
     }
 
@@ -36711,11 +36716,14 @@ impl InnerTransactionResultResult {
             Self::TxBadSponsorship => TransactionResultCode::TxBadSponsorship,
             Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
             Self::TxMalformed => TransactionResultCode::TxMalformed,
+            Self::TxSorobanResourceLimitExceeded => {
+                TransactionResultCode::TxSorobanResourceLimitExceeded
+            }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [TransactionResultCode; 16] {
+    pub const fn variants() -> [TransactionResultCode; 17] {
         Self::VARIANTS
     }
 }
@@ -36768,6 +36776,9 @@ impl ReadXdr for InnerTransactionResultResult {
             TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
             TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
             TransactionResultCode::TxMalformed => Self::TxMalformed,
+            TransactionResultCode::TxSorobanResourceLimitExceeded => {
+                Self::TxSorobanResourceLimitExceeded
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -36797,6 +36808,7 @@ impl WriteXdr for InnerTransactionResultResult {
             Self::TxBadSponsorship => ().write_xdr(w)?,
             Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
             Self::TxMalformed => ().write_xdr(w)?,
+            Self::TxSorobanResourceLimitExceeded => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -36924,6 +36936,7 @@ impl WriteXdr for InnerTransactionResultExt {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
 //            void;
 //        }
 //        result;
@@ -37035,6 +37048,7 @@ impl WriteXdr for InnerTransactionResultPair {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
 //            void;
 //        }
 //
@@ -37066,10 +37080,11 @@ pub enum TransactionResultResult {
     TxBadSponsorship,
     TxBadMinSeqAgeOrGap,
     TxMalformed,
+    TxSorobanResourceLimitExceeded,
 }
 
 impl TransactionResultResult {
-    pub const VARIANTS: [TransactionResultCode; 18] = [
+    pub const VARIANTS: [TransactionResultCode; 19] = [
         TransactionResultCode::TxFeeBumpInnerSuccess,
         TransactionResultCode::TxFeeBumpInnerFailed,
         TransactionResultCode::TxSuccess,
@@ -37088,8 +37103,9 @@ impl TransactionResultResult {
         TransactionResultCode::TxBadSponsorship,
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
+        TransactionResultCode::TxSorobanResourceLimitExceeded,
     ];
-    pub const VARIANTS_STR: [&'static str; 18] = [
+    pub const VARIANTS_STR: [&'static str; 19] = [
         "TxFeeBumpInnerSuccess",
         "TxFeeBumpInnerFailed",
         "TxSuccess",
@@ -37108,6 +37124,7 @@ impl TransactionResultResult {
         "TxBadSponsorship",
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
+        "TxSorobanResourceLimitExceeded",
     ];
 
     #[must_use]
@@ -37131,6 +37148,7 @@ impl TransactionResultResult {
             Self::TxBadSponsorship => "TxBadSponsorship",
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
+            Self::TxSorobanResourceLimitExceeded => "TxSorobanResourceLimitExceeded",
         }
     }
 
@@ -37156,11 +37174,14 @@ impl TransactionResultResult {
             Self::TxBadSponsorship => TransactionResultCode::TxBadSponsorship,
             Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
             Self::TxMalformed => TransactionResultCode::TxMalformed,
+            Self::TxSorobanResourceLimitExceeded => {
+                TransactionResultCode::TxSorobanResourceLimitExceeded
+            }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [TransactionResultCode; 18] {
+    pub const fn variants() -> [TransactionResultCode; 19] {
         Self::VARIANTS
     }
 }
@@ -37219,6 +37240,9 @@ impl ReadXdr for TransactionResultResult {
             TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
             TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
             TransactionResultCode::TxMalformed => Self::TxMalformed,
+            TransactionResultCode::TxSorobanResourceLimitExceeded => {
+                Self::TxSorobanResourceLimitExceeded
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -37250,6 +37274,7 @@ impl WriteXdr for TransactionResultResult {
             Self::TxBadSponsorship => ().write_xdr(w)?,
             Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
             Self::TxMalformed => ().write_xdr(w)?,
+            Self::TxSorobanResourceLimitExceeded => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -37378,6 +37403,7 @@ impl WriteXdr for TransactionResultExt {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
 //            void;
 //        }
 //        result;

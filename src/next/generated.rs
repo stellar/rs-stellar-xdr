@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "d860aa186e9794b7e10e77e1d680a5134c7eb6d9438be305eaebe7652eacf87d",
+        "45dc460924dae4c150567c215b43f21977618b48e6667edd814da2c05dd05a7e",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "77f857e3cf6d0bfc8eba00de25bcffb368954ad006dbd5ef092d15795148feb0",
+        "dcb90dcd0e7832f38a0db70d65dc603f308c4fc816ed7219c299e481b29897ce",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -3313,8 +3313,8 @@ impl WriteXdr for ContractCostType {
 // ContractCostParamEntry is an XDR Struct defines as:
 //
 //   struct ContractCostParamEntry {
-//        int32 constTerm;
-//        int32 linearTerm;
+//        int64 constTerm;
+//        int64 linearTerm;
 //        // use `ext` to add more terms (e.g. higher order polynomials) in the future
 //        ExtensionPoint ext;
 //    };
@@ -3327,8 +3327,8 @@ impl WriteXdr for ContractCostType {
     serde(rename_all = "snake_case")
 )]
 pub struct ContractCostParamEntry {
-    pub const_term: i32,
-    pub linear_term: i32,
+    pub const_term: i64,
+    pub linear_term: i64,
     pub ext: ExtensionPoint,
 }
 
@@ -3336,8 +3336,8 @@ impl ReadXdr for ContractCostParamEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            const_term: i32::read_xdr(r)?,
-            linear_term: i32::read_xdr(r)?,
+            const_term: i64::read_xdr(r)?,
+            linear_term: i64::read_xdr(r)?,
             ext: ExtensionPoint::read_xdr(r)?,
         })
     }
@@ -3470,7 +3470,9 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 //        CONFIG_SETTING_CONTRACT_META_DATA_V0 = 4,
 //        CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5,
 //        CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6,
-//        CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7
+//        CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7,
+//        CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8,
+//        CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9
 //    };
 //
 // enum
@@ -3491,10 +3493,12 @@ pub enum ConfigSettingId {
     BandwidthV0 = 5,
     CostParamsCpuInstructions = 6,
     CostParamsMemoryBytes = 7,
+    DataKeySizeBytes = 8,
+    DataEntrySizeBytes = 9,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 8] = [
+    pub const VARIANTS: [ConfigSettingId; 10] = [
         ConfigSettingId::MaxSizeBytes,
         ConfigSettingId::ComputeV0,
         ConfigSettingId::LedgerCostV0,
@@ -3503,8 +3507,10 @@ impl ConfigSettingId {
         ConfigSettingId::BandwidthV0,
         ConfigSettingId::CostParamsCpuInstructions,
         ConfigSettingId::CostParamsMemoryBytes,
+        ConfigSettingId::DataKeySizeBytes,
+        ConfigSettingId::DataEntrySizeBytes,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "MaxSizeBytes",
         "ComputeV0",
         "LedgerCostV0",
@@ -3513,6 +3519,8 @@ impl ConfigSettingId {
         "BandwidthV0",
         "CostParamsCpuInstructions",
         "CostParamsMemoryBytes",
+        "DataKeySizeBytes",
+        "DataEntrySizeBytes",
     ];
 
     #[must_use]
@@ -3526,11 +3534,13 @@ impl ConfigSettingId {
             Self::BandwidthV0 => "BandwidthV0",
             Self::CostParamsCpuInstructions => "CostParamsCpuInstructions",
             Self::CostParamsMemoryBytes => "CostParamsMemoryBytes",
+            Self::DataKeySizeBytes => "DataKeySizeBytes",
+            Self::DataEntrySizeBytes => "DataEntrySizeBytes",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 8] {
+    pub const fn variants() -> [ConfigSettingId; 10] {
         Self::VARIANTS
     }
 }
@@ -3569,6 +3579,8 @@ impl TryFrom<i32> for ConfigSettingId {
             5 => ConfigSettingId::BandwidthV0,
             6 => ConfigSettingId::CostParamsCpuInstructions,
             7 => ConfigSettingId::CostParamsMemoryBytes,
+            8 => ConfigSettingId::DataKeySizeBytes,
+            9 => ConfigSettingId::DataEntrySizeBytes,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -3620,6 +3632,10 @@ impl WriteXdr for ConfigSettingId {
 //        ContractCostParams contractCostParamsCpuInsns;
 //    case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES:
 //        ContractCostParams contractCostParamsMemBytes;
+//    case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES:
+//        uint32 contractDataKeySizeBytes;
+//    case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES:
+//        uint32 contractDataEntrySizeBytes;
 //    };
 //
 // union with discriminant ConfigSettingId
@@ -3640,10 +3656,12 @@ pub enum ConfigSettingEntry {
     BandwidthV0(ConfigSettingContractBandwidthV0),
     CostParamsCpuInstructions(ContractCostParams),
     CostParamsMemoryBytes(ContractCostParams),
+    DataKeySizeBytes(u32),
+    DataEntrySizeBytes(u32),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 8] = [
+    pub const VARIANTS: [ConfigSettingId; 10] = [
         ConfigSettingId::MaxSizeBytes,
         ConfigSettingId::ComputeV0,
         ConfigSettingId::LedgerCostV0,
@@ -3652,8 +3670,10 @@ impl ConfigSettingEntry {
         ConfigSettingId::BandwidthV0,
         ConfigSettingId::CostParamsCpuInstructions,
         ConfigSettingId::CostParamsMemoryBytes,
+        ConfigSettingId::DataKeySizeBytes,
+        ConfigSettingId::DataEntrySizeBytes,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "MaxSizeBytes",
         "ComputeV0",
         "LedgerCostV0",
@@ -3662,6 +3682,8 @@ impl ConfigSettingEntry {
         "BandwidthV0",
         "CostParamsCpuInstructions",
         "CostParamsMemoryBytes",
+        "DataKeySizeBytes",
+        "DataEntrySizeBytes",
     ];
 
     #[must_use]
@@ -3675,6 +3697,8 @@ impl ConfigSettingEntry {
             Self::BandwidthV0(_) => "BandwidthV0",
             Self::CostParamsCpuInstructions(_) => "CostParamsCpuInstructions",
             Self::CostParamsMemoryBytes(_) => "CostParamsMemoryBytes",
+            Self::DataKeySizeBytes(_) => "DataKeySizeBytes",
+            Self::DataEntrySizeBytes(_) => "DataEntrySizeBytes",
         }
     }
 
@@ -3690,11 +3714,13 @@ impl ConfigSettingEntry {
             Self::BandwidthV0(_) => ConfigSettingId::BandwidthV0,
             Self::CostParamsCpuInstructions(_) => ConfigSettingId::CostParamsCpuInstructions,
             Self::CostParamsMemoryBytes(_) => ConfigSettingId::CostParamsMemoryBytes,
+            Self::DataKeySizeBytes(_) => ConfigSettingId::DataKeySizeBytes,
+            Self::DataEntrySizeBytes(_) => ConfigSettingId::DataEntrySizeBytes,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 8] {
+    pub const fn variants() -> [ConfigSettingId; 10] {
         Self::VARIANTS
     }
 }
@@ -3749,6 +3775,8 @@ impl ReadXdr for ConfigSettingEntry {
             ConfigSettingId::CostParamsMemoryBytes => {
                 Self::CostParamsMemoryBytes(ContractCostParams::read_xdr(r)?)
             }
+            ConfigSettingId::DataKeySizeBytes => Self::DataKeySizeBytes(u32::read_xdr(r)?),
+            ConfigSettingId::DataEntrySizeBytes => Self::DataEntrySizeBytes(u32::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -3770,6 +3798,8 @@ impl WriteXdr for ConfigSettingEntry {
             Self::BandwidthV0(v) => v.write_xdr(w)?,
             Self::CostParamsCpuInstructions(v) => v.write_xdr(w)?,
             Self::CostParamsMemoryBytes(v) => v.write_xdr(w)?,
+            Self::DataKeySizeBytes(v) => v.write_xdr(w)?,
+            Self::DataEntrySizeBytes(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -36570,6 +36600,7 @@ impl WriteXdr for TransactionResultCode {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
 //            void;
 //        }
 //
@@ -36599,10 +36630,11 @@ pub enum InnerTransactionResultResult {
     TxBadSponsorship,
     TxBadMinSeqAgeOrGap,
     TxMalformed,
+    TxSorobanResourceLimitExceeded,
 }
 
 impl InnerTransactionResultResult {
-    pub const VARIANTS: [TransactionResultCode; 16] = [
+    pub const VARIANTS: [TransactionResultCode; 17] = [
         TransactionResultCode::TxSuccess,
         TransactionResultCode::TxFailed,
         TransactionResultCode::TxTooEarly,
@@ -36619,8 +36651,9 @@ impl InnerTransactionResultResult {
         TransactionResultCode::TxBadSponsorship,
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
+        TransactionResultCode::TxSorobanResourceLimitExceeded,
     ];
-    pub const VARIANTS_STR: [&'static str; 16] = [
+    pub const VARIANTS_STR: [&'static str; 17] = [
         "TxSuccess",
         "TxFailed",
         "TxTooEarly",
@@ -36637,6 +36670,7 @@ impl InnerTransactionResultResult {
         "TxBadSponsorship",
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
+        "TxSorobanResourceLimitExceeded",
     ];
 
     #[must_use]
@@ -36658,6 +36692,7 @@ impl InnerTransactionResultResult {
             Self::TxBadSponsorship => "TxBadSponsorship",
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
+            Self::TxSorobanResourceLimitExceeded => "TxSorobanResourceLimitExceeded",
         }
     }
 
@@ -36681,11 +36716,14 @@ impl InnerTransactionResultResult {
             Self::TxBadSponsorship => TransactionResultCode::TxBadSponsorship,
             Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
             Self::TxMalformed => TransactionResultCode::TxMalformed,
+            Self::TxSorobanResourceLimitExceeded => {
+                TransactionResultCode::TxSorobanResourceLimitExceeded
+            }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [TransactionResultCode; 16] {
+    pub const fn variants() -> [TransactionResultCode; 17] {
         Self::VARIANTS
     }
 }
@@ -36738,6 +36776,9 @@ impl ReadXdr for InnerTransactionResultResult {
             TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
             TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
             TransactionResultCode::TxMalformed => Self::TxMalformed,
+            TransactionResultCode::TxSorobanResourceLimitExceeded => {
+                Self::TxSorobanResourceLimitExceeded
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -36767,6 +36808,7 @@ impl WriteXdr for InnerTransactionResultResult {
             Self::TxBadSponsorship => ().write_xdr(w)?,
             Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
             Self::TxMalformed => ().write_xdr(w)?,
+            Self::TxSorobanResourceLimitExceeded => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -36894,6 +36936,7 @@ impl WriteXdr for InnerTransactionResultExt {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
 //            void;
 //        }
 //        result;
@@ -37005,6 +37048,7 @@ impl WriteXdr for InnerTransactionResultPair {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
 //            void;
 //        }
 //
@@ -37036,10 +37080,11 @@ pub enum TransactionResultResult {
     TxBadSponsorship,
     TxBadMinSeqAgeOrGap,
     TxMalformed,
+    TxSorobanResourceLimitExceeded,
 }
 
 impl TransactionResultResult {
-    pub const VARIANTS: [TransactionResultCode; 18] = [
+    pub const VARIANTS: [TransactionResultCode; 19] = [
         TransactionResultCode::TxFeeBumpInnerSuccess,
         TransactionResultCode::TxFeeBumpInnerFailed,
         TransactionResultCode::TxSuccess,
@@ -37058,8 +37103,9 @@ impl TransactionResultResult {
         TransactionResultCode::TxBadSponsorship,
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
+        TransactionResultCode::TxSorobanResourceLimitExceeded,
     ];
-    pub const VARIANTS_STR: [&'static str; 18] = [
+    pub const VARIANTS_STR: [&'static str; 19] = [
         "TxFeeBumpInnerSuccess",
         "TxFeeBumpInnerFailed",
         "TxSuccess",
@@ -37078,6 +37124,7 @@ impl TransactionResultResult {
         "TxBadSponsorship",
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
+        "TxSorobanResourceLimitExceeded",
     ];
 
     #[must_use]
@@ -37101,6 +37148,7 @@ impl TransactionResultResult {
             Self::TxBadSponsorship => "TxBadSponsorship",
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
+            Self::TxSorobanResourceLimitExceeded => "TxSorobanResourceLimitExceeded",
         }
     }
 
@@ -37126,11 +37174,14 @@ impl TransactionResultResult {
             Self::TxBadSponsorship => TransactionResultCode::TxBadSponsorship,
             Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
             Self::TxMalformed => TransactionResultCode::TxMalformed,
+            Self::TxSorobanResourceLimitExceeded => {
+                TransactionResultCode::TxSorobanResourceLimitExceeded
+            }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [TransactionResultCode; 18] {
+    pub const fn variants() -> [TransactionResultCode; 19] {
         Self::VARIANTS
     }
 }
@@ -37189,6 +37240,9 @@ impl ReadXdr for TransactionResultResult {
             TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
             TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
             TransactionResultCode::TxMalformed => Self::TxMalformed,
+            TransactionResultCode::TxSorobanResourceLimitExceeded => {
+                Self::TxSorobanResourceLimitExceeded
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -37220,6 +37274,7 @@ impl WriteXdr for TransactionResultResult {
             Self::TxBadSponsorship => ().write_xdr(w)?,
             Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
             Self::TxMalformed => ().write_xdr(w)?,
+            Self::TxSorobanResourceLimitExceeded => ().write_xdr(w)?,
         };
         Ok(())
     }
@@ -37348,6 +37403,7 @@ impl WriteXdr for TransactionResultExt {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
 //            void;
 //        }
 //        result;

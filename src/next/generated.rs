@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "cd4ac7622931831291ed848004328d926d8a317122ca966f4bc105367819cd6c",
+        "dcf7bb3de5d27327824578dfae95f1d25a3ff3693a117ec499c8c7b7048a31dc",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "dcb90dcd0e7832f38a0db70d65dc603f308c4fc816ed7219c299e481b29897ce",
+        "22f6f4abccac6f9220b2192a60eb7f26829269f5af6e79921eaf25c09ee73a92",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -18136,225 +18136,6 @@ impl WriteXdr for TransactionHistoryResultEntry {
     }
 }
 
-// TransactionResultPairV2 is an XDR Struct defines as:
-//
-//   struct TransactionResultPairV2
-//    {
-//        Hash transactionHash;
-//        Hash hashOfMetaHashes; // hash of hashes in TransactionMetaV3
-//                               // TransactionResult is in the meta
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct TransactionResultPairV2 {
-    pub transaction_hash: Hash,
-    pub hash_of_meta_hashes: Hash,
-}
-
-impl ReadXdr for TransactionResultPairV2 {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            transaction_hash: Hash::read_xdr(r)?,
-            hash_of_meta_hashes: Hash::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for TransactionResultPairV2 {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.transaction_hash.write_xdr(w)?;
-        self.hash_of_meta_hashes.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// TransactionResultSetV2 is an XDR Struct defines as:
-//
-//   struct TransactionResultSetV2
-//    {
-//        TransactionResultPairV2 results<>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct TransactionResultSetV2 {
-    pub results: VecM<TransactionResultPairV2>,
-}
-
-impl ReadXdr for TransactionResultSetV2 {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            results: VecM::<TransactionResultPairV2>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for TransactionResultSetV2 {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.results.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// TransactionHistoryResultEntryV2Ext is an XDR NestedUnion defines as:
-//
-//   union switch (int v)
-//        {
-//        case 0:
-//            void;
-//        }
-//
-// union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum TransactionHistoryResultEntryV2Ext {
-    V0,
-}
-
-impl TransactionHistoryResultEntryV2Ext {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::V0 => "V0",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> i32 {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => 0,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [i32; 1] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for TransactionHistoryResultEntryV2Ext {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<i32> for TransactionHistoryResultEntryV2Ext {
-    #[must_use]
-    fn discriminant(&self) -> i32 {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<i32> for TransactionHistoryResultEntryV2Ext {
-    fn variants() -> slice::Iter<'static, i32> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<i32> for TransactionHistoryResultEntryV2Ext {}
-
-impl ReadXdr for TransactionHistoryResultEntryV2Ext {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
-    }
-}
-
-impl WriteXdr for TransactionHistoryResultEntryV2Ext {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
-    }
-}
-
-// TransactionHistoryResultEntryV2 is an XDR Struct defines as:
-//
-//   struct TransactionHistoryResultEntryV2
-//    {
-//        uint32 ledgerSeq;
-//        TransactionResultSetV2 txResultSet;
-//
-//        // reserved for future use
-//        union switch (int v)
-//        {
-//        case 0:
-//            void;
-//        }
-//        ext;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct TransactionHistoryResultEntryV2 {
-    pub ledger_seq: u32,
-    pub tx_result_set: TransactionResultSetV2,
-    pub ext: TransactionHistoryResultEntryV2Ext,
-}
-
-impl ReadXdr for TransactionHistoryResultEntryV2 {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_seq: u32::read_xdr(r)?,
-            tx_result_set: TransactionResultSetV2::read_xdr(r)?,
-            ext: TransactionHistoryResultEntryV2Ext::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for TransactionHistoryResultEntryV2 {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_seq.write_xdr(w)?;
-        self.tx_result_set.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
-    }
-}
-
 // LedgerHeaderHistoryEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (int v)
@@ -19465,76 +19246,6 @@ impl WriteXdr for DiagnosticEvent {
     }
 }
 
-// OperationDiagnosticEvents is an XDR Struct defines as:
-//
-//   struct OperationDiagnosticEvents
-//    {
-//        DiagnosticEvent events<>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct OperationDiagnosticEvents {
-    pub events: VecM<DiagnosticEvent>,
-}
-
-impl ReadXdr for OperationDiagnosticEvents {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            events: VecM::<DiagnosticEvent>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for OperationDiagnosticEvents {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.events.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// OperationEvents is an XDR Struct defines as:
-//
-//   struct OperationEvents
-//    {
-//        ContractEvent events<>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct OperationEvents {
-    pub events: VecM<ContractEvent>,
-}
-
-impl ReadXdr for OperationEvents {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            events: VecM::<ContractEvent>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for OperationEvents {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.events.write_xdr(w)?;
-        Ok(())
-    }
-}
-
 // TransactionMetaV3 is an XDR Struct defines as:
 //
 //   struct TransactionMetaV3
@@ -19544,17 +19255,14 @@ impl WriteXdr for OperationEvents {
 //        OperationMeta operations<>;         // meta for each operation
 //        LedgerEntryChanges txChangesAfter;  // tx level changes after operations are
 //                                            // applied if any
-//        OperationEvents events<>;           // custom events populated by the
-//                                            // contracts themselves. One list per operation.
-//        TransactionResult txResult;
+//        ContractEvent events<>;           // custom events populated by the
+//                                            // contracts themselves.
+//        SCVal returnValues<MAX_OPS_PER_TX>;    // return values of each invocation.
 //
-//        Hash hashes[3];                     // stores sha256(txChangesBefore, operations, txChangesAfter),
-//                                            // sha256(events), and sha256(txResult)
-//
-//        // Diagnostics events that are not hashed. One list per operation.
+//        // Diagnostics events that are not hashed.
 //        // This will contain all contract and diagnostic events. Even ones
 //        // that were emitted in a failed contract call.
-//        OperationDiagnosticEvents diagnosticEvents<>;
+//        DiagnosticEvent diagnosticEvents<>;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -19568,10 +19276,9 @@ pub struct TransactionMetaV3 {
     pub tx_changes_before: LedgerEntryChanges,
     pub operations: VecM<OperationMeta>,
     pub tx_changes_after: LedgerEntryChanges,
-    pub events: VecM<OperationEvents>,
-    pub tx_result: TransactionResult,
-    pub hashes: [Hash; 3],
-    pub diagnostic_events: VecM<OperationDiagnosticEvents>,
+    pub events: VecM<ContractEvent>,
+    pub return_values: VecM<ScVal, 100>,
+    pub diagnostic_events: VecM<DiagnosticEvent>,
 }
 
 impl ReadXdr for TransactionMetaV3 {
@@ -19581,10 +19288,9 @@ impl ReadXdr for TransactionMetaV3 {
             tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
             operations: VecM::<OperationMeta>::read_xdr(r)?,
             tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
-            events: VecM::<OperationEvents>::read_xdr(r)?,
-            tx_result: TransactionResult::read_xdr(r)?,
-            hashes: <[Hash; 3]>::read_xdr(r)?,
-            diagnostic_events: VecM::<OperationDiagnosticEvents>::read_xdr(r)?,
+            events: VecM::<ContractEvent>::read_xdr(r)?,
+            return_values: VecM::<ScVal, 100>::read_xdr(r)?,
+            diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
         })
     }
 }
@@ -19596,9 +19302,47 @@ impl WriteXdr for TransactionMetaV3 {
         self.operations.write_xdr(w)?;
         self.tx_changes_after.write_xdr(w)?;
         self.events.write_xdr(w)?;
-        self.tx_result.write_xdr(w)?;
-        self.hashes.write_xdr(w)?;
+        self.return_values.write_xdr(w)?;
         self.diagnostic_events.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// InvokeHostFunctionSuccessPreImage is an XDR Struct defines as:
+//
+//   struct InvokeHostFunctionSuccessPreImage
+//    {
+//        SCVal returnValues<MAX_OPS_PER_TX>;
+//        ContractEvent events<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct InvokeHostFunctionSuccessPreImage {
+    pub return_values: VecM<ScVal, 100>,
+    pub events: VecM<ContractEvent>,
+}
+
+impl ReadXdr for InvokeHostFunctionSuccessPreImage {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            return_values: VecM::<ScVal, 100>::read_xdr(r)?,
+            events: VecM::<ContractEvent>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for InvokeHostFunctionSuccessPreImage {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.return_values.write_xdr(w)?;
+        self.events.write_xdr(w)?;
         Ok(())
     }
 }
@@ -19752,49 +19496,6 @@ impl ReadXdr for TransactionResultMeta {
 }
 
 impl WriteXdr for TransactionResultMeta {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.result.write_xdr(w)?;
-        self.fee_processing.write_xdr(w)?;
-        self.tx_apply_processing.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// TransactionResultMetaV2 is an XDR Struct defines as:
-//
-//   struct TransactionResultMetaV2
-//    {
-//        TransactionResultPairV2 result;
-//        LedgerEntryChanges feeProcessing;
-//        TransactionMeta txApplyProcessing;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct TransactionResultMetaV2 {
-    pub result: TransactionResultPairV2,
-    pub fee_processing: LedgerEntryChanges,
-    pub tx_apply_processing: TransactionMeta,
-}
-
-impl ReadXdr for TransactionResultMetaV2 {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            result: TransactionResultPairV2::read_xdr(r)?,
-            fee_processing: LedgerEntryChanges::read_xdr(r)?,
-            tx_apply_processing: TransactionMeta::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for TransactionResultMetaV2 {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.result.write_xdr(w)?;
@@ -19963,66 +19664,6 @@ impl WriteXdr for LedgerCloseMetaV1 {
     }
 }
 
-// LedgerCloseMetaV2 is an XDR Struct defines as:
-//
-//   struct LedgerCloseMetaV2
-//    {
-//        LedgerHeaderHistoryEntry ledgerHeader;
-//
-//        GeneralizedTransactionSet txSet;
-//
-//        // NB: transactions are sorted in apply order here
-//        // fees for all transactions are processed first
-//        // followed by applying transactions
-//        TransactionResultMetaV2 txProcessing<>;
-//
-//        // upgrades are applied last
-//        UpgradeEntryMeta upgradesProcessing<>;
-//
-//        // other misc information attached to the ledger close
-//        SCPHistoryEntry scpInfo<>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct LedgerCloseMetaV2 {
-    pub ledger_header: LedgerHeaderHistoryEntry,
-    pub tx_set: GeneralizedTransactionSet,
-    pub tx_processing: VecM<TransactionResultMetaV2>,
-    pub upgrades_processing: VecM<UpgradeEntryMeta>,
-    pub scp_info: VecM<ScpHistoryEntry>,
-}
-
-impl ReadXdr for LedgerCloseMetaV2 {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
-            tx_set: GeneralizedTransactionSet::read_xdr(r)?,
-            tx_processing: VecM::<TransactionResultMetaV2>::read_xdr(r)?,
-            upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
-            scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for LedgerCloseMetaV2 {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_header.write_xdr(w)?;
-        self.tx_set.write_xdr(w)?;
-        self.tx_processing.write_xdr(w)?;
-        self.upgrades_processing.write_xdr(w)?;
-        self.scp_info.write_xdr(w)?;
-        Ok(())
-    }
-}
-
 // LedgerCloseMeta is an XDR Union defines as:
 //
 //   union LedgerCloseMeta switch (int v)
@@ -20031,8 +19672,6 @@ impl WriteXdr for LedgerCloseMetaV2 {
 //        LedgerCloseMetaV0 v0;
 //    case 1:
 //        LedgerCloseMetaV1 v1;
-//    case 2:
-//        LedgerCloseMetaV2 v2;
 //    };
 //
 // union with discriminant i32
@@ -20047,19 +19686,17 @@ impl WriteXdr for LedgerCloseMetaV2 {
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
     V1(LedgerCloseMetaV1),
-    V2(LedgerCloseMetaV2),
 }
 
 impl LedgerCloseMeta {
-    pub const VARIANTS: [i32; 3] = [0, 1, 2];
-    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
-            Self::V2(_) => "V2",
         }
     }
 
@@ -20069,12 +19706,11 @@ impl LedgerCloseMeta {
         match self {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
-            Self::V2(_) => 2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 3] {
+    pub const fn variants() -> [i32; 2] {
         Self::VARIANTS
     }
 }
@@ -20109,7 +19745,6 @@ impl ReadXdr for LedgerCloseMeta {
         let v = match dv {
             0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
             1 => Self::V1(LedgerCloseMetaV1::read_xdr(r)?),
-            2 => Self::V2(LedgerCloseMetaV2::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -20125,7 +19760,6 @@ impl WriteXdr for LedgerCloseMeta {
         match self {
             Self::V0(v) => v.write_xdr(w)?,
             Self::V1(v) => v.write_xdr(w)?,
-            Self::V2(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -35567,7 +35201,7 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 //   union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code)
 //    {
 //    case INVOKE_HOST_FUNCTION_SUCCESS:
-//        SCVal success<MAX_OPS_PER_TX>;
+//        Hash success; // sha256(InvokeHostFunctionSuccessPreImage)
 //    case INVOKE_HOST_FUNCTION_MALFORMED:
 //    case INVOKE_HOST_FUNCTION_TRAPPED:
 //    case INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED:
@@ -35584,7 +35218,7 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum InvokeHostFunctionResult {
-    Success(VecM<ScVal, 100>),
+    Success(Hash),
     Malformed,
     Trapped,
     ResourceLimitExceeded,
@@ -35656,9 +35290,7 @@ impl ReadXdr for InvokeHostFunctionResult {
             <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            InvokeHostFunctionResultCode::Success => {
-                Self::Success(VecM::<ScVal, 100>::read_xdr(r)?)
-            }
+            InvokeHostFunctionResultCode::Success => Self::Success(Hash::read_xdr(r)?),
             InvokeHostFunctionResultCode::Malformed => Self::Malformed,
             InvokeHostFunctionResultCode::Trapped => Self::Trapped,
             InvokeHostFunctionResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
@@ -39154,10 +38786,6 @@ pub enum TypeVariant {
     TransactionHistoryEntryExt,
     TransactionHistoryResultEntry,
     TransactionHistoryResultEntryExt,
-    TransactionResultPairV2,
-    TransactionResultSetV2,
-    TransactionHistoryResultEntryV2,
-    TransactionHistoryResultEntryV2Ext,
     LedgerHeaderHistoryEntry,
     LedgerHeaderHistoryEntryExt,
     LedgerScpMessages,
@@ -39174,16 +38802,13 @@ pub enum TypeVariant {
     ContractEventBody,
     ContractEventV0,
     DiagnosticEvent,
-    OperationDiagnosticEvents,
-    OperationEvents,
     TransactionMetaV3,
+    InvokeHostFunctionSuccessPreImage,
     TransactionMeta,
     TransactionResultMeta,
-    TransactionResultMetaV2,
     UpgradeEntryMeta,
     LedgerCloseMetaV0,
     LedgerCloseMetaV1,
-    LedgerCloseMetaV2,
     LedgerCloseMeta,
     ErrorCode,
     SError,
@@ -39388,7 +39013,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 419] = [
+    pub const VARIANTS: [TypeVariant; 412] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -39577,10 +39202,6 @@ impl TypeVariant {
         TypeVariant::TransactionHistoryEntryExt,
         TypeVariant::TransactionHistoryResultEntry,
         TypeVariant::TransactionHistoryResultEntryExt,
-        TypeVariant::TransactionResultPairV2,
-        TypeVariant::TransactionResultSetV2,
-        TypeVariant::TransactionHistoryResultEntryV2,
-        TypeVariant::TransactionHistoryResultEntryV2Ext,
         TypeVariant::LedgerHeaderHistoryEntry,
         TypeVariant::LedgerHeaderHistoryEntryExt,
         TypeVariant::LedgerScpMessages,
@@ -39597,16 +39218,13 @@ impl TypeVariant {
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
         TypeVariant::DiagnosticEvent,
-        TypeVariant::OperationDiagnosticEvents,
-        TypeVariant::OperationEvents,
         TypeVariant::TransactionMetaV3,
+        TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
-        TypeVariant::TransactionResultMetaV2,
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaV1,
-        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
@@ -39809,7 +39427,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 419] = [
+    pub const VARIANTS_STR: [&'static str; 412] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -39998,10 +39616,6 @@ impl TypeVariant {
         "TransactionHistoryEntryExt",
         "TransactionHistoryResultEntry",
         "TransactionHistoryResultEntryExt",
-        "TransactionResultPairV2",
-        "TransactionResultSetV2",
-        "TransactionHistoryResultEntryV2",
-        "TransactionHistoryResultEntryV2Ext",
         "LedgerHeaderHistoryEntry",
         "LedgerHeaderHistoryEntryExt",
         "LedgerScpMessages",
@@ -40018,16 +39632,13 @@ impl TypeVariant {
         "ContractEventBody",
         "ContractEventV0",
         "DiagnosticEvent",
-        "OperationDiagnosticEvents",
-        "OperationEvents",
         "TransactionMetaV3",
+        "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
-        "TransactionResultMetaV2",
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaV1",
-        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
@@ -40425,10 +40036,6 @@ impl TypeVariant {
             Self::TransactionHistoryEntryExt => "TransactionHistoryEntryExt",
             Self::TransactionHistoryResultEntry => "TransactionHistoryResultEntry",
             Self::TransactionHistoryResultEntryExt => "TransactionHistoryResultEntryExt",
-            Self::TransactionResultPairV2 => "TransactionResultPairV2",
-            Self::TransactionResultSetV2 => "TransactionResultSetV2",
-            Self::TransactionHistoryResultEntryV2 => "TransactionHistoryResultEntryV2",
-            Self::TransactionHistoryResultEntryV2Ext => "TransactionHistoryResultEntryV2Ext",
             Self::LedgerHeaderHistoryEntry => "LedgerHeaderHistoryEntry",
             Self::LedgerHeaderHistoryEntryExt => "LedgerHeaderHistoryEntryExt",
             Self::LedgerScpMessages => "LedgerScpMessages",
@@ -40445,16 +40052,13 @@ impl TypeVariant {
             Self::ContractEventBody => "ContractEventBody",
             Self::ContractEventV0 => "ContractEventV0",
             Self::DiagnosticEvent => "DiagnosticEvent",
-            Self::OperationDiagnosticEvents => "OperationDiagnosticEvents",
-            Self::OperationEvents => "OperationEvents",
             Self::TransactionMetaV3 => "TransactionMetaV3",
+            Self::InvokeHostFunctionSuccessPreImage => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta => "TransactionMeta",
             Self::TransactionResultMeta => "TransactionResultMeta",
-            Self::TransactionResultMetaV2 => "TransactionResultMetaV2",
             Self::UpgradeEntryMeta => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0 => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaV1 => "LedgerCloseMetaV1",
-            Self::LedgerCloseMetaV2 => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta => "LedgerCloseMeta",
             Self::ErrorCode => "ErrorCode",
             Self::SError => "SError",
@@ -40665,7 +40269,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 419] {
+    pub const fn variants() -> [TypeVariant; 412] {
         Self::VARIANTS
     }
 }
@@ -40880,10 +40484,6 @@ impl core::str::FromStr for TypeVariant {
             "TransactionHistoryEntryExt" => Ok(Self::TransactionHistoryEntryExt),
             "TransactionHistoryResultEntry" => Ok(Self::TransactionHistoryResultEntry),
             "TransactionHistoryResultEntryExt" => Ok(Self::TransactionHistoryResultEntryExt),
-            "TransactionResultPairV2" => Ok(Self::TransactionResultPairV2),
-            "TransactionResultSetV2" => Ok(Self::TransactionResultSetV2),
-            "TransactionHistoryResultEntryV2" => Ok(Self::TransactionHistoryResultEntryV2),
-            "TransactionHistoryResultEntryV2Ext" => Ok(Self::TransactionHistoryResultEntryV2Ext),
             "LedgerHeaderHistoryEntry" => Ok(Self::LedgerHeaderHistoryEntry),
             "LedgerHeaderHistoryEntryExt" => Ok(Self::LedgerHeaderHistoryEntryExt),
             "LedgerScpMessages" => Ok(Self::LedgerScpMessages),
@@ -40900,16 +40500,13 @@ impl core::str::FromStr for TypeVariant {
             "ContractEventBody" => Ok(Self::ContractEventBody),
             "ContractEventV0" => Ok(Self::ContractEventV0),
             "DiagnosticEvent" => Ok(Self::DiagnosticEvent),
-            "OperationDiagnosticEvents" => Ok(Self::OperationDiagnosticEvents),
-            "OperationEvents" => Ok(Self::OperationEvents),
             "TransactionMetaV3" => Ok(Self::TransactionMetaV3),
+            "InvokeHostFunctionSuccessPreImage" => Ok(Self::InvokeHostFunctionSuccessPreImage),
             "TransactionMeta" => Ok(Self::TransactionMeta),
             "TransactionResultMeta" => Ok(Self::TransactionResultMeta),
-            "TransactionResultMetaV2" => Ok(Self::TransactionResultMetaV2),
             "UpgradeEntryMeta" => Ok(Self::UpgradeEntryMeta),
             "LedgerCloseMetaV0" => Ok(Self::LedgerCloseMetaV0),
             "LedgerCloseMetaV1" => Ok(Self::LedgerCloseMetaV1),
-            "LedgerCloseMetaV2" => Ok(Self::LedgerCloseMetaV2),
             "LedgerCloseMeta" => Ok(Self::LedgerCloseMeta),
             "ErrorCode" => Ok(Self::ErrorCode),
             "SError" => Ok(Self::SError),
@@ -41322,10 +40919,6 @@ pub enum Type {
     TransactionHistoryEntryExt(Box<TransactionHistoryEntryExt>),
     TransactionHistoryResultEntry(Box<TransactionHistoryResultEntry>),
     TransactionHistoryResultEntryExt(Box<TransactionHistoryResultEntryExt>),
-    TransactionResultPairV2(Box<TransactionResultPairV2>),
-    TransactionResultSetV2(Box<TransactionResultSetV2>),
-    TransactionHistoryResultEntryV2(Box<TransactionHistoryResultEntryV2>),
-    TransactionHistoryResultEntryV2Ext(Box<TransactionHistoryResultEntryV2Ext>),
     LedgerHeaderHistoryEntry(Box<LedgerHeaderHistoryEntry>),
     LedgerHeaderHistoryEntryExt(Box<LedgerHeaderHistoryEntryExt>),
     LedgerScpMessages(Box<LedgerScpMessages>),
@@ -41342,16 +40935,13 @@ pub enum Type {
     ContractEventBody(Box<ContractEventBody>),
     ContractEventV0(Box<ContractEventV0>),
     DiagnosticEvent(Box<DiagnosticEvent>),
-    OperationDiagnosticEvents(Box<OperationDiagnosticEvents>),
-    OperationEvents(Box<OperationEvents>),
     TransactionMetaV3(Box<TransactionMetaV3>),
+    InvokeHostFunctionSuccessPreImage(Box<InvokeHostFunctionSuccessPreImage>),
     TransactionMeta(Box<TransactionMeta>),
     TransactionResultMeta(Box<TransactionResultMeta>),
-    TransactionResultMetaV2(Box<TransactionResultMetaV2>),
     UpgradeEntryMeta(Box<UpgradeEntryMeta>),
     LedgerCloseMetaV0(Box<LedgerCloseMetaV0>),
     LedgerCloseMetaV1(Box<LedgerCloseMetaV1>),
-    LedgerCloseMetaV2(Box<LedgerCloseMetaV2>),
     LedgerCloseMeta(Box<LedgerCloseMeta>),
     ErrorCode(Box<ErrorCode>),
     SError(Box<SError>),
@@ -41556,7 +41146,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 419] = [
+    pub const VARIANTS: [TypeVariant; 412] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -41745,10 +41335,6 @@ impl Type {
         TypeVariant::TransactionHistoryEntryExt,
         TypeVariant::TransactionHistoryResultEntry,
         TypeVariant::TransactionHistoryResultEntryExt,
-        TypeVariant::TransactionResultPairV2,
-        TypeVariant::TransactionResultSetV2,
-        TypeVariant::TransactionHistoryResultEntryV2,
-        TypeVariant::TransactionHistoryResultEntryV2Ext,
         TypeVariant::LedgerHeaderHistoryEntry,
         TypeVariant::LedgerHeaderHistoryEntryExt,
         TypeVariant::LedgerScpMessages,
@@ -41765,16 +41351,13 @@ impl Type {
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
         TypeVariant::DiagnosticEvent,
-        TypeVariant::OperationDiagnosticEvents,
-        TypeVariant::OperationEvents,
         TypeVariant::TransactionMetaV3,
+        TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
-        TypeVariant::TransactionResultMetaV2,
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaV1,
-        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
@@ -41977,7 +41560,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 419] = [
+    pub const VARIANTS_STR: [&'static str; 412] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -42166,10 +41749,6 @@ impl Type {
         "TransactionHistoryEntryExt",
         "TransactionHistoryResultEntry",
         "TransactionHistoryResultEntryExt",
-        "TransactionResultPairV2",
-        "TransactionResultSetV2",
-        "TransactionHistoryResultEntryV2",
-        "TransactionHistoryResultEntryV2Ext",
         "LedgerHeaderHistoryEntry",
         "LedgerHeaderHistoryEntryExt",
         "LedgerScpMessages",
@@ -42186,16 +41765,13 @@ impl Type {
         "ContractEventBody",
         "ContractEventV0",
         "DiagnosticEvent",
-        "OperationDiagnosticEvents",
-        "OperationEvents",
         "TransactionMetaV3",
+        "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
-        "TransactionResultMetaV2",
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaV1",
-        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
@@ -42901,22 +42477,6 @@ impl Type {
                     TransactionHistoryResultEntryExt::read_xdr(r)?,
                 )))
             }
-            TypeVariant::TransactionResultPairV2 => Ok(Self::TransactionResultPairV2(Box::new(
-                TransactionResultPairV2::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionResultSetV2 => Ok(Self::TransactionResultSetV2(Box::new(
-                TransactionResultSetV2::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionHistoryResultEntryV2 => {
-                Ok(Self::TransactionHistoryResultEntryV2(Box::new(
-                    TransactionHistoryResultEntryV2::read_xdr(r)?,
-                )))
-            }
-            TypeVariant::TransactionHistoryResultEntryV2Ext => {
-                Ok(Self::TransactionHistoryResultEntryV2Ext(Box::new(
-                    TransactionHistoryResultEntryV2Ext::read_xdr(r)?,
-                )))
-            }
             TypeVariant::LedgerHeaderHistoryEntry => Ok(Self::LedgerHeaderHistoryEntry(Box::new(
                 LedgerHeaderHistoryEntry::read_xdr(r)?,
             ))),
@@ -42965,23 +42525,19 @@ impl Type {
             TypeVariant::DiagnosticEvent => Ok(Self::DiagnosticEvent(Box::new(
                 DiagnosticEvent::read_xdr(r)?,
             ))),
-            TypeVariant::OperationDiagnosticEvents => Ok(Self::OperationDiagnosticEvents(
-                Box::new(OperationDiagnosticEvents::read_xdr(r)?),
-            )),
-            TypeVariant::OperationEvents => Ok(Self::OperationEvents(Box::new(
-                OperationEvents::read_xdr(r)?,
-            ))),
             TypeVariant::TransactionMetaV3 => Ok(Self::TransactionMetaV3(Box::new(
                 TransactionMetaV3::read_xdr(r)?,
             ))),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => {
+                Ok(Self::InvokeHostFunctionSuccessPreImage(Box::new(
+                    InvokeHostFunctionSuccessPreImage::read_xdr(r)?,
+                )))
+            }
             TypeVariant::TransactionMeta => Ok(Self::TransactionMeta(Box::new(
                 TransactionMeta::read_xdr(r)?,
             ))),
             TypeVariant::TransactionResultMeta => Ok(Self::TransactionResultMeta(Box::new(
                 TransactionResultMeta::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionResultMetaV2 => Ok(Self::TransactionResultMetaV2(Box::new(
-                TransactionResultMetaV2::read_xdr(r)?,
             ))),
             TypeVariant::UpgradeEntryMeta => Ok(Self::UpgradeEntryMeta(Box::new(
                 UpgradeEntryMeta::read_xdr(r)?,
@@ -42991,9 +42547,6 @@ impl Type {
             ))),
             TypeVariant::LedgerCloseMetaV1 => Ok(Self::LedgerCloseMetaV1(Box::new(
                 LedgerCloseMetaV1::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerCloseMetaV2 => Ok(Self::LedgerCloseMetaV2(Box::new(
-                LedgerCloseMetaV2::read_xdr(r)?,
             ))),
             TypeVariant::LedgerCloseMeta => Ok(Self::LedgerCloseMeta(Box::new(
                 LedgerCloseMeta::read_xdr(r)?,
@@ -44342,22 +43895,6 @@ impl Type {
                 ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(r)
                     .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))),
             ),
-            TypeVariant::TransactionResultPairV2 => Box::new(
-                ReadXdrIter::<_, TransactionResultPairV2>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionResultPairV2(Box::new(t)))),
-            ),
-            TypeVariant::TransactionResultSetV2 => Box::new(
-                ReadXdrIter::<_, TransactionResultSetV2>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionResultSetV2(Box::new(t)))),
-            ),
-            TypeVariant::TransactionHistoryResultEntryV2 => Box::new(
-                ReadXdrIter::<_, TransactionHistoryResultEntryV2>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2(Box::new(t)))),
-            ),
-            TypeVariant::TransactionHistoryResultEntryV2Ext => Box::new(
-                ReadXdrIter::<_, TransactionHistoryResultEntryV2Ext>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2Ext(Box::new(t)))),
-            ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
                 ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(r)
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))),
@@ -44422,17 +43959,13 @@ impl Type {
                 ReadXdrIter::<_, DiagnosticEvent>::new(r)
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
             ),
-            TypeVariant::OperationDiagnosticEvents => Box::new(
-                ReadXdrIter::<_, OperationDiagnosticEvents>::new(r)
-                    .map(|r| r.map(|t| Self::OperationDiagnosticEvents(Box::new(t)))),
-            ),
-            TypeVariant::OperationEvents => Box::new(
-                ReadXdrIter::<_, OperationEvents>::new(r)
-                    .map(|r| r.map(|t| Self::OperationEvents(Box::new(t)))),
-            ),
             TypeVariant::TransactionMetaV3 => Box::new(
                 ReadXdrIter::<_, TransactionMetaV3>::new(r)
                     .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionSuccessPreImage>::new(r)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t)))),
             ),
             TypeVariant::TransactionMeta => Box::new(
                 ReadXdrIter::<_, TransactionMeta>::new(r)
@@ -44441,10 +43974,6 @@ impl Type {
             TypeVariant::TransactionResultMeta => Box::new(
                 ReadXdrIter::<_, TransactionResultMeta>::new(r)
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
-            ),
-            TypeVariant::TransactionResultMetaV2 => Box::new(
-                ReadXdrIter::<_, TransactionResultMetaV2>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionResultMetaV2(Box::new(t)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, UpgradeEntryMeta>::new(r)
@@ -44457,10 +43986,6 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(r)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
-            ),
-            TypeVariant::LedgerCloseMetaV2 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV2>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(r)
@@ -46014,22 +45539,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<TransactionHistoryResultEntryExt>>::new(r)
                     .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t.0)))),
             ),
-            TypeVariant::TransactionResultPairV2 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultPairV2>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionResultPairV2(Box::new(t.0)))),
-            ),
-            TypeVariant::TransactionResultSetV2 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultSetV2>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionResultSetV2(Box::new(t.0)))),
-            ),
-            TypeVariant::TransactionHistoryResultEntryV2 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionHistoryResultEntryV2>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2(Box::new(t.0)))),
-            ),
-            TypeVariant::TransactionHistoryResultEntryV2Ext => Box::new(
-                ReadXdrIter::<_, Frame<TransactionHistoryResultEntryV2Ext>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2Ext(Box::new(t.0)))),
-            ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
                 ReadXdrIter::<_, Frame<LedgerHeaderHistoryEntry>>::new(r)
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t.0)))),
@@ -46094,17 +45603,13 @@ impl Type {
                 ReadXdrIter::<_, Frame<DiagnosticEvent>>::new(r)
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t.0)))),
             ),
-            TypeVariant::OperationDiagnosticEvents => Box::new(
-                ReadXdrIter::<_, Frame<OperationDiagnosticEvents>>::new(r)
-                    .map(|r| r.map(|t| Self::OperationDiagnosticEvents(Box::new(t.0)))),
-            ),
-            TypeVariant::OperationEvents => Box::new(
-                ReadXdrIter::<_, Frame<OperationEvents>>::new(r)
-                    .map(|r| r.map(|t| Self::OperationEvents(Box::new(t.0)))),
-            ),
             TypeVariant::TransactionMetaV3 => Box::new(
                 ReadXdrIter::<_, Frame<TransactionMetaV3>>::new(r)
                     .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t.0)))),
+            ),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
+                ReadXdrIter::<_, Frame<InvokeHostFunctionSuccessPreImage>>::new(r)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t.0)))),
             ),
             TypeVariant::TransactionMeta => Box::new(
                 ReadXdrIter::<_, Frame<TransactionMeta>>::new(r)
@@ -46113,10 +45618,6 @@ impl Type {
             TypeVariant::TransactionResultMeta => Box::new(
                 ReadXdrIter::<_, Frame<TransactionResultMeta>>::new(r)
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t.0)))),
-            ),
-            TypeVariant::TransactionResultMetaV2 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultMetaV2>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionResultMetaV2(Box::new(t.0)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, Frame<UpgradeEntryMeta>>::new(r)
@@ -46129,10 +45630,6 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMetaV1>>::new(r)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t.0)))),
-            ),
-            TypeVariant::LedgerCloseMetaV2 => Box::new(
-                ReadXdrIter::<_, Frame<LedgerCloseMetaV2>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMeta>>::new(r)
@@ -47693,22 +47190,6 @@ impl Type {
                 ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(dec)
                     .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))),
             ),
-            TypeVariant::TransactionResultPairV2 => Box::new(
-                ReadXdrIter::<_, TransactionResultPairV2>::new(dec)
-                    .map(|r| r.map(|t| Self::TransactionResultPairV2(Box::new(t)))),
-            ),
-            TypeVariant::TransactionResultSetV2 => Box::new(
-                ReadXdrIter::<_, TransactionResultSetV2>::new(dec)
-                    .map(|r| r.map(|t| Self::TransactionResultSetV2(Box::new(t)))),
-            ),
-            TypeVariant::TransactionHistoryResultEntryV2 => Box::new(
-                ReadXdrIter::<_, TransactionHistoryResultEntryV2>::new(dec)
-                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2(Box::new(t)))),
-            ),
-            TypeVariant::TransactionHistoryResultEntryV2Ext => Box::new(
-                ReadXdrIter::<_, TransactionHistoryResultEntryV2Ext>::new(dec)
-                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryV2Ext(Box::new(t)))),
-            ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
                 ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(dec)
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))),
@@ -47773,17 +47254,13 @@ impl Type {
                 ReadXdrIter::<_, DiagnosticEvent>::new(dec)
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
             ),
-            TypeVariant::OperationDiagnosticEvents => Box::new(
-                ReadXdrIter::<_, OperationDiagnosticEvents>::new(dec)
-                    .map(|r| r.map(|t| Self::OperationDiagnosticEvents(Box::new(t)))),
-            ),
-            TypeVariant::OperationEvents => Box::new(
-                ReadXdrIter::<_, OperationEvents>::new(dec)
-                    .map(|r| r.map(|t| Self::OperationEvents(Box::new(t)))),
-            ),
             TypeVariant::TransactionMetaV3 => Box::new(
                 ReadXdrIter::<_, TransactionMetaV3>::new(dec)
                     .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionSuccessPreImage>::new(dec)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t)))),
             ),
             TypeVariant::TransactionMeta => Box::new(
                 ReadXdrIter::<_, TransactionMeta>::new(dec)
@@ -47792,10 +47269,6 @@ impl Type {
             TypeVariant::TransactionResultMeta => Box::new(
                 ReadXdrIter::<_, TransactionResultMeta>::new(dec)
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
-            ),
-            TypeVariant::TransactionResultMetaV2 => Box::new(
-                ReadXdrIter::<_, TransactionResultMetaV2>::new(dec)
-                    .map(|r| r.map(|t| Self::TransactionResultMetaV2(Box::new(t)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
                 ReadXdrIter::<_, UpgradeEntryMeta>::new(dec)
@@ -47808,10 +47281,6 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(dec)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
-            ),
-            TypeVariant::LedgerCloseMetaV2 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV2>::new(dec)
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(dec)
@@ -48819,10 +48288,6 @@ impl Type {
             Self::TransactionHistoryEntryExt(ref v) => v.as_ref(),
             Self::TransactionHistoryResultEntry(ref v) => v.as_ref(),
             Self::TransactionHistoryResultEntryExt(ref v) => v.as_ref(),
-            Self::TransactionResultPairV2(ref v) => v.as_ref(),
-            Self::TransactionResultSetV2(ref v) => v.as_ref(),
-            Self::TransactionHistoryResultEntryV2(ref v) => v.as_ref(),
-            Self::TransactionHistoryResultEntryV2Ext(ref v) => v.as_ref(),
             Self::LedgerHeaderHistoryEntry(ref v) => v.as_ref(),
             Self::LedgerHeaderHistoryEntryExt(ref v) => v.as_ref(),
             Self::LedgerScpMessages(ref v) => v.as_ref(),
@@ -48839,16 +48304,13 @@ impl Type {
             Self::ContractEventBody(ref v) => v.as_ref(),
             Self::ContractEventV0(ref v) => v.as_ref(),
             Self::DiagnosticEvent(ref v) => v.as_ref(),
-            Self::OperationDiagnosticEvents(ref v) => v.as_ref(),
-            Self::OperationEvents(ref v) => v.as_ref(),
             Self::TransactionMetaV3(ref v) => v.as_ref(),
+            Self::InvokeHostFunctionSuccessPreImage(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
             Self::TransactionResultMeta(ref v) => v.as_ref(),
-            Self::TransactionResultMetaV2(ref v) => v.as_ref(),
             Self::UpgradeEntryMeta(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV0(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV1(ref v) => v.as_ref(),
-            Self::LedgerCloseMetaV2(ref v) => v.as_ref(),
             Self::LedgerCloseMeta(ref v) => v.as_ref(),
             Self::ErrorCode(ref v) => v.as_ref(),
             Self::SError(ref v) => v.as_ref(),
@@ -49249,10 +48711,6 @@ impl Type {
             Self::TransactionHistoryEntryExt(_) => "TransactionHistoryEntryExt",
             Self::TransactionHistoryResultEntry(_) => "TransactionHistoryResultEntry",
             Self::TransactionHistoryResultEntryExt(_) => "TransactionHistoryResultEntryExt",
-            Self::TransactionResultPairV2(_) => "TransactionResultPairV2",
-            Self::TransactionResultSetV2(_) => "TransactionResultSetV2",
-            Self::TransactionHistoryResultEntryV2(_) => "TransactionHistoryResultEntryV2",
-            Self::TransactionHistoryResultEntryV2Ext(_) => "TransactionHistoryResultEntryV2Ext",
             Self::LedgerHeaderHistoryEntry(_) => "LedgerHeaderHistoryEntry",
             Self::LedgerHeaderHistoryEntryExt(_) => "LedgerHeaderHistoryEntryExt",
             Self::LedgerScpMessages(_) => "LedgerScpMessages",
@@ -49269,16 +48727,13 @@ impl Type {
             Self::ContractEventBody(_) => "ContractEventBody",
             Self::ContractEventV0(_) => "ContractEventV0",
             Self::DiagnosticEvent(_) => "DiagnosticEvent",
-            Self::OperationDiagnosticEvents(_) => "OperationDiagnosticEvents",
-            Self::OperationEvents(_) => "OperationEvents",
             Self::TransactionMetaV3(_) => "TransactionMetaV3",
+            Self::InvokeHostFunctionSuccessPreImage(_) => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta(_) => "TransactionMeta",
             Self::TransactionResultMeta(_) => "TransactionResultMeta",
-            Self::TransactionResultMetaV2(_) => "TransactionResultMetaV2",
             Self::UpgradeEntryMeta(_) => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0(_) => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaV1(_) => "LedgerCloseMetaV1",
-            Self::LedgerCloseMetaV2(_) => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta(_) => "LedgerCloseMeta",
             Self::ErrorCode(_) => "ErrorCode",
             Self::SError(_) => "SError",
@@ -49495,7 +48950,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 419] {
+    pub const fn variants() -> [TypeVariant; 412] {
         Self::VARIANTS
     }
 
@@ -49711,14 +49166,6 @@ impl Type {
             Self::TransactionHistoryResultEntryExt(_) => {
                 TypeVariant::TransactionHistoryResultEntryExt
             }
-            Self::TransactionResultPairV2(_) => TypeVariant::TransactionResultPairV2,
-            Self::TransactionResultSetV2(_) => TypeVariant::TransactionResultSetV2,
-            Self::TransactionHistoryResultEntryV2(_) => {
-                TypeVariant::TransactionHistoryResultEntryV2
-            }
-            Self::TransactionHistoryResultEntryV2Ext(_) => {
-                TypeVariant::TransactionHistoryResultEntryV2Ext
-            }
             Self::LedgerHeaderHistoryEntry(_) => TypeVariant::LedgerHeaderHistoryEntry,
             Self::LedgerHeaderHistoryEntryExt(_) => TypeVariant::LedgerHeaderHistoryEntryExt,
             Self::LedgerScpMessages(_) => TypeVariant::LedgerScpMessages,
@@ -49735,16 +49182,15 @@ impl Type {
             Self::ContractEventBody(_) => TypeVariant::ContractEventBody,
             Self::ContractEventV0(_) => TypeVariant::ContractEventV0,
             Self::DiagnosticEvent(_) => TypeVariant::DiagnosticEvent,
-            Self::OperationDiagnosticEvents(_) => TypeVariant::OperationDiagnosticEvents,
-            Self::OperationEvents(_) => TypeVariant::OperationEvents,
             Self::TransactionMetaV3(_) => TypeVariant::TransactionMetaV3,
+            Self::InvokeHostFunctionSuccessPreImage(_) => {
+                TypeVariant::InvokeHostFunctionSuccessPreImage
+            }
             Self::TransactionMeta(_) => TypeVariant::TransactionMeta,
             Self::TransactionResultMeta(_) => TypeVariant::TransactionResultMeta,
-            Self::TransactionResultMetaV2(_) => TypeVariant::TransactionResultMetaV2,
             Self::UpgradeEntryMeta(_) => TypeVariant::UpgradeEntryMeta,
             Self::LedgerCloseMetaV0(_) => TypeVariant::LedgerCloseMetaV0,
             Self::LedgerCloseMetaV1(_) => TypeVariant::LedgerCloseMetaV1,
-            Self::LedgerCloseMetaV2(_) => TypeVariant::LedgerCloseMetaV2,
             Self::LedgerCloseMeta(_) => TypeVariant::LedgerCloseMeta,
             Self::ErrorCode(_) => TypeVariant::ErrorCode,
             Self::SError(_) => TypeVariant::SError,

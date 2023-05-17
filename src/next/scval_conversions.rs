@@ -1,5 +1,5 @@
 use super::{
-    Int128Parts, ScBytes, ScMap, ScMapEntry, ScStatus, ScSymbol, ScVal, ScVec, UInt128Parts,
+    Int128Parts, ScBytes, ScError, ScMap, ScMapEntry, ScSymbol, ScVal, ScVec, UInt128Parts,
 };
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
@@ -9,16 +9,16 @@ use alloc::{string::String, vec, vec::Vec};
 
 // TODO: Use the Error type for conversions in this file.
 
-impl From<ScStatus> for ScVal {
-    fn from(v: ScStatus) -> Self {
-        ScVal::Status(v)
+impl From<ScError> for ScVal {
+    fn from(v: ScError) -> Self {
+        ScVal::Error(v)
     }
 }
 
-impl TryFrom<ScVal> for ScStatus {
+impl TryFrom<ScVal> for ScError {
     type Error = ();
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
-        if let ScVal::Status(s) = v {
+        if let ScVal::Error(s) = v {
             Ok(s)
         } else {
             Err(())
@@ -303,7 +303,7 @@ impl TryFrom<ScVal> for ScSymbol {
 #[cfg(feature = "alloc")]
 impl TryFrom<String> for ScVal {
     type Error = ();
-    fn try_from(v: String) -> Result<Self, Self::Error> {
+    fn try_from(v: String) -> Result<Self, ()> {
         Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
     }
 }
@@ -311,7 +311,7 @@ impl TryFrom<String> for ScVal {
 #[cfg(feature = "alloc")]
 impl TryFrom<&String> for ScVal {
     type Error = ();
-    fn try_from(v: &String) -> Result<Self, Self::Error> {
+    fn try_from(v: &String) -> Result<Self, ()> {
         Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
     }
 }
@@ -335,7 +335,7 @@ impl TryFrom<&String> for ScSymbol {
 #[cfg(feature = "alloc")]
 impl TryFrom<&str> for ScVal {
     type Error = ();
-    fn try_from(v: &str) -> Result<Self, Self::Error> {
+    fn try_from(v: &str) -> Result<Self, ()> {
         Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
     }
 }
@@ -343,7 +343,7 @@ impl TryFrom<&str> for ScVal {
 #[cfg(not(feature = "alloc"))]
 impl TryFrom<&'static str> for ScVal {
     type Error = ();
-    fn try_from(v: &'static str) -> Result<Self, Self::Error> {
+    fn try_from(v: &'static str) -> Result<Self, ()> {
         Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
     }
 }
@@ -381,7 +381,7 @@ impl TryFrom<ScVal> for String {
 #[cfg(feature = "alloc")]
 impl TryFrom<Vec<u8>> for ScVal {
     type Error = ();
-    fn try_from(v: Vec<u8>) -> Result<Self, Self::Error> {
+    fn try_from(v: Vec<u8>) -> Result<Self, ()> {
         Ok(ScVal::Bytes(ScBytes(v.try_into().map_err(|_| ())?)))
     }
 }
@@ -389,7 +389,7 @@ impl TryFrom<Vec<u8>> for ScVal {
 #[cfg(feature = "alloc")]
 impl TryFrom<&Vec<u8>> for ScVal {
     type Error = ();
-    fn try_from(v: &Vec<u8>) -> Result<Self, Self::Error> {
+    fn try_from(v: &Vec<u8>) -> Result<Self, ()> {
         Ok(ScVal::Bytes(ScBytes(v.try_into().map_err(|_| ())?)))
     }
 }
@@ -397,7 +397,7 @@ impl TryFrom<&Vec<u8>> for ScVal {
 #[cfg(feature = "alloc")]
 impl TryFrom<&[u8]> for ScVal {
     type Error = ();
-    fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(v: &[u8]) -> Result<Self, ()> {
         Ok(ScVal::Bytes(ScBytes(v.try_into().map_err(|_| ())?)))
     }
 }
@@ -405,7 +405,7 @@ impl TryFrom<&[u8]> for ScVal {
 #[cfg(feature = "alloc")]
 impl<const N: usize> TryFrom<[u8; N]> for ScVal {
     type Error = ();
-    fn try_from(v: [u8; N]) -> Result<Self, Self::Error> {
+    fn try_from(v: [u8; N]) -> Result<Self, ()> {
         Ok(ScVal::Bytes(ScBytes(v.try_into().map_err(|_| ())?)))
     }
 }
@@ -413,7 +413,7 @@ impl<const N: usize> TryFrom<[u8; N]> for ScVal {
 #[cfg(feature = "alloc")]
 impl<const N: usize> TryFrom<&[u8; N]> for ScVal {
     type Error = ();
-    fn try_from(v: &[u8; N]) -> Result<Self, Self::Error> {
+    fn try_from(v: &[u8; N]) -> Result<Self, ()> {
         Ok(ScVal::Bytes(ScBytes(v.try_into().map_err(|_| ())?)))
     }
 }
@@ -421,7 +421,7 @@ impl<const N: usize> TryFrom<&[u8; N]> for ScVal {
 #[cfg(not(feature = "alloc"))]
 impl TryFrom<&'static [u8]> for ScVal {
     type Error = ();
-    fn try_from(v: &'static [u8]) -> Result<Self, Self::Error> {
+    fn try_from(v: &'static [u8]) -> Result<Self, ()> {
         Ok(ScVal::Bytes(ScBytes(v.try_into().map_err(|_| ())?)))
     }
 }
@@ -459,7 +459,7 @@ impl From<ScVec> for ScVal {
 #[cfg(feature = "alloc")]
 impl<T: TryInto<ScVal>> TryFrom<Vec<T>> for ScVal {
     type Error = ();
-    fn try_from(v: Vec<T>) -> Result<Self, Self::Error> {
+    fn try_from(v: Vec<T>) -> Result<Self, ()> {
         Ok(ScVal::Vec(Some(
             v.into_iter()
                 .map(|t| <_ as TryInto<ScVal>>::try_into(t))
@@ -474,7 +474,7 @@ impl<T: TryInto<ScVal>> TryFrom<Vec<T>> for ScVal {
 #[cfg(feature = "alloc")]
 impl<T: TryInto<ScVal> + Clone> TryFrom<&Vec<T>> for ScVal {
     type Error = ();
-    fn try_from(v: &Vec<T>) -> Result<Self, Self::Error> {
+    fn try_from(v: &Vec<T>) -> Result<Self, ()> {
         Ok(ScVal::Vec(Some(
             v.iter()
                 .map(|t| <_ as TryInto<ScVal>>::try_into(t.clone()))
@@ -489,7 +489,7 @@ impl<T: TryInto<ScVal> + Clone> TryFrom<&Vec<T>> for ScVal {
 #[cfg(feature = "alloc")]
 impl<T: TryInto<ScVal> + Clone> TryFrom<&[T]> for ScVal {
     type Error = ();
-    fn try_from(v: &[T]) -> Result<Self, Self::Error> {
+    fn try_from(v: &[T]) -> Result<Self, ()> {
         Ok(ScVal::Vec(Some(
             v.iter()
                 .map(|t| <_ as TryInto<ScVal>>::try_into(t.clone()))
@@ -579,7 +579,7 @@ macro_rules! impl_for_tuple {
             $($typ: TryInto<ScVal>),*
         {
             type Error = ();
-            fn try_from(v: ($($typ,)*)) -> Result<Self, Self::Error> {
+            fn try_from(v: ($($typ,)*)) -> Result<Self, ()> {
                 Ok(ScVal::Vec(Some(<_ as TryInto<ScVec>>::try_into(v)?)))
             }
         }

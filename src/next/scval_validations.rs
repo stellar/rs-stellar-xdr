@@ -10,11 +10,11 @@ pub trait Validate {
 impl Validate for ScVal {
     type Error = Error;
 
-    fn validate(&self) -> Result<(), Self::Error> {
+    fn validate(&self) -> Result<(), <Self as Validate>::Error> {
         match self {
             ScVal::U32(_)
             | ScVal::I32(_)
-            | ScVal::Status(_)
+            | ScVal::Error(_)
             | ScVal::Bool(_)
             | ScVal::Void
             | ScVal::U64(_)

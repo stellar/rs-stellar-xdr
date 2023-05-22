@@ -54,7 +54,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-overlay.x",
-        "972f38a9d4a064273f3362cbfa7d3c563293fd5396d5f0774ce6cc690e27645d",
+        "de3957c58b96ae07968b3d3aebea84f83603e95322d1fa336360e13e3aba737a",
     ),
     (
         "xdr/next/Stellar-transaction.x",
@@ -18872,6 +18872,45 @@ impl WriteXdr for SendMore {
     }
 }
 
+// SendMoreExtended is an XDR Struct defines as:
+//
+//   struct SendMoreExtended
+//    {
+//        uint32 numMessages;
+//        uint32 numBytes;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct SendMoreExtended {
+    pub num_messages: u32,
+    pub num_bytes: u32,
+}
+
+impl ReadXdr for SendMoreExtended {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            num_messages: u32::read_xdr(r)?,
+            num_bytes: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for SendMoreExtended {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.num_messages.write_xdr(w)?;
+        self.num_bytes.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // AuthCert is an XDR Struct defines as:
 //
 //   struct AuthCert
@@ -18982,11 +19021,11 @@ impl WriteXdr for Hello {
     }
 }
 
-// AuthMsgFlagPullModeRequested is an XDR Const defines as:
+// AuthMsgFlagFlowControlBytesRequested is an XDR Const defines as:
 //
-//   const AUTH_MSG_FLAG_PULL_MODE_REQUESTED = 100;
+//   const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED = 200;
 //
-pub const AUTH_MSG_FLAG_PULL_MODE_REQUESTED: u64 = 100;
+pub const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED: u64 = 200;
 
 // Auth is an XDR Struct defines as:
 //
@@ -19303,6 +19342,8 @@ impl WriteXdr for PeerAddress {
 //        SURVEY_RESPONSE = 15,
 //
 //        SEND_MORE = 16,
+//        SEND_MORE_EXTENDED = 20,
+//
 //        FLOOD_ADVERT = 18,
 //        FLOOD_DEMAND = 19
 //    };
@@ -19334,12 +19375,13 @@ pub enum MessageType {
     SurveyRequest = 14,
     SurveyResponse = 15,
     SendMore = 16,
+    SendMoreExtended = 20,
     FloodAdvert = 18,
     FloodDemand = 19,
 }
 
 impl MessageType {
-    pub const VARIANTS: [MessageType; 19] = [
+    pub const VARIANTS: [MessageType; 20] = [
         MessageType::ErrorMsg,
         MessageType::Auth,
         MessageType::DontHave,
@@ -19357,10 +19399,11 @@ impl MessageType {
         MessageType::SurveyRequest,
         MessageType::SurveyResponse,
         MessageType::SendMore,
+        MessageType::SendMoreExtended,
         MessageType::FloodAdvert,
         MessageType::FloodDemand,
     ];
-    pub const VARIANTS_STR: [&'static str; 19] = [
+    pub const VARIANTS_STR: [&'static str; 20] = [
         "ErrorMsg",
         "Auth",
         "DontHave",
@@ -19378,6 +19421,7 @@ impl MessageType {
         "SurveyRequest",
         "SurveyResponse",
         "SendMore",
+        "SendMoreExtended",
         "FloodAdvert",
         "FloodDemand",
     ];
@@ -19402,13 +19446,14 @@ impl MessageType {
             Self::SurveyRequest => "SurveyRequest",
             Self::SurveyResponse => "SurveyResponse",
             Self::SendMore => "SendMore",
+            Self::SendMoreExtended => "SendMoreExtended",
             Self::FloodAdvert => "FloodAdvert",
             Self::FloodDemand => "FloodDemand",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 19] {
+    pub const fn variants() -> [MessageType; 20] {
         Self::VARIANTS
     }
 }
@@ -19456,6 +19501,7 @@ impl TryFrom<i32> for MessageType {
             14 => MessageType::SurveyRequest,
             15 => MessageType::SurveyResponse,
             16 => MessageType::SendMore,
+            20 => MessageType::SendMoreExtended,
             18 => MessageType::FloodAdvert,
             19 => MessageType::FloodDemand,
             #[allow(unreachable_patterns)]
@@ -20729,7 +20775,8 @@ impl WriteXdr for FloodDemand {
 //        uint32 getSCPLedgerSeq; // ledger seq requested ; if 0, requests the latest
 //    case SEND_MORE:
 //        SendMore sendMoreMessage;
-//
+//    case SEND_MORE_EXTENDED:
+//        SendMoreExtended sendMoreExtendedMessage;
 //    // Pull mode
 //    case FLOOD_ADVERT:
 //         FloodAdvert floodAdvert;
@@ -20764,12 +20811,13 @@ pub enum StellarMessage {
     ScpMessage(ScpEnvelope),
     GetScpState(u32),
     SendMore(SendMore),
+    SendMoreExtended(SendMoreExtended),
     FloodAdvert(FloodAdvert),
     FloodDemand(FloodDemand),
 }
 
 impl StellarMessage {
-    pub const VARIANTS: [MessageType; 19] = [
+    pub const VARIANTS: [MessageType; 20] = [
         MessageType::ErrorMsg,
         MessageType::Hello,
         MessageType::Auth,
@@ -20787,10 +20835,11 @@ impl StellarMessage {
         MessageType::ScpMessage,
         MessageType::GetScpState,
         MessageType::SendMore,
+        MessageType::SendMoreExtended,
         MessageType::FloodAdvert,
         MessageType::FloodDemand,
     ];
-    pub const VARIANTS_STR: [&'static str; 19] = [
+    pub const VARIANTS_STR: [&'static str; 20] = [
         "ErrorMsg",
         "Hello",
         "Auth",
@@ -20808,6 +20857,7 @@ impl StellarMessage {
         "ScpMessage",
         "GetScpState",
         "SendMore",
+        "SendMoreExtended",
         "FloodAdvert",
         "FloodDemand",
     ];
@@ -20832,6 +20882,7 @@ impl StellarMessage {
             Self::ScpMessage(_) => "ScpMessage",
             Self::GetScpState(_) => "GetScpState",
             Self::SendMore(_) => "SendMore",
+            Self::SendMoreExtended(_) => "SendMoreExtended",
             Self::FloodAdvert(_) => "FloodAdvert",
             Self::FloodDemand(_) => "FloodDemand",
         }
@@ -20858,13 +20909,14 @@ impl StellarMessage {
             Self::ScpMessage(_) => MessageType::ScpMessage,
             Self::GetScpState(_) => MessageType::GetScpState,
             Self::SendMore(_) => MessageType::SendMore,
+            Self::SendMoreExtended(_) => MessageType::SendMoreExtended,
             Self::FloodAdvert(_) => MessageType::FloodAdvert,
             Self::FloodDemand(_) => MessageType::FloodDemand,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 19] {
+    pub const fn variants() -> [MessageType; 20] {
         Self::VARIANTS
     }
 }
@@ -20920,6 +20972,7 @@ impl ReadXdr for StellarMessage {
             MessageType::ScpMessage => Self::ScpMessage(ScpEnvelope::read_xdr(r)?),
             MessageType::GetScpState => Self::GetScpState(u32::read_xdr(r)?),
             MessageType::SendMore => Self::SendMore(SendMore::read_xdr(r)?),
+            MessageType::SendMoreExtended => Self::SendMoreExtended(SendMoreExtended::read_xdr(r)?),
             MessageType::FloodAdvert => Self::FloodAdvert(FloodAdvert::read_xdr(r)?),
             MessageType::FloodDemand => Self::FloodDemand(FloodDemand::read_xdr(r)?),
             #[allow(unreachable_patterns)]
@@ -20952,6 +21005,7 @@ impl WriteXdr for StellarMessage {
             Self::ScpMessage(v) => v.write_xdr(w)?,
             Self::GetScpState(v) => v.write_xdr(w)?,
             Self::SendMore(v) => v.write_xdr(w)?,
+            Self::SendMoreExtended(v) => v.write_xdr(w)?,
             Self::FloodAdvert(v) => v.write_xdr(w)?,
             Self::FloodDemand(v) => v.write_xdr(w)?,
         };
@@ -37722,6 +37776,7 @@ pub enum TypeVariant {
     ErrorCode,
     SError,
     SendMore,
+    SendMoreExtended,
     AuthCert,
     Hello,
     Auth,
@@ -37922,7 +37977,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 405] = [
+    pub const VARIANTS: [TypeVariant; 406] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38131,6 +38186,7 @@ impl TypeVariant {
         TypeVariant::ErrorCode,
         TypeVariant::SError,
         TypeVariant::SendMore,
+        TypeVariant::SendMoreExtended,
         TypeVariant::AuthCert,
         TypeVariant::Hello,
         TypeVariant::Auth,
@@ -38329,7 +38385,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 405] = [
+    pub const VARIANTS_STR: [&'static str; 406] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -38538,6 +38594,7 @@ impl TypeVariant {
         "ErrorCode",
         "SError",
         "SendMore",
+        "SendMoreExtended",
         "AuthCert",
         "Hello",
         "Auth",
@@ -38951,6 +39008,7 @@ impl TypeVariant {
             Self::ErrorCode => "ErrorCode",
             Self::SError => "SError",
             Self::SendMore => "SendMore",
+            Self::SendMoreExtended => "SendMoreExtended",
             Self::AuthCert => "AuthCert",
             Self::Hello => "Hello",
             Self::Auth => "Auth",
@@ -39157,7 +39215,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 405] {
+    pub const fn variants() -> [TypeVariant; 406] {
         Self::VARIANTS
     }
 }
@@ -39392,6 +39450,7 @@ impl core::str::FromStr for TypeVariant {
             "ErrorCode" => Ok(Self::ErrorCode),
             "SError" => Ok(Self::SError),
             "SendMore" => Ok(Self::SendMore),
+            "SendMoreExtended" => Ok(Self::SendMoreExtended),
             "AuthCert" => Ok(Self::AuthCert),
             "Hello" => Ok(Self::Hello),
             "Auth" => Ok(Self::Auth),
@@ -39820,6 +39879,7 @@ pub enum Type {
     ErrorCode(Box<ErrorCode>),
     SError(Box<SError>),
     SendMore(Box<SendMore>),
+    SendMoreExtended(Box<SendMoreExtended>),
     AuthCert(Box<AuthCert>),
     Hello(Box<Hello>),
     Auth(Box<Auth>),
@@ -40020,7 +40080,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 405] = [
+    pub const VARIANTS: [TypeVariant; 406] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -40229,6 +40289,7 @@ impl Type {
         TypeVariant::ErrorCode,
         TypeVariant::SError,
         TypeVariant::SendMore,
+        TypeVariant::SendMoreExtended,
         TypeVariant::AuthCert,
         TypeVariant::Hello,
         TypeVariant::Auth,
@@ -40427,7 +40488,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 405] = [
+    pub const VARIANTS_STR: [&'static str; 406] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -40636,6 +40697,7 @@ impl Type {
         "ErrorCode",
         "SError",
         "SendMore",
+        "SendMoreExtended",
         "AuthCert",
         "Hello",
         "Auth",
@@ -41389,6 +41451,9 @@ impl Type {
             TypeVariant::ErrorCode => Ok(Self::ErrorCode(Box::new(ErrorCode::read_xdr(r)?))),
             TypeVariant::SError => Ok(Self::SError(Box::new(SError::read_xdr(r)?))),
             TypeVariant::SendMore => Ok(Self::SendMore(Box::new(SendMore::read_xdr(r)?))),
+            TypeVariant::SendMoreExtended => Ok(Self::SendMoreExtended(Box::new(
+                SendMoreExtended::read_xdr(r)?,
+            ))),
             TypeVariant::AuthCert => Ok(Self::AuthCert(Box::new(AuthCert::read_xdr(r)?))),
             TypeVariant::Hello => Ok(Self::Hello(Box::new(Hello::read_xdr(r)?))),
             TypeVariant::Auth => Ok(Self::Auth(Box::new(Auth::read_xdr(r)?))),
@@ -42807,6 +42872,10 @@ impl Type {
             ),
             TypeVariant::SendMore => Box::new(
                 ReadXdrIter::<_, SendMore>::new(r).map(|r| r.map(|t| Self::SendMore(Box::new(t)))),
+            ),
+            TypeVariant::SendMoreExtended => Box::new(
+                ReadXdrIter::<_, SendMoreExtended>::new(r)
+                    .map(|r| r.map(|t| Self::SendMoreExtended(Box::new(t)))),
             ),
             TypeVariant::AuthCert => Box::new(
                 ReadXdrIter::<_, AuthCert>::new(r).map(|r| r.map(|t| Self::AuthCert(Box::new(t)))),
@@ -44425,6 +44494,10 @@ impl Type {
             TypeVariant::SendMore => Box::new(
                 ReadXdrIter::<_, Frame<SendMore>>::new(r)
                     .map(|r| r.map(|t| Self::SendMore(Box::new(t.0)))),
+            ),
+            TypeVariant::SendMoreExtended => Box::new(
+                ReadXdrIter::<_, Frame<SendMoreExtended>>::new(r)
+                    .map(|r| r.map(|t| Self::SendMoreExtended(Box::new(t.0)))),
             ),
             TypeVariant::AuthCert => Box::new(
                 ReadXdrIter::<_, Frame<AuthCert>>::new(r)
@@ -46047,6 +46120,10 @@ impl Type {
                 ReadXdrIter::<_, SendMore>::new(dec)
                     .map(|r| r.map(|t| Self::SendMore(Box::new(t)))),
             ),
+            TypeVariant::SendMoreExtended => Box::new(
+                ReadXdrIter::<_, SendMoreExtended>::new(dec)
+                    .map(|r| r.map(|t| Self::SendMoreExtended(Box::new(t)))),
+            ),
             TypeVariant::AuthCert => Box::new(
                 ReadXdrIter::<_, AuthCert>::new(dec)
                     .map(|r| r.map(|t| Self::AuthCert(Box::new(t)))),
@@ -47058,6 +47135,7 @@ impl Type {
             Self::ErrorCode(ref v) => v.as_ref(),
             Self::SError(ref v) => v.as_ref(),
             Self::SendMore(ref v) => v.as_ref(),
+            Self::SendMoreExtended(ref v) => v.as_ref(),
             Self::AuthCert(ref v) => v.as_ref(),
             Self::Hello(ref v) => v.as_ref(),
             Self::Auth(ref v) => v.as_ref(),
@@ -47474,6 +47552,7 @@ impl Type {
             Self::ErrorCode(_) => "ErrorCode",
             Self::SError(_) => "SError",
             Self::SendMore(_) => "SendMore",
+            Self::SendMoreExtended(_) => "SendMoreExtended",
             Self::AuthCert(_) => "AuthCert",
             Self::Hello(_) => "Hello",
             Self::Auth(_) => "Auth",
@@ -47686,7 +47765,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 405] {
+    pub const fn variants() -> [TypeVariant; 406] {
         Self::VARIANTS
     }
 
@@ -47924,6 +48003,7 @@ impl Type {
             Self::ErrorCode(_) => TypeVariant::ErrorCode,
             Self::SError(_) => TypeVariant::SError,
             Self::SendMore(_) => TypeVariant::SendMore,
+            Self::SendMoreExtended(_) => TypeVariant::SendMoreExtended,
             Self::AuthCert(_) => TypeVariant::AuthCert,
             Self::Hello(_) => TypeVariant::Hello,
             Self::Auth(_) => TypeVariant::Auth,

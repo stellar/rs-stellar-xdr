@@ -34,7 +34,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "739e2480ba197aa859f122632a93172668cb0dbe93e30a54c192b96878af207a",
+        "014e38c107bcb62701425267cd67434147b0cb651bf4ec9a0615f88843493c84",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "22f6f4abccac6f9220b2192a60eb7f26829269f5af6e79921eaf25c09ee73a92",
+        "1382f63a7f9c0c5b8ff26fb91a13e9b68ecd12d950b94897543095800f50ff68",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -5731,6 +5731,108 @@ impl WriteXdr for ScSpecFunctionInputV0 {
     }
 }
 
+// ScSpecFunctionV0DataAccess is an XDR Enum defines as:
+//
+//   enum SCSpecFunctionV0DataAccess
+//    {
+//        SC_SPEC_FUNCTION_V0_DATA_ACCESS_READ_ONLY = 0,
+//        SC_SPEC_FUNCTION_V0_DATA_ACCESS_READ_WRITE = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScSpecFunctionV0DataAccess {
+    Only = 0,
+    Write = 1,
+}
+
+impl ScSpecFunctionV0DataAccess {
+    pub const VARIANTS: [ScSpecFunctionV0DataAccess; 2] = [
+        ScSpecFunctionV0DataAccess::Only,
+        ScSpecFunctionV0DataAccess::Write,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Only", "Write"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Only => "Only",
+            Self::Write => "Write",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecFunctionV0DataAccess; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecFunctionV0DataAccess {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScSpecFunctionV0DataAccess> for ScSpecFunctionV0DataAccess {
+    fn variants() -> slice::Iter<'static, ScSpecFunctionV0DataAccess> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScSpecFunctionV0DataAccess {}
+
+impl fmt::Display for ScSpecFunctionV0DataAccess {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScSpecFunctionV0DataAccess {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScSpecFunctionV0DataAccess::Only,
+            1 => ScSpecFunctionV0DataAccess::Write,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScSpecFunctionV0DataAccess> for i32 {
+    #[must_use]
+    fn from(e: ScSpecFunctionV0DataAccess) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScSpecFunctionV0DataAccess {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ScSpecFunctionV0DataAccess {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
 // ScSpecFunctionV0 is an XDR Struct defines as:
 //
 //   struct SCSpecFunctionV0
@@ -5739,6 +5841,7 @@ impl WriteXdr for ScSpecFunctionInputV0 {
 //        SCSymbol name;
 //        SCSpecFunctionInputV0 inputs<10>;
 //        SCSpecTypeDef outputs<1>;
+//        SCSpecFunctionV0DataAccess dataAccess;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -5753,6 +5856,7 @@ pub struct ScSpecFunctionV0 {
     pub name: ScSymbol,
     pub inputs: VecM<ScSpecFunctionInputV0, 10>,
     pub outputs: VecM<ScSpecTypeDef, 1>,
+    pub data_access: ScSpecFunctionV0DataAccess,
 }
 
 impl ReadXdr for ScSpecFunctionV0 {
@@ -5763,6 +5867,7 @@ impl ReadXdr for ScSpecFunctionV0 {
             name: ScSymbol::read_xdr(r)?,
             inputs: VecM::<ScSpecFunctionInputV0, 10>::read_xdr(r)?,
             outputs: VecM::<ScSpecTypeDef, 1>::read_xdr(r)?,
+            data_access: ScSpecFunctionV0DataAccess::read_xdr(r)?,
         })
     }
 }
@@ -5774,6 +5879,7 @@ impl WriteXdr for ScSpecFunctionV0 {
         self.name.write_xdr(w)?;
         self.inputs.write_xdr(w)?;
         self.outputs.write_xdr(w)?;
+        self.data_access.write_xdr(w)?;
         Ok(())
     }
 }
@@ -23708,51 +23814,12 @@ impl WriteXdr for AuthorizedInvocation {
     }
 }
 
-// AddressWithNonce is an XDR Struct defines as:
+// AddressAuthorization is an XDR Struct defines as:
 //
-//   struct AddressWithNonce
+//   struct AddressAuthorization
 //    {
 //        SCAddress address;
 //        uint64 nonce;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct AddressWithNonce {
-    pub address: ScAddress,
-    pub nonce: u64,
-}
-
-impl ReadXdr for AddressWithNonce {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            address: ScAddress::read_xdr(r)?,
-            nonce: u64::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for AddressWithNonce {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.address.write_xdr(w)?;
-        self.nonce.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ContractAuth is an XDR Struct defines as:
-//
-//   struct ContractAuth
-//    {
-//        AddressWithNonce* addressWithNonce; // not present for invoker
-//        AuthorizedInvocation rootInvocation;
 //        SCVec signatureArgs;
 //    };
 //
@@ -23763,19 +23830,261 @@ impl WriteXdr for AddressWithNonce {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct ContractAuth {
-    pub address_with_nonce: Option<AddressWithNonce>,
-    pub root_invocation: AuthorizedInvocation,
+pub struct AddressAuthorization {
+    pub address: ScAddress,
+    pub nonce: u64,
     pub signature_args: ScVec,
+}
+
+impl ReadXdr for AddressAuthorization {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            address: ScAddress::read_xdr(r)?,
+            nonce: u64::read_xdr(r)?,
+            signature_args: ScVec::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for AddressAuthorization {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.address.write_xdr(w)?;
+        self.nonce.write_xdr(w)?;
+        self.signature_args.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// AuthorizationType is an XDR Enum defines as:
+//
+//   enum AuthorizationType
+//    {
+//        AUTHORIZATION_SOURCE_ACCOUNT = 0,
+//        AUTHORIZATION_ADDRESS = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum AuthorizationType {
+    SourceAccount = 0,
+    Address = 1,
+}
+
+impl AuthorizationType {
+    pub const VARIANTS: [AuthorizationType; 2] =
+        [AuthorizationType::SourceAccount, AuthorizationType::Address];
+    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::SourceAccount => "SourceAccount",
+            Self::Address => "Address",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [AuthorizationType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for AuthorizationType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<AuthorizationType> for AuthorizationType {
+    fn variants() -> slice::Iter<'static, AuthorizationType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for AuthorizationType {}
+
+impl fmt::Display for AuthorizationType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for AuthorizationType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => AuthorizationType::SourceAccount,
+            1 => AuthorizationType::Address,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<AuthorizationType> for i32 {
+    #[must_use]
+    fn from(e: AuthorizationType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for AuthorizationType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for AuthorizationType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// Authorization is an XDR Union defines as:
+//
+//   union Authorization switch (AuthorizationType type)
+//    {
+//    case AUTHORIZATION_SOURCE_ACCOUNT:
+//        void;
+//    case AUTHORIZATION_ADDRESS:
+//        AddressAuthorization address;
+//    };
+//
+// union with discriminant AuthorizationType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum Authorization {
+    SourceAccount,
+    Address(AddressAuthorization),
+}
+
+impl Authorization {
+    pub const VARIANTS: [AuthorizationType; 2] =
+        [AuthorizationType::SourceAccount, AuthorizationType::Address];
+    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::SourceAccount => "SourceAccount",
+            Self::Address(_) => "Address",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> AuthorizationType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SourceAccount => AuthorizationType::SourceAccount,
+            Self::Address(_) => AuthorizationType::Address,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [AuthorizationType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for Authorization {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<AuthorizationType> for Authorization {
+    #[must_use]
+    fn discriminant(&self) -> AuthorizationType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<AuthorizationType> for Authorization {
+    fn variants() -> slice::Iter<'static, AuthorizationType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<AuthorizationType> for Authorization {}
+
+impl ReadXdr for Authorization {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: AuthorizationType = <AuthorizationType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            AuthorizationType::SourceAccount => Self::SourceAccount,
+            AuthorizationType::Address => Self::Address(AddressAuthorization::read_xdr(r)?),
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for Authorization {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SourceAccount => ().write_xdr(w)?,
+            Self::Address(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// ContractAuth is an XDR Struct defines as:
+//
+//   struct ContractAuth
+//    {
+//        Authorization authorizer;
+//        AuthorizedInvocation rootInvocation;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractAuth {
+    pub authorizer: Authorization,
+    pub root_invocation: AuthorizedInvocation,
 }
 
 impl ReadXdr for ContractAuth {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            address_with_nonce: Option::<AddressWithNonce>::read_xdr(r)?,
+            authorizer: Authorization::read_xdr(r)?,
             root_invocation: AuthorizedInvocation::read_xdr(r)?,
-            signature_args: ScVec::read_xdr(r)?,
         })
     }
 }
@@ -23783,9 +24092,8 @@ impl ReadXdr for ContractAuth {
 impl WriteXdr for ContractAuth {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.address_with_nonce.write_xdr(w)?;
+        self.authorizer.write_xdr(w)?;
         self.root_invocation.write_xdr(w)?;
-        self.signature_args.write_xdr(w)?;
         Ok(())
     }
 }
@@ -37616,6 +37924,7 @@ pub enum TypeVariant {
     ScSpecUdtErrorEnumCaseV0,
     ScSpecUdtErrorEnumV0,
     ScSpecFunctionInputV0,
+    ScSpecFunctionV0DataAccess,
     ScSpecFunctionV0,
     ScSpecEntryKind,
     ScSpecEntry,
@@ -37842,7 +38151,9 @@ pub enum TypeVariant {
     CreateContractArgs,
     HostFunctionArgs,
     AuthorizedInvocation,
-    AddressWithNonce,
+    AddressAuthorization,
+    AuthorizationType,
+    Authorization,
     ContractAuth,
     HostFunction,
     InvokeHostFunctionOp,
@@ -37977,7 +38288,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 406] = [
+    pub const VARIANTS: [TypeVariant; 409] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38026,6 +38337,7 @@ impl TypeVariant {
         TypeVariant::ScSpecUdtErrorEnumCaseV0,
         TypeVariant::ScSpecUdtErrorEnumV0,
         TypeVariant::ScSpecFunctionInputV0,
+        TypeVariant::ScSpecFunctionV0DataAccess,
         TypeVariant::ScSpecFunctionV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
@@ -38252,7 +38564,9 @@ impl TypeVariant {
         TypeVariant::CreateContractArgs,
         TypeVariant::HostFunctionArgs,
         TypeVariant::AuthorizedInvocation,
-        TypeVariant::AddressWithNonce,
+        TypeVariant::AddressAuthorization,
+        TypeVariant::AuthorizationType,
+        TypeVariant::Authorization,
         TypeVariant::ContractAuth,
         TypeVariant::HostFunction,
         TypeVariant::InvokeHostFunctionOp,
@@ -38385,7 +38699,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 406] = [
+    pub const VARIANTS_STR: [&'static str; 409] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -38434,6 +38748,7 @@ impl TypeVariant {
         "ScSpecUdtErrorEnumCaseV0",
         "ScSpecUdtErrorEnumV0",
         "ScSpecFunctionInputV0",
+        "ScSpecFunctionV0DataAccess",
         "ScSpecFunctionV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
@@ -38660,7 +38975,9 @@ impl TypeVariant {
         "CreateContractArgs",
         "HostFunctionArgs",
         "AuthorizedInvocation",
-        "AddressWithNonce",
+        "AddressAuthorization",
+        "AuthorizationType",
+        "Authorization",
         "ContractAuth",
         "HostFunction",
         "InvokeHostFunctionOp",
@@ -38846,6 +39163,7 @@ impl TypeVariant {
             Self::ScSpecUdtErrorEnumCaseV0 => "ScSpecUdtErrorEnumCaseV0",
             Self::ScSpecUdtErrorEnumV0 => "ScSpecUdtErrorEnumV0",
             Self::ScSpecFunctionInputV0 => "ScSpecFunctionInputV0",
+            Self::ScSpecFunctionV0DataAccess => "ScSpecFunctionV0DataAccess",
             Self::ScSpecFunctionV0 => "ScSpecFunctionV0",
             Self::ScSpecEntryKind => "ScSpecEntryKind",
             Self::ScSpecEntry => "ScSpecEntry",
@@ -39074,7 +39392,9 @@ impl TypeVariant {
             Self::CreateContractArgs => "CreateContractArgs",
             Self::HostFunctionArgs => "HostFunctionArgs",
             Self::AuthorizedInvocation => "AuthorizedInvocation",
-            Self::AddressWithNonce => "AddressWithNonce",
+            Self::AddressAuthorization => "AddressAuthorization",
+            Self::AuthorizationType => "AuthorizationType",
+            Self::Authorization => "Authorization",
             Self::ContractAuth => "ContractAuth",
             Self::HostFunction => "HostFunction",
             Self::InvokeHostFunctionOp => "InvokeHostFunctionOp",
@@ -39215,7 +39535,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 406] {
+    pub const fn variants() -> [TypeVariant; 409] {
         Self::VARIANTS
     }
 }
@@ -39288,6 +39608,7 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecUdtErrorEnumCaseV0" => Ok(Self::ScSpecUdtErrorEnumCaseV0),
             "ScSpecUdtErrorEnumV0" => Ok(Self::ScSpecUdtErrorEnumV0),
             "ScSpecFunctionInputV0" => Ok(Self::ScSpecFunctionInputV0),
+            "ScSpecFunctionV0DataAccess" => Ok(Self::ScSpecFunctionV0DataAccess),
             "ScSpecFunctionV0" => Ok(Self::ScSpecFunctionV0),
             "ScSpecEntryKind" => Ok(Self::ScSpecEntryKind),
             "ScSpecEntry" => Ok(Self::ScSpecEntry),
@@ -39516,7 +39837,9 @@ impl core::str::FromStr for TypeVariant {
             "CreateContractArgs" => Ok(Self::CreateContractArgs),
             "HostFunctionArgs" => Ok(Self::HostFunctionArgs),
             "AuthorizedInvocation" => Ok(Self::AuthorizedInvocation),
-            "AddressWithNonce" => Ok(Self::AddressWithNonce),
+            "AddressAuthorization" => Ok(Self::AddressAuthorization),
+            "AuthorizationType" => Ok(Self::AuthorizationType),
+            "Authorization" => Ok(Self::Authorization),
             "ContractAuth" => Ok(Self::ContractAuth),
             "HostFunction" => Ok(Self::HostFunction),
             "InvokeHostFunctionOp" => Ok(Self::InvokeHostFunctionOp),
@@ -39719,6 +40042,7 @@ pub enum Type {
     ScSpecUdtErrorEnumCaseV0(Box<ScSpecUdtErrorEnumCaseV0>),
     ScSpecUdtErrorEnumV0(Box<ScSpecUdtErrorEnumV0>),
     ScSpecFunctionInputV0(Box<ScSpecFunctionInputV0>),
+    ScSpecFunctionV0DataAccess(Box<ScSpecFunctionV0DataAccess>),
     ScSpecFunctionV0(Box<ScSpecFunctionV0>),
     ScSpecEntryKind(Box<ScSpecEntryKind>),
     ScSpecEntry(Box<ScSpecEntry>),
@@ -39945,7 +40269,9 @@ pub enum Type {
     CreateContractArgs(Box<CreateContractArgs>),
     HostFunctionArgs(Box<HostFunctionArgs>),
     AuthorizedInvocation(Box<AuthorizedInvocation>),
-    AddressWithNonce(Box<AddressWithNonce>),
+    AddressAuthorization(Box<AddressAuthorization>),
+    AuthorizationType(Box<AuthorizationType>),
+    Authorization(Box<Authorization>),
     ContractAuth(Box<ContractAuth>),
     HostFunction(Box<HostFunction>),
     InvokeHostFunctionOp(Box<InvokeHostFunctionOp>),
@@ -40080,7 +40406,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 406] = [
+    pub const VARIANTS: [TypeVariant; 409] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -40129,6 +40455,7 @@ impl Type {
         TypeVariant::ScSpecUdtErrorEnumCaseV0,
         TypeVariant::ScSpecUdtErrorEnumV0,
         TypeVariant::ScSpecFunctionInputV0,
+        TypeVariant::ScSpecFunctionV0DataAccess,
         TypeVariant::ScSpecFunctionV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
@@ -40355,7 +40682,9 @@ impl Type {
         TypeVariant::CreateContractArgs,
         TypeVariant::HostFunctionArgs,
         TypeVariant::AuthorizedInvocation,
-        TypeVariant::AddressWithNonce,
+        TypeVariant::AddressAuthorization,
+        TypeVariant::AuthorizationType,
+        TypeVariant::Authorization,
         TypeVariant::ContractAuth,
         TypeVariant::HostFunction,
         TypeVariant::InvokeHostFunctionOp,
@@ -40488,7 +40817,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 406] = [
+    pub const VARIANTS_STR: [&'static str; 409] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -40537,6 +40866,7 @@ impl Type {
         "ScSpecUdtErrorEnumCaseV0",
         "ScSpecUdtErrorEnumV0",
         "ScSpecFunctionInputV0",
+        "ScSpecFunctionV0DataAccess",
         "ScSpecFunctionV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
@@ -40763,7 +41093,9 @@ impl Type {
         "CreateContractArgs",
         "HostFunctionArgs",
         "AuthorizedInvocation",
-        "AddressWithNonce",
+        "AddressAuthorization",
+        "AuthorizationType",
+        "Authorization",
         "ContractAuth",
         "HostFunction",
         "InvokeHostFunctionOp",
@@ -41041,6 +41373,9 @@ impl Type {
             TypeVariant::ScSpecFunctionInputV0 => Ok(Self::ScSpecFunctionInputV0(Box::new(
                 ScSpecFunctionInputV0::read_xdr(r)?,
             ))),
+            TypeVariant::ScSpecFunctionV0DataAccess => Ok(Self::ScSpecFunctionV0DataAccess(
+                Box::new(ScSpecFunctionV0DataAccess::read_xdr(r)?),
+            )),
             TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
                 ScSpecFunctionV0::read_xdr(r)?,
             ))),
@@ -41627,9 +41962,15 @@ impl Type {
             TypeVariant::AuthorizedInvocation => Ok(Self::AuthorizedInvocation(Box::new(
                 AuthorizedInvocation::read_xdr(r)?,
             ))),
-            TypeVariant::AddressWithNonce => Ok(Self::AddressWithNonce(Box::new(
-                AddressWithNonce::read_xdr(r)?,
+            TypeVariant::AddressAuthorization => Ok(Self::AddressAuthorization(Box::new(
+                AddressAuthorization::read_xdr(r)?,
             ))),
+            TypeVariant::AuthorizationType => Ok(Self::AuthorizationType(Box::new(
+                AuthorizationType::read_xdr(r)?,
+            ))),
+            TypeVariant::Authorization => {
+                Ok(Self::Authorization(Box::new(Authorization::read_xdr(r)?)))
+            }
             TypeVariant::ContractAuth => {
                 Ok(Self::ContractAuth(Box::new(ContractAuth::read_xdr(r)?)))
             }
@@ -42248,6 +42589,10 @@ impl Type {
             TypeVariant::ScSpecFunctionInputV0 => Box::new(
                 ReadXdrIter::<_, ScSpecFunctionInputV0>::new(r)
                     .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecFunctionV0DataAccess => Box::new(
+                ReadXdrIter::<_, ScSpecFunctionV0DataAccess>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionV0DataAccess(Box::new(t)))),
             ),
             TypeVariant::ScSpecFunctionV0 => Box::new(
                 ReadXdrIter::<_, ScSpecFunctionV0>::new(r)
@@ -43133,9 +43478,17 @@ impl Type {
                 ReadXdrIter::<_, AuthorizedInvocation>::new(r)
                     .map(|r| r.map(|t| Self::AuthorizedInvocation(Box::new(t)))),
             ),
-            TypeVariant::AddressWithNonce => Box::new(
-                ReadXdrIter::<_, AddressWithNonce>::new(r)
-                    .map(|r| r.map(|t| Self::AddressWithNonce(Box::new(t)))),
+            TypeVariant::AddressAuthorization => Box::new(
+                ReadXdrIter::<_, AddressAuthorization>::new(r)
+                    .map(|r| r.map(|t| Self::AddressAuthorization(Box::new(t)))),
+            ),
+            TypeVariant::AuthorizationType => Box::new(
+                ReadXdrIter::<_, AuthorizationType>::new(r)
+                    .map(|r| r.map(|t| Self::AuthorizationType(Box::new(t)))),
+            ),
+            TypeVariant::Authorization => Box::new(
+                ReadXdrIter::<_, Authorization>::new(r)
+                    .map(|r| r.map(|t| Self::Authorization(Box::new(t)))),
             ),
             TypeVariant::ContractAuth => Box::new(
                 ReadXdrIter::<_, ContractAuth>::new(r)
@@ -43853,6 +44206,10 @@ impl Type {
             TypeVariant::ScSpecFunctionInputV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecFunctionInputV0>>::new(r)
                     .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecFunctionV0DataAccess => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecFunctionV0DataAccess>>::new(r)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionV0DataAccess(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecFunctionV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecFunctionV0>>::new(r)
@@ -44758,9 +45115,17 @@ impl Type {
                 ReadXdrIter::<_, Frame<AuthorizedInvocation>>::new(r)
                     .map(|r| r.map(|t| Self::AuthorizedInvocation(Box::new(t.0)))),
             ),
-            TypeVariant::AddressWithNonce => Box::new(
-                ReadXdrIter::<_, Frame<AddressWithNonce>>::new(r)
-                    .map(|r| r.map(|t| Self::AddressWithNonce(Box::new(t.0)))),
+            TypeVariant::AddressAuthorization => Box::new(
+                ReadXdrIter::<_, Frame<AddressAuthorization>>::new(r)
+                    .map(|r| r.map(|t| Self::AddressAuthorization(Box::new(t.0)))),
+            ),
+            TypeVariant::AuthorizationType => Box::new(
+                ReadXdrIter::<_, Frame<AuthorizationType>>::new(r)
+                    .map(|r| r.map(|t| Self::AuthorizationType(Box::new(t.0)))),
+            ),
+            TypeVariant::Authorization => Box::new(
+                ReadXdrIter::<_, Frame<Authorization>>::new(r)
+                    .map(|r| r.map(|t| Self::Authorization(Box::new(t.0)))),
             ),
             TypeVariant::ContractAuth => Box::new(
                 ReadXdrIter::<_, Frame<ContractAuth>>::new(r)
@@ -45489,6 +45854,10 @@ impl Type {
             TypeVariant::ScSpecFunctionInputV0 => Box::new(
                 ReadXdrIter::<_, ScSpecFunctionInputV0>::new(dec)
                     .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecFunctionV0DataAccess => Box::new(
+                ReadXdrIter::<_, ScSpecFunctionV0DataAccess>::new(dec)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionV0DataAccess(Box::new(t)))),
             ),
             TypeVariant::ScSpecFunctionV0 => Box::new(
                 ReadXdrIter::<_, ScSpecFunctionV0>::new(dec)
@@ -46382,9 +46751,17 @@ impl Type {
                 ReadXdrIter::<_, AuthorizedInvocation>::new(dec)
                     .map(|r| r.map(|t| Self::AuthorizedInvocation(Box::new(t)))),
             ),
-            TypeVariant::AddressWithNonce => Box::new(
-                ReadXdrIter::<_, AddressWithNonce>::new(dec)
-                    .map(|r| r.map(|t| Self::AddressWithNonce(Box::new(t)))),
+            TypeVariant::AddressAuthorization => Box::new(
+                ReadXdrIter::<_, AddressAuthorization>::new(dec)
+                    .map(|r| r.map(|t| Self::AddressAuthorization(Box::new(t)))),
+            ),
+            TypeVariant::AuthorizationType => Box::new(
+                ReadXdrIter::<_, AuthorizationType>::new(dec)
+                    .map(|r| r.map(|t| Self::AuthorizationType(Box::new(t)))),
+            ),
+            TypeVariant::Authorization => Box::new(
+                ReadXdrIter::<_, Authorization>::new(dec)
+                    .map(|r| r.map(|t| Self::Authorization(Box::new(t)))),
             ),
             TypeVariant::ContractAuth => Box::new(
                 ReadXdrIter::<_, ContractAuth>::new(dec)
@@ -46975,6 +47352,7 @@ impl Type {
             Self::ScSpecUdtErrorEnumCaseV0(ref v) => v.as_ref(),
             Self::ScSpecUdtErrorEnumV0(ref v) => v.as_ref(),
             Self::ScSpecFunctionInputV0(ref v) => v.as_ref(),
+            Self::ScSpecFunctionV0DataAccess(ref v) => v.as_ref(),
             Self::ScSpecFunctionV0(ref v) => v.as_ref(),
             Self::ScSpecEntryKind(ref v) => v.as_ref(),
             Self::ScSpecEntry(ref v) => v.as_ref(),
@@ -47201,7 +47579,9 @@ impl Type {
             Self::CreateContractArgs(ref v) => v.as_ref(),
             Self::HostFunctionArgs(ref v) => v.as_ref(),
             Self::AuthorizedInvocation(ref v) => v.as_ref(),
-            Self::AddressWithNonce(ref v) => v.as_ref(),
+            Self::AddressAuthorization(ref v) => v.as_ref(),
+            Self::AuthorizationType(ref v) => v.as_ref(),
+            Self::Authorization(ref v) => v.as_ref(),
             Self::ContractAuth(ref v) => v.as_ref(),
             Self::HostFunction(ref v) => v.as_ref(),
             Self::InvokeHostFunctionOp(ref v) => v.as_ref(),
@@ -47390,6 +47770,7 @@ impl Type {
             Self::ScSpecUdtErrorEnumCaseV0(_) => "ScSpecUdtErrorEnumCaseV0",
             Self::ScSpecUdtErrorEnumV0(_) => "ScSpecUdtErrorEnumV0",
             Self::ScSpecFunctionInputV0(_) => "ScSpecFunctionInputV0",
+            Self::ScSpecFunctionV0DataAccess(_) => "ScSpecFunctionV0DataAccess",
             Self::ScSpecFunctionV0(_) => "ScSpecFunctionV0",
             Self::ScSpecEntryKind(_) => "ScSpecEntryKind",
             Self::ScSpecEntry(_) => "ScSpecEntry",
@@ -47618,7 +47999,9 @@ impl Type {
             Self::CreateContractArgs(_) => "CreateContractArgs",
             Self::HostFunctionArgs(_) => "HostFunctionArgs",
             Self::AuthorizedInvocation(_) => "AuthorizedInvocation",
-            Self::AddressWithNonce(_) => "AddressWithNonce",
+            Self::AddressAuthorization(_) => "AddressAuthorization",
+            Self::AuthorizationType(_) => "AuthorizationType",
+            Self::Authorization(_) => "Authorization",
             Self::ContractAuth(_) => "ContractAuth",
             Self::HostFunction(_) => "HostFunction",
             Self::InvokeHostFunctionOp(_) => "InvokeHostFunctionOp",
@@ -47765,7 +48148,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 406] {
+    pub const fn variants() -> [TypeVariant; 409] {
         Self::VARIANTS
     }
 
@@ -47829,6 +48212,7 @@ impl Type {
             Self::ScSpecUdtErrorEnumCaseV0(_) => TypeVariant::ScSpecUdtErrorEnumCaseV0,
             Self::ScSpecUdtErrorEnumV0(_) => TypeVariant::ScSpecUdtErrorEnumV0,
             Self::ScSpecFunctionInputV0(_) => TypeVariant::ScSpecFunctionInputV0,
+            Self::ScSpecFunctionV0DataAccess(_) => TypeVariant::ScSpecFunctionV0DataAccess,
             Self::ScSpecFunctionV0(_) => TypeVariant::ScSpecFunctionV0,
             Self::ScSpecEntryKind(_) => TypeVariant::ScSpecEntryKind,
             Self::ScSpecEntry(_) => TypeVariant::ScSpecEntry,
@@ -48071,7 +48455,9 @@ impl Type {
             Self::CreateContractArgs(_) => TypeVariant::CreateContractArgs,
             Self::HostFunctionArgs(_) => TypeVariant::HostFunctionArgs,
             Self::AuthorizedInvocation(_) => TypeVariant::AuthorizedInvocation,
-            Self::AddressWithNonce(_) => TypeVariant::AddressWithNonce,
+            Self::AddressAuthorization(_) => TypeVariant::AddressAuthorization,
+            Self::AuthorizationType(_) => TypeVariant::AuthorizationType,
+            Self::Authorization(_) => TypeVariant::Authorization,
             Self::ContractAuth(_) => TypeVariant::ContractAuth,
             Self::HostFunction(_) => TypeVariant::HostFunction,
             Self::InvokeHostFunctionOp(_) => TypeVariant::InvokeHostFunctionOp,

@@ -34,7 +34,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "014e38c107bcb62701425267cd67434147b0cb651bf4ec9a0615f88843493c84",
+        "2264b8230e81d12590dd0a7efea57bd68bf0696b0279a969b0b18566c6bd0eba",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -5735,8 +5735,8 @@ impl WriteXdr for ScSpecFunctionInputV0 {
 //
 //   enum SCSpecFunctionV0DataAccess
 //    {
-//        SC_SPEC_FUNCTION_V0_DATA_ACCESS_READ_ONLY = 0,
-//        SC_SPEC_FUNCTION_V0_DATA_ACCESS_READ_WRITE = 1
+//        SC_SPEC_FUNCTION_V0_DATA_ACCESS_READ = 0,
+//        SC_SPEC_FUNCTION_V0_DATA_ACCESS_WRITE = 1
 //    };
 //
 // enum
@@ -5749,21 +5749,21 @@ impl WriteXdr for ScSpecFunctionInputV0 {
 )]
 #[repr(i32)]
 pub enum ScSpecFunctionV0DataAccess {
-    Only = 0,
+    Read = 0,
     Write = 1,
 }
 
 impl ScSpecFunctionV0DataAccess {
     pub const VARIANTS: [ScSpecFunctionV0DataAccess; 2] = [
-        ScSpecFunctionV0DataAccess::Only,
+        ScSpecFunctionV0DataAccess::Read,
         ScSpecFunctionV0DataAccess::Write,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Only", "Write"];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Read", "Write"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::Only => "Only",
+            Self::Read => "Read",
             Self::Write => "Write",
         }
     }
@@ -5800,7 +5800,7 @@ impl TryFrom<i32> for ScSpecFunctionV0DataAccess {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScSpecFunctionV0DataAccess::Only,
+            0 => ScSpecFunctionV0DataAccess::Read,
             1 => ScSpecFunctionV0DataAccess::Write,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),

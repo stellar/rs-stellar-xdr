@@ -18,51 +18,51 @@
 pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     (
         "xdr/next/Stellar-SCP.x",
-        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+        "2b855c7f79b8e50cf15ca1e1aa89fb16bbb38117de0b1c969c80e675ae1ca4bb",
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "45dc460924dae4c150567c215b43f21977618b48e6667edd814da2c05dd05a7e",
+        "7b2691a8f6dab3ab737785fc1d8033aa30cd871ceddf022f1624adfee15f18f3",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
-        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
+        "8d30dbf039e41e149725b34f2c809fc034c0879adac9d85fc49b8371f9a0444f",
     ),
     (
         "xdr/next/Stellar-contract-meta.x",
-        "f01532c11ca044e19d9f9f16fe373e9af64835da473be556b9a807ee3319ae0d",
+        "6a7d15d520858ec034ed717358d947b496924d1642d29eac5f3423a315693d7b",
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "739e2480ba197aa859f122632a93172668cb0dbe93e30a54c192b96878af207a",
+        "a5bfc1110f5aafd38102394a28ee0ef1b3308765797a853b099164149fc094c2",
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "099e26238d835f0b2a1bf443259c61706e6c9f6b2adf0a82072fd4c615a78716",
+        "5fa87afa7229f450ae27746ec380c72d7461594a384a58456640cd87cc6c4e9f",
     ),
     (
         "xdr/next/Stellar-internal.x",
-        "368706dd6e2efafd16a8f63daf3374845b791d097b15c502aa7653a412b68b68",
+        "467d954846f88e50e690b64a0ef2dc138b92b03d24bdd66559df16f76535b288",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "95ab2a488911a6c1a3342e68f88f2fa44ec4bc48af9c9227ccb07bb9b682d3fd",
+        "cdc04b3c294402b99d5502f59a10e349024583f531dba7728e6c0c6ef4e73047",
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "dcf7bb3de5d27327824578dfae95f1d25a3ff3693a117ec499c8c7b7048a31dc",
+        "2b03f9a299cddcd013109bbf3963c5eaf80387b891fc03a3b11a959a0085e174",
     ),
     (
         "xdr/next/Stellar-overlay.x",
-        "de3957c58b96ae07968b3d3aebea84f83603e95322d1fa336360e13e3aba737a",
+        "ceec386c9d3e2db7f5f9ee4b10d7f7149f3aaa49b32bf734b86ffc3db323cab7",
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "22f6f4abccac6f9220b2192a60eb7f26829269f5af6e79921eaf25c09ee73a92",
+        "d7e13e347eccab3c0d19ebacb5dab28ffb6de27cb1f7abb6fe147d8a13408690",
     ),
     (
         "xdr/next/Stellar-types.x",
-        "6e3b13f0d3e360b09fa5e2b0e55d43f4d974a769df66afb34e8aecbb329d3f15",
+        "af94781a7058a2a780206ebc22da63281013d34662a47f4473a227e701a41f27",
     ),
 ];
 
@@ -7200,12 +7200,6 @@ impl WriteXdr for ScAddress {
     }
 }
 
-// ScvalLimit is an XDR Const defines as:
-//
-//   const SCVAL_LIMIT = 256000;
-//
-pub const SCVAL_LIMIT: u64 = 256000;
-
 // ScsymbolLimit is an XDR Const defines as:
 //
 //   const SCSYMBOL_LIMIT = 32;
@@ -7214,7 +7208,7 @@ pub const SCSYMBOL_LIMIT: u64 = 32;
 
 // ScVec is an XDR Typedef defines as:
 //
-//   typedef SCVal SCVec<SCVAL_LIMIT>;
+//   typedef SCVal SCVec<>;
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
@@ -7224,25 +7218,25 @@ pub const SCSYMBOL_LIMIT: u64 = 32;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct ScVec(pub VecM<ScVal, 256000>);
+pub struct ScVec(pub VecM<ScVal>);
 
-impl From<ScVec> for VecM<ScVal, 256000> {
+impl From<ScVec> for VecM<ScVal> {
     #[must_use]
     fn from(x: ScVec) -> Self {
         x.0
     }
 }
 
-impl From<VecM<ScVal, 256000>> for ScVec {
+impl From<VecM<ScVal>> for ScVec {
     #[must_use]
-    fn from(x: VecM<ScVal, 256000>) -> Self {
+    fn from(x: VecM<ScVal>) -> Self {
         ScVec(x)
     }
 }
 
-impl AsRef<VecM<ScVal, 256000>> for ScVec {
+impl AsRef<VecM<ScVal>> for ScVec {
     #[must_use]
-    fn as_ref(&self) -> &VecM<ScVal, 256000> {
+    fn as_ref(&self) -> &VecM<ScVal> {
         &self.0
     }
 }
@@ -7250,7 +7244,7 @@ impl AsRef<VecM<ScVal, 256000>> for ScVec {
 impl ReadXdr for ScVec {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<ScVal, 256000>::read_xdr(r)?;
+        let i = VecM::<ScVal>::read_xdr(r)?;
         let v = ScVec(i);
         Ok(v)
     }
@@ -7264,7 +7258,7 @@ impl WriteXdr for ScVec {
 }
 
 impl Deref for ScVec {
-    type Target = VecM<ScVal, 256000>;
+    type Target = VecM<ScVal>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -7314,7 +7308,7 @@ impl AsRef<[ScVal]> for ScVec {
 
 // ScMap is an XDR Typedef defines as:
 //
-//   typedef SCMapEntry SCMap<SCVAL_LIMIT>;
+//   typedef SCMapEntry SCMap<>;
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
@@ -7324,25 +7318,25 @@ impl AsRef<[ScVal]> for ScVec {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct ScMap(pub VecM<ScMapEntry, 256000>);
+pub struct ScMap(pub VecM<ScMapEntry>);
 
-impl From<ScMap> for VecM<ScMapEntry, 256000> {
+impl From<ScMap> for VecM<ScMapEntry> {
     #[must_use]
     fn from(x: ScMap) -> Self {
         x.0
     }
 }
 
-impl From<VecM<ScMapEntry, 256000>> for ScMap {
+impl From<VecM<ScMapEntry>> for ScMap {
     #[must_use]
-    fn from(x: VecM<ScMapEntry, 256000>) -> Self {
+    fn from(x: VecM<ScMapEntry>) -> Self {
         ScMap(x)
     }
 }
 
-impl AsRef<VecM<ScMapEntry, 256000>> for ScMap {
+impl AsRef<VecM<ScMapEntry>> for ScMap {
     #[must_use]
-    fn as_ref(&self) -> &VecM<ScMapEntry, 256000> {
+    fn as_ref(&self) -> &VecM<ScMapEntry> {
         &self.0
     }
 }
@@ -7350,7 +7344,7 @@ impl AsRef<VecM<ScMapEntry, 256000>> for ScMap {
 impl ReadXdr for ScMap {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<ScMapEntry, 256000>::read_xdr(r)?;
+        let i = VecM::<ScMapEntry>::read_xdr(r)?;
         let v = ScMap(i);
         Ok(v)
     }
@@ -7364,7 +7358,7 @@ impl WriteXdr for ScMap {
 }
 
 impl Deref for ScMap {
-    type Target = VecM<ScMapEntry, 256000>;
+    type Target = VecM<ScMapEntry>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -7414,7 +7408,7 @@ impl AsRef<[ScMapEntry]> for ScMap {
 
 // ScBytes is an XDR Typedef defines as:
 //
-//   typedef opaque SCBytes<SCVAL_LIMIT>;
+//   typedef opaque SCBytes<>;
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
@@ -7424,25 +7418,25 @@ impl AsRef<[ScMapEntry]> for ScMap {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct ScBytes(pub BytesM<256000>);
+pub struct ScBytes(pub BytesM);
 
-impl From<ScBytes> for BytesM<256000> {
+impl From<ScBytes> for BytesM {
     #[must_use]
     fn from(x: ScBytes) -> Self {
         x.0
     }
 }
 
-impl From<BytesM<256000>> for ScBytes {
+impl From<BytesM> for ScBytes {
     #[must_use]
-    fn from(x: BytesM<256000>) -> Self {
+    fn from(x: BytesM) -> Self {
         ScBytes(x)
     }
 }
 
-impl AsRef<BytesM<256000>> for ScBytes {
+impl AsRef<BytesM> for ScBytes {
     #[must_use]
-    fn as_ref(&self) -> &BytesM<256000> {
+    fn as_ref(&self) -> &BytesM {
         &self.0
     }
 }
@@ -7450,7 +7444,7 @@ impl AsRef<BytesM<256000>> for ScBytes {
 impl ReadXdr for ScBytes {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = BytesM::<256000>::read_xdr(r)?;
+        let i = BytesM::read_xdr(r)?;
         let v = ScBytes(i);
         Ok(v)
     }
@@ -7464,7 +7458,7 @@ impl WriteXdr for ScBytes {
 }
 
 impl Deref for ScBytes {
-    type Target = BytesM<256000>;
+    type Target = BytesM;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -7514,7 +7508,7 @@ impl AsRef<[u8]> for ScBytes {
 
 // ScString is an XDR Typedef defines as:
 //
-//   typedef string SCString<SCVAL_LIMIT>;
+//   typedef string SCString<>;
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
@@ -7524,25 +7518,25 @@ impl AsRef<[u8]> for ScBytes {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct ScString(pub StringM<256000>);
+pub struct ScString(pub StringM);
 
-impl From<ScString> for StringM<256000> {
+impl From<ScString> for StringM {
     #[must_use]
     fn from(x: ScString) -> Self {
         x.0
     }
 }
 
-impl From<StringM<256000>> for ScString {
+impl From<StringM> for ScString {
     #[must_use]
-    fn from(x: StringM<256000>) -> Self {
+    fn from(x: StringM) -> Self {
         ScString(x)
     }
 }
 
-impl AsRef<StringM<256000>> for ScString {
+impl AsRef<StringM> for ScString {
     #[must_use]
-    fn as_ref(&self) -> &StringM<256000> {
+    fn as_ref(&self) -> &StringM {
         &self.0
     }
 }
@@ -7550,7 +7544,7 @@ impl AsRef<StringM<256000>> for ScString {
 impl ReadXdr for ScString {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = StringM::<256000>::read_xdr(r)?;
+        let i = StringM::read_xdr(r)?;
         let v = ScString(i);
         Ok(v)
     }
@@ -7564,7 +7558,7 @@ impl WriteXdr for ScString {
 }
 
 impl Deref for ScString {
-    type Target = StringM<256000>;
+    type Target = StringM;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -13310,7 +13304,7 @@ impl WriteXdr for ContractDataEntry {
 //        ExtensionPoint ext;
 //
 //        Hash hash;
-//        opaque code<SCVAL_LIMIT>;
+//        opaque code<>;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -13323,7 +13317,7 @@ impl WriteXdr for ContractDataEntry {
 pub struct ContractCodeEntry {
     pub ext: ExtensionPoint,
     pub hash: Hash,
-    pub code: BytesM<256000>,
+    pub code: BytesM,
 }
 
 impl ReadXdr for ContractCodeEntry {
@@ -13332,7 +13326,7 @@ impl ReadXdr for ContractCodeEntry {
         Ok(Self {
             ext: ExtensionPoint::read_xdr(r)?,
             hash: Hash::read_xdr(r)?,
-            code: BytesM::<256000>::read_xdr(r)?,
+            code: BytesM::read_xdr(r)?,
         })
     }
 }
@@ -14392,12 +14386,8 @@ impl WriteXdr for LedgerKey {
 //        ENVELOPE_TYPE_TX_FEE_BUMP = 5,
 //        ENVELOPE_TYPE_OP_ID = 6,
 //        ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7,
-//        ENVELOPE_TYPE_CONTRACT_ID_FROM_ED25519 = 8,
-//        ENVELOPE_TYPE_CONTRACT_ID_FROM_CONTRACT = 9,
-//        ENVELOPE_TYPE_CONTRACT_ID_FROM_ASSET = 10,
-//        ENVELOPE_TYPE_CONTRACT_ID_FROM_SOURCE_ACCOUNT = 11,
-//        ENVELOPE_TYPE_CREATE_CONTRACT_ARGS = 12,
-//        ENVELOPE_TYPE_CONTRACT_AUTH = 13
+//        ENVELOPE_TYPE_CONTRACT_ID = 8,
+//        ENVELOPE_TYPE_SOROBAN_AUTHORIZATION = 9
 //    };
 //
 // enum
@@ -14418,16 +14408,12 @@ pub enum EnvelopeType {
     TxFeeBump = 5,
     OpId = 6,
     PoolRevokeOpId = 7,
-    ContractIdFromEd25519 = 8,
-    ContractIdFromContract = 9,
-    ContractIdFromAsset = 10,
-    ContractIdFromSourceAccount = 11,
-    CreateContractArgs = 12,
-    ContractAuth = 13,
+    ContractId = 8,
+    SorobanAuthorization = 9,
 }
 
 impl EnvelopeType {
-    pub const VARIANTS: [EnvelopeType; 14] = [
+    pub const VARIANTS: [EnvelopeType; 10] = [
         EnvelopeType::TxV0,
         EnvelopeType::Scp,
         EnvelopeType::Tx,
@@ -14436,14 +14422,10 @@ impl EnvelopeType {
         EnvelopeType::TxFeeBump,
         EnvelopeType::OpId,
         EnvelopeType::PoolRevokeOpId,
-        EnvelopeType::ContractIdFromEd25519,
-        EnvelopeType::ContractIdFromContract,
-        EnvelopeType::ContractIdFromAsset,
-        EnvelopeType::ContractIdFromSourceAccount,
-        EnvelopeType::CreateContractArgs,
-        EnvelopeType::ContractAuth,
+        EnvelopeType::ContractId,
+        EnvelopeType::SorobanAuthorization,
     ];
-    pub const VARIANTS_STR: [&'static str; 14] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "TxV0",
         "Scp",
         "Tx",
@@ -14452,12 +14434,8 @@ impl EnvelopeType {
         "TxFeeBump",
         "OpId",
         "PoolRevokeOpId",
-        "ContractIdFromEd25519",
-        "ContractIdFromContract",
-        "ContractIdFromAsset",
-        "ContractIdFromSourceAccount",
-        "CreateContractArgs",
-        "ContractAuth",
+        "ContractId",
+        "SorobanAuthorization",
     ];
 
     #[must_use]
@@ -14471,17 +14449,13 @@ impl EnvelopeType {
             Self::TxFeeBump => "TxFeeBump",
             Self::OpId => "OpId",
             Self::PoolRevokeOpId => "PoolRevokeOpId",
-            Self::ContractIdFromEd25519 => "ContractIdFromEd25519",
-            Self::ContractIdFromContract => "ContractIdFromContract",
-            Self::ContractIdFromAsset => "ContractIdFromAsset",
-            Self::ContractIdFromSourceAccount => "ContractIdFromSourceAccount",
-            Self::CreateContractArgs => "CreateContractArgs",
-            Self::ContractAuth => "ContractAuth",
+            Self::ContractId => "ContractId",
+            Self::SorobanAuthorization => "SorobanAuthorization",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 14] {
+    pub const fn variants() -> [EnvelopeType; 10] {
         Self::VARIANTS
     }
 }
@@ -14520,12 +14494,8 @@ impl TryFrom<i32> for EnvelopeType {
             5 => EnvelopeType::TxFeeBump,
             6 => EnvelopeType::OpId,
             7 => EnvelopeType::PoolRevokeOpId,
-            8 => EnvelopeType::ContractIdFromEd25519,
-            9 => EnvelopeType::ContractIdFromContract,
-            10 => EnvelopeType::ContractIdFromAsset,
-            11 => EnvelopeType::ContractIdFromSourceAccount,
-            12 => EnvelopeType::CreateContractArgs,
-            13 => EnvelopeType::ContractAuth,
+            8 => EnvelopeType::ContractId,
+            9 => EnvelopeType::SorobanAuthorization,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -23099,13 +23069,12 @@ impl WriteXdr for HostFunctionType {
     }
 }
 
-// ContractIdType is an XDR Enum defines as:
+// ContractIdPreimageType is an XDR Enum defines as:
 //
-//   enum ContractIDType
+//   enum ContractIDPreimageType
 //    {
-//        CONTRACT_ID_FROM_SOURCE_ACCOUNT = 0,
-//        CONTRACT_ID_FROM_ED25519_PUBLIC_KEY = 1,
-//        CONTRACT_ID_FROM_ASSET = 2
+//        CONTRACT_ID_PREIMAGE_FROM_ADDRESS = 0,
+//        CONTRACT_ID_PREIMAGE_FROM_ASSET = 1
 //    };
 //
 // enum
@@ -23117,64 +23086,60 @@ impl WriteXdr for HostFunctionType {
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
-pub enum ContractIdType {
-    SourceAccount = 0,
-    Ed25519PublicKey = 1,
-    Asset = 2,
+pub enum ContractIdPreimageType {
+    Address = 0,
+    Asset = 1,
 }
 
-impl ContractIdType {
-    pub const VARIANTS: [ContractIdType; 3] = [
-        ContractIdType::SourceAccount,
-        ContractIdType::Ed25519PublicKey,
-        ContractIdType::Asset,
+impl ContractIdPreimageType {
+    pub const VARIANTS: [ContractIdPreimageType; 2] = [
+        ContractIdPreimageType::Address,
+        ContractIdPreimageType::Asset,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["SourceAccount", "Ed25519PublicKey", "Asset"];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Address", "Asset"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::SourceAccount => "SourceAccount",
-            Self::Ed25519PublicKey => "Ed25519PublicKey",
+            Self::Address => "Address",
             Self::Asset => "Asset",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractIdType; 3] {
+    pub const fn variants() -> [ContractIdPreimageType; 2] {
         Self::VARIANTS
     }
 }
 
-impl Name for ContractIdType {
+impl Name for ContractIdPreimageType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Variants<ContractIdType> for ContractIdType {
-    fn variants() -> slice::Iter<'static, ContractIdType> {
+impl Variants<ContractIdPreimageType> for ContractIdPreimageType {
+    fn variants() -> slice::Iter<'static, ContractIdPreimageType> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Enum for ContractIdType {}
+impl Enum for ContractIdPreimageType {}
 
-impl fmt::Display for ContractIdType {
+impl fmt::Display for ContractIdPreimageType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
 
-impl TryFrom<i32> for ContractIdType {
+impl TryFrom<i32> for ContractIdPreimageType {
     type Error = Error;
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ContractIdType::SourceAccount,
-            1 => ContractIdType::Ed25519PublicKey,
-            2 => ContractIdType::Asset,
+            0 => ContractIdPreimageType::Address,
+            1 => ContractIdPreimageType::Asset,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -23182,14 +23147,14 @@ impl TryFrom<i32> for ContractIdType {
     }
 }
 
-impl From<ContractIdType> for i32 {
+impl From<ContractIdPreimageType> for i32 {
     #[must_use]
-    fn from(e: ContractIdType) -> Self {
+    fn from(e: ContractIdPreimageType) -> Self {
         e as Self
     }
 }
 
-impl ReadXdr for ContractIdType {
+impl ReadXdr for ContractIdPreimageType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -23198,7 +23163,7 @@ impl ReadXdr for ContractIdType {
     }
 }
 
-impl WriteXdr for ContractIdType {
+impl WriteXdr for ContractIdPreimageType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -23206,149 +23171,11 @@ impl WriteXdr for ContractIdType {
     }
 }
 
-// ContractIdPublicKeyType is an XDR Enum defines as:
-//
-//   enum ContractIDPublicKeyType
-//    {
-//        CONTRACT_ID_PUBLIC_KEY_SOURCE_ACCOUNT = 0,
-//        CONTRACT_ID_PUBLIC_KEY_ED25519 = 1
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[repr(i32)]
-pub enum ContractIdPublicKeyType {
-    SourceAccount = 0,
-    Ed25519 = 1,
-}
-
-impl ContractIdPublicKeyType {
-    pub const VARIANTS: [ContractIdPublicKeyType; 2] = [
-        ContractIdPublicKeyType::SourceAccount,
-        ContractIdPublicKeyType::Ed25519,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Ed25519"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::SourceAccount => "SourceAccount",
-            Self::Ed25519 => "Ed25519",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ContractIdPublicKeyType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ContractIdPublicKeyType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ContractIdPublicKeyType> for ContractIdPublicKeyType {
-    fn variants() -> slice::Iter<'static, ContractIdPublicKeyType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ContractIdPublicKeyType {}
-
-impl fmt::Display for ContractIdPublicKeyType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ContractIdPublicKeyType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ContractIdPublicKeyType::SourceAccount,
-            1 => ContractIdPublicKeyType::Ed25519,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ContractIdPublicKeyType> for i32 {
-    #[must_use]
-    fn from(e: ContractIdPublicKeyType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ContractIdPublicKeyType {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ContractIdPublicKeyType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
-// UploadContractWasmArgs is an XDR Struct defines as:
-//
-//   struct UploadContractWasmArgs
-//    {
-//        opaque code<SCVAL_LIMIT>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct UploadContractWasmArgs {
-    pub code: BytesM<256000>,
-}
-
-impl ReadXdr for UploadContractWasmArgs {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            code: BytesM::<256000>::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for UploadContractWasmArgs {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.code.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ContractIdFromEd25519PublicKey is an XDR NestedStruct defines as:
+// ContractIdPreimageFromAddress is an XDR NestedStruct defines as:
 //
 //   struct
 //        {
-//            uint256 key;
-//            Signature signature;
+//            SCAddress address;
 //            uint256 salt;
 //        }
 //
@@ -23359,51 +23186,45 @@ impl WriteXdr for UploadContractWasmArgs {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct ContractIdFromEd25519PublicKey {
-    pub key: Uint256,
-    pub signature: Signature,
+pub struct ContractIdPreimageFromAddress {
+    pub address: ScAddress,
     pub salt: Uint256,
 }
 
-impl ReadXdr for ContractIdFromEd25519PublicKey {
+impl ReadXdr for ContractIdPreimageFromAddress {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            key: Uint256::read_xdr(r)?,
-            signature: Signature::read_xdr(r)?,
+            address: ScAddress::read_xdr(r)?,
             salt: Uint256::read_xdr(r)?,
         })
     }
 }
 
-impl WriteXdr for ContractIdFromEd25519PublicKey {
+impl WriteXdr for ContractIdPreimageFromAddress {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
-        self.signature.write_xdr(w)?;
+        self.address.write_xdr(w)?;
         self.salt.write_xdr(w)?;
         Ok(())
     }
 }
 
-// ContractId is an XDR Union defines as:
+// ContractIdPreimage is an XDR Union defines as:
 //
-//   union ContractID switch (ContractIDType type)
+//   union ContractIDPreimage switch (ContractIDPreimageType type)
 //    {
-//    case CONTRACT_ID_FROM_SOURCE_ACCOUNT:
-//        uint256 salt;
-//    case CONTRACT_ID_FROM_ED25519_PUBLIC_KEY:
+//    case CONTRACT_ID_PREIMAGE_FROM_ADDRESS:
 //        struct
 //        {
-//            uint256 key;
-//            Signature signature;
+//            SCAddress address;
 //            uint256 salt;
-//        } fromEd25519PublicKey;
-//    case CONTRACT_ID_FROM_ASSET:
-//        Asset asset;
+//        } fromAddress;
+//    case CONTRACT_ID_PREIMAGE_FROM_ASSET:
+//        Asset fromAsset;
 //    };
 //
-// union with discriminant ContractIdType
+// union with discriminant ContractIdPreimageType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -23412,78 +23233,73 @@ impl WriteXdr for ContractIdFromEd25519PublicKey {
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
-pub enum ContractId {
-    SourceAccount(Uint256),
-    Ed25519PublicKey(ContractIdFromEd25519PublicKey),
+pub enum ContractIdPreimage {
+    Address(ContractIdPreimageFromAddress),
     Asset(Asset),
 }
 
-impl ContractId {
-    pub const VARIANTS: [ContractIdType; 3] = [
-        ContractIdType::SourceAccount,
-        ContractIdType::Ed25519PublicKey,
-        ContractIdType::Asset,
+impl ContractIdPreimage {
+    pub const VARIANTS: [ContractIdPreimageType; 2] = [
+        ContractIdPreimageType::Address,
+        ContractIdPreimageType::Asset,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["SourceAccount", "Ed25519PublicKey", "Asset"];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Address", "Asset"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::SourceAccount(_) => "SourceAccount",
-            Self::Ed25519PublicKey(_) => "Ed25519PublicKey",
+            Self::Address(_) => "Address",
             Self::Asset(_) => "Asset",
         }
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> ContractIdType {
+    pub const fn discriminant(&self) -> ContractIdPreimageType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::SourceAccount(_) => ContractIdType::SourceAccount,
-            Self::Ed25519PublicKey(_) => ContractIdType::Ed25519PublicKey,
-            Self::Asset(_) => ContractIdType::Asset,
+            Self::Address(_) => ContractIdPreimageType::Address,
+            Self::Asset(_) => ContractIdPreimageType::Asset,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractIdType; 3] {
+    pub const fn variants() -> [ContractIdPreimageType; 2] {
         Self::VARIANTS
     }
 }
 
-impl Name for ContractId {
+impl Name for ContractIdPreimage {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Discriminant<ContractIdType> for ContractId {
+impl Discriminant<ContractIdPreimageType> for ContractIdPreimage {
     #[must_use]
-    fn discriminant(&self) -> ContractIdType {
+    fn discriminant(&self) -> ContractIdPreimageType {
         Self::discriminant(self)
     }
 }
 
-impl Variants<ContractIdType> for ContractId {
-    fn variants() -> slice::Iter<'static, ContractIdType> {
+impl Variants<ContractIdPreimageType> for ContractIdPreimage {
+    fn variants() -> slice::Iter<'static, ContractIdPreimageType> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<ContractIdType> for ContractId {}
+impl Union<ContractIdPreimageType> for ContractIdPreimage {}
 
-impl ReadXdr for ContractId {
+impl ReadXdr for ContractIdPreimage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ContractIdType = <ContractIdType as ReadXdr>::read_xdr(r)?;
+        let dv: ContractIdPreimageType = <ContractIdPreimageType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            ContractIdType::SourceAccount => Self::SourceAccount(Uint256::read_xdr(r)?),
-            ContractIdType::Ed25519PublicKey => {
-                Self::Ed25519PublicKey(ContractIdFromEd25519PublicKey::read_xdr(r)?)
+            ContractIdPreimageType::Address => {
+                Self::Address(ContractIdPreimageFromAddress::read_xdr(r)?)
             }
-            ContractIdType::Asset => Self::Asset(Asset::read_xdr(r)?),
+            ContractIdPreimageType::Asset => Self::Asset(Asset::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -23491,14 +23307,13 @@ impl ReadXdr for ContractId {
     }
 }
 
-impl WriteXdr for ContractId {
+impl WriteXdr for ContractIdPreimage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::SourceAccount(v) => v.write_xdr(w)?,
-            Self::Ed25519PublicKey(v) => v.write_xdr(w)?,
+            Self::Address(v) => v.write_xdr(w)?,
             Self::Asset(v) => v.write_xdr(w)?,
         };
         Ok(())
@@ -23509,7 +23324,7 @@ impl WriteXdr for ContractId {
 //
 //   struct CreateContractArgs
 //    {
-//        ContractID contractID;
+//        ContractIDPreimage contractIDPreimage;
 //        SCContractExecutable executable;
 //    };
 //
@@ -23521,7 +23336,7 @@ impl WriteXdr for ContractId {
     serde(rename_all = "snake_case")
 )]
 pub struct CreateContractArgs {
-    pub contract_id: ContractId,
+    pub contract_id_preimage: ContractIdPreimage,
     pub executable: ScContractExecutable,
 }
 
@@ -23529,7 +23344,7 @@ impl ReadXdr for CreateContractArgs {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            contract_id: ContractId::read_xdr(r)?,
+            contract_id_preimage: ContractIdPreimage::read_xdr(r)?,
             executable: ScContractExecutable::read_xdr(r)?,
         })
     }
@@ -23538,22 +23353,22 @@ impl ReadXdr for CreateContractArgs {
 impl WriteXdr for CreateContractArgs {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.contract_id.write_xdr(w)?;
+        self.contract_id_preimage.write_xdr(w)?;
         self.executable.write_xdr(w)?;
         Ok(())
     }
 }
 
-// HostFunctionArgs is an XDR Union defines as:
+// HostFunction is an XDR Union defines as:
 //
-//   union HostFunctionArgs switch (HostFunctionType type)
+//   union HostFunction switch (HostFunctionType type)
 //    {
 //    case HOST_FUNCTION_TYPE_INVOKE_CONTRACT:
 //        SCVec invokeContract;
 //    case HOST_FUNCTION_TYPE_CREATE_CONTRACT:
 //        CreateContractArgs createContract;
 //    case HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM:
-//        UploadContractWasmArgs uploadContractWasm;
+//        opaque wasm<>;
 //    };
 //
 // union with discriminant HostFunctionType
@@ -23565,13 +23380,13 @@ impl WriteXdr for CreateContractArgs {
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
-pub enum HostFunctionArgs {
+pub enum HostFunction {
     InvokeContract(ScVec),
     CreateContract(CreateContractArgs),
-    UploadContractWasm(UploadContractWasmArgs),
+    UploadContractWasm(BytesM),
 }
 
-impl HostFunctionArgs {
+impl HostFunction {
     pub const VARIANTS: [HostFunctionType; 3] = [
         HostFunctionType::InvokeContract,
         HostFunctionType::CreateContract,
@@ -23605,29 +23420,29 @@ impl HostFunctionArgs {
     }
 }
 
-impl Name for HostFunctionArgs {
+impl Name for HostFunction {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Discriminant<HostFunctionType> for HostFunctionArgs {
+impl Discriminant<HostFunctionType> for HostFunction {
     #[must_use]
     fn discriminant(&self) -> HostFunctionType {
         Self::discriminant(self)
     }
 }
 
-impl Variants<HostFunctionType> for HostFunctionArgs {
+impl Variants<HostFunctionType> for HostFunction {
     fn variants() -> slice::Iter<'static, HostFunctionType> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<HostFunctionType> for HostFunctionArgs {}
+impl Union<HostFunctionType> for HostFunction {}
 
-impl ReadXdr for HostFunctionArgs {
+impl ReadXdr for HostFunction {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let dv: HostFunctionType = <HostFunctionType as ReadXdr>::read_xdr(r)?;
@@ -23637,9 +23452,7 @@ impl ReadXdr for HostFunctionArgs {
             HostFunctionType::CreateContract => {
                 Self::CreateContract(CreateContractArgs::read_xdr(r)?)
             }
-            HostFunctionType::UploadContractWasm => {
-                Self::UploadContractWasm(UploadContractWasmArgs::read_xdr(r)?)
-            }
+            HostFunctionType::UploadContractWasm => Self::UploadContractWasm(BytesM::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -23647,7 +23460,7 @@ impl ReadXdr for HostFunctionArgs {
     }
 }
 
-impl WriteXdr for HostFunctionArgs {
+impl WriteXdr for HostFunction {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
@@ -23661,14 +23474,115 @@ impl WriteXdr for HostFunctionArgs {
     }
 }
 
-// AuthorizedInvocation is an XDR Struct defines as:
+// SorobanAuthorizedFunctionType is an XDR Enum defines as:
 //
-//   struct AuthorizedInvocation
+//   enum SorobanAuthorizedFunctionType
 //    {
-//        Hash contractID;
+//        SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN = 0,
+//        SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum SorobanAuthorizedFunctionType {
+    ContractFn = 0,
+    CreateContractHostFn = 1,
+}
+
+impl SorobanAuthorizedFunctionType {
+    pub const VARIANTS: [SorobanAuthorizedFunctionType; 2] = [
+        SorobanAuthorizedFunctionType::ContractFn,
+        SorobanAuthorizedFunctionType::CreateContractHostFn,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["ContractFn", "CreateContractHostFn"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ContractFn => "ContractFn",
+            Self::CreateContractHostFn => "CreateContractHostFn",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [SorobanAuthorizedFunctionType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SorobanAuthorizedFunctionType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunctionType {
+    fn variants() -> slice::Iter<'static, SorobanAuthorizedFunctionType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for SorobanAuthorizedFunctionType {}
+
+impl fmt::Display for SorobanAuthorizedFunctionType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for SorobanAuthorizedFunctionType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => SorobanAuthorizedFunctionType::ContractFn,
+            1 => SorobanAuthorizedFunctionType::CreateContractHostFn,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<SorobanAuthorizedFunctionType> for i32 {
+    #[must_use]
+    fn from(e: SorobanAuthorizedFunctionType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for SorobanAuthorizedFunctionType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for SorobanAuthorizedFunctionType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// SorobanAuthorizedContractFunction is an XDR Struct defines as:
+//
+//   struct SorobanAuthorizedContractFunction
+//    {
+//        SCAddress contractAddress;
 //        SCSymbol functionName;
 //        SCVec args;
-//        AuthorizedInvocation subInvocations<>;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -23678,81 +23592,187 @@ impl WriteXdr for HostFunctionArgs {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct AuthorizedInvocation {
-    pub contract_id: Hash,
+pub struct SorobanAuthorizedContractFunction {
+    pub contract_address: ScAddress,
     pub function_name: ScSymbol,
     pub args: ScVec,
-    pub sub_invocations: VecM<AuthorizedInvocation>,
 }
 
-impl ReadXdr for AuthorizedInvocation {
+impl ReadXdr for SorobanAuthorizedContractFunction {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            contract_id: Hash::read_xdr(r)?,
+            contract_address: ScAddress::read_xdr(r)?,
             function_name: ScSymbol::read_xdr(r)?,
             args: ScVec::read_xdr(r)?,
-            sub_invocations: VecM::<AuthorizedInvocation>::read_xdr(r)?,
         })
     }
 }
 
-impl WriteXdr for AuthorizedInvocation {
+impl WriteXdr for SorobanAuthorizedContractFunction {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.contract_id.write_xdr(w)?;
+        self.contract_address.write_xdr(w)?;
         self.function_name.write_xdr(w)?;
         self.args.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// SorobanAuthorizedFunction is an XDR Union defines as:
+//
+//   union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type)
+//    {
+//    case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN:
+//        SorobanAuthorizedContractFunction contractFn;
+//    case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN:
+//        CreateContractArgs createContractHostFn;
+//    };
+//
+// union with discriminant SorobanAuthorizedFunctionType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum SorobanAuthorizedFunction {
+    ContractFn(SorobanAuthorizedContractFunction),
+    CreateContractHostFn(CreateContractArgs),
+}
+
+impl SorobanAuthorizedFunction {
+    pub const VARIANTS: [SorobanAuthorizedFunctionType; 2] = [
+        SorobanAuthorizedFunctionType::ContractFn,
+        SorobanAuthorizedFunctionType::CreateContractHostFn,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["ContractFn", "CreateContractHostFn"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ContractFn(_) => "ContractFn",
+            Self::CreateContractHostFn(_) => "CreateContractHostFn",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> SorobanAuthorizedFunctionType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ContractFn(_) => SorobanAuthorizedFunctionType::ContractFn,
+            Self::CreateContractHostFn(_) => SorobanAuthorizedFunctionType::CreateContractHostFn,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [SorobanAuthorizedFunctionType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SorobanAuthorizedFunction {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {
+    #[must_use]
+    fn discriminant(&self) -> SorobanAuthorizedFunctionType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {
+    fn variants() -> slice::Iter<'static, SorobanAuthorizedFunctionType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {}
+
+impl ReadXdr for SorobanAuthorizedFunction {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: SorobanAuthorizedFunctionType =
+            <SorobanAuthorizedFunctionType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            SorobanAuthorizedFunctionType::ContractFn => {
+                Self::ContractFn(SorobanAuthorizedContractFunction::read_xdr(r)?)
+            }
+            SorobanAuthorizedFunctionType::CreateContractHostFn => {
+                Self::CreateContractHostFn(CreateContractArgs::read_xdr(r)?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for SorobanAuthorizedFunction {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ContractFn(v) => v.write_xdr(w)?,
+            Self::CreateContractHostFn(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// SorobanAuthorizedInvocation is an XDR Struct defines as:
+//
+//   struct SorobanAuthorizedInvocation
+//    {
+//        SorobanAuthorizedFunction function;
+//        SorobanAuthorizedInvocation subInvocations<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct SorobanAuthorizedInvocation {
+    pub function: SorobanAuthorizedFunction,
+    pub sub_invocations: VecM<SorobanAuthorizedInvocation>,
+}
+
+impl ReadXdr for SorobanAuthorizedInvocation {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            function: SorobanAuthorizedFunction::read_xdr(r)?,
+            sub_invocations: VecM::<SorobanAuthorizedInvocation>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for SorobanAuthorizedInvocation {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.function.write_xdr(w)?;
         self.sub_invocations.write_xdr(w)?;
         Ok(())
     }
 }
 
-// AddressWithNonce is an XDR Struct defines as:
+// SorobanAddressCredentials is an XDR Struct defines as:
 //
-//   struct AddressWithNonce
+//   struct SorobanAddressCredentials
 //    {
 //        SCAddress address;
 //        uint64 nonce;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct AddressWithNonce {
-    pub address: ScAddress,
-    pub nonce: u64,
-}
-
-impl ReadXdr for AddressWithNonce {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            address: ScAddress::read_xdr(r)?,
-            nonce: u64::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for AddressWithNonce {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.address.write_xdr(w)?;
-        self.nonce.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// ContractAuth is an XDR Struct defines as:
-//
-//   struct ContractAuth
-//    {
-//        AddressWithNonce* addressWithNonce; // not present for invoker
-//        AuthorizedInvocation rootInvocation;
 //        SCVec signatureArgs;
 //    };
 //
@@ -23763,42 +23783,247 @@ impl WriteXdr for AddressWithNonce {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct ContractAuth {
-    pub address_with_nonce: Option<AddressWithNonce>,
-    pub root_invocation: AuthorizedInvocation,
+pub struct SorobanAddressCredentials {
+    pub address: ScAddress,
+    pub nonce: u64,
     pub signature_args: ScVec,
 }
 
-impl ReadXdr for ContractAuth {
+impl ReadXdr for SorobanAddressCredentials {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            address_with_nonce: Option::<AddressWithNonce>::read_xdr(r)?,
-            root_invocation: AuthorizedInvocation::read_xdr(r)?,
+            address: ScAddress::read_xdr(r)?,
+            nonce: u64::read_xdr(r)?,
             signature_args: ScVec::read_xdr(r)?,
         })
     }
 }
 
-impl WriteXdr for ContractAuth {
+impl WriteXdr for SorobanAddressCredentials {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.address_with_nonce.write_xdr(w)?;
-        self.root_invocation.write_xdr(w)?;
+        self.address.write_xdr(w)?;
+        self.nonce.write_xdr(w)?;
         self.signature_args.write_xdr(w)?;
         Ok(())
     }
 }
 
-// HostFunction is an XDR Struct defines as:
+// SorobanCredentialsType is an XDR Enum defines as:
 //
-//   struct HostFunction {
-//        // Arguments of the function to call defined by the function
-//        // type.
-//        HostFunctionArgs args;
-//        // Per-address authorizations for this host fn
-//        // Currently only supported for INVOKE_CONTRACT function
-//        ContractAuth auth<>;
+//   enum SorobanCredentialsType
+//    {
+//        SOROBAN_CREDENTIALS_SOURCE_ACCOUNT = 0,
+//        SOROBAN_CREDENTIALS_ADDRESS = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum SorobanCredentialsType {
+    SourceAccount = 0,
+    Address = 1,
+}
+
+impl SorobanCredentialsType {
+    pub const VARIANTS: [SorobanCredentialsType; 2] = [
+        SorobanCredentialsType::SourceAccount,
+        SorobanCredentialsType::Address,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::SourceAccount => "SourceAccount",
+            Self::Address => "Address",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [SorobanCredentialsType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SorobanCredentialsType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<SorobanCredentialsType> for SorobanCredentialsType {
+    fn variants() -> slice::Iter<'static, SorobanCredentialsType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for SorobanCredentialsType {}
+
+impl fmt::Display for SorobanCredentialsType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for SorobanCredentialsType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => SorobanCredentialsType::SourceAccount,
+            1 => SorobanCredentialsType::Address,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<SorobanCredentialsType> for i32 {
+    #[must_use]
+    fn from(e: SorobanCredentialsType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for SorobanCredentialsType {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for SorobanCredentialsType {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
+// SorobanCredentials is an XDR Union defines as:
+//
+//   union SorobanCredentials switch (SorobanCredentialsType type)
+//    {
+//    case SOROBAN_CREDENTIALS_SOURCE_ACCOUNT:
+//        void;
+//    case SOROBAN_CREDENTIALS_ADDRESS:
+//        SorobanAddressCredentials address;
+//    };
+//
+// union with discriminant SorobanCredentialsType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum SorobanCredentials {
+    SourceAccount,
+    Address(SorobanAddressCredentials),
+}
+
+impl SorobanCredentials {
+    pub const VARIANTS: [SorobanCredentialsType; 2] = [
+        SorobanCredentialsType::SourceAccount,
+        SorobanCredentialsType::Address,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::SourceAccount => "SourceAccount",
+            Self::Address(_) => "Address",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> SorobanCredentialsType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SourceAccount => SorobanCredentialsType::SourceAccount,
+            Self::Address(_) => SorobanCredentialsType::Address,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [SorobanCredentialsType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SorobanCredentials {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<SorobanCredentialsType> for SorobanCredentials {
+    #[must_use]
+    fn discriminant(&self) -> SorobanCredentialsType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<SorobanCredentialsType> for SorobanCredentials {
+    fn variants() -> slice::Iter<'static, SorobanCredentialsType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<SorobanCredentialsType> for SorobanCredentials {}
+
+impl ReadXdr for SorobanCredentials {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let dv: SorobanCredentialsType = <SorobanCredentialsType as ReadXdr>::read_xdr(r)?;
+        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+        let v = match dv {
+            SorobanCredentialsType::SourceAccount => Self::SourceAccount,
+            SorobanCredentialsType::Address => {
+                Self::Address(SorobanAddressCredentials::read_xdr(r)?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(v)
+    }
+}
+
+impl WriteXdr for SorobanCredentials {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.discriminant().write_xdr(w)?;
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SourceAccount => ().write_xdr(w)?,
+            Self::Address(v) => v.write_xdr(w)?,
+        };
+        Ok(())
+    }
+}
+
+// SorobanAuthorizationEntry is an XDR Struct defines as:
+//
+//   struct SorobanAuthorizationEntry
+//    {
+//        SorobanCredentials credentials;
+//        SorobanAuthorizedInvocation rootInvocation;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -23808,26 +24033,26 @@ impl WriteXdr for ContractAuth {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct HostFunction {
-    pub args: HostFunctionArgs,
-    pub auth: VecM<ContractAuth>,
+pub struct SorobanAuthorizationEntry {
+    pub credentials: SorobanCredentials,
+    pub root_invocation: SorobanAuthorizedInvocation,
 }
 
-impl ReadXdr for HostFunction {
+impl ReadXdr for SorobanAuthorizationEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            args: HostFunctionArgs::read_xdr(r)?,
-            auth: VecM::<ContractAuth>::read_xdr(r)?,
+            credentials: SorobanCredentials::read_xdr(r)?,
+            root_invocation: SorobanAuthorizedInvocation::read_xdr(r)?,
         })
     }
 }
 
-impl WriteXdr for HostFunction {
+impl WriteXdr for SorobanAuthorizationEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.args.write_xdr(w)?;
-        self.auth.write_xdr(w)?;
+        self.credentials.write_xdr(w)?;
+        self.root_invocation.write_xdr(w)?;
         Ok(())
     }
 }
@@ -23836,11 +24061,10 @@ impl WriteXdr for HostFunction {
 //
 //   struct InvokeHostFunctionOp
 //    {
-//        // The host functions to invoke. The functions will be executed
-//        // in the same fashion as operations: either all functions will
-//        // be successfully applied or all fail if at least one of them
-//        // fails.
-//        HostFunction functions<MAX_OPS_PER_TX>;
+//        // Host function to invoke.
+//        HostFunction hostFunction;
+//        // Per-address authorizations for this host function.
+//        SorobanAuthorizationEntry auth<>;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -23851,14 +24075,16 @@ impl WriteXdr for HostFunction {
     serde(rename_all = "snake_case")
 )]
 pub struct InvokeHostFunctionOp {
-    pub functions: VecM<HostFunction, 100>,
+    pub host_function: HostFunction,
+    pub auth: VecM<SorobanAuthorizationEntry>,
 }
 
 impl ReadXdr for InvokeHostFunctionOp {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            functions: VecM::<HostFunction, 100>::read_xdr(r)?,
+            host_function: HostFunction::read_xdr(r)?,
+            auth: VecM::<SorobanAuthorizationEntry>::read_xdr(r)?,
         })
     }
 }
@@ -23866,7 +24092,8 @@ impl ReadXdr for InvokeHostFunctionOp {
 impl WriteXdr for InvokeHostFunctionOp {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.functions.write_xdr(w)?;
+        self.host_function.write_xdr(w)?;
+        self.auth.write_xdr(w)?;
         Ok(())
     }
 }
@@ -24401,56 +24628,12 @@ impl WriteXdr for HashIdPreimageRevokeId {
     }
 }
 
-// HashIdPreimageEd25519ContractId is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            Hash networkID;
-//            uint256 ed25519;
-//            uint256 salt;
-//        }
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct HashIdPreimageEd25519ContractId {
-    pub network_id: Hash,
-    pub ed25519: Uint256,
-    pub salt: Uint256,
-}
-
-impl ReadXdr for HashIdPreimageEd25519ContractId {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            network_id: Hash::read_xdr(r)?,
-            ed25519: Uint256::read_xdr(r)?,
-            salt: Uint256::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for HashIdPreimageEd25519ContractId {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.network_id.write_xdr(w)?;
-        self.ed25519.write_xdr(w)?;
-        self.salt.write_xdr(w)?;
-        Ok(())
-    }
-}
-
 // HashIdPreimageContractId is an XDR NestedStruct defines as:
 //
 //   struct
 //        {
 //            Hash networkID;
-//            Hash contractID;
-//            uint256 salt;
+//            ContractIDPreimage contractIDPreimage;
 //        }
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -24462,8 +24645,7 @@ impl WriteXdr for HashIdPreimageEd25519ContractId {
 )]
 pub struct HashIdPreimageContractId {
     pub network_id: Hash,
-    pub contract_id: Hash,
-    pub salt: Uint256,
+    pub contract_id_preimage: ContractIdPreimage,
 }
 
 impl ReadXdr for HashIdPreimageContractId {
@@ -24471,8 +24653,7 @@ impl ReadXdr for HashIdPreimageContractId {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             network_id: Hash::read_xdr(r)?,
-            contract_id: Hash::read_xdr(r)?,
-            salt: Uint256::read_xdr(r)?,
+            contract_id_preimage: ContractIdPreimage::read_xdr(r)?,
         })
     }
 }
@@ -24481,144 +24662,18 @@ impl WriteXdr for HashIdPreimageContractId {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.network_id.write_xdr(w)?;
-        self.contract_id.write_xdr(w)?;
-        self.salt.write_xdr(w)?;
+        self.contract_id_preimage.write_xdr(w)?;
         Ok(())
     }
 }
 
-// HashIdPreimageFromAsset is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            Hash networkID;
-//            Asset asset;
-//        }
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct HashIdPreimageFromAsset {
-    pub network_id: Hash,
-    pub asset: Asset,
-}
-
-impl ReadXdr for HashIdPreimageFromAsset {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            network_id: Hash::read_xdr(r)?,
-            asset: Asset::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for HashIdPreimageFromAsset {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.network_id.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// HashIdPreimageSourceAccountContractId is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            Hash networkID;
-//            AccountID sourceAccount;
-//            uint256 salt;
-//        }
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct HashIdPreimageSourceAccountContractId {
-    pub network_id: Hash,
-    pub source_account: AccountId,
-    pub salt: Uint256,
-}
-
-impl ReadXdr for HashIdPreimageSourceAccountContractId {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            network_id: Hash::read_xdr(r)?,
-            source_account: AccountId::read_xdr(r)?,
-            salt: Uint256::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for HashIdPreimageSourceAccountContractId {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.network_id.write_xdr(w)?;
-        self.source_account.write_xdr(w)?;
-        self.salt.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// HashIdPreimageCreateContractArgs is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            Hash networkID;
-//            SCContractExecutable executable;
-//            uint256 salt;
-//        }
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct HashIdPreimageCreateContractArgs {
-    pub network_id: Hash,
-    pub executable: ScContractExecutable,
-    pub salt: Uint256,
-}
-
-impl ReadXdr for HashIdPreimageCreateContractArgs {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            network_id: Hash::read_xdr(r)?,
-            executable: ScContractExecutable::read_xdr(r)?,
-            salt: Uint256::read_xdr(r)?,
-        })
-    }
-}
-
-impl WriteXdr for HashIdPreimageCreateContractArgs {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.network_id.write_xdr(w)?;
-        self.executable.write_xdr(w)?;
-        self.salt.write_xdr(w)?;
-        Ok(())
-    }
-}
-
-// HashIdPreimageContractAuth is an XDR NestedStruct defines as:
+// HashIdPreimageSorobanAuthorization is an XDR NestedStruct defines as:
 //
 //   struct
 //        {
 //            Hash networkID;
 //            uint64 nonce;
-//            AuthorizedInvocation invocation;
+//            SorobanAuthorizedInvocation invocation;
 //        }
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -24628,24 +24683,24 @@ impl WriteXdr for HashIdPreimageCreateContractArgs {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct HashIdPreimageContractAuth {
+pub struct HashIdPreimageSorobanAuthorization {
     pub network_id: Hash,
     pub nonce: u64,
-    pub invocation: AuthorizedInvocation,
+    pub invocation: SorobanAuthorizedInvocation,
 }
 
-impl ReadXdr for HashIdPreimageContractAuth {
+impl ReadXdr for HashIdPreimageSorobanAuthorization {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             network_id: Hash::read_xdr(r)?,
             nonce: u64::read_xdr(r)?,
-            invocation: AuthorizedInvocation::read_xdr(r)?,
+            invocation: SorobanAuthorizedInvocation::read_xdr(r)?,
         })
     }
 }
 
-impl WriteXdr for HashIdPreimageContractAuth {
+impl WriteXdr for HashIdPreimageSorobanAuthorization {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.network_id.write_xdr(w)?;
@@ -24675,47 +24730,19 @@ impl WriteXdr for HashIdPreimageContractAuth {
 //            PoolID liquidityPoolID;
 //            Asset asset;
 //        } revokeID;
-//    case ENVELOPE_TYPE_CONTRACT_ID_FROM_ED25519:
+//    case ENVELOPE_TYPE_CONTRACT_ID:
 //        struct
 //        {
 //            Hash networkID;
-//            uint256 ed25519;
-//            uint256 salt;
-//        } ed25519ContractID;
-//    case ENVELOPE_TYPE_CONTRACT_ID_FROM_CONTRACT:
-//        struct
-//        {
-//            Hash networkID;
-//            Hash contractID;
-//            uint256 salt;
+//            ContractIDPreimage contractIDPreimage;
 //        } contractID;
-//    case ENVELOPE_TYPE_CONTRACT_ID_FROM_ASSET:
-//        struct
-//        {
-//            Hash networkID;
-//            Asset asset;
-//        } fromAsset;
-//    case ENVELOPE_TYPE_CONTRACT_ID_FROM_SOURCE_ACCOUNT:
-//        struct
-//        {
-//            Hash networkID;
-//            AccountID sourceAccount;
-//            uint256 salt;
-//        } sourceAccountContractID;
-//    case ENVELOPE_TYPE_CREATE_CONTRACT_ARGS:
-//        struct
-//        {
-//            Hash networkID;
-//            SCContractExecutable executable;
-//            uint256 salt;
-//        } createContractArgs;
-//    case ENVELOPE_TYPE_CONTRACT_AUTH:
+//    case ENVELOPE_TYPE_SOROBAN_AUTHORIZATION:
 //        struct
 //        {
 //            Hash networkID;
 //            uint64 nonce;
-//            AuthorizedInvocation invocation;
-//        } contractAuth;
+//            SorobanAuthorizedInvocation invocation;
+//        } sorobanAuthorization;
 //    };
 //
 // union with discriminant EnvelopeType
@@ -24730,34 +24757,22 @@ impl WriteXdr for HashIdPreimageContractAuth {
 pub enum HashIdPreimage {
     OpId(HashIdPreimageOperationId),
     PoolRevokeOpId(HashIdPreimageRevokeId),
-    ContractIdFromEd25519(HashIdPreimageEd25519ContractId),
-    ContractIdFromContract(HashIdPreimageContractId),
-    ContractIdFromAsset(HashIdPreimageFromAsset),
-    ContractIdFromSourceAccount(HashIdPreimageSourceAccountContractId),
-    CreateContractArgs(HashIdPreimageCreateContractArgs),
-    ContractAuth(HashIdPreimageContractAuth),
+    ContractId(HashIdPreimageContractId),
+    SorobanAuthorization(HashIdPreimageSorobanAuthorization),
 }
 
 impl HashIdPreimage {
-    pub const VARIANTS: [EnvelopeType; 8] = [
+    pub const VARIANTS: [EnvelopeType; 4] = [
         EnvelopeType::OpId,
         EnvelopeType::PoolRevokeOpId,
-        EnvelopeType::ContractIdFromEd25519,
-        EnvelopeType::ContractIdFromContract,
-        EnvelopeType::ContractIdFromAsset,
-        EnvelopeType::ContractIdFromSourceAccount,
-        EnvelopeType::CreateContractArgs,
-        EnvelopeType::ContractAuth,
+        EnvelopeType::ContractId,
+        EnvelopeType::SorobanAuthorization,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: [&'static str; 4] = [
         "OpId",
         "PoolRevokeOpId",
-        "ContractIdFromEd25519",
-        "ContractIdFromContract",
-        "ContractIdFromAsset",
-        "ContractIdFromSourceAccount",
-        "CreateContractArgs",
-        "ContractAuth",
+        "ContractId",
+        "SorobanAuthorization",
     ];
 
     #[must_use]
@@ -24765,12 +24780,8 @@ impl HashIdPreimage {
         match self {
             Self::OpId(_) => "OpId",
             Self::PoolRevokeOpId(_) => "PoolRevokeOpId",
-            Self::ContractIdFromEd25519(_) => "ContractIdFromEd25519",
-            Self::ContractIdFromContract(_) => "ContractIdFromContract",
-            Self::ContractIdFromAsset(_) => "ContractIdFromAsset",
-            Self::ContractIdFromSourceAccount(_) => "ContractIdFromSourceAccount",
-            Self::CreateContractArgs(_) => "CreateContractArgs",
-            Self::ContractAuth(_) => "ContractAuth",
+            Self::ContractId(_) => "ContractId",
+            Self::SorobanAuthorization(_) => "SorobanAuthorization",
         }
     }
 
@@ -24780,17 +24791,13 @@ impl HashIdPreimage {
         match self {
             Self::OpId(_) => EnvelopeType::OpId,
             Self::PoolRevokeOpId(_) => EnvelopeType::PoolRevokeOpId,
-            Self::ContractIdFromEd25519(_) => EnvelopeType::ContractIdFromEd25519,
-            Self::ContractIdFromContract(_) => EnvelopeType::ContractIdFromContract,
-            Self::ContractIdFromAsset(_) => EnvelopeType::ContractIdFromAsset,
-            Self::ContractIdFromSourceAccount(_) => EnvelopeType::ContractIdFromSourceAccount,
-            Self::CreateContractArgs(_) => EnvelopeType::CreateContractArgs,
-            Self::ContractAuth(_) => EnvelopeType::ContractAuth,
+            Self::ContractId(_) => EnvelopeType::ContractId,
+            Self::SorobanAuthorization(_) => EnvelopeType::SorobanAuthorization,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 8] {
+    pub const fn variants() -> [EnvelopeType; 4] {
         Self::VARIANTS
     }
 }
@@ -24827,23 +24834,9 @@ impl ReadXdr for HashIdPreimage {
             EnvelopeType::PoolRevokeOpId => {
                 Self::PoolRevokeOpId(HashIdPreimageRevokeId::read_xdr(r)?)
             }
-            EnvelopeType::ContractIdFromEd25519 => {
-                Self::ContractIdFromEd25519(HashIdPreimageEd25519ContractId::read_xdr(r)?)
-            }
-            EnvelopeType::ContractIdFromContract => {
-                Self::ContractIdFromContract(HashIdPreimageContractId::read_xdr(r)?)
-            }
-            EnvelopeType::ContractIdFromAsset => {
-                Self::ContractIdFromAsset(HashIdPreimageFromAsset::read_xdr(r)?)
-            }
-            EnvelopeType::ContractIdFromSourceAccount => Self::ContractIdFromSourceAccount(
-                HashIdPreimageSourceAccountContractId::read_xdr(r)?,
-            ),
-            EnvelopeType::CreateContractArgs => {
-                Self::CreateContractArgs(HashIdPreimageCreateContractArgs::read_xdr(r)?)
-            }
-            EnvelopeType::ContractAuth => {
-                Self::ContractAuth(HashIdPreimageContractAuth::read_xdr(r)?)
+            EnvelopeType::ContractId => Self::ContractId(HashIdPreimageContractId::read_xdr(r)?),
+            EnvelopeType::SorobanAuthorization => {
+                Self::SorobanAuthorization(HashIdPreimageSorobanAuthorization::read_xdr(r)?)
             }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -24860,12 +24853,8 @@ impl WriteXdr for HashIdPreimage {
         match self {
             Self::OpId(v) => v.write_xdr(w)?,
             Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
-            Self::ContractIdFromEd25519(v) => v.write_xdr(w)?,
-            Self::ContractIdFromContract(v) => v.write_xdr(w)?,
-            Self::ContractIdFromAsset(v) => v.write_xdr(w)?,
-            Self::ContractIdFromSourceAccount(v) => v.write_xdr(w)?,
-            Self::CreateContractArgs(v) => v.write_xdr(w)?,
-            Self::ContractAuth(v) => v.write_xdr(w)?,
+            Self::ContractId(v) => v.write_xdr(w)?,
+            Self::SorobanAuthorization(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -37834,29 +37823,27 @@ pub enum TypeVariant {
     LiquidityPoolDepositOp,
     LiquidityPoolWithdrawOp,
     HostFunctionType,
-    ContractIdType,
-    ContractIdPublicKeyType,
-    UploadContractWasmArgs,
-    ContractId,
-    ContractIdFromEd25519PublicKey,
+    ContractIdPreimageType,
+    ContractIdPreimage,
+    ContractIdPreimageFromAddress,
     CreateContractArgs,
-    HostFunctionArgs,
-    AuthorizedInvocation,
-    AddressWithNonce,
-    ContractAuth,
     HostFunction,
+    SorobanAuthorizedFunctionType,
+    SorobanAuthorizedContractFunction,
+    SorobanAuthorizedFunction,
+    SorobanAuthorizedInvocation,
+    SorobanAddressCredentials,
+    SorobanCredentialsType,
+    SorobanCredentials,
+    SorobanAuthorizationEntry,
     InvokeHostFunctionOp,
     Operation,
     OperationBody,
     HashIdPreimage,
     HashIdPreimageOperationId,
     HashIdPreimageRevokeId,
-    HashIdPreimageEd25519ContractId,
     HashIdPreimageContractId,
-    HashIdPreimageFromAsset,
-    HashIdPreimageSourceAccountContractId,
-    HashIdPreimageCreateContractArgs,
-    HashIdPreimageContractAuth,
+    HashIdPreimageSorobanAuthorization,
     MemoType,
     Memo,
     TimeBounds,
@@ -37977,7 +37964,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 406] = [
+    pub const VARIANTS: [TypeVariant; 404] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38244,29 +38231,27 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolDepositOp,
         TypeVariant::LiquidityPoolWithdrawOp,
         TypeVariant::HostFunctionType,
-        TypeVariant::ContractIdType,
-        TypeVariant::ContractIdPublicKeyType,
-        TypeVariant::UploadContractWasmArgs,
-        TypeVariant::ContractId,
-        TypeVariant::ContractIdFromEd25519PublicKey,
+        TypeVariant::ContractIdPreimageType,
+        TypeVariant::ContractIdPreimage,
+        TypeVariant::ContractIdPreimageFromAddress,
         TypeVariant::CreateContractArgs,
-        TypeVariant::HostFunctionArgs,
-        TypeVariant::AuthorizedInvocation,
-        TypeVariant::AddressWithNonce,
-        TypeVariant::ContractAuth,
         TypeVariant::HostFunction,
+        TypeVariant::SorobanAuthorizedFunctionType,
+        TypeVariant::SorobanAuthorizedContractFunction,
+        TypeVariant::SorobanAuthorizedFunction,
+        TypeVariant::SorobanAuthorizedInvocation,
+        TypeVariant::SorobanAddressCredentials,
+        TypeVariant::SorobanCredentialsType,
+        TypeVariant::SorobanCredentials,
+        TypeVariant::SorobanAuthorizationEntry,
         TypeVariant::InvokeHostFunctionOp,
         TypeVariant::Operation,
         TypeVariant::OperationBody,
         TypeVariant::HashIdPreimage,
         TypeVariant::HashIdPreimageOperationId,
         TypeVariant::HashIdPreimageRevokeId,
-        TypeVariant::HashIdPreimageEd25519ContractId,
         TypeVariant::HashIdPreimageContractId,
-        TypeVariant::HashIdPreimageFromAsset,
-        TypeVariant::HashIdPreimageSourceAccountContractId,
-        TypeVariant::HashIdPreimageCreateContractArgs,
-        TypeVariant::HashIdPreimageContractAuth,
+        TypeVariant::HashIdPreimageSorobanAuthorization,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -38385,7 +38370,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 406] = [
+    pub const VARIANTS_STR: [&'static str; 404] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -38652,29 +38637,27 @@ impl TypeVariant {
         "LiquidityPoolDepositOp",
         "LiquidityPoolWithdrawOp",
         "HostFunctionType",
-        "ContractIdType",
-        "ContractIdPublicKeyType",
-        "UploadContractWasmArgs",
-        "ContractId",
-        "ContractIdFromEd25519PublicKey",
+        "ContractIdPreimageType",
+        "ContractIdPreimage",
+        "ContractIdPreimageFromAddress",
         "CreateContractArgs",
-        "HostFunctionArgs",
-        "AuthorizedInvocation",
-        "AddressWithNonce",
-        "ContractAuth",
         "HostFunction",
+        "SorobanAuthorizedFunctionType",
+        "SorobanAuthorizedContractFunction",
+        "SorobanAuthorizedFunction",
+        "SorobanAuthorizedInvocation",
+        "SorobanAddressCredentials",
+        "SorobanCredentialsType",
+        "SorobanCredentials",
+        "SorobanAuthorizationEntry",
         "InvokeHostFunctionOp",
         "Operation",
         "OperationBody",
         "HashIdPreimage",
         "HashIdPreimageOperationId",
         "HashIdPreimageRevokeId",
-        "HashIdPreimageEd25519ContractId",
         "HashIdPreimageContractId",
-        "HashIdPreimageFromAsset",
-        "HashIdPreimageSourceAccountContractId",
-        "HashIdPreimageCreateContractArgs",
-        "HashIdPreimageContractAuth",
+        "HashIdPreimageSorobanAuthorization",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -39066,29 +39049,27 @@ impl TypeVariant {
             Self::LiquidityPoolDepositOp => "LiquidityPoolDepositOp",
             Self::LiquidityPoolWithdrawOp => "LiquidityPoolWithdrawOp",
             Self::HostFunctionType => "HostFunctionType",
-            Self::ContractIdType => "ContractIdType",
-            Self::ContractIdPublicKeyType => "ContractIdPublicKeyType",
-            Self::UploadContractWasmArgs => "UploadContractWasmArgs",
-            Self::ContractId => "ContractId",
-            Self::ContractIdFromEd25519PublicKey => "ContractIdFromEd25519PublicKey",
+            Self::ContractIdPreimageType => "ContractIdPreimageType",
+            Self::ContractIdPreimage => "ContractIdPreimage",
+            Self::ContractIdPreimageFromAddress => "ContractIdPreimageFromAddress",
             Self::CreateContractArgs => "CreateContractArgs",
-            Self::HostFunctionArgs => "HostFunctionArgs",
-            Self::AuthorizedInvocation => "AuthorizedInvocation",
-            Self::AddressWithNonce => "AddressWithNonce",
-            Self::ContractAuth => "ContractAuth",
             Self::HostFunction => "HostFunction",
+            Self::SorobanAuthorizedFunctionType => "SorobanAuthorizedFunctionType",
+            Self::SorobanAuthorizedContractFunction => "SorobanAuthorizedContractFunction",
+            Self::SorobanAuthorizedFunction => "SorobanAuthorizedFunction",
+            Self::SorobanAuthorizedInvocation => "SorobanAuthorizedInvocation",
+            Self::SorobanAddressCredentials => "SorobanAddressCredentials",
+            Self::SorobanCredentialsType => "SorobanCredentialsType",
+            Self::SorobanCredentials => "SorobanCredentials",
+            Self::SorobanAuthorizationEntry => "SorobanAuthorizationEntry",
             Self::InvokeHostFunctionOp => "InvokeHostFunctionOp",
             Self::Operation => "Operation",
             Self::OperationBody => "OperationBody",
             Self::HashIdPreimage => "HashIdPreimage",
             Self::HashIdPreimageOperationId => "HashIdPreimageOperationId",
             Self::HashIdPreimageRevokeId => "HashIdPreimageRevokeId",
-            Self::HashIdPreimageEd25519ContractId => "HashIdPreimageEd25519ContractId",
             Self::HashIdPreimageContractId => "HashIdPreimageContractId",
-            Self::HashIdPreimageFromAsset => "HashIdPreimageFromAsset",
-            Self::HashIdPreimageSourceAccountContractId => "HashIdPreimageSourceAccountContractId",
-            Self::HashIdPreimageCreateContractArgs => "HashIdPreimageCreateContractArgs",
-            Self::HashIdPreimageContractAuth => "HashIdPreimageContractAuth",
+            Self::HashIdPreimageSorobanAuthorization => "HashIdPreimageSorobanAuthorization",
             Self::MemoType => "MemoType",
             Self::Memo => "Memo",
             Self::TimeBounds => "TimeBounds",
@@ -39215,7 +39196,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 406] {
+    pub const fn variants() -> [TypeVariant; 404] {
         Self::VARIANTS
     }
 }
@@ -39508,31 +39489,27 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolDepositOp" => Ok(Self::LiquidityPoolDepositOp),
             "LiquidityPoolWithdrawOp" => Ok(Self::LiquidityPoolWithdrawOp),
             "HostFunctionType" => Ok(Self::HostFunctionType),
-            "ContractIdType" => Ok(Self::ContractIdType),
-            "ContractIdPublicKeyType" => Ok(Self::ContractIdPublicKeyType),
-            "UploadContractWasmArgs" => Ok(Self::UploadContractWasmArgs),
-            "ContractId" => Ok(Self::ContractId),
-            "ContractIdFromEd25519PublicKey" => Ok(Self::ContractIdFromEd25519PublicKey),
+            "ContractIdPreimageType" => Ok(Self::ContractIdPreimageType),
+            "ContractIdPreimage" => Ok(Self::ContractIdPreimage),
+            "ContractIdPreimageFromAddress" => Ok(Self::ContractIdPreimageFromAddress),
             "CreateContractArgs" => Ok(Self::CreateContractArgs),
-            "HostFunctionArgs" => Ok(Self::HostFunctionArgs),
-            "AuthorizedInvocation" => Ok(Self::AuthorizedInvocation),
-            "AddressWithNonce" => Ok(Self::AddressWithNonce),
-            "ContractAuth" => Ok(Self::ContractAuth),
             "HostFunction" => Ok(Self::HostFunction),
+            "SorobanAuthorizedFunctionType" => Ok(Self::SorobanAuthorizedFunctionType),
+            "SorobanAuthorizedContractFunction" => Ok(Self::SorobanAuthorizedContractFunction),
+            "SorobanAuthorizedFunction" => Ok(Self::SorobanAuthorizedFunction),
+            "SorobanAuthorizedInvocation" => Ok(Self::SorobanAuthorizedInvocation),
+            "SorobanAddressCredentials" => Ok(Self::SorobanAddressCredentials),
+            "SorobanCredentialsType" => Ok(Self::SorobanCredentialsType),
+            "SorobanCredentials" => Ok(Self::SorobanCredentials),
+            "SorobanAuthorizationEntry" => Ok(Self::SorobanAuthorizationEntry),
             "InvokeHostFunctionOp" => Ok(Self::InvokeHostFunctionOp),
             "Operation" => Ok(Self::Operation),
             "OperationBody" => Ok(Self::OperationBody),
             "HashIdPreimage" => Ok(Self::HashIdPreimage),
             "HashIdPreimageOperationId" => Ok(Self::HashIdPreimageOperationId),
             "HashIdPreimageRevokeId" => Ok(Self::HashIdPreimageRevokeId),
-            "HashIdPreimageEd25519ContractId" => Ok(Self::HashIdPreimageEd25519ContractId),
             "HashIdPreimageContractId" => Ok(Self::HashIdPreimageContractId),
-            "HashIdPreimageFromAsset" => Ok(Self::HashIdPreimageFromAsset),
-            "HashIdPreimageSourceAccountContractId" => {
-                Ok(Self::HashIdPreimageSourceAccountContractId)
-            }
-            "HashIdPreimageCreateContractArgs" => Ok(Self::HashIdPreimageCreateContractArgs),
-            "HashIdPreimageContractAuth" => Ok(Self::HashIdPreimageContractAuth),
+            "HashIdPreimageSorobanAuthorization" => Ok(Self::HashIdPreimageSorobanAuthorization),
             "MemoType" => Ok(Self::MemoType),
             "Memo" => Ok(Self::Memo),
             "TimeBounds" => Ok(Self::TimeBounds),
@@ -39937,29 +39914,27 @@ pub enum Type {
     LiquidityPoolDepositOp(Box<LiquidityPoolDepositOp>),
     LiquidityPoolWithdrawOp(Box<LiquidityPoolWithdrawOp>),
     HostFunctionType(Box<HostFunctionType>),
-    ContractIdType(Box<ContractIdType>),
-    ContractIdPublicKeyType(Box<ContractIdPublicKeyType>),
-    UploadContractWasmArgs(Box<UploadContractWasmArgs>),
-    ContractId(Box<ContractId>),
-    ContractIdFromEd25519PublicKey(Box<ContractIdFromEd25519PublicKey>),
+    ContractIdPreimageType(Box<ContractIdPreimageType>),
+    ContractIdPreimage(Box<ContractIdPreimage>),
+    ContractIdPreimageFromAddress(Box<ContractIdPreimageFromAddress>),
     CreateContractArgs(Box<CreateContractArgs>),
-    HostFunctionArgs(Box<HostFunctionArgs>),
-    AuthorizedInvocation(Box<AuthorizedInvocation>),
-    AddressWithNonce(Box<AddressWithNonce>),
-    ContractAuth(Box<ContractAuth>),
     HostFunction(Box<HostFunction>),
+    SorobanAuthorizedFunctionType(Box<SorobanAuthorizedFunctionType>),
+    SorobanAuthorizedContractFunction(Box<SorobanAuthorizedContractFunction>),
+    SorobanAuthorizedFunction(Box<SorobanAuthorizedFunction>),
+    SorobanAuthorizedInvocation(Box<SorobanAuthorizedInvocation>),
+    SorobanAddressCredentials(Box<SorobanAddressCredentials>),
+    SorobanCredentialsType(Box<SorobanCredentialsType>),
+    SorobanCredentials(Box<SorobanCredentials>),
+    SorobanAuthorizationEntry(Box<SorobanAuthorizationEntry>),
     InvokeHostFunctionOp(Box<InvokeHostFunctionOp>),
     Operation(Box<Operation>),
     OperationBody(Box<OperationBody>),
     HashIdPreimage(Box<HashIdPreimage>),
     HashIdPreimageOperationId(Box<HashIdPreimageOperationId>),
     HashIdPreimageRevokeId(Box<HashIdPreimageRevokeId>),
-    HashIdPreimageEd25519ContractId(Box<HashIdPreimageEd25519ContractId>),
     HashIdPreimageContractId(Box<HashIdPreimageContractId>),
-    HashIdPreimageFromAsset(Box<HashIdPreimageFromAsset>),
-    HashIdPreimageSourceAccountContractId(Box<HashIdPreimageSourceAccountContractId>),
-    HashIdPreimageCreateContractArgs(Box<HashIdPreimageCreateContractArgs>),
-    HashIdPreimageContractAuth(Box<HashIdPreimageContractAuth>),
+    HashIdPreimageSorobanAuthorization(Box<HashIdPreimageSorobanAuthorization>),
     MemoType(Box<MemoType>),
     Memo(Box<Memo>),
     TimeBounds(Box<TimeBounds>),
@@ -40080,7 +40055,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 406] = [
+    pub const VARIANTS: [TypeVariant; 404] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -40347,29 +40322,27 @@ impl Type {
         TypeVariant::LiquidityPoolDepositOp,
         TypeVariant::LiquidityPoolWithdrawOp,
         TypeVariant::HostFunctionType,
-        TypeVariant::ContractIdType,
-        TypeVariant::ContractIdPublicKeyType,
-        TypeVariant::UploadContractWasmArgs,
-        TypeVariant::ContractId,
-        TypeVariant::ContractIdFromEd25519PublicKey,
+        TypeVariant::ContractIdPreimageType,
+        TypeVariant::ContractIdPreimage,
+        TypeVariant::ContractIdPreimageFromAddress,
         TypeVariant::CreateContractArgs,
-        TypeVariant::HostFunctionArgs,
-        TypeVariant::AuthorizedInvocation,
-        TypeVariant::AddressWithNonce,
-        TypeVariant::ContractAuth,
         TypeVariant::HostFunction,
+        TypeVariant::SorobanAuthorizedFunctionType,
+        TypeVariant::SorobanAuthorizedContractFunction,
+        TypeVariant::SorobanAuthorizedFunction,
+        TypeVariant::SorobanAuthorizedInvocation,
+        TypeVariant::SorobanAddressCredentials,
+        TypeVariant::SorobanCredentialsType,
+        TypeVariant::SorobanCredentials,
+        TypeVariant::SorobanAuthorizationEntry,
         TypeVariant::InvokeHostFunctionOp,
         TypeVariant::Operation,
         TypeVariant::OperationBody,
         TypeVariant::HashIdPreimage,
         TypeVariant::HashIdPreimageOperationId,
         TypeVariant::HashIdPreimageRevokeId,
-        TypeVariant::HashIdPreimageEd25519ContractId,
         TypeVariant::HashIdPreimageContractId,
-        TypeVariant::HashIdPreimageFromAsset,
-        TypeVariant::HashIdPreimageSourceAccountContractId,
-        TypeVariant::HashIdPreimageCreateContractArgs,
-        TypeVariant::HashIdPreimageContractAuth,
+        TypeVariant::HashIdPreimageSorobanAuthorization,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -40488,7 +40461,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 406] = [
+    pub const VARIANTS_STR: [&'static str; 404] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -40755,29 +40728,27 @@ impl Type {
         "LiquidityPoolDepositOp",
         "LiquidityPoolWithdrawOp",
         "HostFunctionType",
-        "ContractIdType",
-        "ContractIdPublicKeyType",
-        "UploadContractWasmArgs",
-        "ContractId",
-        "ContractIdFromEd25519PublicKey",
+        "ContractIdPreimageType",
+        "ContractIdPreimage",
+        "ContractIdPreimageFromAddress",
         "CreateContractArgs",
-        "HostFunctionArgs",
-        "AuthorizedInvocation",
-        "AddressWithNonce",
-        "ContractAuth",
         "HostFunction",
+        "SorobanAuthorizedFunctionType",
+        "SorobanAuthorizedContractFunction",
+        "SorobanAuthorizedFunction",
+        "SorobanAuthorizedInvocation",
+        "SorobanAddressCredentials",
+        "SorobanCredentialsType",
+        "SorobanCredentials",
+        "SorobanAuthorizationEntry",
         "InvokeHostFunctionOp",
         "Operation",
         "OperationBody",
         "HashIdPreimage",
         "HashIdPreimageOperationId",
         "HashIdPreimageRevokeId",
-        "HashIdPreimageEd25519ContractId",
         "HashIdPreimageContractId",
-        "HashIdPreimageFromAsset",
-        "HashIdPreimageSourceAccountContractId",
-        "HashIdPreimageCreateContractArgs",
-        "HashIdPreimageContractAuth",
+        "HashIdPreimageSorobanAuthorization",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -41603,39 +41574,47 @@ impl Type {
             TypeVariant::HostFunctionType => Ok(Self::HostFunctionType(Box::new(
                 HostFunctionType::read_xdr(r)?,
             ))),
-            TypeVariant::ContractIdType => {
-                Ok(Self::ContractIdType(Box::new(ContractIdType::read_xdr(r)?)))
-            }
-            TypeVariant::ContractIdPublicKeyType => Ok(Self::ContractIdPublicKeyType(Box::new(
-                ContractIdPublicKeyType::read_xdr(r)?,
+            TypeVariant::ContractIdPreimageType => Ok(Self::ContractIdPreimageType(Box::new(
+                ContractIdPreimageType::read_xdr(r)?,
             ))),
-            TypeVariant::UploadContractWasmArgs => Ok(Self::UploadContractWasmArgs(Box::new(
-                UploadContractWasmArgs::read_xdr(r)?,
+            TypeVariant::ContractIdPreimage => Ok(Self::ContractIdPreimage(Box::new(
+                ContractIdPreimage::read_xdr(r)?,
             ))),
-            TypeVariant::ContractId => Ok(Self::ContractId(Box::new(ContractId::read_xdr(r)?))),
-            TypeVariant::ContractIdFromEd25519PublicKey => {
-                Ok(Self::ContractIdFromEd25519PublicKey(Box::new(
-                    ContractIdFromEd25519PublicKey::read_xdr(r)?,
-                )))
-            }
+            TypeVariant::ContractIdPreimageFromAddress => Ok(Self::ContractIdPreimageFromAddress(
+                Box::new(ContractIdPreimageFromAddress::read_xdr(r)?),
+            )),
             TypeVariant::CreateContractArgs => Ok(Self::CreateContractArgs(Box::new(
                 CreateContractArgs::read_xdr(r)?,
             ))),
-            TypeVariant::HostFunctionArgs => Ok(Self::HostFunctionArgs(Box::new(
-                HostFunctionArgs::read_xdr(r)?,
-            ))),
-            TypeVariant::AuthorizedInvocation => Ok(Self::AuthorizedInvocation(Box::new(
-                AuthorizedInvocation::read_xdr(r)?,
-            ))),
-            TypeVariant::AddressWithNonce => Ok(Self::AddressWithNonce(Box::new(
-                AddressWithNonce::read_xdr(r)?,
-            ))),
-            TypeVariant::ContractAuth => {
-                Ok(Self::ContractAuth(Box::new(ContractAuth::read_xdr(r)?)))
-            }
             TypeVariant::HostFunction => {
                 Ok(Self::HostFunction(Box::new(HostFunction::read_xdr(r)?)))
             }
+            TypeVariant::SorobanAuthorizedFunctionType => Ok(Self::SorobanAuthorizedFunctionType(
+                Box::new(SorobanAuthorizedFunctionType::read_xdr(r)?),
+            )),
+            TypeVariant::SorobanAuthorizedContractFunction => {
+                Ok(Self::SorobanAuthorizedContractFunction(Box::new(
+                    SorobanAuthorizedContractFunction::read_xdr(r)?,
+                )))
+            }
+            TypeVariant::SorobanAuthorizedFunction => Ok(Self::SorobanAuthorizedFunction(
+                Box::new(SorobanAuthorizedFunction::read_xdr(r)?),
+            )),
+            TypeVariant::SorobanAuthorizedInvocation => Ok(Self::SorobanAuthorizedInvocation(
+                Box::new(SorobanAuthorizedInvocation::read_xdr(r)?),
+            )),
+            TypeVariant::SorobanAddressCredentials => Ok(Self::SorobanAddressCredentials(
+                Box::new(SorobanAddressCredentials::read_xdr(r)?),
+            )),
+            TypeVariant::SorobanCredentialsType => Ok(Self::SorobanCredentialsType(Box::new(
+                SorobanCredentialsType::read_xdr(r)?,
+            ))),
+            TypeVariant::SorobanCredentials => Ok(Self::SorobanCredentials(Box::new(
+                SorobanCredentials::read_xdr(r)?,
+            ))),
+            TypeVariant::SorobanAuthorizationEntry => Ok(Self::SorobanAuthorizationEntry(
+                Box::new(SorobanAuthorizationEntry::read_xdr(r)?),
+            )),
             TypeVariant::InvokeHostFunctionOp => Ok(Self::InvokeHostFunctionOp(Box::new(
                 InvokeHostFunctionOp::read_xdr(r)?,
             ))),
@@ -41652,30 +41631,14 @@ impl Type {
             TypeVariant::HashIdPreimageRevokeId => Ok(Self::HashIdPreimageRevokeId(Box::new(
                 HashIdPreimageRevokeId::read_xdr(r)?,
             ))),
-            TypeVariant::HashIdPreimageEd25519ContractId => {
-                Ok(Self::HashIdPreimageEd25519ContractId(Box::new(
-                    HashIdPreimageEd25519ContractId::read_xdr(r)?,
-                )))
-            }
             TypeVariant::HashIdPreimageContractId => Ok(Self::HashIdPreimageContractId(Box::new(
                 HashIdPreimageContractId::read_xdr(r)?,
             ))),
-            TypeVariant::HashIdPreimageFromAsset => Ok(Self::HashIdPreimageFromAsset(Box::new(
-                HashIdPreimageFromAsset::read_xdr(r)?,
-            ))),
-            TypeVariant::HashIdPreimageSourceAccountContractId => {
-                Ok(Self::HashIdPreimageSourceAccountContractId(Box::new(
-                    HashIdPreimageSourceAccountContractId::read_xdr(r)?,
+            TypeVariant::HashIdPreimageSorobanAuthorization => {
+                Ok(Self::HashIdPreimageSorobanAuthorization(Box::new(
+                    HashIdPreimageSorobanAuthorization::read_xdr(r)?,
                 )))
             }
-            TypeVariant::HashIdPreimageCreateContractArgs => {
-                Ok(Self::HashIdPreimageCreateContractArgs(Box::new(
-                    HashIdPreimageCreateContractArgs::read_xdr(r)?,
-                )))
-            }
-            TypeVariant::HashIdPreimageContractAuth => Ok(Self::HashIdPreimageContractAuth(
-                Box::new(HashIdPreimageContractAuth::read_xdr(r)?),
-            )),
             TypeVariant::MemoType => Ok(Self::MemoType(Box::new(MemoType::read_xdr(r)?))),
             TypeVariant::Memo => Ok(Self::Memo(Box::new(Memo::read_xdr(r)?))),
             TypeVariant::TimeBounds => Ok(Self::TimeBounds(Box::new(TimeBounds::read_xdr(r)?))),
@@ -43101,49 +43064,57 @@ impl Type {
                 ReadXdrIter::<_, HostFunctionType>::new(r)
                     .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t)))),
             ),
-            TypeVariant::ContractIdType => Box::new(
-                ReadXdrIter::<_, ContractIdType>::new(r)
-                    .map(|r| r.map(|t| Self::ContractIdType(Box::new(t)))),
+            TypeVariant::ContractIdPreimageType => Box::new(
+                ReadXdrIter::<_, ContractIdPreimageType>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdPreimageType(Box::new(t)))),
             ),
-            TypeVariant::ContractIdPublicKeyType => Box::new(
-                ReadXdrIter::<_, ContractIdPublicKeyType>::new(r)
-                    .map(|r| r.map(|t| Self::ContractIdPublicKeyType(Box::new(t)))),
+            TypeVariant::ContractIdPreimage => Box::new(
+                ReadXdrIter::<_, ContractIdPreimage>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdPreimage(Box::new(t)))),
             ),
-            TypeVariant::UploadContractWasmArgs => Box::new(
-                ReadXdrIter::<_, UploadContractWasmArgs>::new(r)
-                    .map(|r| r.map(|t| Self::UploadContractWasmArgs(Box::new(t)))),
-            ),
-            TypeVariant::ContractId => Box::new(
-                ReadXdrIter::<_, ContractId>::new(r)
-                    .map(|r| r.map(|t| Self::ContractId(Box::new(t)))),
-            ),
-            TypeVariant::ContractIdFromEd25519PublicKey => Box::new(
-                ReadXdrIter::<_, ContractIdFromEd25519PublicKey>::new(r)
-                    .map(|r| r.map(|t| Self::ContractIdFromEd25519PublicKey(Box::new(t)))),
+            TypeVariant::ContractIdPreimageFromAddress => Box::new(
+                ReadXdrIter::<_, ContractIdPreimageFromAddress>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdPreimageFromAddress(Box::new(t)))),
             ),
             TypeVariant::CreateContractArgs => Box::new(
                 ReadXdrIter::<_, CreateContractArgs>::new(r)
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
             ),
-            TypeVariant::HostFunctionArgs => Box::new(
-                ReadXdrIter::<_, HostFunctionArgs>::new(r)
-                    .map(|r| r.map(|t| Self::HostFunctionArgs(Box::new(t)))),
-            ),
-            TypeVariant::AuthorizedInvocation => Box::new(
-                ReadXdrIter::<_, AuthorizedInvocation>::new(r)
-                    .map(|r| r.map(|t| Self::AuthorizedInvocation(Box::new(t)))),
-            ),
-            TypeVariant::AddressWithNonce => Box::new(
-                ReadXdrIter::<_, AddressWithNonce>::new(r)
-                    .map(|r| r.map(|t| Self::AddressWithNonce(Box::new(t)))),
-            ),
-            TypeVariant::ContractAuth => Box::new(
-                ReadXdrIter::<_, ContractAuth>::new(r)
-                    .map(|r| r.map(|t| Self::ContractAuth(Box::new(t)))),
-            ),
             TypeVariant::HostFunction => Box::new(
                 ReadXdrIter::<_, HostFunction>::new(r)
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunctionType => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedFunctionType>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedContractFunction => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedContractFunction>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedContractFunction(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunction => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedFunction>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedFunction(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedInvocation => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedInvocation>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedInvocation(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAddressCredentials => Box::new(
+                ReadXdrIter::<_, SorobanAddressCredentials>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
+            ),
+            TypeVariant::SorobanCredentialsType => Box::new(
+                ReadXdrIter::<_, SorobanCredentialsType>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
+            ),
+            TypeVariant::SorobanCredentials => Box::new(
+                ReadXdrIter::<_, SorobanCredentials>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanCredentials(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizationEntry => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizationEntry>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionOp>::new(r)
@@ -43169,29 +43140,13 @@ impl Type {
                 ReadXdrIter::<_, HashIdPreimageRevokeId>::new(r)
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
             ),
-            TypeVariant::HashIdPreimageEd25519ContractId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageEd25519ContractId>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageEd25519ContractId(Box::new(t)))),
-            ),
             TypeVariant::HashIdPreimageContractId => Box::new(
                 ReadXdrIter::<_, HashIdPreimageContractId>::new(r)
                     .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t)))),
             ),
-            TypeVariant::HashIdPreimageFromAsset => Box::new(
-                ReadXdrIter::<_, HashIdPreimageFromAsset>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageFromAsset(Box::new(t)))),
-            ),
-            TypeVariant::HashIdPreimageSourceAccountContractId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageSourceAccountContractId>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageSourceAccountContractId(Box::new(t)))),
-            ),
-            TypeVariant::HashIdPreimageCreateContractArgs => Box::new(
-                ReadXdrIter::<_, HashIdPreimageCreateContractArgs>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageCreateContractArgs(Box::new(t)))),
-            ),
-            TypeVariant::HashIdPreimageContractAuth => Box::new(
-                ReadXdrIter::<_, HashIdPreimageContractAuth>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageContractAuth(Box::new(t)))),
+            TypeVariant::HashIdPreimageSorobanAuthorization => Box::new(
+                ReadXdrIter::<_, HashIdPreimageSorobanAuthorization>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(r).map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
@@ -44726,49 +44681,57 @@ impl Type {
                 ReadXdrIter::<_, Frame<HostFunctionType>>::new(r)
                     .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t.0)))),
             ),
-            TypeVariant::ContractIdType => Box::new(
-                ReadXdrIter::<_, Frame<ContractIdType>>::new(r)
-                    .map(|r| r.map(|t| Self::ContractIdType(Box::new(t.0)))),
+            TypeVariant::ContractIdPreimageType => Box::new(
+                ReadXdrIter::<_, Frame<ContractIdPreimageType>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdPreimageType(Box::new(t.0)))),
             ),
-            TypeVariant::ContractIdPublicKeyType => Box::new(
-                ReadXdrIter::<_, Frame<ContractIdPublicKeyType>>::new(r)
-                    .map(|r| r.map(|t| Self::ContractIdPublicKeyType(Box::new(t.0)))),
+            TypeVariant::ContractIdPreimage => Box::new(
+                ReadXdrIter::<_, Frame<ContractIdPreimage>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdPreimage(Box::new(t.0)))),
             ),
-            TypeVariant::UploadContractWasmArgs => Box::new(
-                ReadXdrIter::<_, Frame<UploadContractWasmArgs>>::new(r)
-                    .map(|r| r.map(|t| Self::UploadContractWasmArgs(Box::new(t.0)))),
-            ),
-            TypeVariant::ContractId => Box::new(
-                ReadXdrIter::<_, Frame<ContractId>>::new(r)
-                    .map(|r| r.map(|t| Self::ContractId(Box::new(t.0)))),
-            ),
-            TypeVariant::ContractIdFromEd25519PublicKey => Box::new(
-                ReadXdrIter::<_, Frame<ContractIdFromEd25519PublicKey>>::new(r)
-                    .map(|r| r.map(|t| Self::ContractIdFromEd25519PublicKey(Box::new(t.0)))),
+            TypeVariant::ContractIdPreimageFromAddress => Box::new(
+                ReadXdrIter::<_, Frame<ContractIdPreimageFromAddress>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractIdPreimageFromAddress(Box::new(t.0)))),
             ),
             TypeVariant::CreateContractArgs => Box::new(
                 ReadXdrIter::<_, Frame<CreateContractArgs>>::new(r)
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t.0)))),
             ),
-            TypeVariant::HostFunctionArgs => Box::new(
-                ReadXdrIter::<_, Frame<HostFunctionArgs>>::new(r)
-                    .map(|r| r.map(|t| Self::HostFunctionArgs(Box::new(t.0)))),
-            ),
-            TypeVariant::AuthorizedInvocation => Box::new(
-                ReadXdrIter::<_, Frame<AuthorizedInvocation>>::new(r)
-                    .map(|r| r.map(|t| Self::AuthorizedInvocation(Box::new(t.0)))),
-            ),
-            TypeVariant::AddressWithNonce => Box::new(
-                ReadXdrIter::<_, Frame<AddressWithNonce>>::new(r)
-                    .map(|r| r.map(|t| Self::AddressWithNonce(Box::new(t.0)))),
-            ),
-            TypeVariant::ContractAuth => Box::new(
-                ReadXdrIter::<_, Frame<ContractAuth>>::new(r)
-                    .map(|r| r.map(|t| Self::ContractAuth(Box::new(t.0)))),
-            ),
             TypeVariant::HostFunction => Box::new(
                 ReadXdrIter::<_, Frame<HostFunction>>::new(r)
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunctionType => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAuthorizedFunctionType>>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAuthorizedContractFunction => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAuthorizedContractFunction>>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedContractFunction(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunction => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAuthorizedFunction>>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedFunction(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAuthorizedInvocation => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAuthorizedInvocation>>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedInvocation(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAddressCredentials => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAddressCredentials>>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanCredentialsType => Box::new(
+                ReadXdrIter::<_, Frame<SorobanCredentialsType>>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanCredentials => Box::new(
+                ReadXdrIter::<_, Frame<SorobanCredentials>>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanCredentials(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAuthorizationEntry => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAuthorizationEntry>>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t.0)))),
             ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, Frame<InvokeHostFunctionOp>>::new(r)
@@ -44794,29 +44757,13 @@ impl Type {
                 ReadXdrIter::<_, Frame<HashIdPreimageRevokeId>>::new(r)
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t.0)))),
             ),
-            TypeVariant::HashIdPreimageEd25519ContractId => Box::new(
-                ReadXdrIter::<_, Frame<HashIdPreimageEd25519ContractId>>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageEd25519ContractId(Box::new(t.0)))),
-            ),
             TypeVariant::HashIdPreimageContractId => Box::new(
                 ReadXdrIter::<_, Frame<HashIdPreimageContractId>>::new(r)
                     .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t.0)))),
             ),
-            TypeVariant::HashIdPreimageFromAsset => Box::new(
-                ReadXdrIter::<_, Frame<HashIdPreimageFromAsset>>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageFromAsset(Box::new(t.0)))),
-            ),
-            TypeVariant::HashIdPreimageSourceAccountContractId => Box::new(
-                ReadXdrIter::<_, Frame<HashIdPreimageSourceAccountContractId>>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageSourceAccountContractId(Box::new(t.0)))),
-            ),
-            TypeVariant::HashIdPreimageCreateContractArgs => Box::new(
-                ReadXdrIter::<_, Frame<HashIdPreimageCreateContractArgs>>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageCreateContractArgs(Box::new(t.0)))),
-            ),
-            TypeVariant::HashIdPreimageContractAuth => Box::new(
-                ReadXdrIter::<_, Frame<HashIdPreimageContractAuth>>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageContractAuth(Box::new(t.0)))),
+            TypeVariant::HashIdPreimageSorobanAuthorization => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageSorobanAuthorization>>::new(r)
+                    .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t.0)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, Frame<MemoType>>::new(r)
@@ -46350,49 +46297,57 @@ impl Type {
                 ReadXdrIter::<_, HostFunctionType>::new(dec)
                     .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t)))),
             ),
-            TypeVariant::ContractIdType => Box::new(
-                ReadXdrIter::<_, ContractIdType>::new(dec)
-                    .map(|r| r.map(|t| Self::ContractIdType(Box::new(t)))),
+            TypeVariant::ContractIdPreimageType => Box::new(
+                ReadXdrIter::<_, ContractIdPreimageType>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractIdPreimageType(Box::new(t)))),
             ),
-            TypeVariant::ContractIdPublicKeyType => Box::new(
-                ReadXdrIter::<_, ContractIdPublicKeyType>::new(dec)
-                    .map(|r| r.map(|t| Self::ContractIdPublicKeyType(Box::new(t)))),
+            TypeVariant::ContractIdPreimage => Box::new(
+                ReadXdrIter::<_, ContractIdPreimage>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractIdPreimage(Box::new(t)))),
             ),
-            TypeVariant::UploadContractWasmArgs => Box::new(
-                ReadXdrIter::<_, UploadContractWasmArgs>::new(dec)
-                    .map(|r| r.map(|t| Self::UploadContractWasmArgs(Box::new(t)))),
-            ),
-            TypeVariant::ContractId => Box::new(
-                ReadXdrIter::<_, ContractId>::new(dec)
-                    .map(|r| r.map(|t| Self::ContractId(Box::new(t)))),
-            ),
-            TypeVariant::ContractIdFromEd25519PublicKey => Box::new(
-                ReadXdrIter::<_, ContractIdFromEd25519PublicKey>::new(dec)
-                    .map(|r| r.map(|t| Self::ContractIdFromEd25519PublicKey(Box::new(t)))),
+            TypeVariant::ContractIdPreimageFromAddress => Box::new(
+                ReadXdrIter::<_, ContractIdPreimageFromAddress>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractIdPreimageFromAddress(Box::new(t)))),
             ),
             TypeVariant::CreateContractArgs => Box::new(
                 ReadXdrIter::<_, CreateContractArgs>::new(dec)
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
             ),
-            TypeVariant::HostFunctionArgs => Box::new(
-                ReadXdrIter::<_, HostFunctionArgs>::new(dec)
-                    .map(|r| r.map(|t| Self::HostFunctionArgs(Box::new(t)))),
-            ),
-            TypeVariant::AuthorizedInvocation => Box::new(
-                ReadXdrIter::<_, AuthorizedInvocation>::new(dec)
-                    .map(|r| r.map(|t| Self::AuthorizedInvocation(Box::new(t)))),
-            ),
-            TypeVariant::AddressWithNonce => Box::new(
-                ReadXdrIter::<_, AddressWithNonce>::new(dec)
-                    .map(|r| r.map(|t| Self::AddressWithNonce(Box::new(t)))),
-            ),
-            TypeVariant::ContractAuth => Box::new(
-                ReadXdrIter::<_, ContractAuth>::new(dec)
-                    .map(|r| r.map(|t| Self::ContractAuth(Box::new(t)))),
-            ),
             TypeVariant::HostFunction => Box::new(
                 ReadXdrIter::<_, HostFunction>::new(dec)
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunctionType => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedFunctionType>::new(dec)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedContractFunction => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedContractFunction>::new(dec)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedContractFunction(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunction => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedFunction>::new(dec)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedFunction(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedInvocation => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedInvocation>::new(dec)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedInvocation(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAddressCredentials => Box::new(
+                ReadXdrIter::<_, SorobanAddressCredentials>::new(dec)
+                    .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
+            ),
+            TypeVariant::SorobanCredentialsType => Box::new(
+                ReadXdrIter::<_, SorobanCredentialsType>::new(dec)
+                    .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
+            ),
+            TypeVariant::SorobanCredentials => Box::new(
+                ReadXdrIter::<_, SorobanCredentials>::new(dec)
+                    .map(|r| r.map(|t| Self::SorobanCredentials(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizationEntry => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizationEntry>::new(dec)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionOp>::new(dec)
@@ -46418,29 +46373,13 @@ impl Type {
                 ReadXdrIter::<_, HashIdPreimageRevokeId>::new(dec)
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
             ),
-            TypeVariant::HashIdPreimageEd25519ContractId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageEd25519ContractId>::new(dec)
-                    .map(|r| r.map(|t| Self::HashIdPreimageEd25519ContractId(Box::new(t)))),
-            ),
             TypeVariant::HashIdPreimageContractId => Box::new(
                 ReadXdrIter::<_, HashIdPreimageContractId>::new(dec)
                     .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t)))),
             ),
-            TypeVariant::HashIdPreimageFromAsset => Box::new(
-                ReadXdrIter::<_, HashIdPreimageFromAsset>::new(dec)
-                    .map(|r| r.map(|t| Self::HashIdPreimageFromAsset(Box::new(t)))),
-            ),
-            TypeVariant::HashIdPreimageSourceAccountContractId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageSourceAccountContractId>::new(dec)
-                    .map(|r| r.map(|t| Self::HashIdPreimageSourceAccountContractId(Box::new(t)))),
-            ),
-            TypeVariant::HashIdPreimageCreateContractArgs => Box::new(
-                ReadXdrIter::<_, HashIdPreimageCreateContractArgs>::new(dec)
-                    .map(|r| r.map(|t| Self::HashIdPreimageCreateContractArgs(Box::new(t)))),
-            ),
-            TypeVariant::HashIdPreimageContractAuth => Box::new(
-                ReadXdrIter::<_, HashIdPreimageContractAuth>::new(dec)
-                    .map(|r| r.map(|t| Self::HashIdPreimageContractAuth(Box::new(t)))),
+            TypeVariant::HashIdPreimageSorobanAuthorization => Box::new(
+                ReadXdrIter::<_, HashIdPreimageSorobanAuthorization>::new(dec)
+                    .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(dec)
@@ -47193,29 +47132,27 @@ impl Type {
             Self::LiquidityPoolDepositOp(ref v) => v.as_ref(),
             Self::LiquidityPoolWithdrawOp(ref v) => v.as_ref(),
             Self::HostFunctionType(ref v) => v.as_ref(),
-            Self::ContractIdType(ref v) => v.as_ref(),
-            Self::ContractIdPublicKeyType(ref v) => v.as_ref(),
-            Self::UploadContractWasmArgs(ref v) => v.as_ref(),
-            Self::ContractId(ref v) => v.as_ref(),
-            Self::ContractIdFromEd25519PublicKey(ref v) => v.as_ref(),
+            Self::ContractIdPreimageType(ref v) => v.as_ref(),
+            Self::ContractIdPreimage(ref v) => v.as_ref(),
+            Self::ContractIdPreimageFromAddress(ref v) => v.as_ref(),
             Self::CreateContractArgs(ref v) => v.as_ref(),
-            Self::HostFunctionArgs(ref v) => v.as_ref(),
-            Self::AuthorizedInvocation(ref v) => v.as_ref(),
-            Self::AddressWithNonce(ref v) => v.as_ref(),
-            Self::ContractAuth(ref v) => v.as_ref(),
             Self::HostFunction(ref v) => v.as_ref(),
+            Self::SorobanAuthorizedFunctionType(ref v) => v.as_ref(),
+            Self::SorobanAuthorizedContractFunction(ref v) => v.as_ref(),
+            Self::SorobanAuthorizedFunction(ref v) => v.as_ref(),
+            Self::SorobanAuthorizedInvocation(ref v) => v.as_ref(),
+            Self::SorobanAddressCredentials(ref v) => v.as_ref(),
+            Self::SorobanCredentialsType(ref v) => v.as_ref(),
+            Self::SorobanCredentials(ref v) => v.as_ref(),
+            Self::SorobanAuthorizationEntry(ref v) => v.as_ref(),
             Self::InvokeHostFunctionOp(ref v) => v.as_ref(),
             Self::Operation(ref v) => v.as_ref(),
             Self::OperationBody(ref v) => v.as_ref(),
             Self::HashIdPreimage(ref v) => v.as_ref(),
             Self::HashIdPreimageOperationId(ref v) => v.as_ref(),
             Self::HashIdPreimageRevokeId(ref v) => v.as_ref(),
-            Self::HashIdPreimageEd25519ContractId(ref v) => v.as_ref(),
             Self::HashIdPreimageContractId(ref v) => v.as_ref(),
-            Self::HashIdPreimageFromAsset(ref v) => v.as_ref(),
-            Self::HashIdPreimageSourceAccountContractId(ref v) => v.as_ref(),
-            Self::HashIdPreimageCreateContractArgs(ref v) => v.as_ref(),
-            Self::HashIdPreimageContractAuth(ref v) => v.as_ref(),
+            Self::HashIdPreimageSorobanAuthorization(ref v) => v.as_ref(),
             Self::MemoType(ref v) => v.as_ref(),
             Self::Memo(ref v) => v.as_ref(),
             Self::TimeBounds(ref v) => v.as_ref(),
@@ -47610,31 +47547,27 @@ impl Type {
             Self::LiquidityPoolDepositOp(_) => "LiquidityPoolDepositOp",
             Self::LiquidityPoolWithdrawOp(_) => "LiquidityPoolWithdrawOp",
             Self::HostFunctionType(_) => "HostFunctionType",
-            Self::ContractIdType(_) => "ContractIdType",
-            Self::ContractIdPublicKeyType(_) => "ContractIdPublicKeyType",
-            Self::UploadContractWasmArgs(_) => "UploadContractWasmArgs",
-            Self::ContractId(_) => "ContractId",
-            Self::ContractIdFromEd25519PublicKey(_) => "ContractIdFromEd25519PublicKey",
+            Self::ContractIdPreimageType(_) => "ContractIdPreimageType",
+            Self::ContractIdPreimage(_) => "ContractIdPreimage",
+            Self::ContractIdPreimageFromAddress(_) => "ContractIdPreimageFromAddress",
             Self::CreateContractArgs(_) => "CreateContractArgs",
-            Self::HostFunctionArgs(_) => "HostFunctionArgs",
-            Self::AuthorizedInvocation(_) => "AuthorizedInvocation",
-            Self::AddressWithNonce(_) => "AddressWithNonce",
-            Self::ContractAuth(_) => "ContractAuth",
             Self::HostFunction(_) => "HostFunction",
+            Self::SorobanAuthorizedFunctionType(_) => "SorobanAuthorizedFunctionType",
+            Self::SorobanAuthorizedContractFunction(_) => "SorobanAuthorizedContractFunction",
+            Self::SorobanAuthorizedFunction(_) => "SorobanAuthorizedFunction",
+            Self::SorobanAuthorizedInvocation(_) => "SorobanAuthorizedInvocation",
+            Self::SorobanAddressCredentials(_) => "SorobanAddressCredentials",
+            Self::SorobanCredentialsType(_) => "SorobanCredentialsType",
+            Self::SorobanCredentials(_) => "SorobanCredentials",
+            Self::SorobanAuthorizationEntry(_) => "SorobanAuthorizationEntry",
             Self::InvokeHostFunctionOp(_) => "InvokeHostFunctionOp",
             Self::Operation(_) => "Operation",
             Self::OperationBody(_) => "OperationBody",
             Self::HashIdPreimage(_) => "HashIdPreimage",
             Self::HashIdPreimageOperationId(_) => "HashIdPreimageOperationId",
             Self::HashIdPreimageRevokeId(_) => "HashIdPreimageRevokeId",
-            Self::HashIdPreimageEd25519ContractId(_) => "HashIdPreimageEd25519ContractId",
             Self::HashIdPreimageContractId(_) => "HashIdPreimageContractId",
-            Self::HashIdPreimageFromAsset(_) => "HashIdPreimageFromAsset",
-            Self::HashIdPreimageSourceAccountContractId(_) => {
-                "HashIdPreimageSourceAccountContractId"
-            }
-            Self::HashIdPreimageCreateContractArgs(_) => "HashIdPreimageCreateContractArgs",
-            Self::HashIdPreimageContractAuth(_) => "HashIdPreimageContractAuth",
+            Self::HashIdPreimageSorobanAuthorization(_) => "HashIdPreimageSorobanAuthorization",
             Self::MemoType(_) => "MemoType",
             Self::Memo(_) => "Memo",
             Self::TimeBounds(_) => "TimeBounds",
@@ -47765,7 +47698,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 406] {
+    pub const fn variants() -> [TypeVariant; 404] {
         Self::VARIANTS
     }
 
@@ -48063,35 +47996,31 @@ impl Type {
             Self::LiquidityPoolDepositOp(_) => TypeVariant::LiquidityPoolDepositOp,
             Self::LiquidityPoolWithdrawOp(_) => TypeVariant::LiquidityPoolWithdrawOp,
             Self::HostFunctionType(_) => TypeVariant::HostFunctionType,
-            Self::ContractIdType(_) => TypeVariant::ContractIdType,
-            Self::ContractIdPublicKeyType(_) => TypeVariant::ContractIdPublicKeyType,
-            Self::UploadContractWasmArgs(_) => TypeVariant::UploadContractWasmArgs,
-            Self::ContractId(_) => TypeVariant::ContractId,
-            Self::ContractIdFromEd25519PublicKey(_) => TypeVariant::ContractIdFromEd25519PublicKey,
+            Self::ContractIdPreimageType(_) => TypeVariant::ContractIdPreimageType,
+            Self::ContractIdPreimage(_) => TypeVariant::ContractIdPreimage,
+            Self::ContractIdPreimageFromAddress(_) => TypeVariant::ContractIdPreimageFromAddress,
             Self::CreateContractArgs(_) => TypeVariant::CreateContractArgs,
-            Self::HostFunctionArgs(_) => TypeVariant::HostFunctionArgs,
-            Self::AuthorizedInvocation(_) => TypeVariant::AuthorizedInvocation,
-            Self::AddressWithNonce(_) => TypeVariant::AddressWithNonce,
-            Self::ContractAuth(_) => TypeVariant::ContractAuth,
             Self::HostFunction(_) => TypeVariant::HostFunction,
+            Self::SorobanAuthorizedFunctionType(_) => TypeVariant::SorobanAuthorizedFunctionType,
+            Self::SorobanAuthorizedContractFunction(_) => {
+                TypeVariant::SorobanAuthorizedContractFunction
+            }
+            Self::SorobanAuthorizedFunction(_) => TypeVariant::SorobanAuthorizedFunction,
+            Self::SorobanAuthorizedInvocation(_) => TypeVariant::SorobanAuthorizedInvocation,
+            Self::SorobanAddressCredentials(_) => TypeVariant::SorobanAddressCredentials,
+            Self::SorobanCredentialsType(_) => TypeVariant::SorobanCredentialsType,
+            Self::SorobanCredentials(_) => TypeVariant::SorobanCredentials,
+            Self::SorobanAuthorizationEntry(_) => TypeVariant::SorobanAuthorizationEntry,
             Self::InvokeHostFunctionOp(_) => TypeVariant::InvokeHostFunctionOp,
             Self::Operation(_) => TypeVariant::Operation,
             Self::OperationBody(_) => TypeVariant::OperationBody,
             Self::HashIdPreimage(_) => TypeVariant::HashIdPreimage,
             Self::HashIdPreimageOperationId(_) => TypeVariant::HashIdPreimageOperationId,
             Self::HashIdPreimageRevokeId(_) => TypeVariant::HashIdPreimageRevokeId,
-            Self::HashIdPreimageEd25519ContractId(_) => {
-                TypeVariant::HashIdPreimageEd25519ContractId
-            }
             Self::HashIdPreimageContractId(_) => TypeVariant::HashIdPreimageContractId,
-            Self::HashIdPreimageFromAsset(_) => TypeVariant::HashIdPreimageFromAsset,
-            Self::HashIdPreimageSourceAccountContractId(_) => {
-                TypeVariant::HashIdPreimageSourceAccountContractId
+            Self::HashIdPreimageSorobanAuthorization(_) => {
+                TypeVariant::HashIdPreimageSorobanAuthorization
             }
-            Self::HashIdPreimageCreateContractArgs(_) => {
-                TypeVariant::HashIdPreimageCreateContractArgs
-            }
-            Self::HashIdPreimageContractAuth(_) => TypeVariant::HashIdPreimageContractAuth,
             Self::MemoType(_) => TypeVariant::MemoType,
             Self::Memo(_) => TypeVariant::Memo,
             Self::TimeBounds(_) => TypeVariant::TimeBounds,

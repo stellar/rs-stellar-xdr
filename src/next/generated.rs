@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "dcf7bb3de5d27327824578dfae95f1d25a3ff3693a117ec499c8c7b7048a31dc",
+        "1b90de35f85de180f58913f22c72e4cb411454171140169aa5cd2823b7f8bb13",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -18141,9 +18141,9 @@ impl WriteXdr for DiagnosticEvent {
 //        OperationMeta operations<>;         // meta for each operation
 //        LedgerEntryChanges txChangesAfter;  // tx level changes after operations are
 //                                            // applied if any
-//        ContractEvent events<>;           // custom events populated by the
+//        ContractEvent events<>;             // custom events populated by the
 //                                            // contracts themselves.
-//        SCVal returnValues<MAX_OPS_PER_TX>;    // return values of each invocation.
+//        SCVal returnValue;                  // return value of the invocation.
 //
 //        // Diagnostics events that are not hashed.
 //        // This will contain all contract and diagnostic events. Even ones
@@ -18163,7 +18163,7 @@ pub struct TransactionMetaV3 {
     pub operations: VecM<OperationMeta>,
     pub tx_changes_after: LedgerEntryChanges,
     pub events: VecM<ContractEvent>,
-    pub return_values: VecM<ScVal, 100>,
+    pub return_value: ScVal,
     pub diagnostic_events: VecM<DiagnosticEvent>,
 }
 
@@ -18175,7 +18175,7 @@ impl ReadXdr for TransactionMetaV3 {
             operations: VecM::<OperationMeta>::read_xdr(r)?,
             tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
             events: VecM::<ContractEvent>::read_xdr(r)?,
-            return_values: VecM::<ScVal, 100>::read_xdr(r)?,
+            return_value: ScVal::read_xdr(r)?,
             diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
         })
     }
@@ -18188,7 +18188,7 @@ impl WriteXdr for TransactionMetaV3 {
         self.operations.write_xdr(w)?;
         self.tx_changes_after.write_xdr(w)?;
         self.events.write_xdr(w)?;
-        self.return_values.write_xdr(w)?;
+        self.return_value.write_xdr(w)?;
         self.diagnostic_events.write_xdr(w)?;
         Ok(())
     }

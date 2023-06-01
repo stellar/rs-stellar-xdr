@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "1b90de35f85de180f58913f22c72e4cb411454171140169aa5cd2823b7f8bb13",
+        "0c2b074a68fa9de41b72ba1574825e7ed172e4736ca29fa6f0c88eb70579b682",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -18198,7 +18198,7 @@ impl WriteXdr for TransactionMetaV3 {
 //
 //   struct InvokeHostFunctionSuccessPreImage
 //    {
-//        SCVal returnValues<MAX_OPS_PER_TX>;
+//        SCVal returnValue;
 //        ContractEvent events<>;
 //    };
 //
@@ -18210,7 +18210,7 @@ impl WriteXdr for TransactionMetaV3 {
     serde(rename_all = "snake_case")
 )]
 pub struct InvokeHostFunctionSuccessPreImage {
-    pub return_values: VecM<ScVal, 100>,
+    pub return_value: ScVal,
     pub events: VecM<ContractEvent>,
 }
 
@@ -18218,7 +18218,7 @@ impl ReadXdr for InvokeHostFunctionSuccessPreImage {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            return_values: VecM::<ScVal, 100>::read_xdr(r)?,
+            return_value: ScVal::read_xdr(r)?,
             events: VecM::<ContractEvent>::read_xdr(r)?,
         })
     }
@@ -18227,7 +18227,7 @@ impl ReadXdr for InvokeHostFunctionSuccessPreImage {
 impl WriteXdr for InvokeHostFunctionSuccessPreImage {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.return_values.write_xdr(w)?;
+        self.return_value.write_xdr(w)?;
         self.events.write_xdr(w)?;
         Ok(())
     }

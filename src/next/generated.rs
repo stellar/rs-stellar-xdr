@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "4f19593fb4616df66f24d46bd63c5d61d72208db673ba62d27120e92fd2562f9",
+        "92645b4ee5ca32d9a44419751661501092b9d9ef9b391266ab2336af29723a20",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "ca66c217a7f17b4fdb7d55611cf5bd4d779ce0dc0afe51ac136c303c81200f38",
+        "ac8c016a92e75e6ba29cccb00a3aa633f347ba15e5b4fcd0d6986d4eed52fe4e",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "6b56f47d1c6aaad860e199a7a9f46d3083921937af2fb4028c08efdcf70edaef",
+        "fccdf397df717d4acc1601ff04fd5d8ccc1defabef931ebbd2f5e41e21539f65",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -2781,6 +2781,42 @@ impl WriteXdr for ScpQuorumSet {
     }
 }
 
+// ConfigSettingContractExecutionLanesV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractExecutionLanesV0
+//    {
+//        // maximum number of Soroban transactions per ledger
+//        uint32 ledgerMaxTxCount;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractExecutionLanesV0 {
+    pub ledger_max_tx_count: u32,
+}
+
+impl ReadXdr for ConfigSettingContractExecutionLanesV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ledger_max_tx_count: u32::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ledger_max_tx_count.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // ConfigSettingContractComputeV0 is an XDR Struct defines as:
 //
 //   struct ConfigSettingContractComputeV0
@@ -3313,10 +3349,11 @@ impl WriteXdr for ContractCostType {
 // ContractCostParamEntry is an XDR Struct defines as:
 //
 //   struct ContractCostParamEntry {
-//        int64 constTerm;
-//        int64 linearTerm;
 //        // use `ext` to add more terms (e.g. higher order polynomials) in the future
 //        ExtensionPoint ext;
+//
+//        int64 constTerm;
+//        int64 linearTerm;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -3327,18 +3364,18 @@ impl WriteXdr for ContractCostType {
     serde(rename_all = "snake_case")
 )]
 pub struct ContractCostParamEntry {
+    pub ext: ExtensionPoint,
     pub const_term: i64,
     pub linear_term: i64,
-    pub ext: ExtensionPoint,
 }
 
 impl ReadXdr for ContractCostParamEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            ext: ExtensionPoint::read_xdr(r)?,
             const_term: i64::read_xdr(r)?,
             linear_term: i64::read_xdr(r)?,
-            ext: ExtensionPoint::read_xdr(r)?,
         })
     }
 }
@@ -3346,9 +3383,9 @@ impl ReadXdr for ContractCostParamEntry {
 impl WriteXdr for ContractCostParamEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ext.write_xdr(w)?;
         self.const_term.write_xdr(w)?;
         self.linear_term.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
         Ok(())
     }
 }
@@ -3632,7 +3669,8 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 //        CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7,
 //        CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8,
 //        CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9,
-//        CONFIG_SETTING_STATE_EXPIRATION = 10
+//        CONFIG_SETTING_STATE_EXPIRATION = 10,
+//        CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11
 //    };
 //
 // enum
@@ -3656,10 +3694,11 @@ pub enum ConfigSettingId {
     ContractDataKeySizeBytes = 8,
     ContractDataEntrySizeBytes = 9,
     StateExpiration = 10,
+    ContractExecutionLanes = 11,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 11] = [
+    pub const VARIANTS: [ConfigSettingId; 12] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -3671,8 +3710,9 @@ impl ConfigSettingId {
         ConfigSettingId::ContractDataKeySizeBytes,
         ConfigSettingId::ContractDataEntrySizeBytes,
         ConfigSettingId::StateExpiration,
+        ConfigSettingId::ContractExecutionLanes,
     ];
-    pub const VARIANTS_STR: [&'static str; 11] = [
+    pub const VARIANTS_STR: [&'static str; 12] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -3684,6 +3724,7 @@ impl ConfigSettingId {
         "ContractDataKeySizeBytes",
         "ContractDataEntrySizeBytes",
         "StateExpiration",
+        "ContractExecutionLanes",
     ];
 
     #[must_use]
@@ -3700,11 +3741,12 @@ impl ConfigSettingId {
             Self::ContractDataKeySizeBytes => "ContractDataKeySizeBytes",
             Self::ContractDataEntrySizeBytes => "ContractDataEntrySizeBytes",
             Self::StateExpiration => "StateExpiration",
+            Self::ContractExecutionLanes => "ContractExecutionLanes",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 11] {
+    pub const fn variants() -> [ConfigSettingId; 12] {
         Self::VARIANTS
     }
 }
@@ -3746,6 +3788,7 @@ impl TryFrom<i32> for ConfigSettingId {
             8 => ConfigSettingId::ContractDataKeySizeBytes,
             9 => ConfigSettingId::ContractDataEntrySizeBytes,
             10 => ConfigSettingId::StateExpiration,
+            11 => ConfigSettingId::ContractExecutionLanes,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -3803,6 +3846,8 @@ impl WriteXdr for ConfigSettingId {
 //        uint32 contractDataEntrySizeBytes;
 //    case CONFIG_SETTING_STATE_EXPIRATION:
 //        StateExpirationSettings stateExpirationSettings;
+//    case CONFIG_SETTING_CONTRACT_EXECUTION_LANES:
+//        ConfigSettingContractExecutionLanesV0 contractExecutionLanes;
 //    };
 //
 // union with discriminant ConfigSettingId
@@ -3826,10 +3871,11 @@ pub enum ConfigSettingEntry {
     ContractDataKeySizeBytes(u32),
     ContractDataEntrySizeBytes(u32),
     StateExpiration(StateExpirationSettings),
+    ContractExecutionLanes(ConfigSettingContractExecutionLanesV0),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 11] = [
+    pub const VARIANTS: [ConfigSettingId; 12] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -3841,8 +3887,9 @@ impl ConfigSettingEntry {
         ConfigSettingId::ContractDataKeySizeBytes,
         ConfigSettingId::ContractDataEntrySizeBytes,
         ConfigSettingId::StateExpiration,
+        ConfigSettingId::ContractExecutionLanes,
     ];
-    pub const VARIANTS_STR: [&'static str; 11] = [
+    pub const VARIANTS_STR: [&'static str; 12] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -3854,6 +3901,7 @@ impl ConfigSettingEntry {
         "ContractDataKeySizeBytes",
         "ContractDataEntrySizeBytes",
         "StateExpiration",
+        "ContractExecutionLanes",
     ];
 
     #[must_use]
@@ -3870,6 +3918,7 @@ impl ConfigSettingEntry {
             Self::ContractDataKeySizeBytes(_) => "ContractDataKeySizeBytes",
             Self::ContractDataEntrySizeBytes(_) => "ContractDataEntrySizeBytes",
             Self::StateExpiration(_) => "StateExpiration",
+            Self::ContractExecutionLanes(_) => "ContractExecutionLanes",
         }
     }
 
@@ -3892,11 +3941,12 @@ impl ConfigSettingEntry {
             Self::ContractDataKeySizeBytes(_) => ConfigSettingId::ContractDataKeySizeBytes,
             Self::ContractDataEntrySizeBytes(_) => ConfigSettingId::ContractDataEntrySizeBytes,
             Self::StateExpiration(_) => ConfigSettingId::StateExpiration,
+            Self::ContractExecutionLanes(_) => ConfigSettingId::ContractExecutionLanes,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 11] {
+    pub const fn variants() -> [ConfigSettingId; 12] {
         Self::VARIANTS
     }
 }
@@ -3960,6 +4010,9 @@ impl ReadXdr for ConfigSettingEntry {
             ConfigSettingId::StateExpiration => {
                 Self::StateExpiration(StateExpirationSettings::read_xdr(r)?)
             }
+            ConfigSettingId::ContractExecutionLanes => {
+                Self::ContractExecutionLanes(ConfigSettingContractExecutionLanesV0::read_xdr(r)?)
+            }
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -3984,6 +4037,7 @@ impl WriteXdr for ConfigSettingEntry {
             Self::ContractDataKeySizeBytes(v) => v.write_xdr(w)?,
             Self::ContractDataEntrySizeBytes(v) => v.write_xdr(w)?,
             Self::StateExpiration(v) => v.write_xdr(w)?,
+            Self::ContractExecutionLanes(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -18941,18 +18995,15 @@ impl WriteXdr for DiagnosticEvent {
     }
 }
 
-// TransactionMetaV3 is an XDR Struct defines as:
+// SorobanTransactionMeta is an XDR Struct defines as:
 //
-//   struct TransactionMetaV3
+//   struct SorobanTransactionMeta
 //    {
-//        LedgerEntryChanges txChangesBefore; // tx level changes before operations
-//                                            // are applied if any
-//        OperationMeta operations<>;         // meta for each operation
-//        LedgerEntryChanges txChangesAfter;  // tx level changes after operations are
-//                                            // applied if any
+//        ExtensionPoint ext;
+//
 //        ContractEvent events<>;             // custom events populated by the
 //                                            // contracts themselves.
-//        SCVal returnValue;                  // return value of the invocation.
+//        SCVal returnValue;                  // return value of the host fn invocation
 //
 //        // Diagnostics events that are not hashed.
 //        // This will contain all contract and diagnostic events. Even ones
@@ -18967,22 +19018,18 @@ impl WriteXdr for DiagnosticEvent {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct TransactionMetaV3 {
-    pub tx_changes_before: LedgerEntryChanges,
-    pub operations: VecM<OperationMeta>,
-    pub tx_changes_after: LedgerEntryChanges,
+pub struct SorobanTransactionMeta {
+    pub ext: ExtensionPoint,
     pub events: VecM<ContractEvent>,
     pub return_value: ScVal,
     pub diagnostic_events: VecM<DiagnosticEvent>,
 }
 
-impl ReadXdr for TransactionMetaV3 {
+impl ReadXdr for SorobanTransactionMeta {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
-            operations: VecM::<OperationMeta>::read_xdr(r)?,
-            tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
+            ext: ExtensionPoint::read_xdr(r)?,
             events: VecM::<ContractEvent>::read_xdr(r)?,
             return_value: ScVal::read_xdr(r)?,
             diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
@@ -18990,15 +19037,68 @@ impl ReadXdr for TransactionMetaV3 {
     }
 }
 
-impl WriteXdr for TransactionMetaV3 {
+impl WriteXdr for SorobanTransactionMeta {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx_changes_before.write_xdr(w)?;
-        self.operations.write_xdr(w)?;
-        self.tx_changes_after.write_xdr(w)?;
+        self.ext.write_xdr(w)?;
         self.events.write_xdr(w)?;
         self.return_value.write_xdr(w)?;
         self.diagnostic_events.write_xdr(w)?;
+        Ok(())
+    }
+}
+
+// TransactionMetaV3 is an XDR Struct defines as:
+//
+//   struct TransactionMetaV3
+//    {
+//        ExtensionPoint ext;
+//
+//        LedgerEntryChanges txChangesBefore;  // tx level changes before operations
+//                                             // are applied if any
+//        OperationMeta operations<>;          // meta for each operation
+//        LedgerEntryChanges txChangesAfter;   // tx level changes after operations are
+//                                             // applied if any
+//        SorobanTransactionMeta* sorobanMeta; // Soroban-specific meta (only for
+//                                             // Soroban transactions).
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct TransactionMetaV3 {
+    pub ext: ExtensionPoint,
+    pub tx_changes_before: LedgerEntryChanges,
+    pub operations: VecM<OperationMeta>,
+    pub tx_changes_after: LedgerEntryChanges,
+    pub soroban_meta: Option<SorobanTransactionMeta>,
+}
+
+impl ReadXdr for TransactionMetaV3 {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            ext: ExtensionPoint::read_xdr(r)?,
+            tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
+            operations: VecM::<OperationMeta>::read_xdr(r)?,
+            tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
+            soroban_meta: Option::<SorobanTransactionMeta>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for TransactionMetaV3 {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ext.write_xdr(w)?;
+        self.tx_changes_before.write_xdr(w)?;
+        self.operations.write_xdr(w)?;
+        self.tx_changes_after.write_xdr(w)?;
+        self.soroban_meta.write_xdr(w)?;
         Ok(())
     }
 }
@@ -26485,10 +26585,10 @@ impl WriteXdr for SorobanResources {
 //
 //   struct SorobanTransactionData
 //    {
+//        ExtensionPoint ext;
 //        SorobanResources resources;
 //        // Portion of transaction `fee` allocated to refundable fees.
 //        int64 refundableFee;
-//        ExtensionPoint ext;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -26499,18 +26599,18 @@ impl WriteXdr for SorobanResources {
     serde(rename_all = "snake_case")
 )]
 pub struct SorobanTransactionData {
+    pub ext: ExtensionPoint,
     pub resources: SorobanResources,
     pub refundable_fee: i64,
-    pub ext: ExtensionPoint,
 }
 
 impl ReadXdr for SorobanTransactionData {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
+            ext: ExtensionPoint::read_xdr(r)?,
             resources: SorobanResources::read_xdr(r)?,
             refundable_fee: i64::read_xdr(r)?,
-            ext: ExtensionPoint::read_xdr(r)?,
         })
     }
 }
@@ -26518,9 +26618,9 @@ impl ReadXdr for SorobanTransactionData {
 impl WriteXdr for SorobanTransactionData {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.ext.write_xdr(w)?;
         self.resources.write_xdr(w)?;
         self.refundable_fee.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
         Ok(())
     }
 }
@@ -38471,6 +38571,7 @@ pub enum TypeVariant {
     ScpStatementExternalize,
     ScpEnvelope,
     ScpQuorumSet,
+    ConfigSettingContractExecutionLanesV0,
     ConfigSettingContractComputeV0,
     ConfigSettingContractLedgerCostV0,
     ConfigSettingContractHistoricalDataV0,
@@ -38665,6 +38766,7 @@ pub enum TypeVariant {
     ContractEventBody,
     ContractEventV0,
     DiagnosticEvent,
+    SorobanTransactionMeta,
     TransactionMetaV3,
     InvokeHostFunctionSuccessPreImage,
     TransactionMeta,
@@ -38876,7 +38978,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 413] = [
+    pub const VARIANTS: [TypeVariant; 415] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -38888,6 +38990,7 @@ impl TypeVariant {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::ConfigSettingContractExecutionLanesV0,
         TypeVariant::ConfigSettingContractComputeV0,
         TypeVariant::ConfigSettingContractLedgerCostV0,
         TypeVariant::ConfigSettingContractHistoricalDataV0,
@@ -39082,6 +39185,7 @@ impl TypeVariant {
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
         TypeVariant::DiagnosticEvent,
+        TypeVariant::SorobanTransactionMeta,
         TypeVariant::TransactionMetaV3,
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
@@ -39291,7 +39395,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 413] = [
+    pub const VARIANTS_STR: [&'static str; 415] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -39303,6 +39407,7 @@ impl TypeVariant {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "ConfigSettingContractExecutionLanesV0",
         "ConfigSettingContractComputeV0",
         "ConfigSettingContractLedgerCostV0",
         "ConfigSettingContractHistoricalDataV0",
@@ -39497,6 +39602,7 @@ impl TypeVariant {
         "ContractEventBody",
         "ContractEventV0",
         "DiagnosticEvent",
+        "SorobanTransactionMeta",
         "TransactionMetaV3",
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
@@ -39722,6 +39828,7 @@ impl TypeVariant {
             Self::ScpStatementExternalize => "ScpStatementExternalize",
             Self::ScpEnvelope => "ScpEnvelope",
             Self::ScpQuorumSet => "ScpQuorumSet",
+            Self::ConfigSettingContractExecutionLanesV0 => "ConfigSettingContractExecutionLanesV0",
             Self::ConfigSettingContractComputeV0 => "ConfigSettingContractComputeV0",
             Self::ConfigSettingContractLedgerCostV0 => "ConfigSettingContractLedgerCostV0",
             Self::ConfigSettingContractHistoricalDataV0 => "ConfigSettingContractHistoricalDataV0",
@@ -39918,6 +40025,7 @@ impl TypeVariant {
             Self::ContractEventBody => "ContractEventBody",
             Self::ContractEventV0 => "ContractEventV0",
             Self::DiagnosticEvent => "DiagnosticEvent",
+            Self::SorobanTransactionMeta => "SorobanTransactionMeta",
             Self::TransactionMetaV3 => "TransactionMetaV3",
             Self::InvokeHostFunctionSuccessPreImage => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta => "TransactionMeta",
@@ -40135,7 +40243,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 413] {
+    pub const fn variants() -> [TypeVariant; 415] {
         Self::VARIANTS
     }
 }
@@ -40169,6 +40277,9 @@ impl core::str::FromStr for TypeVariant {
             "ScpStatementExternalize" => Ok(Self::ScpStatementExternalize),
             "ScpEnvelope" => Ok(Self::ScpEnvelope),
             "ScpQuorumSet" => Ok(Self::ScpQuorumSet),
+            "ConfigSettingContractExecutionLanesV0" => {
+                Ok(Self::ConfigSettingContractExecutionLanesV0)
+            }
             "ConfigSettingContractComputeV0" => Ok(Self::ConfigSettingContractComputeV0),
             "ConfigSettingContractLedgerCostV0" => Ok(Self::ConfigSettingContractLedgerCostV0),
             "ConfigSettingContractHistoricalDataV0" => {
@@ -40367,6 +40478,7 @@ impl core::str::FromStr for TypeVariant {
             "ContractEventBody" => Ok(Self::ContractEventBody),
             "ContractEventV0" => Ok(Self::ContractEventV0),
             "DiagnosticEvent" => Ok(Self::DiagnosticEvent),
+            "SorobanTransactionMeta" => Ok(Self::SorobanTransactionMeta),
             "TransactionMetaV3" => Ok(Self::TransactionMetaV3),
             "InvokeHostFunctionSuccessPreImage" => Ok(Self::InvokeHostFunctionSuccessPreImage),
             "TransactionMeta" => Ok(Self::TransactionMeta),
@@ -40607,6 +40719,7 @@ pub enum Type {
     ScpStatementExternalize(Box<ScpStatementExternalize>),
     ScpEnvelope(Box<ScpEnvelope>),
     ScpQuorumSet(Box<ScpQuorumSet>),
+    ConfigSettingContractExecutionLanesV0(Box<ConfigSettingContractExecutionLanesV0>),
     ConfigSettingContractComputeV0(Box<ConfigSettingContractComputeV0>),
     ConfigSettingContractLedgerCostV0(Box<ConfigSettingContractLedgerCostV0>),
     ConfigSettingContractHistoricalDataV0(Box<ConfigSettingContractHistoricalDataV0>),
@@ -40801,6 +40914,7 @@ pub enum Type {
     ContractEventBody(Box<ContractEventBody>),
     ContractEventV0(Box<ContractEventV0>),
     DiagnosticEvent(Box<DiagnosticEvent>),
+    SorobanTransactionMeta(Box<SorobanTransactionMeta>),
     TransactionMetaV3(Box<TransactionMetaV3>),
     InvokeHostFunctionSuccessPreImage(Box<InvokeHostFunctionSuccessPreImage>),
     TransactionMeta(Box<TransactionMeta>),
@@ -41012,7 +41126,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 413] = [
+    pub const VARIANTS: [TypeVariant; 415] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -41024,6 +41138,7 @@ impl Type {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::ConfigSettingContractExecutionLanesV0,
         TypeVariant::ConfigSettingContractComputeV0,
         TypeVariant::ConfigSettingContractLedgerCostV0,
         TypeVariant::ConfigSettingContractHistoricalDataV0,
@@ -41218,6 +41333,7 @@ impl Type {
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
         TypeVariant::DiagnosticEvent,
+        TypeVariant::SorobanTransactionMeta,
         TypeVariant::TransactionMetaV3,
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
@@ -41427,7 +41543,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 413] = [
+    pub const VARIANTS_STR: [&'static str; 415] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -41439,6 +41555,7 @@ impl Type {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "ConfigSettingContractExecutionLanesV0",
         "ConfigSettingContractComputeV0",
         "ConfigSettingContractLedgerCostV0",
         "ConfigSettingContractHistoricalDataV0",
@@ -41633,6 +41750,7 @@ impl Type {
         "ContractEventBody",
         "ContractEventV0",
         "DiagnosticEvent",
+        "SorobanTransactionMeta",
         "TransactionMetaV3",
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
@@ -41873,6 +41991,11 @@ impl Type {
             TypeVariant::ScpEnvelope => Ok(Self::ScpEnvelope(Box::new(ScpEnvelope::read_xdr(r)?))),
             TypeVariant::ScpQuorumSet => {
                 Ok(Self::ScpQuorumSet(Box::new(ScpQuorumSet::read_xdr(r)?)))
+            }
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => {
+                Ok(Self::ConfigSettingContractExecutionLanesV0(Box::new(
+                    ConfigSettingContractExecutionLanesV0::read_xdr(r)?,
+                )))
             }
             TypeVariant::ConfigSettingContractComputeV0 => {
                 Ok(Self::ConfigSettingContractComputeV0(Box::new(
@@ -42391,6 +42514,9 @@ impl Type {
             ))),
             TypeVariant::DiagnosticEvent => Ok(Self::DiagnosticEvent(Box::new(
                 DiagnosticEvent::read_xdr(r)?,
+            ))),
+            TypeVariant::SorobanTransactionMeta => Ok(Self::SorobanTransactionMeta(Box::new(
+                SorobanTransactionMeta::read_xdr(r)?,
             ))),
             TypeVariant::TransactionMetaV3 => Ok(Self::TransactionMetaV3(Box::new(
                 TransactionMetaV3::read_xdr(r)?,
@@ -43066,6 +43192,10 @@ impl Type {
             TypeVariant::ScpQuorumSet => Box::new(
                 ReadXdrIter::<_, ScpQuorumSet>::new(r)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractExecutionLanesV0>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractComputeV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(r)
@@ -43827,6 +43957,10 @@ impl Type {
             TypeVariant::DiagnosticEvent => Box::new(
                 ReadXdrIter::<_, DiagnosticEvent>::new(r)
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionMeta => Box::new(
+                ReadXdrIter::<_, SorobanTransactionMeta>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanTransactionMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV3 => Box::new(
                 ReadXdrIter::<_, TransactionMetaV3>::new(r)
@@ -44699,6 +44833,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScpQuorumSet>>::new(r)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t.0)))),
             ),
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractExecutionLanesV0>>::new(r)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t.0)))),
+            ),
             TypeVariant::ConfigSettingContractComputeV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractComputeV0>>::new(r)
                     .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t.0)))),
@@ -45475,6 +45613,10 @@ impl Type {
             TypeVariant::DiagnosticEvent => Box::new(
                 ReadXdrIter::<_, Frame<DiagnosticEvent>>::new(r)
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanTransactionMeta => Box::new(
+                ReadXdrIter::<_, Frame<SorobanTransactionMeta>>::new(r)
+                    .map(|r| r.map(|t| Self::SorobanTransactionMeta(Box::new(t.0)))),
             ),
             TypeVariant::TransactionMetaV3 => Box::new(
                 ReadXdrIter::<_, Frame<TransactionMetaV3>>::new(r)
@@ -46363,6 +46505,10 @@ impl Type {
                 ReadXdrIter::<_, ScpQuorumSet>::new(dec)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractExecutionLanesV0>::new(dec)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t)))),
+            ),
             TypeVariant::ConfigSettingContractComputeV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(dec)
                     .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
@@ -47129,6 +47275,10 @@ impl Type {
             TypeVariant::DiagnosticEvent => Box::new(
                 ReadXdrIter::<_, DiagnosticEvent>::new(dec)
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionMeta => Box::new(
+                ReadXdrIter::<_, SorobanTransactionMeta>::new(dec)
+                    .map(|r| r.map(|t| Self::SorobanTransactionMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV3 => Box::new(
                 ReadXdrIter::<_, TransactionMetaV3>::new(dec)
@@ -47987,6 +48137,7 @@ impl Type {
             Self::ScpStatementExternalize(ref v) => v.as_ref(),
             Self::ScpEnvelope(ref v) => v.as_ref(),
             Self::ScpQuorumSet(ref v) => v.as_ref(),
+            Self::ConfigSettingContractExecutionLanesV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractComputeV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractLedgerCostV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractHistoricalDataV0(ref v) => v.as_ref(),
@@ -48181,6 +48332,7 @@ impl Type {
             Self::ContractEventBody(ref v) => v.as_ref(),
             Self::ContractEventV0(ref v) => v.as_ref(),
             Self::DiagnosticEvent(ref v) => v.as_ref(),
+            Self::SorobanTransactionMeta(ref v) => v.as_ref(),
             Self::TransactionMetaV3(ref v) => v.as_ref(),
             Self::InvokeHostFunctionSuccessPreImage(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
@@ -48407,6 +48559,9 @@ impl Type {
             Self::ScpStatementExternalize(_) => "ScpStatementExternalize",
             Self::ScpEnvelope(_) => "ScpEnvelope",
             Self::ScpQuorumSet(_) => "ScpQuorumSet",
+            Self::ConfigSettingContractExecutionLanesV0(_) => {
+                "ConfigSettingContractExecutionLanesV0"
+            }
             Self::ConfigSettingContractComputeV0(_) => "ConfigSettingContractComputeV0",
             Self::ConfigSettingContractLedgerCostV0(_) => "ConfigSettingContractLedgerCostV0",
             Self::ConfigSettingContractHistoricalDataV0(_) => {
@@ -48605,6 +48760,7 @@ impl Type {
             Self::ContractEventBody(_) => "ContractEventBody",
             Self::ContractEventV0(_) => "ContractEventV0",
             Self::DiagnosticEvent(_) => "DiagnosticEvent",
+            Self::SorobanTransactionMeta(_) => "SorobanTransactionMeta",
             Self::TransactionMetaV3(_) => "TransactionMetaV3",
             Self::InvokeHostFunctionSuccessPreImage(_) => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta(_) => "TransactionMeta",
@@ -48826,7 +48982,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 413] {
+    pub const fn variants() -> [TypeVariant; 415] {
         Self::VARIANTS
     }
 
@@ -48845,6 +49001,9 @@ impl Type {
             Self::ScpStatementExternalize(_) => TypeVariant::ScpStatementExternalize,
             Self::ScpEnvelope(_) => TypeVariant::ScpEnvelope,
             Self::ScpQuorumSet(_) => TypeVariant::ScpQuorumSet,
+            Self::ConfigSettingContractExecutionLanesV0(_) => {
+                TypeVariant::ConfigSettingContractExecutionLanesV0
+            }
             Self::ConfigSettingContractComputeV0(_) => TypeVariant::ConfigSettingContractComputeV0,
             Self::ConfigSettingContractLedgerCostV0(_) => {
                 TypeVariant::ConfigSettingContractLedgerCostV0
@@ -49059,6 +49218,7 @@ impl Type {
             Self::ContractEventBody(_) => TypeVariant::ContractEventBody,
             Self::ContractEventV0(_) => TypeVariant::ContractEventV0,
             Self::DiagnosticEvent(_) => TypeVariant::DiagnosticEvent,
+            Self::SorobanTransactionMeta(_) => TypeVariant::SorobanTransactionMeta,
             Self::TransactionMetaV3(_) => TypeVariant::TransactionMetaV3,
             Self::InvokeHostFunctionSuccessPreImage(_) => {
                 TypeVariant::InvokeHostFunctionSuccessPreImage

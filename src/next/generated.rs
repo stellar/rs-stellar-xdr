@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "92645b4ee5ca32d9a44419751661501092b9d9ef9b391266ab2336af29723a20",
+        "d653b5434b79b82ccf6252c2a9cfeef3c8c13537d59e9e0baa3c31a7524a5ef3",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -3151,7 +3151,17 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 //        // Roundtrip cost of invoking a VM function from the host.
 //        InvokeVmFunction = 19,
 //        // Cost of charging a value to the budgeting system.
-//        ChargeBudget = 20
+//        ChargeBudget = 20,
+//        // Cost of computing a keccak256 hash from bytes.
+//        ComputeKeccak256Hash = 21,
+//        // Cost of computing an ECDSA secp256k1 pubkey from bytes.
+//        ComputeEcdsaSecp256k1Key = 22,
+//        // Cost of computing an ECDSA secp256k1 signature from bytes.
+//        ComputeEcdsaSecp256k1Sig = 23,
+//        // Cost of verifying an ECDSA secp256k1 signature.
+//        VerifyEcdsaSecp256k1Sig = 24,
+//        // Cost of recovering an ECDSA secp256k1 key from a signature.
+//        RecoverEcdsaSecp256k1Key = 25
 //    };
 //
 // enum
@@ -3185,10 +3195,15 @@ pub enum ContractCostType {
     VmInstantiation = 18,
     InvokeVmFunction = 19,
     ChargeBudget = 20,
+    ComputeKeccak256Hash = 21,
+    ComputeEcdsaSecp256k1Key = 22,
+    ComputeEcdsaSecp256k1Sig = 23,
+    VerifyEcdsaSecp256k1Sig = 24,
+    RecoverEcdsaSecp256k1Key = 25,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 21] = [
+    pub const VARIANTS: [ContractCostType; 26] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::WasmMemAlloc,
         ContractCostType::HostMemAlloc,
@@ -3210,8 +3225,13 @@ impl ContractCostType {
         ContractCostType::VmInstantiation,
         ContractCostType::InvokeVmFunction,
         ContractCostType::ChargeBudget,
+        ContractCostType::ComputeKeccak256Hash,
+        ContractCostType::ComputeEcdsaSecp256k1Key,
+        ContractCostType::ComputeEcdsaSecp256k1Sig,
+        ContractCostType::VerifyEcdsaSecp256k1Sig,
+        ContractCostType::RecoverEcdsaSecp256k1Key,
     ];
-    pub const VARIANTS_STR: [&'static str; 21] = [
+    pub const VARIANTS_STR: [&'static str; 26] = [
         "WasmInsnExec",
         "WasmMemAlloc",
         "HostMemAlloc",
@@ -3233,6 +3253,11 @@ impl ContractCostType {
         "VmInstantiation",
         "InvokeVmFunction",
         "ChargeBudget",
+        "ComputeKeccak256Hash",
+        "ComputeEcdsaSecp256k1Key",
+        "ComputeEcdsaSecp256k1Sig",
+        "VerifyEcdsaSecp256k1Sig",
+        "RecoverEcdsaSecp256k1Key",
     ];
 
     #[must_use]
@@ -3259,11 +3284,16 @@ impl ContractCostType {
             Self::VmInstantiation => "VmInstantiation",
             Self::InvokeVmFunction => "InvokeVmFunction",
             Self::ChargeBudget => "ChargeBudget",
+            Self::ComputeKeccak256Hash => "ComputeKeccak256Hash",
+            Self::ComputeEcdsaSecp256k1Key => "ComputeEcdsaSecp256k1Key",
+            Self::ComputeEcdsaSecp256k1Sig => "ComputeEcdsaSecp256k1Sig",
+            Self::VerifyEcdsaSecp256k1Sig => "VerifyEcdsaSecp256k1Sig",
+            Self::RecoverEcdsaSecp256k1Key => "RecoverEcdsaSecp256k1Key",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 21] {
+    pub const fn variants() -> [ContractCostType; 26] {
         Self::VARIANTS
     }
 }
@@ -3315,6 +3345,11 @@ impl TryFrom<i32> for ContractCostType {
             18 => ContractCostType::VmInstantiation,
             19 => ContractCostType::InvokeVmFunction,
             20 => ContractCostType::ChargeBudget,
+            21 => ContractCostType::ComputeKeccak256Hash,
+            22 => ContractCostType::ComputeEcdsaSecp256k1Key,
+            23 => ContractCostType::ComputeEcdsaSecp256k1Sig,
+            24 => ContractCostType::VerifyEcdsaSecp256k1Sig,
+            25 => ContractCostType::RecoverEcdsaSecp256k1Key,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

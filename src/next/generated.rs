@@ -38,7 +38,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "71c38a756f77215c01b0b48e8e8c0a1ad6fc6a7ae4e69eb09f7084e9c39c34f6",
+        "fed18d273cea6d95c901478191d39cdc35f7dca2c9cbcea7a724fe8c589168d2",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -46,7 +46,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "5da753824fd0f3ca01499f54ded9736bc6991bd3e152fffb8299c4f04a959ee9",
+        "f648e16cd6cd19dac8103252af9eda3e0b73dd5b983dd7ca14d6fb32f108ac04",
     ),
     (
         "xdr/next/Stellar-ledger.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "fccdf397df717d4acc1601ff04fd5d8ccc1defabef931ebbd2f5e41e21539f65",
+        "b9d6ce8bb25bf148c65c66dfc9c911b435904c66bddf8296556866d050b62a1c",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -8095,7 +8095,7 @@ impl AsRef<[u8]> for ScSymbol {
 // ScNonceKey is an XDR Struct defines as:
 //
 //   struct SCNonceKey {
-//        SCAddress nonce_address;
+//        int64 nonce;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -8106,14 +8106,14 @@ impl AsRef<[u8]> for ScSymbol {
     serde(rename_all = "snake_case")
 )]
 pub struct ScNonceKey {
-    pub nonce_address: ScAddress,
+    pub nonce: i64,
 }
 
 impl ReadXdr for ScNonceKey {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            nonce_address: ScAddress::read_xdr(r)?,
+            nonce: i64::read_xdr(r)?,
         })
     }
 }
@@ -8121,7 +8121,7 @@ impl ReadXdr for ScNonceKey {
 impl WriteXdr for ScNonceKey {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.nonce_address.write_xdr(w)?;
+        self.nonce.write_xdr(w)?;
         Ok(())
     }
 }
@@ -14007,7 +14007,7 @@ impl WriteXdr for ContractDataEntryBody {
 // ContractDataEntry is an XDR Struct defines as:
 //
 //   struct ContractDataEntry {
-//        Hash contractID;
+//        SCAddress contract;
 //        SCVal key;
 //        ContractDataType type;
 //
@@ -14034,7 +14034,7 @@ impl WriteXdr for ContractDataEntryBody {
     serde(rename_all = "snake_case")
 )]
 pub struct ContractDataEntry {
-    pub contract_id: Hash,
+    pub contract: ScAddress,
     pub key: ScVal,
     pub type_: ContractDataType,
     pub body: ContractDataEntryBody,
@@ -14045,7 +14045,7 @@ impl ReadXdr for ContractDataEntry {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            contract_id: Hash::read_xdr(r)?,
+            contract: ScAddress::read_xdr(r)?,
             key: ScVal::read_xdr(r)?,
             type_: ContractDataType::read_xdr(r)?,
             body: ContractDataEntryBody::read_xdr(r)?,
@@ -14057,7 +14057,7 @@ impl ReadXdr for ContractDataEntry {
 impl WriteXdr for ContractDataEntry {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.contract_id.write_xdr(w)?;
+        self.contract.write_xdr(w)?;
         self.key.write_xdr(w)?;
         self.type_.write_xdr(w)?;
         self.body.write_xdr(w)?;
@@ -14936,7 +14936,7 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 //
 //   struct
 //        {
-//            Hash contractID;
+//            SCAddress contract;
 //            SCVal key;
 //            ContractDataType type;
 //            ContractLedgerEntryType leType;
@@ -14950,7 +14950,7 @@ impl WriteXdr for LedgerKeyLiquidityPool {
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyContractData {
-    pub contract_id: Hash,
+    pub contract: ScAddress,
     pub key: ScVal,
     pub type_: ContractDataType,
     pub le_type: ContractLedgerEntryType,
@@ -14960,7 +14960,7 @@ impl ReadXdr for LedgerKeyContractData {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
-            contract_id: Hash::read_xdr(r)?,
+            contract: ScAddress::read_xdr(r)?,
             key: ScVal::read_xdr(r)?,
             type_: ContractDataType::read_xdr(r)?,
             le_type: ContractLedgerEntryType::read_xdr(r)?,
@@ -14971,7 +14971,7 @@ impl ReadXdr for LedgerKeyContractData {
 impl WriteXdr for LedgerKeyContractData {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.contract_id.write_xdr(w)?;
+        self.contract.write_xdr(w)?;
         self.key.write_xdr(w)?;
         self.type_.write_xdr(w)?;
         self.le_type.write_xdr(w)?;
@@ -15098,7 +15098,7 @@ impl WriteXdr for LedgerKeyConfigSetting {
 //    case CONTRACT_DATA:
 //        struct
 //        {
-//            Hash contractID;
+//            SCAddress contract;
 //            SCVal key;
 //            ContractDataType type;
 //            ContractLedgerEntryType leType;
@@ -24810,7 +24810,8 @@ impl WriteXdr for SorobanAuthorizedInvocation {
 //   struct SorobanAddressCredentials
 //    {
 //        SCAddress address;
-//        uint64 nonce;
+//        int64 nonce;
+//        uint32 signatureExpirationLedger;
 //        SCVec signatureArgs;
 //    };
 //
@@ -24823,7 +24824,8 @@ impl WriteXdr for SorobanAuthorizedInvocation {
 )]
 pub struct SorobanAddressCredentials {
     pub address: ScAddress,
-    pub nonce: u64,
+    pub nonce: i64,
+    pub signature_expiration_ledger: u32,
     pub signature_args: ScVec,
 }
 
@@ -24832,7 +24834,8 @@ impl ReadXdr for SorobanAddressCredentials {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             address: ScAddress::read_xdr(r)?,
-            nonce: u64::read_xdr(r)?,
+            nonce: i64::read_xdr(r)?,
+            signature_expiration_ledger: u32::read_xdr(r)?,
             signature_args: ScVec::read_xdr(r)?,
         })
     }
@@ -24843,6 +24846,7 @@ impl WriteXdr for SorobanAddressCredentials {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.address.write_xdr(w)?;
         self.nonce.write_xdr(w)?;
+        self.signature_expiration_ledger.write_xdr(w)?;
         self.signature_args.write_xdr(w)?;
         Ok(())
     }
@@ -25710,7 +25714,8 @@ impl WriteXdr for HashIdPreimageContractId {
 //   struct
 //        {
 //            Hash networkID;
-//            uint64 nonce;
+//            int64 nonce;
+//            uint32 signatureExpirationLedger;
 //            SorobanAuthorizedInvocation invocation;
 //        }
 //
@@ -25723,7 +25728,8 @@ impl WriteXdr for HashIdPreimageContractId {
 )]
 pub struct HashIdPreimageSorobanAuthorization {
     pub network_id: Hash,
-    pub nonce: u64,
+    pub nonce: i64,
+    pub signature_expiration_ledger: u32,
     pub invocation: SorobanAuthorizedInvocation,
 }
 
@@ -25732,7 +25738,8 @@ impl ReadXdr for HashIdPreimageSorobanAuthorization {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             network_id: Hash::read_xdr(r)?,
-            nonce: u64::read_xdr(r)?,
+            nonce: i64::read_xdr(r)?,
+            signature_expiration_ledger: u32::read_xdr(r)?,
             invocation: SorobanAuthorizedInvocation::read_xdr(r)?,
         })
     }
@@ -25743,6 +25750,7 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.network_id.write_xdr(w)?;
         self.nonce.write_xdr(w)?;
+        self.signature_expiration_ledger.write_xdr(w)?;
         self.invocation.write_xdr(w)?;
         Ok(())
     }
@@ -25778,7 +25786,8 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
 //        struct
 //        {
 //            Hash networkID;
-//            uint64 nonce;
+//            int64 nonce;
+//            uint32 signatureExpirationLedger;
 //            SorobanAuthorizedInvocation invocation;
 //        } sorobanAuthorization;
 //    };

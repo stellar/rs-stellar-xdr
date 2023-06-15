@@ -38,7 +38,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "fed18d273cea6d95c901478191d39cdc35f7dca2c9cbcea7a724fe8c589168d2",
+        "b864122a386370e9b4f2513c1cff762dfffead8a33e9760d96f41643d45207ff",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -7484,8 +7484,7 @@ impl WriteXdr for ScAddress {
 //
 //   enum ContractDataType {
 //        TEMPORARY = 0,
-//        MERGEABLE = 1,
-//        EXCLUSIVE = 2
+//        PERSISTENT = 1
 //    };
 //
 // enum
@@ -7499,29 +7498,24 @@ impl WriteXdr for ScAddress {
 #[repr(i32)]
 pub enum ContractDataType {
     Temporary = 0,
-    Mergeable = 1,
-    Exclusive = 2,
+    Persistent = 1,
 }
 
 impl ContractDataType {
-    pub const VARIANTS: [ContractDataType; 3] = [
-        ContractDataType::Temporary,
-        ContractDataType::Mergeable,
-        ContractDataType::Exclusive,
-    ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Temporary", "Mergeable", "Exclusive"];
+    pub const VARIANTS: [ContractDataType; 2] =
+        [ContractDataType::Temporary, ContractDataType::Persistent];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Temporary", "Persistent"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Temporary => "Temporary",
-            Self::Mergeable => "Mergeable",
-            Self::Exclusive => "Exclusive",
+            Self::Persistent => "Persistent",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractDataType; 3] {
+    pub const fn variants() -> [ContractDataType; 2] {
         Self::VARIANTS
     }
 }
@@ -7553,8 +7547,7 @@ impl TryFrom<i32> for ContractDataType {
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
             0 => ContractDataType::Temporary,
-            1 => ContractDataType::Mergeable,
-            2 => ContractDataType::Exclusive,
+            1 => ContractDataType::Persistent,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

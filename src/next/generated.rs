@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "2338faba8dd06fb22caf1afdd0248a92552835792871ec31e5dc1a810dba641d",
+        "3eaa429790e5ec56953a1498b4bfefee0a25cee0e016798167431b4118f8cf9e",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -3159,7 +3159,17 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 //        // Cost of computing an ECDSA secp256k1 signature from bytes.
 //        ComputeEcdsaSecp256k1Sig = 23,
 //        // Cost of recovering an ECDSA secp256k1 key from a signature.
-//        RecoverEcdsaSecp256k1Key = 24
+//        RecoverEcdsaSecp256k1Key = 24,
+//        // Cost of int256 addition (`+`) and subtraction (`-`) operations
+//        Int256AddSub = 25,
+//        // Cost of int256 multiplication (`*`) operation
+//        Int256Mul = 26,
+//        // Cost of int256 division (`/`) operation
+//        Int256Div = 27,
+//        // Cost of int256 power (`exp`) operation
+//        Int256Pow = 28,
+//        // Cost of int256 shift (`shl`, `shr`) operation
+//        Int256Shift = 29
 //    };
 //
 // enum
@@ -3197,10 +3207,15 @@ pub enum ContractCostType {
     ComputeEcdsaSecp256k1Key = 22,
     ComputeEcdsaSecp256k1Sig = 23,
     RecoverEcdsaSecp256k1Key = 24,
+    Int256AddSub = 25,
+    Int256Mul = 26,
+    Int256Div = 27,
+    Int256Pow = 28,
+    Int256Shift = 29,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 25] = [
+    pub const VARIANTS: [ContractCostType; 30] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::WasmMemAlloc,
         ContractCostType::HostMemAlloc,
@@ -3226,8 +3241,13 @@ impl ContractCostType {
         ContractCostType::ComputeEcdsaSecp256k1Key,
         ContractCostType::ComputeEcdsaSecp256k1Sig,
         ContractCostType::RecoverEcdsaSecp256k1Key,
+        ContractCostType::Int256AddSub,
+        ContractCostType::Int256Mul,
+        ContractCostType::Int256Div,
+        ContractCostType::Int256Pow,
+        ContractCostType::Int256Shift,
     ];
-    pub const VARIANTS_STR: [&'static str; 25] = [
+    pub const VARIANTS_STR: [&'static str; 30] = [
         "WasmInsnExec",
         "WasmMemAlloc",
         "HostMemAlloc",
@@ -3253,6 +3273,11 @@ impl ContractCostType {
         "ComputeEcdsaSecp256k1Key",
         "ComputeEcdsaSecp256k1Sig",
         "RecoverEcdsaSecp256k1Key",
+        "Int256AddSub",
+        "Int256Mul",
+        "Int256Div",
+        "Int256Pow",
+        "Int256Shift",
     ];
 
     #[must_use]
@@ -3283,11 +3308,16 @@ impl ContractCostType {
             Self::ComputeEcdsaSecp256k1Key => "ComputeEcdsaSecp256k1Key",
             Self::ComputeEcdsaSecp256k1Sig => "ComputeEcdsaSecp256k1Sig",
             Self::RecoverEcdsaSecp256k1Key => "RecoverEcdsaSecp256k1Key",
+            Self::Int256AddSub => "Int256AddSub",
+            Self::Int256Mul => "Int256Mul",
+            Self::Int256Div => "Int256Div",
+            Self::Int256Pow => "Int256Pow",
+            Self::Int256Shift => "Int256Shift",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 25] {
+    pub const fn variants() -> [ContractCostType; 30] {
         Self::VARIANTS
     }
 }
@@ -3343,6 +3373,11 @@ impl TryFrom<i32> for ContractCostType {
             22 => ContractCostType::ComputeEcdsaSecp256k1Key,
             23 => ContractCostType::ComputeEcdsaSecp256k1Sig,
             24 => ContractCostType::RecoverEcdsaSecp256k1Key,
+            25 => ContractCostType::Int256AddSub,
+            26 => ContractCostType::Int256Mul,
+            27 => ContractCostType::Int256Div,
+            28 => ContractCostType::Int256Pow,
+            29 => ContractCostType::Int256Shift,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

@@ -92,10 +92,10 @@ jobs:
     - uses: stellar/actions/rust-cache@main
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
-    - uses: stellar/binaries@v12
+    - uses: stellar/binaries@v14
       with:
         name: cargo-hack
-        version: 0.5.16
+        version: 0.5.28
     - name: Build
       run: echo "${{ matrix.commands.build }}" | xargs -I{} bash -x -c '{} --target ${{ matrix.sys.target }}'
     - name: Test

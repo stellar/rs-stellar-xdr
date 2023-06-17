@@ -87,6 +87,9 @@ jobs:
           test: true
         commands: ${{ fromJSON(needs.commands.outputs.commands) }}
     runs-on: ${{ matrix.sys.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main

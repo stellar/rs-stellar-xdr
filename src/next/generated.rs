@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "4f4f349b46cb46aba71da54552ffbbb8c028e9a2a280b04849c889d1081f4b42",
+        "eaa4b6c047f564b10a8179c66e4342359d085be8bd2a61ca5fb7b4fc18ec0a13",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -35558,9 +35558,9 @@ impl WriteXdr for InvokeHostFunctionResult {
     }
 }
 
-// BumpFootprintExpirationOpResultCode is an XDR Enum defines as:
+// BumpFootprintExpirationResultCode is an XDR Enum defines as:
 //
-//   enum BumpFootprintExpirationOpResultCode
+//   enum BumpFootprintExpirationResultCode
 //    {
 //        // codes considered as "success" for the operation
 //        BUMP_FOOTPRINT_EXPIRATION_SUCCESS = 0,
@@ -35579,17 +35579,17 @@ impl WriteXdr for InvokeHostFunctionResult {
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
-pub enum BumpFootprintExpirationOpResultCode {
+pub enum BumpFootprintExpirationResultCode {
     Success = 0,
     Malformed = -1,
     ResourceLimitExceeded = -2,
 }
 
-impl BumpFootprintExpirationOpResultCode {
-    pub const VARIANTS: [BumpFootprintExpirationOpResultCode; 3] = [
-        BumpFootprintExpirationOpResultCode::Success,
-        BumpFootprintExpirationOpResultCode::Malformed,
-        BumpFootprintExpirationOpResultCode::ResourceLimitExceeded,
+impl BumpFootprintExpirationResultCode {
+    pub const VARIANTS: [BumpFootprintExpirationResultCode; 3] = [
+        BumpFootprintExpirationResultCode::Success,
+        BumpFootprintExpirationResultCode::Malformed,
+        BumpFootprintExpirationResultCode::ResourceLimitExceeded,
     ];
     pub const VARIANTS_STR: [&'static str; 3] = ["Success", "Malformed", "ResourceLimitExceeded"];
 
@@ -35603,40 +35603,40 @@ impl BumpFootprintExpirationOpResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [BumpFootprintExpirationOpResultCode; 3] {
+    pub const fn variants() -> [BumpFootprintExpirationResultCode; 3] {
         Self::VARIANTS
     }
 }
 
-impl Name for BumpFootprintExpirationOpResultCode {
+impl Name for BumpFootprintExpirationResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Variants<BumpFootprintExpirationOpResultCode> for BumpFootprintExpirationOpResultCode {
-    fn variants() -> slice::Iter<'static, BumpFootprintExpirationOpResultCode> {
+impl Variants<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResultCode {
+    fn variants() -> slice::Iter<'static, BumpFootprintExpirationResultCode> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Enum for BumpFootprintExpirationOpResultCode {}
+impl Enum for BumpFootprintExpirationResultCode {}
 
-impl fmt::Display for BumpFootprintExpirationOpResultCode {
+impl fmt::Display for BumpFootprintExpirationResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
 
-impl TryFrom<i32> for BumpFootprintExpirationOpResultCode {
+impl TryFrom<i32> for BumpFootprintExpirationResultCode {
     type Error = Error;
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => BumpFootprintExpirationOpResultCode::Success,
-            -1 => BumpFootprintExpirationOpResultCode::Malformed,
-            -2 => BumpFootprintExpirationOpResultCode::ResourceLimitExceeded,
+            0 => BumpFootprintExpirationResultCode::Success,
+            -1 => BumpFootprintExpirationResultCode::Malformed,
+            -2 => BumpFootprintExpirationResultCode::ResourceLimitExceeded,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -35644,14 +35644,14 @@ impl TryFrom<i32> for BumpFootprintExpirationOpResultCode {
     }
 }
 
-impl From<BumpFootprintExpirationOpResultCode> for i32 {
+impl From<BumpFootprintExpirationResultCode> for i32 {
     #[must_use]
-    fn from(e: BumpFootprintExpirationOpResultCode) -> Self {
+    fn from(e: BumpFootprintExpirationResultCode) -> Self {
         e as Self
     }
 }
 
-impl ReadXdr for BumpFootprintExpirationOpResultCode {
+impl ReadXdr for BumpFootprintExpirationResultCode {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -35660,7 +35660,7 @@ impl ReadXdr for BumpFootprintExpirationOpResultCode {
     }
 }
 
-impl WriteXdr for BumpFootprintExpirationOpResultCode {
+impl WriteXdr for BumpFootprintExpirationResultCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -35670,7 +35670,7 @@ impl WriteXdr for BumpFootprintExpirationOpResultCode {
 
 // BumpFootprintExpirationResult is an XDR Union defines as:
 //
-//   union BumpFootprintExpirationResult switch (BumpFootprintExpirationOpResultCode code)
+//   union BumpFootprintExpirationResult switch (BumpFootprintExpirationResultCode code)
 //    {
 //    case BUMP_FOOTPRINT_EXPIRATION_SUCCESS:
 //        void;
@@ -35678,7 +35678,7 @@ impl WriteXdr for BumpFootprintExpirationOpResultCode {
 //        void;
 //    };
 //
-// union with discriminant BumpFootprintExpirationOpResultCode
+// union with discriminant BumpFootprintExpirationResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -35693,9 +35693,9 @@ pub enum BumpFootprintExpirationResult {
 }
 
 impl BumpFootprintExpirationResult {
-    pub const VARIANTS: [BumpFootprintExpirationOpResultCode; 2] = [
-        BumpFootprintExpirationOpResultCode::Success,
-        BumpFootprintExpirationOpResultCode::Malformed,
+    pub const VARIANTS: [BumpFootprintExpirationResultCode; 2] = [
+        BumpFootprintExpirationResultCode::Success,
+        BumpFootprintExpirationResultCode::Malformed,
     ];
     pub const VARIANTS_STR: [&'static str; 2] = ["Success", "Malformed"];
 
@@ -35708,16 +35708,16 @@ impl BumpFootprintExpirationResult {
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> BumpFootprintExpirationOpResultCode {
+    pub const fn discriminant(&self) -> BumpFootprintExpirationResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Success => BumpFootprintExpirationOpResultCode::Success,
-            Self::Malformed => BumpFootprintExpirationOpResultCode::Malformed,
+            Self::Success => BumpFootprintExpirationResultCode::Success,
+            Self::Malformed => BumpFootprintExpirationResultCode::Malformed,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [BumpFootprintExpirationOpResultCode; 2] {
+    pub const fn variants() -> [BumpFootprintExpirationResultCode; 2] {
         Self::VARIANTS
     }
 }
@@ -35729,30 +35729,30 @@ impl Name for BumpFootprintExpirationResult {
     }
 }
 
-impl Discriminant<BumpFootprintExpirationOpResultCode> for BumpFootprintExpirationResult {
+impl Discriminant<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResult {
     #[must_use]
-    fn discriminant(&self) -> BumpFootprintExpirationOpResultCode {
+    fn discriminant(&self) -> BumpFootprintExpirationResultCode {
         Self::discriminant(self)
     }
 }
 
-impl Variants<BumpFootprintExpirationOpResultCode> for BumpFootprintExpirationResult {
-    fn variants() -> slice::Iter<'static, BumpFootprintExpirationOpResultCode> {
+impl Variants<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResult {
+    fn variants() -> slice::Iter<'static, BumpFootprintExpirationResultCode> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<BumpFootprintExpirationOpResultCode> for BumpFootprintExpirationResult {}
+impl Union<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResult {}
 
 impl ReadXdr for BumpFootprintExpirationResult {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: BumpFootprintExpirationOpResultCode =
-            <BumpFootprintExpirationOpResultCode as ReadXdr>::read_xdr(r)?;
+        let dv: BumpFootprintExpirationResultCode =
+            <BumpFootprintExpirationResultCode as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            BumpFootprintExpirationOpResultCode::Success => Self::Success,
-            BumpFootprintExpirationOpResultCode::Malformed => Self::Malformed,
+            BumpFootprintExpirationResultCode::Success => Self::Success,
+            BumpFootprintExpirationResultCode::Malformed => Self::Malformed,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -39451,7 +39451,7 @@ pub enum TypeVariant {
     LiquidityPoolWithdrawResult,
     InvokeHostFunctionResultCode,
     InvokeHostFunctionResult,
-    BumpFootprintExpirationOpResultCode,
+    BumpFootprintExpirationResultCode,
     BumpFootprintExpirationResult,
     OperationResultCode,
     OperationResult,
@@ -39874,7 +39874,7 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolWithdrawResult,
         TypeVariant::InvokeHostFunctionResultCode,
         TypeVariant::InvokeHostFunctionResult,
-        TypeVariant::BumpFootprintExpirationOpResultCode,
+        TypeVariant::BumpFootprintExpirationResultCode,
         TypeVariant::BumpFootprintExpirationResult,
         TypeVariant::OperationResultCode,
         TypeVariant::OperationResult,
@@ -40295,7 +40295,7 @@ impl TypeVariant {
         "LiquidityPoolWithdrawResult",
         "InvokeHostFunctionResultCode",
         "InvokeHostFunctionResult",
-        "BumpFootprintExpirationOpResultCode",
+        "BumpFootprintExpirationResultCode",
         "BumpFootprintExpirationResult",
         "OperationResultCode",
         "OperationResult",
@@ -40726,7 +40726,7 @@ impl TypeVariant {
             Self::LiquidityPoolWithdrawResult => "LiquidityPoolWithdrawResult",
             Self::InvokeHostFunctionResultCode => "InvokeHostFunctionResultCode",
             Self::InvokeHostFunctionResult => "InvokeHostFunctionResult",
-            Self::BumpFootprintExpirationOpResultCode => "BumpFootprintExpirationOpResultCode",
+            Self::BumpFootprintExpirationResultCode => "BumpFootprintExpirationResultCode",
             Self::BumpFootprintExpirationResult => "BumpFootprintExpirationResult",
             Self::OperationResultCode => "OperationResultCode",
             Self::OperationResult => "OperationResult",
@@ -41187,7 +41187,7 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolWithdrawResult" => Ok(Self::LiquidityPoolWithdrawResult),
             "InvokeHostFunctionResultCode" => Ok(Self::InvokeHostFunctionResultCode),
             "InvokeHostFunctionResult" => Ok(Self::InvokeHostFunctionResult),
-            "BumpFootprintExpirationOpResultCode" => Ok(Self::BumpFootprintExpirationOpResultCode),
+            "BumpFootprintExpirationResultCode" => Ok(Self::BumpFootprintExpirationResultCode),
             "BumpFootprintExpirationResult" => Ok(Self::BumpFootprintExpirationResult),
             "OperationResultCode" => Ok(Self::OperationResultCode),
             "OperationResult" => Ok(Self::OperationResult),
@@ -41619,7 +41619,7 @@ pub enum Type {
     LiquidityPoolWithdrawResult(Box<LiquidityPoolWithdrawResult>),
     InvokeHostFunctionResultCode(Box<InvokeHostFunctionResultCode>),
     InvokeHostFunctionResult(Box<InvokeHostFunctionResult>),
-    BumpFootprintExpirationOpResultCode(Box<BumpFootprintExpirationOpResultCode>),
+    BumpFootprintExpirationResultCode(Box<BumpFootprintExpirationResultCode>),
     BumpFootprintExpirationResult(Box<BumpFootprintExpirationResult>),
     OperationResultCode(Box<OperationResultCode>),
     OperationResult(Box<OperationResult>),
@@ -42042,7 +42042,7 @@ impl Type {
         TypeVariant::LiquidityPoolWithdrawResult,
         TypeVariant::InvokeHostFunctionResultCode,
         TypeVariant::InvokeHostFunctionResult,
-        TypeVariant::BumpFootprintExpirationOpResultCode,
+        TypeVariant::BumpFootprintExpirationResultCode,
         TypeVariant::BumpFootprintExpirationResult,
         TypeVariant::OperationResultCode,
         TypeVariant::OperationResult,
@@ -42463,7 +42463,7 @@ impl Type {
         "LiquidityPoolWithdrawResult",
         "InvokeHostFunctionResultCode",
         "InvokeHostFunctionResult",
-        "BumpFootprintExpirationOpResultCode",
+        "BumpFootprintExpirationResultCode",
         "BumpFootprintExpirationResult",
         "OperationResultCode",
         "OperationResult",
@@ -43584,9 +43584,9 @@ impl Type {
             TypeVariant::InvokeHostFunctionResult => Ok(Self::InvokeHostFunctionResult(Box::new(
                 InvokeHostFunctionResult::read_xdr(r)?,
             ))),
-            TypeVariant::BumpFootprintExpirationOpResultCode => {
-                Ok(Self::BumpFootprintExpirationOpResultCode(Box::new(
-                    BumpFootprintExpirationOpResultCode::read_xdr(r)?,
+            TypeVariant::BumpFootprintExpirationResultCode => {
+                Ok(Self::BumpFootprintExpirationResultCode(Box::new(
+                    BumpFootprintExpirationResultCode::read_xdr(r)?,
                 )))
             }
             TypeVariant::BumpFootprintExpirationResult => Ok(Self::BumpFootprintExpirationResult(
@@ -45213,9 +45213,9 @@ impl Type {
                 ReadXdrIter::<_, InvokeHostFunctionResult>::new(r)
                     .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t)))),
             ),
-            TypeVariant::BumpFootprintExpirationOpResultCode => Box::new(
-                ReadXdrIter::<_, BumpFootprintExpirationOpResultCode>::new(r)
-                    .map(|r| r.map(|t| Self::BumpFootprintExpirationOpResultCode(Box::new(t)))),
+            TypeVariant::BumpFootprintExpirationResultCode => Box::new(
+                ReadXdrIter::<_, BumpFootprintExpirationResultCode>::new(r)
+                    .map(|r| r.map(|t| Self::BumpFootprintExpirationResultCode(Box::new(t)))),
             ),
             TypeVariant::BumpFootprintExpirationResult => Box::new(
                 ReadXdrIter::<_, BumpFootprintExpirationResult>::new(r)
@@ -46894,9 +46894,9 @@ impl Type {
                 ReadXdrIter::<_, Frame<InvokeHostFunctionResult>>::new(r)
                     .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t.0)))),
             ),
-            TypeVariant::BumpFootprintExpirationOpResultCode => Box::new(
-                ReadXdrIter::<_, Frame<BumpFootprintExpirationOpResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::BumpFootprintExpirationOpResultCode(Box::new(t.0)))),
+            TypeVariant::BumpFootprintExpirationResultCode => Box::new(
+                ReadXdrIter::<_, Frame<BumpFootprintExpirationResultCode>>::new(r)
+                    .map(|r| r.map(|t| Self::BumpFootprintExpirationResultCode(Box::new(t.0)))),
             ),
             TypeVariant::BumpFootprintExpirationResult => Box::new(
                 ReadXdrIter::<_, Frame<BumpFootprintExpirationResult>>::new(r)
@@ -48567,9 +48567,9 @@ impl Type {
                 ReadXdrIter::<_, InvokeHostFunctionResult>::new(dec)
                     .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t)))),
             ),
-            TypeVariant::BumpFootprintExpirationOpResultCode => Box::new(
-                ReadXdrIter::<_, BumpFootprintExpirationOpResultCode>::new(dec)
-                    .map(|r| r.map(|t| Self::BumpFootprintExpirationOpResultCode(Box::new(t)))),
+            TypeVariant::BumpFootprintExpirationResultCode => Box::new(
+                ReadXdrIter::<_, BumpFootprintExpirationResultCode>::new(dec)
+                    .map(|r| r.map(|t| Self::BumpFootprintExpirationResultCode(Box::new(t)))),
             ),
             TypeVariant::BumpFootprintExpirationResult => Box::new(
                 ReadXdrIter::<_, BumpFootprintExpirationResult>::new(dec)
@@ -49111,7 +49111,7 @@ impl Type {
             Self::LiquidityPoolWithdrawResult(ref v) => v.as_ref(),
             Self::InvokeHostFunctionResultCode(ref v) => v.as_ref(),
             Self::InvokeHostFunctionResult(ref v) => v.as_ref(),
-            Self::BumpFootprintExpirationOpResultCode(ref v) => v.as_ref(),
+            Self::BumpFootprintExpirationResultCode(ref v) => v.as_ref(),
             Self::BumpFootprintExpirationResult(ref v) => v.as_ref(),
             Self::OperationResultCode(ref v) => v.as_ref(),
             Self::OperationResult(ref v) => v.as_ref(),
@@ -49551,7 +49551,7 @@ impl Type {
             Self::LiquidityPoolWithdrawResult(_) => "LiquidityPoolWithdrawResult",
             Self::InvokeHostFunctionResultCode(_) => "InvokeHostFunctionResultCode",
             Self::InvokeHostFunctionResult(_) => "InvokeHostFunctionResult",
-            Self::BumpFootprintExpirationOpResultCode(_) => "BumpFootprintExpirationOpResultCode",
+            Self::BumpFootprintExpirationResultCode(_) => "BumpFootprintExpirationResultCode",
             Self::BumpFootprintExpirationResult(_) => "BumpFootprintExpirationResult",
             Self::OperationResultCode(_) => "OperationResultCode",
             Self::OperationResult(_) => "OperationResult",
@@ -50039,8 +50039,8 @@ impl Type {
             Self::LiquidityPoolWithdrawResult(_) => TypeVariant::LiquidityPoolWithdrawResult,
             Self::InvokeHostFunctionResultCode(_) => TypeVariant::InvokeHostFunctionResultCode,
             Self::InvokeHostFunctionResult(_) => TypeVariant::InvokeHostFunctionResult,
-            Self::BumpFootprintExpirationOpResultCode(_) => {
-                TypeVariant::BumpFootprintExpirationOpResultCode
+            Self::BumpFootprintExpirationResultCode(_) => {
+                TypeVariant::BumpFootprintExpirationResultCode
             }
             Self::BumpFootprintExpirationResult(_) => TypeVariant::BumpFootprintExpirationResult,
             Self::OperationResultCode(_) => TypeVariant::OperationResultCode,

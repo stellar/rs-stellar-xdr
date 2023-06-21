@@ -16,6 +16,7 @@ impl Validate for ScVal {
             | ScVal::I32(_)
             | ScVal::Error(_)
             | ScVal::Bool(_)
+            | ScVal::Void
             | ScVal::U64(_)
             | ScVal::I64(_)
             | ScVal::Timepoint(_)
@@ -45,7 +46,6 @@ impl Validate for ScVal {
             }
             ScVal::Vec(None) | ScVal::Map(None) => Err(Error::Invalid),
             ScVal::Map(Some(m)) => m.validate(),
-            ScVal::Void => todo!(),
         }
     }
 }

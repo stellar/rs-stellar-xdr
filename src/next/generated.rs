@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "3eaa429790e5ec56953a1498b4bfefee0a25cee0e016798167431b4118f8cf9e",
+        "ca9a2ee51bf7ba55f7f42f5d8e736ecebb34367642a0fe229f2a1b698d21a51d",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -38,7 +38,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "b864122a386370e9b4f2513c1cff762dfffead8a33e9760d96f41643d45207ff",
+        "8cc02fc38ce4cffa60c85d13b5f83b0106f0b86a41bbed8976e2ab05b8e91614",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "eaa4b6c047f564b10a8179c66e4342359d085be8bd2a61ca5fb7b4fc18ec0a13",
+        "3599090a2446d62804b8fcfe6b49a46a61f3b1546d3ede4b1969af4683e699ec",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -3148,28 +3148,30 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 //        VmMemWrite = 17,
 //        // Cost of instantiation a VM from wasm bytes code.
 //        VmInstantiation = 18,
+//        // Cost of instantiation a VM from a cached state.
+//        VmCachedInstantiation = 19,
 //        // Roundtrip cost of invoking a VM function from the host.
-//        InvokeVmFunction = 19,
+//        InvokeVmFunction = 20,
 //        // Cost of charging a value to the budgeting system.
-//        ChargeBudget = 20,
+//        ChargeBudget = 21,
 //        // Cost of computing a keccak256 hash from bytes.
-//        ComputeKeccak256Hash = 21,
+//        ComputeKeccak256Hash = 22,
 //        // Cost of computing an ECDSA secp256k1 pubkey from bytes.
-//        ComputeEcdsaSecp256k1Key = 22,
+//        ComputeEcdsaSecp256k1Key = 23,
 //        // Cost of computing an ECDSA secp256k1 signature from bytes.
-//        ComputeEcdsaSecp256k1Sig = 23,
+//        ComputeEcdsaSecp256k1Sig = 24,
 //        // Cost of recovering an ECDSA secp256k1 key from a signature.
-//        RecoverEcdsaSecp256k1Key = 24,
+//        RecoverEcdsaSecp256k1Key = 25,
 //        // Cost of int256 addition (`+`) and subtraction (`-`) operations
-//        Int256AddSub = 25,
+//        Int256AddSub = 26,
 //        // Cost of int256 multiplication (`*`) operation
-//        Int256Mul = 26,
+//        Int256Mul = 27,
 //        // Cost of int256 division (`/`) operation
-//        Int256Div = 27,
+//        Int256Div = 28,
 //        // Cost of int256 power (`exp`) operation
-//        Int256Pow = 28,
+//        Int256Pow = 29,
 //        // Cost of int256 shift (`shl`, `shr`) operation
-//        Int256Shift = 29
+//        Int256Shift = 30
 //    };
 //
 // enum
@@ -3201,21 +3203,22 @@ pub enum ContractCostType {
     VmMemRead = 16,
     VmMemWrite = 17,
     VmInstantiation = 18,
-    InvokeVmFunction = 19,
-    ChargeBudget = 20,
-    ComputeKeccak256Hash = 21,
-    ComputeEcdsaSecp256k1Key = 22,
-    ComputeEcdsaSecp256k1Sig = 23,
-    RecoverEcdsaSecp256k1Key = 24,
-    Int256AddSub = 25,
-    Int256Mul = 26,
-    Int256Div = 27,
-    Int256Pow = 28,
-    Int256Shift = 29,
+    VmCachedInstantiation = 19,
+    InvokeVmFunction = 20,
+    ChargeBudget = 21,
+    ComputeKeccak256Hash = 22,
+    ComputeEcdsaSecp256k1Key = 23,
+    ComputeEcdsaSecp256k1Sig = 24,
+    RecoverEcdsaSecp256k1Key = 25,
+    Int256AddSub = 26,
+    Int256Mul = 27,
+    Int256Div = 28,
+    Int256Pow = 29,
+    Int256Shift = 30,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 30] = [
+    pub const VARIANTS: [ContractCostType; 31] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::WasmMemAlloc,
         ContractCostType::HostMemAlloc,
@@ -3235,6 +3238,7 @@ impl ContractCostType {
         ContractCostType::VmMemRead,
         ContractCostType::VmMemWrite,
         ContractCostType::VmInstantiation,
+        ContractCostType::VmCachedInstantiation,
         ContractCostType::InvokeVmFunction,
         ContractCostType::ChargeBudget,
         ContractCostType::ComputeKeccak256Hash,
@@ -3247,7 +3251,7 @@ impl ContractCostType {
         ContractCostType::Int256Pow,
         ContractCostType::Int256Shift,
     ];
-    pub const VARIANTS_STR: [&'static str; 30] = [
+    pub const VARIANTS_STR: [&'static str; 31] = [
         "WasmInsnExec",
         "WasmMemAlloc",
         "HostMemAlloc",
@@ -3267,6 +3271,7 @@ impl ContractCostType {
         "VmMemRead",
         "VmMemWrite",
         "VmInstantiation",
+        "VmCachedInstantiation",
         "InvokeVmFunction",
         "ChargeBudget",
         "ComputeKeccak256Hash",
@@ -3302,6 +3307,7 @@ impl ContractCostType {
             Self::VmMemRead => "VmMemRead",
             Self::VmMemWrite => "VmMemWrite",
             Self::VmInstantiation => "VmInstantiation",
+            Self::VmCachedInstantiation => "VmCachedInstantiation",
             Self::InvokeVmFunction => "InvokeVmFunction",
             Self::ChargeBudget => "ChargeBudget",
             Self::ComputeKeccak256Hash => "ComputeKeccak256Hash",
@@ -3317,7 +3323,7 @@ impl ContractCostType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 30] {
+    pub const fn variants() -> [ContractCostType; 31] {
         Self::VARIANTS
     }
 }
@@ -3367,17 +3373,18 @@ impl TryFrom<i32> for ContractCostType {
             16 => ContractCostType::VmMemRead,
             17 => ContractCostType::VmMemWrite,
             18 => ContractCostType::VmInstantiation,
-            19 => ContractCostType::InvokeVmFunction,
-            20 => ContractCostType::ChargeBudget,
-            21 => ContractCostType::ComputeKeccak256Hash,
-            22 => ContractCostType::ComputeEcdsaSecp256k1Key,
-            23 => ContractCostType::ComputeEcdsaSecp256k1Sig,
-            24 => ContractCostType::RecoverEcdsaSecp256k1Key,
-            25 => ContractCostType::Int256AddSub,
-            26 => ContractCostType::Int256Mul,
-            27 => ContractCostType::Int256Div,
-            28 => ContractCostType::Int256Pow,
-            29 => ContractCostType::Int256Shift,
+            19 => ContractCostType::VmCachedInstantiation,
+            20 => ContractCostType::InvokeVmFunction,
+            21 => ContractCostType::ChargeBudget,
+            22 => ContractCostType::ComputeKeccak256Hash,
+            23 => ContractCostType::ComputeEcdsaSecp256k1Key,
+            24 => ContractCostType::ComputeEcdsaSecp256k1Sig,
+            25 => ContractCostType::RecoverEcdsaSecp256k1Key,
+            26 => ContractCostType::Int256AddSub,
+            27 => ContractCostType::Int256Mul,
+            28 => ContractCostType::Int256Div,
+            29 => ContractCostType::Int256Pow,
+            30 => ContractCostType::Int256Shift,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -6381,18 +6388,20 @@ impl WriteXdr for ScSpecEntry {
 //        SCV_VEC = 16,
 //        SCV_MAP = 17,
 //
-//        // SCContractExecutable and SCAddressType are types that gets used separately from
-//        // SCVal so we do not flatten their structures into separate SCVal cases.
-//        SCV_CONTRACT_EXECUTABLE = 18,
-//        SCV_ADDRESS = 19,
+//        // Address is the universal identifier for contracts and classic
+//        // accounts.
+//        SCV_ADDRESS = 18,
 //
-//        // SCV_LEDGER_KEY_CONTRACT_EXECUTABLE and SCV_LEDGER_KEY_NONCE are unique
-//        // symbolic SCVals used as the key for ledger entries for a contract's code
-//        // and an address' nonce, respectively.
-//        SCV_LEDGER_KEY_CONTRACT_EXECUTABLE = 20,
-//        SCV_LEDGER_KEY_NONCE = 21,
+//        // The following are the internal SCVal variants that are not
+//        // exposed to the contracts.
+//        SCV_CONTRACT_INSTANCE = 19,
+//        SCV_STORAGE_TYPE = 20,
 //
-//        SCV_STORAGE_TYPE = 22
+//        // SCV_LEDGER_KEY_CONTRACT_INSTANCE and SCV_LEDGER_KEY_NONCE are unique
+//        // symbolic SCVals used as the key for ledger entries for a contract's
+//        // instance and an address' nonce, respectively.
+//        SCV_LEDGER_KEY_CONTRACT_INSTANCE = 21,
+//        SCV_LEDGER_KEY_NONCE = 22
 //    };
 //
 // enum
@@ -6423,11 +6432,11 @@ pub enum ScValType {
     Symbol = 15,
     Vec = 16,
     Map = 17,
-    ContractExecutable = 18,
-    Address = 19,
-    LedgerKeyContractExecutable = 20,
-    LedgerKeyNonce = 21,
-    StorageType = 22,
+    Address = 18,
+    ContractInstance = 19,
+    StorageType = 20,
+    LedgerKeyContractInstance = 21,
+    LedgerKeyNonce = 22,
 }
 
 impl ScValType {
@@ -6450,11 +6459,11 @@ impl ScValType {
         ScValType::Symbol,
         ScValType::Vec,
         ScValType::Map,
-        ScValType::ContractExecutable,
         ScValType::Address,
-        ScValType::LedgerKeyContractExecutable,
-        ScValType::LedgerKeyNonce,
+        ScValType::ContractInstance,
         ScValType::StorageType,
+        ScValType::LedgerKeyContractInstance,
+        ScValType::LedgerKeyNonce,
     ];
     pub const VARIANTS_STR: [&'static str; 23] = [
         "Bool",
@@ -6475,11 +6484,11 @@ impl ScValType {
         "Symbol",
         "Vec",
         "Map",
-        "ContractExecutable",
         "Address",
-        "LedgerKeyContractExecutable",
-        "LedgerKeyNonce",
+        "ContractInstance",
         "StorageType",
+        "LedgerKeyContractInstance",
+        "LedgerKeyNonce",
     ];
 
     #[must_use]
@@ -6503,11 +6512,11 @@ impl ScValType {
             Self::Symbol => "Symbol",
             Self::Vec => "Vec",
             Self::Map => "Map",
-            Self::ContractExecutable => "ContractExecutable",
             Self::Address => "Address",
-            Self::LedgerKeyContractExecutable => "LedgerKeyContractExecutable",
-            Self::LedgerKeyNonce => "LedgerKeyNonce",
+            Self::ContractInstance => "ContractInstance",
             Self::StorageType => "StorageType",
+            Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
+            Self::LedgerKeyNonce => "LedgerKeyNonce",
         }
     }
 
@@ -6561,11 +6570,11 @@ impl TryFrom<i32> for ScValType {
             15 => ScValType::Symbol,
             16 => ScValType::Vec,
             17 => ScValType::Map,
-            18 => ScValType::ContractExecutable,
-            19 => ScValType::Address,
-            20 => ScValType::LedgerKeyContractExecutable,
-            21 => ScValType::LedgerKeyNonce,
-            22 => ScValType::StorageType,
+            18 => ScValType::Address,
+            19 => ScValType::ContractInstance,
+            20 => ScValType::StorageType,
+            21 => ScValType::LedgerKeyContractInstance,
+            22 => ScValType::LedgerKeyNonce,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -7102,12 +7111,12 @@ impl WriteXdr for Int256Parts {
     }
 }
 
-// ScContractExecutableType is an XDR Enum defines as:
+// ContractExecutableType is an XDR Enum defines as:
 //
-//   enum SCContractExecutableType
+//   enum ContractExecutableType
 //    {
-//        SCCONTRACT_EXECUTABLE_WASM_REF = 0,
-//        SCCONTRACT_EXECUTABLE_TOKEN = 1
+//        CONTRACT_EXECUTABLE_WASM = 0,
+//        CONTRACT_EXECUTABLE_TOKEN = 1
 //    };
 //
 // enum
@@ -7119,60 +7128,58 @@ impl WriteXdr for Int256Parts {
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
-pub enum ScContractExecutableType {
-    WasmRef = 0,
+pub enum ContractExecutableType {
+    Wasm = 0,
     Token = 1,
 }
 
-impl ScContractExecutableType {
-    pub const VARIANTS: [ScContractExecutableType; 2] = [
-        ScContractExecutableType::WasmRef,
-        ScContractExecutableType::Token,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["WasmRef", "Token"];
+impl ContractExecutableType {
+    pub const VARIANTS: [ContractExecutableType; 2] =
+        [ContractExecutableType::Wasm, ContractExecutableType::Token];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "Token"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::WasmRef => "WasmRef",
+            Self::Wasm => "Wasm",
             Self::Token => "Token",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScContractExecutableType; 2] {
+    pub const fn variants() -> [ContractExecutableType; 2] {
         Self::VARIANTS
     }
 }
 
-impl Name for ScContractExecutableType {
+impl Name for ContractExecutableType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Variants<ScContractExecutableType> for ScContractExecutableType {
-    fn variants() -> slice::Iter<'static, ScContractExecutableType> {
+impl Variants<ContractExecutableType> for ContractExecutableType {
+    fn variants() -> slice::Iter<'static, ContractExecutableType> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Enum for ScContractExecutableType {}
+impl Enum for ContractExecutableType {}
 
-impl fmt::Display for ScContractExecutableType {
+impl fmt::Display for ContractExecutableType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
 
-impl TryFrom<i32> for ScContractExecutableType {
+impl TryFrom<i32> for ContractExecutableType {
     type Error = Error;
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ScContractExecutableType::WasmRef,
-            1 => ScContractExecutableType::Token,
+            0 => ContractExecutableType::Wasm,
+            1 => ContractExecutableType::Token,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -7180,14 +7187,14 @@ impl TryFrom<i32> for ScContractExecutableType {
     }
 }
 
-impl From<ScContractExecutableType> for i32 {
+impl From<ContractExecutableType> for i32 {
     #[must_use]
-    fn from(e: ScContractExecutableType) -> Self {
+    fn from(e: ContractExecutableType) -> Self {
         e as Self
     }
 }
 
-impl ReadXdr for ScContractExecutableType {
+impl ReadXdr for ContractExecutableType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -7196,7 +7203,7 @@ impl ReadXdr for ScContractExecutableType {
     }
 }
 
-impl WriteXdr for ScContractExecutableType {
+impl WriteXdr for ContractExecutableType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -7204,17 +7211,17 @@ impl WriteXdr for ScContractExecutableType {
     }
 }
 
-// ScContractExecutable is an XDR Union defines as:
+// ContractExecutable is an XDR Union defines as:
 //
-//   union SCContractExecutable switch (SCContractExecutableType type)
+//   union ContractExecutable switch (ContractExecutableType type)
 //    {
-//    case SCCONTRACT_EXECUTABLE_WASM_REF:
-//        Hash wasm_id;
-//    case SCCONTRACT_EXECUTABLE_TOKEN:
+//    case CONTRACT_EXECUTABLE_WASM:
+//        Hash wasm_hash;
+//    case CONTRACT_EXECUTABLE_TOKEN:
 //        void;
 //    };
 //
-// union with discriminant ScContractExecutableType
+// union with discriminant ContractExecutableType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -7223,71 +7230,69 @@ impl WriteXdr for ScContractExecutableType {
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
-pub enum ScContractExecutable {
-    WasmRef(Hash),
+pub enum ContractExecutable {
+    Wasm(Hash),
     Token,
 }
 
-impl ScContractExecutable {
-    pub const VARIANTS: [ScContractExecutableType; 2] = [
-        ScContractExecutableType::WasmRef,
-        ScContractExecutableType::Token,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["WasmRef", "Token"];
+impl ContractExecutable {
+    pub const VARIANTS: [ContractExecutableType; 2] =
+        [ContractExecutableType::Wasm, ContractExecutableType::Token];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "Token"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::WasmRef(_) => "WasmRef",
+            Self::Wasm(_) => "Wasm",
             Self::Token => "Token",
         }
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> ScContractExecutableType {
+    pub const fn discriminant(&self) -> ContractExecutableType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::WasmRef(_) => ScContractExecutableType::WasmRef,
-            Self::Token => ScContractExecutableType::Token,
+            Self::Wasm(_) => ContractExecutableType::Wasm,
+            Self::Token => ContractExecutableType::Token,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScContractExecutableType; 2] {
+    pub const fn variants() -> [ContractExecutableType; 2] {
         Self::VARIANTS
     }
 }
 
-impl Name for ScContractExecutable {
+impl Name for ContractExecutable {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Discriminant<ScContractExecutableType> for ScContractExecutable {
+impl Discriminant<ContractExecutableType> for ContractExecutable {
     #[must_use]
-    fn discriminant(&self) -> ScContractExecutableType {
+    fn discriminant(&self) -> ContractExecutableType {
         Self::discriminant(self)
     }
 }
 
-impl Variants<ScContractExecutableType> for ScContractExecutable {
-    fn variants() -> slice::Iter<'static, ScContractExecutableType> {
+impl Variants<ContractExecutableType> for ContractExecutable {
+    fn variants() -> slice::Iter<'static, ContractExecutableType> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<ScContractExecutableType> for ScContractExecutable {}
+impl Union<ContractExecutableType> for ContractExecutable {}
 
-impl ReadXdr for ScContractExecutable {
+impl ReadXdr for ContractExecutable {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ScContractExecutableType = <ScContractExecutableType as ReadXdr>::read_xdr(r)?;
+        let dv: ContractExecutableType = <ContractExecutableType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            ScContractExecutableType::WasmRef => Self::WasmRef(Hash::read_xdr(r)?),
-            ScContractExecutableType::Token => Self::Token,
+            ContractExecutableType::Wasm => Self::Wasm(Hash::read_xdr(r)?),
+            ContractExecutableType::Token => Self::Token,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -7295,13 +7300,13 @@ impl ReadXdr for ScContractExecutable {
     }
 }
 
-impl WriteXdr for ScContractExecutable {
+impl WriteXdr for ContractExecutable {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.discriminant().write_xdr(w)?;
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::WasmRef(v) => v.write_xdr(w)?,
+            Self::Wasm(v) => v.write_xdr(w)?,
             Self::Token => ().write_xdr(w)?,
         };
         Ok(())
@@ -8147,6 +8152,44 @@ impl WriteXdr for ScNonceKey {
     }
 }
 
+// ScContractInstance is an XDR Struct defines as:
+//
+//   struct SCContractInstance {
+//        ContractExecutable executable;
+//        SCMap* storage;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScContractInstance {
+    pub executable: ContractExecutable,
+    pub storage: Option<ScMap>,
+}
+
+impl ReadXdr for ScContractInstance {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        Ok(Self {
+            executable: ContractExecutable::read_xdr(r)?,
+            storage: Option::<ScMap>::read_xdr(r)?,
+        })
+    }
+}
+
+impl WriteXdr for ScContractInstance {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        self.executable.write_xdr(w)?;
+        self.storage.write_xdr(w)?;
+        Ok(())
+    }
+}
+
 // ScVal is an XDR Union defines as:
 //
 //   union SCVal switch (SCValType type)
@@ -8197,20 +8240,21 @@ impl WriteXdr for ScNonceKey {
 //    case SCV_MAP:
 //        SCMap *map;
 //
-//    case SCV_CONTRACT_EXECUTABLE:
-//        SCContractExecutable exec;
 //    case SCV_ADDRESS:
 //        SCAddress address;
 //
 //    // Special SCVals reserved for system-constructed contract-data
 //    // ledger keys, not generally usable elsewhere.
-//    case SCV_LEDGER_KEY_CONTRACT_EXECUTABLE:
+//    case SCV_LEDGER_KEY_CONTRACT_INSTANCE:
 //        void;
 //    case SCV_LEDGER_KEY_NONCE:
 //        SCNonceKey nonce_key;
 //
 //    case SCV_STORAGE_TYPE:
 //        ContractDataType storageType;
+//
+//    case SCV_CONTRACT_INSTANCE:
+//        SCContractInstance instance;
 //    };
 //
 // union with discriminant ScValType
@@ -8241,11 +8285,11 @@ pub enum ScVal {
     Symbol(ScSymbol),
     Vec(Option<ScVec>),
     Map(Option<ScMap>),
-    ContractExecutable(ScContractExecutable),
     Address(ScAddress),
-    LedgerKeyContractExecutable,
+    LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
     StorageType(ContractDataType),
+    ContractInstance(ScContractInstance),
 }
 
 impl ScVal {
@@ -8268,11 +8312,11 @@ impl ScVal {
         ScValType::Symbol,
         ScValType::Vec,
         ScValType::Map,
-        ScValType::ContractExecutable,
         ScValType::Address,
-        ScValType::LedgerKeyContractExecutable,
+        ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
         ScValType::StorageType,
+        ScValType::ContractInstance,
     ];
     pub const VARIANTS_STR: [&'static str; 23] = [
         "Bool",
@@ -8293,11 +8337,11 @@ impl ScVal {
         "Symbol",
         "Vec",
         "Map",
-        "ContractExecutable",
         "Address",
-        "LedgerKeyContractExecutable",
+        "LedgerKeyContractInstance",
         "LedgerKeyNonce",
         "StorageType",
+        "ContractInstance",
     ];
 
     #[must_use]
@@ -8321,11 +8365,11 @@ impl ScVal {
             Self::Symbol(_) => "Symbol",
             Self::Vec(_) => "Vec",
             Self::Map(_) => "Map",
-            Self::ContractExecutable(_) => "ContractExecutable",
             Self::Address(_) => "Address",
-            Self::LedgerKeyContractExecutable => "LedgerKeyContractExecutable",
+            Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
             Self::LedgerKeyNonce(_) => "LedgerKeyNonce",
             Self::StorageType(_) => "StorageType",
+            Self::ContractInstance(_) => "ContractInstance",
         }
     }
 
@@ -8351,11 +8395,11 @@ impl ScVal {
             Self::Symbol(_) => ScValType::Symbol,
             Self::Vec(_) => ScValType::Vec,
             Self::Map(_) => ScValType::Map,
-            Self::ContractExecutable(_) => ScValType::ContractExecutable,
             Self::Address(_) => ScValType::Address,
-            Self::LedgerKeyContractExecutable => ScValType::LedgerKeyContractExecutable,
+            Self::LedgerKeyContractInstance => ScValType::LedgerKeyContractInstance,
             Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
             Self::StorageType(_) => ScValType::StorageType,
+            Self::ContractInstance(_) => ScValType::ContractInstance,
         }
     }
 
@@ -8411,13 +8455,11 @@ impl ReadXdr for ScVal {
             ScValType::Symbol => Self::Symbol(ScSymbol::read_xdr(r)?),
             ScValType::Vec => Self::Vec(Option::<ScVec>::read_xdr(r)?),
             ScValType::Map => Self::Map(Option::<ScMap>::read_xdr(r)?),
-            ScValType::ContractExecutable => {
-                Self::ContractExecutable(ScContractExecutable::read_xdr(r)?)
-            }
             ScValType::Address => Self::Address(ScAddress::read_xdr(r)?),
-            ScValType::LedgerKeyContractExecutable => Self::LedgerKeyContractExecutable,
+            ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
             ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
             ScValType::StorageType => Self::StorageType(ContractDataType::read_xdr(r)?),
+            ScValType::ContractInstance => Self::ContractInstance(ScContractInstance::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -8449,11 +8491,11 @@ impl WriteXdr for ScVal {
             Self::Symbol(v) => v.write_xdr(w)?,
             Self::Vec(v) => v.write_xdr(w)?,
             Self::Map(v) => v.write_xdr(w)?,
-            Self::ContractExecutable(v) => v.write_xdr(w)?,
             Self::Address(v) => v.write_xdr(w)?,
-            Self::LedgerKeyContractExecutable => ().write_xdr(w)?,
+            Self::LedgerKeyContractInstance => ().write_xdr(w)?,
             Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
             Self::StorageType(v) => v.write_xdr(w)?,
+            Self::ContractInstance(v) => v.write_xdr(w)?,
         };
         Ok(())
     }
@@ -24390,7 +24432,7 @@ impl WriteXdr for ContractIdPreimage {
 //   struct CreateContractArgs
 //    {
 //        ContractIDPreimage contractIDPreimage;
-//        SCContractExecutable executable;
+//        ContractExecutable executable;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -24402,7 +24444,7 @@ impl WriteXdr for ContractIdPreimage {
 )]
 pub struct CreateContractArgs {
     pub contract_id_preimage: ContractIdPreimage,
-    pub executable: ScContractExecutable,
+    pub executable: ContractExecutable,
 }
 
 impl ReadXdr for CreateContractArgs {
@@ -24410,7 +24452,7 @@ impl ReadXdr for CreateContractArgs {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             contract_id_preimage: ContractIdPreimage::read_xdr(r)?,
-            executable: ScContractExecutable::read_xdr(r)?,
+            executable: ContractExecutable::read_xdr(r)?,
         })
     }
 }
@@ -39130,8 +39172,8 @@ pub enum TypeVariant {
     Int128Parts,
     UInt256Parts,
     Int256Parts,
-    ScContractExecutableType,
-    ScContractExecutable,
+    ContractExecutableType,
+    ContractExecutable,
     ScAddressType,
     ScAddress,
     ContractDataType,
@@ -39141,6 +39183,7 @@ pub enum TypeVariant {
     ScString,
     ScSymbol,
     ScNonceKey,
+    ScContractInstance,
     ScVal,
     ScMapEntry,
     StoredTransactionSet,
@@ -39490,7 +39533,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 419] = [
+    pub const VARIANTS: [TypeVariant; 420] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -39553,8 +39596,8 @@ impl TypeVariant {
         TypeVariant::Int128Parts,
         TypeVariant::UInt256Parts,
         TypeVariant::Int256Parts,
-        TypeVariant::ScContractExecutableType,
-        TypeVariant::ScContractExecutable,
+        TypeVariant::ContractExecutableType,
+        TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::ScAddress,
         TypeVariant::ContractDataType,
@@ -39564,6 +39607,7 @@ impl TypeVariant {
         TypeVariant::ScString,
         TypeVariant::ScSymbol,
         TypeVariant::ScNonceKey,
+        TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
         TypeVariant::ScMapEntry,
         TypeVariant::StoredTransactionSet,
@@ -39911,7 +39955,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 419] = [
+    pub const VARIANTS_STR: [&'static str; 420] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -39974,8 +40018,8 @@ impl TypeVariant {
         "Int128Parts",
         "UInt256Parts",
         "Int256Parts",
-        "ScContractExecutableType",
-        "ScContractExecutable",
+        "ContractExecutableType",
+        "ContractExecutable",
         "ScAddressType",
         "ScAddress",
         "ContractDataType",
@@ -39985,6 +40029,7 @@ impl TypeVariant {
         "ScString",
         "ScSymbol",
         "ScNonceKey",
+        "ScContractInstance",
         "ScVal",
         "ScMapEntry",
         "StoredTransactionSet",
@@ -40399,8 +40444,8 @@ impl TypeVariant {
             Self::Int128Parts => "Int128Parts",
             Self::UInt256Parts => "UInt256Parts",
             Self::Int256Parts => "Int256Parts",
-            Self::ScContractExecutableType => "ScContractExecutableType",
-            Self::ScContractExecutable => "ScContractExecutable",
+            Self::ContractExecutableType => "ContractExecutableType",
+            Self::ContractExecutable => "ContractExecutable",
             Self::ScAddressType => "ScAddressType",
             Self::ScAddress => "ScAddress",
             Self::ContractDataType => "ContractDataType",
@@ -40410,6 +40455,7 @@ impl TypeVariant {
             Self::ScString => "ScString",
             Self::ScSymbol => "ScSymbol",
             Self::ScNonceKey => "ScNonceKey",
+            Self::ScContractInstance => "ScContractInstance",
             Self::ScVal => "ScVal",
             Self::ScMapEntry => "ScMapEntry",
             Self::StoredTransactionSet => "StoredTransactionSet",
@@ -40767,7 +40813,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 419] {
+    pub const fn variants() -> [TypeVariant; 420] {
         Self::VARIANTS
     }
 }
@@ -40856,8 +40902,8 @@ impl core::str::FromStr for TypeVariant {
             "Int128Parts" => Ok(Self::Int128Parts),
             "UInt256Parts" => Ok(Self::UInt256Parts),
             "Int256Parts" => Ok(Self::Int256Parts),
-            "ScContractExecutableType" => Ok(Self::ScContractExecutableType),
-            "ScContractExecutable" => Ok(Self::ScContractExecutable),
+            "ContractExecutableType" => Ok(Self::ContractExecutableType),
+            "ContractExecutable" => Ok(Self::ContractExecutable),
             "ScAddressType" => Ok(Self::ScAddressType),
             "ScAddress" => Ok(Self::ScAddress),
             "ContractDataType" => Ok(Self::ContractDataType),
@@ -40867,6 +40913,7 @@ impl core::str::FromStr for TypeVariant {
             "ScString" => Ok(Self::ScString),
             "ScSymbol" => Ok(Self::ScSymbol),
             "ScNonceKey" => Ok(Self::ScNonceKey),
+            "ScContractInstance" => Ok(Self::ScContractInstance),
             "ScVal" => Ok(Self::ScVal),
             "ScMapEntry" => Ok(Self::ScMapEntry),
             "StoredTransactionSet" => Ok(Self::StoredTransactionSet),
@@ -41298,8 +41345,8 @@ pub enum Type {
     Int128Parts(Box<Int128Parts>),
     UInt256Parts(Box<UInt256Parts>),
     Int256Parts(Box<Int256Parts>),
-    ScContractExecutableType(Box<ScContractExecutableType>),
-    ScContractExecutable(Box<ScContractExecutable>),
+    ContractExecutableType(Box<ContractExecutableType>),
+    ContractExecutable(Box<ContractExecutable>),
     ScAddressType(Box<ScAddressType>),
     ScAddress(Box<ScAddress>),
     ContractDataType(Box<ContractDataType>),
@@ -41309,6 +41356,7 @@ pub enum Type {
     ScString(Box<ScString>),
     ScSymbol(Box<ScSymbol>),
     ScNonceKey(Box<ScNonceKey>),
+    ScContractInstance(Box<ScContractInstance>),
     ScVal(Box<ScVal>),
     ScMapEntry(Box<ScMapEntry>),
     StoredTransactionSet(Box<StoredTransactionSet>),
@@ -41658,7 +41706,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 419] = [
+    pub const VARIANTS: [TypeVariant; 420] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -41721,8 +41769,8 @@ impl Type {
         TypeVariant::Int128Parts,
         TypeVariant::UInt256Parts,
         TypeVariant::Int256Parts,
-        TypeVariant::ScContractExecutableType,
-        TypeVariant::ScContractExecutable,
+        TypeVariant::ContractExecutableType,
+        TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::ScAddress,
         TypeVariant::ContractDataType,
@@ -41732,6 +41780,7 @@ impl Type {
         TypeVariant::ScString,
         TypeVariant::ScSymbol,
         TypeVariant::ScNonceKey,
+        TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
         TypeVariant::ScMapEntry,
         TypeVariant::StoredTransactionSet,
@@ -42079,7 +42128,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 419] = [
+    pub const VARIANTS_STR: [&'static str; 420] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -42142,8 +42191,8 @@ impl Type {
         "Int128Parts",
         "UInt256Parts",
         "Int256Parts",
-        "ScContractExecutableType",
-        "ScContractExecutable",
+        "ContractExecutableType",
+        "ContractExecutable",
         "ScAddressType",
         "ScAddress",
         "ContractDataType",
@@ -42153,6 +42202,7 @@ impl Type {
         "ScString",
         "ScSymbol",
         "ScNonceKey",
+        "ScContractInstance",
         "ScVal",
         "ScMapEntry",
         "StoredTransactionSet",
@@ -42675,11 +42725,11 @@ impl Type {
                 Ok(Self::UInt256Parts(Box::new(UInt256Parts::read_xdr(r)?)))
             }
             TypeVariant::Int256Parts => Ok(Self::Int256Parts(Box::new(Int256Parts::read_xdr(r)?))),
-            TypeVariant::ScContractExecutableType => Ok(Self::ScContractExecutableType(Box::new(
-                ScContractExecutableType::read_xdr(r)?,
+            TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
+                ContractExecutableType::read_xdr(r)?,
             ))),
-            TypeVariant::ScContractExecutable => Ok(Self::ScContractExecutable(Box::new(
-                ScContractExecutable::read_xdr(r)?,
+            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
+                ContractExecutable::read_xdr(r)?,
             ))),
             TypeVariant::ScAddressType => {
                 Ok(Self::ScAddressType(Box::new(ScAddressType::read_xdr(r)?)))
@@ -42694,6 +42744,9 @@ impl Type {
             TypeVariant::ScString => Ok(Self::ScString(Box::new(ScString::read_xdr(r)?))),
             TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(ScSymbol::read_xdr(r)?))),
             TypeVariant::ScNonceKey => Ok(Self::ScNonceKey(Box::new(ScNonceKey::read_xdr(r)?))),
+            TypeVariant::ScContractInstance => Ok(Self::ScContractInstance(Box::new(
+                ScContractInstance::read_xdr(r)?,
+            ))),
             TypeVariant::ScVal => Ok(Self::ScVal(Box::new(ScVal::read_xdr(r)?))),
             TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(ScMapEntry::read_xdr(r)?))),
             TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
@@ -43949,13 +44002,13 @@ impl Type {
                 ReadXdrIter::<_, Int256Parts>::new(r)
                     .map(|r| r.map(|t| Self::Int256Parts(Box::new(t)))),
             ),
-            TypeVariant::ScContractExecutableType => Box::new(
-                ReadXdrIter::<_, ScContractExecutableType>::new(r)
-                    .map(|r| r.map(|t| Self::ScContractExecutableType(Box::new(t)))),
+            TypeVariant::ContractExecutableType => Box::new(
+                ReadXdrIter::<_, ContractExecutableType>::new(r)
+                    .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
             ),
-            TypeVariant::ScContractExecutable => Box::new(
-                ReadXdrIter::<_, ScContractExecutable>::new(r)
-                    .map(|r| r.map(|t| Self::ScContractExecutable(Box::new(t)))),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, ContractExecutable>::new(r)
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
             ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, ScAddressType>::new(r)
@@ -43987,6 +44040,10 @@ impl Type {
             TypeVariant::ScNonceKey => Box::new(
                 ReadXdrIter::<_, ScNonceKey>::new(r)
                     .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t)))),
+            ),
+            TypeVariant::ScContractInstance => Box::new(
+                ReadXdrIter::<_, ScContractInstance>::new(r)
+                    .map(|r| r.map(|t| Self::ScContractInstance(Box::new(t)))),
             ),
             TypeVariant::ScVal => Box::new(
                 ReadXdrIter::<_, ScVal>::new(r).map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
@@ -45607,13 +45664,13 @@ impl Type {
                 ReadXdrIter::<_, Frame<Int256Parts>>::new(r)
                     .map(|r| r.map(|t| Self::Int256Parts(Box::new(t.0)))),
             ),
-            TypeVariant::ScContractExecutableType => Box::new(
-                ReadXdrIter::<_, Frame<ScContractExecutableType>>::new(r)
-                    .map(|r| r.map(|t| Self::ScContractExecutableType(Box::new(t.0)))),
+            TypeVariant::ContractExecutableType => Box::new(
+                ReadXdrIter::<_, Frame<ContractExecutableType>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t.0)))),
             ),
-            TypeVariant::ScContractExecutable => Box::new(
-                ReadXdrIter::<_, Frame<ScContractExecutable>>::new(r)
-                    .map(|r| r.map(|t| Self::ScContractExecutable(Box::new(t.0)))),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, Frame<ContractExecutable>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t.0)))),
             ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, Frame<ScAddressType>>::new(r)
@@ -45650,6 +45707,10 @@ impl Type {
             TypeVariant::ScNonceKey => Box::new(
                 ReadXdrIter::<_, Frame<ScNonceKey>>::new(r)
                     .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t.0)))),
+            ),
+            TypeVariant::ScContractInstance => Box::new(
+                ReadXdrIter::<_, Frame<ScContractInstance>>::new(r)
+                    .map(|r| r.map(|t| Self::ScContractInstance(Box::new(t.0)))),
             ),
             TypeVariant::ScVal => Box::new(
                 ReadXdrIter::<_, Frame<ScVal>>::new(r)
@@ -47294,13 +47355,13 @@ impl Type {
                 ReadXdrIter::<_, Int256Parts>::new(dec)
                     .map(|r| r.map(|t| Self::Int256Parts(Box::new(t)))),
             ),
-            TypeVariant::ScContractExecutableType => Box::new(
-                ReadXdrIter::<_, ScContractExecutableType>::new(dec)
-                    .map(|r| r.map(|t| Self::ScContractExecutableType(Box::new(t)))),
+            TypeVariant::ContractExecutableType => Box::new(
+                ReadXdrIter::<_, ContractExecutableType>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
             ),
-            TypeVariant::ScContractExecutable => Box::new(
-                ReadXdrIter::<_, ScContractExecutable>::new(dec)
-                    .map(|r| r.map(|t| Self::ScContractExecutable(Box::new(t)))),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, ContractExecutable>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
             ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, ScAddressType>::new(dec)
@@ -47334,6 +47395,10 @@ impl Type {
             TypeVariant::ScNonceKey => Box::new(
                 ReadXdrIter::<_, ScNonceKey>::new(dec)
                     .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t)))),
+            ),
+            TypeVariant::ScContractInstance => Box::new(
+                ReadXdrIter::<_, ScContractInstance>::new(dec)
+                    .map(|r| r.map(|t| Self::ScContractInstance(Box::new(t)))),
             ),
             TypeVariant::ScVal => Box::new(
                 ReadXdrIter::<_, ScVal>::new(dec).map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
@@ -48790,8 +48855,8 @@ impl Type {
             Self::Int128Parts(ref v) => v.as_ref(),
             Self::UInt256Parts(ref v) => v.as_ref(),
             Self::Int256Parts(ref v) => v.as_ref(),
-            Self::ScContractExecutableType(ref v) => v.as_ref(),
-            Self::ScContractExecutable(ref v) => v.as_ref(),
+            Self::ContractExecutableType(ref v) => v.as_ref(),
+            Self::ContractExecutable(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
             Self::ScAddress(ref v) => v.as_ref(),
             Self::ContractDataType(ref v) => v.as_ref(),
@@ -48801,6 +48866,7 @@ impl Type {
             Self::ScString(ref v) => v.as_ref(),
             Self::ScSymbol(ref v) => v.as_ref(),
             Self::ScNonceKey(ref v) => v.as_ref(),
+            Self::ScContractInstance(ref v) => v.as_ref(),
             Self::ScVal(ref v) => v.as_ref(),
             Self::ScMapEntry(ref v) => v.as_ref(),
             Self::StoredTransactionSet(ref v) => v.as_ref(),
@@ -49220,8 +49286,8 @@ impl Type {
             Self::Int128Parts(_) => "Int128Parts",
             Self::UInt256Parts(_) => "UInt256Parts",
             Self::Int256Parts(_) => "Int256Parts",
-            Self::ScContractExecutableType(_) => "ScContractExecutableType",
-            Self::ScContractExecutable(_) => "ScContractExecutable",
+            Self::ContractExecutableType(_) => "ContractExecutableType",
+            Self::ContractExecutable(_) => "ContractExecutable",
             Self::ScAddressType(_) => "ScAddressType",
             Self::ScAddress(_) => "ScAddress",
             Self::ContractDataType(_) => "ContractDataType",
@@ -49231,6 +49297,7 @@ impl Type {
             Self::ScString(_) => "ScString",
             Self::ScSymbol(_) => "ScSymbol",
             Self::ScNonceKey(_) => "ScNonceKey",
+            Self::ScContractInstance(_) => "ScContractInstance",
             Self::ScVal(_) => "ScVal",
             Self::ScMapEntry(_) => "ScMapEntry",
             Self::StoredTransactionSet(_) => "StoredTransactionSet",
@@ -49592,7 +49659,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 419] {
+    pub const fn variants() -> [TypeVariant; 420] {
         Self::VARIANTS
     }
 
@@ -49672,8 +49739,8 @@ impl Type {
             Self::Int128Parts(_) => TypeVariant::Int128Parts,
             Self::UInt256Parts(_) => TypeVariant::UInt256Parts,
             Self::Int256Parts(_) => TypeVariant::Int256Parts,
-            Self::ScContractExecutableType(_) => TypeVariant::ScContractExecutableType,
-            Self::ScContractExecutable(_) => TypeVariant::ScContractExecutable,
+            Self::ContractExecutableType(_) => TypeVariant::ContractExecutableType,
+            Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,
             Self::ScAddress(_) => TypeVariant::ScAddress,
             Self::ContractDataType(_) => TypeVariant::ContractDataType,
@@ -49683,6 +49750,7 @@ impl Type {
             Self::ScString(_) => TypeVariant::ScString,
             Self::ScSymbol(_) => TypeVariant::ScSymbol,
             Self::ScNonceKey(_) => TypeVariant::ScNonceKey,
+            Self::ScContractInstance(_) => TypeVariant::ScContractInstance,
             Self::ScVal(_) => TypeVariant::ScVal,
             Self::ScMapEntry(_) => TypeVariant::ScMapEntry,
             Self::StoredTransactionSet(_) => TypeVariant::StoredTransactionSet,

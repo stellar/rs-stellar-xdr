@@ -28,10 +28,10 @@ impl Validate for ScVal {
             | ScVal::Bytes(_)
             | ScVal::String(_)
             | ScVal::Vec(Some(_))
-            | ScVal::ContractExecutable(_)
             | ScVal::Address(_)
-            | ScVal::LedgerKeyContractExecutable
+            | ScVal::LedgerKeyContractInstance
             | ScVal::LedgerKeyNonce(_)
+            | ScVal::ContractInstance(_)
             | ScVal::StorageType(_) => Ok(()),
 
             ScVal::Symbol(s) => {

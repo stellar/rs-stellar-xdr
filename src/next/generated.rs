@@ -38,7 +38,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "8cc02fc38ce4cffa60c85d13b5f83b0106f0b86a41bbed8976e2ab05b8e91614",
+        "8238ab197e8755ae4691d8a66a7ff4614b54f0622263cafbcc04534dca4f6a3e",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -46,7 +46,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "f648e16cd6cd19dac8103252af9eda3e0b73dd5b983dd7ca14d6fb32f108ac04",
+        "3d1714508129ca3cf7bfd0fa0cb7b3e3bbd2f9496b7f766dda8fbb1d9c46a0ca",
     ),
     (
         "xdr/next/Stellar-ledger.x",
@@ -6395,13 +6395,12 @@ impl WriteXdr for ScSpecEntry {
 //        // The following are the internal SCVal variants that are not
 //        // exposed to the contracts.
 //        SCV_CONTRACT_INSTANCE = 19,
-//        SCV_STORAGE_TYPE = 20,
 //
 //        // SCV_LEDGER_KEY_CONTRACT_INSTANCE and SCV_LEDGER_KEY_NONCE are unique
 //        // symbolic SCVals used as the key for ledger entries for a contract's
 //        // instance and an address' nonce, respectively.
-//        SCV_LEDGER_KEY_CONTRACT_INSTANCE = 21,
-//        SCV_LEDGER_KEY_NONCE = 22
+//        SCV_LEDGER_KEY_CONTRACT_INSTANCE = 20,
+//        SCV_LEDGER_KEY_NONCE = 21
 //    };
 //
 // enum
@@ -6434,13 +6433,12 @@ pub enum ScValType {
     Map = 17,
     Address = 18,
     ContractInstance = 19,
-    StorageType = 20,
-    LedgerKeyContractInstance = 21,
-    LedgerKeyNonce = 22,
+    LedgerKeyContractInstance = 20,
+    LedgerKeyNonce = 21,
 }
 
 impl ScValType {
-    pub const VARIANTS: [ScValType; 23] = [
+    pub const VARIANTS: [ScValType; 22] = [
         ScValType::Bool,
         ScValType::Void,
         ScValType::Error,
@@ -6461,11 +6459,10 @@ impl ScValType {
         ScValType::Map,
         ScValType::Address,
         ScValType::ContractInstance,
-        ScValType::StorageType,
         ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
     ];
-    pub const VARIANTS_STR: [&'static str; 23] = [
+    pub const VARIANTS_STR: [&'static str; 22] = [
         "Bool",
         "Void",
         "Error",
@@ -6486,7 +6483,6 @@ impl ScValType {
         "Map",
         "Address",
         "ContractInstance",
-        "StorageType",
         "LedgerKeyContractInstance",
         "LedgerKeyNonce",
     ];
@@ -6514,14 +6510,13 @@ impl ScValType {
             Self::Map => "Map",
             Self::Address => "Address",
             Self::ContractInstance => "ContractInstance",
-            Self::StorageType => "StorageType",
             Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
             Self::LedgerKeyNonce => "LedgerKeyNonce",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScValType; 23] {
+    pub const fn variants() -> [ScValType; 22] {
         Self::VARIANTS
     }
 }
@@ -6572,9 +6567,8 @@ impl TryFrom<i32> for ScValType {
             17 => ScValType::Map,
             18 => ScValType::Address,
             19 => ScValType::ContractInstance,
-            20 => ScValType::StorageType,
-            21 => ScValType::LedgerKeyContractInstance,
-            22 => ScValType::LedgerKeyNonce,
+            20 => ScValType::LedgerKeyContractInstance,
+            21 => ScValType::LedgerKeyNonce,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -7513,105 +7507,6 @@ impl WriteXdr for ScAddress {
     }
 }
 
-// ContractDataType is an XDR Enum defines as:
-//
-//   enum ContractDataType {
-//        TEMPORARY = 0,
-//        PERSISTENT = 1
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[repr(i32)]
-pub enum ContractDataType {
-    Temporary = 0,
-    Persistent = 1,
-}
-
-impl ContractDataType {
-    pub const VARIANTS: [ContractDataType; 2] =
-        [ContractDataType::Temporary, ContractDataType::Persistent];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Temporary", "Persistent"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Temporary => "Temporary",
-            Self::Persistent => "Persistent",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ContractDataType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ContractDataType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ContractDataType> for ContractDataType {
-    fn variants() -> slice::Iter<'static, ContractDataType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ContractDataType {}
-
-impl fmt::Display for ContractDataType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ContractDataType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ContractDataType::Temporary,
-            1 => ContractDataType::Persistent,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ContractDataType> for i32 {
-    #[must_use]
-    fn from(e: ContractDataType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ContractDataType {
-    #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
-    }
-}
-
-impl WriteXdr for ContractDataType {
-    #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
-    }
-}
-
 // ScsymbolLimit is an XDR Const defines as:
 //
 //   const SCSYMBOL_LIMIT = 32;
@@ -8250,9 +8145,6 @@ impl WriteXdr for ScContractInstance {
 //    case SCV_LEDGER_KEY_NONCE:
 //        SCNonceKey nonce_key;
 //
-//    case SCV_STORAGE_TYPE:
-//        ContractDataType storageType;
-//
 //    case SCV_CONTRACT_INSTANCE:
 //        SCContractInstance instance;
 //    };
@@ -8288,12 +8180,11 @@ pub enum ScVal {
     Address(ScAddress),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
-    StorageType(ContractDataType),
     ContractInstance(ScContractInstance),
 }
 
 impl ScVal {
-    pub const VARIANTS: [ScValType; 23] = [
+    pub const VARIANTS: [ScValType; 22] = [
         ScValType::Bool,
         ScValType::Void,
         ScValType::Error,
@@ -8315,10 +8206,9 @@ impl ScVal {
         ScValType::Address,
         ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
-        ScValType::StorageType,
         ScValType::ContractInstance,
     ];
-    pub const VARIANTS_STR: [&'static str; 23] = [
+    pub const VARIANTS_STR: [&'static str; 22] = [
         "Bool",
         "Void",
         "Error",
@@ -8340,7 +8230,6 @@ impl ScVal {
         "Address",
         "LedgerKeyContractInstance",
         "LedgerKeyNonce",
-        "StorageType",
         "ContractInstance",
     ];
 
@@ -8368,7 +8257,6 @@ impl ScVal {
             Self::Address(_) => "Address",
             Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
             Self::LedgerKeyNonce(_) => "LedgerKeyNonce",
-            Self::StorageType(_) => "StorageType",
             Self::ContractInstance(_) => "ContractInstance",
         }
     }
@@ -8398,13 +8286,12 @@ impl ScVal {
             Self::Address(_) => ScValType::Address,
             Self::LedgerKeyContractInstance => ScValType::LedgerKeyContractInstance,
             Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
-            Self::StorageType(_) => ScValType::StorageType,
             Self::ContractInstance(_) => ScValType::ContractInstance,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScValType; 23] {
+    pub const fn variants() -> [ScValType; 22] {
         Self::VARIANTS
     }
 }
@@ -8458,7 +8345,6 @@ impl ReadXdr for ScVal {
             ScValType::Address => Self::Address(ScAddress::read_xdr(r)?),
             ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
             ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
-            ScValType::StorageType => Self::StorageType(ContractDataType::read_xdr(r)?),
             ScValType::ContractInstance => Self::ContractInstance(ScContractInstance::read_xdr(r)?),
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -8494,7 +8380,6 @@ impl WriteXdr for ScVal {
             Self::Address(v) => v.write_xdr(w)?,
             Self::LedgerKeyContractInstance => ().write_xdr(w)?,
             Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
-            Self::StorageType(v) => v.write_xdr(w)?,
             Self::ContractInstance(v) => v.write_xdr(w)?,
         };
         Ok(())
@@ -13715,9 +13600,9 @@ impl WriteXdr for LiquidityPoolEntry {
     }
 }
 
-// ContractLedgerEntryType is an XDR Enum defines as:
+// ContractEntryBodyType is an XDR Enum defines as:
 //
-//   enum ContractLedgerEntryType {
+//   enum ContractEntryBodyType {
 //        DATA_ENTRY = 0,
 //        EXPIRATION_EXTENSION = 1
 //    };
@@ -13731,15 +13616,15 @@ impl WriteXdr for LiquidityPoolEntry {
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
-pub enum ContractLedgerEntryType {
+pub enum ContractEntryBodyType {
     DataEntry = 0,
     ExpirationExtension = 1,
 }
 
-impl ContractLedgerEntryType {
-    pub const VARIANTS: [ContractLedgerEntryType; 2] = [
-        ContractLedgerEntryType::DataEntry,
-        ContractLedgerEntryType::ExpirationExtension,
+impl ContractEntryBodyType {
+    pub const VARIANTS: [ContractEntryBodyType; 2] = [
+        ContractEntryBodyType::DataEntry,
+        ContractEntryBodyType::ExpirationExtension,
     ];
     pub const VARIANTS_STR: [&'static str; 2] = ["DataEntry", "ExpirationExtension"];
 
@@ -13752,39 +13637,39 @@ impl ContractLedgerEntryType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractLedgerEntryType; 2] {
+    pub const fn variants() -> [ContractEntryBodyType; 2] {
         Self::VARIANTS
     }
 }
 
-impl Name for ContractLedgerEntryType {
+impl Name for ContractEntryBodyType {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Variants<ContractLedgerEntryType> for ContractLedgerEntryType {
-    fn variants() -> slice::Iter<'static, ContractLedgerEntryType> {
+impl Variants<ContractEntryBodyType> for ContractEntryBodyType {
+    fn variants() -> slice::Iter<'static, ContractEntryBodyType> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Enum for ContractLedgerEntryType {}
+impl Enum for ContractEntryBodyType {}
 
-impl fmt::Display for ContractLedgerEntryType {
+impl fmt::Display for ContractEntryBodyType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
 
-impl TryFrom<i32> for ContractLedgerEntryType {
+impl TryFrom<i32> for ContractEntryBodyType {
     type Error = Error;
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => ContractLedgerEntryType::DataEntry,
-            1 => ContractLedgerEntryType::ExpirationExtension,
+            0 => ContractEntryBodyType::DataEntry,
+            1 => ContractEntryBodyType::ExpirationExtension,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -13792,14 +13677,14 @@ impl TryFrom<i32> for ContractLedgerEntryType {
     }
 }
 
-impl From<ContractLedgerEntryType> for i32 {
+impl From<ContractEntryBodyType> for i32 {
     #[must_use]
-    fn from(e: ContractLedgerEntryType) -> Self {
+    fn from(e: ContractEntryBodyType) -> Self {
         e as Self
     }
 }
 
-impl ReadXdr for ContractLedgerEntryType {
+impl ReadXdr for ContractEntryBodyType {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         let e = i32::read_xdr(r)?;
@@ -13808,7 +13693,7 @@ impl ReadXdr for ContractLedgerEntryType {
     }
 }
 
-impl WriteXdr for ContractLedgerEntryType {
+impl WriteXdr for ContractEntryBodyType {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         let i: i32 = (*self).into();
@@ -13918,6 +13803,107 @@ impl WriteXdr for ContractDataFlags {
     }
 }
 
+// ContractDataDurability is an XDR Enum defines as:
+//
+//   enum ContractDataDurability {
+//        TEMPORARY = 0,
+//        PERSISTENT = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ContractDataDurability {
+    Temporary = 0,
+    Persistent = 1,
+}
+
+impl ContractDataDurability {
+    pub const VARIANTS: [ContractDataDurability; 2] = [
+        ContractDataDurability::Temporary,
+        ContractDataDurability::Persistent,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Temporary", "Persistent"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Temporary => "Temporary",
+            Self::Persistent => "Persistent",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractDataDurability; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractDataDurability {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ContractDataDurability> for ContractDataDurability {
+    fn variants() -> slice::Iter<'static, ContractDataDurability> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ContractDataDurability {}
+
+impl fmt::Display for ContractDataDurability {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ContractDataDurability {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ContractDataDurability::Temporary,
+            1 => ContractDataDurability::Persistent,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ContractDataDurability> for i32 {
+    #[must_use]
+    fn from(e: ContractDataDurability) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ContractDataDurability {
+    #[cfg(feature = "std")]
+    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+        let e = i32::read_xdr(r)?;
+        let v: Self = e.try_into()?;
+        Ok(v)
+    }
+}
+
+impl WriteXdr for ContractDataDurability {
+    #[cfg(feature = "std")]
+    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+        let i: i32 = (*self).into();
+        i.write_xdr(w)
+    }
+}
+
 // ContractDataEntryData is an XDR NestedStruct defines as:
 //
 //   struct
@@ -13959,7 +13945,7 @@ impl WriteXdr for ContractDataEntryData {
 
 // ContractDataEntryBody is an XDR NestedUnion defines as:
 //
-//   union switch (ContractLedgerEntryType leType)
+//   union switch (ContractEntryBodyType bodyType)
 //        {
 //        case DATA_ENTRY:
 //        struct
@@ -13971,7 +13957,7 @@ impl WriteXdr for ContractDataEntryData {
 //            void;
 //        }
 //
-// union with discriminant ContractLedgerEntryType
+// union with discriminant ContractEntryBodyType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -13986,9 +13972,9 @@ pub enum ContractDataEntryBody {
 }
 
 impl ContractDataEntryBody {
-    pub const VARIANTS: [ContractLedgerEntryType; 2] = [
-        ContractLedgerEntryType::DataEntry,
-        ContractLedgerEntryType::ExpirationExtension,
+    pub const VARIANTS: [ContractEntryBodyType; 2] = [
+        ContractEntryBodyType::DataEntry,
+        ContractEntryBodyType::ExpirationExtension,
     ];
     pub const VARIANTS_STR: [&'static str; 2] = ["DataEntry", "ExpirationExtension"];
 
@@ -14001,16 +13987,16 @@ impl ContractDataEntryBody {
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> ContractLedgerEntryType {
+    pub const fn discriminant(&self) -> ContractEntryBodyType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::DataEntry(_) => ContractLedgerEntryType::DataEntry,
-            Self::ExpirationExtension => ContractLedgerEntryType::ExpirationExtension,
+            Self::DataEntry(_) => ContractEntryBodyType::DataEntry,
+            Self::ExpirationExtension => ContractEntryBodyType::ExpirationExtension,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractLedgerEntryType; 2] {
+    pub const fn variants() -> [ContractEntryBodyType; 2] {
         Self::VARIANTS
     }
 }
@@ -14022,31 +14008,31 @@ impl Name for ContractDataEntryBody {
     }
 }
 
-impl Discriminant<ContractLedgerEntryType> for ContractDataEntryBody {
+impl Discriminant<ContractEntryBodyType> for ContractDataEntryBody {
     #[must_use]
-    fn discriminant(&self) -> ContractLedgerEntryType {
+    fn discriminant(&self) -> ContractEntryBodyType {
         Self::discriminant(self)
     }
 }
 
-impl Variants<ContractLedgerEntryType> for ContractDataEntryBody {
-    fn variants() -> slice::Iter<'static, ContractLedgerEntryType> {
+impl Variants<ContractEntryBodyType> for ContractDataEntryBody {
+    fn variants() -> slice::Iter<'static, ContractEntryBodyType> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<ContractLedgerEntryType> for ContractDataEntryBody {}
+impl Union<ContractEntryBodyType> for ContractDataEntryBody {}
 
 impl ReadXdr for ContractDataEntryBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ContractLedgerEntryType = <ContractLedgerEntryType as ReadXdr>::read_xdr(r)?;
+        let dv: ContractEntryBodyType = <ContractEntryBodyType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            ContractLedgerEntryType::DataEntry => {
+            ContractEntryBodyType::DataEntry => {
                 Self::DataEntry(ContractDataEntryData::read_xdr(r)?)
             }
-            ContractLedgerEntryType::ExpirationExtension => Self::ExpirationExtension,
+            ContractEntryBodyType::ExpirationExtension => Self::ExpirationExtension,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14072,9 +14058,9 @@ impl WriteXdr for ContractDataEntryBody {
 //   struct ContractDataEntry {
 //        SCAddress contract;
 //        SCVal key;
-//        ContractDataType type;
+//        ContractDataDurability durability;
 //
-//        union switch (ContractLedgerEntryType leType)
+//        union switch (ContractEntryBodyType bodyType)
 //        {
 //        case DATA_ENTRY:
 //        struct
@@ -14099,7 +14085,7 @@ impl WriteXdr for ContractDataEntryBody {
 pub struct ContractDataEntry {
     pub contract: ScAddress,
     pub key: ScVal,
-    pub type_: ContractDataType,
+    pub durability: ContractDataDurability,
     pub body: ContractDataEntryBody,
     pub expiration_ledger_seq: u32,
 }
@@ -14110,7 +14096,7 @@ impl ReadXdr for ContractDataEntry {
         Ok(Self {
             contract: ScAddress::read_xdr(r)?,
             key: ScVal::read_xdr(r)?,
-            type_: ContractDataType::read_xdr(r)?,
+            durability: ContractDataDurability::read_xdr(r)?,
             body: ContractDataEntryBody::read_xdr(r)?,
             expiration_ledger_seq: u32::read_xdr(r)?,
         })
@@ -14122,7 +14108,7 @@ impl WriteXdr for ContractDataEntry {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.contract.write_xdr(w)?;
         self.key.write_xdr(w)?;
-        self.type_.write_xdr(w)?;
+        self.durability.write_xdr(w)?;
         self.body.write_xdr(w)?;
         self.expiration_ledger_seq.write_xdr(w)?;
         Ok(())
@@ -14131,7 +14117,7 @@ impl WriteXdr for ContractDataEntry {
 
 // ContractCodeEntryBody is an XDR NestedUnion defines as:
 //
-//   union switch (ContractLedgerEntryType leType)
+//   union switch (ContractEntryBodyType bodyType)
 //        {
 //        case DATA_ENTRY:
 //            opaque code<>;
@@ -14139,7 +14125,7 @@ impl WriteXdr for ContractDataEntry {
 //            void;
 //        }
 //
-// union with discriminant ContractLedgerEntryType
+// union with discriminant ContractEntryBodyType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14154,9 +14140,9 @@ pub enum ContractCodeEntryBody {
 }
 
 impl ContractCodeEntryBody {
-    pub const VARIANTS: [ContractLedgerEntryType; 2] = [
-        ContractLedgerEntryType::DataEntry,
-        ContractLedgerEntryType::ExpirationExtension,
+    pub const VARIANTS: [ContractEntryBodyType; 2] = [
+        ContractEntryBodyType::DataEntry,
+        ContractEntryBodyType::ExpirationExtension,
     ];
     pub const VARIANTS_STR: [&'static str; 2] = ["DataEntry", "ExpirationExtension"];
 
@@ -14169,16 +14155,16 @@ impl ContractCodeEntryBody {
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> ContractLedgerEntryType {
+    pub const fn discriminant(&self) -> ContractEntryBodyType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::DataEntry(_) => ContractLedgerEntryType::DataEntry,
-            Self::ExpirationExtension => ContractLedgerEntryType::ExpirationExtension,
+            Self::DataEntry(_) => ContractEntryBodyType::DataEntry,
+            Self::ExpirationExtension => ContractEntryBodyType::ExpirationExtension,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractLedgerEntryType; 2] {
+    pub const fn variants() -> [ContractEntryBodyType; 2] {
         Self::VARIANTS
     }
 }
@@ -14190,29 +14176,29 @@ impl Name for ContractCodeEntryBody {
     }
 }
 
-impl Discriminant<ContractLedgerEntryType> for ContractCodeEntryBody {
+impl Discriminant<ContractEntryBodyType> for ContractCodeEntryBody {
     #[must_use]
-    fn discriminant(&self) -> ContractLedgerEntryType {
+    fn discriminant(&self) -> ContractEntryBodyType {
         Self::discriminant(self)
     }
 }
 
-impl Variants<ContractLedgerEntryType> for ContractCodeEntryBody {
-    fn variants() -> slice::Iter<'static, ContractLedgerEntryType> {
+impl Variants<ContractEntryBodyType> for ContractCodeEntryBody {
+    fn variants() -> slice::Iter<'static, ContractEntryBodyType> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<ContractLedgerEntryType> for ContractCodeEntryBody {}
+impl Union<ContractEntryBodyType> for ContractCodeEntryBody {}
 
 impl ReadXdr for ContractCodeEntryBody {
     #[cfg(feature = "std")]
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ContractLedgerEntryType = <ContractLedgerEntryType as ReadXdr>::read_xdr(r)?;
+        let dv: ContractEntryBodyType = <ContractEntryBodyType as ReadXdr>::read_xdr(r)?;
         #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
         let v = match dv {
-            ContractLedgerEntryType::DataEntry => Self::DataEntry(BytesM::read_xdr(r)?),
-            ContractLedgerEntryType::ExpirationExtension => Self::ExpirationExtension,
+            ContractEntryBodyType::DataEntry => Self::DataEntry(BytesM::read_xdr(r)?),
+            ContractEntryBodyType::ExpirationExtension => Self::ExpirationExtension,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14239,7 +14225,7 @@ impl WriteXdr for ContractCodeEntryBody {
 //        ExtensionPoint ext;
 //
 //        Hash hash;
-//        union switch (ContractLedgerEntryType leType)
+//        union switch (ContractEntryBodyType bodyType)
 //        {
 //        case DATA_ENTRY:
 //            opaque code<>;
@@ -15001,8 +14987,8 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 //        {
 //            SCAddress contract;
 //            SCVal key;
-//            ContractDataType type;
-//            ContractLedgerEntryType leType;
+//            ContractDataDurability durability;
+//            ContractEntryBodyType bodyType;
 //        }
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -15015,8 +15001,8 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 pub struct LedgerKeyContractData {
     pub contract: ScAddress,
     pub key: ScVal,
-    pub type_: ContractDataType,
-    pub le_type: ContractLedgerEntryType,
+    pub durability: ContractDataDurability,
+    pub body_type: ContractEntryBodyType,
 }
 
 impl ReadXdr for LedgerKeyContractData {
@@ -15025,8 +15011,8 @@ impl ReadXdr for LedgerKeyContractData {
         Ok(Self {
             contract: ScAddress::read_xdr(r)?,
             key: ScVal::read_xdr(r)?,
-            type_: ContractDataType::read_xdr(r)?,
-            le_type: ContractLedgerEntryType::read_xdr(r)?,
+            durability: ContractDataDurability::read_xdr(r)?,
+            body_type: ContractEntryBodyType::read_xdr(r)?,
         })
     }
 }
@@ -15036,8 +15022,8 @@ impl WriteXdr for LedgerKeyContractData {
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.contract.write_xdr(w)?;
         self.key.write_xdr(w)?;
-        self.type_.write_xdr(w)?;
-        self.le_type.write_xdr(w)?;
+        self.durability.write_xdr(w)?;
+        self.body_type.write_xdr(w)?;
         Ok(())
     }
 }
@@ -15047,7 +15033,7 @@ impl WriteXdr for LedgerKeyContractData {
 //   struct
 //        {
 //            Hash hash;
-//            ContractLedgerEntryType leType;
+//            ContractEntryBodyType bodyType;
 //        }
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -15059,7 +15045,7 @@ impl WriteXdr for LedgerKeyContractData {
 )]
 pub struct LedgerKeyContractCode {
     pub hash: Hash,
-    pub le_type: ContractLedgerEntryType,
+    pub body_type: ContractEntryBodyType,
 }
 
 impl ReadXdr for LedgerKeyContractCode {
@@ -15067,7 +15053,7 @@ impl ReadXdr for LedgerKeyContractCode {
     fn read_xdr(r: &mut impl Read) -> Result<Self> {
         Ok(Self {
             hash: Hash::read_xdr(r)?,
-            le_type: ContractLedgerEntryType::read_xdr(r)?,
+            body_type: ContractEntryBodyType::read_xdr(r)?,
         })
     }
 }
@@ -15076,7 +15062,7 @@ impl WriteXdr for LedgerKeyContractCode {
     #[cfg(feature = "std")]
     fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
         self.hash.write_xdr(w)?;
-        self.le_type.write_xdr(w)?;
+        self.body_type.write_xdr(w)?;
         Ok(())
     }
 }
@@ -15163,14 +15149,14 @@ impl WriteXdr for LedgerKeyConfigSetting {
 //        {
 //            SCAddress contract;
 //            SCVal key;
-//            ContractDataType type;
-//            ContractLedgerEntryType leType;
+//            ContractDataDurability durability;
+//            ContractEntryBodyType bodyType;
 //        } contractData;
 //    case CONTRACT_CODE:
 //        struct
 //        {
 //            Hash hash;
-//            ContractLedgerEntryType leType;
+//            ContractEntryBodyType bodyType;
 //        } contractCode;
 //    case CONFIG_SETTING:
 //        struct
@@ -39176,7 +39162,6 @@ pub enum TypeVariant {
     ContractExecutable,
     ScAddressType,
     ScAddress,
-    ContractDataType,
     ScVec,
     ScMap,
     ScBytes,
@@ -39247,8 +39232,9 @@ pub enum TypeVariant {
     LiquidityPoolEntry,
     LiquidityPoolEntryBody,
     LiquidityPoolEntryConstantProduct,
-    ContractLedgerEntryType,
+    ContractEntryBodyType,
     ContractDataFlags,
+    ContractDataDurability,
     ContractDataEntry,
     ContractDataEntryBody,
     ContractDataEntryData,
@@ -39600,7 +39586,6 @@ impl TypeVariant {
         TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::ScAddress,
-        TypeVariant::ContractDataType,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
         TypeVariant::ScBytes,
@@ -39671,8 +39656,9 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolEntry,
         TypeVariant::LiquidityPoolEntryBody,
         TypeVariant::LiquidityPoolEntryConstantProduct,
-        TypeVariant::ContractLedgerEntryType,
+        TypeVariant::ContractEntryBodyType,
         TypeVariant::ContractDataFlags,
+        TypeVariant::ContractDataDurability,
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractDataEntryBody,
         TypeVariant::ContractDataEntryData,
@@ -40022,7 +40008,6 @@ impl TypeVariant {
         "ContractExecutable",
         "ScAddressType",
         "ScAddress",
-        "ContractDataType",
         "ScVec",
         "ScMap",
         "ScBytes",
@@ -40093,8 +40078,9 @@ impl TypeVariant {
         "LiquidityPoolEntry",
         "LiquidityPoolEntryBody",
         "LiquidityPoolEntryConstantProduct",
-        "ContractLedgerEntryType",
+        "ContractEntryBodyType",
         "ContractDataFlags",
+        "ContractDataDurability",
         "ContractDataEntry",
         "ContractDataEntryBody",
         "ContractDataEntryData",
@@ -40448,7 +40434,6 @@ impl TypeVariant {
             Self::ContractExecutable => "ContractExecutable",
             Self::ScAddressType => "ScAddressType",
             Self::ScAddress => "ScAddress",
-            Self::ContractDataType => "ContractDataType",
             Self::ScVec => "ScVec",
             Self::ScMap => "ScMap",
             Self::ScBytes => "ScBytes",
@@ -40521,8 +40506,9 @@ impl TypeVariant {
             Self::LiquidityPoolEntry => "LiquidityPoolEntry",
             Self::LiquidityPoolEntryBody => "LiquidityPoolEntryBody",
             Self::LiquidityPoolEntryConstantProduct => "LiquidityPoolEntryConstantProduct",
-            Self::ContractLedgerEntryType => "ContractLedgerEntryType",
+            Self::ContractEntryBodyType => "ContractEntryBodyType",
             Self::ContractDataFlags => "ContractDataFlags",
+            Self::ContractDataDurability => "ContractDataDurability",
             Self::ContractDataEntry => "ContractDataEntry",
             Self::ContractDataEntryBody => "ContractDataEntryBody",
             Self::ContractDataEntryData => "ContractDataEntryData",
@@ -40906,7 +40892,6 @@ impl core::str::FromStr for TypeVariant {
             "ContractExecutable" => Ok(Self::ContractExecutable),
             "ScAddressType" => Ok(Self::ScAddressType),
             "ScAddress" => Ok(Self::ScAddress),
-            "ContractDataType" => Ok(Self::ContractDataType),
             "ScVec" => Ok(Self::ScVec),
             "ScMap" => Ok(Self::ScMap),
             "ScBytes" => Ok(Self::ScBytes),
@@ -40979,8 +40964,9 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolEntry" => Ok(Self::LiquidityPoolEntry),
             "LiquidityPoolEntryBody" => Ok(Self::LiquidityPoolEntryBody),
             "LiquidityPoolEntryConstantProduct" => Ok(Self::LiquidityPoolEntryConstantProduct),
-            "ContractLedgerEntryType" => Ok(Self::ContractLedgerEntryType),
+            "ContractEntryBodyType" => Ok(Self::ContractEntryBodyType),
             "ContractDataFlags" => Ok(Self::ContractDataFlags),
+            "ContractDataDurability" => Ok(Self::ContractDataDurability),
             "ContractDataEntry" => Ok(Self::ContractDataEntry),
             "ContractDataEntryBody" => Ok(Self::ContractDataEntryBody),
             "ContractDataEntryData" => Ok(Self::ContractDataEntryData),
@@ -41349,7 +41335,6 @@ pub enum Type {
     ContractExecutable(Box<ContractExecutable>),
     ScAddressType(Box<ScAddressType>),
     ScAddress(Box<ScAddress>),
-    ContractDataType(Box<ContractDataType>),
     ScVec(Box<ScVec>),
     ScMap(Box<ScMap>),
     ScBytes(Box<ScBytes>),
@@ -41420,8 +41405,9 @@ pub enum Type {
     LiquidityPoolEntry(Box<LiquidityPoolEntry>),
     LiquidityPoolEntryBody(Box<LiquidityPoolEntryBody>),
     LiquidityPoolEntryConstantProduct(Box<LiquidityPoolEntryConstantProduct>),
-    ContractLedgerEntryType(Box<ContractLedgerEntryType>),
+    ContractEntryBodyType(Box<ContractEntryBodyType>),
     ContractDataFlags(Box<ContractDataFlags>),
+    ContractDataDurability(Box<ContractDataDurability>),
     ContractDataEntry(Box<ContractDataEntry>),
     ContractDataEntryBody(Box<ContractDataEntryBody>),
     ContractDataEntryData(Box<ContractDataEntryData>),
@@ -41773,7 +41759,6 @@ impl Type {
         TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::ScAddress,
-        TypeVariant::ContractDataType,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
         TypeVariant::ScBytes,
@@ -41844,8 +41829,9 @@ impl Type {
         TypeVariant::LiquidityPoolEntry,
         TypeVariant::LiquidityPoolEntryBody,
         TypeVariant::LiquidityPoolEntryConstantProduct,
-        TypeVariant::ContractLedgerEntryType,
+        TypeVariant::ContractEntryBodyType,
         TypeVariant::ContractDataFlags,
+        TypeVariant::ContractDataDurability,
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractDataEntryBody,
         TypeVariant::ContractDataEntryData,
@@ -42195,7 +42181,6 @@ impl Type {
         "ContractExecutable",
         "ScAddressType",
         "ScAddress",
-        "ContractDataType",
         "ScVec",
         "ScMap",
         "ScBytes",
@@ -42266,8 +42251,9 @@ impl Type {
         "LiquidityPoolEntry",
         "LiquidityPoolEntryBody",
         "LiquidityPoolEntryConstantProduct",
-        "ContractLedgerEntryType",
+        "ContractEntryBodyType",
         "ContractDataFlags",
+        "ContractDataDurability",
         "ContractDataEntry",
         "ContractDataEntryBody",
         "ContractDataEntryData",
@@ -42735,9 +42721,6 @@ impl Type {
                 Ok(Self::ScAddressType(Box::new(ScAddressType::read_xdr(r)?)))
             }
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(ScAddress::read_xdr(r)?))),
-            TypeVariant::ContractDataType => Ok(Self::ContractDataType(Box::new(
-                ContractDataType::read_xdr(r)?,
-            ))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(ScVec::read_xdr(r)?))),
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(ScMap::read_xdr(r)?))),
             TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(ScBytes::read_xdr(r)?))),
@@ -42902,11 +42885,14 @@ impl Type {
                     LiquidityPoolEntryConstantProduct::read_xdr(r)?,
                 )))
             }
-            TypeVariant::ContractLedgerEntryType => Ok(Self::ContractLedgerEntryType(Box::new(
-                ContractLedgerEntryType::read_xdr(r)?,
+            TypeVariant::ContractEntryBodyType => Ok(Self::ContractEntryBodyType(Box::new(
+                ContractEntryBodyType::read_xdr(r)?,
             ))),
             TypeVariant::ContractDataFlags => Ok(Self::ContractDataFlags(Box::new(
                 ContractDataFlags::read_xdr(r)?,
+            ))),
+            TypeVariant::ContractDataDurability => Ok(Self::ContractDataDurability(Box::new(
+                ContractDataDurability::read_xdr(r)?,
             ))),
             TypeVariant::ContractDataEntry => Ok(Self::ContractDataEntry(Box::new(
                 ContractDataEntry::read_xdr(r)?,
@@ -44018,10 +44004,6 @@ impl Type {
                 ReadXdrIter::<_, ScAddress>::new(r)
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
             ),
-            TypeVariant::ContractDataType => Box::new(
-                ReadXdrIter::<_, ContractDataType>::new(r)
-                    .map(|r| r.map(|t| Self::ContractDataType(Box::new(t)))),
-            ),
             TypeVariant::ScVec => Box::new(
                 ReadXdrIter::<_, ScVec>::new(r).map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
             ),
@@ -44289,13 +44271,17 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(r)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
-            TypeVariant::ContractLedgerEntryType => Box::new(
-                ReadXdrIter::<_, ContractLedgerEntryType>::new(r)
-                    .map(|r| r.map(|t| Self::ContractLedgerEntryType(Box::new(t)))),
+            TypeVariant::ContractEntryBodyType => Box::new(
+                ReadXdrIter::<_, ContractEntryBodyType>::new(r)
+                    .map(|r| r.map(|t| Self::ContractEntryBodyType(Box::new(t)))),
             ),
             TypeVariant::ContractDataFlags => Box::new(
                 ReadXdrIter::<_, ContractDataFlags>::new(r)
                     .map(|r| r.map(|t| Self::ContractDataFlags(Box::new(t)))),
+            ),
+            TypeVariant::ContractDataDurability => Box::new(
+                ReadXdrIter::<_, ContractDataDurability>::new(r)
+                    .map(|r| r.map(|t| Self::ContractDataDurability(Box::new(t)))),
             ),
             TypeVariant::ContractDataEntry => Box::new(
                 ReadXdrIter::<_, ContractDataEntry>::new(r)
@@ -45680,10 +45666,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScAddress>>::new(r)
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t.0)))),
             ),
-            TypeVariant::ContractDataType => Box::new(
-                ReadXdrIter::<_, Frame<ContractDataType>>::new(r)
-                    .map(|r| r.map(|t| Self::ContractDataType(Box::new(t.0)))),
-            ),
             TypeVariant::ScVec => Box::new(
                 ReadXdrIter::<_, Frame<ScVec>>::new(r)
                     .map(|r| r.map(|t| Self::ScVec(Box::new(t.0)))),
@@ -45965,13 +45947,17 @@ impl Type {
                 ReadXdrIter::<_, Frame<LiquidityPoolEntryConstantProduct>>::new(r)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t.0)))),
             ),
-            TypeVariant::ContractLedgerEntryType => Box::new(
-                ReadXdrIter::<_, Frame<ContractLedgerEntryType>>::new(r)
-                    .map(|r| r.map(|t| Self::ContractLedgerEntryType(Box::new(t.0)))),
+            TypeVariant::ContractEntryBodyType => Box::new(
+                ReadXdrIter::<_, Frame<ContractEntryBodyType>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractEntryBodyType(Box::new(t.0)))),
             ),
             TypeVariant::ContractDataFlags => Box::new(
                 ReadXdrIter::<_, Frame<ContractDataFlags>>::new(r)
                     .map(|r| r.map(|t| Self::ContractDataFlags(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractDataDurability => Box::new(
+                ReadXdrIter::<_, Frame<ContractDataDurability>>::new(r)
+                    .map(|r| r.map(|t| Self::ContractDataDurability(Box::new(t.0)))),
             ),
             TypeVariant::ContractDataEntry => Box::new(
                 ReadXdrIter::<_, Frame<ContractDataEntry>>::new(r)
@@ -47371,10 +47357,6 @@ impl Type {
                 ReadXdrIter::<_, ScAddress>::new(dec)
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
             ),
-            TypeVariant::ContractDataType => Box::new(
-                ReadXdrIter::<_, ContractDataType>::new(dec)
-                    .map(|r| r.map(|t| Self::ContractDataType(Box::new(t)))),
-            ),
             TypeVariant::ScVec => Box::new(
                 ReadXdrIter::<_, ScVec>::new(dec).map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
             ),
@@ -47647,13 +47629,17 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(dec)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
-            TypeVariant::ContractLedgerEntryType => Box::new(
-                ReadXdrIter::<_, ContractLedgerEntryType>::new(dec)
-                    .map(|r| r.map(|t| Self::ContractLedgerEntryType(Box::new(t)))),
+            TypeVariant::ContractEntryBodyType => Box::new(
+                ReadXdrIter::<_, ContractEntryBodyType>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractEntryBodyType(Box::new(t)))),
             ),
             TypeVariant::ContractDataFlags => Box::new(
                 ReadXdrIter::<_, ContractDataFlags>::new(dec)
                     .map(|r| r.map(|t| Self::ContractDataFlags(Box::new(t)))),
+            ),
+            TypeVariant::ContractDataDurability => Box::new(
+                ReadXdrIter::<_, ContractDataDurability>::new(dec)
+                    .map(|r| r.map(|t| Self::ContractDataDurability(Box::new(t)))),
             ),
             TypeVariant::ContractDataEntry => Box::new(
                 ReadXdrIter::<_, ContractDataEntry>::new(dec)
@@ -48859,7 +48845,6 @@ impl Type {
             Self::ContractExecutable(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
             Self::ScAddress(ref v) => v.as_ref(),
-            Self::ContractDataType(ref v) => v.as_ref(),
             Self::ScVec(ref v) => v.as_ref(),
             Self::ScMap(ref v) => v.as_ref(),
             Self::ScBytes(ref v) => v.as_ref(),
@@ -48930,8 +48915,9 @@ impl Type {
             Self::LiquidityPoolEntry(ref v) => v.as_ref(),
             Self::LiquidityPoolEntryBody(ref v) => v.as_ref(),
             Self::LiquidityPoolEntryConstantProduct(ref v) => v.as_ref(),
-            Self::ContractLedgerEntryType(ref v) => v.as_ref(),
+            Self::ContractEntryBodyType(ref v) => v.as_ref(),
             Self::ContractDataFlags(ref v) => v.as_ref(),
+            Self::ContractDataDurability(ref v) => v.as_ref(),
             Self::ContractDataEntry(ref v) => v.as_ref(),
             Self::ContractDataEntryBody(ref v) => v.as_ref(),
             Self::ContractDataEntryData(ref v) => v.as_ref(),
@@ -49290,7 +49276,6 @@ impl Type {
             Self::ContractExecutable(_) => "ContractExecutable",
             Self::ScAddressType(_) => "ScAddressType",
             Self::ScAddress(_) => "ScAddress",
-            Self::ContractDataType(_) => "ContractDataType",
             Self::ScVec(_) => "ScVec",
             Self::ScMap(_) => "ScMap",
             Self::ScBytes(_) => "ScBytes",
@@ -49363,8 +49348,9 @@ impl Type {
             Self::LiquidityPoolEntry(_) => "LiquidityPoolEntry",
             Self::LiquidityPoolEntryBody(_) => "LiquidityPoolEntryBody",
             Self::LiquidityPoolEntryConstantProduct(_) => "LiquidityPoolEntryConstantProduct",
-            Self::ContractLedgerEntryType(_) => "ContractLedgerEntryType",
+            Self::ContractEntryBodyType(_) => "ContractEntryBodyType",
             Self::ContractDataFlags(_) => "ContractDataFlags",
+            Self::ContractDataDurability(_) => "ContractDataDurability",
             Self::ContractDataEntry(_) => "ContractDataEntry",
             Self::ContractDataEntryBody(_) => "ContractDataEntryBody",
             Self::ContractDataEntryData(_) => "ContractDataEntryData",
@@ -49743,7 +49729,6 @@ impl Type {
             Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,
             Self::ScAddress(_) => TypeVariant::ScAddress,
-            Self::ContractDataType(_) => TypeVariant::ContractDataType,
             Self::ScVec(_) => TypeVariant::ScVec,
             Self::ScMap(_) => TypeVariant::ScMap,
             Self::ScBytes(_) => TypeVariant::ScBytes,
@@ -49822,8 +49807,9 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(_) => {
                 TypeVariant::LiquidityPoolEntryConstantProduct
             }
-            Self::ContractLedgerEntryType(_) => TypeVariant::ContractLedgerEntryType,
+            Self::ContractEntryBodyType(_) => TypeVariant::ContractEntryBodyType,
             Self::ContractDataFlags(_) => TypeVariant::ContractDataFlags,
+            Self::ContractDataDurability(_) => TypeVariant::ContractDataDurability,
             Self::ContractDataEntry(_) => TypeVariant::ContractDataEntry,
             Self::ContractDataEntryBody(_) => TypeVariant::ContractDataEntryBody,
             Self::ContractDataEntryData(_) => TypeVariant::ContractDataEntryData,

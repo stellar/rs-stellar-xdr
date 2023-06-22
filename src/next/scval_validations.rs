@@ -31,8 +31,7 @@ impl Validate for ScVal {
             | ScVal::Address(_)
             | ScVal::LedgerKeyContractInstance
             | ScVal::LedgerKeyNonce(_)
-            | ScVal::ContractInstance(_)
-            | ScVal::StorageType(_) => Ok(()),
+            | ScVal::ContractInstance(_) => Ok(()),
 
             ScVal::Symbol(s) => {
                 // Symbol is defined as valid per https://github.com/stellar/rs-stellar-contract-env/blob/94c1717516c8fad4ad65caa148183b9fcbc408db/stellar-contract-env-common/src/symbol.rs#L107-L111.

@@ -97,14 +97,14 @@
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Version<'a> {
     pub pkg: &'a str,
-    pub rev: &'a str,
+    pub rev: Option<&'a str>,
     pub xdr: &'a str,
     pub xdr_curr: &'a str,
     pub xdr_next: &'a str,
 }
 pub const VERSION: Version = Version {
     pkg: env!("CARGO_PKG_VERSION"),
-    rev: env!("GIT_REVISION"),
+    rev: option_env!("GIT_REVISION"),
     xdr: if cfg!(all(feature = "curr", feature = "next")) {
         "curr,next"
     } else if cfg!(feature = "curr") {

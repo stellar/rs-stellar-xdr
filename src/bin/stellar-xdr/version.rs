@@ -11,7 +11,10 @@ impl Cmd {
             "stellar-xdr {} ({})
 xdr (+curr): {}
 xdr (+next): {}",
-            v.pkg, v.rev, v.xdr_curr, v.xdr_next
+            v.pkg,
+            v.rev.unwrap_or("unknown git revision"),
+            v.xdr_curr,
+            v.xdr_next
         );
     }
 }

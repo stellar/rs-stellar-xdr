@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "a611a8fe8599c1605b3ab66cb7ee20129fc12b4aab4cdca3faea646649d631fa",
+        "04a5a8d1abc31f942b1d4a8eeb4b09fc059bc3d19a2d457d019dde5f53db9c75",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "ac8c016a92e75e6ba29cccb00a3aa633f347ba15e5b4fcd0d6986d4eed52fe4e",
+        "7dd81b979b72042790ef4e595f484083dc1eeaaf708ceb603c105602bef50876",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -19507,7 +19507,7 @@ impl WriteXdr for LedgerCloseMetaV1 {
 //
 //        // Expired restorable ledger entries that are being
 //        // evicted at this ledger.
-//        LedgerEntry evictedRestorableLedgerEntries<>;
+//        LedgerEntry evictedPersistentLedgerEntries<>;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -19526,7 +19526,7 @@ pub struct LedgerCloseMetaV2 {
     pub scp_info: VecM<ScpHistoryEntry>,
     pub total_byte_size_of_bucket_list: u64,
     pub evicted_temporary_ledger_keys: VecM<LedgerKey>,
-    pub evicted_restorable_ledger_entries: VecM<LedgerEntry>,
+    pub evicted_persistent_ledger_entries: VecM<LedgerEntry>,
 }
 
 impl ReadXdr for LedgerCloseMetaV2 {
@@ -19541,7 +19541,7 @@ impl ReadXdr for LedgerCloseMetaV2 {
             scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
             total_byte_size_of_bucket_list: u64::read_xdr(r)?,
             evicted_temporary_ledger_keys: VecM::<LedgerKey>::read_xdr(r)?,
-            evicted_restorable_ledger_entries: VecM::<LedgerEntry>::read_xdr(r)?,
+            evicted_persistent_ledger_entries: VecM::<LedgerEntry>::read_xdr(r)?,
         })
     }
 }
@@ -19557,7 +19557,7 @@ impl WriteXdr for LedgerCloseMetaV2 {
         self.scp_info.write_xdr(w)?;
         self.total_byte_size_of_bucket_list.write_xdr(w)?;
         self.evicted_temporary_ledger_keys.write_xdr(w)?;
-        self.evicted_restorable_ledger_entries.write_xdr(w)?;
+        self.evicted_persistent_ledger_entries.write_xdr(w)?;
         Ok(())
     }
 }

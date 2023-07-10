@@ -82,27 +82,31 @@ macro_rules! run_x {
                 )
             })?;
             for f in &mut files {
+                let mut f = stellar_xdr::$m::DepthLimitedRead::new(
+                    f,
+                    stellar_xdr::$m::DEFAULT_MAX_DEPTH_LIMIT,
+                );
                 match self.input {
                     InputFormat::Single => {
-                        let t = stellar_xdr::$m::Type::read_xdr_to_end(r#type, f)?;
+                        let t = stellar_xdr::$m::Type::read_xdr_to_end(r#type, &mut f)?;
                         self.out(&t)?;
                     }
                     InputFormat::SingleBase64 => {
-                        let t = stellar_xdr::$m::Type::read_xdr_base64_to_end(r#type, f)?;
+                        let t = stellar_xdr::$m::Type::read_xdr_base64_to_end(r#type, &mut f)?;
                         self.out(&t)?;
                     }
                     InputFormat::Stream => {
-                        for t in stellar_xdr::$m::Type::read_xdr_iter(r#type, f) {
+                        for t in stellar_xdr::$m::Type::read_xdr_iter(r#type, &mut f) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamBase64 => {
-                        for t in stellar_xdr::$m::Type::read_xdr_base64_iter(r#type, f) {
+                        for t in stellar_xdr::$m::Type::read_xdr_base64_iter(r#type, &mut f) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamFramed => {
-                        for t in stellar_xdr::$m::Type::read_xdr_framed_iter(r#type, f) {
+                        for t in stellar_xdr::$m::Type::read_xdr_framed_iter(r#type, &mut f) {
                             self.out(&t?)?;
                         }
                     }

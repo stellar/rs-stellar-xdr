@@ -71,7 +71,7 @@ macro_rules! run_x {
         fn $f(&self) -> Result<(), Error> {
             let mut f = stellar_xdr::$m::DepthLimitedRead::new(
                 ResetRead::new(self.file()?),
-                stellar_xdr::$m::DEFAULT_MAX_DEPTH_LIMIT,
+                stellar_xdr::$m::DEFAULT_XDR_RW_DEPTH_LIMIT,
             );
             'variants: for v in stellar_xdr::$m::TypeVariant::VARIANTS {
                 f.inner.reset();

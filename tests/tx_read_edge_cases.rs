@@ -6,7 +6,7 @@
 
 use std::io::{self, Cursor};
 use stellar_xdr::Error;
-use stellar_xdr::{DepthLimitedRead, ReadXdr, WriteXdr, DEFAULT_MAX_DEPTH_LIMIT};
+use stellar_xdr::{DepthLimitedRead, ReadXdr, WriteXdr, DEFAULT_XDR_RW_DEPTH_LIMIT};
 
 #[test]
 fn test_read_interrupts_and_residuals() -> Result<(), Error> {
@@ -17,7 +17,7 @@ fn test_read_interrupts_and_residuals() -> Result<(), Error> {
     {
         let mut cursor = DepthLimitedRead::new(
             Interrupted::new(Cursor::new(&v_bytes)),
-            DEFAULT_MAX_DEPTH_LIMIT,
+            DEFAULT_XDR_RW_DEPTH_LIMIT,
         );
         assert_eq!(u32::read_xdr(&mut cursor), Ok(1u32));
         assert_eq!(u32::read_xdr(&mut cursor), Ok(2u32));
@@ -29,14 +29,14 @@ fn test_read_interrupts_and_residuals() -> Result<(), Error> {
         assert_eq!(
             u32::read_xdr_to_end(&mut DepthLimitedRead::new(
                 Interrupted::new(Cursor::new(&v_bytes)),
-                DEFAULT_MAX_DEPTH_LIMIT,
+                DEFAULT_XDR_RW_DEPTH_LIMIT,
             )),
             Err(Error::Invalid)
         );
         assert_eq!(
             u64::read_xdr_to_end(&mut DepthLimitedRead::new(
                 Interrupted::new(Cursor::new(&v_bytes)),
-                DEFAULT_MAX_DEPTH_LIMIT,
+                DEFAULT_XDR_RW_DEPTH_LIMIT,
             )),
             Ok(1u64 << 32 | 2u64)
         );

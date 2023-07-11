@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "7663184071756803e1f24f57fe0f5d6529dc11ca03d66e91074822e5acdc7f79",
+        "4e5190ba91281fa7761b99760a230c076f10ce7bddbf277830d713aae1944829",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -26674,7 +26674,7 @@ impl WriteXdr for LedgerFootprint {
 //        uint32 writeBytes;
 //
 //        // Maximum size of dynamic metadata produced by this contract (
-//        // currently only includes the events).
+//        // bytes read from ledger + bytes written to ledger + event bytes written to meta).
 //        uint32 extendedMetaDataSizeBytes;
 //    };
 //
@@ -35189,7 +35189,8 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 //        // codes considered as "failure" for the operation
 //        INVOKE_HOST_FUNCTION_MALFORMED = -1,
 //        INVOKE_HOST_FUNCTION_TRAPPED = -2,
-//        INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3
+//        INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3,
+//        INVOKE_HOST_FUNCTION_ENTRY_EXPIRED = -4
 //    };
 //
 // enum
@@ -35206,17 +35207,24 @@ pub enum InvokeHostFunctionResultCode {
     Malformed = -1,
     Trapped = -2,
     ResourceLimitExceeded = -3,
+    EntryExpired = -4,
 }
 
 impl InvokeHostFunctionResultCode {
-    pub const VARIANTS: [InvokeHostFunctionResultCode; 4] = [
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 5] = [
         InvokeHostFunctionResultCode::Success,
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
         InvokeHostFunctionResultCode::ResourceLimitExceeded,
+        InvokeHostFunctionResultCode::EntryExpired,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Success", "Malformed", "Trapped", "ResourceLimitExceeded"];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "Success",
+        "Malformed",
+        "Trapped",
+        "ResourceLimitExceeded",
+        "EntryExpired",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -35225,11 +35233,12 @@ impl InvokeHostFunctionResultCode {
             Self::Malformed => "Malformed",
             Self::Trapped => "Trapped",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::EntryExpired => "EntryExpired",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [InvokeHostFunctionResultCode; 4] {
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 5] {
         Self::VARIANTS
     }
 }
@@ -35264,6 +35273,7 @@ impl TryFrom<i32> for InvokeHostFunctionResultCode {
             -1 => InvokeHostFunctionResultCode::Malformed,
             -2 => InvokeHostFunctionResultCode::Trapped,
             -3 => InvokeHostFunctionResultCode::ResourceLimitExceeded,
+            -4 => InvokeHostFunctionResultCode::EntryExpired,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -35304,6 +35314,7 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 //    case INVOKE_HOST_FUNCTION_MALFORMED:
 //    case INVOKE_HOST_FUNCTION_TRAPPED:
 //    case INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED:
+//    case INVOKE_HOST_FUNCTION_ENTRY_EXPIRED:
 //        void;
 //    };
 //
@@ -35321,17 +35332,24 @@ pub enum InvokeHostFunctionResult {
     Malformed,
     Trapped,
     ResourceLimitExceeded,
+    EntryExpired,
 }
 
 impl InvokeHostFunctionResult {
-    pub const VARIANTS: [InvokeHostFunctionResultCode; 4] = [
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 5] = [
         InvokeHostFunctionResultCode::Success,
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
         InvokeHostFunctionResultCode::ResourceLimitExceeded,
+        InvokeHostFunctionResultCode::EntryExpired,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Success", "Malformed", "Trapped", "ResourceLimitExceeded"];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "Success",
+        "Malformed",
+        "Trapped",
+        "ResourceLimitExceeded",
+        "EntryExpired",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -35340,6 +35358,7 @@ impl InvokeHostFunctionResult {
             Self::Malformed => "Malformed",
             Self::Trapped => "Trapped",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::EntryExpired => "EntryExpired",
         }
     }
 
@@ -35351,11 +35370,12 @@ impl InvokeHostFunctionResult {
             Self::Malformed => InvokeHostFunctionResultCode::Malformed,
             Self::Trapped => InvokeHostFunctionResultCode::Trapped,
             Self::ResourceLimitExceeded => InvokeHostFunctionResultCode::ResourceLimitExceeded,
+            Self::EntryExpired => InvokeHostFunctionResultCode::EntryExpired,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [InvokeHostFunctionResultCode; 4] {
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 5] {
         Self::VARIANTS
     }
 }
@@ -35393,6 +35413,7 @@ impl ReadXdr for InvokeHostFunctionResult {
             InvokeHostFunctionResultCode::Malformed => Self::Malformed,
             InvokeHostFunctionResultCode::Trapped => Self::Trapped,
             InvokeHostFunctionResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
+            InvokeHostFunctionResultCode::EntryExpired => Self::EntryExpired,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -35410,6 +35431,7 @@ impl WriteXdr for InvokeHostFunctionResult {
             Self::Malformed => ().write_xdr(w)?,
             Self::Trapped => ().write_xdr(w)?,
             Self::ResourceLimitExceeded => ().write_xdr(w)?,
+            Self::EntryExpired => ().write_xdr(w)?,
         };
         Ok(())
     }

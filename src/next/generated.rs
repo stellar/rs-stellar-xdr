@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "04a5a8d1abc31f942b1d4a8eeb4b09fc059bc3d19a2d457d019dde5f53db9c75",
+        "c8750a8ef0db66d4dd2e56f263c6b33ccaf0111128fdcf875e63efed9effe0a5",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "7663184071756803e1f24f57fe0f5d6529dc11ca03d66e91074822e5acdc7f79",
+        "4e5190ba91281fa7761b99760a230c076f10ce7bddbf277830d713aae1944829",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -3247,16 +3247,16 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
 //        int64 feeWriteLedgerEntry; // Fee per ledger entry write
 //
 //        int64 feeRead1KB;  // Fee for reading 1KB
-//        int64 feeWrite1KB; // Fee for writing 1KB
 //
-//        // Bucket list fees grow slowly up to that size
-//        int64 bucketListSizeBytes;
-//        // Fee rate in stroops when the bucket list is empty
-//        int64 bucketListFeeRateLow;
-//        // Fee rate in stroops when the bucket list reached bucketListSizeBytes
-//        int64 bucketListFeeRateHigh;
-//        // Rate multiplier for any additional data past the first bucketListSizeBytes
-//        uint32 bucketListGrowthFactor;
+//        // The following parameters determine the write fee per 1KB.
+//        // Write fee grows linearly until bucket list reaches this size
+//        int64 bucketListTargetSizeBytes;
+//        // Fee per 1KB write when the bucket list is empty
+//        int64 writeFee1KBBucketListLow;
+//        // Fee per 1KB write when the bucket list has reached `bucketListTargetSizeBytes`
+//        int64 writeFee1KBBucketListHigh;
+//        // Write fee multiplier for any additional data past the first `bucketListTargetSizeBytes`
+//        uint32 bucketListWriteFeeGrowthFactor;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -3278,11 +3278,10 @@ pub struct ConfigSettingContractLedgerCostV0 {
     pub fee_read_ledger_entry: i64,
     pub fee_write_ledger_entry: i64,
     pub fee_read1_kb: i64,
-    pub fee_write1_kb: i64,
-    pub bucket_list_size_bytes: i64,
-    pub bucket_list_fee_rate_low: i64,
-    pub bucket_list_fee_rate_high: i64,
-    pub bucket_list_growth_factor: u32,
+    pub bucket_list_target_size_bytes: i64,
+    pub write_fee1_kb_bucket_list_low: i64,
+    pub write_fee1_kb_bucket_list_high: i64,
+    pub bucket_list_write_fee_growth_factor: u32,
 }
 
 impl ReadXdr for ConfigSettingContractLedgerCostV0 {
@@ -3301,11 +3300,10 @@ impl ReadXdr for ConfigSettingContractLedgerCostV0 {
                 fee_read_ledger_entry: i64::read_xdr(r)?,
                 fee_write_ledger_entry: i64::read_xdr(r)?,
                 fee_read1_kb: i64::read_xdr(r)?,
-                fee_write1_kb: i64::read_xdr(r)?,
-                bucket_list_size_bytes: i64::read_xdr(r)?,
-                bucket_list_fee_rate_low: i64::read_xdr(r)?,
-                bucket_list_fee_rate_high: i64::read_xdr(r)?,
-                bucket_list_growth_factor: u32::read_xdr(r)?,
+                bucket_list_target_size_bytes: i64::read_xdr(r)?,
+                write_fee1_kb_bucket_list_low: i64::read_xdr(r)?,
+                write_fee1_kb_bucket_list_high: i64::read_xdr(r)?,
+                bucket_list_write_fee_growth_factor: u32::read_xdr(r)?,
             })
         })
     }
@@ -3326,11 +3324,10 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
             self.fee_read_ledger_entry.write_xdr(w)?;
             self.fee_write_ledger_entry.write_xdr(w)?;
             self.fee_read1_kb.write_xdr(w)?;
-            self.fee_write1_kb.write_xdr(w)?;
-            self.bucket_list_size_bytes.write_xdr(w)?;
-            self.bucket_list_fee_rate_low.write_xdr(w)?;
-            self.bucket_list_fee_rate_high.write_xdr(w)?;
-            self.bucket_list_growth_factor.write_xdr(w)?;
+            self.bucket_list_target_size_bytes.write_xdr(w)?;
+            self.write_fee1_kb_bucket_list_low.write_xdr(w)?;
+            self.write_fee1_kb_bucket_list_high.write_xdr(w)?;
+            self.bucket_list_write_fee_growth_factor.write_xdr(w)?;
             Ok(())
         })
     }
@@ -28198,7 +28195,7 @@ impl WriteXdr for LedgerFootprint {
 //        uint32 writeBytes;
 //
 //        // Maximum size of dynamic metadata produced by this contract (
-//        // currently only includes the events).
+//        // bytes read from ledger + bytes written to ledger + event bytes written to meta).
 //        uint32 extendedMetaDataSizeBytes;
 //    };
 //
@@ -37014,7 +37011,8 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 //        // codes considered as "failure" for the operation
 //        INVOKE_HOST_FUNCTION_MALFORMED = -1,
 //        INVOKE_HOST_FUNCTION_TRAPPED = -2,
-//        INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3
+//        INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3,
+//        INVOKE_HOST_FUNCTION_ENTRY_EXPIRED = -4
 //    };
 //
 // enum
@@ -37031,17 +37029,24 @@ pub enum InvokeHostFunctionResultCode {
     Malformed = -1,
     Trapped = -2,
     ResourceLimitExceeded = -3,
+    EntryExpired = -4,
 }
 
 impl InvokeHostFunctionResultCode {
-    pub const VARIANTS: [InvokeHostFunctionResultCode; 4] = [
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 5] = [
         InvokeHostFunctionResultCode::Success,
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
         InvokeHostFunctionResultCode::ResourceLimitExceeded,
+        InvokeHostFunctionResultCode::EntryExpired,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Success", "Malformed", "Trapped", "ResourceLimitExceeded"];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "Success",
+        "Malformed",
+        "Trapped",
+        "ResourceLimitExceeded",
+        "EntryExpired",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -37050,11 +37055,12 @@ impl InvokeHostFunctionResultCode {
             Self::Malformed => "Malformed",
             Self::Trapped => "Trapped",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::EntryExpired => "EntryExpired",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [InvokeHostFunctionResultCode; 4] {
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 5] {
         Self::VARIANTS
     }
 }
@@ -37089,6 +37095,7 @@ impl TryFrom<i32> for InvokeHostFunctionResultCode {
             -1 => InvokeHostFunctionResultCode::Malformed,
             -2 => InvokeHostFunctionResultCode::Trapped,
             -3 => InvokeHostFunctionResultCode::ResourceLimitExceeded,
+            -4 => InvokeHostFunctionResultCode::EntryExpired,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -37133,6 +37140,7 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 //    case INVOKE_HOST_FUNCTION_MALFORMED:
 //    case INVOKE_HOST_FUNCTION_TRAPPED:
 //    case INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED:
+//    case INVOKE_HOST_FUNCTION_ENTRY_EXPIRED:
 //        void;
 //    };
 //
@@ -37150,17 +37158,24 @@ pub enum InvokeHostFunctionResult {
     Malformed,
     Trapped,
     ResourceLimitExceeded,
+    EntryExpired,
 }
 
 impl InvokeHostFunctionResult {
-    pub const VARIANTS: [InvokeHostFunctionResultCode; 4] = [
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 5] = [
         InvokeHostFunctionResultCode::Success,
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
         InvokeHostFunctionResultCode::ResourceLimitExceeded,
+        InvokeHostFunctionResultCode::EntryExpired,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] =
-        ["Success", "Malformed", "Trapped", "ResourceLimitExceeded"];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "Success",
+        "Malformed",
+        "Trapped",
+        "ResourceLimitExceeded",
+        "EntryExpired",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -37169,6 +37184,7 @@ impl InvokeHostFunctionResult {
             Self::Malformed => "Malformed",
             Self::Trapped => "Trapped",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::EntryExpired => "EntryExpired",
         }
     }
 
@@ -37180,11 +37196,12 @@ impl InvokeHostFunctionResult {
             Self::Malformed => InvokeHostFunctionResultCode::Malformed,
             Self::Trapped => InvokeHostFunctionResultCode::Trapped,
             Self::ResourceLimitExceeded => InvokeHostFunctionResultCode::ResourceLimitExceeded,
+            Self::EntryExpired => InvokeHostFunctionResultCode::EntryExpired,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [InvokeHostFunctionResultCode; 4] {
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 5] {
         Self::VARIANTS
     }
 }
@@ -37223,6 +37240,7 @@ impl ReadXdr for InvokeHostFunctionResult {
                 InvokeHostFunctionResultCode::Malformed => Self::Malformed,
                 InvokeHostFunctionResultCode::Trapped => Self::Trapped,
                 InvokeHostFunctionResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
+                InvokeHostFunctionResultCode::EntryExpired => Self::EntryExpired,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -37242,6 +37260,7 @@ impl WriteXdr for InvokeHostFunctionResult {
                 Self::Malformed => ().write_xdr(w)?,
                 Self::Trapped => ().write_xdr(w)?,
                 Self::ResourceLimitExceeded => ().write_xdr(w)?,
+                Self::EntryExpired => ().write_xdr(w)?,
             };
             Ok(())
         })

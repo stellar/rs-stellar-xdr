@@ -6,7 +6,7 @@
 
 use std::io::{self, Cursor};
 use stellar_xdr::Error;
-use stellar_xdr::{ReadXdr, WriteXdr};
+use stellar_xdr::{DepthLimitedRead, ReadXdr, WriteXdr, DEFAULT_XDR_RW_DEPTH_LIMIT};
 
 #[test]
 fn test_read_interrupts_and_residuals() -> Result<(), Error> {
@@ -15,7 +15,10 @@ fn test_read_interrupts_and_residuals() -> Result<(), Error> {
     // read_xdr should support not consuming the buffer on the read, being able
     // to do subsequent reads, and continuing on interrupts.
     {
-        let mut cursor = Interrupted::new(Cursor::new(&v_bytes));
+        let mut cursor = DepthLimitedRead::new(
+            Interrupted::new(Cursor::new(&v_bytes)),
+            DEFAULT_XDR_RW_DEPTH_LIMIT,
+        );
         assert_eq!(u32::read_xdr(&mut cursor), Ok(1u32));
         assert_eq!(u32::read_xdr(&mut cursor), Ok(2u32));
     }
@@ -24,11 +27,17 @@ fn test_read_interrupts_and_residuals() -> Result<(), Error> {
     // type being read, and continue on interrupts.
     {
         assert_eq!(
-            u32::read_xdr_to_end(&mut Interrupted::new(Cursor::new(&v_bytes))),
+            u32::read_xdr_to_end(&mut DepthLimitedRead::new(
+                Interrupted::new(Cursor::new(&v_bytes)),
+                DEFAULT_XDR_RW_DEPTH_LIMIT,
+            )),
             Err(Error::Invalid)
         );
         assert_eq!(
-            u64::read_xdr_to_end(&mut Interrupted::new(Cursor::new(&v_bytes))),
+            u64::read_xdr_to_end(&mut DepthLimitedRead::new(
+                Interrupted::new(Cursor::new(&v_bytes)),
+                DEFAULT_XDR_RW_DEPTH_LIMIT,
+            )),
             Ok(1u64 << 32 | 2u64)
         );
     }

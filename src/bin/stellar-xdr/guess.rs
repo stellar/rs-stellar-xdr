@@ -69,9 +69,12 @@ impl Default for OutputFormat {
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let mut f = ResetRead::new(self.file()?);
+            let mut f = stellar_xdr::$m::DepthLimitedRead::new(
+                ResetRead::new(self.file()?),
+                stellar_xdr::$m::DEFAULT_XDR_RW_DEPTH_LIMIT,
+            );
             'variants: for v in stellar_xdr::$m::TypeVariant::VARIANTS {
-                f.reset();
+                f.inner.reset();
                 let count: usize = match self.input {
                     InputFormat::Single => stellar_xdr::$m::Type::read_xdr_to_end(v, &mut f)
                         .ok()

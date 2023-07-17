@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "7dd81b979b72042790ef4e595f484083dc1eeaaf708ceb603c105602bef50876",
+        "59077cbb5a1517fdaaaf7b1f0f750cf02f84984ed024441dc37b7f974866fa58",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "4e5190ba91281fa7761b99760a230c076f10ce7bddbf277830d713aae1944829",
+        "50460419c6dce766685db1898f5e8b554ac04d481200a57e1ea66b7f80e48cf3",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -17267,7 +17267,8 @@ impl WriteXdr for LedgerHeader {
 //        LEDGER_UPGRADE_MAX_TX_SET_SIZE = 3,
 //        LEDGER_UPGRADE_BASE_RESERVE = 4,
 //        LEDGER_UPGRADE_FLAGS = 5,
-//        LEDGER_UPGRADE_CONFIG = 6
+//        LEDGER_UPGRADE_CONFIG = 6,
+//        LEDGER_UPGRADE_MAX_SOROBAN_TX_SET_SIZE = 7
 //    };
 //
 // enum
@@ -17286,24 +17287,27 @@ pub enum LedgerUpgradeType {
     BaseReserve = 4,
     Flags = 5,
     Config = 6,
+    MaxSorobanTxSetSize = 7,
 }
 
 impl LedgerUpgradeType {
-    pub const VARIANTS: [LedgerUpgradeType; 6] = [
+    pub const VARIANTS: [LedgerUpgradeType; 7] = [
         LedgerUpgradeType::Version,
         LedgerUpgradeType::BaseFee,
         LedgerUpgradeType::MaxTxSetSize,
         LedgerUpgradeType::BaseReserve,
         LedgerUpgradeType::Flags,
         LedgerUpgradeType::Config,
+        LedgerUpgradeType::MaxSorobanTxSetSize,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: [&'static str; 7] = [
         "Version",
         "BaseFee",
         "MaxTxSetSize",
         "BaseReserve",
         "Flags",
         "Config",
+        "MaxSorobanTxSetSize",
     ];
 
     #[must_use]
@@ -17315,11 +17319,12 @@ impl LedgerUpgradeType {
             Self::BaseReserve => "BaseReserve",
             Self::Flags => "Flags",
             Self::Config => "Config",
+            Self::MaxSorobanTxSetSize => "MaxSorobanTxSetSize",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerUpgradeType; 6] {
+    pub const fn variants() -> [LedgerUpgradeType; 7] {
         Self::VARIANTS
     }
 }
@@ -17356,6 +17361,7 @@ impl TryFrom<i32> for LedgerUpgradeType {
             4 => LedgerUpgradeType::BaseReserve,
             5 => LedgerUpgradeType::Flags,
             6 => LedgerUpgradeType::Config,
+            7 => LedgerUpgradeType::MaxSorobanTxSetSize,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17448,7 +17454,12 @@ impl WriteXdr for ConfigUpgradeSetKey {
 //    case LEDGER_UPGRADE_FLAGS:
 //        uint32 newFlags; // update flags
 //    case LEDGER_UPGRADE_CONFIG:
+//        // Update arbitray `ConfigSetting` entries identified by the key.
 //        ConfigUpgradeSetKey newConfig;
+//    case LEDGER_UPGRADE_MAX_SOROBAN_TX_SET_SIZE:
+//        // Update ConfigSettingContractExecutionLanesV0.ledgerMaxTxCount without
+//        // using `LEDGER_UPGRADE_CONFIG`.
+//        uint32 newMaxSorobanTxSetSize;
 //    };
 //
 // union with discriminant LedgerUpgradeType
@@ -17467,24 +17478,27 @@ pub enum LedgerUpgrade {
     BaseReserve(u32),
     Flags(u32),
     Config(ConfigUpgradeSetKey),
+    MaxSorobanTxSetSize(u32),
 }
 
 impl LedgerUpgrade {
-    pub const VARIANTS: [LedgerUpgradeType; 6] = [
+    pub const VARIANTS: [LedgerUpgradeType; 7] = [
         LedgerUpgradeType::Version,
         LedgerUpgradeType::BaseFee,
         LedgerUpgradeType::MaxTxSetSize,
         LedgerUpgradeType::BaseReserve,
         LedgerUpgradeType::Flags,
         LedgerUpgradeType::Config,
+        LedgerUpgradeType::MaxSorobanTxSetSize,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: [&'static str; 7] = [
         "Version",
         "BaseFee",
         "MaxTxSetSize",
         "BaseReserve",
         "Flags",
         "Config",
+        "MaxSorobanTxSetSize",
     ];
 
     #[must_use]
@@ -17496,6 +17510,7 @@ impl LedgerUpgrade {
             Self::BaseReserve(_) => "BaseReserve",
             Self::Flags(_) => "Flags",
             Self::Config(_) => "Config",
+            Self::MaxSorobanTxSetSize(_) => "MaxSorobanTxSetSize",
         }
     }
 
@@ -17509,11 +17524,12 @@ impl LedgerUpgrade {
             Self::BaseReserve(_) => LedgerUpgradeType::BaseReserve,
             Self::Flags(_) => LedgerUpgradeType::Flags,
             Self::Config(_) => LedgerUpgradeType::Config,
+            Self::MaxSorobanTxSetSize(_) => LedgerUpgradeType::MaxSorobanTxSetSize,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerUpgradeType; 6] {
+    pub const fn variants() -> [LedgerUpgradeType; 7] {
         Self::VARIANTS
     }
 }
@@ -17553,6 +17569,9 @@ impl ReadXdr for LedgerUpgrade {
                 LedgerUpgradeType::BaseReserve => Self::BaseReserve(u32::read_xdr(r)?),
                 LedgerUpgradeType::Flags => Self::Flags(u32::read_xdr(r)?),
                 LedgerUpgradeType::Config => Self::Config(ConfigUpgradeSetKey::read_xdr(r)?),
+                LedgerUpgradeType::MaxSorobanTxSetSize => {
+                    Self::MaxSorobanTxSetSize(u32::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -17574,6 +17593,7 @@ impl WriteXdr for LedgerUpgrade {
                 Self::BaseReserve(v) => v.write_xdr(w)?,
                 Self::Flags(v) => v.write_xdr(w)?,
                 Self::Config(v) => v.write_xdr(w)?,
+                Self::MaxSorobanTxSetSize(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -19867,7 +19887,7 @@ impl WriteXdr for ContractEventType {
 //
 //   struct
 //            {
-//                SCVec topics;
+//                SCVal topics<>;
 //                SCVal data;
 //            }
 //
@@ -19879,7 +19899,7 @@ impl WriteXdr for ContractEventType {
     serde(rename_all = "snake_case")
 )]
 pub struct ContractEventV0 {
-    pub topics: ScVec,
+    pub topics: VecM<ScVal>,
     pub data: ScVal,
 }
 
@@ -19888,7 +19908,7 @@ impl ReadXdr for ContractEventV0 {
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                topics: ScVec::read_xdr(r)?,
+                topics: VecM::<ScVal>::read_xdr(r)?,
                 data: ScVal::read_xdr(r)?,
             })
         })
@@ -19913,7 +19933,7 @@ impl WriteXdr for ContractEventV0 {
 //        case 0:
 //            struct
 //            {
-//                SCVec topics;
+//                SCVal topics<>;
 //                SCVal data;
 //            } v0;
 //        }
@@ -20024,7 +20044,7 @@ impl WriteXdr for ContractEventBody {
 //        case 0:
 //            struct
 //            {
-//                SCVec topics;
+//                SCVal topics<>;
 //                SCVal data;
 //            } v0;
 //        }
@@ -25795,12 +25815,58 @@ impl WriteXdr for CreateContractArgs {
     }
 }
 
+// InvokeContractArgs is an XDR Struct defines as:
+//
+//   struct InvokeContractArgs {
+//        SCAddress contractAddress;
+//        SCSymbol functionName;
+//        SCVal args<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct InvokeContractArgs {
+    pub contract_address: ScAddress,
+    pub function_name: ScSymbol,
+    pub args: VecM<ScVal>,
+}
+
+impl ReadXdr for InvokeContractArgs {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                contract_address: ScAddress::read_xdr(r)?,
+                function_name: ScSymbol::read_xdr(r)?,
+                args: VecM::<ScVal>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for InvokeContractArgs {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.contract_address.write_xdr(w)?;
+            self.function_name.write_xdr(w)?;
+            self.args.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 // HostFunction is an XDR Union defines as:
 //
 //   union HostFunction switch (HostFunctionType type)
 //    {
 //    case HOST_FUNCTION_TYPE_INVOKE_CONTRACT:
-//        SCVec invokeContract;
+//        InvokeContractArgs invokeContract;
 //    case HOST_FUNCTION_TYPE_CREATE_CONTRACT:
 //        CreateContractArgs createContract;
 //    case HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM:
@@ -25817,7 +25883,7 @@ impl WriteXdr for CreateContractArgs {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum HostFunction {
-    InvokeContract(ScVec),
+    InvokeContract(InvokeContractArgs),
     CreateContract(CreateContractArgs),
     UploadContractWasm(BytesM),
 }
@@ -25885,7 +25951,9 @@ impl ReadXdr for HostFunction {
             let dv: HostFunctionType = <HostFunctionType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                HostFunctionType::InvokeContract => Self::InvokeContract(ScVec::read_xdr(r)?),
+                HostFunctionType::InvokeContract => {
+                    Self::InvokeContract(InvokeContractArgs::read_xdr(r)?)
+                }
                 HostFunctionType::CreateContract => {
                     Self::CreateContract(CreateContractArgs::read_xdr(r)?)
                 }
@@ -26022,59 +26090,12 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
     }
 }
 
-// SorobanAuthorizedContractFunction is an XDR Struct defines as:
-//
-//   struct SorobanAuthorizedContractFunction
-//    {
-//        SCAddress contractAddress;
-//        SCSymbol functionName;
-//        SCVec args;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct SorobanAuthorizedContractFunction {
-    pub contract_address: ScAddress,
-    pub function_name: ScSymbol,
-    pub args: ScVec,
-}
-
-impl ReadXdr for SorobanAuthorizedContractFunction {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                contract_address: ScAddress::read_xdr(r)?,
-                function_name: ScSymbol::read_xdr(r)?,
-                args: ScVec::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for SorobanAuthorizedContractFunction {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.contract_address.write_xdr(w)?;
-            self.function_name.write_xdr(w)?;
-            self.args.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 // SorobanAuthorizedFunction is an XDR Union defines as:
 //
 //   union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type)
 //    {
 //    case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN:
-//        SorobanAuthorizedContractFunction contractFn;
+//        InvokeContractArgs contractFn;
 //    case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN:
 //        CreateContractArgs createContractHostFn;
 //    };
@@ -26089,7 +26110,7 @@ impl WriteXdr for SorobanAuthorizedContractFunction {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SorobanAuthorizedFunction {
-    ContractFn(SorobanAuthorizedContractFunction),
+    ContractFn(InvokeContractArgs),
     CreateContractHostFn(CreateContractArgs),
 }
 
@@ -26154,7 +26175,7 @@ impl ReadXdr for SorobanAuthorizedFunction {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 SorobanAuthorizedFunctionType::ContractFn => {
-                    Self::ContractFn(SorobanAuthorizedContractFunction::read_xdr(r)?)
+                    Self::ContractFn(InvokeContractArgs::read_xdr(r)?)
                 }
                 SorobanAuthorizedFunctionType::CreateContractHostFn => {
                     Self::CreateContractHostFn(CreateContractArgs::read_xdr(r)?)
@@ -26232,7 +26253,7 @@ impl WriteXdr for SorobanAuthorizedInvocation {
 //        SCAddress address;
 //        int64 nonce;
 //        uint32 signatureExpirationLedger;
-//        SCVec signatureArgs;
+//        SCVal signature;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -26246,7 +26267,7 @@ pub struct SorobanAddressCredentials {
     pub address: ScAddress,
     pub nonce: i64,
     pub signature_expiration_ledger: u32,
-    pub signature_args: ScVec,
+    pub signature: ScVal,
 }
 
 impl ReadXdr for SorobanAddressCredentials {
@@ -26257,7 +26278,7 @@ impl ReadXdr for SorobanAddressCredentials {
                 address: ScAddress::read_xdr(r)?,
                 nonce: i64::read_xdr(r)?,
                 signature_expiration_ledger: u32::read_xdr(r)?,
-                signature_args: ScVec::read_xdr(r)?,
+                signature: ScVal::read_xdr(r)?,
             })
         })
     }
@@ -26270,7 +26291,7 @@ impl WriteXdr for SorobanAddressCredentials {
             self.address.write_xdr(w)?;
             self.nonce.write_xdr(w)?;
             self.signature_expiration_ledger.write_xdr(w)?;
-            self.signature_args.write_xdr(w)?;
+            self.signature.write_xdr(w)?;
             Ok(())
         })
     }
@@ -41426,9 +41447,9 @@ pub enum TypeVariant {
     ContractIdPreimage,
     ContractIdPreimageFromAddress,
     CreateContractArgs,
+    InvokeContractArgs,
     HostFunction,
     SorobanAuthorizedFunctionType,
-    SorobanAuthorizedContractFunction,
     SorobanAuthorizedFunction,
     SorobanAuthorizedInvocation,
     SorobanAddressCredentials,
@@ -41851,9 +41872,9 @@ impl TypeVariant {
         TypeVariant::ContractIdPreimage,
         TypeVariant::ContractIdPreimageFromAddress,
         TypeVariant::CreateContractArgs,
+        TypeVariant::InvokeContractArgs,
         TypeVariant::HostFunction,
         TypeVariant::SorobanAuthorizedFunctionType,
-        TypeVariant::SorobanAuthorizedContractFunction,
         TypeVariant::SorobanAuthorizedFunction,
         TypeVariant::SorobanAuthorizedInvocation,
         TypeVariant::SorobanAddressCredentials,
@@ -42274,9 +42295,9 @@ impl TypeVariant {
         "ContractIdPreimage",
         "ContractIdPreimageFromAddress",
         "CreateContractArgs",
+        "InvokeContractArgs",
         "HostFunction",
         "SorobanAuthorizedFunctionType",
-        "SorobanAuthorizedContractFunction",
         "SorobanAuthorizedFunction",
         "SorobanAuthorizedInvocation",
         "SorobanAddressCredentials",
@@ -42703,9 +42724,9 @@ impl TypeVariant {
             Self::ContractIdPreimage => "ContractIdPreimage",
             Self::ContractIdPreimageFromAddress => "ContractIdPreimageFromAddress",
             Self::CreateContractArgs => "CreateContractArgs",
+            Self::InvokeContractArgs => "InvokeContractArgs",
             Self::HostFunction => "HostFunction",
             Self::SorobanAuthorizedFunctionType => "SorobanAuthorizedFunctionType",
-            Self::SorobanAuthorizedContractFunction => "SorobanAuthorizedContractFunction",
             Self::SorobanAuthorizedFunction => "SorobanAuthorizedFunction",
             Self::SorobanAuthorizedInvocation => "SorobanAuthorizedInvocation",
             Self::SorobanAddressCredentials => "SorobanAddressCredentials",
@@ -43162,9 +43183,9 @@ impl core::str::FromStr for TypeVariant {
             "ContractIdPreimage" => Ok(Self::ContractIdPreimage),
             "ContractIdPreimageFromAddress" => Ok(Self::ContractIdPreimageFromAddress),
             "CreateContractArgs" => Ok(Self::CreateContractArgs),
+            "InvokeContractArgs" => Ok(Self::InvokeContractArgs),
             "HostFunction" => Ok(Self::HostFunction),
             "SorobanAuthorizedFunctionType" => Ok(Self::SorobanAuthorizedFunctionType),
-            "SorobanAuthorizedContractFunction" => Ok(Self::SorobanAuthorizedContractFunction),
             "SorobanAuthorizedFunction" => Ok(Self::SorobanAuthorizedFunction),
             "SorobanAuthorizedInvocation" => Ok(Self::SorobanAuthorizedInvocation),
             "SorobanAddressCredentials" => Ok(Self::SorobanAddressCredentials),
@@ -43604,9 +43625,9 @@ pub enum Type {
     ContractIdPreimage(Box<ContractIdPreimage>),
     ContractIdPreimageFromAddress(Box<ContractIdPreimageFromAddress>),
     CreateContractArgs(Box<CreateContractArgs>),
+    InvokeContractArgs(Box<InvokeContractArgs>),
     HostFunction(Box<HostFunction>),
     SorobanAuthorizedFunctionType(Box<SorobanAuthorizedFunctionType>),
-    SorobanAuthorizedContractFunction(Box<SorobanAuthorizedContractFunction>),
     SorobanAuthorizedFunction(Box<SorobanAuthorizedFunction>),
     SorobanAuthorizedInvocation(Box<SorobanAuthorizedInvocation>),
     SorobanAddressCredentials(Box<SorobanAddressCredentials>),
@@ -44029,9 +44050,9 @@ impl Type {
         TypeVariant::ContractIdPreimage,
         TypeVariant::ContractIdPreimageFromAddress,
         TypeVariant::CreateContractArgs,
+        TypeVariant::InvokeContractArgs,
         TypeVariant::HostFunction,
         TypeVariant::SorobanAuthorizedFunctionType,
-        TypeVariant::SorobanAuthorizedContractFunction,
         TypeVariant::SorobanAuthorizedFunction,
         TypeVariant::SorobanAuthorizedInvocation,
         TypeVariant::SorobanAddressCredentials,
@@ -44452,9 +44473,9 @@ impl Type {
         "ContractIdPreimage",
         "ContractIdPreimageFromAddress",
         "CreateContractArgs",
+        "InvokeContractArgs",
         "HostFunction",
         "SorobanAuthorizedFunctionType",
-        "SorobanAuthorizedContractFunction",
         "SorobanAuthorizedFunction",
         "SorobanAuthorizedInvocation",
         "SorobanAddressCredentials",
@@ -45785,17 +45806,17 @@ impl Type {
                     CreateContractArgs::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::InvokeContractArgs => r.with_limited_depth(|r| {
+                Ok(Self::InvokeContractArgs(Box::new(
+                    InvokeContractArgs::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::HostFunction => r.with_limited_depth(|r| {
                 Ok(Self::HostFunction(Box::new(HostFunction::read_xdr(r)?)))
             }),
             TypeVariant::SorobanAuthorizedFunctionType => r.with_limited_depth(|r| {
                 Ok(Self::SorobanAuthorizedFunctionType(Box::new(
                     SorobanAuthorizedFunctionType::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::SorobanAuthorizedContractFunction => r.with_limited_depth(|r| {
-                Ok(Self::SorobanAuthorizedContractFunction(Box::new(
-                    SorobanAuthorizedContractFunction::read_xdr(r)?,
                 )))
             }),
             TypeVariant::SorobanAuthorizedFunction => r.with_limited_depth(|r| {
@@ -47633,6 +47654,10 @@ impl Type {
                 ReadXdrIter::<_, CreateContractArgs>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
             ),
+            TypeVariant::InvokeContractArgs => Box::new(
+                ReadXdrIter::<_, InvokeContractArgs>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeContractArgs(Box::new(t)))),
+            ),
             TypeVariant::HostFunction => Box::new(
                 ReadXdrIter::<_, HostFunction>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
@@ -47643,13 +47668,6 @@ impl Type {
                     r.depth_remaining,
                 )
                 .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t)))),
-            ),
-            TypeVariant::SorobanAuthorizedContractFunction => Box::new(
-                ReadXdrIter::<_, SorobanAuthorizedContractFunction>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::SorobanAuthorizedContractFunction(Box::new(t)))),
             ),
             TypeVariant::SorobanAuthorizedFunction => Box::new(
                 ReadXdrIter::<_, SorobanAuthorizedFunction>::new(&mut r.inner, r.depth_remaining)
@@ -49656,6 +49674,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<CreateContractArgs>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t.0)))),
             ),
+            TypeVariant::InvokeContractArgs => Box::new(
+                ReadXdrIter::<_, Frame<InvokeContractArgs>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeContractArgs(Box::new(t.0)))),
+            ),
             TypeVariant::HostFunction => Box::new(
                 ReadXdrIter::<_, Frame<HostFunction>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t.0)))),
@@ -49666,13 +49688,6 @@ impl Type {
                     r.depth_remaining,
                 )
                 .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t.0)))),
-            ),
-            TypeVariant::SorobanAuthorizedContractFunction => Box::new(
-                ReadXdrIter::<_, Frame<SorobanAuthorizedContractFunction>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::SorobanAuthorizedContractFunction(Box::new(t.0)))),
             ),
             TypeVariant::SorobanAuthorizedFunction => Box::new(
                 ReadXdrIter::<_, Frame<SorobanAuthorizedFunction>>::new(
@@ -51560,6 +51575,10 @@ impl Type {
                 ReadXdrIter::<_, CreateContractArgs>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
             ),
+            TypeVariant::InvokeContractArgs => Box::new(
+                ReadXdrIter::<_, InvokeContractArgs>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeContractArgs(Box::new(t)))),
+            ),
             TypeVariant::HostFunction => Box::new(
                 ReadXdrIter::<_, HostFunction>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
@@ -51567,10 +51586,6 @@ impl Type {
             TypeVariant::SorobanAuthorizedFunctionType => Box::new(
                 ReadXdrIter::<_, SorobanAuthorizedFunctionType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t)))),
-            ),
-            TypeVariant::SorobanAuthorizedContractFunction => Box::new(
-                ReadXdrIter::<_, SorobanAuthorizedContractFunction>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::SorobanAuthorizedContractFunction(Box::new(t)))),
             ),
             TypeVariant::SorobanAuthorizedFunction => Box::new(
                 ReadXdrIter::<_, SorobanAuthorizedFunction>::new(dec, r.depth_remaining)
@@ -52443,9 +52458,9 @@ impl Type {
             Self::ContractIdPreimage(ref v) => v.as_ref(),
             Self::ContractIdPreimageFromAddress(ref v) => v.as_ref(),
             Self::CreateContractArgs(ref v) => v.as_ref(),
+            Self::InvokeContractArgs(ref v) => v.as_ref(),
             Self::HostFunction(ref v) => v.as_ref(),
             Self::SorobanAuthorizedFunctionType(ref v) => v.as_ref(),
-            Self::SorobanAuthorizedContractFunction(ref v) => v.as_ref(),
             Self::SorobanAuthorizedFunction(ref v) => v.as_ref(),
             Self::SorobanAuthorizedInvocation(ref v) => v.as_ref(),
             Self::SorobanAddressCredentials(ref v) => v.as_ref(),
@@ -52877,9 +52892,9 @@ impl Type {
             Self::ContractIdPreimage(_) => "ContractIdPreimage",
             Self::ContractIdPreimageFromAddress(_) => "ContractIdPreimageFromAddress",
             Self::CreateContractArgs(_) => "CreateContractArgs",
+            Self::InvokeContractArgs(_) => "InvokeContractArgs",
             Self::HostFunction(_) => "HostFunction",
             Self::SorobanAuthorizedFunctionType(_) => "SorobanAuthorizedFunctionType",
-            Self::SorobanAuthorizedContractFunction(_) => "SorobanAuthorizedContractFunction",
             Self::SorobanAuthorizedFunction(_) => "SorobanAuthorizedFunction",
             Self::SorobanAuthorizedInvocation(_) => "SorobanAuthorizedInvocation",
             Self::SorobanAddressCredentials(_) => "SorobanAddressCredentials",
@@ -53345,11 +53360,9 @@ impl Type {
             Self::ContractIdPreimage(_) => TypeVariant::ContractIdPreimage,
             Self::ContractIdPreimageFromAddress(_) => TypeVariant::ContractIdPreimageFromAddress,
             Self::CreateContractArgs(_) => TypeVariant::CreateContractArgs,
+            Self::InvokeContractArgs(_) => TypeVariant::InvokeContractArgs,
             Self::HostFunction(_) => TypeVariant::HostFunction,
             Self::SorobanAuthorizedFunctionType(_) => TypeVariant::SorobanAuthorizedFunctionType,
-            Self::SorobanAuthorizedContractFunction(_) => {
-                TypeVariant::SorobanAuthorizedContractFunction
-            }
             Self::SorobanAuthorizedFunction(_) => TypeVariant::SorobanAuthorizedFunction,
             Self::SorobanAuthorizedInvocation(_) => TypeVariant::SorobanAuthorizedInvocation,
             Self::SorobanAddressCredentials(_) => TypeVariant::SorobanAddressCredentials,

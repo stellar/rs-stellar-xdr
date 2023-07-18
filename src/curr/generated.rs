@@ -70,7 +70,7 @@ use alloc::{
     string::{FromUtf8Error, String},
     vec::Vec,
 };
-#[cfg(all(feature = "std"))]
+#[cfg(feature = "std")]
 use std::string::FromUtf8Error;
 
 #[cfg(feature = "arbitrary")]
@@ -83,6 +83,14 @@ use std::{
     error, io,
     io::{BufRead, BufReader, Cursor, Read, Write},
 };
+
+/// Defines the maximum depth for recursive calls in `Read/WriteXdr` to prevent stack overflow.
+///
+/// The depth limit is akin to limiting stack depth. Its purpose is to prevent the program from
+/// hitting the maximum stack size allowed by Rust, which would result in an unrecoverable `SIGABRT`.
+/// For more information about Rust's stack size limit, refer to the
+/// [Rust documentation](https://doc.rust-lang.org/std/thread/#stack-size).
+pub const DEFAULT_XDR_RW_DEPTH_LIMIT: u32 = 500;
 
 /// Error contains all errors returned by functions in this crate. It can be
 /// compared via `PartialEq`, however any contained IO errors will only be
@@ -99,6 +107,7 @@ pub enum Error {
     InvalidHex,
     #[cfg(feature = "std")]
     Io(io::Error),
+    DepthLimitExceeded,
 }
 
 impl PartialEq for Error {
@@ -142,6 +151,7 @@ impl fmt::Display for Error {
             Error::InvalidHex => write!(f, "hex invalid"),
             #[cfg(feature = "std")]
             Error::Io(e) => write!(f, "{e}"),
+            Error::DepthLimitExceeded => write!(f, "depth limit exceeded"),
         }
     }
 }
@@ -213,17 +223,173 @@ where
 {
 }
 
+/// `DepthLimiter` is a trait designed for managing the depth of recursive operations.
+/// It provides a mechanism to limit recursion depth, and defines the behavior upon
+/// entering and leaving a recursion level.
+pub trait DepthLimiter {
+    /// A general error type for any type implementing, or an operation under the guard of
+    /// `DepthLimiter`. It must at least include the error case where the depth limit is exceeded
+    /// which is returned from `enter`.
+    type DepthLimiterError;
+
+    /// Defines the behavior for entering a new recursion level.
+    /// A `DepthLimiterError` is returned if the new level exceeds the depth limit.
+    fn enter(&mut self) -> core::result::Result<(), Self::DepthLimiterError>;
+
+    /// Defines the behavior for leaving a recursion level.
+    /// A `DepthLimiterError` is returned if an error occurs.
+    fn leave(&mut self) -> core::result::Result<(), Self::DepthLimiterError>;
+
+    /// Wraps a given function `f` with depth limiting guards.
+    /// It triggers an `enter` before, and a `leave` after the execution of `f`.
+    ///
+    /// # Parameters
+    ///
+    /// - `f`: The function to be executed under depth limit constraints.
+    ///
+    /// # Returns
+    ///
+    /// - `Err` if 1. the depth limit has been exceeded upon `enter` 2. `f` executes
+    ///         with an error 3. if error occurs on `leave`.
+    ///   `Ok` otherwise.
+    fn with_limited_depth<T, F>(&mut self, f: F) -> core::result::Result<T, Self::DepthLimiterError>
+    where
+        F: FnOnce(&mut Self) -> core::result::Result<T, Self::DepthLimiterError>,
+    {
+        self.enter()?;
+        let res = f(self);
+        self.leave()?;
+        res
+    }
+}
+
+/// `DepthLimitedRead` wraps a `Read` object and enforces a depth limit to
+/// recursive read operations. It maintains a `depth_remaining` state tracking
+/// remaining allowed recursion depth.
+#[cfg(feature = "std")]
+pub struct DepthLimitedRead<R: Read> {
+    pub inner: R,
+    pub(crate) depth_remaining: u32,
+}
+
+#[cfg(feature = "std")]
+impl<R: Read> DepthLimitedRead<R> {
+    /// Constructs a new `DepthLimitedRead`.
+    ///
+    /// - `inner`: The object implementing the `Read` trait.
+    /// - `depth_limit`: The maximum allowed recursion depth.
+    pub fn new(inner: R, depth_limit: u32) -> Self {
+        DepthLimitedRead {
+            inner,
+            depth_remaining: depth_limit,
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<R: Read> DepthLimiter for DepthLimitedRead<R> {
+    type DepthLimiterError = Error;
+
+    /// Decrements the `depth_remaining`. If the `depth_remaining` is already zero, an error is
+    /// returned indicating that the maximum depth limit has been exceeded.
+    fn enter(&mut self) -> core::result::Result<(), Error> {
+        if let Some(depth) = self.depth_remaining.checked_sub(1) {
+            self.depth_remaining = depth;
+        } else {
+            return Err(Error::DepthLimitExceeded);
+        }
+        Ok(())
+    }
+
+    /// Increments the depth. `leave` should be called in tandem with `enter` such that the depth
+    /// doesn't exceed the initial depth limit.
+    fn leave(&mut self) -> core::result::Result<(), Error> {
+        self.depth_remaining = self.depth_remaining.saturating_add(1);
+        Ok(())
+    }
+}
+
+#[cfg(feature = "std")]
+impl<R: Read> Read for DepthLimitedRead<R> {
+    /// Forwards the read operation to the wrapped object.
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        self.inner.read(buf)
+    }
+}
+
+/// `DepthLimitedWrite` wraps a `Write` object and enforces a depth limit to
+/// recursive write operations. It maintains a `depth_remaining` state tracking
+/// remaining allowed recursion depth.
+#[cfg(feature = "std")]
+pub struct DepthLimitedWrite<W: Write> {
+    pub inner: W,
+    pub(crate) depth_remaining: u32,
+}
+
+#[cfg(feature = "std")]
+impl<W: Write> DepthLimitedWrite<W> {
+    /// Constructs a new `DepthLimitedWrite`.
+    ///
+    /// - `inner`: The object implementing the `Write` trait.
+    /// - `depth_limit`: The maximum allowed recursion depth.
+    pub fn new(inner: W, depth_limit: u32) -> Self {
+        DepthLimitedWrite {
+            inner,
+            depth_remaining: depth_limit,
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<W: Write> DepthLimiter for DepthLimitedWrite<W> {
+    type DepthLimiterError = Error;
+
+    /// Decrements the `depth_remaining`. If the depth is already zero, an error is
+    /// returned indicating that the maximum depth limit has been exceeded.
+    fn enter(&mut self) -> Result<()> {
+        if let Some(depth) = self.depth_remaining.checked_sub(1) {
+            self.depth_remaining = depth;
+        } else {
+            return Err(Error::DepthLimitExceeded);
+        }
+        Ok(())
+    }
+
+    /// Increments the depth. `leave` should be called in tandem with `enter` such that the depth
+    /// doesn't exceed the initial depth limit.
+    fn leave(&mut self) -> core::result::Result<(), Error> {
+        self.depth_remaining = self.depth_remaining.saturating_add(1);
+        Ok(())
+    }
+}
+
+#[cfg(feature = "std")]
+impl<W: Write> Write for DepthLimitedWrite<W> {
+    /// Forwards the write operation to the wrapped object.
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.inner.write(buf)
+    }
+
+    /// Forwards the flush operation to the wrapped object.
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.inner.flush()
+    }
+}
+
 #[cfg(feature = "std")]
 pub struct ReadXdrIter<R: Read, S: ReadXdr> {
-    reader: BufReader<R>,
+    reader: DepthLimitedRead<BufReader<R>>,
     _s: PhantomData<S>,
 }
 
 #[cfg(feature = "std")]
 impl<R: Read, S: ReadXdr> ReadXdrIter<R, S> {
-    fn new(r: R) -> Self {
+    fn new(r: R, depth_limit: u32) -> Self {
         Self {
-            reader: BufReader::new(r),
+            reader: DepthLimitedRead {
+                inner: BufReader::new(r),
+                depth_remaining: depth_limit,
+            },
             _s: PhantomData,
         }
     }
@@ -247,7 +413,7 @@ impl<R: Read, S: ReadXdr> Iterator for ReadXdrIter<R, S> {
         // xdr types in this crate heavily use the `std::io::Read::read_exact`
         // method that doesn't distinguish between an EOF at the beginning of a
         // read and an EOF after a partial fill of a read_exact.
-        match self.reader.fill_buf() {
+        match self.reader.inner.fill_buf() {
             // If the reader has no more data and is unable to fill any new data
             // into its internal buf, then the EOF has been reached.
             Ok([]) => return None,
@@ -257,7 +423,8 @@ impl<R: Read, S: ReadXdr> Iterator for ReadXdrIter<R, S> {
             Ok([..]) => (),
         };
         // Read the buf into the type.
-        match S::read_xdr(&mut self.reader) {
+        let r = self.reader.with_limited_depth(|dlr| S::read_xdr(dlr));
+        match r {
             Ok(s) => Some(Ok(s)),
             Err(e) => Some(Err(e)),
         }
@@ -280,18 +447,21 @@ where
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
     ///
-    /// Use [`ReadXdr::read_xdr_to_end`] when the intent is for all bytes in the
+    /// Use [`ReadXdR: Read_xdr_to_end`] when the intent is for all bytes in the
     /// read implementation to be consumed by the read.
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self>;
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self>;
 
     /// Construct the type from the XDR bytes base64 encoded.
     ///
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "base64")]
-    fn read_xdr_base64(r: &mut impl Read) -> Result<Self> {
-        let mut dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+    fn read_xdr_base64<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        let mut dec = DepthLimitedRead::new(
+            base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD),
+            r.depth_remaining,
+        );
         let t = Self::read_xdr(&mut dec)?;
         Ok(t)
     }
@@ -315,7 +485,7 @@ where
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
     #[cfg(feature = "std")]
-    fn read_xdr_to_end(r: &mut impl Read) -> Result<Self> {
+    fn read_xdr_to_end<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         let s = Self::read_xdr(r)?;
         // Check that any further reads, such as this read of one byte, read no
         // data, indicating EOF. If a byte is read the data is invalid.
@@ -331,8 +501,11 @@ where
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "base64")]
-    fn read_xdr_base64_to_end(r: &mut impl Read) -> Result<Self> {
-        let mut dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+    fn read_xdr_base64_to_end<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        let mut dec = DepthLimitedRead::new(
+            base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD),
+            r.depth_remaining,
+        );
         let t = Self::read_xdr_to_end(&mut dec)?;
         Ok(t)
     }
@@ -349,10 +522,10 @@ where
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
     ///
-    /// Use [`ReadXdr::read_xdr_into_to_end`] when the intent is for all bytes
+    /// Use [`ReadXdR: Read_xdr_into_to_end`] when the intent is for all bytes
     /// in the read implementation to be consumed by the read.
     #[cfg(feature = "std")]
-    fn read_xdr_into(&mut self, r: &mut impl Read) -> Result<()> {
+    fn read_xdr_into<R: Read>(&mut self, r: &mut DepthLimitedRead<R>) -> Result<()> {
         *self = Self::read_xdr(r)?;
         Ok(())
     }
@@ -376,7 +549,7 @@ where
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
     #[cfg(feature = "std")]
-    fn read_xdr_into_to_end(&mut self, r: &mut impl Read) -> Result<()> {
+    fn read_xdr_into_to_end<R: Read>(&mut self, r: &mut DepthLimitedRead<R>) -> Result<()> {
         Self::read_xdr_into(self, r)?;
         // Check that any further reads, such as this read of one byte, read no
         // data, indicating EOF. If a byte is read the data is invalid.
@@ -406,62 +579,96 @@ where
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
     #[cfg(feature = "std")]
-    fn read_xdr_iter<R: Read>(r: &mut R) -> ReadXdrIter<&mut R, Self> {
-        ReadXdrIter::new(r)
+    fn read_xdr_iter<R: Read>(r: &mut DepthLimitedRead<R>) -> ReadXdrIter<&mut R, Self> {
+        ReadXdrIter::new(&mut r.inner, r.depth_remaining)
     }
 
     /// Create an iterator that reads the read implementation as a stream of
     /// values that are read into the implementing type.
     #[cfg(feature = "base64")]
     fn read_xdr_base64_iter<R: Read>(
-        r: &mut R,
+        r: &mut DepthLimitedRead<R>,
     ) -> ReadXdrIter<base64::read::DecoderReader<R>, Self> {
-        let dec = base64::read::DecoderReader::new(r, base64::STANDARD);
-        ReadXdrIter::new(dec)
+        let dec = base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD);
+        ReadXdrIter::new(dec, r.depth_remaining)
     }
 
-    /// Construct the type from the XDR bytes.
+    /// Construct the type from the XDR bytes, specifying a depth limit.
+    ///
+    /// An error is returned if the bytes are not completely consumed by the
+    /// deserialization.
+    #[cfg(feature = "std")]
+    fn from_xdr_with_depth_limit(bytes: impl AsRef<[u8]>, depth_limit: u32) -> Result<Self> {
+        let mut cursor = DepthLimitedRead::new(Cursor::new(bytes.as_ref()), depth_limit);
+        let t = Self::read_xdr_to_end(&mut cursor)?;
+        Ok(t)
+    }
+
+    /// Construct the type from the XDR bytes, using the default depth limit.
     ///
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "std")]
     fn from_xdr(bytes: impl AsRef<[u8]>) -> Result<Self> {
-        let mut cursor = Cursor::new(bytes.as_ref());
-        let t = Self::read_xdr_to_end(&mut cursor)?;
+        ReadXdr::from_xdr_with_depth_limit(bytes, DEFAULT_XDR_RW_DEPTH_LIMIT)
+    }
+
+    /// Construct the type from the XDR bytes base64 encoded, specifying a depth limit.
+    ///
+    /// An error is returned if the bytes are not completely consumed by the
+    /// deserialization.
+    #[cfg(feature = "base64")]
+    fn from_xdr_base64_with_depth_limit(b64: impl AsRef<[u8]>, depth_limit: u32) -> Result<Self> {
+        let mut b64_reader = Cursor::new(b64);
+        let mut dec = DepthLimitedRead::new(
+            base64::read::DecoderReader::new(&mut b64_reader, base64::STANDARD),
+            depth_limit,
+        );
+        let t = Self::read_xdr_to_end(&mut dec)?;
         Ok(t)
     }
 
-    /// Construct the type from the XDR bytes base64 encoded.
+    /// Construct the type from the XDR bytes base64 encoded, using the default depth limit.
     ///
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "base64")]
     fn from_xdr_base64(b64: impl AsRef<[u8]>) -> Result<Self> {
-        let mut b64_reader = Cursor::new(b64);
-        let mut dec = base64::read::DecoderReader::new(&mut b64_reader, base64::STANDARD);
-        let t = Self::read_xdr_to_end(&mut dec)?;
-        Ok(t)
+        ReadXdr::from_xdr_base64_with_depth_limit(b64, DEFAULT_XDR_RW_DEPTH_LIMIT)
     }
 }
 
 pub trait WriteXdr {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()>;
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()>;
+
+    #[cfg(feature = "std")]
+    fn to_xdr_with_depth_limit(&self, depth_limit: u32) -> Result<Vec<u8>> {
+        let mut cursor = DepthLimitedWrite::new(Cursor::new(vec![]), depth_limit);
+        self.write_xdr(&mut cursor)?;
+        let bytes = cursor.inner.into_inner();
+        Ok(bytes)
+    }
 
     #[cfg(feature = "std")]
     fn to_xdr(&self) -> Result<Vec<u8>> {
-        let mut cursor = Cursor::new(vec![]);
-        self.write_xdr(&mut cursor)?;
-        let bytes = cursor.into_inner();
-        Ok(bytes)
+        self.to_xdr_with_depth_limit(DEFAULT_XDR_RW_DEPTH_LIMIT)
+    }
+
+    #[cfg(feature = "base64")]
+    fn to_xdr_base64_with_depth_limit(&self, depth_limit: u32) -> Result<String> {
+        let mut enc = DepthLimitedWrite::new(
+            base64::write::EncoderStringWriter::new(base64::STANDARD),
+            depth_limit,
+        );
+        self.write_xdr(&mut enc)?;
+        let b64 = enc.inner.into_inner();
+        Ok(b64)
     }
 
     #[cfg(feature = "base64")]
     fn to_xdr_base64(&self) -> Result<String> {
-        let mut enc = base64::write::EncoderStringWriter::new(base64::STANDARD);
-        self.write_xdr(&mut enc)?;
-        let b64 = enc.into_inner();
-        Ok(b64)
+        self.to_xdr_base64_with_depth_limit(DEFAULT_XDR_RW_DEPTH_LIMIT)
     }
 }
 
@@ -474,229 +681,240 @@ fn pad_len(len: usize) -> usize {
 
 impl ReadXdr for i32 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         let mut b = [0u8; 4];
-        r.read_exact(&mut b)?;
-        let i = i32::from_be_bytes(b);
-        Ok(i)
+        r.with_limited_depth(|r| {
+            r.read_exact(&mut b)?;
+            Ok(i32::from_be_bytes(b))
+        })
     }
 }
 
 impl WriteXdr for i32 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         let b: [u8; 4] = self.to_be_bytes();
-        w.write_all(&b)?;
-        Ok(())
+        w.with_limited_depth(|w| Ok(w.write_all(&b)?))
     }
 }
 
 impl ReadXdr for u32 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         let mut b = [0u8; 4];
-        r.read_exact(&mut b)?;
-        let i = u32::from_be_bytes(b);
-        Ok(i)
+        r.with_limited_depth(|r| {
+            r.read_exact(&mut b)?;
+            Ok(u32::from_be_bytes(b))
+        })
     }
 }
 
 impl WriteXdr for u32 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         let b: [u8; 4] = self.to_be_bytes();
-        w.write_all(&b)?;
-        Ok(())
+        w.with_limited_depth(|w| Ok(w.write_all(&b)?))
     }
 }
 
 impl ReadXdr for i64 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         let mut b = [0u8; 8];
-        r.read_exact(&mut b)?;
-        let i = i64::from_be_bytes(b);
-        Ok(i)
+        r.with_limited_depth(|r| {
+            r.read_exact(&mut b)?;
+            Ok(i64::from_be_bytes(b))
+        })
     }
 }
 
 impl WriteXdr for i64 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         let b: [u8; 8] = self.to_be_bytes();
-        w.write_all(&b)?;
-        Ok(())
+        w.with_limited_depth(|w| Ok(w.write_all(&b)?))
     }
 }
 
 impl ReadXdr for u64 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         let mut b = [0u8; 8];
-        r.read_exact(&mut b)?;
-        let i = u64::from_be_bytes(b);
-        Ok(i)
+        r.with_limited_depth(|r| {
+            r.read_exact(&mut b)?;
+            Ok(u64::from_be_bytes(b))
+        })
     }
 }
 
 impl WriteXdr for u64 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         let b: [u8; 8] = self.to_be_bytes();
-        w.write_all(&b)?;
-        Ok(())
+        w.with_limited_depth(|w| Ok(w.write_all(&b)?))
     }
 }
 
 impl ReadXdr for f32 {
     #[cfg(feature = "std")]
-    fn read_xdr(_r: &mut impl Read) -> Result<Self> {
+    fn read_xdr<R: Read>(_r: &mut DepthLimitedRead<R>) -> Result<Self> {
         todo!()
     }
 }
 
 impl WriteXdr for f32 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, _w: &mut impl Write) -> Result<()> {
+    fn write_xdr<W: Write>(&self, _w: &mut DepthLimitedWrite<W>) -> Result<()> {
         todo!()
     }
 }
 
 impl ReadXdr for f64 {
     #[cfg(feature = "std")]
-    fn read_xdr(_r: &mut impl Read) -> Result<Self> {
+    fn read_xdr<R: Read>(_r: &mut DepthLimitedRead<R>) -> Result<Self> {
         todo!()
     }
 }
 
 impl WriteXdr for f64 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, _w: &mut impl Write) -> Result<()> {
+    fn write_xdr<W: Write>(&self, _w: &mut DepthLimitedWrite<W>) -> Result<()> {
         todo!()
     }
 }
 
 impl ReadXdr for bool {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = u32::read_xdr(r)?;
-        let b = i == 1;
-        Ok(b)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = u32::read_xdr(r)?;
+            let b = i == 1;
+            Ok(b)
+        })
     }
 }
 
 impl WriteXdr for bool {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i = u32::from(*self); // true = 1, false = 0
-        i.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i = u32::from(*self); // true = 1, false = 0
+            i.write_xdr(w)
+        })
     }
 }
 
 impl<T: ReadXdr> ReadXdr for Option<T> {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = u32::read_xdr(r)?;
-        match i {
-            0 => Ok(None),
-            1 => {
-                let t = T::read_xdr(r)?;
-                Ok(Some(t))
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = u32::read_xdr(r)?;
+            match i {
+                0 => Ok(None),
+                1 => {
+                    let t = T::read_xdr(r)?;
+                    Ok(Some(t))
+                }
+                _ => Err(Error::Invalid),
             }
-            _ => Err(Error::Invalid),
-        }
+        })
     }
 }
 
 impl<T: WriteXdr> WriteXdr for Option<T> {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        if let Some(t) = self {
-            1u32.write_xdr(w)?;
-            t.write_xdr(w)?;
-        } else {
-            0u32.write_xdr(w)?;
-        }
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            if let Some(t) = self {
+                1u32.write_xdr(w)?;
+                t.write_xdr(w)?;
+            } else {
+                0u32.write_xdr(w)?;
+            }
+            Ok(())
+        })
     }
 }
 
 impl<T: ReadXdr> ReadXdr for Box<T> {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let t = T::read_xdr(r)?;
-        Ok(Box::new(t))
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| Ok(Box::new(T::read_xdr(r)?)))
     }
 }
 
 impl<T: WriteXdr> WriteXdr for Box<T> {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        T::write_xdr(self, w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| T::write_xdr(self, w))
     }
 }
 
 impl ReadXdr for () {
     #[cfg(feature = "std")]
-    fn read_xdr(_r: &mut impl Read) -> Result<Self> {
+    fn read_xdr<R: Read>(_r: &mut DepthLimitedRead<R>) -> Result<Self> {
         Ok(())
     }
 }
 
 impl WriteXdr for () {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, _w: &mut impl Write) -> Result<()> {
+    fn write_xdr<W: Write>(&self, _w: &mut DepthLimitedWrite<W>) -> Result<()> {
         Ok(())
     }
 }
 
 impl<const N: usize> ReadXdr for [u8; N] {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let mut arr = [0u8; N];
-        r.read_exact(&mut arr)?;
-
-        let pad = &mut [0u8; 3][..pad_len(N)];
-        r.read_exact(pad)?;
-        if pad.iter().any(|b| *b != 0) {
-            return Err(Error::NonZeroPadding);
-        }
-
-        Ok(arr)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let mut arr = [0u8; N];
+            r.read_exact(&mut arr)?;
+            let pad = &mut [0u8; 3][..pad_len(N)];
+            r.read_exact(pad)?;
+            if pad.iter().any(|b| *b != 0) {
+                return Err(Error::NonZeroPadding);
+            }
+            Ok(arr)
+        })
     }
 }
 
 impl<const N: usize> WriteXdr for [u8; N] {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        w.write_all(self)?;
-        w.write_all(&[0u8; 3][..pad_len(N)])?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            w.write_all(self)?;
+            w.write_all(&[0u8; 3][..pad_len(N)])?;
+            Ok(())
+        })
     }
 }
 
 impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let mut vec = Vec::with_capacity(N);
-        for _ in 0..N {
-            let t = T::read_xdr(r)?;
-            vec.push(t);
-        }
-        let arr: [T; N] = vec.try_into().unwrap_or_else(|_: Vec<T>| unreachable!());
-        Ok(arr)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let mut vec = Vec::with_capacity(N);
+            for _ in 0..N {
+                let t = T::read_xdr(r)?;
+                vec.push(t);
+            }
+            let arr: [T; N] = vec.try_into().unwrap_or_else(|_: Vec<T>| unreachable!());
+            Ok(arr)
+        })
     }
 }
 
 impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        for t in self {
-            t.write_xdr(w)?;
-        }
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            for t in self {
+                t.write_xdr(w)?;
+            }
+            Ok(())
+        })
     }
 }
 
@@ -1023,68 +1241,76 @@ impl<'a, const MAX: u32> TryFrom<&'a VecM<u8, MAX>> for &'a str {
 
 impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let len: u32 = u32::read_xdr(r)?;
-        if len > MAX {
-            return Err(Error::LengthExceedsMax);
-        }
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
 
-        let mut vec = vec![0u8; len as usize];
-        r.read_exact(&mut vec)?;
+            let mut vec = vec![0u8; len as usize];
+            r.read_exact(&mut vec)?;
 
-        let pad = &mut [0u8; 3][..pad_len(len as usize)];
-        r.read_exact(pad)?;
-        if pad.iter().any(|b| *b != 0) {
-            return Err(Error::NonZeroPadding);
-        }
+            let pad = &mut [0u8; 3][..pad_len(len as usize)];
+            r.read_exact(pad)?;
+            if pad.iter().any(|b| *b != 0) {
+                return Err(Error::NonZeroPadding);
+            }
 
-        Ok(VecM(vec))
+            Ok(VecM(vec))
+        })
     }
 }
 
 impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        len.write_xdr(w)?;
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+            len.write_xdr(w)?;
 
-        w.write_all(&self.0)?;
+            w.write_all(&self.0)?;
 
-        w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
+            w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
 
-        Ok(())
+            Ok(())
+        })
     }
 }
 
 impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let len = u32::read_xdr(r)?;
-        if len > MAX {
-            return Err(Error::LengthExceedsMax);
-        }
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let len = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
 
-        let mut vec = Vec::with_capacity(len as usize);
-        for _ in 0..len {
-            let t = T::read_xdr(r)?;
-            vec.push(t);
-        }
+            let mut vec = Vec::with_capacity(len as usize);
+            for _ in 0..len {
+                let t = T::read_xdr(r)?;
+                vec.push(t);
+            }
 
-        Ok(VecM(vec))
+            Ok(VecM(vec))
+        })
     }
 }
 
 impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        len.write_xdr(w)?;
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+            len.write_xdr(w)?;
 
-        for t in &self.0 {
-            t.write_xdr(w)?;
-        }
+            for t in &self.0 {
+                t.write_xdr(w)?;
+            }
 
-        Ok(())
+            Ok(())
+        })
     }
 }
 
@@ -1413,36 +1639,40 @@ impl<'a, const MAX: u32> TryFrom<&'a BytesM<MAX>> for &'a str {
 
 impl<const MAX: u32> ReadXdr for BytesM<MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let len: u32 = u32::read_xdr(r)?;
-        if len > MAX {
-            return Err(Error::LengthExceedsMax);
-        }
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
 
-        let mut vec = vec![0u8; len as usize];
-        r.read_exact(&mut vec)?;
+            let mut vec = vec![0u8; len as usize];
+            r.read_exact(&mut vec)?;
 
-        let pad = &mut [0u8; 3][..pad_len(len as usize)];
-        r.read_exact(pad)?;
-        if pad.iter().any(|b| *b != 0) {
-            return Err(Error::NonZeroPadding);
-        }
+            let pad = &mut [0u8; 3][..pad_len(len as usize)];
+            r.read_exact(pad)?;
+            if pad.iter().any(|b| *b != 0) {
+                return Err(Error::NonZeroPadding);
+            }
 
-        Ok(BytesM(vec))
+            Ok(BytesM(vec))
+        })
     }
 }
 
 impl<const MAX: u32> WriteXdr for BytesM<MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        len.write_xdr(w)?;
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+            len.write_xdr(w)?;
 
-        w.write_all(&self.0)?;
+            w.write_all(&self.0)?;
 
-        w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
+            w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
 
-        Ok(())
+            Ok(())
+        })
     }
 }
 
@@ -1792,36 +2022,40 @@ impl<'a, const MAX: u32> TryFrom<&'a StringM<MAX>> for &'a str {
 
 impl<const MAX: u32> ReadXdr for StringM<MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let len: u32 = u32::read_xdr(r)?;
-        if len > MAX {
-            return Err(Error::LengthExceedsMax);
-        }
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let len: u32 = u32::read_xdr(r)?;
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
+            }
 
-        let mut vec = vec![0u8; len as usize];
-        r.read_exact(&mut vec)?;
+            let mut vec = vec![0u8; len as usize];
+            r.read_exact(&mut vec)?;
 
-        let pad = &mut [0u8; 3][..pad_len(len as usize)];
-        r.read_exact(pad)?;
-        if pad.iter().any(|b| *b != 0) {
-            return Err(Error::NonZeroPadding);
-        }
+            let pad = &mut [0u8; 3][..pad_len(len as usize)];
+            r.read_exact(pad)?;
+            if pad.iter().any(|b| *b != 0) {
+                return Err(Error::NonZeroPadding);
+            }
 
-        Ok(StringM(vec))
+            Ok(StringM(vec))
+        })
     }
 }
 
 impl<const MAX: u32> WriteXdr for StringM<MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        len.write_xdr(w)?;
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
+            len.write_xdr(w)?;
 
-        w.write_all(&self.0)?;
+            w.write_all(&self.0)?;
 
-        w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
+            w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
 
-        Ok(())
+            Ok(())
+        })
     }
 }
 
@@ -1842,7 +2076,7 @@ where
     T: ReadXdr,
 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         // Read the frame header value that contains 1 flag-bit and a 33-bit length.
         //  - The 1 flag bit is 0 when there are more frames for the same record.
         //  - The 31-bit length is the length of the bytes within the frame that
@@ -1865,26 +2099,34 @@ where
 mod tests {
     use std::io::Cursor;
 
-    use super::{Error, ReadXdr, VecM, WriteXdr};
+    use super::{
+        DepthLimitedRead, DepthLimitedWrite, Error, ReadXdr, VecM, WriteXdr,
+        DEFAULT_XDR_RW_DEPTH_LIMIT,
+    };
 
     #[test]
     pub fn vec_u8_read_without_padding() {
-        let mut buf = Cursor::new(vec![0, 0, 0, 4, 2, 2, 2, 2]);
-        let v = VecM::<u8, 8>::read_xdr(&mut buf).unwrap();
+        let buf = Cursor::new(vec![0, 0, 0, 4, 2, 2, 2, 2]);
+        let v =
+            VecM::<u8, 8>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT))
+                .unwrap();
         assert_eq!(v.to_vec(), vec![2, 2, 2, 2]);
     }
 
     #[test]
     pub fn vec_u8_read_with_padding() {
-        let mut buf = Cursor::new(vec![0, 0, 0, 1, 2, 0, 0, 0]);
-        let v = VecM::<u8, 8>::read_xdr(&mut buf).unwrap();
+        let buf = Cursor::new(vec![0, 0, 0, 1, 2, 0, 0, 0]);
+        let v =
+            VecM::<u8, 8>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT))
+                .unwrap();
         assert_eq!(v.to_vec(), vec![2]);
     }
 
     #[test]
     pub fn vec_u8_read_with_insufficient_padding() {
-        let mut buf = Cursor::new(vec![0, 0, 0, 1, 2, 0, 0]);
-        let res = VecM::<u8, 8>::read_xdr(&mut buf);
+        let buf = Cursor::new(vec![0, 0, 0, 1, 2, 0, 0]);
+        let res =
+            VecM::<u8, 8>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT));
         match res {
             Err(Error::Io(_)) => (),
             _ => panic!("expected IO error got {res:?}"),
@@ -1893,8 +2135,9 @@ mod tests {
 
     #[test]
     pub fn vec_u8_read_with_non_zero_padding() {
-        let mut buf = Cursor::new(vec![0, 0, 0, 1, 2, 3, 0, 0]);
-        let res = VecM::<u8, 8>::read_xdr(&mut buf);
+        let buf = Cursor::new(vec![0, 0, 0, 1, 2, 3, 0, 0]);
+        let res =
+            VecM::<u8, 8>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT));
         match res {
             Err(Error::NonZeroPadding) => (),
             _ => panic!("expected NonZeroPadding got {res:?}"),
@@ -1905,7 +2148,12 @@ mod tests {
     pub fn vec_u8_write_without_padding() {
         let mut buf = vec![];
         let v: VecM<u8, 8> = vec![2, 2, 2, 2].try_into().unwrap();
-        v.write_xdr(&mut Cursor::new(&mut buf)).unwrap();
+
+        v.write_xdr(&mut DepthLimitedWrite::new(
+            Cursor::new(&mut buf),
+            DEFAULT_XDR_RW_DEPTH_LIMIT,
+        ))
+        .unwrap();
         assert_eq!(buf, vec![0, 0, 0, 4, 2, 2, 2, 2]);
     }
 
@@ -1913,28 +2161,34 @@ mod tests {
     pub fn vec_u8_write_with_padding() {
         let mut buf = vec![];
         let v: VecM<u8, 8> = vec![2].try_into().unwrap();
-        v.write_xdr(&mut Cursor::new(&mut buf)).unwrap();
+        v.write_xdr(&mut DepthLimitedWrite::new(
+            Cursor::new(&mut buf),
+            DEFAULT_XDR_RW_DEPTH_LIMIT,
+        ))
+        .unwrap();
         assert_eq!(buf, vec![0, 0, 0, 1, 2, 0, 0, 0]);
     }
 
     #[test]
     pub fn arr_u8_read_without_padding() {
-        let mut buf = Cursor::new(vec![2, 2, 2, 2]);
-        let v = <[u8; 4]>::read_xdr(&mut buf).unwrap();
+        let buf = Cursor::new(vec![2, 2, 2, 2]);
+        let v = <[u8; 4]>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT))
+            .unwrap();
         assert_eq!(v, [2, 2, 2, 2]);
     }
 
     #[test]
     pub fn arr_u8_read_with_padding() {
-        let mut buf = Cursor::new(vec![2, 0, 0, 0]);
-        let v = <[u8; 1]>::read_xdr(&mut buf).unwrap();
+        let buf = Cursor::new(vec![2, 0, 0, 0]);
+        let v = <[u8; 1]>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT))
+            .unwrap();
         assert_eq!(v, [2]);
     }
 
     #[test]
     pub fn arr_u8_read_with_insufficient_padding() {
-        let mut buf = Cursor::new(vec![2, 0, 0]);
-        let res = <[u8; 1]>::read_xdr(&mut buf);
+        let buf = Cursor::new(vec![2, 0, 0]);
+        let res = <[u8; 1]>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT));
         match res {
             Err(Error::Io(_)) => (),
             _ => panic!("expected IO error got {res:?}"),
@@ -1943,8 +2197,8 @@ mod tests {
 
     #[test]
     pub fn arr_u8_read_with_non_zero_padding() {
-        let mut buf = Cursor::new(vec![2, 3, 0, 0]);
-        let res = <[u8; 1]>::read_xdr(&mut buf);
+        let buf = Cursor::new(vec![2, 3, 0, 0]);
+        let res = <[u8; 1]>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT));
         match res {
             Err(Error::NonZeroPadding) => (),
             _ => panic!("expected NonZeroPadding got {res:?}"),
@@ -1955,7 +2209,10 @@ mod tests {
     pub fn arr_u8_write_without_padding() {
         let mut buf = vec![];
         [2u8, 2, 2, 2]
-            .write_xdr(&mut Cursor::new(&mut buf))
+            .write_xdr(&mut DepthLimitedWrite::new(
+                Cursor::new(&mut buf),
+                DEFAULT_XDR_RW_DEPTH_LIMIT,
+            ))
             .unwrap();
         assert_eq!(buf, vec![2, 2, 2, 2]);
     }
@@ -1963,14 +2220,19 @@ mod tests {
     #[test]
     pub fn arr_u8_write_with_padding() {
         let mut buf = vec![];
-        [2u8].write_xdr(&mut Cursor::new(&mut buf)).unwrap();
+        [2u8]
+            .write_xdr(&mut DepthLimitedWrite::new(
+                Cursor::new(&mut buf),
+                DEFAULT_XDR_RW_DEPTH_LIMIT,
+            ))
+            .unwrap();
         assert_eq!(buf, vec![2, 0, 0, 0]);
     }
 }
 
 #[cfg(all(test, feature = "std"))]
 mod test {
-    use super::VecM;
+    use super::*;
 
     #[test]
     fn into_option_none() {
@@ -1994,6 +2256,45 @@ mod test {
     fn to_option_some() {
         let v: VecM<_, 1> = vec![1].try_into().unwrap();
         assert_eq!(v.to_option(), Some(1));
+    }
+
+    #[test]
+    fn depth_limited_read_write_under_the_limit_success() {
+        let a: Option<Option<Option<u32>>> = Some(Some(Some(5)));
+        let mut buf = DepthLimitedWrite::new(Vec::new(), 4);
+        a.write_xdr(&mut buf).unwrap();
+
+        let mut dlr = DepthLimitedRead::new(Cursor::new(buf.inner.as_slice()), 4);
+        let a_back: Option<Option<Option<u32>>> = ReadXdr::read_xdr(&mut dlr).unwrap();
+        assert_eq!(a, a_back);
+    }
+
+    #[test]
+    fn write_over_depth_limit_fail() {
+        let depth_limit = 3;
+        let a: Option<Option<Option<u32>>> = Some(Some(Some(5)));
+        let mut buf = DepthLimitedWrite::new(Vec::new(), depth_limit);
+        let res = a.write_xdr(&mut buf);
+        match res {
+            Err(Error::DepthLimitExceeded) => (),
+            _ => panic!("expected DepthLimitExceeded got {res:?}"),
+        }
+    }
+
+    #[test]
+    fn read_over_depth_limit_fail() {
+        let read_depth_limit = 3;
+        let write_depth_limit = 5;
+        let a: Option<Option<Option<u32>>> = Some(Some(Some(5)));
+        let mut buf = DepthLimitedWrite::new(Vec::new(), write_depth_limit);
+        a.write_xdr(&mut buf).unwrap();
+
+        let mut dlr = DepthLimitedRead::new(Cursor::new(buf.inner.as_slice()), read_depth_limit);
+        let res: Result<Option<Option<Option<u32>>>> = ReadXdr::read_xdr(&mut dlr);
+        match res {
+            Err(Error::DepthLimitExceeded) => (),
+            _ => panic!("expected DepthLimitExceeded got {res:?}"),
+        }
     }
 }
 
@@ -2051,17 +2352,19 @@ impl AsRef<BytesM> for Value {
 
 impl ReadXdr for Value {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = BytesM::read_xdr(r)?;
-        let v = Value(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = BytesM::read_xdr(r)?;
+            let v = Value(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for Value {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -2136,20 +2439,24 @@ pub struct ScpBallot {
 
 impl ReadXdr for ScpBallot {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            counter: u32::read_xdr(r)?,
-            value: Value::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                counter: u32::read_xdr(r)?,
+                value: Value::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ScpBallot {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.counter.write_xdr(w)?;
-        self.value.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.counter.write_xdr(w)?;
+            self.value.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -2250,18 +2557,22 @@ impl From<ScpStatementType> for i32 {
 
 impl ReadXdr for ScpStatementType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ScpStatementType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -2289,22 +2600,26 @@ pub struct ScpNomination {
 
 impl ReadXdr for ScpNomination {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            quorum_set_hash: Hash::read_xdr(r)?,
-            votes: VecM::<Value>::read_xdr(r)?,
-            accepted: VecM::<Value>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                quorum_set_hash: Hash::read_xdr(r)?,
+                votes: VecM::<Value>::read_xdr(r)?,
+                accepted: VecM::<Value>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ScpNomination {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.quorum_set_hash.write_xdr(w)?;
-        self.votes.write_xdr(w)?;
-        self.accepted.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.quorum_set_hash.write_xdr(w)?;
+            self.votes.write_xdr(w)?;
+            self.accepted.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -2338,28 +2653,32 @@ pub struct ScpStatementPrepare {
 
 impl ReadXdr for ScpStatementPrepare {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            quorum_set_hash: Hash::read_xdr(r)?,
-            ballot: ScpBallot::read_xdr(r)?,
-            prepared: Option::<ScpBallot>::read_xdr(r)?,
-            prepared_prime: Option::<ScpBallot>::read_xdr(r)?,
-            n_c: u32::read_xdr(r)?,
-            n_h: u32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                quorum_set_hash: Hash::read_xdr(r)?,
+                ballot: ScpBallot::read_xdr(r)?,
+                prepared: Option::<ScpBallot>::read_xdr(r)?,
+                prepared_prime: Option::<ScpBallot>::read_xdr(r)?,
+                n_c: u32::read_xdr(r)?,
+                n_h: u32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ScpStatementPrepare {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.quorum_set_hash.write_xdr(w)?;
-        self.ballot.write_xdr(w)?;
-        self.prepared.write_xdr(w)?;
-        self.prepared_prime.write_xdr(w)?;
-        self.n_c.write_xdr(w)?;
-        self.n_h.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.quorum_set_hash.write_xdr(w)?;
+            self.ballot.write_xdr(w)?;
+            self.prepared.write_xdr(w)?;
+            self.prepared_prime.write_xdr(w)?;
+            self.n_c.write_xdr(w)?;
+            self.n_h.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -2391,26 +2710,30 @@ pub struct ScpStatementConfirm {
 
 impl ReadXdr for ScpStatementConfirm {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ballot: ScpBallot::read_xdr(r)?,
-            n_prepared: u32::read_xdr(r)?,
-            n_commit: u32::read_xdr(r)?,
-            n_h: u32::read_xdr(r)?,
-            quorum_set_hash: Hash::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ballot: ScpBallot::read_xdr(r)?,
+                n_prepared: u32::read_xdr(r)?,
+                n_commit: u32::read_xdr(r)?,
+                n_h: u32::read_xdr(r)?,
+                quorum_set_hash: Hash::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ScpStatementConfirm {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ballot.write_xdr(w)?;
-        self.n_prepared.write_xdr(w)?;
-        self.n_commit.write_xdr(w)?;
-        self.n_h.write_xdr(w)?;
-        self.quorum_set_hash.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ballot.write_xdr(w)?;
+            self.n_prepared.write_xdr(w)?;
+            self.n_commit.write_xdr(w)?;
+            self.n_h.write_xdr(w)?;
+            self.quorum_set_hash.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -2438,22 +2761,26 @@ pub struct ScpStatementExternalize {
 
 impl ReadXdr for ScpStatementExternalize {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            commit: ScpBallot::read_xdr(r)?,
-            n_h: u32::read_xdr(r)?,
-            commit_quorum_set_hash: Hash::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                commit: ScpBallot::read_xdr(r)?,
+                n_h: u32::read_xdr(r)?,
+                commit_quorum_set_hash: Hash::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ScpStatementExternalize {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.commit.write_xdr(w)?;
-        self.n_h.write_xdr(w)?;
-        self.commit_quorum_set_hash.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.commit.write_xdr(w)?;
+            self.n_h.write_xdr(w)?;
+            self.commit_quorum_set_hash.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -2567,35 +2894,39 @@ impl Union<ScpStatementType> for ScpStatementPledges {}
 
 impl ReadXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ScpStatementType = <ScpStatementType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ScpStatementType::Prepare => Self::Prepare(ScpStatementPrepare::read_xdr(r)?),
-            ScpStatementType::Confirm => Self::Confirm(ScpStatementConfirm::read_xdr(r)?),
-            ScpStatementType::Externalize => {
-                Self::Externalize(ScpStatementExternalize::read_xdr(r)?)
-            }
-            ScpStatementType::Nominate => Self::Nominate(ScpNomination::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ScpStatementType = <ScpStatementType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ScpStatementType::Prepare => Self::Prepare(ScpStatementPrepare::read_xdr(r)?),
+                ScpStatementType::Confirm => Self::Confirm(ScpStatementConfirm::read_xdr(r)?),
+                ScpStatementType::Externalize => {
+                    Self::Externalize(ScpStatementExternalize::read_xdr(r)?)
+                }
+                ScpStatementType::Nominate => Self::Nominate(ScpNomination::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Prepare(v) => v.write_xdr(w)?,
-            Self::Confirm(v) => v.write_xdr(w)?,
-            Self::Externalize(v) => v.write_xdr(w)?,
-            Self::Nominate(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Prepare(v) => v.write_xdr(w)?,
+                Self::Confirm(v) => v.write_xdr(w)?,
+                Self::Externalize(v) => v.write_xdr(w)?,
+                Self::Nominate(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -2655,22 +2986,26 @@ pub struct ScpStatement {
 
 impl ReadXdr for ScpStatement {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            node_id: NodeId::read_xdr(r)?,
-            slot_index: u64::read_xdr(r)?,
-            pledges: ScpStatementPledges::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                node_id: NodeId::read_xdr(r)?,
+                slot_index: u64::read_xdr(r)?,
+                pledges: ScpStatementPledges::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ScpStatement {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.node_id.write_xdr(w)?;
-        self.slot_index.write_xdr(w)?;
-        self.pledges.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.node_id.write_xdr(w)?;
+            self.slot_index.write_xdr(w)?;
+            self.pledges.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -2696,20 +3031,24 @@ pub struct ScpEnvelope {
 
 impl ReadXdr for ScpEnvelope {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            statement: ScpStatement::read_xdr(r)?,
-            signature: Signature::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                statement: ScpStatement::read_xdr(r)?,
+                signature: Signature::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ScpEnvelope {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.statement.write_xdr(w)?;
-        self.signature.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.statement.write_xdr(w)?;
+            self.signature.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -2737,22 +3076,26 @@ pub struct ScpQuorumSet {
 
 impl ReadXdr for ScpQuorumSet {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            threshold: u32::read_xdr(r)?,
-            validators: VecM::<NodeId>::read_xdr(r)?,
-            inner_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                threshold: u32::read_xdr(r)?,
+                validators: VecM::<NodeId>::read_xdr(r)?,
+                inner_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ScpQuorumSet {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.threshold.write_xdr(w)?;
-        self.validators.write_xdr(w)?;
-        self.inner_sets.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.threshold.write_xdr(w)?;
+            self.validators.write_xdr(w)?;
+            self.inner_sets.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -2831,29 +3174,33 @@ impl Union<i32> for StoredTransactionSet {}
 
 impl ReadXdr for StoredTransactionSet {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0(TransactionSet::read_xdr(r)?),
-            1 => Self::V1(GeneralizedTransactionSet::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0(TransactionSet::read_xdr(r)?),
+                1 => Self::V1(GeneralizedTransactionSet::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for StoredTransactionSet {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(v) => v.write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0(v) => v.write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -2881,22 +3228,26 @@ pub struct PersistedScpStateV0 {
 
 impl ReadXdr for PersistedScpStateV0 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            scp_envelopes: VecM::<ScpEnvelope>::read_xdr(r)?,
-            quorum_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
-            tx_sets: VecM::<StoredTransactionSet>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                scp_envelopes: VecM::<ScpEnvelope>::read_xdr(r)?,
+                quorum_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
+                tx_sets: VecM::<StoredTransactionSet>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for PersistedScpStateV0 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.scp_envelopes.write_xdr(w)?;
-        self.quorum_sets.write_xdr(w)?;
-        self.tx_sets.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.scp_envelopes.write_xdr(w)?;
+            self.quorum_sets.write_xdr(w)?;
+            self.tx_sets.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -2923,20 +3274,24 @@ pub struct PersistedScpStateV1 {
 
 impl ReadXdr for PersistedScpStateV1 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            scp_envelopes: VecM::<ScpEnvelope>::read_xdr(r)?,
-            quorum_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                scp_envelopes: VecM::<ScpEnvelope>::read_xdr(r)?,
+                quorum_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for PersistedScpStateV1 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.scp_envelopes.write_xdr(w)?;
-        self.quorum_sets.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.scp_envelopes.write_xdr(w)?;
+            self.quorum_sets.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -3015,29 +3370,33 @@ impl Union<i32> for PersistedScpState {}
 
 impl ReadXdr for PersistedScpState {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0(PersistedScpStateV0::read_xdr(r)?),
-            1 => Self::V1(PersistedScpStateV1::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0(PersistedScpStateV0::read_xdr(r)?),
+                1 => Self::V1(PersistedScpStateV1::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PersistedScpState {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(v) => v.write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0(v) => v.write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -3078,17 +3437,19 @@ impl AsRef<PublicKey> for AccountId {
 
 impl ReadXdr for AccountId {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = PublicKey::read_xdr(r)?;
-        let v = AccountId(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = PublicKey::read_xdr(r)?;
+            let v = AccountId(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AccountId {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -3156,17 +3517,19 @@ impl AsRef<[u8; 4]> for Thresholds {
 
 impl ReadXdr for Thresholds {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <[u8; 4]>::read_xdr(r)?;
-        let v = Thresholds(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = <[u8; 4]>::read_xdr(r)?;
+            let v = Thresholds(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for Thresholds {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -3244,17 +3607,19 @@ impl AsRef<StringM<32>> for String32 {
 
 impl ReadXdr for String32 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = StringM::<32>::read_xdr(r)?;
-        let v = String32(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = StringM::<32>::read_xdr(r)?;
+            let v = String32(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for String32 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -3344,17 +3709,19 @@ impl AsRef<StringM<64>> for String64 {
 
 impl ReadXdr for String64 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = StringM::<64>::read_xdr(r)?;
-        let v = String64(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = StringM::<64>::read_xdr(r)?;
+            let v = String64(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for String64 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -3444,17 +3811,19 @@ impl AsRef<i64> for SequenceNumber {
 
 impl ReadXdr for SequenceNumber {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = i64::read_xdr(r)?;
-        let v = SequenceNumber(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = i64::read_xdr(r)?;
+            let v = SequenceNumber(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for SequenceNumber {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -3495,17 +3864,19 @@ impl AsRef<u64> for TimePoint {
 
 impl ReadXdr for TimePoint {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = u64::read_xdr(r)?;
-        let v = TimePoint(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = u64::read_xdr(r)?;
+            let v = TimePoint(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TimePoint {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -3546,17 +3917,19 @@ impl AsRef<u64> for Duration {
 
 impl ReadXdr for Duration {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = u64::read_xdr(r)?;
-        let v = Duration(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = u64::read_xdr(r)?;
+            let v = Duration(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for Duration {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -3597,17 +3970,19 @@ impl AsRef<BytesM<64>> for DataValue {
 
 impl ReadXdr for DataValue {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = BytesM::<64>::read_xdr(r)?;
-        let v = DataValue(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = BytesM::<64>::read_xdr(r)?;
+            let v = DataValue(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for DataValue {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -3697,17 +4072,19 @@ impl AsRef<Hash> for PoolId {
 
 impl ReadXdr for PoolId {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = Hash::read_xdr(r)?;
-        let v = PoolId(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = Hash::read_xdr(r)?;
+            let v = PoolId(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PoolId {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -3775,17 +4152,19 @@ impl AsRef<[u8; 4]> for AssetCode4 {
 
 impl ReadXdr for AssetCode4 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <[u8; 4]>::read_xdr(r)?;
-        let v = AssetCode4(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = <[u8; 4]>::read_xdr(r)?;
+            let v = AssetCode4(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AssetCode4 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -3890,17 +4269,19 @@ impl AsRef<[u8; 12]> for AssetCode12 {
 
 impl ReadXdr for AssetCode12 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <[u8; 12]>::read_xdr(r)?;
-        let v = AssetCode12(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = <[u8; 12]>::read_xdr(r)?;
+            let v = AssetCode12(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AssetCode12 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -4039,18 +4420,22 @@ impl From<AssetType> for i32 {
 
 impl ReadXdr for AssetType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AssetType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -4132,29 +4517,33 @@ impl Union<AssetType> for AssetCode {}
 
 impl ReadXdr for AssetCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AssetCode4::read_xdr(r)?),
-            AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AssetCode12::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AssetCode4::read_xdr(r)?),
+                AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AssetCode12::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AssetCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::CreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::CreditAlphanum12(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::CreditAlphanum4(v) => v.write_xdr(w)?,
+                Self::CreditAlphanum12(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -4180,20 +4569,24 @@ pub struct AlphaNum4 {
 
 impl ReadXdr for AlphaNum4 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            asset_code: AssetCode4::read_xdr(r)?,
-            issuer: AccountId::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                asset_code: AssetCode4::read_xdr(r)?,
+                issuer: AccountId::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for AlphaNum4 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.asset_code.write_xdr(w)?;
-        self.issuer.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.asset_code.write_xdr(w)?;
+            self.issuer.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -4219,20 +4612,24 @@ pub struct AlphaNum12 {
 
 impl ReadXdr for AlphaNum12 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            asset_code: AssetCode12::read_xdr(r)?,
-            issuer: AccountId::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                asset_code: AssetCode12::read_xdr(r)?,
+                issuer: AccountId::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for AlphaNum12 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.asset_code.write_xdr(w)?;
-        self.issuer.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.asset_code.write_xdr(w)?;
+            self.issuer.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -4324,31 +4721,35 @@ impl Union<AssetType> for Asset {}
 
 impl ReadXdr for Asset {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            AssetType::Native => Self::Native,
-            AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
-            AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                AssetType::Native => Self::Native,
+                AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
+                AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for Asset {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Native => ().write_xdr(w)?,
-            Self::CreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::CreditAlphanum12(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Native => ().write_xdr(w)?,
+                Self::CreditAlphanum4(v) => v.write_xdr(w)?,
+                Self::CreditAlphanum12(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -4374,20 +4775,24 @@ pub struct Price {
 
 impl ReadXdr for Price {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            n: i32::read_xdr(r)?,
-            d: i32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                n: i32::read_xdr(r)?,
+                d: i32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for Price {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.n.write_xdr(w)?;
-        self.d.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.n.write_xdr(w)?;
+            self.d.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -4413,20 +4818,24 @@ pub struct Liabilities {
 
 impl ReadXdr for Liabilities {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            buying: i64::read_xdr(r)?,
-            selling: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                buying: i64::read_xdr(r)?,
+                selling: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for Liabilities {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.buying.write_xdr(w)?;
-        self.selling.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.buying.write_xdr(w)?;
+            self.selling.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -4527,18 +4936,22 @@ impl From<ThresholdIndexes> for i32 {
 
 impl ReadXdr for ThresholdIndexes {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ThresholdIndexes {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -4656,18 +5069,22 @@ impl From<LedgerEntryType> for i32 {
 
 impl ReadXdr for LedgerEntryType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerEntryType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -4693,20 +5110,24 @@ pub struct Signer {
 
 impl ReadXdr for Signer {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            key: SignerKey::read_xdr(r)?,
-            weight: u32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                key: SignerKey::read_xdr(r)?,
+                weight: u32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for Signer {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
-        self.weight.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.key.write_xdr(w)?;
+            self.weight.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -4822,18 +5243,22 @@ impl From<AccountFlags> for i32 {
 
 impl ReadXdr for AccountFlags {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AccountFlags {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -4892,17 +5317,19 @@ impl AsRef<Option<AccountId>> for SponsorshipDescriptor {
 
 impl ReadXdr for SponsorshipDescriptor {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = Option::<AccountId>::read_xdr(r)?;
-        let v = SponsorshipDescriptor(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = Option::<AccountId>::read_xdr(r)?;
+            let v = SponsorshipDescriptor(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for SponsorshipDescriptor {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -4936,22 +5363,26 @@ pub struct AccountEntryExtensionV3 {
 
 impl ReadXdr for AccountEntryExtensionV3 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ext: ExtensionPoint::read_xdr(r)?,
-            seq_ledger: u32::read_xdr(r)?,
-            seq_time: TimePoint::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                seq_ledger: u32::read_xdr(r)?,
+                seq_time: TimePoint::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for AccountEntryExtensionV3 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ext.write_xdr(w)?;
-        self.seq_ledger.write_xdr(w)?;
-        self.seq_time.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.seq_ledger.write_xdr(w)?;
+            self.seq_time.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -5030,29 +5461,33 @@ impl Union<i32> for AccountEntryExtensionV2Ext {}
 
 impl ReadXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            3 => Self::V3(AccountEntryExtensionV3::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                3 => Self::V3(AccountEntryExtensionV3::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-            Self::V3(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V3(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -5090,24 +5525,28 @@ pub struct AccountEntryExtensionV2 {
 
 impl ReadXdr for AccountEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            num_sponsored: u32::read_xdr(r)?,
-            num_sponsoring: u32::read_xdr(r)?,
-            signer_sponsoring_i_ds: VecM::<SponsorshipDescriptor, 20>::read_xdr(r)?,
-            ext: AccountEntryExtensionV2Ext::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                num_sponsored: u32::read_xdr(r)?,
+                num_sponsoring: u32::read_xdr(r)?,
+                signer_sponsoring_i_ds: VecM::<SponsorshipDescriptor, 20>::read_xdr(r)?,
+                ext: AccountEntryExtensionV2Ext::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for AccountEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.num_sponsored.write_xdr(w)?;
-        self.num_sponsoring.write_xdr(w)?;
-        self.signer_sponsoring_i_ds.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.num_sponsored.write_xdr(w)?;
+            self.num_sponsoring.write_xdr(w)?;
+            self.signer_sponsoring_i_ds.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -5186,29 +5625,33 @@ impl Union<i32> for AccountEntryExtensionV1Ext {}
 
 impl ReadXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            2 => Self::V2(AccountEntryExtensionV2::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                2 => Self::V2(AccountEntryExtensionV2::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-            Self::V2(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V2(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -5242,20 +5685,24 @@ pub struct AccountEntryExtensionV1 {
 
 impl ReadXdr for AccountEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            liabilities: Liabilities::read_xdr(r)?,
-            ext: AccountEntryExtensionV1Ext::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                liabilities: Liabilities::read_xdr(r)?,
+                ext: AccountEntryExtensionV1Ext::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for AccountEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liabilities.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.liabilities.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -5334,29 +5781,33 @@ impl Union<i32> for AccountEntryExt {}
 
 impl ReadXdr for AccountEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            1 => Self::V1(AccountEntryExtensionV1::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                1 => Self::V1(AccountEntryExtensionV1::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AccountEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -5413,36 +5864,40 @@ pub struct AccountEntry {
 
 impl ReadXdr for AccountEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            account_id: AccountId::read_xdr(r)?,
-            balance: i64::read_xdr(r)?,
-            seq_num: SequenceNumber::read_xdr(r)?,
-            num_sub_entries: u32::read_xdr(r)?,
-            inflation_dest: Option::<AccountId>::read_xdr(r)?,
-            flags: u32::read_xdr(r)?,
-            home_domain: String32::read_xdr(r)?,
-            thresholds: Thresholds::read_xdr(r)?,
-            signers: VecM::<Signer, 20>::read_xdr(r)?,
-            ext: AccountEntryExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                account_id: AccountId::read_xdr(r)?,
+                balance: i64::read_xdr(r)?,
+                seq_num: SequenceNumber::read_xdr(r)?,
+                num_sub_entries: u32::read_xdr(r)?,
+                inflation_dest: Option::<AccountId>::read_xdr(r)?,
+                flags: u32::read_xdr(r)?,
+                home_domain: String32::read_xdr(r)?,
+                thresholds: Thresholds::read_xdr(r)?,
+                signers: VecM::<Signer, 20>::read_xdr(r)?,
+                ext: AccountEntryExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for AccountEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.balance.write_xdr(w)?;
-        self.seq_num.write_xdr(w)?;
-        self.num_sub_entries.write_xdr(w)?;
-        self.inflation_dest.write_xdr(w)?;
-        self.flags.write_xdr(w)?;
-        self.home_domain.write_xdr(w)?;
-        self.thresholds.write_xdr(w)?;
-        self.signers.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.account_id.write_xdr(w)?;
+            self.balance.write_xdr(w)?;
+            self.seq_num.write_xdr(w)?;
+            self.num_sub_entries.write_xdr(w)?;
+            self.inflation_dest.write_xdr(w)?;
+            self.flags.write_xdr(w)?;
+            self.home_domain.write_xdr(w)?;
+            self.thresholds.write_xdr(w)?;
+            self.signers.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -5547,18 +6002,22 @@ impl From<TrustLineFlags> for i32 {
 
 impl ReadXdr for TrustLineFlags {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TrustLineFlags {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -5660,18 +6119,22 @@ impl From<LiquidityPoolType> for i32 {
 
 impl ReadXdr for LiquidityPoolType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LiquidityPoolType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -5771,33 +6234,37 @@ impl Union<AssetType> for TrustLineAsset {}
 
 impl ReadXdr for TrustLineAsset {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            AssetType::Native => Self::Native,
-            AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
-            AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
-            AssetType::PoolShare => Self::PoolShare(PoolId::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                AssetType::Native => Self::Native,
+                AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
+                AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
+                AssetType::PoolShare => Self::PoolShare(PoolId::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TrustLineAsset {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Native => ().write_xdr(w)?,
-            Self::CreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::CreditAlphanum12(v) => v.write_xdr(w)?,
-            Self::PoolShare(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Native => ().write_xdr(w)?,
+                Self::CreditAlphanum4(v) => v.write_xdr(w)?,
+                Self::CreditAlphanum12(v) => v.write_xdr(w)?,
+                Self::PoolShare(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -5871,27 +6338,31 @@ impl Union<i32> for TrustLineEntryExtensionV2Ext {}
 
 impl ReadXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -5923,20 +6394,24 @@ pub struct TrustLineEntryExtensionV2 {
 
 impl ReadXdr for TrustLineEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            liquidity_pool_use_count: i32::read_xdr(r)?,
-            ext: TrustLineEntryExtensionV2Ext::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                liquidity_pool_use_count: i32::read_xdr(r)?,
+                ext: TrustLineEntryExtensionV2Ext::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TrustLineEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_use_count.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.liquidity_pool_use_count.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -6015,29 +6490,33 @@ impl Union<i32> for TrustLineEntryV1Ext {}
 
 impl ReadXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            2 => Self::V2(TrustLineEntryExtensionV2::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                2 => Self::V2(TrustLineEntryExtensionV2::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-            Self::V2(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V2(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -6071,20 +6550,24 @@ pub struct TrustLineEntryV1 {
 
 impl ReadXdr for TrustLineEntryV1 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            liabilities: Liabilities::read_xdr(r)?,
-            ext: TrustLineEntryV1Ext::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                liabilities: Liabilities::read_xdr(r)?,
+                ext: TrustLineEntryV1Ext::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TrustLineEntryV1 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liabilities.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.liabilities.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -6175,29 +6658,33 @@ impl Union<i32> for TrustLineEntryExt {}
 
 impl ReadXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            1 => Self::V1(TrustLineEntryV1::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                1 => Self::V1(TrustLineEntryV1::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -6254,28 +6741,32 @@ pub struct TrustLineEntry {
 
 impl ReadXdr for TrustLineEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            account_id: AccountId::read_xdr(r)?,
-            asset: TrustLineAsset::read_xdr(r)?,
-            balance: i64::read_xdr(r)?,
-            limit: i64::read_xdr(r)?,
-            flags: u32::read_xdr(r)?,
-            ext: TrustLineEntryExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                account_id: AccountId::read_xdr(r)?,
+                asset: TrustLineAsset::read_xdr(r)?,
+                balance: i64::read_xdr(r)?,
+                limit: i64::read_xdr(r)?,
+                flags: u32::read_xdr(r)?,
+                ext: TrustLineEntryExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TrustLineEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.balance.write_xdr(w)?;
-        self.limit.write_xdr(w)?;
-        self.flags.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.account_id.write_xdr(w)?;
+            self.asset.write_xdr(w)?;
+            self.balance.write_xdr(w)?;
+            self.limit.write_xdr(w)?;
+            self.flags.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -6361,18 +6852,22 @@ impl From<OfferEntryFlags> for i32 {
 
 impl ReadXdr for OfferEntryFlags {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for OfferEntryFlags {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -6452,27 +6947,31 @@ impl Union<i32> for OfferEntryExt {}
 
 impl ReadXdr for OfferEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for OfferEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -6523,32 +7022,36 @@ pub struct OfferEntry {
 
 impl ReadXdr for OfferEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            seller_id: AccountId::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
-            selling: Asset::read_xdr(r)?,
-            buying: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
-            price: Price::read_xdr(r)?,
-            flags: u32::read_xdr(r)?,
-            ext: OfferEntryExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                seller_id: AccountId::read_xdr(r)?,
+                offer_id: i64::read_xdr(r)?,
+                selling: Asset::read_xdr(r)?,
+                buying: Asset::read_xdr(r)?,
+                amount: i64::read_xdr(r)?,
+                price: Price::read_xdr(r)?,
+                flags: u32::read_xdr(r)?,
+                ext: OfferEntryExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for OfferEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.seller_id.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
-        self.selling.write_xdr(w)?;
-        self.buying.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.price.write_xdr(w)?;
-        self.flags.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.seller_id.write_xdr(w)?;
+            self.offer_id.write_xdr(w)?;
+            self.selling.write_xdr(w)?;
+            self.buying.write_xdr(w)?;
+            self.amount.write_xdr(w)?;
+            self.price.write_xdr(w)?;
+            self.flags.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -6622,27 +7125,31 @@ impl Union<i32> for DataEntryExt {}
 
 impl ReadXdr for DataEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for DataEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -6679,24 +7186,28 @@ pub struct DataEntry {
 
 impl ReadXdr for DataEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            account_id: AccountId::read_xdr(r)?,
-            data_name: String64::read_xdr(r)?,
-            data_value: DataValue::read_xdr(r)?,
-            ext: DataEntryExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                account_id: AccountId::read_xdr(r)?,
+                data_name: String64::read_xdr(r)?,
+                data_value: DataValue::read_xdr(r)?,
+                ext: DataEntryExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for DataEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.data_name.write_xdr(w)?;
-        self.data_value.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.account_id.write_xdr(w)?;
+            self.data_name.write_xdr(w)?;
+            self.data_value.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -6814,18 +7325,22 @@ impl From<ClaimPredicateType> for i32 {
 
 impl ReadXdr for ClaimPredicateType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimPredicateType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -6939,37 +7454,45 @@ impl Union<ClaimPredicateType> for ClaimPredicate {}
 
 impl ReadXdr for ClaimPredicate {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClaimPredicateType = <ClaimPredicateType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ClaimPredicateType::Unconditional => Self::Unconditional,
-            ClaimPredicateType::And => Self::And(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
-            ClaimPredicateType::Or => Self::Or(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
-            ClaimPredicateType::Not => Self::Not(Option::<Box<ClaimPredicate>>::read_xdr(r)?),
-            ClaimPredicateType::BeforeAbsoluteTime => Self::BeforeAbsoluteTime(i64::read_xdr(r)?),
-            ClaimPredicateType::BeforeRelativeTime => Self::BeforeRelativeTime(i64::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimPredicateType = <ClaimPredicateType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ClaimPredicateType::Unconditional => Self::Unconditional,
+                ClaimPredicateType::And => Self::And(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
+                ClaimPredicateType::Or => Self::Or(VecM::<ClaimPredicate, 2>::read_xdr(r)?),
+                ClaimPredicateType::Not => Self::Not(Option::<Box<ClaimPredicate>>::read_xdr(r)?),
+                ClaimPredicateType::BeforeAbsoluteTime => {
+                    Self::BeforeAbsoluteTime(i64::read_xdr(r)?)
+                }
+                ClaimPredicateType::BeforeRelativeTime => {
+                    Self::BeforeRelativeTime(i64::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimPredicate {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Unconditional => ().write_xdr(w)?,
-            Self::And(v) => v.write_xdr(w)?,
-            Self::Or(v) => v.write_xdr(w)?,
-            Self::Not(v) => v.write_xdr(w)?,
-            Self::BeforeAbsoluteTime(v) => v.write_xdr(w)?,
-            Self::BeforeRelativeTime(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Unconditional => ().write_xdr(w)?,
+                Self::And(v) => v.write_xdr(w)?,
+                Self::Or(v) => v.write_xdr(w)?,
+                Self::Not(v) => v.write_xdr(w)?,
+                Self::BeforeAbsoluteTime(v) => v.write_xdr(w)?,
+                Self::BeforeRelativeTime(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -7053,18 +7576,22 @@ impl From<ClaimantType> for i32 {
 
 impl ReadXdr for ClaimantType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimantType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -7090,20 +7617,24 @@ pub struct ClaimantV0 {
 
 impl ReadXdr for ClaimantV0 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            destination: AccountId::read_xdr(r)?,
-            predicate: ClaimPredicate::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                destination: AccountId::read_xdr(r)?,
+                predicate: ClaimPredicate::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ClaimantV0 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.destination.write_xdr(w)?;
-        self.predicate.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.destination.write_xdr(w)?;
+            self.predicate.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -7181,27 +7712,31 @@ impl Union<ClaimantType> for Claimant {}
 
 impl ReadXdr for Claimant {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClaimantType = <ClaimantType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ClaimantType::ClaimantTypeV0 => Self::ClaimantTypeV0(ClaimantV0::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimantType = <ClaimantType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ClaimantType::ClaimantTypeV0 => Self::ClaimantTypeV0(ClaimantV0::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for Claimant {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::ClaimantTypeV0(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ClaimantTypeV0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -7286,18 +7821,22 @@ impl From<ClaimableBalanceIdType> for i32 {
 
 impl ReadXdr for ClaimableBalanceIdType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimableBalanceIdType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -7372,29 +7911,33 @@ impl Union<ClaimableBalanceIdType> for ClaimableBalanceId {}
 
 impl ReadXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ClaimableBalanceIdType::ClaimableBalanceIdTypeV0 => {
-                Self::ClaimableBalanceIdTypeV0(Hash::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ClaimableBalanceIdType::ClaimableBalanceIdTypeV0 => {
+                    Self::ClaimableBalanceIdTypeV0(Hash::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::ClaimableBalanceIdTypeV0(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ClaimableBalanceIdTypeV0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -7481,18 +8024,22 @@ impl From<ClaimableBalanceFlags> for i32 {
 
 impl ReadXdr for ClaimableBalanceFlags {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimableBalanceFlags {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -7572,27 +8119,31 @@ impl Union<i32> for ClaimableBalanceEntryExtensionV1Ext {}
 
 impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -7624,20 +8175,24 @@ pub struct ClaimableBalanceEntryExtensionV1 {
 
 impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ext: ClaimableBalanceEntryExtensionV1Ext::read_xdr(r)?,
-            flags: u32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ClaimableBalanceEntryExtensionV1Ext::read_xdr(r)?,
+                flags: u32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ext.write_xdr(w)?;
-        self.flags.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.flags.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -7716,29 +8271,33 @@ impl Union<i32> for ClaimableBalanceEntryExt {}
 
 impl ReadXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            1 => Self::V1(ClaimableBalanceEntryExtensionV1::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                1 => Self::V1(ClaimableBalanceEntryExtensionV1::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -7786,26 +8345,30 @@ pub struct ClaimableBalanceEntry {
 
 impl ReadXdr for ClaimableBalanceEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            balance_id: ClaimableBalanceId::read_xdr(r)?,
-            claimants: VecM::<Claimant, 10>::read_xdr(r)?,
-            asset: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
-            ext: ClaimableBalanceEntryExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                balance_id: ClaimableBalanceId::read_xdr(r)?,
+                claimants: VecM::<Claimant, 10>::read_xdr(r)?,
+                asset: Asset::read_xdr(r)?,
+                amount: i64::read_xdr(r)?,
+                ext: ClaimableBalanceEntryExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ClaimableBalanceEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.balance_id.write_xdr(w)?;
-        self.claimants.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.balance_id.write_xdr(w)?;
+            self.claimants.write_xdr(w)?;
+            self.asset.write_xdr(w)?;
+            self.amount.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -7833,22 +8396,26 @@ pub struct LiquidityPoolConstantProductParameters {
 
 impl ReadXdr for LiquidityPoolConstantProductParameters {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            asset_a: Asset::read_xdr(r)?,
-            asset_b: Asset::read_xdr(r)?,
-            fee: i32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                asset_a: Asset::read_xdr(r)?,
+                asset_b: Asset::read_xdr(r)?,
+                fee: i32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LiquidityPoolConstantProductParameters {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.asset_a.write_xdr(w)?;
-        self.asset_b.write_xdr(w)?;
-        self.fee.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.asset_a.write_xdr(w)?;
+            self.asset_b.write_xdr(w)?;
+            self.fee.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -7882,26 +8449,30 @@ pub struct LiquidityPoolEntryConstantProduct {
 
 impl ReadXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            params: LiquidityPoolConstantProductParameters::read_xdr(r)?,
-            reserve_a: i64::read_xdr(r)?,
-            reserve_b: i64::read_xdr(r)?,
-            total_pool_shares: i64::read_xdr(r)?,
-            pool_shares_trust_line_count: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                params: LiquidityPoolConstantProductParameters::read_xdr(r)?,
+                reserve_a: i64::read_xdr(r)?,
+                reserve_b: i64::read_xdr(r)?,
+                total_pool_shares: i64::read_xdr(r)?,
+                pool_shares_trust_line_count: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.params.write_xdr(w)?;
-        self.reserve_a.write_xdr(w)?;
-        self.reserve_b.write_xdr(w)?;
-        self.total_pool_shares.write_xdr(w)?;
-        self.pool_shares_trust_line_count.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.params.write_xdr(w)?;
+            self.reserve_a.write_xdr(w)?;
+            self.reserve_b.write_xdr(w)?;
+            self.total_pool_shares.write_xdr(w)?;
+            self.pool_shares_trust_line_count.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -7986,29 +8557,35 @@ impl Union<LiquidityPoolType> for LiquidityPoolEntryBody {}
 
 impl ReadXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            LiquidityPoolType::LiquidityPoolConstantProduct => {
-                Self::LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                LiquidityPoolType::LiquidityPoolConstantProduct => {
+                    Self::LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct::read_xdr(
+                        r,
+                    )?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::LiquidityPoolConstantProduct(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::LiquidityPoolConstantProduct(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -8049,20 +8626,24 @@ pub struct LiquidityPoolEntry {
 
 impl ReadXdr for LiquidityPoolEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            liquidity_pool_id: PoolId::read_xdr(r)?,
-            body: LiquidityPoolEntryBody::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                liquidity_pool_id: PoolId::read_xdr(r)?,
+                body: LiquidityPoolEntryBody::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LiquidityPoolEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_id.write_xdr(w)?;
-        self.body.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.liquidity_pool_id.write_xdr(w)?;
+            self.body.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -8136,27 +8717,31 @@ impl Union<i32> for LedgerEntryExtensionV1Ext {}
 
 impl ReadXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -8188,20 +8773,24 @@ pub struct LedgerEntryExtensionV1 {
 
 impl ReadXdr for LedgerEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            sponsoring_id: SponsorshipDescriptor::read_xdr(r)?,
-            ext: LedgerEntryExtensionV1Ext::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                sponsoring_id: SponsorshipDescriptor::read_xdr(r)?,
+                ext: LedgerEntryExtensionV1Ext::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.sponsoring_id.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.sponsoring_id.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -8314,39 +8903,45 @@ impl Union<LedgerEntryType> for LedgerEntryData {}
 
 impl ReadXdr for LedgerEntryData {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            LedgerEntryType::Account => Self::Account(AccountEntry::read_xdr(r)?),
-            LedgerEntryType::Trustline => Self::Trustline(TrustLineEntry::read_xdr(r)?),
-            LedgerEntryType::Offer => Self::Offer(OfferEntry::read_xdr(r)?),
-            LedgerEntryType::Data => Self::Data(DataEntry::read_xdr(r)?),
-            LedgerEntryType::ClaimableBalance => {
-                Self::ClaimableBalance(ClaimableBalanceEntry::read_xdr(r)?)
-            }
-            LedgerEntryType::LiquidityPool => Self::LiquidityPool(LiquidityPoolEntry::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                LedgerEntryType::Account => Self::Account(AccountEntry::read_xdr(r)?),
+                LedgerEntryType::Trustline => Self::Trustline(TrustLineEntry::read_xdr(r)?),
+                LedgerEntryType::Offer => Self::Offer(OfferEntry::read_xdr(r)?),
+                LedgerEntryType::Data => Self::Data(DataEntry::read_xdr(r)?),
+                LedgerEntryType::ClaimableBalance => {
+                    Self::ClaimableBalance(ClaimableBalanceEntry::read_xdr(r)?)
+                }
+                LedgerEntryType::LiquidityPool => {
+                    Self::LiquidityPool(LiquidityPoolEntry::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerEntryData {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Account(v) => v.write_xdr(w)?,
-            Self::Trustline(v) => v.write_xdr(w)?,
-            Self::Offer(v) => v.write_xdr(w)?,
-            Self::Data(v) => v.write_xdr(w)?,
-            Self::ClaimableBalance(v) => v.write_xdr(w)?,
-            Self::LiquidityPool(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Account(v) => v.write_xdr(w)?,
+                Self::Trustline(v) => v.write_xdr(w)?,
+                Self::Offer(v) => v.write_xdr(w)?,
+                Self::Data(v) => v.write_xdr(w)?,
+                Self::ClaimableBalance(v) => v.write_xdr(w)?,
+                Self::LiquidityPool(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -8425,29 +9020,33 @@ impl Union<i32> for LedgerEntryExt {}
 
 impl ReadXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            1 => Self::V1(LedgerEntryExtensionV1::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                1 => Self::V1(LedgerEntryExtensionV1::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -8500,22 +9099,26 @@ pub struct LedgerEntry {
 
 impl ReadXdr for LedgerEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            last_modified_ledger_seq: u32::read_xdr(r)?,
-            data: LedgerEntryData::read_xdr(r)?,
-            ext: LedgerEntryExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                last_modified_ledger_seq: u32::read_xdr(r)?,
+                data: LedgerEntryData::read_xdr(r)?,
+                ext: LedgerEntryExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.last_modified_ledger_seq.write_xdr(w)?;
-        self.data.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.last_modified_ledger_seq.write_xdr(w)?;
+            self.data.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -8539,18 +9142,22 @@ pub struct LedgerKeyAccount {
 
 impl ReadXdr for LedgerKeyAccount {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            account_id: AccountId::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                account_id: AccountId::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerKeyAccount {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.account_id.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -8576,20 +9183,24 @@ pub struct LedgerKeyTrustLine {
 
 impl ReadXdr for LedgerKeyTrustLine {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            account_id: AccountId::read_xdr(r)?,
-            asset: TrustLineAsset::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                account_id: AccountId::read_xdr(r)?,
+                asset: TrustLineAsset::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerKeyTrustLine {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.account_id.write_xdr(w)?;
+            self.asset.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -8615,20 +9226,24 @@ pub struct LedgerKeyOffer {
 
 impl ReadXdr for LedgerKeyOffer {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            seller_id: AccountId::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                seller_id: AccountId::read_xdr(r)?,
+                offer_id: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerKeyOffer {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.seller_id.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.seller_id.write_xdr(w)?;
+            self.offer_id.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -8654,20 +9269,24 @@ pub struct LedgerKeyData {
 
 impl ReadXdr for LedgerKeyData {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            account_id: AccountId::read_xdr(r)?,
-            data_name: String64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                account_id: AccountId::read_xdr(r)?,
+                data_name: String64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerKeyData {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.data_name.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.account_id.write_xdr(w)?;
+            self.data_name.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -8691,18 +9310,22 @@ pub struct LedgerKeyClaimableBalance {
 
 impl ReadXdr for LedgerKeyClaimableBalance {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            balance_id: ClaimableBalanceId::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                balance_id: ClaimableBalanceId::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerKeyClaimableBalance {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.balance_id.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.balance_id.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -8726,18 +9349,22 @@ pub struct LedgerKeyLiquidityPool {
 
 impl ReadXdr for LedgerKeyLiquidityPool {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            liquidity_pool_id: PoolId::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                liquidity_pool_id: PoolId::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerKeyLiquidityPool {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_id.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.liquidity_pool_id.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -8876,41 +9503,45 @@ impl Union<LedgerEntryType> for LedgerKey {}
 
 impl ReadXdr for LedgerKey {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            LedgerEntryType::Account => Self::Account(LedgerKeyAccount::read_xdr(r)?),
-            LedgerEntryType::Trustline => Self::Trustline(LedgerKeyTrustLine::read_xdr(r)?),
-            LedgerEntryType::Offer => Self::Offer(LedgerKeyOffer::read_xdr(r)?),
-            LedgerEntryType::Data => Self::Data(LedgerKeyData::read_xdr(r)?),
-            LedgerEntryType::ClaimableBalance => {
-                Self::ClaimableBalance(LedgerKeyClaimableBalance::read_xdr(r)?)
-            }
-            LedgerEntryType::LiquidityPool => {
-                Self::LiquidityPool(LedgerKeyLiquidityPool::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                LedgerEntryType::Account => Self::Account(LedgerKeyAccount::read_xdr(r)?),
+                LedgerEntryType::Trustline => Self::Trustline(LedgerKeyTrustLine::read_xdr(r)?),
+                LedgerEntryType::Offer => Self::Offer(LedgerKeyOffer::read_xdr(r)?),
+                LedgerEntryType::Data => Self::Data(LedgerKeyData::read_xdr(r)?),
+                LedgerEntryType::ClaimableBalance => {
+                    Self::ClaimableBalance(LedgerKeyClaimableBalance::read_xdr(r)?)
+                }
+                LedgerEntryType::LiquidityPool => {
+                    Self::LiquidityPool(LedgerKeyLiquidityPool::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerKey {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Account(v) => v.write_xdr(w)?,
-            Self::Trustline(v) => v.write_xdr(w)?,
-            Self::Offer(v) => v.write_xdr(w)?,
-            Self::Data(v) => v.write_xdr(w)?,
-            Self::ClaimableBalance(v) => v.write_xdr(w)?,
-            Self::LiquidityPool(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Account(v) => v.write_xdr(w)?,
+                Self::Trustline(v) => v.write_xdr(w)?,
+                Self::Offer(v) => v.write_xdr(w)?,
+                Self::Data(v) => v.write_xdr(w)?,
+                Self::ClaimableBalance(v) => v.write_xdr(w)?,
+                Self::LiquidityPool(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -9040,18 +9671,22 @@ impl From<EnvelopeType> for i32 {
 
 impl ReadXdr for EnvelopeType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for EnvelopeType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -9092,17 +9727,19 @@ impl AsRef<BytesM<128>> for UpgradeType {
 
 impl ReadXdr for UpgradeType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = BytesM::<128>::read_xdr(r)?;
-        let v = UpgradeType(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = BytesM::<128>::read_xdr(r)?;
+            let v = UpgradeType(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for UpgradeType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -9239,18 +9876,22 @@ impl From<StellarValueType> for i32 {
 
 impl ReadXdr for StellarValueType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for StellarValueType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -9276,20 +9917,24 @@ pub struct LedgerCloseValueSignature {
 
 impl ReadXdr for LedgerCloseValueSignature {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            node_id: NodeId::read_xdr(r)?,
-            signature: Signature::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                node_id: NodeId::read_xdr(r)?,
+                signature: Signature::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerCloseValueSignature {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.node_id.write_xdr(w)?;
-        self.signature.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.node_id.write_xdr(w)?;
+            self.signature.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -9368,29 +10013,33 @@ impl Union<StellarValueType> for StellarValueExt {}
 
 impl ReadXdr for StellarValueExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: StellarValueType = <StellarValueType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            StellarValueType::Basic => Self::Basic,
-            StellarValueType::Signed => Self::Signed(LedgerCloseValueSignature::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: StellarValueType = <StellarValueType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                StellarValueType::Basic => Self::Basic,
+                StellarValueType::Signed => Self::Signed(LedgerCloseValueSignature::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for StellarValueExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Basic => ().write_xdr(w)?,
-            Self::Signed(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Basic => ().write_xdr(w)?,
+                Self::Signed(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -9435,24 +10084,28 @@ pub struct StellarValue {
 
 impl ReadXdr for StellarValue {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            tx_set_hash: Hash::read_xdr(r)?,
-            close_time: TimePoint::read_xdr(r)?,
-            upgrades: VecM::<UpgradeType, 6>::read_xdr(r)?,
-            ext: StellarValueExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx_set_hash: Hash::read_xdr(r)?,
+                close_time: TimePoint::read_xdr(r)?,
+                upgrades: VecM::<UpgradeType, 6>::read_xdr(r)?,
+                ext: StellarValueExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for StellarValue {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx_set_hash.write_xdr(w)?;
-        self.close_time.write_xdr(w)?;
-        self.upgrades.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.tx_set_hash.write_xdr(w)?;
+            self.close_time.write_xdr(w)?;
+            self.upgrades.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -9554,18 +10207,22 @@ impl From<LedgerHeaderFlags> for i32 {
 
 impl ReadXdr for LedgerHeaderFlags {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerHeaderFlags {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -9639,27 +10296,31 @@ impl Union<i32> for LedgerHeaderExtensionV1Ext {}
 
 impl ReadXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -9691,20 +10352,24 @@ pub struct LedgerHeaderExtensionV1 {
 
 impl ReadXdr for LedgerHeaderExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            flags: u32::read_xdr(r)?,
-            ext: LedgerHeaderExtensionV1Ext::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                flags: u32::read_xdr(r)?,
+                ext: LedgerHeaderExtensionV1Ext::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerHeaderExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.flags.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.flags.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -9783,29 +10448,33 @@ impl Union<i32> for LedgerHeaderExt {}
 
 impl ReadXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            1 => Self::V1(LedgerHeaderExtensionV1::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                1 => Self::V1(LedgerHeaderExtensionV1::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -9878,46 +10547,50 @@ pub struct LedgerHeader {
 
 impl ReadXdr for LedgerHeader {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_version: u32::read_xdr(r)?,
-            previous_ledger_hash: Hash::read_xdr(r)?,
-            scp_value: StellarValue::read_xdr(r)?,
-            tx_set_result_hash: Hash::read_xdr(r)?,
-            bucket_list_hash: Hash::read_xdr(r)?,
-            ledger_seq: u32::read_xdr(r)?,
-            total_coins: i64::read_xdr(r)?,
-            fee_pool: i64::read_xdr(r)?,
-            inflation_seq: u32::read_xdr(r)?,
-            id_pool: u64::read_xdr(r)?,
-            base_fee: u32::read_xdr(r)?,
-            base_reserve: u32::read_xdr(r)?,
-            max_tx_set_size: u32::read_xdr(r)?,
-            skip_list: <[Hash; 4]>::read_xdr(r)?,
-            ext: LedgerHeaderExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_version: u32::read_xdr(r)?,
+                previous_ledger_hash: Hash::read_xdr(r)?,
+                scp_value: StellarValue::read_xdr(r)?,
+                tx_set_result_hash: Hash::read_xdr(r)?,
+                bucket_list_hash: Hash::read_xdr(r)?,
+                ledger_seq: u32::read_xdr(r)?,
+                total_coins: i64::read_xdr(r)?,
+                fee_pool: i64::read_xdr(r)?,
+                inflation_seq: u32::read_xdr(r)?,
+                id_pool: u64::read_xdr(r)?,
+                base_fee: u32::read_xdr(r)?,
+                base_reserve: u32::read_xdr(r)?,
+                max_tx_set_size: u32::read_xdr(r)?,
+                skip_list: <[Hash; 4]>::read_xdr(r)?,
+                ext: LedgerHeaderExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerHeader {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_version.write_xdr(w)?;
-        self.previous_ledger_hash.write_xdr(w)?;
-        self.scp_value.write_xdr(w)?;
-        self.tx_set_result_hash.write_xdr(w)?;
-        self.bucket_list_hash.write_xdr(w)?;
-        self.ledger_seq.write_xdr(w)?;
-        self.total_coins.write_xdr(w)?;
-        self.fee_pool.write_xdr(w)?;
-        self.inflation_seq.write_xdr(w)?;
-        self.id_pool.write_xdr(w)?;
-        self.base_fee.write_xdr(w)?;
-        self.base_reserve.write_xdr(w)?;
-        self.max_tx_set_size.write_xdr(w)?;
-        self.skip_list.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_version.write_xdr(w)?;
+            self.previous_ledger_hash.write_xdr(w)?;
+            self.scp_value.write_xdr(w)?;
+            self.tx_set_result_hash.write_xdr(w)?;
+            self.bucket_list_hash.write_xdr(w)?;
+            self.ledger_seq.write_xdr(w)?;
+            self.total_coins.write_xdr(w)?;
+            self.fee_pool.write_xdr(w)?;
+            self.inflation_seq.write_xdr(w)?;
+            self.id_pool.write_xdr(w)?;
+            self.base_fee.write_xdr(w)?;
+            self.base_reserve.write_xdr(w)?;
+            self.max_tx_set_size.write_xdr(w)?;
+            self.skip_list.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -10024,18 +10697,22 @@ impl From<LedgerUpgradeType> for i32 {
 
 impl ReadXdr for LedgerUpgradeType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerUpgradeType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -10136,35 +10813,39 @@ impl Union<LedgerUpgradeType> for LedgerUpgrade {}
 
 impl ReadXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            LedgerUpgradeType::Version => Self::Version(u32::read_xdr(r)?),
-            LedgerUpgradeType::BaseFee => Self::BaseFee(u32::read_xdr(r)?),
-            LedgerUpgradeType::MaxTxSetSize => Self::MaxTxSetSize(u32::read_xdr(r)?),
-            LedgerUpgradeType::BaseReserve => Self::BaseReserve(u32::read_xdr(r)?),
-            LedgerUpgradeType::Flags => Self::Flags(u32::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                LedgerUpgradeType::Version => Self::Version(u32::read_xdr(r)?),
+                LedgerUpgradeType::BaseFee => Self::BaseFee(u32::read_xdr(r)?),
+                LedgerUpgradeType::MaxTxSetSize => Self::MaxTxSetSize(u32::read_xdr(r)?),
+                LedgerUpgradeType::BaseReserve => Self::BaseReserve(u32::read_xdr(r)?),
+                LedgerUpgradeType::Flags => Self::Flags(u32::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Version(v) => v.write_xdr(w)?,
-            Self::BaseFee(v) => v.write_xdr(w)?,
-            Self::MaxTxSetSize(v) => v.write_xdr(w)?,
-            Self::BaseReserve(v) => v.write_xdr(w)?,
-            Self::Flags(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Version(v) => v.write_xdr(w)?,
+                Self::BaseFee(v) => v.write_xdr(w)?,
+                Self::MaxTxSetSize(v) => v.write_xdr(w)?,
+                Self::BaseReserve(v) => v.write_xdr(w)?,
+                Self::Flags(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -10268,18 +10949,22 @@ impl From<BucketEntryType> for i32 {
 
 impl ReadXdr for BucketEntryType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for BucketEntryType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -10353,27 +11038,31 @@ impl Union<i32> for BucketMetadataExt {}
 
 impl ReadXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -10407,20 +11096,24 @@ pub struct BucketMetadata {
 
 impl ReadXdr for BucketMetadata {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_version: u32::read_xdr(r)?,
-            ext: BucketMetadataExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_version: u32::read_xdr(r)?,
+                ext: BucketMetadataExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for BucketMetadata {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_version.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_version.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -10515,33 +11208,37 @@ impl Union<BucketEntryType> for BucketEntry {}
 
 impl ReadXdr for BucketEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: BucketEntryType = <BucketEntryType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            BucketEntryType::Liveentry => Self::Liveentry(LedgerEntry::read_xdr(r)?),
-            BucketEntryType::Initentry => Self::Initentry(LedgerEntry::read_xdr(r)?),
-            BucketEntryType::Deadentry => Self::Deadentry(LedgerKey::read_xdr(r)?),
-            BucketEntryType::Metaentry => Self::Metaentry(BucketMetadata::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: BucketEntryType = <BucketEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                BucketEntryType::Liveentry => Self::Liveentry(LedgerEntry::read_xdr(r)?),
+                BucketEntryType::Initentry => Self::Initentry(LedgerEntry::read_xdr(r)?),
+                BucketEntryType::Deadentry => Self::Deadentry(LedgerKey::read_xdr(r)?),
+                BucketEntryType::Metaentry => Self::Metaentry(BucketMetadata::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for BucketEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Liveentry(v) => v.write_xdr(w)?,
-            Self::Initentry(v) => v.write_xdr(w)?,
-            Self::Deadentry(v) => v.write_xdr(w)?,
-            Self::Metaentry(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Liveentry(v) => v.write_xdr(w)?,
+                Self::Initentry(v) => v.write_xdr(w)?,
+                Self::Deadentry(v) => v.write_xdr(w)?,
+                Self::Metaentry(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -10628,18 +11325,22 @@ impl From<TxSetComponentType> for i32 {
 
 impl ReadXdr for TxSetComponentType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TxSetComponentType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -10665,20 +11366,24 @@ pub struct TxSetComponentTxsMaybeDiscountedFee {
 
 impl ReadXdr for TxSetComponentTxsMaybeDiscountedFee {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            base_fee: Option::<i64>::read_xdr(r)?,
-            txs: VecM::<TransactionEnvelope>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                base_fee: Option::<i64>::read_xdr(r)?,
+                txs: VecM::<TransactionEnvelope>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.base_fee.write_xdr(w)?;
-        self.txs.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.base_fee.write_xdr(w)?;
+            self.txs.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -10759,31 +11464,35 @@ impl Union<TxSetComponentType> for TxSetComponent {}
 
 impl ReadXdr for TxSetComponent {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: TxSetComponentType = <TxSetComponentType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            TxSetComponentType::TxsetCompTxsMaybeDiscountedFee => {
-                Self::TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee::read_xdr(
-                    r,
-                )?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: TxSetComponentType = <TxSetComponentType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                TxSetComponentType::TxsetCompTxsMaybeDiscountedFee => {
+                    Self::TxsetCompTxsMaybeDiscountedFee(
+                        TxSetComponentTxsMaybeDiscountedFee::read_xdr(r)?,
+                    )
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TxSetComponent {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::TxsetCompTxsMaybeDiscountedFee(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::TxsetCompTxsMaybeDiscountedFee(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -10857,27 +11566,31 @@ impl Union<i32> for TransactionPhase {}
 
 impl ReadXdr for TransactionPhase {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0(VecM::<TxSetComponent>::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0(VecM::<TxSetComponent>::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TransactionPhase {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -10903,20 +11616,24 @@ pub struct TransactionSet {
 
 impl ReadXdr for TransactionSet {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            previous_ledger_hash: Hash::read_xdr(r)?,
-            txs: VecM::<TransactionEnvelope>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                previous_ledger_hash: Hash::read_xdr(r)?,
+                txs: VecM::<TransactionEnvelope>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionSet {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.previous_ledger_hash.write_xdr(w)?;
-        self.txs.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.previous_ledger_hash.write_xdr(w)?;
+            self.txs.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -10942,20 +11659,24 @@ pub struct TransactionSetV1 {
 
 impl ReadXdr for TransactionSetV1 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            previous_ledger_hash: Hash::read_xdr(r)?,
-            phases: VecM::<TransactionPhase>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                previous_ledger_hash: Hash::read_xdr(r)?,
+                phases: VecM::<TransactionPhase>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionSetV1 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.previous_ledger_hash.write_xdr(w)?;
-        self.phases.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.previous_ledger_hash.write_xdr(w)?;
+            self.phases.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -11030,27 +11751,31 @@ impl Union<i32> for GeneralizedTransactionSet {}
 
 impl ReadXdr for GeneralizedTransactionSet {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            1 => Self::V1(TransactionSetV1::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                1 => Self::V1(TransactionSetV1::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for GeneralizedTransactionSet {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V1(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -11076,20 +11801,24 @@ pub struct TransactionResultPair {
 
 impl ReadXdr for TransactionResultPair {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            transaction_hash: Hash::read_xdr(r)?,
-            result: TransactionResult::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                transaction_hash: Hash::read_xdr(r)?,
+                result: TransactionResult::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionResultPair {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.transaction_hash.write_xdr(w)?;
-        self.result.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.transaction_hash.write_xdr(w)?;
+            self.result.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -11113,18 +11842,22 @@ pub struct TransactionResultSet {
 
 impl ReadXdr for TransactionResultSet {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            results: VecM::<TransactionResultPair>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                results: VecM::<TransactionResultPair>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionResultSet {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.results.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.results.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -11203,29 +11936,33 @@ impl Union<i32> for TransactionHistoryEntryExt {}
 
 impl ReadXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            1 => Self::V1(GeneralizedTransactionSet::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                1 => Self::V1(GeneralizedTransactionSet::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -11262,22 +11999,26 @@ pub struct TransactionHistoryEntry {
 
 impl ReadXdr for TransactionHistoryEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_seq: u32::read_xdr(r)?,
-            tx_set: TransactionSet::read_xdr(r)?,
-            ext: TransactionHistoryEntryExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_seq: u32::read_xdr(r)?,
+                tx_set: TransactionSet::read_xdr(r)?,
+                ext: TransactionHistoryEntryExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionHistoryEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_seq.write_xdr(w)?;
-        self.tx_set.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_seq.write_xdr(w)?;
+            self.tx_set.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -11351,27 +12092,31 @@ impl Union<i32> for TransactionHistoryResultEntryExt {}
 
 impl ReadXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -11406,22 +12151,26 @@ pub struct TransactionHistoryResultEntry {
 
 impl ReadXdr for TransactionHistoryResultEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_seq: u32::read_xdr(r)?,
-            tx_result_set: TransactionResultSet::read_xdr(r)?,
-            ext: TransactionHistoryResultEntryExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_seq: u32::read_xdr(r)?,
+                tx_result_set: TransactionResultSet::read_xdr(r)?,
+                ext: TransactionHistoryResultEntryExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionHistoryResultEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_seq.write_xdr(w)?;
-        self.tx_result_set.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_seq.write_xdr(w)?;
+            self.tx_result_set.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -11495,27 +12244,31 @@ impl Union<i32> for LedgerHeaderHistoryEntryExt {}
 
 impl ReadXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -11550,22 +12303,26 @@ pub struct LedgerHeaderHistoryEntry {
 
 impl ReadXdr for LedgerHeaderHistoryEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            hash: Hash::read_xdr(r)?,
-            header: LedgerHeader::read_xdr(r)?,
-            ext: LedgerHeaderHistoryEntryExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                hash: Hash::read_xdr(r)?,
+                header: LedgerHeader::read_xdr(r)?,
+                ext: LedgerHeaderHistoryEntryExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerHeaderHistoryEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.hash.write_xdr(w)?;
-        self.header.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.hash.write_xdr(w)?;
+            self.header.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -11591,20 +12348,24 @@ pub struct LedgerScpMessages {
 
 impl ReadXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_seq: u32::read_xdr(r)?,
-            messages: VecM::<ScpEnvelope>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_seq: u32::read_xdr(r)?,
+                messages: VecM::<ScpEnvelope>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_seq.write_xdr(w)?;
-        self.messages.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_seq.write_xdr(w)?;
+            self.messages.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -11630,20 +12391,24 @@ pub struct ScpHistoryEntryV0 {
 
 impl ReadXdr for ScpHistoryEntryV0 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            quorum_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
-            ledger_messages: LedgerScpMessages::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                quorum_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
+                ledger_messages: LedgerScpMessages::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ScpHistoryEntryV0 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.quorum_sets.write_xdr(w)?;
-        self.ledger_messages.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.quorum_sets.write_xdr(w)?;
+            self.ledger_messages.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -11717,27 +12482,31 @@ impl Union<i32> for ScpHistoryEntry {}
 
 impl ReadXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0(ScpHistoryEntryV0::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0(ScpHistoryEntryV0::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -11838,18 +12607,22 @@ impl From<LedgerEntryChangeType> for i32 {
 
 impl ReadXdr for LedgerEntryChangeType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerEntryChangeType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -11943,33 +12716,37 @@ impl Union<LedgerEntryChangeType> for LedgerEntryChange {}
 
 impl ReadXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            LedgerEntryChangeType::Created => Self::Created(LedgerEntry::read_xdr(r)?),
-            LedgerEntryChangeType::Updated => Self::Updated(LedgerEntry::read_xdr(r)?),
-            LedgerEntryChangeType::Removed => Self::Removed(LedgerKey::read_xdr(r)?),
-            LedgerEntryChangeType::State => Self::State(LedgerEntry::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                LedgerEntryChangeType::Created => Self::Created(LedgerEntry::read_xdr(r)?),
+                LedgerEntryChangeType::Updated => Self::Updated(LedgerEntry::read_xdr(r)?),
+                LedgerEntryChangeType::Removed => Self::Removed(LedgerKey::read_xdr(r)?),
+                LedgerEntryChangeType::State => Self::State(LedgerEntry::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Created(v) => v.write_xdr(w)?,
-            Self::Updated(v) => v.write_xdr(w)?,
-            Self::Removed(v) => v.write_xdr(w)?,
-            Self::State(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Created(v) => v.write_xdr(w)?,
+                Self::Updated(v) => v.write_xdr(w)?,
+                Self::Removed(v) => v.write_xdr(w)?,
+                Self::State(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -12010,17 +12787,19 @@ impl AsRef<VecM<LedgerEntryChange>> for LedgerEntryChanges {
 
 impl ReadXdr for LedgerEntryChanges {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<LedgerEntryChange>::read_xdr(r)?;
-        let v = LedgerEntryChanges(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<LedgerEntryChange>::read_xdr(r)?;
+            let v = LedgerEntryChanges(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerEntryChanges {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -12093,18 +12872,22 @@ pub struct OperationMeta {
 
 impl ReadXdr for OperationMeta {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            changes: LedgerEntryChanges::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                changes: LedgerEntryChanges::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for OperationMeta {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.changes.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.changes.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -12130,20 +12913,24 @@ pub struct TransactionMetaV1 {
 
 impl ReadXdr for TransactionMetaV1 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            tx_changes: LedgerEntryChanges::read_xdr(r)?,
-            operations: VecM::<OperationMeta>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx_changes: LedgerEntryChanges::read_xdr(r)?,
+                operations: VecM::<OperationMeta>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionMetaV1 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx_changes.write_xdr(w)?;
-        self.operations.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.tx_changes.write_xdr(w)?;
+            self.operations.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -12173,22 +12960,26 @@ pub struct TransactionMetaV2 {
 
 impl ReadXdr for TransactionMetaV2 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
-            operations: VecM::<OperationMeta>::read_xdr(r)?,
-            tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
+                operations: VecM::<OperationMeta>::read_xdr(r)?,
+                tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionMetaV2 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx_changes_before.write_xdr(w)?;
-        self.operations.write_xdr(w)?;
-        self.tx_changes_after.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.tx_changes_before.write_xdr(w)?;
+            self.operations.write_xdr(w)?;
+            self.tx_changes_after.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -12272,31 +13063,35 @@ impl Union<i32> for TransactionMeta {}
 
 impl ReadXdr for TransactionMeta {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0(VecM::<OperationMeta>::read_xdr(r)?),
-            1 => Self::V1(TransactionMetaV1::read_xdr(r)?),
-            2 => Self::V2(TransactionMetaV2::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0(VecM::<OperationMeta>::read_xdr(r)?),
+                1 => Self::V1(TransactionMetaV1::read_xdr(r)?),
+                2 => Self::V2(TransactionMetaV2::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TransactionMeta {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(v) => v.write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
-            Self::V2(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0(v) => v.write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+                Self::V2(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -12324,22 +13119,26 @@ pub struct TransactionResultMeta {
 
 impl ReadXdr for TransactionResultMeta {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            result: TransactionResultPair::read_xdr(r)?,
-            fee_processing: LedgerEntryChanges::read_xdr(r)?,
-            tx_apply_processing: TransactionMeta::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                result: TransactionResultPair::read_xdr(r)?,
+                fee_processing: LedgerEntryChanges::read_xdr(r)?,
+                tx_apply_processing: TransactionMeta::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionResultMeta {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.result.write_xdr(w)?;
-        self.fee_processing.write_xdr(w)?;
-        self.tx_apply_processing.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.result.write_xdr(w)?;
+            self.fee_processing.write_xdr(w)?;
+            self.tx_apply_processing.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -12365,20 +13164,24 @@ pub struct UpgradeEntryMeta {
 
 impl ReadXdr for UpgradeEntryMeta {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            upgrade: LedgerUpgrade::read_xdr(r)?,
-            changes: LedgerEntryChanges::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                upgrade: LedgerUpgrade::read_xdr(r)?,
+                changes: LedgerEntryChanges::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for UpgradeEntryMeta {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.upgrade.write_xdr(w)?;
-        self.changes.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.upgrade.write_xdr(w)?;
+            self.changes.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -12419,26 +13222,30 @@ pub struct LedgerCloseMetaV0 {
 
 impl ReadXdr for LedgerCloseMetaV0 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
-            tx_set: TransactionSet::read_xdr(r)?,
-            tx_processing: VecM::<TransactionResultMeta>::read_xdr(r)?,
-            upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
-            scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
+                tx_set: TransactionSet::read_xdr(r)?,
+                tx_processing: VecM::<TransactionResultMeta>::read_xdr(r)?,
+                upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
+                scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerCloseMetaV0 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_header.write_xdr(w)?;
-        self.tx_set.write_xdr(w)?;
-        self.tx_processing.write_xdr(w)?;
-        self.upgrades_processing.write_xdr(w)?;
-        self.scp_info.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_header.write_xdr(w)?;
+            self.tx_set.write_xdr(w)?;
+            self.tx_processing.write_xdr(w)?;
+            self.upgrades_processing.write_xdr(w)?;
+            self.scp_info.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -12479,26 +13286,30 @@ pub struct LedgerCloseMetaV1 {
 
 impl ReadXdr for LedgerCloseMetaV1 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
-            tx_set: GeneralizedTransactionSet::read_xdr(r)?,
-            tx_processing: VecM::<TransactionResultMeta>::read_xdr(r)?,
-            upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
-            scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
+                tx_set: GeneralizedTransactionSet::read_xdr(r)?,
+                tx_processing: VecM::<TransactionResultMeta>::read_xdr(r)?,
+                upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
+                scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerCloseMetaV1 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_header.write_xdr(w)?;
-        self.tx_set.write_xdr(w)?;
-        self.tx_processing.write_xdr(w)?;
-        self.upgrades_processing.write_xdr(w)?;
-        self.scp_info.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_header.write_xdr(w)?;
+            self.tx_set.write_xdr(w)?;
+            self.tx_processing.write_xdr(w)?;
+            self.upgrades_processing.write_xdr(w)?;
+            self.scp_info.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -12577,29 +13388,33 @@ impl Union<i32> for LedgerCloseMeta {}
 
 impl ReadXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
-            1 => Self::V1(LedgerCloseMetaV1::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
+                1 => Self::V1(LedgerCloseMetaV1::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(v) => v.write_xdr(w)?,
-            Self::V1(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0(v) => v.write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -12705,18 +13520,22 @@ impl From<ErrorCode> for i32 {
 
 impl ReadXdr for ErrorCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ErrorCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -12742,20 +13561,24 @@ pub struct SError {
 
 impl ReadXdr for SError {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            code: ErrorCode::read_xdr(r)?,
-            msg: StringM::<100>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                code: ErrorCode::read_xdr(r)?,
+                msg: StringM::<100>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for SError {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.code.write_xdr(w)?;
-        self.msg.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.code.write_xdr(w)?;
+            self.msg.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -12779,18 +13602,22 @@ pub struct SendMore {
 
 impl ReadXdr for SendMore {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            num_messages: u32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                num_messages: u32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for SendMore {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.num_messages.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.num_messages.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -12818,22 +13645,26 @@ pub struct AuthCert {
 
 impl ReadXdr for AuthCert {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            pubkey: Curve25519Public::read_xdr(r)?,
-            expiration: u64::read_xdr(r)?,
-            sig: Signature::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                pubkey: Curve25519Public::read_xdr(r)?,
+                expiration: u64::read_xdr(r)?,
+                sig: Signature::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for AuthCert {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.pubkey.write_xdr(w)?;
-        self.expiration.write_xdr(w)?;
-        self.sig.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.pubkey.write_xdr(w)?;
+            self.expiration.write_xdr(w)?;
+            self.sig.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -12873,34 +13704,38 @@ pub struct Hello {
 
 impl ReadXdr for Hello {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ledger_version: u32::read_xdr(r)?,
-            overlay_version: u32::read_xdr(r)?,
-            overlay_min_version: u32::read_xdr(r)?,
-            network_id: Hash::read_xdr(r)?,
-            version_str: StringM::<100>::read_xdr(r)?,
-            listening_port: i32::read_xdr(r)?,
-            peer_id: NodeId::read_xdr(r)?,
-            cert: AuthCert::read_xdr(r)?,
-            nonce: Uint256::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_version: u32::read_xdr(r)?,
+                overlay_version: u32::read_xdr(r)?,
+                overlay_min_version: u32::read_xdr(r)?,
+                network_id: Hash::read_xdr(r)?,
+                version_str: StringM::<100>::read_xdr(r)?,
+                listening_port: i32::read_xdr(r)?,
+                peer_id: NodeId::read_xdr(r)?,
+                cert: AuthCert::read_xdr(r)?,
+                nonce: Uint256::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for Hello {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ledger_version.write_xdr(w)?;
-        self.overlay_version.write_xdr(w)?;
-        self.overlay_min_version.write_xdr(w)?;
-        self.network_id.write_xdr(w)?;
-        self.version_str.write_xdr(w)?;
-        self.listening_port.write_xdr(w)?;
-        self.peer_id.write_xdr(w)?;
-        self.cert.write_xdr(w)?;
-        self.nonce.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_version.write_xdr(w)?;
+            self.overlay_version.write_xdr(w)?;
+            self.overlay_min_version.write_xdr(w)?;
+            self.network_id.write_xdr(w)?;
+            self.version_str.write_xdr(w)?;
+            self.listening_port.write_xdr(w)?;
+            self.peer_id.write_xdr(w)?;
+            self.cert.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -12930,18 +13765,22 @@ pub struct Auth {
 
 impl ReadXdr for Auth {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            flags: i32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                flags: i32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for Auth {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.flags.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.flags.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -13029,18 +13868,22 @@ impl From<IpAddrType> for i32 {
 
 impl ReadXdr for IpAddrType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for IpAddrType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -13119,29 +13962,33 @@ impl Union<IpAddrType> for PeerAddressIp {}
 
 impl ReadXdr for PeerAddressIp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: IpAddrType = <IpAddrType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            IpAddrType::IPv4 => Self::IPv4(<[u8; 4]>::read_xdr(r)?),
-            IpAddrType::IPv6 => Self::IPv6(<[u8; 16]>::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: IpAddrType = <IpAddrType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                IpAddrType::IPv4 => Self::IPv4(<[u8; 4]>::read_xdr(r)?),
+                IpAddrType::IPv6 => Self::IPv6(<[u8; 16]>::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PeerAddressIp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::IPv4(v) => v.write_xdr(w)?,
-            Self::IPv6(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::IPv4(v) => v.write_xdr(w)?,
+                Self::IPv6(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -13176,22 +14023,26 @@ pub struct PeerAddress {
 
 impl ReadXdr for PeerAddress {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ip: PeerAddressIp::read_xdr(r)?,
-            port: u32::read_xdr(r)?,
-            num_failures: u32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ip: PeerAddressIp::read_xdr(r)?,
+                port: u32::read_xdr(r)?,
+                num_failures: u32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for PeerAddress {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ip.write_xdr(w)?;
-        self.port.write_xdr(w)?;
-        self.num_failures.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ip.write_xdr(w)?;
+            self.port.write_xdr(w)?;
+            self.num_failures.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -13396,18 +14247,22 @@ impl From<MessageType> for i32 {
 
 impl ReadXdr for MessageType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for MessageType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -13433,20 +14288,24 @@ pub struct DontHave {
 
 impl ReadXdr for DontHave {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            type_: MessageType::read_xdr(r)?,
-            req_hash: Uint256::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                type_: MessageType::read_xdr(r)?,
+                req_hash: Uint256::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for DontHave {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.type_.write_xdr(w)?;
-        self.req_hash.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.type_.write_xdr(w)?;
+            self.req_hash.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -13530,18 +14389,22 @@ impl From<SurveyMessageCommandType> for i32 {
 
 impl ReadXdr for SurveyMessageCommandType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for SurveyMessageCommandType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -13573,26 +14436,30 @@ pub struct SurveyRequestMessage {
 
 impl ReadXdr for SurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            surveyor_peer_id: NodeId::read_xdr(r)?,
-            surveyed_peer_id: NodeId::read_xdr(r)?,
-            ledger_num: u32::read_xdr(r)?,
-            encryption_key: Curve25519Public::read_xdr(r)?,
-            command_type: SurveyMessageCommandType::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                surveyor_peer_id: NodeId::read_xdr(r)?,
+                surveyed_peer_id: NodeId::read_xdr(r)?,
+                ledger_num: u32::read_xdr(r)?,
+                encryption_key: Curve25519Public::read_xdr(r)?,
+                command_type: SurveyMessageCommandType::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for SurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.surveyor_peer_id.write_xdr(w)?;
-        self.surveyed_peer_id.write_xdr(w)?;
-        self.ledger_num.write_xdr(w)?;
-        self.encryption_key.write_xdr(w)?;
-        self.command_type.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.surveyor_peer_id.write_xdr(w)?;
+            self.surveyed_peer_id.write_xdr(w)?;
+            self.ledger_num.write_xdr(w)?;
+            self.encryption_key.write_xdr(w)?;
+            self.command_type.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -13618,20 +14485,24 @@ pub struct SignedSurveyRequestMessage {
 
 impl ReadXdr for SignedSurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            request_signature: Signature::read_xdr(r)?,
-            request: SurveyRequestMessage::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                request_signature: Signature::read_xdr(r)?,
+                request: SurveyRequestMessage::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for SignedSurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.request_signature.write_xdr(w)?;
-        self.request.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.request_signature.write_xdr(w)?;
+            self.request.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -13672,17 +14543,19 @@ impl AsRef<BytesM<64000>> for EncryptedBody {
 
 impl ReadXdr for EncryptedBody {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = BytesM::<64000>::read_xdr(r)?;
-        let v = EncryptedBody(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = BytesM::<64000>::read_xdr(r)?;
+            let v = EncryptedBody(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for EncryptedBody {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -13763,26 +14636,30 @@ pub struct SurveyResponseMessage {
 
 impl ReadXdr for SurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            surveyor_peer_id: NodeId::read_xdr(r)?,
-            surveyed_peer_id: NodeId::read_xdr(r)?,
-            ledger_num: u32::read_xdr(r)?,
-            command_type: SurveyMessageCommandType::read_xdr(r)?,
-            encrypted_body: EncryptedBody::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                surveyor_peer_id: NodeId::read_xdr(r)?,
+                surveyed_peer_id: NodeId::read_xdr(r)?,
+                ledger_num: u32::read_xdr(r)?,
+                command_type: SurveyMessageCommandType::read_xdr(r)?,
+                encrypted_body: EncryptedBody::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for SurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.surveyor_peer_id.write_xdr(w)?;
-        self.surveyed_peer_id.write_xdr(w)?;
-        self.ledger_num.write_xdr(w)?;
-        self.command_type.write_xdr(w)?;
-        self.encrypted_body.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.surveyor_peer_id.write_xdr(w)?;
+            self.surveyed_peer_id.write_xdr(w)?;
+            self.ledger_num.write_xdr(w)?;
+            self.command_type.write_xdr(w)?;
+            self.encrypted_body.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -13808,20 +14685,24 @@ pub struct SignedSurveyResponseMessage {
 
 impl ReadXdr for SignedSurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            response_signature: Signature::read_xdr(r)?,
-            response: SurveyResponseMessage::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                response_signature: Signature::read_xdr(r)?,
+                response: SurveyResponseMessage::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for SignedSurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.response_signature.write_xdr(w)?;
-        self.response.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.response_signature.write_xdr(w)?;
+            self.response.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -13875,46 +14756,50 @@ pub struct PeerStats {
 
 impl ReadXdr for PeerStats {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            id: NodeId::read_xdr(r)?,
-            version_str: StringM::<100>::read_xdr(r)?,
-            messages_read: u64::read_xdr(r)?,
-            messages_written: u64::read_xdr(r)?,
-            bytes_read: u64::read_xdr(r)?,
-            bytes_written: u64::read_xdr(r)?,
-            seconds_connected: u64::read_xdr(r)?,
-            unique_flood_bytes_recv: u64::read_xdr(r)?,
-            duplicate_flood_bytes_recv: u64::read_xdr(r)?,
-            unique_fetch_bytes_recv: u64::read_xdr(r)?,
-            duplicate_fetch_bytes_recv: u64::read_xdr(r)?,
-            unique_flood_message_recv: u64::read_xdr(r)?,
-            duplicate_flood_message_recv: u64::read_xdr(r)?,
-            unique_fetch_message_recv: u64::read_xdr(r)?,
-            duplicate_fetch_message_recv: u64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                id: NodeId::read_xdr(r)?,
+                version_str: StringM::<100>::read_xdr(r)?,
+                messages_read: u64::read_xdr(r)?,
+                messages_written: u64::read_xdr(r)?,
+                bytes_read: u64::read_xdr(r)?,
+                bytes_written: u64::read_xdr(r)?,
+                seconds_connected: u64::read_xdr(r)?,
+                unique_flood_bytes_recv: u64::read_xdr(r)?,
+                duplicate_flood_bytes_recv: u64::read_xdr(r)?,
+                unique_fetch_bytes_recv: u64::read_xdr(r)?,
+                duplicate_fetch_bytes_recv: u64::read_xdr(r)?,
+                unique_flood_message_recv: u64::read_xdr(r)?,
+                duplicate_flood_message_recv: u64::read_xdr(r)?,
+                unique_fetch_message_recv: u64::read_xdr(r)?,
+                duplicate_fetch_message_recv: u64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for PeerStats {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.id.write_xdr(w)?;
-        self.version_str.write_xdr(w)?;
-        self.messages_read.write_xdr(w)?;
-        self.messages_written.write_xdr(w)?;
-        self.bytes_read.write_xdr(w)?;
-        self.bytes_written.write_xdr(w)?;
-        self.seconds_connected.write_xdr(w)?;
-        self.unique_flood_bytes_recv.write_xdr(w)?;
-        self.duplicate_flood_bytes_recv.write_xdr(w)?;
-        self.unique_fetch_bytes_recv.write_xdr(w)?;
-        self.duplicate_fetch_bytes_recv.write_xdr(w)?;
-        self.unique_flood_message_recv.write_xdr(w)?;
-        self.duplicate_flood_message_recv.write_xdr(w)?;
-        self.unique_fetch_message_recv.write_xdr(w)?;
-        self.duplicate_fetch_message_recv.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.id.write_xdr(w)?;
+            self.version_str.write_xdr(w)?;
+            self.messages_read.write_xdr(w)?;
+            self.messages_written.write_xdr(w)?;
+            self.bytes_read.write_xdr(w)?;
+            self.bytes_written.write_xdr(w)?;
+            self.seconds_connected.write_xdr(w)?;
+            self.unique_flood_bytes_recv.write_xdr(w)?;
+            self.duplicate_flood_bytes_recv.write_xdr(w)?;
+            self.unique_fetch_bytes_recv.write_xdr(w)?;
+            self.duplicate_fetch_bytes_recv.write_xdr(w)?;
+            self.unique_flood_message_recv.write_xdr(w)?;
+            self.duplicate_flood_message_recv.write_xdr(w)?;
+            self.unique_fetch_message_recv.write_xdr(w)?;
+            self.duplicate_fetch_message_recv.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -13955,17 +14840,19 @@ impl AsRef<VecM<PeerStats, 25>> for PeerStatList {
 
 impl ReadXdr for PeerStatList {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<PeerStats, 25>::read_xdr(r)?;
-        let v = PeerStatList(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<PeerStats, 25>::read_xdr(r)?;
+            let v = PeerStatList(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PeerStatList {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -14045,24 +14932,28 @@ pub struct TopologyResponseBody {
 
 impl ReadXdr for TopologyResponseBody {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            inbound_peers: PeerStatList::read_xdr(r)?,
-            outbound_peers: PeerStatList::read_xdr(r)?,
-            total_inbound_peer_count: u32::read_xdr(r)?,
-            total_outbound_peer_count: u32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                inbound_peers: PeerStatList::read_xdr(r)?,
+                outbound_peers: PeerStatList::read_xdr(r)?,
+                total_inbound_peer_count: u32::read_xdr(r)?,
+                total_outbound_peer_count: u32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TopologyResponseBody {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.inbound_peers.write_xdr(w)?;
-        self.outbound_peers.write_xdr(w)?;
-        self.total_inbound_peer_count.write_xdr(w)?;
-        self.total_outbound_peer_count.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.inbound_peers.write_xdr(w)?;
+            self.outbound_peers.write_xdr(w)?;
+            self.total_inbound_peer_count.write_xdr(w)?;
+            self.total_outbound_peer_count.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -14136,29 +15027,33 @@ impl Union<SurveyMessageCommandType> for SurveyResponseBody {}
 
 impl ReadXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: SurveyMessageCommandType = <SurveyMessageCommandType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            SurveyMessageCommandType::SurveyTopology => {
-                Self::SurveyTopology(TopologyResponseBody::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: SurveyMessageCommandType = <SurveyMessageCommandType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                SurveyMessageCommandType::SurveyTopology => {
+                    Self::SurveyTopology(TopologyResponseBody::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::SurveyTopology(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::SurveyTopology(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -14205,17 +15100,19 @@ impl AsRef<VecM<Hash, 1000>> for TxAdvertVector {
 
 impl ReadXdr for TxAdvertVector {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<Hash, 1000>::read_xdr(r)?;
-        let v = TxAdvertVector(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<Hash, 1000>::read_xdr(r)?;
+            let v = TxAdvertVector(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TxAdvertVector {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -14288,18 +15185,22 @@ pub struct FloodAdvert {
 
 impl ReadXdr for FloodAdvert {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            tx_hashes: TxAdvertVector::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx_hashes: TxAdvertVector::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for FloodAdvert {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx_hashes.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.tx_hashes.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -14346,17 +15247,19 @@ impl AsRef<VecM<Hash, 1000>> for TxDemandVector {
 
 impl ReadXdr for TxDemandVector {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = VecM::<Hash, 1000>::read_xdr(r)?;
-        let v = TxDemandVector(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<Hash, 1000>::read_xdr(r)?;
+            let v = TxDemandVector(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TxDemandVector {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -14429,18 +15332,22 @@ pub struct FloodDemand {
 
 impl ReadXdr for FloodDemand {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            tx_hashes: TxDemandVector::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx_hashes: TxDemandVector::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for FloodDemand {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx_hashes.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.tx_hashes.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -14652,69 +15559,73 @@ impl Union<MessageType> for StellarMessage {}
 
 impl ReadXdr for StellarMessage {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: MessageType = <MessageType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            MessageType::ErrorMsg => Self::ErrorMsg(SError::read_xdr(r)?),
-            MessageType::Hello => Self::Hello(Hello::read_xdr(r)?),
-            MessageType::Auth => Self::Auth(Auth::read_xdr(r)?),
-            MessageType::DontHave => Self::DontHave(DontHave::read_xdr(r)?),
-            MessageType::GetPeers => Self::GetPeers,
-            MessageType::Peers => Self::Peers(VecM::<PeerAddress, 100>::read_xdr(r)?),
-            MessageType::GetTxSet => Self::GetTxSet(Uint256::read_xdr(r)?),
-            MessageType::TxSet => Self::TxSet(TransactionSet::read_xdr(r)?),
-            MessageType::GeneralizedTxSet => {
-                Self::GeneralizedTxSet(GeneralizedTransactionSet::read_xdr(r)?)
-            }
-            MessageType::Transaction => Self::Transaction(TransactionEnvelope::read_xdr(r)?),
-            MessageType::SurveyRequest => {
-                Self::SurveyRequest(SignedSurveyRequestMessage::read_xdr(r)?)
-            }
-            MessageType::SurveyResponse => {
-                Self::SurveyResponse(SignedSurveyResponseMessage::read_xdr(r)?)
-            }
-            MessageType::GetScpQuorumset => Self::GetScpQuorumset(Uint256::read_xdr(r)?),
-            MessageType::ScpQuorumset => Self::ScpQuorumset(ScpQuorumSet::read_xdr(r)?),
-            MessageType::ScpMessage => Self::ScpMessage(ScpEnvelope::read_xdr(r)?),
-            MessageType::GetScpState => Self::GetScpState(u32::read_xdr(r)?),
-            MessageType::SendMore => Self::SendMore(SendMore::read_xdr(r)?),
-            MessageType::FloodAdvert => Self::FloodAdvert(FloodAdvert::read_xdr(r)?),
-            MessageType::FloodDemand => Self::FloodDemand(FloodDemand::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: MessageType = <MessageType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                MessageType::ErrorMsg => Self::ErrorMsg(SError::read_xdr(r)?),
+                MessageType::Hello => Self::Hello(Hello::read_xdr(r)?),
+                MessageType::Auth => Self::Auth(Auth::read_xdr(r)?),
+                MessageType::DontHave => Self::DontHave(DontHave::read_xdr(r)?),
+                MessageType::GetPeers => Self::GetPeers,
+                MessageType::Peers => Self::Peers(VecM::<PeerAddress, 100>::read_xdr(r)?),
+                MessageType::GetTxSet => Self::GetTxSet(Uint256::read_xdr(r)?),
+                MessageType::TxSet => Self::TxSet(TransactionSet::read_xdr(r)?),
+                MessageType::GeneralizedTxSet => {
+                    Self::GeneralizedTxSet(GeneralizedTransactionSet::read_xdr(r)?)
+                }
+                MessageType::Transaction => Self::Transaction(TransactionEnvelope::read_xdr(r)?),
+                MessageType::SurveyRequest => {
+                    Self::SurveyRequest(SignedSurveyRequestMessage::read_xdr(r)?)
+                }
+                MessageType::SurveyResponse => {
+                    Self::SurveyResponse(SignedSurveyResponseMessage::read_xdr(r)?)
+                }
+                MessageType::GetScpQuorumset => Self::GetScpQuorumset(Uint256::read_xdr(r)?),
+                MessageType::ScpQuorumset => Self::ScpQuorumset(ScpQuorumSet::read_xdr(r)?),
+                MessageType::ScpMessage => Self::ScpMessage(ScpEnvelope::read_xdr(r)?),
+                MessageType::GetScpState => Self::GetScpState(u32::read_xdr(r)?),
+                MessageType::SendMore => Self::SendMore(SendMore::read_xdr(r)?),
+                MessageType::FloodAdvert => Self::FloodAdvert(FloodAdvert::read_xdr(r)?),
+                MessageType::FloodDemand => Self::FloodDemand(FloodDemand::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for StellarMessage {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::ErrorMsg(v) => v.write_xdr(w)?,
-            Self::Hello(v) => v.write_xdr(w)?,
-            Self::Auth(v) => v.write_xdr(w)?,
-            Self::DontHave(v) => v.write_xdr(w)?,
-            Self::GetPeers => ().write_xdr(w)?,
-            Self::Peers(v) => v.write_xdr(w)?,
-            Self::GetTxSet(v) => v.write_xdr(w)?,
-            Self::TxSet(v) => v.write_xdr(w)?,
-            Self::GeneralizedTxSet(v) => v.write_xdr(w)?,
-            Self::Transaction(v) => v.write_xdr(w)?,
-            Self::SurveyRequest(v) => v.write_xdr(w)?,
-            Self::SurveyResponse(v) => v.write_xdr(w)?,
-            Self::GetScpQuorumset(v) => v.write_xdr(w)?,
-            Self::ScpQuorumset(v) => v.write_xdr(w)?,
-            Self::ScpMessage(v) => v.write_xdr(w)?,
-            Self::GetScpState(v) => v.write_xdr(w)?,
-            Self::SendMore(v) => v.write_xdr(w)?,
-            Self::FloodAdvert(v) => v.write_xdr(w)?,
-            Self::FloodDemand(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ErrorMsg(v) => v.write_xdr(w)?,
+                Self::Hello(v) => v.write_xdr(w)?,
+                Self::Auth(v) => v.write_xdr(w)?,
+                Self::DontHave(v) => v.write_xdr(w)?,
+                Self::GetPeers => ().write_xdr(w)?,
+                Self::Peers(v) => v.write_xdr(w)?,
+                Self::GetTxSet(v) => v.write_xdr(w)?,
+                Self::TxSet(v) => v.write_xdr(w)?,
+                Self::GeneralizedTxSet(v) => v.write_xdr(w)?,
+                Self::Transaction(v) => v.write_xdr(w)?,
+                Self::SurveyRequest(v) => v.write_xdr(w)?,
+                Self::SurveyResponse(v) => v.write_xdr(w)?,
+                Self::GetScpQuorumset(v) => v.write_xdr(w)?,
+                Self::ScpQuorumset(v) => v.write_xdr(w)?,
+                Self::ScpMessage(v) => v.write_xdr(w)?,
+                Self::GetScpState(v) => v.write_xdr(w)?,
+                Self::SendMore(v) => v.write_xdr(w)?,
+                Self::FloodAdvert(v) => v.write_xdr(w)?,
+                Self::FloodDemand(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -14742,22 +15653,26 @@ pub struct AuthenticatedMessageV0 {
 
 impl ReadXdr for AuthenticatedMessageV0 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            sequence: u64::read_xdr(r)?,
-            message: StellarMessage::read_xdr(r)?,
-            mac: HmacSha256Mac::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                sequence: u64::read_xdr(r)?,
+                message: StellarMessage::read_xdr(r)?,
+                mac: HmacSha256Mac::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for AuthenticatedMessageV0 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.sequence.write_xdr(w)?;
-        self.message.write_xdr(w)?;
-        self.mac.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.sequence.write_xdr(w)?;
+            self.message.write_xdr(w)?;
+            self.mac.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -14836,27 +15751,31 @@ impl Union<u32> for AuthenticatedMessage {}
 
 impl ReadXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: u32 = <u32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0(AuthenticatedMessageV0::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: u32 = <u32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0(AuthenticatedMessageV0::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -14932,29 +15851,35 @@ impl Union<LiquidityPoolType> for LiquidityPoolParameters {}
 
 impl ReadXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            LiquidityPoolType::LiquidityPoolConstantProduct => Self::LiquidityPoolConstantProduct(
-                LiquidityPoolConstantProductParameters::read_xdr(r)?,
-            ),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                LiquidityPoolType::LiquidityPoolConstantProduct => {
+                    Self::LiquidityPoolConstantProduct(
+                        LiquidityPoolConstantProductParameters::read_xdr(r)?,
+                    )
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::LiquidityPoolConstantProduct(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::LiquidityPoolConstantProduct(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -14980,20 +15905,24 @@ pub struct MuxedAccountMed25519 {
 
 impl ReadXdr for MuxedAccountMed25519 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            id: u64::read_xdr(r)?,
-            ed25519: Uint256::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                id: u64::read_xdr(r)?,
+                ed25519: Uint256::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for MuxedAccountMed25519 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.id.write_xdr(w)?;
-        self.ed25519.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.id.write_xdr(w)?;
+            self.ed25519.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -15076,29 +16005,35 @@ impl Union<CryptoKeyType> for MuxedAccount {}
 
 impl ReadXdr for MuxedAccount {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: CryptoKeyType = <CryptoKeyType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            CryptoKeyType::Ed25519 => Self::Ed25519(Uint256::read_xdr(r)?),
-            CryptoKeyType::MuxedEd25519 => Self::MuxedEd25519(MuxedAccountMed25519::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: CryptoKeyType = <CryptoKeyType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                CryptoKeyType::Ed25519 => Self::Ed25519(Uint256::read_xdr(r)?),
+                CryptoKeyType::MuxedEd25519 => {
+                    Self::MuxedEd25519(MuxedAccountMed25519::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for MuxedAccount {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Ed25519(v) => v.write_xdr(w)?,
-            Self::MuxedEd25519(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Ed25519(v) => v.write_xdr(w)?,
+                Self::MuxedEd25519(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -15124,20 +16059,24 @@ pub struct DecoratedSignature {
 
 impl ReadXdr for DecoratedSignature {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            hint: SignatureHint::read_xdr(r)?,
-            signature: Signature::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                hint: SignatureHint::read_xdr(r)?,
+                signature: Signature::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for DecoratedSignature {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.hint.write_xdr(w)?;
-        self.signature.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.hint.write_xdr(w)?;
+            self.signature.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -15363,18 +16302,22 @@ impl From<OperationType> for i32 {
 
 impl ReadXdr for OperationType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for OperationType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -15400,20 +16343,24 @@ pub struct CreateAccountOp {
 
 impl ReadXdr for CreateAccountOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            destination: AccountId::read_xdr(r)?,
-            starting_balance: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                destination: AccountId::read_xdr(r)?,
+                starting_balance: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for CreateAccountOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.destination.write_xdr(w)?;
-        self.starting_balance.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.destination.write_xdr(w)?;
+            self.starting_balance.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -15441,22 +16388,26 @@ pub struct PaymentOp {
 
 impl ReadXdr for PaymentOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            destination: MuxedAccount::read_xdr(r)?,
-            asset: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                destination: MuxedAccount::read_xdr(r)?,
+                asset: Asset::read_xdr(r)?,
+                amount: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for PaymentOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.destination.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.destination.write_xdr(w)?;
+            self.asset.write_xdr(w)?;
+            self.amount.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -15494,28 +16445,32 @@ pub struct PathPaymentStrictReceiveOp {
 
 impl ReadXdr for PathPaymentStrictReceiveOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            send_asset: Asset::read_xdr(r)?,
-            send_max: i64::read_xdr(r)?,
-            destination: MuxedAccount::read_xdr(r)?,
-            dest_asset: Asset::read_xdr(r)?,
-            dest_amount: i64::read_xdr(r)?,
-            path: VecM::<Asset, 5>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                send_asset: Asset::read_xdr(r)?,
+                send_max: i64::read_xdr(r)?,
+                destination: MuxedAccount::read_xdr(r)?,
+                dest_asset: Asset::read_xdr(r)?,
+                dest_amount: i64::read_xdr(r)?,
+                path: VecM::<Asset, 5>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for PathPaymentStrictReceiveOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.send_asset.write_xdr(w)?;
-        self.send_max.write_xdr(w)?;
-        self.destination.write_xdr(w)?;
-        self.dest_asset.write_xdr(w)?;
-        self.dest_amount.write_xdr(w)?;
-        self.path.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.send_asset.write_xdr(w)?;
+            self.send_max.write_xdr(w)?;
+            self.destination.write_xdr(w)?;
+            self.dest_asset.write_xdr(w)?;
+            self.dest_amount.write_xdr(w)?;
+            self.path.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -15553,28 +16508,32 @@ pub struct PathPaymentStrictSendOp {
 
 impl ReadXdr for PathPaymentStrictSendOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            send_asset: Asset::read_xdr(r)?,
-            send_amount: i64::read_xdr(r)?,
-            destination: MuxedAccount::read_xdr(r)?,
-            dest_asset: Asset::read_xdr(r)?,
-            dest_min: i64::read_xdr(r)?,
-            path: VecM::<Asset, 5>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                send_asset: Asset::read_xdr(r)?,
+                send_amount: i64::read_xdr(r)?,
+                destination: MuxedAccount::read_xdr(r)?,
+                dest_asset: Asset::read_xdr(r)?,
+                dest_min: i64::read_xdr(r)?,
+                path: VecM::<Asset, 5>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for PathPaymentStrictSendOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.send_asset.write_xdr(w)?;
-        self.send_amount.write_xdr(w)?;
-        self.destination.write_xdr(w)?;
-        self.dest_asset.write_xdr(w)?;
-        self.dest_min.write_xdr(w)?;
-        self.path.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.send_asset.write_xdr(w)?;
+            self.send_amount.write_xdr(w)?;
+            self.destination.write_xdr(w)?;
+            self.dest_asset.write_xdr(w)?;
+            self.dest_min.write_xdr(w)?;
+            self.path.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -15608,26 +16567,30 @@ pub struct ManageSellOfferOp {
 
 impl ReadXdr for ManageSellOfferOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            selling: Asset::read_xdr(r)?,
-            buying: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
-            price: Price::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                selling: Asset::read_xdr(r)?,
+                buying: Asset::read_xdr(r)?,
+                amount: i64::read_xdr(r)?,
+                price: Price::read_xdr(r)?,
+                offer_id: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ManageSellOfferOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.selling.write_xdr(w)?;
-        self.buying.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.price.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.selling.write_xdr(w)?;
+            self.buying.write_xdr(w)?;
+            self.amount.write_xdr(w)?;
+            self.price.write_xdr(w)?;
+            self.offer_id.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -15662,26 +16625,30 @@ pub struct ManageBuyOfferOp {
 
 impl ReadXdr for ManageBuyOfferOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            selling: Asset::read_xdr(r)?,
-            buying: Asset::read_xdr(r)?,
-            buy_amount: i64::read_xdr(r)?,
-            price: Price::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                selling: Asset::read_xdr(r)?,
+                buying: Asset::read_xdr(r)?,
+                buy_amount: i64::read_xdr(r)?,
+                price: Price::read_xdr(r)?,
+                offer_id: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ManageBuyOfferOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.selling.write_xdr(w)?;
-        self.buying.write_xdr(w)?;
-        self.buy_amount.write_xdr(w)?;
-        self.price.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.selling.write_xdr(w)?;
+            self.buying.write_xdr(w)?;
+            self.buy_amount.write_xdr(w)?;
+            self.price.write_xdr(w)?;
+            self.offer_id.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -15711,24 +16678,28 @@ pub struct CreatePassiveSellOfferOp {
 
 impl ReadXdr for CreatePassiveSellOfferOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            selling: Asset::read_xdr(r)?,
-            buying: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
-            price: Price::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                selling: Asset::read_xdr(r)?,
+                buying: Asset::read_xdr(r)?,
+                amount: i64::read_xdr(r)?,
+                price: Price::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for CreatePassiveSellOfferOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.selling.write_xdr(w)?;
-        self.buying.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.price.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.selling.write_xdr(w)?;
+            self.buying.write_xdr(w)?;
+            self.amount.write_xdr(w)?;
+            self.price.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -15775,34 +16746,38 @@ pub struct SetOptionsOp {
 
 impl ReadXdr for SetOptionsOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            inflation_dest: Option::<AccountId>::read_xdr(r)?,
-            clear_flags: Option::<u32>::read_xdr(r)?,
-            set_flags: Option::<u32>::read_xdr(r)?,
-            master_weight: Option::<u32>::read_xdr(r)?,
-            low_threshold: Option::<u32>::read_xdr(r)?,
-            med_threshold: Option::<u32>::read_xdr(r)?,
-            high_threshold: Option::<u32>::read_xdr(r)?,
-            home_domain: Option::<String32>::read_xdr(r)?,
-            signer: Option::<Signer>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                inflation_dest: Option::<AccountId>::read_xdr(r)?,
+                clear_flags: Option::<u32>::read_xdr(r)?,
+                set_flags: Option::<u32>::read_xdr(r)?,
+                master_weight: Option::<u32>::read_xdr(r)?,
+                low_threshold: Option::<u32>::read_xdr(r)?,
+                med_threshold: Option::<u32>::read_xdr(r)?,
+                high_threshold: Option::<u32>::read_xdr(r)?,
+                home_domain: Option::<String32>::read_xdr(r)?,
+                signer: Option::<Signer>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for SetOptionsOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.inflation_dest.write_xdr(w)?;
-        self.clear_flags.write_xdr(w)?;
-        self.set_flags.write_xdr(w)?;
-        self.master_weight.write_xdr(w)?;
-        self.low_threshold.write_xdr(w)?;
-        self.med_threshold.write_xdr(w)?;
-        self.high_threshold.write_xdr(w)?;
-        self.home_domain.write_xdr(w)?;
-        self.signer.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.inflation_dest.write_xdr(w)?;
+            self.clear_flags.write_xdr(w)?;
+            self.set_flags.write_xdr(w)?;
+            self.master_weight.write_xdr(w)?;
+            self.low_threshold.write_xdr(w)?;
+            self.med_threshold.write_xdr(w)?;
+            self.high_threshold.write_xdr(w)?;
+            self.home_domain.write_xdr(w)?;
+            self.signer.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -15902,33 +16877,37 @@ impl Union<AssetType> for ChangeTrustAsset {}
 
 impl ReadXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            AssetType::Native => Self::Native,
-            AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
-            AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
-            AssetType::PoolShare => Self::PoolShare(LiquidityPoolParameters::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                AssetType::Native => Self::Native,
+                AssetType::CreditAlphanum4 => Self::CreditAlphanum4(AlphaNum4::read_xdr(r)?),
+                AssetType::CreditAlphanum12 => Self::CreditAlphanum12(AlphaNum12::read_xdr(r)?),
+                AssetType::PoolShare => Self::PoolShare(LiquidityPoolParameters::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Native => ().write_xdr(w)?,
-            Self::CreditAlphanum4(v) => v.write_xdr(w)?,
-            Self::CreditAlphanum12(v) => v.write_xdr(w)?,
-            Self::PoolShare(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Native => ().write_xdr(w)?,
+                Self::CreditAlphanum4(v) => v.write_xdr(w)?,
+                Self::CreditAlphanum12(v) => v.write_xdr(w)?,
+                Self::PoolShare(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -15956,20 +16935,24 @@ pub struct ChangeTrustOp {
 
 impl ReadXdr for ChangeTrustOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            line: ChangeTrustAsset::read_xdr(r)?,
-            limit: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                line: ChangeTrustAsset::read_xdr(r)?,
+                limit: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ChangeTrustOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.line.write_xdr(w)?;
-        self.limit.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.line.write_xdr(w)?;
+            self.limit.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -15999,22 +16982,26 @@ pub struct AllowTrustOp {
 
 impl ReadXdr for AllowTrustOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            trustor: AccountId::read_xdr(r)?,
-            asset: AssetCode::read_xdr(r)?,
-            authorize: u32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                trustor: AccountId::read_xdr(r)?,
+                asset: AssetCode::read_xdr(r)?,
+                authorize: u32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for AllowTrustOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.trustor.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.authorize.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.trustor.write_xdr(w)?;
+            self.asset.write_xdr(w)?;
+            self.authorize.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16040,20 +17027,24 @@ pub struct ManageDataOp {
 
 impl ReadXdr for ManageDataOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            data_name: String64::read_xdr(r)?,
-            data_value: Option::<DataValue>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                data_name: String64::read_xdr(r)?,
+                data_value: Option::<DataValue>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ManageDataOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.data_name.write_xdr(w)?;
-        self.data_value.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.data_name.write_xdr(w)?;
+            self.data_value.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16077,18 +17068,22 @@ pub struct BumpSequenceOp {
 
 impl ReadXdr for BumpSequenceOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            bump_to: SequenceNumber::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                bump_to: SequenceNumber::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for BumpSequenceOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.bump_to.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.bump_to.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16116,22 +17111,26 @@ pub struct CreateClaimableBalanceOp {
 
 impl ReadXdr for CreateClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            asset: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
-            claimants: VecM::<Claimant, 10>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                asset: Asset::read_xdr(r)?,
+                amount: i64::read_xdr(r)?,
+                claimants: VecM::<Claimant, 10>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for CreateClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.asset.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.claimants.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.asset.write_xdr(w)?;
+            self.amount.write_xdr(w)?;
+            self.claimants.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16155,18 +17154,22 @@ pub struct ClaimClaimableBalanceOp {
 
 impl ReadXdr for ClaimClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            balance_id: ClaimableBalanceId::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                balance_id: ClaimableBalanceId::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ClaimClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.balance_id.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.balance_id.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16190,18 +17193,22 @@ pub struct BeginSponsoringFutureReservesOp {
 
 impl ReadXdr for BeginSponsoringFutureReservesOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            sponsored_id: AccountId::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                sponsored_id: AccountId::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for BeginSponsoringFutureReservesOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.sponsored_id.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.sponsored_id.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16292,18 +17299,22 @@ impl From<RevokeSponsorshipType> for i32 {
 
 impl ReadXdr for RevokeSponsorshipType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for RevokeSponsorshipType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -16329,20 +17340,24 @@ pub struct RevokeSponsorshipOpSigner {
 
 impl ReadXdr for RevokeSponsorshipOpSigner {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            account_id: AccountId::read_xdr(r)?,
-            signer_key: SignerKey::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                account_id: AccountId::read_xdr(r)?,
+                signer_key: SignerKey::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for RevokeSponsorshipOpSigner {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.account_id.write_xdr(w)?;
-        self.signer_key.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.account_id.write_xdr(w)?;
+            self.signer_key.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16428,29 +17443,35 @@ impl Union<RevokeSponsorshipType> for RevokeSponsorshipOp {}
 
 impl ReadXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            RevokeSponsorshipType::LedgerEntry => Self::LedgerEntry(LedgerKey::read_xdr(r)?),
-            RevokeSponsorshipType::Signer => Self::Signer(RevokeSponsorshipOpSigner::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                RevokeSponsorshipType::LedgerEntry => Self::LedgerEntry(LedgerKey::read_xdr(r)?),
+                RevokeSponsorshipType::Signer => {
+                    Self::Signer(RevokeSponsorshipOpSigner::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::LedgerEntry(v) => v.write_xdr(w)?,
-            Self::Signer(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::LedgerEntry(v) => v.write_xdr(w)?,
+                Self::Signer(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -16478,22 +17499,26 @@ pub struct ClawbackOp {
 
 impl ReadXdr for ClawbackOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            asset: Asset::read_xdr(r)?,
-            from: MuxedAccount::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                asset: Asset::read_xdr(r)?,
+                from: MuxedAccount::read_xdr(r)?,
+                amount: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ClawbackOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.asset.write_xdr(w)?;
-        self.from.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.asset.write_xdr(w)?;
+            self.from.write_xdr(w)?;
+            self.amount.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16517,18 +17542,22 @@ pub struct ClawbackClaimableBalanceOp {
 
 impl ReadXdr for ClawbackClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            balance_id: ClaimableBalanceId::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                balance_id: ClaimableBalanceId::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ClawbackClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.balance_id.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.balance_id.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16559,24 +17588,28 @@ pub struct SetTrustLineFlagsOp {
 
 impl ReadXdr for SetTrustLineFlagsOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            trustor: AccountId::read_xdr(r)?,
-            asset: Asset::read_xdr(r)?,
-            clear_flags: u32::read_xdr(r)?,
-            set_flags: u32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                trustor: AccountId::read_xdr(r)?,
+                asset: Asset::read_xdr(r)?,
+                clear_flags: u32::read_xdr(r)?,
+                set_flags: u32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for SetTrustLineFlagsOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.trustor.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.clear_flags.write_xdr(w)?;
-        self.set_flags.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.trustor.write_xdr(w)?;
+            self.asset.write_xdr(w)?;
+            self.clear_flags.write_xdr(w)?;
+            self.set_flags.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16614,26 +17647,30 @@ pub struct LiquidityPoolDepositOp {
 
 impl ReadXdr for LiquidityPoolDepositOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            liquidity_pool_id: PoolId::read_xdr(r)?,
-            max_amount_a: i64::read_xdr(r)?,
-            max_amount_b: i64::read_xdr(r)?,
-            min_price: Price::read_xdr(r)?,
-            max_price: Price::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                liquidity_pool_id: PoolId::read_xdr(r)?,
+                max_amount_a: i64::read_xdr(r)?,
+                max_amount_b: i64::read_xdr(r)?,
+                min_price: Price::read_xdr(r)?,
+                max_price: Price::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LiquidityPoolDepositOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_id.write_xdr(w)?;
-        self.max_amount_a.write_xdr(w)?;
-        self.max_amount_b.write_xdr(w)?;
-        self.min_price.write_xdr(w)?;
-        self.max_price.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.liquidity_pool_id.write_xdr(w)?;
+            self.max_amount_a.write_xdr(w)?;
+            self.max_amount_b.write_xdr(w)?;
+            self.min_price.write_xdr(w)?;
+            self.max_price.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16663,24 +17700,28 @@ pub struct LiquidityPoolWithdrawOp {
 
 impl ReadXdr for LiquidityPoolWithdrawOp {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            liquidity_pool_id: PoolId::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
-            min_amount_a: i64::read_xdr(r)?,
-            min_amount_b: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                liquidity_pool_id: PoolId::read_xdr(r)?,
+                amount: i64::read_xdr(r)?,
+                min_amount_a: i64::read_xdr(r)?,
+                min_amount_b: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LiquidityPoolWithdrawOp {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_id.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        self.min_amount_a.write_xdr(w)?;
-        self.min_amount_b.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.liquidity_pool_id.write_xdr(w)?;
+            self.amount.write_xdr(w)?;
+            self.min_amount_a.write_xdr(w)?;
+            self.min_amount_b.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -16919,97 +17960,105 @@ impl Union<OperationType> for OperationBody {}
 
 impl ReadXdr for OperationBody {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            OperationType::CreateAccount => Self::CreateAccount(CreateAccountOp::read_xdr(r)?),
-            OperationType::Payment => Self::Payment(PaymentOp::read_xdr(r)?),
-            OperationType::PathPaymentStrictReceive => {
-                Self::PathPaymentStrictReceive(PathPaymentStrictReceiveOp::read_xdr(r)?)
-            }
-            OperationType::ManageSellOffer => {
-                Self::ManageSellOffer(ManageSellOfferOp::read_xdr(r)?)
-            }
-            OperationType::CreatePassiveSellOffer => {
-                Self::CreatePassiveSellOffer(CreatePassiveSellOfferOp::read_xdr(r)?)
-            }
-            OperationType::SetOptions => Self::SetOptions(SetOptionsOp::read_xdr(r)?),
-            OperationType::ChangeTrust => Self::ChangeTrust(ChangeTrustOp::read_xdr(r)?),
-            OperationType::AllowTrust => Self::AllowTrust(AllowTrustOp::read_xdr(r)?),
-            OperationType::AccountMerge => Self::AccountMerge(MuxedAccount::read_xdr(r)?),
-            OperationType::Inflation => Self::Inflation,
-            OperationType::ManageData => Self::ManageData(ManageDataOp::read_xdr(r)?),
-            OperationType::BumpSequence => Self::BumpSequence(BumpSequenceOp::read_xdr(r)?),
-            OperationType::ManageBuyOffer => Self::ManageBuyOffer(ManageBuyOfferOp::read_xdr(r)?),
-            OperationType::PathPaymentStrictSend => {
-                Self::PathPaymentStrictSend(PathPaymentStrictSendOp::read_xdr(r)?)
-            }
-            OperationType::CreateClaimableBalance => {
-                Self::CreateClaimableBalance(CreateClaimableBalanceOp::read_xdr(r)?)
-            }
-            OperationType::ClaimClaimableBalance => {
-                Self::ClaimClaimableBalance(ClaimClaimableBalanceOp::read_xdr(r)?)
-            }
-            OperationType::BeginSponsoringFutureReserves => {
-                Self::BeginSponsoringFutureReserves(BeginSponsoringFutureReservesOp::read_xdr(r)?)
-            }
-            OperationType::EndSponsoringFutureReserves => Self::EndSponsoringFutureReserves,
-            OperationType::RevokeSponsorship => {
-                Self::RevokeSponsorship(RevokeSponsorshipOp::read_xdr(r)?)
-            }
-            OperationType::Clawback => Self::Clawback(ClawbackOp::read_xdr(r)?),
-            OperationType::ClawbackClaimableBalance => {
-                Self::ClawbackClaimableBalance(ClawbackClaimableBalanceOp::read_xdr(r)?)
-            }
-            OperationType::SetTrustLineFlags => {
-                Self::SetTrustLineFlags(SetTrustLineFlagsOp::read_xdr(r)?)
-            }
-            OperationType::LiquidityPoolDeposit => {
-                Self::LiquidityPoolDeposit(LiquidityPoolDepositOp::read_xdr(r)?)
-            }
-            OperationType::LiquidityPoolWithdraw => {
-                Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawOp::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                OperationType::CreateAccount => Self::CreateAccount(CreateAccountOp::read_xdr(r)?),
+                OperationType::Payment => Self::Payment(PaymentOp::read_xdr(r)?),
+                OperationType::PathPaymentStrictReceive => {
+                    Self::PathPaymentStrictReceive(PathPaymentStrictReceiveOp::read_xdr(r)?)
+                }
+                OperationType::ManageSellOffer => {
+                    Self::ManageSellOffer(ManageSellOfferOp::read_xdr(r)?)
+                }
+                OperationType::CreatePassiveSellOffer => {
+                    Self::CreatePassiveSellOffer(CreatePassiveSellOfferOp::read_xdr(r)?)
+                }
+                OperationType::SetOptions => Self::SetOptions(SetOptionsOp::read_xdr(r)?),
+                OperationType::ChangeTrust => Self::ChangeTrust(ChangeTrustOp::read_xdr(r)?),
+                OperationType::AllowTrust => Self::AllowTrust(AllowTrustOp::read_xdr(r)?),
+                OperationType::AccountMerge => Self::AccountMerge(MuxedAccount::read_xdr(r)?),
+                OperationType::Inflation => Self::Inflation,
+                OperationType::ManageData => Self::ManageData(ManageDataOp::read_xdr(r)?),
+                OperationType::BumpSequence => Self::BumpSequence(BumpSequenceOp::read_xdr(r)?),
+                OperationType::ManageBuyOffer => {
+                    Self::ManageBuyOffer(ManageBuyOfferOp::read_xdr(r)?)
+                }
+                OperationType::PathPaymentStrictSend => {
+                    Self::PathPaymentStrictSend(PathPaymentStrictSendOp::read_xdr(r)?)
+                }
+                OperationType::CreateClaimableBalance => {
+                    Self::CreateClaimableBalance(CreateClaimableBalanceOp::read_xdr(r)?)
+                }
+                OperationType::ClaimClaimableBalance => {
+                    Self::ClaimClaimableBalance(ClaimClaimableBalanceOp::read_xdr(r)?)
+                }
+                OperationType::BeginSponsoringFutureReserves => {
+                    Self::BeginSponsoringFutureReserves(BeginSponsoringFutureReservesOp::read_xdr(
+                        r,
+                    )?)
+                }
+                OperationType::EndSponsoringFutureReserves => Self::EndSponsoringFutureReserves,
+                OperationType::RevokeSponsorship => {
+                    Self::RevokeSponsorship(RevokeSponsorshipOp::read_xdr(r)?)
+                }
+                OperationType::Clawback => Self::Clawback(ClawbackOp::read_xdr(r)?),
+                OperationType::ClawbackClaimableBalance => {
+                    Self::ClawbackClaimableBalance(ClawbackClaimableBalanceOp::read_xdr(r)?)
+                }
+                OperationType::SetTrustLineFlags => {
+                    Self::SetTrustLineFlags(SetTrustLineFlagsOp::read_xdr(r)?)
+                }
+                OperationType::LiquidityPoolDeposit => {
+                    Self::LiquidityPoolDeposit(LiquidityPoolDepositOp::read_xdr(r)?)
+                }
+                OperationType::LiquidityPoolWithdraw => {
+                    Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawOp::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for OperationBody {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::CreateAccount(v) => v.write_xdr(w)?,
-            Self::Payment(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictReceive(v) => v.write_xdr(w)?,
-            Self::ManageSellOffer(v) => v.write_xdr(w)?,
-            Self::CreatePassiveSellOffer(v) => v.write_xdr(w)?,
-            Self::SetOptions(v) => v.write_xdr(w)?,
-            Self::ChangeTrust(v) => v.write_xdr(w)?,
-            Self::AllowTrust(v) => v.write_xdr(w)?,
-            Self::AccountMerge(v) => v.write_xdr(w)?,
-            Self::Inflation => ().write_xdr(w)?,
-            Self::ManageData(v) => v.write_xdr(w)?,
-            Self::BumpSequence(v) => v.write_xdr(w)?,
-            Self::ManageBuyOffer(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictSend(v) => v.write_xdr(w)?,
-            Self::CreateClaimableBalance(v) => v.write_xdr(w)?,
-            Self::ClaimClaimableBalance(v) => v.write_xdr(w)?,
-            Self::BeginSponsoringFutureReserves(v) => v.write_xdr(w)?,
-            Self::EndSponsoringFutureReserves => ().write_xdr(w)?,
-            Self::RevokeSponsorship(v) => v.write_xdr(w)?,
-            Self::Clawback(v) => v.write_xdr(w)?,
-            Self::ClawbackClaimableBalance(v) => v.write_xdr(w)?,
-            Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
-            Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
-            Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::CreateAccount(v) => v.write_xdr(w)?,
+                Self::Payment(v) => v.write_xdr(w)?,
+                Self::PathPaymentStrictReceive(v) => v.write_xdr(w)?,
+                Self::ManageSellOffer(v) => v.write_xdr(w)?,
+                Self::CreatePassiveSellOffer(v) => v.write_xdr(w)?,
+                Self::SetOptions(v) => v.write_xdr(w)?,
+                Self::ChangeTrust(v) => v.write_xdr(w)?,
+                Self::AllowTrust(v) => v.write_xdr(w)?,
+                Self::AccountMerge(v) => v.write_xdr(w)?,
+                Self::Inflation => ().write_xdr(w)?,
+                Self::ManageData(v) => v.write_xdr(w)?,
+                Self::BumpSequence(v) => v.write_xdr(w)?,
+                Self::ManageBuyOffer(v) => v.write_xdr(w)?,
+                Self::PathPaymentStrictSend(v) => v.write_xdr(w)?,
+                Self::CreateClaimableBalance(v) => v.write_xdr(w)?,
+                Self::ClaimClaimableBalance(v) => v.write_xdr(w)?,
+                Self::BeginSponsoringFutureReserves(v) => v.write_xdr(w)?,
+                Self::EndSponsoringFutureReserves => ().write_xdr(w)?,
+                Self::RevokeSponsorship(v) => v.write_xdr(w)?,
+                Self::Clawback(v) => v.write_xdr(w)?,
+                Self::ClawbackClaimableBalance(v) => v.write_xdr(w)?,
+                Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
+                Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
+                Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -17090,20 +18139,24 @@ pub struct Operation {
 
 impl ReadXdr for Operation {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            source_account: Option::<MuxedAccount>::read_xdr(r)?,
-            body: OperationBody::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                source_account: Option::<MuxedAccount>::read_xdr(r)?,
+                body: OperationBody::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for Operation {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.source_account.write_xdr(w)?;
-        self.body.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.source_account.write_xdr(w)?;
+            self.body.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -17131,22 +18184,26 @@ pub struct HashIdPreimageOperationId {
 
 impl ReadXdr for HashIdPreimageOperationId {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            source_account: AccountId::read_xdr(r)?,
-            seq_num: SequenceNumber::read_xdr(r)?,
-            op_num: u32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                source_account: AccountId::read_xdr(r)?,
+                seq_num: SequenceNumber::read_xdr(r)?,
+                op_num: u32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for HashIdPreimageOperationId {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.source_account.write_xdr(w)?;
-        self.seq_num.write_xdr(w)?;
-        self.op_num.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.source_account.write_xdr(w)?;
+            self.seq_num.write_xdr(w)?;
+            self.op_num.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -17178,26 +18235,30 @@ pub struct HashIdPreimageRevokeId {
 
 impl ReadXdr for HashIdPreimageRevokeId {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            source_account: AccountId::read_xdr(r)?,
-            seq_num: SequenceNumber::read_xdr(r)?,
-            op_num: u32::read_xdr(r)?,
-            liquidity_pool_id: PoolId::read_xdr(r)?,
-            asset: Asset::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                source_account: AccountId::read_xdr(r)?,
+                seq_num: SequenceNumber::read_xdr(r)?,
+                op_num: u32::read_xdr(r)?,
+                liquidity_pool_id: PoolId::read_xdr(r)?,
+                asset: Asset::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for HashIdPreimageRevokeId {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.source_account.write_xdr(w)?;
-        self.seq_num.write_xdr(w)?;
-        self.op_num.write_xdr(w)?;
-        self.liquidity_pool_id.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.source_account.write_xdr(w)?;
+            self.seq_num.write_xdr(w)?;
+            self.op_num.write_xdr(w)?;
+            self.liquidity_pool_id.write_xdr(w)?;
+            self.asset.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -17288,31 +18349,35 @@ impl Union<EnvelopeType> for HashIdPreimage {}
 
 impl ReadXdr for HashIdPreimage {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            EnvelopeType::OpId => Self::OpId(HashIdPreimageOperationId::read_xdr(r)?),
-            EnvelopeType::PoolRevokeOpId => {
-                Self::PoolRevokeOpId(HashIdPreimageRevokeId::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                EnvelopeType::OpId => Self::OpId(HashIdPreimageOperationId::read_xdr(r)?),
+                EnvelopeType::PoolRevokeOpId => {
+                    Self::PoolRevokeOpId(HashIdPreimageRevokeId::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for HashIdPreimage {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::OpId(v) => v.write_xdr(w)?,
-            Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::OpId(v) => v.write_xdr(w)?,
+                Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -17418,18 +18483,22 @@ impl From<MemoType> for i32 {
 
 impl ReadXdr for MemoType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for MemoType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -17529,35 +18598,39 @@ impl Union<MemoType> for Memo {}
 
 impl ReadXdr for Memo {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: MemoType = <MemoType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            MemoType::None => Self::None,
-            MemoType::Text => Self::Text(StringM::<28>::read_xdr(r)?),
-            MemoType::Id => Self::Id(u64::read_xdr(r)?),
-            MemoType::Hash => Self::Hash(Hash::read_xdr(r)?),
-            MemoType::Return => Self::Return(Hash::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: MemoType = <MemoType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                MemoType::None => Self::None,
+                MemoType::Text => Self::Text(StringM::<28>::read_xdr(r)?),
+                MemoType::Id => Self::Id(u64::read_xdr(r)?),
+                MemoType::Hash => Self::Hash(Hash::read_xdr(r)?),
+                MemoType::Return => Self::Return(Hash::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for Memo {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::None => ().write_xdr(w)?,
-            Self::Text(v) => v.write_xdr(w)?,
-            Self::Id(v) => v.write_xdr(w)?,
-            Self::Hash(v) => v.write_xdr(w)?,
-            Self::Return(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::None => ().write_xdr(w)?,
+                Self::Text(v) => v.write_xdr(w)?,
+                Self::Id(v) => v.write_xdr(w)?,
+                Self::Hash(v) => v.write_xdr(w)?,
+                Self::Return(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -17583,20 +18656,24 @@ pub struct TimeBounds {
 
 impl ReadXdr for TimeBounds {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            min_time: TimePoint::read_xdr(r)?,
-            max_time: TimePoint::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                min_time: TimePoint::read_xdr(r)?,
+                max_time: TimePoint::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TimeBounds {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.min_time.write_xdr(w)?;
-        self.max_time.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.min_time.write_xdr(w)?;
+            self.max_time.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -17622,20 +18699,24 @@ pub struct LedgerBounds {
 
 impl ReadXdr for LedgerBounds {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            min_ledger: u32::read_xdr(r)?,
-            max_ledger: u32::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                min_ledger: u32::read_xdr(r)?,
+                max_ledger: u32::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for LedgerBounds {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.min_ledger.write_xdr(w)?;
-        self.max_ledger.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.min_ledger.write_xdr(w)?;
+            self.max_ledger.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -17692,28 +18773,32 @@ pub struct PreconditionsV2 {
 
 impl ReadXdr for PreconditionsV2 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            time_bounds: Option::<TimeBounds>::read_xdr(r)?,
-            ledger_bounds: Option::<LedgerBounds>::read_xdr(r)?,
-            min_seq_num: Option::<SequenceNumber>::read_xdr(r)?,
-            min_seq_age: Duration::read_xdr(r)?,
-            min_seq_ledger_gap: u32::read_xdr(r)?,
-            extra_signers: VecM::<SignerKey, 2>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                time_bounds: Option::<TimeBounds>::read_xdr(r)?,
+                ledger_bounds: Option::<LedgerBounds>::read_xdr(r)?,
+                min_seq_num: Option::<SequenceNumber>::read_xdr(r)?,
+                min_seq_age: Duration::read_xdr(r)?,
+                min_seq_ledger_gap: u32::read_xdr(r)?,
+                extra_signers: VecM::<SignerKey, 2>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for PreconditionsV2 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.time_bounds.write_xdr(w)?;
-        self.ledger_bounds.write_xdr(w)?;
-        self.min_seq_num.write_xdr(w)?;
-        self.min_seq_age.write_xdr(w)?;
-        self.min_seq_ledger_gap.write_xdr(w)?;
-        self.extra_signers.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.time_bounds.write_xdr(w)?;
+            self.ledger_bounds.write_xdr(w)?;
+            self.min_seq_num.write_xdr(w)?;
+            self.min_seq_age.write_xdr(w)?;
+            self.min_seq_ledger_gap.write_xdr(w)?;
+            self.extra_signers.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -17809,18 +18894,22 @@ impl From<PreconditionType> for i32 {
 
 impl ReadXdr for PreconditionType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PreconditionType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -17908,31 +18997,35 @@ impl Union<PreconditionType> for Preconditions {}
 
 impl ReadXdr for Preconditions {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: PreconditionType = <PreconditionType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            PreconditionType::None => Self::None,
-            PreconditionType::Time => Self::Time(TimeBounds::read_xdr(r)?),
-            PreconditionType::V2 => Self::V2(PreconditionsV2::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: PreconditionType = <PreconditionType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                PreconditionType::None => Self::None,
+                PreconditionType::Time => Self::Time(TimeBounds::read_xdr(r)?),
+                PreconditionType::V2 => Self::V2(PreconditionsV2::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for Preconditions {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::None => ().write_xdr(w)?,
-            Self::Time(v) => v.write_xdr(w)?,
-            Self::V2(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::None => ().write_xdr(w)?,
+                Self::Time(v) => v.write_xdr(w)?,
+                Self::V2(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -18012,27 +19105,31 @@ impl Union<i32> for TransactionV0Ext {}
 
 impl ReadXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -18073,30 +19170,34 @@ pub struct TransactionV0 {
 
 impl ReadXdr for TransactionV0 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            source_account_ed25519: Uint256::read_xdr(r)?,
-            fee: u32::read_xdr(r)?,
-            seq_num: SequenceNumber::read_xdr(r)?,
-            time_bounds: Option::<TimeBounds>::read_xdr(r)?,
-            memo: Memo::read_xdr(r)?,
-            operations: VecM::<Operation, 100>::read_xdr(r)?,
-            ext: TransactionV0Ext::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                source_account_ed25519: Uint256::read_xdr(r)?,
+                fee: u32::read_xdr(r)?,
+                seq_num: SequenceNumber::read_xdr(r)?,
+                time_bounds: Option::<TimeBounds>::read_xdr(r)?,
+                memo: Memo::read_xdr(r)?,
+                operations: VecM::<Operation, 100>::read_xdr(r)?,
+                ext: TransactionV0Ext::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionV0 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.source_account_ed25519.write_xdr(w)?;
-        self.fee.write_xdr(w)?;
-        self.seq_num.write_xdr(w)?;
-        self.time_bounds.write_xdr(w)?;
-        self.memo.write_xdr(w)?;
-        self.operations.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.source_account_ed25519.write_xdr(w)?;
+            self.fee.write_xdr(w)?;
+            self.seq_num.write_xdr(w)?;
+            self.time_bounds.write_xdr(w)?;
+            self.memo.write_xdr(w)?;
+            self.operations.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -18124,20 +19225,24 @@ pub struct TransactionV0Envelope {
 
 impl ReadXdr for TransactionV0Envelope {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            tx: TransactionV0::read_xdr(r)?,
-            signatures: VecM::<DecoratedSignature, 20>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx: TransactionV0::read_xdr(r)?,
+                signatures: VecM::<DecoratedSignature, 20>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionV0Envelope {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx.write_xdr(w)?;
-        self.signatures.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.tx.write_xdr(w)?;
+            self.signatures.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -18211,27 +19316,31 @@ impl Union<i32> for TransactionExt {}
 
 impl ReadXdr for TransactionExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TransactionExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -18283,30 +19392,34 @@ pub struct Transaction {
 
 impl ReadXdr for Transaction {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            source_account: MuxedAccount::read_xdr(r)?,
-            fee: u32::read_xdr(r)?,
-            seq_num: SequenceNumber::read_xdr(r)?,
-            cond: Preconditions::read_xdr(r)?,
-            memo: Memo::read_xdr(r)?,
-            operations: VecM::<Operation, 100>::read_xdr(r)?,
-            ext: TransactionExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                source_account: MuxedAccount::read_xdr(r)?,
+                fee: u32::read_xdr(r)?,
+                seq_num: SequenceNumber::read_xdr(r)?,
+                cond: Preconditions::read_xdr(r)?,
+                memo: Memo::read_xdr(r)?,
+                operations: VecM::<Operation, 100>::read_xdr(r)?,
+                ext: TransactionExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for Transaction {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.source_account.write_xdr(w)?;
-        self.fee.write_xdr(w)?;
-        self.seq_num.write_xdr(w)?;
-        self.cond.write_xdr(w)?;
-        self.memo.write_xdr(w)?;
-        self.operations.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.source_account.write_xdr(w)?;
+            self.fee.write_xdr(w)?;
+            self.seq_num.write_xdr(w)?;
+            self.cond.write_xdr(w)?;
+            self.memo.write_xdr(w)?;
+            self.operations.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -18334,20 +19447,24 @@ pub struct TransactionV1Envelope {
 
 impl ReadXdr for TransactionV1Envelope {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            tx: Transaction::read_xdr(r)?,
-            signatures: VecM::<DecoratedSignature, 20>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx: Transaction::read_xdr(r)?,
+                signatures: VecM::<DecoratedSignature, 20>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionV1Envelope {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx.write_xdr(w)?;
-        self.signatures.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.tx.write_xdr(w)?;
+            self.signatures.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -18421,27 +19538,31 @@ impl Union<EnvelopeType> for FeeBumpTransactionInnerTx {}
 
 impl ReadXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            EnvelopeType::Tx => Self::Tx(TransactionV1Envelope::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                EnvelopeType::Tx => Self::Tx(TransactionV1Envelope::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Tx(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Tx(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -18515,27 +19636,31 @@ impl Union<i32> for FeeBumpTransactionExt {}
 
 impl ReadXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -18575,24 +19700,28 @@ pub struct FeeBumpTransaction {
 
 impl ReadXdr for FeeBumpTransaction {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            fee_source: MuxedAccount::read_xdr(r)?,
-            fee: i64::read_xdr(r)?,
-            inner_tx: FeeBumpTransactionInnerTx::read_xdr(r)?,
-            ext: FeeBumpTransactionExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                fee_source: MuxedAccount::read_xdr(r)?,
+                fee: i64::read_xdr(r)?,
+                inner_tx: FeeBumpTransactionInnerTx::read_xdr(r)?,
+                ext: FeeBumpTransactionExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for FeeBumpTransaction {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.fee_source.write_xdr(w)?;
-        self.fee.write_xdr(w)?;
-        self.inner_tx.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.fee_source.write_xdr(w)?;
+            self.fee.write_xdr(w)?;
+            self.inner_tx.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -18620,20 +19749,24 @@ pub struct FeeBumpTransactionEnvelope {
 
 impl ReadXdr for FeeBumpTransactionEnvelope {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            tx: FeeBumpTransaction::read_xdr(r)?,
-            signatures: VecM::<DecoratedSignature, 20>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx: FeeBumpTransaction::read_xdr(r)?,
+                signatures: VecM::<DecoratedSignature, 20>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for FeeBumpTransactionEnvelope {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.tx.write_xdr(w)?;
-        self.signatures.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.tx.write_xdr(w)?;
+            self.signatures.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -18721,31 +19854,37 @@ impl Union<EnvelopeType> for TransactionEnvelope {}
 
 impl ReadXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            EnvelopeType::TxV0 => Self::TxV0(TransactionV0Envelope::read_xdr(r)?),
-            EnvelopeType::Tx => Self::Tx(TransactionV1Envelope::read_xdr(r)?),
-            EnvelopeType::TxFeeBump => Self::TxFeeBump(FeeBumpTransactionEnvelope::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                EnvelopeType::TxV0 => Self::TxV0(TransactionV0Envelope::read_xdr(r)?),
+                EnvelopeType::Tx => Self::Tx(TransactionV1Envelope::read_xdr(r)?),
+                EnvelopeType::TxFeeBump => {
+                    Self::TxFeeBump(FeeBumpTransactionEnvelope::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::TxV0(v) => v.write_xdr(w)?,
-            Self::Tx(v) => v.write_xdr(w)?,
-            Self::TxFeeBump(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::TxV0(v) => v.write_xdr(w)?,
+                Self::Tx(v) => v.write_xdr(w)?,
+                Self::TxFeeBump(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -18825,29 +19964,33 @@ impl Union<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {}
 
 impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            EnvelopeType::Tx => Self::Tx(Transaction::read_xdr(r)?),
-            EnvelopeType::TxFeeBump => Self::TxFeeBump(FeeBumpTransaction::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                EnvelopeType::Tx => Self::Tx(Transaction::read_xdr(r)?),
+                EnvelopeType::TxFeeBump => Self::TxFeeBump(FeeBumpTransaction::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Tx(v) => v.write_xdr(w)?,
-            Self::TxFeeBump(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Tx(v) => v.write_xdr(w)?,
+                Self::TxFeeBump(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -18881,20 +20024,24 @@ pub struct TransactionSignaturePayload {
 
 impl ReadXdr for TransactionSignaturePayload {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            network_id: Hash::read_xdr(r)?,
-            tagged_transaction: TransactionSignaturePayloadTaggedTransaction::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                network_id: Hash::read_xdr(r)?,
+                tagged_transaction: TransactionSignaturePayloadTaggedTransaction::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionSignaturePayload {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.network_id.write_xdr(w)?;
-        self.tagged_transaction.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.network_id.write_xdr(w)?;
+            self.tagged_transaction.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -18990,18 +20137,22 @@ impl From<ClaimAtomType> for i32 {
 
 impl ReadXdr for ClaimAtomType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimAtomType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -19040,28 +20191,32 @@ pub struct ClaimOfferAtomV0 {
 
 impl ReadXdr for ClaimOfferAtomV0 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            seller_ed25519: Uint256::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
-            asset_sold: Asset::read_xdr(r)?,
-            amount_sold: i64::read_xdr(r)?,
-            asset_bought: Asset::read_xdr(r)?,
-            amount_bought: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                seller_ed25519: Uint256::read_xdr(r)?,
+                offer_id: i64::read_xdr(r)?,
+                asset_sold: Asset::read_xdr(r)?,
+                amount_sold: i64::read_xdr(r)?,
+                asset_bought: Asset::read_xdr(r)?,
+                amount_bought: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ClaimOfferAtomV0 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.seller_ed25519.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
-        self.asset_sold.write_xdr(w)?;
-        self.amount_sold.write_xdr(w)?;
-        self.asset_bought.write_xdr(w)?;
-        self.amount_bought.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.seller_ed25519.write_xdr(w)?;
+            self.offer_id.write_xdr(w)?;
+            self.asset_sold.write_xdr(w)?;
+            self.amount_sold.write_xdr(w)?;
+            self.asset_bought.write_xdr(w)?;
+            self.amount_bought.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -19100,28 +20255,32 @@ pub struct ClaimOfferAtom {
 
 impl ReadXdr for ClaimOfferAtom {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            seller_id: AccountId::read_xdr(r)?,
-            offer_id: i64::read_xdr(r)?,
-            asset_sold: Asset::read_xdr(r)?,
-            amount_sold: i64::read_xdr(r)?,
-            asset_bought: Asset::read_xdr(r)?,
-            amount_bought: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                seller_id: AccountId::read_xdr(r)?,
+                offer_id: i64::read_xdr(r)?,
+                asset_sold: Asset::read_xdr(r)?,
+                amount_sold: i64::read_xdr(r)?,
+                asset_bought: Asset::read_xdr(r)?,
+                amount_bought: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ClaimOfferAtom {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.seller_id.write_xdr(w)?;
-        self.offer_id.write_xdr(w)?;
-        self.asset_sold.write_xdr(w)?;
-        self.amount_sold.write_xdr(w)?;
-        self.asset_bought.write_xdr(w)?;
-        self.amount_bought.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.seller_id.write_xdr(w)?;
+            self.offer_id.write_xdr(w)?;
+            self.asset_sold.write_xdr(w)?;
+            self.amount_sold.write_xdr(w)?;
+            self.asset_bought.write_xdr(w)?;
+            self.amount_bought.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -19157,26 +20316,30 @@ pub struct ClaimLiquidityAtom {
 
 impl ReadXdr for ClaimLiquidityAtom {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            liquidity_pool_id: PoolId::read_xdr(r)?,
-            asset_sold: Asset::read_xdr(r)?,
-            amount_sold: i64::read_xdr(r)?,
-            asset_bought: Asset::read_xdr(r)?,
-            amount_bought: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                liquidity_pool_id: PoolId::read_xdr(r)?,
+                asset_sold: Asset::read_xdr(r)?,
+                amount_sold: i64::read_xdr(r)?,
+                asset_bought: Asset::read_xdr(r)?,
+                amount_bought: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ClaimLiquidityAtom {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.liquidity_pool_id.write_xdr(w)?;
-        self.asset_sold.write_xdr(w)?;
-        self.amount_sold.write_xdr(w)?;
-        self.asset_bought.write_xdr(w)?;
-        self.amount_bought.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.liquidity_pool_id.write_xdr(w)?;
+            self.asset_sold.write_xdr(w)?;
+            self.amount_sold.write_xdr(w)?;
+            self.asset_bought.write_xdr(w)?;
+            self.amount_bought.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -19264,31 +20427,37 @@ impl Union<ClaimAtomType> for ClaimAtom {}
 
 impl ReadXdr for ClaimAtom {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClaimAtomType = <ClaimAtomType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ClaimAtomType::V0 => Self::V0(ClaimOfferAtomV0::read_xdr(r)?),
-            ClaimAtomType::OrderBook => Self::OrderBook(ClaimOfferAtom::read_xdr(r)?),
-            ClaimAtomType::LiquidityPool => Self::LiquidityPool(ClaimLiquidityAtom::read_xdr(r)?),
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimAtomType = <ClaimAtomType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ClaimAtomType::V0 => Self::V0(ClaimOfferAtomV0::read_xdr(r)?),
+                ClaimAtomType::OrderBook => Self::OrderBook(ClaimOfferAtom::read_xdr(r)?),
+                ClaimAtomType::LiquidityPool => {
+                    Self::LiquidityPool(ClaimLiquidityAtom::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimAtom {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0(v) => v.write_xdr(w)?,
-            Self::OrderBook(v) => v.write_xdr(w)?,
-            Self::LiquidityPool(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0(v) => v.write_xdr(w)?,
+                Self::OrderBook(v) => v.write_xdr(w)?,
+                Self::LiquidityPool(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -19404,18 +20573,22 @@ impl From<CreateAccountResultCode> for i32 {
 
 impl ReadXdr for CreateAccountResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for CreateAccountResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -19518,35 +20691,39 @@ impl Union<CreateAccountResultCode> for CreateAccountResult {}
 
 impl ReadXdr for CreateAccountResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            CreateAccountResultCode::Success => Self::Success,
-            CreateAccountResultCode::Malformed => Self::Malformed,
-            CreateAccountResultCode::Underfunded => Self::Underfunded,
-            CreateAccountResultCode::LowReserve => Self::LowReserve,
-            CreateAccountResultCode::AlreadyExist => Self::AlreadyExist,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                CreateAccountResultCode::Success => Self::Success,
+                CreateAccountResultCode::Malformed => Self::Malformed,
+                CreateAccountResultCode::Underfunded => Self::Underfunded,
+                CreateAccountResultCode::LowReserve => Self::LowReserve,
+                CreateAccountResultCode::AlreadyExist => Self::AlreadyExist,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for CreateAccountResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::Underfunded => ().write_xdr(w)?,
-            Self::LowReserve => ().write_xdr(w)?,
-            Self::AlreadyExist => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+                Self::LowReserve => ().write_xdr(w)?,
+                Self::AlreadyExist => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -19691,18 +20868,22 @@ impl From<PaymentResultCode> for i32 {
 
 impl ReadXdr for PaymentResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PaymentResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -19835,45 +21016,49 @@ impl Union<PaymentResultCode> for PaymentResult {}
 
 impl ReadXdr for PaymentResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: PaymentResultCode = <PaymentResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            PaymentResultCode::Success => Self::Success,
-            PaymentResultCode::Malformed => Self::Malformed,
-            PaymentResultCode::Underfunded => Self::Underfunded,
-            PaymentResultCode::SrcNoTrust => Self::SrcNoTrust,
-            PaymentResultCode::SrcNotAuthorized => Self::SrcNotAuthorized,
-            PaymentResultCode::NoDestination => Self::NoDestination,
-            PaymentResultCode::NoTrust => Self::NoTrust,
-            PaymentResultCode::NotAuthorized => Self::NotAuthorized,
-            PaymentResultCode::LineFull => Self::LineFull,
-            PaymentResultCode::NoIssuer => Self::NoIssuer,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: PaymentResultCode = <PaymentResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                PaymentResultCode::Success => Self::Success,
+                PaymentResultCode::Malformed => Self::Malformed,
+                PaymentResultCode::Underfunded => Self::Underfunded,
+                PaymentResultCode::SrcNoTrust => Self::SrcNoTrust,
+                PaymentResultCode::SrcNotAuthorized => Self::SrcNotAuthorized,
+                PaymentResultCode::NoDestination => Self::NoDestination,
+                PaymentResultCode::NoTrust => Self::NoTrust,
+                PaymentResultCode::NotAuthorized => Self::NotAuthorized,
+                PaymentResultCode::LineFull => Self::LineFull,
+                PaymentResultCode::NoIssuer => Self::NoIssuer,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PaymentResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::Underfunded => ().write_xdr(w)?,
-            Self::SrcNoTrust => ().write_xdr(w)?,
-            Self::SrcNotAuthorized => ().write_xdr(w)?,
-            Self::NoDestination => ().write_xdr(w)?,
-            Self::NoTrust => ().write_xdr(w)?,
-            Self::NotAuthorized => ().write_xdr(w)?,
-            Self::LineFull => ().write_xdr(w)?,
-            Self::NoIssuer => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+                Self::SrcNoTrust => ().write_xdr(w)?,
+                Self::SrcNotAuthorized => ().write_xdr(w)?,
+                Self::NoDestination => ().write_xdr(w)?,
+                Self::NoTrust => ().write_xdr(w)?,
+                Self::NotAuthorized => ().write_xdr(w)?,
+                Self::LineFull => ().write_xdr(w)?,
+                Self::NoIssuer => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -20045,18 +21230,22 @@ impl From<PathPaymentStrictReceiveResultCode> for i32 {
 
 impl ReadXdr for PathPaymentStrictReceiveResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PathPaymentStrictReceiveResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -20084,22 +21273,26 @@ pub struct SimplePaymentResult {
 
 impl ReadXdr for SimplePaymentResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            destination: AccountId::read_xdr(r)?,
-            asset: Asset::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                destination: AccountId::read_xdr(r)?,
+                asset: Asset::read_xdr(r)?,
+                amount: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for SimplePaymentResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.destination.write_xdr(w)?;
-        self.asset.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.destination.write_xdr(w)?;
+            self.asset.write_xdr(w)?;
+            self.amount.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -20125,20 +21318,24 @@ pub struct PathPaymentStrictReceiveResultSuccess {
 
 impl ReadXdr for PathPaymentStrictReceiveResultSuccess {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            offers: VecM::<ClaimAtom>::read_xdr(r)?,
-            last: SimplePaymentResult::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                offers: VecM::<ClaimAtom>::read_xdr(r)?,
+                last: SimplePaymentResult::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.offers.write_xdr(w)?;
-        self.last.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.offers.write_xdr(w)?;
+            self.last.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -20296,54 +21493,58 @@ impl Union<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResul
 
 impl ReadXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: PathPaymentStrictReceiveResultCode =
-            <PathPaymentStrictReceiveResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            PathPaymentStrictReceiveResultCode::Success => {
-                Self::Success(PathPaymentStrictReceiveResultSuccess::read_xdr(r)?)
-            }
-            PathPaymentStrictReceiveResultCode::Malformed => Self::Malformed,
-            PathPaymentStrictReceiveResultCode::Underfunded => Self::Underfunded,
-            PathPaymentStrictReceiveResultCode::SrcNoTrust => Self::SrcNoTrust,
-            PathPaymentStrictReceiveResultCode::SrcNotAuthorized => Self::SrcNotAuthorized,
-            PathPaymentStrictReceiveResultCode::NoDestination => Self::NoDestination,
-            PathPaymentStrictReceiveResultCode::NoTrust => Self::NoTrust,
-            PathPaymentStrictReceiveResultCode::NotAuthorized => Self::NotAuthorized,
-            PathPaymentStrictReceiveResultCode::LineFull => Self::LineFull,
-            PathPaymentStrictReceiveResultCode::NoIssuer => Self::NoIssuer(Asset::read_xdr(r)?),
-            PathPaymentStrictReceiveResultCode::TooFewOffers => Self::TooFewOffers,
-            PathPaymentStrictReceiveResultCode::OfferCrossSelf => Self::OfferCrossSelf,
-            PathPaymentStrictReceiveResultCode::OverSendmax => Self::OverSendmax,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: PathPaymentStrictReceiveResultCode =
+                <PathPaymentStrictReceiveResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                PathPaymentStrictReceiveResultCode::Success => {
+                    Self::Success(PathPaymentStrictReceiveResultSuccess::read_xdr(r)?)
+                }
+                PathPaymentStrictReceiveResultCode::Malformed => Self::Malformed,
+                PathPaymentStrictReceiveResultCode::Underfunded => Self::Underfunded,
+                PathPaymentStrictReceiveResultCode::SrcNoTrust => Self::SrcNoTrust,
+                PathPaymentStrictReceiveResultCode::SrcNotAuthorized => Self::SrcNotAuthorized,
+                PathPaymentStrictReceiveResultCode::NoDestination => Self::NoDestination,
+                PathPaymentStrictReceiveResultCode::NoTrust => Self::NoTrust,
+                PathPaymentStrictReceiveResultCode::NotAuthorized => Self::NotAuthorized,
+                PathPaymentStrictReceiveResultCode::LineFull => Self::LineFull,
+                PathPaymentStrictReceiveResultCode::NoIssuer => Self::NoIssuer(Asset::read_xdr(r)?),
+                PathPaymentStrictReceiveResultCode::TooFewOffers => Self::TooFewOffers,
+                PathPaymentStrictReceiveResultCode::OfferCrossSelf => Self::OfferCrossSelf,
+                PathPaymentStrictReceiveResultCode::OverSendmax => Self::OverSendmax,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success(v) => v.write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::Underfunded => ().write_xdr(w)?,
-            Self::SrcNoTrust => ().write_xdr(w)?,
-            Self::SrcNotAuthorized => ().write_xdr(w)?,
-            Self::NoDestination => ().write_xdr(w)?,
-            Self::NoTrust => ().write_xdr(w)?,
-            Self::NotAuthorized => ().write_xdr(w)?,
-            Self::LineFull => ().write_xdr(w)?,
-            Self::NoIssuer(v) => v.write_xdr(w)?,
-            Self::TooFewOffers => ().write_xdr(w)?,
-            Self::OfferCrossSelf => ().write_xdr(w)?,
-            Self::OverSendmax => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+                Self::SrcNoTrust => ().write_xdr(w)?,
+                Self::SrcNotAuthorized => ().write_xdr(w)?,
+                Self::NoDestination => ().write_xdr(w)?,
+                Self::NoTrust => ().write_xdr(w)?,
+                Self::NotAuthorized => ().write_xdr(w)?,
+                Self::LineFull => ().write_xdr(w)?,
+                Self::NoIssuer(v) => v.write_xdr(w)?,
+                Self::TooFewOffers => ().write_xdr(w)?,
+                Self::OfferCrossSelf => ().write_xdr(w)?,
+                Self::OverSendmax => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -20514,18 +21715,22 @@ impl From<PathPaymentStrictSendResultCode> for i32 {
 
 impl ReadXdr for PathPaymentStrictSendResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PathPaymentStrictSendResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -20551,20 +21756,24 @@ pub struct PathPaymentStrictSendResultSuccess {
 
 impl ReadXdr for PathPaymentStrictSendResultSuccess {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            offers: VecM::<ClaimAtom>::read_xdr(r)?,
-            last: SimplePaymentResult::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                offers: VecM::<ClaimAtom>::read_xdr(r)?,
+                last: SimplePaymentResult::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for PathPaymentStrictSendResultSuccess {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.offers.write_xdr(w)?;
-        self.last.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.offers.write_xdr(w)?;
+            self.last.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -20721,54 +21930,58 @@ impl Union<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {}
 
 impl ReadXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: PathPaymentStrictSendResultCode =
-            <PathPaymentStrictSendResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            PathPaymentStrictSendResultCode::Success => {
-                Self::Success(PathPaymentStrictSendResultSuccess::read_xdr(r)?)
-            }
-            PathPaymentStrictSendResultCode::Malformed => Self::Malformed,
-            PathPaymentStrictSendResultCode::Underfunded => Self::Underfunded,
-            PathPaymentStrictSendResultCode::SrcNoTrust => Self::SrcNoTrust,
-            PathPaymentStrictSendResultCode::SrcNotAuthorized => Self::SrcNotAuthorized,
-            PathPaymentStrictSendResultCode::NoDestination => Self::NoDestination,
-            PathPaymentStrictSendResultCode::NoTrust => Self::NoTrust,
-            PathPaymentStrictSendResultCode::NotAuthorized => Self::NotAuthorized,
-            PathPaymentStrictSendResultCode::LineFull => Self::LineFull,
-            PathPaymentStrictSendResultCode::NoIssuer => Self::NoIssuer(Asset::read_xdr(r)?),
-            PathPaymentStrictSendResultCode::TooFewOffers => Self::TooFewOffers,
-            PathPaymentStrictSendResultCode::OfferCrossSelf => Self::OfferCrossSelf,
-            PathPaymentStrictSendResultCode::UnderDestmin => Self::UnderDestmin,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: PathPaymentStrictSendResultCode =
+                <PathPaymentStrictSendResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                PathPaymentStrictSendResultCode::Success => {
+                    Self::Success(PathPaymentStrictSendResultSuccess::read_xdr(r)?)
+                }
+                PathPaymentStrictSendResultCode::Malformed => Self::Malformed,
+                PathPaymentStrictSendResultCode::Underfunded => Self::Underfunded,
+                PathPaymentStrictSendResultCode::SrcNoTrust => Self::SrcNoTrust,
+                PathPaymentStrictSendResultCode::SrcNotAuthorized => Self::SrcNotAuthorized,
+                PathPaymentStrictSendResultCode::NoDestination => Self::NoDestination,
+                PathPaymentStrictSendResultCode::NoTrust => Self::NoTrust,
+                PathPaymentStrictSendResultCode::NotAuthorized => Self::NotAuthorized,
+                PathPaymentStrictSendResultCode::LineFull => Self::LineFull,
+                PathPaymentStrictSendResultCode::NoIssuer => Self::NoIssuer(Asset::read_xdr(r)?),
+                PathPaymentStrictSendResultCode::TooFewOffers => Self::TooFewOffers,
+                PathPaymentStrictSendResultCode::OfferCrossSelf => Self::OfferCrossSelf,
+                PathPaymentStrictSendResultCode::UnderDestmin => Self::UnderDestmin,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success(v) => v.write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::Underfunded => ().write_xdr(w)?,
-            Self::SrcNoTrust => ().write_xdr(w)?,
-            Self::SrcNotAuthorized => ().write_xdr(w)?,
-            Self::NoDestination => ().write_xdr(w)?,
-            Self::NoTrust => ().write_xdr(w)?,
-            Self::NotAuthorized => ().write_xdr(w)?,
-            Self::LineFull => ().write_xdr(w)?,
-            Self::NoIssuer(v) => v.write_xdr(w)?,
-            Self::TooFewOffers => ().write_xdr(w)?,
-            Self::OfferCrossSelf => ().write_xdr(w)?,
-            Self::UnderDestmin => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+                Self::SrcNoTrust => ().write_xdr(w)?,
+                Self::SrcNotAuthorized => ().write_xdr(w)?,
+                Self::NoDestination => ().write_xdr(w)?,
+                Self::NoTrust => ().write_xdr(w)?,
+                Self::NotAuthorized => ().write_xdr(w)?,
+                Self::LineFull => ().write_xdr(w)?,
+                Self::NoIssuer(v) => v.write_xdr(w)?,
+                Self::TooFewOffers => ().write_xdr(w)?,
+                Self::OfferCrossSelf => ().write_xdr(w)?,
+                Self::UnderDestmin => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -20938,18 +22151,22 @@ impl From<ManageSellOfferResultCode> for i32 {
 
 impl ReadXdr for ManageSellOfferResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ManageSellOfferResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -21045,18 +22262,22 @@ impl From<ManageOfferEffect> for i32 {
 
 impl ReadXdr for ManageOfferEffect {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ManageOfferEffect {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -21143,31 +22364,35 @@ impl Union<ManageOfferEffect> for ManageOfferSuccessResultOffer {}
 
 impl ReadXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ManageOfferEffect = <ManageOfferEffect as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ManageOfferEffect::Created => Self::Created(OfferEntry::read_xdr(r)?),
-            ManageOfferEffect::Updated => Self::Updated(OfferEntry::read_xdr(r)?),
-            ManageOfferEffect::Deleted => Self::Deleted,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ManageOfferEffect = <ManageOfferEffect as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ManageOfferEffect::Created => Self::Created(OfferEntry::read_xdr(r)?),
+                ManageOfferEffect::Updated => Self::Updated(OfferEntry::read_xdr(r)?),
+                ManageOfferEffect::Deleted => Self::Deleted,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Created(v) => v.write_xdr(w)?,
-            Self::Updated(v) => v.write_xdr(w)?,
-            Self::Deleted => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Created(v) => v.write_xdr(w)?,
+                Self::Updated(v) => v.write_xdr(w)?,
+                Self::Deleted => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -21203,20 +22428,24 @@ pub struct ManageOfferSuccessResult {
 
 impl ReadXdr for ManageOfferSuccessResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            offers_claimed: VecM::<ClaimAtom>::read_xdr(r)?,
-            offer: ManageOfferSuccessResultOffer::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                offers_claimed: VecM::<ClaimAtom>::read_xdr(r)?,
+                offer: ManageOfferSuccessResultOffer::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for ManageOfferSuccessResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.offers_claimed.write_xdr(w)?;
-        self.offer.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.offers_claimed.write_xdr(w)?;
+            self.offer.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -21367,53 +22596,58 @@ impl Union<ManageSellOfferResultCode> for ManageSellOfferResult {}
 
 impl ReadXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ManageSellOfferResultCode = <ManageSellOfferResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ManageSellOfferResultCode::Success => {
-                Self::Success(ManageOfferSuccessResult::read_xdr(r)?)
-            }
-            ManageSellOfferResultCode::Malformed => Self::Malformed,
-            ManageSellOfferResultCode::SellNoTrust => Self::SellNoTrust,
-            ManageSellOfferResultCode::BuyNoTrust => Self::BuyNoTrust,
-            ManageSellOfferResultCode::SellNotAuthorized => Self::SellNotAuthorized,
-            ManageSellOfferResultCode::BuyNotAuthorized => Self::BuyNotAuthorized,
-            ManageSellOfferResultCode::LineFull => Self::LineFull,
-            ManageSellOfferResultCode::Underfunded => Self::Underfunded,
-            ManageSellOfferResultCode::CrossSelf => Self::CrossSelf,
-            ManageSellOfferResultCode::SellNoIssuer => Self::SellNoIssuer,
-            ManageSellOfferResultCode::BuyNoIssuer => Self::BuyNoIssuer,
-            ManageSellOfferResultCode::NotFound => Self::NotFound,
-            ManageSellOfferResultCode::LowReserve => Self::LowReserve,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ManageSellOfferResultCode =
+                <ManageSellOfferResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ManageSellOfferResultCode::Success => {
+                    Self::Success(ManageOfferSuccessResult::read_xdr(r)?)
+                }
+                ManageSellOfferResultCode::Malformed => Self::Malformed,
+                ManageSellOfferResultCode::SellNoTrust => Self::SellNoTrust,
+                ManageSellOfferResultCode::BuyNoTrust => Self::BuyNoTrust,
+                ManageSellOfferResultCode::SellNotAuthorized => Self::SellNotAuthorized,
+                ManageSellOfferResultCode::BuyNotAuthorized => Self::BuyNotAuthorized,
+                ManageSellOfferResultCode::LineFull => Self::LineFull,
+                ManageSellOfferResultCode::Underfunded => Self::Underfunded,
+                ManageSellOfferResultCode::CrossSelf => Self::CrossSelf,
+                ManageSellOfferResultCode::SellNoIssuer => Self::SellNoIssuer,
+                ManageSellOfferResultCode::BuyNoIssuer => Self::BuyNoIssuer,
+                ManageSellOfferResultCode::NotFound => Self::NotFound,
+                ManageSellOfferResultCode::LowReserve => Self::LowReserve,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success(v) => v.write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::SellNoTrust => ().write_xdr(w)?,
-            Self::BuyNoTrust => ().write_xdr(w)?,
-            Self::SellNotAuthorized => ().write_xdr(w)?,
-            Self::BuyNotAuthorized => ().write_xdr(w)?,
-            Self::LineFull => ().write_xdr(w)?,
-            Self::Underfunded => ().write_xdr(w)?,
-            Self::CrossSelf => ().write_xdr(w)?,
-            Self::SellNoIssuer => ().write_xdr(w)?,
-            Self::BuyNoIssuer => ().write_xdr(w)?,
-            Self::NotFound => ().write_xdr(w)?,
-            Self::LowReserve => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::SellNoTrust => ().write_xdr(w)?,
+                Self::BuyNoTrust => ().write_xdr(w)?,
+                Self::SellNotAuthorized => ().write_xdr(w)?,
+                Self::BuyNotAuthorized => ().write_xdr(w)?,
+                Self::LineFull => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+                Self::CrossSelf => ().write_xdr(w)?,
+                Self::SellNoIssuer => ().write_xdr(w)?,
+                Self::BuyNoIssuer => ().write_xdr(w)?,
+                Self::NotFound => ().write_xdr(w)?,
+                Self::LowReserve => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -21580,18 +22814,22 @@ impl From<ManageBuyOfferResultCode> for i32 {
 
 impl ReadXdr for ManageBuyOfferResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ManageBuyOfferResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -21742,53 +22980,57 @@ impl Union<ManageBuyOfferResultCode> for ManageBuyOfferResult {}
 
 impl ReadXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ManageBuyOfferResultCode::Success => {
-                Self::Success(ManageOfferSuccessResult::read_xdr(r)?)
-            }
-            ManageBuyOfferResultCode::Malformed => Self::Malformed,
-            ManageBuyOfferResultCode::SellNoTrust => Self::SellNoTrust,
-            ManageBuyOfferResultCode::BuyNoTrust => Self::BuyNoTrust,
-            ManageBuyOfferResultCode::SellNotAuthorized => Self::SellNotAuthorized,
-            ManageBuyOfferResultCode::BuyNotAuthorized => Self::BuyNotAuthorized,
-            ManageBuyOfferResultCode::LineFull => Self::LineFull,
-            ManageBuyOfferResultCode::Underfunded => Self::Underfunded,
-            ManageBuyOfferResultCode::CrossSelf => Self::CrossSelf,
-            ManageBuyOfferResultCode::SellNoIssuer => Self::SellNoIssuer,
-            ManageBuyOfferResultCode::BuyNoIssuer => Self::BuyNoIssuer,
-            ManageBuyOfferResultCode::NotFound => Self::NotFound,
-            ManageBuyOfferResultCode::LowReserve => Self::LowReserve,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ManageBuyOfferResultCode::Success => {
+                    Self::Success(ManageOfferSuccessResult::read_xdr(r)?)
+                }
+                ManageBuyOfferResultCode::Malformed => Self::Malformed,
+                ManageBuyOfferResultCode::SellNoTrust => Self::SellNoTrust,
+                ManageBuyOfferResultCode::BuyNoTrust => Self::BuyNoTrust,
+                ManageBuyOfferResultCode::SellNotAuthorized => Self::SellNotAuthorized,
+                ManageBuyOfferResultCode::BuyNotAuthorized => Self::BuyNotAuthorized,
+                ManageBuyOfferResultCode::LineFull => Self::LineFull,
+                ManageBuyOfferResultCode::Underfunded => Self::Underfunded,
+                ManageBuyOfferResultCode::CrossSelf => Self::CrossSelf,
+                ManageBuyOfferResultCode::SellNoIssuer => Self::SellNoIssuer,
+                ManageBuyOfferResultCode::BuyNoIssuer => Self::BuyNoIssuer,
+                ManageBuyOfferResultCode::NotFound => Self::NotFound,
+                ManageBuyOfferResultCode::LowReserve => Self::LowReserve,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success(v) => v.write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::SellNoTrust => ().write_xdr(w)?,
-            Self::BuyNoTrust => ().write_xdr(w)?,
-            Self::SellNotAuthorized => ().write_xdr(w)?,
-            Self::BuyNotAuthorized => ().write_xdr(w)?,
-            Self::LineFull => ().write_xdr(w)?,
-            Self::Underfunded => ().write_xdr(w)?,
-            Self::CrossSelf => ().write_xdr(w)?,
-            Self::SellNoIssuer => ().write_xdr(w)?,
-            Self::BuyNoIssuer => ().write_xdr(w)?,
-            Self::NotFound => ().write_xdr(w)?,
-            Self::LowReserve => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::SellNoTrust => ().write_xdr(w)?,
+                Self::BuyNoTrust => ().write_xdr(w)?,
+                Self::SellNotAuthorized => ().write_xdr(w)?,
+                Self::BuyNotAuthorized => ().write_xdr(w)?,
+                Self::LineFull => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+                Self::CrossSelf => ().write_xdr(w)?,
+                Self::SellNoIssuer => ().write_xdr(w)?,
+                Self::BuyNoIssuer => ().write_xdr(w)?,
+                Self::NotFound => ().write_xdr(w)?,
+                Self::LowReserve => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -21939,18 +23181,22 @@ impl From<SetOptionsResultCode> for i32 {
 
 impl ReadXdr for SetOptionsResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for SetOptionsResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -22089,47 +23335,51 @@ impl Union<SetOptionsResultCode> for SetOptionsResult {}
 
 impl ReadXdr for SetOptionsResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            SetOptionsResultCode::Success => Self::Success,
-            SetOptionsResultCode::LowReserve => Self::LowReserve,
-            SetOptionsResultCode::TooManySigners => Self::TooManySigners,
-            SetOptionsResultCode::BadFlags => Self::BadFlags,
-            SetOptionsResultCode::InvalidInflation => Self::InvalidInflation,
-            SetOptionsResultCode::CantChange => Self::CantChange,
-            SetOptionsResultCode::UnknownFlag => Self::UnknownFlag,
-            SetOptionsResultCode::ThresholdOutOfRange => Self::ThresholdOutOfRange,
-            SetOptionsResultCode::BadSigner => Self::BadSigner,
-            SetOptionsResultCode::InvalidHomeDomain => Self::InvalidHomeDomain,
-            SetOptionsResultCode::AuthRevocableRequired => Self::AuthRevocableRequired,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                SetOptionsResultCode::Success => Self::Success,
+                SetOptionsResultCode::LowReserve => Self::LowReserve,
+                SetOptionsResultCode::TooManySigners => Self::TooManySigners,
+                SetOptionsResultCode::BadFlags => Self::BadFlags,
+                SetOptionsResultCode::InvalidInflation => Self::InvalidInflation,
+                SetOptionsResultCode::CantChange => Self::CantChange,
+                SetOptionsResultCode::UnknownFlag => Self::UnknownFlag,
+                SetOptionsResultCode::ThresholdOutOfRange => Self::ThresholdOutOfRange,
+                SetOptionsResultCode::BadSigner => Self::BadSigner,
+                SetOptionsResultCode::InvalidHomeDomain => Self::InvalidHomeDomain,
+                SetOptionsResultCode::AuthRevocableRequired => Self::AuthRevocableRequired,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for SetOptionsResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::LowReserve => ().write_xdr(w)?,
-            Self::TooManySigners => ().write_xdr(w)?,
-            Self::BadFlags => ().write_xdr(w)?,
-            Self::InvalidInflation => ().write_xdr(w)?,
-            Self::CantChange => ().write_xdr(w)?,
-            Self::UnknownFlag => ().write_xdr(w)?,
-            Self::ThresholdOutOfRange => ().write_xdr(w)?,
-            Self::BadSigner => ().write_xdr(w)?,
-            Self::InvalidHomeDomain => ().write_xdr(w)?,
-            Self::AuthRevocableRequired => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::LowReserve => ().write_xdr(w)?,
+                Self::TooManySigners => ().write_xdr(w)?,
+                Self::BadFlags => ().write_xdr(w)?,
+                Self::InvalidInflation => ().write_xdr(w)?,
+                Self::CantChange => ().write_xdr(w)?,
+                Self::UnknownFlag => ().write_xdr(w)?,
+                Self::ThresholdOutOfRange => ().write_xdr(w)?,
+                Self::BadSigner => ().write_xdr(w)?,
+                Self::InvalidHomeDomain => ().write_xdr(w)?,
+                Self::AuthRevocableRequired => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -22271,18 +23521,22 @@ impl From<ChangeTrustResultCode> for i32 {
 
 impl ReadXdr for ChangeTrustResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ChangeTrustResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -22409,43 +23663,49 @@ impl Union<ChangeTrustResultCode> for ChangeTrustResult {}
 
 impl ReadXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ChangeTrustResultCode::Success => Self::Success,
-            ChangeTrustResultCode::Malformed => Self::Malformed,
-            ChangeTrustResultCode::NoIssuer => Self::NoIssuer,
-            ChangeTrustResultCode::InvalidLimit => Self::InvalidLimit,
-            ChangeTrustResultCode::LowReserve => Self::LowReserve,
-            ChangeTrustResultCode::SelfNotAllowed => Self::SelfNotAllowed,
-            ChangeTrustResultCode::TrustLineMissing => Self::TrustLineMissing,
-            ChangeTrustResultCode::CannotDelete => Self::CannotDelete,
-            ChangeTrustResultCode::NotAuthMaintainLiabilities => Self::NotAuthMaintainLiabilities,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ChangeTrustResultCode::Success => Self::Success,
+                ChangeTrustResultCode::Malformed => Self::Malformed,
+                ChangeTrustResultCode::NoIssuer => Self::NoIssuer,
+                ChangeTrustResultCode::InvalidLimit => Self::InvalidLimit,
+                ChangeTrustResultCode::LowReserve => Self::LowReserve,
+                ChangeTrustResultCode::SelfNotAllowed => Self::SelfNotAllowed,
+                ChangeTrustResultCode::TrustLineMissing => Self::TrustLineMissing,
+                ChangeTrustResultCode::CannotDelete => Self::CannotDelete,
+                ChangeTrustResultCode::NotAuthMaintainLiabilities => {
+                    Self::NotAuthMaintainLiabilities
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::NoIssuer => ().write_xdr(w)?,
-            Self::InvalidLimit => ().write_xdr(w)?,
-            Self::LowReserve => ().write_xdr(w)?,
-            Self::SelfNotAllowed => ().write_xdr(w)?,
-            Self::TrustLineMissing => ().write_xdr(w)?,
-            Self::CannotDelete => ().write_xdr(w)?,
-            Self::NotAuthMaintainLiabilities => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::NoIssuer => ().write_xdr(w)?,
+                Self::InvalidLimit => ().write_xdr(w)?,
+                Self::LowReserve => ().write_xdr(w)?,
+                Self::SelfNotAllowed => ().write_xdr(w)?,
+                Self::TrustLineMissing => ().write_xdr(w)?,
+                Self::CannotDelete => ().write_xdr(w)?,
+                Self::NotAuthMaintainLiabilities => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -22573,18 +23833,22 @@ impl From<AllowTrustResultCode> for i32 {
 
 impl ReadXdr for AllowTrustResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AllowTrustResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -22699,39 +23963,43 @@ impl Union<AllowTrustResultCode> for AllowTrustResult {}
 
 impl ReadXdr for AllowTrustResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            AllowTrustResultCode::Success => Self::Success,
-            AllowTrustResultCode::Malformed => Self::Malformed,
-            AllowTrustResultCode::NoTrustLine => Self::NoTrustLine,
-            AllowTrustResultCode::TrustNotRequired => Self::TrustNotRequired,
-            AllowTrustResultCode::CantRevoke => Self::CantRevoke,
-            AllowTrustResultCode::SelfNotAllowed => Self::SelfNotAllowed,
-            AllowTrustResultCode::LowReserve => Self::LowReserve,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                AllowTrustResultCode::Success => Self::Success,
+                AllowTrustResultCode::Malformed => Self::Malformed,
+                AllowTrustResultCode::NoTrustLine => Self::NoTrustLine,
+                AllowTrustResultCode::TrustNotRequired => Self::TrustNotRequired,
+                AllowTrustResultCode::CantRevoke => Self::CantRevoke,
+                AllowTrustResultCode::SelfNotAllowed => Self::SelfNotAllowed,
+                AllowTrustResultCode::LowReserve => Self::LowReserve,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AllowTrustResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::NoTrustLine => ().write_xdr(w)?,
-            Self::TrustNotRequired => ().write_xdr(w)?,
-            Self::CantRevoke => ().write_xdr(w)?,
-            Self::SelfNotAllowed => ().write_xdr(w)?,
-            Self::LowReserve => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::NoTrustLine => ().write_xdr(w)?,
+                Self::TrustNotRequired => ().write_xdr(w)?,
+                Self::CantRevoke => ().write_xdr(w)?,
+                Self::SelfNotAllowed => ().write_xdr(w)?,
+                Self::LowReserve => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -22864,18 +24132,22 @@ impl From<AccountMergeResultCode> for i32 {
 
 impl ReadXdr for AccountMergeResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AccountMergeResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -22996,41 +24268,45 @@ impl Union<AccountMergeResultCode> for AccountMergeResult {}
 
 impl ReadXdr for AccountMergeResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            AccountMergeResultCode::Success => Self::Success(i64::read_xdr(r)?),
-            AccountMergeResultCode::Malformed => Self::Malformed,
-            AccountMergeResultCode::NoAccount => Self::NoAccount,
-            AccountMergeResultCode::ImmutableSet => Self::ImmutableSet,
-            AccountMergeResultCode::HasSubEntries => Self::HasSubEntries,
-            AccountMergeResultCode::SeqnumTooFar => Self::SeqnumTooFar,
-            AccountMergeResultCode::DestFull => Self::DestFull,
-            AccountMergeResultCode::IsSponsor => Self::IsSponsor,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                AccountMergeResultCode::Success => Self::Success(i64::read_xdr(r)?),
+                AccountMergeResultCode::Malformed => Self::Malformed,
+                AccountMergeResultCode::NoAccount => Self::NoAccount,
+                AccountMergeResultCode::ImmutableSet => Self::ImmutableSet,
+                AccountMergeResultCode::HasSubEntries => Self::HasSubEntries,
+                AccountMergeResultCode::SeqnumTooFar => Self::SeqnumTooFar,
+                AccountMergeResultCode::DestFull => Self::DestFull,
+                AccountMergeResultCode::IsSponsor => Self::IsSponsor,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for AccountMergeResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success(v) => v.write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::NoAccount => ().write_xdr(w)?,
-            Self::ImmutableSet => ().write_xdr(w)?,
-            Self::HasSubEntries => ().write_xdr(w)?,
-            Self::SeqnumTooFar => ().write_xdr(w)?,
-            Self::DestFull => ().write_xdr(w)?,
-            Self::IsSponsor => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::NoAccount => ().write_xdr(w)?,
+                Self::ImmutableSet => ().write_xdr(w)?,
+                Self::HasSubEntries => ().write_xdr(w)?,
+                Self::SeqnumTooFar => ().write_xdr(w)?,
+                Self::DestFull => ().write_xdr(w)?,
+                Self::IsSponsor => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -23121,18 +24397,22 @@ impl From<InflationResultCode> for i32 {
 
 impl ReadXdr for InflationResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for InflationResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -23158,20 +24438,24 @@ pub struct InflationPayout {
 
 impl ReadXdr for InflationPayout {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            destination: AccountId::read_xdr(r)?,
-            amount: i64::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                destination: AccountId::read_xdr(r)?,
+                amount: i64::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for InflationPayout {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.destination.write_xdr(w)?;
-        self.amount.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.destination.write_xdr(w)?;
+            self.amount.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -23251,29 +24535,35 @@ impl Union<InflationResultCode> for InflationResult {}
 
 impl ReadXdr for InflationResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: InflationResultCode = <InflationResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            InflationResultCode::Success => Self::Success(VecM::<InflationPayout>::read_xdr(r)?),
-            InflationResultCode::NotTime => Self::NotTime,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: InflationResultCode = <InflationResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                InflationResultCode::Success => {
+                    Self::Success(VecM::<InflationPayout>::read_xdr(r)?)
+                }
+                InflationResultCode::NotTime => Self::NotTime,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for InflationResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success(v) => v.write_xdr(w)?,
-            Self::NotTime => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::NotTime => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -23389,18 +24679,22 @@ impl From<ManageDataResultCode> for i32 {
 
 impl ReadXdr for ManageDataResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ManageDataResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -23503,35 +24797,39 @@ impl Union<ManageDataResultCode> for ManageDataResult {}
 
 impl ReadXdr for ManageDataResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ManageDataResultCode = <ManageDataResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ManageDataResultCode::Success => Self::Success,
-            ManageDataResultCode::NotSupportedYet => Self::NotSupportedYet,
-            ManageDataResultCode::NameNotFound => Self::NameNotFound,
-            ManageDataResultCode::LowReserve => Self::LowReserve,
-            ManageDataResultCode::InvalidName => Self::InvalidName,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ManageDataResultCode = <ManageDataResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ManageDataResultCode::Success => Self::Success,
+                ManageDataResultCode::NotSupportedYet => Self::NotSupportedYet,
+                ManageDataResultCode::NameNotFound => Self::NameNotFound,
+                ManageDataResultCode::LowReserve => Self::LowReserve,
+                ManageDataResultCode::InvalidName => Self::InvalidName,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ManageDataResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::NotSupportedYet => ().write_xdr(w)?,
-            Self::NameNotFound => ().write_xdr(w)?,
-            Self::LowReserve => ().write_xdr(w)?,
-            Self::InvalidName => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::NotSupportedYet => ().write_xdr(w)?,
+                Self::NameNotFound => ().write_xdr(w)?,
+                Self::LowReserve => ().write_xdr(w)?,
+                Self::InvalidName => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -23624,18 +24922,22 @@ impl From<BumpSequenceResultCode> for i32 {
 
 impl ReadXdr for BumpSequenceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for BumpSequenceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -23717,29 +25019,33 @@ impl Union<BumpSequenceResultCode> for BumpSequenceResult {}
 
 impl ReadXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            BumpSequenceResultCode::Success => Self::Success,
-            BumpSequenceResultCode::BadSeq => Self::BadSeq,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                BumpSequenceResultCode::Success => Self::Success,
+                BumpSequenceResultCode::BadSeq => Self::BadSeq,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::BadSeq => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::BadSeq => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -23857,18 +25163,22 @@ impl From<CreateClaimableBalanceResultCode> for i32 {
 
 impl ReadXdr for CreateClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for CreateClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -23978,40 +25288,44 @@ impl Union<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResult {}
 
 impl ReadXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: CreateClaimableBalanceResultCode =
-            <CreateClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            CreateClaimableBalanceResultCode::Success => {
-                Self::Success(ClaimableBalanceId::read_xdr(r)?)
-            }
-            CreateClaimableBalanceResultCode::Malformed => Self::Malformed,
-            CreateClaimableBalanceResultCode::LowReserve => Self::LowReserve,
-            CreateClaimableBalanceResultCode::NoTrust => Self::NoTrust,
-            CreateClaimableBalanceResultCode::NotAuthorized => Self::NotAuthorized,
-            CreateClaimableBalanceResultCode::Underfunded => Self::Underfunded,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: CreateClaimableBalanceResultCode =
+                <CreateClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                CreateClaimableBalanceResultCode::Success => {
+                    Self::Success(ClaimableBalanceId::read_xdr(r)?)
+                }
+                CreateClaimableBalanceResultCode::Malformed => Self::Malformed,
+                CreateClaimableBalanceResultCode::LowReserve => Self::LowReserve,
+                CreateClaimableBalanceResultCode::NoTrust => Self::NoTrust,
+                CreateClaimableBalanceResultCode::NotAuthorized => Self::NotAuthorized,
+                CreateClaimableBalanceResultCode::Underfunded => Self::Underfunded,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success(v) => v.write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::LowReserve => ().write_xdr(w)?,
-            Self::NoTrust => ().write_xdr(w)?,
-            Self::NotAuthorized => ().write_xdr(w)?,
-            Self::Underfunded => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::LowReserve => ().write_xdr(w)?,
+                Self::NoTrust => ().write_xdr(w)?,
+                Self::NotAuthorized => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -24129,18 +25443,22 @@ impl From<ClaimClaimableBalanceResultCode> for i32 {
 
 impl ReadXdr for ClaimClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -24249,38 +25567,42 @@ impl Union<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {}
 
 impl ReadXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClaimClaimableBalanceResultCode =
-            <ClaimClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ClaimClaimableBalanceResultCode::Success => Self::Success,
-            ClaimClaimableBalanceResultCode::DoesNotExist => Self::DoesNotExist,
-            ClaimClaimableBalanceResultCode::CannotClaim => Self::CannotClaim,
-            ClaimClaimableBalanceResultCode::LineFull => Self::LineFull,
-            ClaimClaimableBalanceResultCode::NoTrust => Self::NoTrust,
-            ClaimClaimableBalanceResultCode::NotAuthorized => Self::NotAuthorized,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimClaimableBalanceResultCode =
+                <ClaimClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ClaimClaimableBalanceResultCode::Success => Self::Success,
+                ClaimClaimableBalanceResultCode::DoesNotExist => Self::DoesNotExist,
+                ClaimClaimableBalanceResultCode::CannotClaim => Self::CannotClaim,
+                ClaimClaimableBalanceResultCode::LineFull => Self::LineFull,
+                ClaimClaimableBalanceResultCode::NoTrust => Self::NoTrust,
+                ClaimClaimableBalanceResultCode::NotAuthorized => Self::NotAuthorized,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::DoesNotExist => ().write_xdr(w)?,
-            Self::CannotClaim => ().write_xdr(w)?,
-            Self::LineFull => ().write_xdr(w)?,
-            Self::NoTrust => ().write_xdr(w)?,
-            Self::NotAuthorized => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::DoesNotExist => ().write_xdr(w)?,
+                Self::CannotClaim => ().write_xdr(w)?,
+                Self::LineFull => ().write_xdr(w)?,
+                Self::NoTrust => ().write_xdr(w)?,
+                Self::NotAuthorized => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -24385,18 +25707,22 @@ impl From<BeginSponsoringFutureReservesResultCode> for i32 {
 
 impl ReadXdr for BeginSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for BeginSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -24490,34 +25816,38 @@ impl Union<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureRes
 
 impl ReadXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: BeginSponsoringFutureReservesResultCode =
-            <BeginSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            BeginSponsoringFutureReservesResultCode::Success => Self::Success,
-            BeginSponsoringFutureReservesResultCode::Malformed => Self::Malformed,
-            BeginSponsoringFutureReservesResultCode::AlreadySponsored => Self::AlreadySponsored,
-            BeginSponsoringFutureReservesResultCode::Recursive => Self::Recursive,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: BeginSponsoringFutureReservesResultCode =
+                <BeginSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                BeginSponsoringFutureReservesResultCode::Success => Self::Success,
+                BeginSponsoringFutureReservesResultCode::Malformed => Self::Malformed,
+                BeginSponsoringFutureReservesResultCode::AlreadySponsored => Self::AlreadySponsored,
+                BeginSponsoringFutureReservesResultCode::Recursive => Self::Recursive,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::AlreadySponsored => ().write_xdr(w)?,
-            Self::Recursive => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::AlreadySponsored => ().write_xdr(w)?,
+                Self::Recursive => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -24611,18 +25941,22 @@ impl From<EndSponsoringFutureReservesResultCode> for i32 {
 
 impl ReadXdr for EndSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for EndSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -24705,30 +26039,34 @@ impl Union<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReserve
 
 impl ReadXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: EndSponsoringFutureReservesResultCode =
-            <EndSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            EndSponsoringFutureReservesResultCode::Success => Self::Success,
-            EndSponsoringFutureReservesResultCode::NotSponsored => Self::NotSponsored,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: EndSponsoringFutureReservesResultCode =
+                <EndSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                EndSponsoringFutureReservesResultCode::Success => Self::Success,
+                EndSponsoringFutureReservesResultCode::NotSponsored => Self::NotSponsored,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::NotSponsored => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::NotSponsored => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -24849,18 +26187,22 @@ impl From<RevokeSponsorshipResultCode> for i32 {
 
 impl ReadXdr for RevokeSponsorshipResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for RevokeSponsorshipResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -24969,38 +26311,42 @@ impl Union<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {}
 
 impl ReadXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: RevokeSponsorshipResultCode =
-            <RevokeSponsorshipResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            RevokeSponsorshipResultCode::Success => Self::Success,
-            RevokeSponsorshipResultCode::DoesNotExist => Self::DoesNotExist,
-            RevokeSponsorshipResultCode::NotSponsor => Self::NotSponsor,
-            RevokeSponsorshipResultCode::LowReserve => Self::LowReserve,
-            RevokeSponsorshipResultCode::OnlyTransferable => Self::OnlyTransferable,
-            RevokeSponsorshipResultCode::Malformed => Self::Malformed,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: RevokeSponsorshipResultCode =
+                <RevokeSponsorshipResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                RevokeSponsorshipResultCode::Success => Self::Success,
+                RevokeSponsorshipResultCode::DoesNotExist => Self::DoesNotExist,
+                RevokeSponsorshipResultCode::NotSponsor => Self::NotSponsor,
+                RevokeSponsorshipResultCode::LowReserve => Self::LowReserve,
+                RevokeSponsorshipResultCode::OnlyTransferable => Self::OnlyTransferable,
+                RevokeSponsorshipResultCode::Malformed => Self::Malformed,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::DoesNotExist => ().write_xdr(w)?,
-            Self::NotSponsor => ().write_xdr(w)?,
-            Self::LowReserve => ().write_xdr(w)?,
-            Self::OnlyTransferable => ().write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::DoesNotExist => ().write_xdr(w)?,
+                Self::NotSponsor => ().write_xdr(w)?,
+                Self::LowReserve => ().write_xdr(w)?,
+                Self::OnlyTransferable => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -25115,18 +26461,22 @@ impl From<ClawbackResultCode> for i32 {
 
 impl ReadXdr for ClawbackResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClawbackResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -25229,35 +26579,39 @@ impl Union<ClawbackResultCode> for ClawbackResult {}
 
 impl ReadXdr for ClawbackResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClawbackResultCode = <ClawbackResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ClawbackResultCode::Success => Self::Success,
-            ClawbackResultCode::Malformed => Self::Malformed,
-            ClawbackResultCode::NotClawbackEnabled => Self::NotClawbackEnabled,
-            ClawbackResultCode::NoTrust => Self::NoTrust,
-            ClawbackResultCode::Underfunded => Self::Underfunded,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ClawbackResultCode = <ClawbackResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ClawbackResultCode::Success => Self::Success,
+                ClawbackResultCode::Malformed => Self::Malformed,
+                ClawbackResultCode::NotClawbackEnabled => Self::NotClawbackEnabled,
+                ClawbackResultCode::NoTrust => Self::NoTrust,
+                ClawbackResultCode::Underfunded => Self::Underfunded,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClawbackResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::NotClawbackEnabled => ().write_xdr(w)?,
-            Self::NoTrust => ().write_xdr(w)?,
-            Self::Underfunded => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::NotClawbackEnabled => ().write_xdr(w)?,
+                Self::NoTrust => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -25362,18 +26716,22 @@ impl From<ClawbackClaimableBalanceResultCode> for i32 {
 
 impl ReadXdr for ClawbackClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClawbackClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -25467,34 +26825,38 @@ impl Union<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResul
 
 impl ReadXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: ClawbackClaimableBalanceResultCode =
-            <ClawbackClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            ClawbackClaimableBalanceResultCode::Success => Self::Success,
-            ClawbackClaimableBalanceResultCode::DoesNotExist => Self::DoesNotExist,
-            ClawbackClaimableBalanceResultCode::NotIssuer => Self::NotIssuer,
-            ClawbackClaimableBalanceResultCode::NotClawbackEnabled => Self::NotClawbackEnabled,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ClawbackClaimableBalanceResultCode =
+                <ClawbackClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ClawbackClaimableBalanceResultCode::Success => Self::Success,
+                ClawbackClaimableBalanceResultCode::DoesNotExist => Self::DoesNotExist,
+                ClawbackClaimableBalanceResultCode::NotIssuer => Self::NotIssuer,
+                ClawbackClaimableBalanceResultCode::NotClawbackEnabled => Self::NotClawbackEnabled,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::DoesNotExist => ().write_xdr(w)?,
-            Self::NotIssuer => ().write_xdr(w)?,
-            Self::NotClawbackEnabled => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::DoesNotExist => ().write_xdr(w)?,
+                Self::NotIssuer => ().write_xdr(w)?,
+                Self::NotClawbackEnabled => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -25616,18 +26978,22 @@ impl From<SetTrustLineFlagsResultCode> for i32 {
 
 impl ReadXdr for SetTrustLineFlagsResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for SetTrustLineFlagsResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -25736,38 +27102,42 @@ impl Union<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {}
 
 impl ReadXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: SetTrustLineFlagsResultCode =
-            <SetTrustLineFlagsResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            SetTrustLineFlagsResultCode::Success => Self::Success,
-            SetTrustLineFlagsResultCode::Malformed => Self::Malformed,
-            SetTrustLineFlagsResultCode::NoTrustLine => Self::NoTrustLine,
-            SetTrustLineFlagsResultCode::CantRevoke => Self::CantRevoke,
-            SetTrustLineFlagsResultCode::InvalidState => Self::InvalidState,
-            SetTrustLineFlagsResultCode::LowReserve => Self::LowReserve,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: SetTrustLineFlagsResultCode =
+                <SetTrustLineFlagsResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                SetTrustLineFlagsResultCode::Success => Self::Success,
+                SetTrustLineFlagsResultCode::Malformed => Self::Malformed,
+                SetTrustLineFlagsResultCode::NoTrustLine => Self::NoTrustLine,
+                SetTrustLineFlagsResultCode::CantRevoke => Self::CantRevoke,
+                SetTrustLineFlagsResultCode::InvalidState => Self::InvalidState,
+                SetTrustLineFlagsResultCode::LowReserve => Self::LowReserve,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::NoTrustLine => ().write_xdr(w)?,
-            Self::CantRevoke => ().write_xdr(w)?,
-            Self::InvalidState => ().write_xdr(w)?,
-            Self::LowReserve => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::NoTrustLine => ().write_xdr(w)?,
+                Self::CantRevoke => ().write_xdr(w)?,
+                Self::InvalidState => ().write_xdr(w)?,
+                Self::LowReserve => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -25904,18 +27274,22 @@ impl From<LiquidityPoolDepositResultCode> for i32 {
 
 impl ReadXdr for LiquidityPoolDepositResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LiquidityPoolDepositResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -26036,42 +27410,46 @@ impl Union<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {}
 
 impl ReadXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LiquidityPoolDepositResultCode =
-            <LiquidityPoolDepositResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            LiquidityPoolDepositResultCode::Success => Self::Success,
-            LiquidityPoolDepositResultCode::Malformed => Self::Malformed,
-            LiquidityPoolDepositResultCode::NoTrust => Self::NoTrust,
-            LiquidityPoolDepositResultCode::NotAuthorized => Self::NotAuthorized,
-            LiquidityPoolDepositResultCode::Underfunded => Self::Underfunded,
-            LiquidityPoolDepositResultCode::LineFull => Self::LineFull,
-            LiquidityPoolDepositResultCode::BadPrice => Self::BadPrice,
-            LiquidityPoolDepositResultCode::PoolFull => Self::PoolFull,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolDepositResultCode =
+                <LiquidityPoolDepositResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                LiquidityPoolDepositResultCode::Success => Self::Success,
+                LiquidityPoolDepositResultCode::Malformed => Self::Malformed,
+                LiquidityPoolDepositResultCode::NoTrust => Self::NoTrust,
+                LiquidityPoolDepositResultCode::NotAuthorized => Self::NotAuthorized,
+                LiquidityPoolDepositResultCode::Underfunded => Self::Underfunded,
+                LiquidityPoolDepositResultCode::LineFull => Self::LineFull,
+                LiquidityPoolDepositResultCode::BadPrice => Self::BadPrice,
+                LiquidityPoolDepositResultCode::PoolFull => Self::PoolFull,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::NoTrust => ().write_xdr(w)?,
-            Self::NotAuthorized => ().write_xdr(w)?,
-            Self::Underfunded => ().write_xdr(w)?,
-            Self::LineFull => ().write_xdr(w)?,
-            Self::BadPrice => ().write_xdr(w)?,
-            Self::PoolFull => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::NoTrust => ().write_xdr(w)?,
+                Self::NotAuthorized => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+                Self::LineFull => ().write_xdr(w)?,
+                Self::BadPrice => ().write_xdr(w)?,
+                Self::PoolFull => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -26195,18 +27573,22 @@ impl From<LiquidityPoolWithdrawResultCode> for i32 {
 
 impl ReadXdr for LiquidityPoolWithdrawResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LiquidityPoolWithdrawResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -26315,38 +27697,42 @@ impl Union<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {}
 
 impl ReadXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: LiquidityPoolWithdrawResultCode =
-            <LiquidityPoolWithdrawResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            LiquidityPoolWithdrawResultCode::Success => Self::Success,
-            LiquidityPoolWithdrawResultCode::Malformed => Self::Malformed,
-            LiquidityPoolWithdrawResultCode::NoTrust => Self::NoTrust,
-            LiquidityPoolWithdrawResultCode::Underfunded => Self::Underfunded,
-            LiquidityPoolWithdrawResultCode::LineFull => Self::LineFull,
-            LiquidityPoolWithdrawResultCode::UnderMinimum => Self::UnderMinimum,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: LiquidityPoolWithdrawResultCode =
+                <LiquidityPoolWithdrawResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                LiquidityPoolWithdrawResultCode::Success => Self::Success,
+                LiquidityPoolWithdrawResultCode::Malformed => Self::Malformed,
+                LiquidityPoolWithdrawResultCode::NoTrust => Self::NoTrust,
+                LiquidityPoolWithdrawResultCode::Underfunded => Self::Underfunded,
+                LiquidityPoolWithdrawResultCode::LineFull => Self::LineFull,
+                LiquidityPoolWithdrawResultCode::UnderMinimum => Self::UnderMinimum,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Success => ().write_xdr(w)?,
-            Self::Malformed => ().write_xdr(w)?,
-            Self::NoTrust => ().write_xdr(w)?,
-            Self::Underfunded => ().write_xdr(w)?,
-            Self::LineFull => ().write_xdr(w)?,
-            Self::UnderMinimum => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::NoTrust => ().write_xdr(w)?,
+                Self::Underfunded => ().write_xdr(w)?,
+                Self::LineFull => ().write_xdr(w)?,
+                Self::UnderMinimum => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -26471,18 +27857,22 @@ impl From<OperationResultCode> for i32 {
 
 impl ReadXdr for OperationResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for OperationResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -26721,101 +28111,109 @@ impl Union<OperationType> for OperationResultTr {}
 
 impl ReadXdr for OperationResultTr {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            OperationType::CreateAccount => Self::CreateAccount(CreateAccountResult::read_xdr(r)?),
-            OperationType::Payment => Self::Payment(PaymentResult::read_xdr(r)?),
-            OperationType::PathPaymentStrictReceive => {
-                Self::PathPaymentStrictReceive(PathPaymentStrictReceiveResult::read_xdr(r)?)
-            }
-            OperationType::ManageSellOffer => {
-                Self::ManageSellOffer(ManageSellOfferResult::read_xdr(r)?)
-            }
-            OperationType::CreatePassiveSellOffer => {
-                Self::CreatePassiveSellOffer(ManageSellOfferResult::read_xdr(r)?)
-            }
-            OperationType::SetOptions => Self::SetOptions(SetOptionsResult::read_xdr(r)?),
-            OperationType::ChangeTrust => Self::ChangeTrust(ChangeTrustResult::read_xdr(r)?),
-            OperationType::AllowTrust => Self::AllowTrust(AllowTrustResult::read_xdr(r)?),
-            OperationType::AccountMerge => Self::AccountMerge(AccountMergeResult::read_xdr(r)?),
-            OperationType::Inflation => Self::Inflation(InflationResult::read_xdr(r)?),
-            OperationType::ManageData => Self::ManageData(ManageDataResult::read_xdr(r)?),
-            OperationType::BumpSequence => Self::BumpSequence(BumpSequenceResult::read_xdr(r)?),
-            OperationType::ManageBuyOffer => {
-                Self::ManageBuyOffer(ManageBuyOfferResult::read_xdr(r)?)
-            }
-            OperationType::PathPaymentStrictSend => {
-                Self::PathPaymentStrictSend(PathPaymentStrictSendResult::read_xdr(r)?)
-            }
-            OperationType::CreateClaimableBalance => {
-                Self::CreateClaimableBalance(CreateClaimableBalanceResult::read_xdr(r)?)
-            }
-            OperationType::ClaimClaimableBalance => {
-                Self::ClaimClaimableBalance(ClaimClaimableBalanceResult::read_xdr(r)?)
-            }
-            OperationType::BeginSponsoringFutureReserves => Self::BeginSponsoringFutureReserves(
-                BeginSponsoringFutureReservesResult::read_xdr(r)?,
-            ),
-            OperationType::EndSponsoringFutureReserves => {
-                Self::EndSponsoringFutureReserves(EndSponsoringFutureReservesResult::read_xdr(r)?)
-            }
-            OperationType::RevokeSponsorship => {
-                Self::RevokeSponsorship(RevokeSponsorshipResult::read_xdr(r)?)
-            }
-            OperationType::Clawback => Self::Clawback(ClawbackResult::read_xdr(r)?),
-            OperationType::ClawbackClaimableBalance => {
-                Self::ClawbackClaimableBalance(ClawbackClaimableBalanceResult::read_xdr(r)?)
-            }
-            OperationType::SetTrustLineFlags => {
-                Self::SetTrustLineFlags(SetTrustLineFlagsResult::read_xdr(r)?)
-            }
-            OperationType::LiquidityPoolDeposit => {
-                Self::LiquidityPoolDeposit(LiquidityPoolDepositResult::read_xdr(r)?)
-            }
-            OperationType::LiquidityPoolWithdraw => {
-                Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawResult::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                OperationType::CreateAccount => {
+                    Self::CreateAccount(CreateAccountResult::read_xdr(r)?)
+                }
+                OperationType::Payment => Self::Payment(PaymentResult::read_xdr(r)?),
+                OperationType::PathPaymentStrictReceive => {
+                    Self::PathPaymentStrictReceive(PathPaymentStrictReceiveResult::read_xdr(r)?)
+                }
+                OperationType::ManageSellOffer => {
+                    Self::ManageSellOffer(ManageSellOfferResult::read_xdr(r)?)
+                }
+                OperationType::CreatePassiveSellOffer => {
+                    Self::CreatePassiveSellOffer(ManageSellOfferResult::read_xdr(r)?)
+                }
+                OperationType::SetOptions => Self::SetOptions(SetOptionsResult::read_xdr(r)?),
+                OperationType::ChangeTrust => Self::ChangeTrust(ChangeTrustResult::read_xdr(r)?),
+                OperationType::AllowTrust => Self::AllowTrust(AllowTrustResult::read_xdr(r)?),
+                OperationType::AccountMerge => Self::AccountMerge(AccountMergeResult::read_xdr(r)?),
+                OperationType::Inflation => Self::Inflation(InflationResult::read_xdr(r)?),
+                OperationType::ManageData => Self::ManageData(ManageDataResult::read_xdr(r)?),
+                OperationType::BumpSequence => Self::BumpSequence(BumpSequenceResult::read_xdr(r)?),
+                OperationType::ManageBuyOffer => {
+                    Self::ManageBuyOffer(ManageBuyOfferResult::read_xdr(r)?)
+                }
+                OperationType::PathPaymentStrictSend => {
+                    Self::PathPaymentStrictSend(PathPaymentStrictSendResult::read_xdr(r)?)
+                }
+                OperationType::CreateClaimableBalance => {
+                    Self::CreateClaimableBalance(CreateClaimableBalanceResult::read_xdr(r)?)
+                }
+                OperationType::ClaimClaimableBalance => {
+                    Self::ClaimClaimableBalance(ClaimClaimableBalanceResult::read_xdr(r)?)
+                }
+                OperationType::BeginSponsoringFutureReserves => {
+                    Self::BeginSponsoringFutureReserves(
+                        BeginSponsoringFutureReservesResult::read_xdr(r)?,
+                    )
+                }
+                OperationType::EndSponsoringFutureReserves => Self::EndSponsoringFutureReserves(
+                    EndSponsoringFutureReservesResult::read_xdr(r)?,
+                ),
+                OperationType::RevokeSponsorship => {
+                    Self::RevokeSponsorship(RevokeSponsorshipResult::read_xdr(r)?)
+                }
+                OperationType::Clawback => Self::Clawback(ClawbackResult::read_xdr(r)?),
+                OperationType::ClawbackClaimableBalance => {
+                    Self::ClawbackClaimableBalance(ClawbackClaimableBalanceResult::read_xdr(r)?)
+                }
+                OperationType::SetTrustLineFlags => {
+                    Self::SetTrustLineFlags(SetTrustLineFlagsResult::read_xdr(r)?)
+                }
+                OperationType::LiquidityPoolDeposit => {
+                    Self::LiquidityPoolDeposit(LiquidityPoolDepositResult::read_xdr(r)?)
+                }
+                OperationType::LiquidityPoolWithdraw => {
+                    Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawResult::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for OperationResultTr {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::CreateAccount(v) => v.write_xdr(w)?,
-            Self::Payment(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictReceive(v) => v.write_xdr(w)?,
-            Self::ManageSellOffer(v) => v.write_xdr(w)?,
-            Self::CreatePassiveSellOffer(v) => v.write_xdr(w)?,
-            Self::SetOptions(v) => v.write_xdr(w)?,
-            Self::ChangeTrust(v) => v.write_xdr(w)?,
-            Self::AllowTrust(v) => v.write_xdr(w)?,
-            Self::AccountMerge(v) => v.write_xdr(w)?,
-            Self::Inflation(v) => v.write_xdr(w)?,
-            Self::ManageData(v) => v.write_xdr(w)?,
-            Self::BumpSequence(v) => v.write_xdr(w)?,
-            Self::ManageBuyOffer(v) => v.write_xdr(w)?,
-            Self::PathPaymentStrictSend(v) => v.write_xdr(w)?,
-            Self::CreateClaimableBalance(v) => v.write_xdr(w)?,
-            Self::ClaimClaimableBalance(v) => v.write_xdr(w)?,
-            Self::BeginSponsoringFutureReserves(v) => v.write_xdr(w)?,
-            Self::EndSponsoringFutureReserves(v) => v.write_xdr(w)?,
-            Self::RevokeSponsorship(v) => v.write_xdr(w)?,
-            Self::Clawback(v) => v.write_xdr(w)?,
-            Self::ClawbackClaimableBalance(v) => v.write_xdr(w)?,
-            Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
-            Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
-            Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::CreateAccount(v) => v.write_xdr(w)?,
+                Self::Payment(v) => v.write_xdr(w)?,
+                Self::PathPaymentStrictReceive(v) => v.write_xdr(w)?,
+                Self::ManageSellOffer(v) => v.write_xdr(w)?,
+                Self::CreatePassiveSellOffer(v) => v.write_xdr(w)?,
+                Self::SetOptions(v) => v.write_xdr(w)?,
+                Self::ChangeTrust(v) => v.write_xdr(w)?,
+                Self::AllowTrust(v) => v.write_xdr(w)?,
+                Self::AccountMerge(v) => v.write_xdr(w)?,
+                Self::Inflation(v) => v.write_xdr(w)?,
+                Self::ManageData(v) => v.write_xdr(w)?,
+                Self::BumpSequence(v) => v.write_xdr(w)?,
+                Self::ManageBuyOffer(v) => v.write_xdr(w)?,
+                Self::PathPaymentStrictSend(v) => v.write_xdr(w)?,
+                Self::CreateClaimableBalance(v) => v.write_xdr(w)?,
+                Self::ClaimClaimableBalance(v) => v.write_xdr(w)?,
+                Self::BeginSponsoringFutureReserves(v) => v.write_xdr(w)?,
+                Self::EndSponsoringFutureReserves(v) => v.write_xdr(w)?,
+                Self::RevokeSponsorship(v) => v.write_xdr(w)?,
+                Self::Clawback(v) => v.write_xdr(w)?,
+                Self::ClawbackClaimableBalance(v) => v.write_xdr(w)?,
+                Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
+                Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
+                Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -26981,39 +28379,43 @@ impl Union<OperationResultCode> for OperationResult {}
 
 impl ReadXdr for OperationResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: OperationResultCode = <OperationResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            OperationResultCode::OpInner => Self::OpInner(OperationResultTr::read_xdr(r)?),
-            OperationResultCode::OpBadAuth => Self::OpBadAuth,
-            OperationResultCode::OpNoAccount => Self::OpNoAccount,
-            OperationResultCode::OpNotSupported => Self::OpNotSupported,
-            OperationResultCode::OpTooManySubentries => Self::OpTooManySubentries,
-            OperationResultCode::OpExceededWorkLimit => Self::OpExceededWorkLimit,
-            OperationResultCode::OpTooManySponsoring => Self::OpTooManySponsoring,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: OperationResultCode = <OperationResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                OperationResultCode::OpInner => Self::OpInner(OperationResultTr::read_xdr(r)?),
+                OperationResultCode::OpBadAuth => Self::OpBadAuth,
+                OperationResultCode::OpNoAccount => Self::OpNoAccount,
+                OperationResultCode::OpNotSupported => Self::OpNotSupported,
+                OperationResultCode::OpTooManySubentries => Self::OpTooManySubentries,
+                OperationResultCode::OpExceededWorkLimit => Self::OpExceededWorkLimit,
+                OperationResultCode::OpTooManySponsoring => Self::OpTooManySponsoring,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for OperationResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::OpInner(v) => v.write_xdr(w)?,
-            Self::OpBadAuth => ().write_xdr(w)?,
-            Self::OpNoAccount => ().write_xdr(w)?,
-            Self::OpNotSupported => ().write_xdr(w)?,
-            Self::OpTooManySubentries => ().write_xdr(w)?,
-            Self::OpExceededWorkLimit => ().write_xdr(w)?,
-            Self::OpTooManySponsoring => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::OpInner(v) => v.write_xdr(w)?,
+                Self::OpBadAuth => ().write_xdr(w)?,
+                Self::OpNoAccount => ().write_xdr(w)?,
+                Self::OpNotSupported => ().write_xdr(w)?,
+                Self::OpTooManySubentries => ().write_xdr(w)?,
+                Self::OpExceededWorkLimit => ().write_xdr(w)?,
+                Self::OpTooManySponsoring => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -27208,18 +28610,22 @@ impl From<TransactionResultCode> for i32 {
 
 impl ReadXdr for TransactionResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TransactionResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -27390,61 +28796,65 @@ impl Union<TransactionResultCode> for InnerTransactionResultResult {}
 
 impl ReadXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            TransactionResultCode::TxSuccess => {
-                Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?)
-            }
-            TransactionResultCode::TxFailed => {
-                Self::TxFailed(VecM::<OperationResult>::read_xdr(r)?)
-            }
-            TransactionResultCode::TxTooEarly => Self::TxTooEarly,
-            TransactionResultCode::TxTooLate => Self::TxTooLate,
-            TransactionResultCode::TxMissingOperation => Self::TxMissingOperation,
-            TransactionResultCode::TxBadSeq => Self::TxBadSeq,
-            TransactionResultCode::TxBadAuth => Self::TxBadAuth,
-            TransactionResultCode::TxInsufficientBalance => Self::TxInsufficientBalance,
-            TransactionResultCode::TxNoAccount => Self::TxNoAccount,
-            TransactionResultCode::TxInsufficientFee => Self::TxInsufficientFee,
-            TransactionResultCode::TxBadAuthExtra => Self::TxBadAuthExtra,
-            TransactionResultCode::TxInternalError => Self::TxInternalError,
-            TransactionResultCode::TxNotSupported => Self::TxNotSupported,
-            TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
-            TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
-            TransactionResultCode::TxMalformed => Self::TxMalformed,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                TransactionResultCode::TxSuccess => {
+                    Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?)
+                }
+                TransactionResultCode::TxFailed => {
+                    Self::TxFailed(VecM::<OperationResult>::read_xdr(r)?)
+                }
+                TransactionResultCode::TxTooEarly => Self::TxTooEarly,
+                TransactionResultCode::TxTooLate => Self::TxTooLate,
+                TransactionResultCode::TxMissingOperation => Self::TxMissingOperation,
+                TransactionResultCode::TxBadSeq => Self::TxBadSeq,
+                TransactionResultCode::TxBadAuth => Self::TxBadAuth,
+                TransactionResultCode::TxInsufficientBalance => Self::TxInsufficientBalance,
+                TransactionResultCode::TxNoAccount => Self::TxNoAccount,
+                TransactionResultCode::TxInsufficientFee => Self::TxInsufficientFee,
+                TransactionResultCode::TxBadAuthExtra => Self::TxBadAuthExtra,
+                TransactionResultCode::TxInternalError => Self::TxInternalError,
+                TransactionResultCode::TxNotSupported => Self::TxNotSupported,
+                TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
+                TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
+                TransactionResultCode::TxMalformed => Self::TxMalformed,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::TxSuccess(v) => v.write_xdr(w)?,
-            Self::TxFailed(v) => v.write_xdr(w)?,
-            Self::TxTooEarly => ().write_xdr(w)?,
-            Self::TxTooLate => ().write_xdr(w)?,
-            Self::TxMissingOperation => ().write_xdr(w)?,
-            Self::TxBadSeq => ().write_xdr(w)?,
-            Self::TxBadAuth => ().write_xdr(w)?,
-            Self::TxInsufficientBalance => ().write_xdr(w)?,
-            Self::TxNoAccount => ().write_xdr(w)?,
-            Self::TxInsufficientFee => ().write_xdr(w)?,
-            Self::TxBadAuthExtra => ().write_xdr(w)?,
-            Self::TxInternalError => ().write_xdr(w)?,
-            Self::TxNotSupported => ().write_xdr(w)?,
-            Self::TxBadSponsorship => ().write_xdr(w)?,
-            Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
-            Self::TxMalformed => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::TxSuccess(v) => v.write_xdr(w)?,
+                Self::TxFailed(v) => v.write_xdr(w)?,
+                Self::TxTooEarly => ().write_xdr(w)?,
+                Self::TxTooLate => ().write_xdr(w)?,
+                Self::TxMissingOperation => ().write_xdr(w)?,
+                Self::TxBadSeq => ().write_xdr(w)?,
+                Self::TxBadAuth => ().write_xdr(w)?,
+                Self::TxInsufficientBalance => ().write_xdr(w)?,
+                Self::TxNoAccount => ().write_xdr(w)?,
+                Self::TxInsufficientFee => ().write_xdr(w)?,
+                Self::TxBadAuthExtra => ().write_xdr(w)?,
+                Self::TxInternalError => ().write_xdr(w)?,
+                Self::TxNotSupported => ().write_xdr(w)?,
+                Self::TxBadSponsorship => ().write_xdr(w)?,
+                Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
+                Self::TxMalformed => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -27518,27 +28928,31 @@ impl Union<i32> for InnerTransactionResultExt {}
 
 impl ReadXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -27598,22 +29012,26 @@ pub struct InnerTransactionResult {
 
 impl ReadXdr for InnerTransactionResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            fee_charged: i64::read_xdr(r)?,
-            result: InnerTransactionResultResult::read_xdr(r)?,
-            ext: InnerTransactionResultExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                fee_charged: i64::read_xdr(r)?,
+                result: InnerTransactionResultResult::read_xdr(r)?,
+                ext: InnerTransactionResultExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for InnerTransactionResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.fee_charged.write_xdr(w)?;
-        self.result.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.fee_charged.write_xdr(w)?;
+            self.result.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -27639,20 +29057,24 @@ pub struct InnerTransactionResultPair {
 
 impl ReadXdr for InnerTransactionResultPair {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            transaction_hash: Hash::read_xdr(r)?,
-            result: InnerTransactionResult::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                transaction_hash: Hash::read_xdr(r)?,
+                result: InnerTransactionResult::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for InnerTransactionResultPair {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.transaction_hash.write_xdr(w)?;
-        self.result.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.transaction_hash.write_xdr(w)?;
+            self.result.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -27835,69 +29257,73 @@ impl Union<TransactionResultCode> for TransactionResultResult {}
 
 impl ReadXdr for TransactionResultResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            TransactionResultCode::TxFeeBumpInnerSuccess => {
-                Self::TxFeeBumpInnerSuccess(InnerTransactionResultPair::read_xdr(r)?)
-            }
-            TransactionResultCode::TxFeeBumpInnerFailed => {
-                Self::TxFeeBumpInnerFailed(InnerTransactionResultPair::read_xdr(r)?)
-            }
-            TransactionResultCode::TxSuccess => {
-                Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?)
-            }
-            TransactionResultCode::TxFailed => {
-                Self::TxFailed(VecM::<OperationResult>::read_xdr(r)?)
-            }
-            TransactionResultCode::TxTooEarly => Self::TxTooEarly,
-            TransactionResultCode::TxTooLate => Self::TxTooLate,
-            TransactionResultCode::TxMissingOperation => Self::TxMissingOperation,
-            TransactionResultCode::TxBadSeq => Self::TxBadSeq,
-            TransactionResultCode::TxBadAuth => Self::TxBadAuth,
-            TransactionResultCode::TxInsufficientBalance => Self::TxInsufficientBalance,
-            TransactionResultCode::TxNoAccount => Self::TxNoAccount,
-            TransactionResultCode::TxInsufficientFee => Self::TxInsufficientFee,
-            TransactionResultCode::TxBadAuthExtra => Self::TxBadAuthExtra,
-            TransactionResultCode::TxInternalError => Self::TxInternalError,
-            TransactionResultCode::TxNotSupported => Self::TxNotSupported,
-            TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
-            TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
-            TransactionResultCode::TxMalformed => Self::TxMalformed,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                TransactionResultCode::TxFeeBumpInnerSuccess => {
+                    Self::TxFeeBumpInnerSuccess(InnerTransactionResultPair::read_xdr(r)?)
+                }
+                TransactionResultCode::TxFeeBumpInnerFailed => {
+                    Self::TxFeeBumpInnerFailed(InnerTransactionResultPair::read_xdr(r)?)
+                }
+                TransactionResultCode::TxSuccess => {
+                    Self::TxSuccess(VecM::<OperationResult>::read_xdr(r)?)
+                }
+                TransactionResultCode::TxFailed => {
+                    Self::TxFailed(VecM::<OperationResult>::read_xdr(r)?)
+                }
+                TransactionResultCode::TxTooEarly => Self::TxTooEarly,
+                TransactionResultCode::TxTooLate => Self::TxTooLate,
+                TransactionResultCode::TxMissingOperation => Self::TxMissingOperation,
+                TransactionResultCode::TxBadSeq => Self::TxBadSeq,
+                TransactionResultCode::TxBadAuth => Self::TxBadAuth,
+                TransactionResultCode::TxInsufficientBalance => Self::TxInsufficientBalance,
+                TransactionResultCode::TxNoAccount => Self::TxNoAccount,
+                TransactionResultCode::TxInsufficientFee => Self::TxInsufficientFee,
+                TransactionResultCode::TxBadAuthExtra => Self::TxBadAuthExtra,
+                TransactionResultCode::TxInternalError => Self::TxInternalError,
+                TransactionResultCode::TxNotSupported => Self::TxNotSupported,
+                TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
+                TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
+                TransactionResultCode::TxMalformed => Self::TxMalformed,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TransactionResultResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::TxFeeBumpInnerSuccess(v) => v.write_xdr(w)?,
-            Self::TxFeeBumpInnerFailed(v) => v.write_xdr(w)?,
-            Self::TxSuccess(v) => v.write_xdr(w)?,
-            Self::TxFailed(v) => v.write_xdr(w)?,
-            Self::TxTooEarly => ().write_xdr(w)?,
-            Self::TxTooLate => ().write_xdr(w)?,
-            Self::TxMissingOperation => ().write_xdr(w)?,
-            Self::TxBadSeq => ().write_xdr(w)?,
-            Self::TxBadAuth => ().write_xdr(w)?,
-            Self::TxInsufficientBalance => ().write_xdr(w)?,
-            Self::TxNoAccount => ().write_xdr(w)?,
-            Self::TxInsufficientFee => ().write_xdr(w)?,
-            Self::TxBadAuthExtra => ().write_xdr(w)?,
-            Self::TxInternalError => ().write_xdr(w)?,
-            Self::TxNotSupported => ().write_xdr(w)?,
-            Self::TxBadSponsorship => ().write_xdr(w)?,
-            Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
-            Self::TxMalformed => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::TxFeeBumpInnerSuccess(v) => v.write_xdr(w)?,
+                Self::TxFeeBumpInnerFailed(v) => v.write_xdr(w)?,
+                Self::TxSuccess(v) => v.write_xdr(w)?,
+                Self::TxFailed(v) => v.write_xdr(w)?,
+                Self::TxTooEarly => ().write_xdr(w)?,
+                Self::TxTooLate => ().write_xdr(w)?,
+                Self::TxMissingOperation => ().write_xdr(w)?,
+                Self::TxBadSeq => ().write_xdr(w)?,
+                Self::TxBadAuth => ().write_xdr(w)?,
+                Self::TxInsufficientBalance => ().write_xdr(w)?,
+                Self::TxNoAccount => ().write_xdr(w)?,
+                Self::TxInsufficientFee => ().write_xdr(w)?,
+                Self::TxBadAuthExtra => ().write_xdr(w)?,
+                Self::TxInternalError => ().write_xdr(w)?,
+                Self::TxNotSupported => ().write_xdr(w)?,
+                Self::TxBadSponsorship => ().write_xdr(w)?,
+                Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
+                Self::TxMalformed => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -27971,27 +29397,31 @@ impl Union<i32> for TransactionResultExt {}
 
 impl ReadXdr for TransactionResultExt {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for TransactionResultExt {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -28052,22 +29482,26 @@ pub struct TransactionResult {
 
 impl ReadXdr for TransactionResult {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            fee_charged: i64::read_xdr(r)?,
-            result: TransactionResultResult::read_xdr(r)?,
-            ext: TransactionResultExt::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                fee_charged: i64::read_xdr(r)?,
+                result: TransactionResultResult::read_xdr(r)?,
+                ext: TransactionResultExt::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for TransactionResult {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.fee_charged.write_xdr(w)?;
-        self.result.write_xdr(w)?;
-        self.ext.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.fee_charged.write_xdr(w)?;
+            self.result.write_xdr(w)?;
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -28135,17 +29569,19 @@ impl AsRef<[u8; 32]> for Hash {
 
 impl ReadXdr for Hash {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <[u8; 32]>::read_xdr(r)?;
-        let v = Hash(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = <[u8; 32]>::read_xdr(r)?;
+            let v = Hash(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for Hash {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -28250,17 +29686,19 @@ impl AsRef<[u8; 32]> for Uint256 {
 
 impl ReadXdr for Uint256 {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <[u8; 32]>::read_xdr(r)?;
-        let v = Uint256(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = <[u8; 32]>::read_xdr(r)?;
+            let v = Uint256(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for Uint256 {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -28395,27 +29833,31 @@ impl Union<i32> for ExtensionPoint {}
 
 impl ReadXdr for ExtensionPoint {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            0 => Self::V0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for ExtensionPoint {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => ().write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -28529,18 +29971,22 @@ impl From<CryptoKeyType> for i32 {
 
 impl ReadXdr for CryptoKeyType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for CryptoKeyType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -28624,18 +30070,22 @@ impl From<PublicKeyType> for i32 {
 
 impl ReadXdr for PublicKeyType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PublicKeyType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -28737,18 +30187,22 @@ impl From<SignerKeyType> for i32 {
 
 impl ReadXdr for SignerKeyType {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let e = i32::read_xdr(r)?;
-        let v: Self = e.try_into()?;
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for SignerKeyType {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        let i: i32 = (*self).into();
-        i.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
     }
 }
 
@@ -28822,29 +30276,33 @@ impl Union<PublicKeyType> for PublicKey {}
 
 impl ReadXdr for PublicKey {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: PublicKeyType = <PublicKeyType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            PublicKeyType::PublicKeyTypeEd25519 => {
-                Self::PublicKeyTypeEd25519(Uint256::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: PublicKeyType = <PublicKeyType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                PublicKeyType::PublicKeyTypeEd25519 => {
+                    Self::PublicKeyTypeEd25519(Uint256::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for PublicKey {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::PublicKeyTypeEd25519(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::PublicKeyTypeEd25519(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -28872,20 +30330,24 @@ pub struct SignerKeyEd25519SignedPayload {
 
 impl ReadXdr for SignerKeyEd25519SignedPayload {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            ed25519: Uint256::read_xdr(r)?,
-            payload: BytesM::<64>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ed25519: Uint256::read_xdr(r)?,
+                payload: BytesM::<64>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for SignerKeyEd25519SignedPayload {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.ed25519.write_xdr(w)?;
-        self.payload.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ed25519.write_xdr(w)?;
+            self.payload.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -28988,35 +30450,39 @@ impl Union<SignerKeyType> for SignerKey {}
 
 impl ReadXdr for SignerKey {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let dv: SignerKeyType = <SignerKeyType as ReadXdr>::read_xdr(r)?;
-        #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-        let v = match dv {
-            SignerKeyType::Ed25519 => Self::Ed25519(Uint256::read_xdr(r)?),
-            SignerKeyType::PreAuthTx => Self::PreAuthTx(Uint256::read_xdr(r)?),
-            SignerKeyType::HashX => Self::HashX(Uint256::read_xdr(r)?),
-            SignerKeyType::Ed25519SignedPayload => {
-                Self::Ed25519SignedPayload(SignerKeyEd25519SignedPayload::read_xdr(r)?)
-            }
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: SignerKeyType = <SignerKeyType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                SignerKeyType::Ed25519 => Self::Ed25519(Uint256::read_xdr(r)?),
+                SignerKeyType::PreAuthTx => Self::PreAuthTx(Uint256::read_xdr(r)?),
+                SignerKeyType::HashX => Self::HashX(Uint256::read_xdr(r)?),
+                SignerKeyType::Ed25519SignedPayload => {
+                    Self::Ed25519SignedPayload(SignerKeyEd25519SignedPayload::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for SignerKey {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.discriminant().write_xdr(w)?;
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Ed25519(v) => v.write_xdr(w)?,
-            Self::PreAuthTx(v) => v.write_xdr(w)?,
-            Self::HashX(v) => v.write_xdr(w)?,
-            Self::Ed25519SignedPayload(v) => v.write_xdr(w)?,
-        };
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Ed25519(v) => v.write_xdr(w)?,
+                Self::PreAuthTx(v) => v.write_xdr(w)?,
+                Self::HashX(v) => v.write_xdr(w)?,
+                Self::Ed25519SignedPayload(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
     }
 }
 
@@ -29057,17 +30523,19 @@ impl AsRef<BytesM<64>> for Signature {
 
 impl ReadXdr for Signature {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = BytesM::<64>::read_xdr(r)?;
-        let v = Signature(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = BytesM::<64>::read_xdr(r)?;
+            let v = Signature(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for Signature {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -29184,17 +30652,19 @@ impl AsRef<[u8; 4]> for SignatureHint {
 
 impl ReadXdr for SignatureHint {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = <[u8; 4]>::read_xdr(r)?;
-        let v = SignatureHint(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = <[u8; 4]>::read_xdr(r)?;
+            let v = SignatureHint(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for SignatureHint {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -29272,17 +30742,19 @@ impl AsRef<PublicKey> for NodeId {
 
 impl ReadXdr for NodeId {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        let i = PublicKey::read_xdr(r)?;
-        let v = NodeId(i);
-        Ok(v)
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = PublicKey::read_xdr(r)?;
+            let v = NodeId(i);
+            Ok(v)
+        })
     }
 }
 
 impl WriteXdr for NodeId {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.0.write_xdr(w)
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -29306,18 +30778,22 @@ pub struct Curve25519Secret {
 
 impl ReadXdr for Curve25519Secret {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            key: <[u8; 32]>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                key: <[u8; 32]>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for Curve25519Secret {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.key.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -29341,18 +30817,22 @@ pub struct Curve25519Public {
 
 impl ReadXdr for Curve25519Public {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            key: <[u8; 32]>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                key: <[u8; 32]>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for Curve25519Public {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.key.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -29376,18 +30856,22 @@ pub struct HmacSha256Key {
 
 impl ReadXdr for HmacSha256Key {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            key: <[u8; 32]>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                key: <[u8; 32]>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for HmacSha256Key {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.key.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.key.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -29411,18 +30895,22 @@ pub struct HmacSha256Mac {
 
 impl ReadXdr for HmacSha256Mac {
     #[cfg(feature = "std")]
-    fn read_xdr(r: &mut impl Read) -> Result<Self> {
-        Ok(Self {
-            mac: <[u8; 32]>::read_xdr(r)?,
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                mac: <[u8; 32]>::read_xdr(r)?,
+            })
         })
     }
 }
 
 impl WriteXdr for HmacSha256Mac {
     #[cfg(feature = "std")]
-    fn write_xdr(&self, w: &mut impl Write) -> Result<()> {
-        self.mac.write_xdr(w)?;
-        Ok(())
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.mac.write_xdr(w)?;
+            Ok(())
+        })
     }
 }
 
@@ -31952,861 +33440,1322 @@ impl Type {
 
     #[cfg(feature = "std")]
     #[allow(clippy::too_many_lines)]
-    pub fn read_xdr(v: TypeVariant, r: &mut impl Read) -> Result<Self> {
+    pub fn read_xdr<R: Read>(v: TypeVariant, r: &mut DepthLimitedRead<R>) -> Result<Self> {
         match v {
-            TypeVariant::Value => Ok(Self::Value(Box::new(Value::read_xdr(r)?))),
-            TypeVariant::ScpBallot => Ok(Self::ScpBallot(Box::new(ScpBallot::read_xdr(r)?))),
-            TypeVariant::ScpStatementType => Ok(Self::ScpStatementType(Box::new(
-                ScpStatementType::read_xdr(r)?,
-            ))),
-            TypeVariant::ScpNomination => {
+            TypeVariant::Value => {
+                r.with_limited_depth(|r| Ok(Self::Value(Box::new(Value::read_xdr(r)?))))
+            }
+            TypeVariant::ScpBallot => {
+                r.with_limited_depth(|r| Ok(Self::ScpBallot(Box::new(ScpBallot::read_xdr(r)?))))
+            }
+            TypeVariant::ScpStatementType => r.with_limited_depth(|r| {
+                Ok(Self::ScpStatementType(Box::new(
+                    ScpStatementType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScpNomination => r.with_limited_depth(|r| {
                 Ok(Self::ScpNomination(Box::new(ScpNomination::read_xdr(r)?)))
-            }
-            TypeVariant::ScpStatement => {
+            }),
+            TypeVariant::ScpStatement => r.with_limited_depth(|r| {
                 Ok(Self::ScpStatement(Box::new(ScpStatement::read_xdr(r)?)))
+            }),
+            TypeVariant::ScpStatementPledges => r.with_limited_depth(|r| {
+                Ok(Self::ScpStatementPledges(Box::new(
+                    ScpStatementPledges::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScpStatementPrepare => r.with_limited_depth(|r| {
+                Ok(Self::ScpStatementPrepare(Box::new(
+                    ScpStatementPrepare::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScpStatementConfirm => r.with_limited_depth(|r| {
+                Ok(Self::ScpStatementConfirm(Box::new(
+                    ScpStatementConfirm::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScpStatementExternalize => r.with_limited_depth(|r| {
+                Ok(Self::ScpStatementExternalize(Box::new(
+                    ScpStatementExternalize::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScpEnvelope => {
+                r.with_limited_depth(|r| Ok(Self::ScpEnvelope(Box::new(ScpEnvelope::read_xdr(r)?))))
             }
-            TypeVariant::ScpStatementPledges => Ok(Self::ScpStatementPledges(Box::new(
-                ScpStatementPledges::read_xdr(r)?,
-            ))),
-            TypeVariant::ScpStatementPrepare => Ok(Self::ScpStatementPrepare(Box::new(
-                ScpStatementPrepare::read_xdr(r)?,
-            ))),
-            TypeVariant::ScpStatementConfirm => Ok(Self::ScpStatementConfirm(Box::new(
-                ScpStatementConfirm::read_xdr(r)?,
-            ))),
-            TypeVariant::ScpStatementExternalize => Ok(Self::ScpStatementExternalize(Box::new(
-                ScpStatementExternalize::read_xdr(r)?,
-            ))),
-            TypeVariant::ScpEnvelope => Ok(Self::ScpEnvelope(Box::new(ScpEnvelope::read_xdr(r)?))),
-            TypeVariant::ScpQuorumSet => {
+            TypeVariant::ScpQuorumSet => r.with_limited_depth(|r| {
                 Ok(Self::ScpQuorumSet(Box::new(ScpQuorumSet::read_xdr(r)?)))
+            }),
+            TypeVariant::StoredTransactionSet => r.with_limited_depth(|r| {
+                Ok(Self::StoredTransactionSet(Box::new(
+                    StoredTransactionSet::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::PersistedScpStateV0 => r.with_limited_depth(|r| {
+                Ok(Self::PersistedScpStateV0(Box::new(
+                    PersistedScpStateV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::PersistedScpStateV1 => r.with_limited_depth(|r| {
+                Ok(Self::PersistedScpStateV1(Box::new(
+                    PersistedScpStateV1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::PersistedScpState => r.with_limited_depth(|r| {
+                Ok(Self::PersistedScpState(Box::new(
+                    PersistedScpState::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AccountId => {
+                r.with_limited_depth(|r| Ok(Self::AccountId(Box::new(AccountId::read_xdr(r)?))))
             }
-            TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
-                StoredTransactionSet::read_xdr(r)?,
-            ))),
-            TypeVariant::PersistedScpStateV0 => Ok(Self::PersistedScpStateV0(Box::new(
-                PersistedScpStateV0::read_xdr(r)?,
-            ))),
-            TypeVariant::PersistedScpStateV1 => Ok(Self::PersistedScpStateV1(Box::new(
-                PersistedScpStateV1::read_xdr(r)?,
-            ))),
-            TypeVariant::PersistedScpState => Ok(Self::PersistedScpState(Box::new(
-                PersistedScpState::read_xdr(r)?,
-            ))),
-            TypeVariant::AccountId => Ok(Self::AccountId(Box::new(AccountId::read_xdr(r)?))),
-            TypeVariant::Thresholds => Ok(Self::Thresholds(Box::new(Thresholds::read_xdr(r)?))),
-            TypeVariant::String32 => Ok(Self::String32(Box::new(String32::read_xdr(r)?))),
-            TypeVariant::String64 => Ok(Self::String64(Box::new(String64::read_xdr(r)?))),
-            TypeVariant::SequenceNumber => {
+            TypeVariant::Thresholds => {
+                r.with_limited_depth(|r| Ok(Self::Thresholds(Box::new(Thresholds::read_xdr(r)?))))
+            }
+            TypeVariant::String32 => {
+                r.with_limited_depth(|r| Ok(Self::String32(Box::new(String32::read_xdr(r)?))))
+            }
+            TypeVariant::String64 => {
+                r.with_limited_depth(|r| Ok(Self::String64(Box::new(String64::read_xdr(r)?))))
+            }
+            TypeVariant::SequenceNumber => r.with_limited_depth(|r| {
                 Ok(Self::SequenceNumber(Box::new(SequenceNumber::read_xdr(r)?)))
+            }),
+            TypeVariant::TimePoint => {
+                r.with_limited_depth(|r| Ok(Self::TimePoint(Box::new(TimePoint::read_xdr(r)?))))
             }
-            TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(TimePoint::read_xdr(r)?))),
-            TypeVariant::Duration => Ok(Self::Duration(Box::new(Duration::read_xdr(r)?))),
-            TypeVariant::DataValue => Ok(Self::DataValue(Box::new(DataValue::read_xdr(r)?))),
-            TypeVariant::PoolId => Ok(Self::PoolId(Box::new(PoolId::read_xdr(r)?))),
-            TypeVariant::AssetCode4 => Ok(Self::AssetCode4(Box::new(AssetCode4::read_xdr(r)?))),
-            TypeVariant::AssetCode12 => Ok(Self::AssetCode12(Box::new(AssetCode12::read_xdr(r)?))),
-            TypeVariant::AssetType => Ok(Self::AssetType(Box::new(AssetType::read_xdr(r)?))),
-            TypeVariant::AssetCode => Ok(Self::AssetCode(Box::new(AssetCode::read_xdr(r)?))),
-            TypeVariant::AlphaNum4 => Ok(Self::AlphaNum4(Box::new(AlphaNum4::read_xdr(r)?))),
-            TypeVariant::AlphaNum12 => Ok(Self::AlphaNum12(Box::new(AlphaNum12::read_xdr(r)?))),
-            TypeVariant::Asset => Ok(Self::Asset(Box::new(Asset::read_xdr(r)?))),
-            TypeVariant::Price => Ok(Self::Price(Box::new(Price::read_xdr(r)?))),
-            TypeVariant::Liabilities => Ok(Self::Liabilities(Box::new(Liabilities::read_xdr(r)?))),
-            TypeVariant::ThresholdIndexes => Ok(Self::ThresholdIndexes(Box::new(
-                ThresholdIndexes::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerEntryType => Ok(Self::LedgerEntryType(Box::new(
-                LedgerEntryType::read_xdr(r)?,
-            ))),
-            TypeVariant::Signer => Ok(Self::Signer(Box::new(Signer::read_xdr(r)?))),
-            TypeVariant::AccountFlags => {
+            TypeVariant::Duration => {
+                r.with_limited_depth(|r| Ok(Self::Duration(Box::new(Duration::read_xdr(r)?))))
+            }
+            TypeVariant::DataValue => {
+                r.with_limited_depth(|r| Ok(Self::DataValue(Box::new(DataValue::read_xdr(r)?))))
+            }
+            TypeVariant::PoolId => {
+                r.with_limited_depth(|r| Ok(Self::PoolId(Box::new(PoolId::read_xdr(r)?))))
+            }
+            TypeVariant::AssetCode4 => {
+                r.with_limited_depth(|r| Ok(Self::AssetCode4(Box::new(AssetCode4::read_xdr(r)?))))
+            }
+            TypeVariant::AssetCode12 => {
+                r.with_limited_depth(|r| Ok(Self::AssetCode12(Box::new(AssetCode12::read_xdr(r)?))))
+            }
+            TypeVariant::AssetType => {
+                r.with_limited_depth(|r| Ok(Self::AssetType(Box::new(AssetType::read_xdr(r)?))))
+            }
+            TypeVariant::AssetCode => {
+                r.with_limited_depth(|r| Ok(Self::AssetCode(Box::new(AssetCode::read_xdr(r)?))))
+            }
+            TypeVariant::AlphaNum4 => {
+                r.with_limited_depth(|r| Ok(Self::AlphaNum4(Box::new(AlphaNum4::read_xdr(r)?))))
+            }
+            TypeVariant::AlphaNum12 => {
+                r.with_limited_depth(|r| Ok(Self::AlphaNum12(Box::new(AlphaNum12::read_xdr(r)?))))
+            }
+            TypeVariant::Asset => {
+                r.with_limited_depth(|r| Ok(Self::Asset(Box::new(Asset::read_xdr(r)?))))
+            }
+            TypeVariant::Price => {
+                r.with_limited_depth(|r| Ok(Self::Price(Box::new(Price::read_xdr(r)?))))
+            }
+            TypeVariant::Liabilities => {
+                r.with_limited_depth(|r| Ok(Self::Liabilities(Box::new(Liabilities::read_xdr(r)?))))
+            }
+            TypeVariant::ThresholdIndexes => r.with_limited_depth(|r| {
+                Ok(Self::ThresholdIndexes(Box::new(
+                    ThresholdIndexes::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerEntryType => r.with_limited_depth(|r| {
+                Ok(Self::LedgerEntryType(Box::new(LedgerEntryType::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::Signer => {
+                r.with_limited_depth(|r| Ok(Self::Signer(Box::new(Signer::read_xdr(r)?))))
+            }
+            TypeVariant::AccountFlags => r.with_limited_depth(|r| {
                 Ok(Self::AccountFlags(Box::new(AccountFlags::read_xdr(r)?)))
-            }
-            TypeVariant::SponsorshipDescriptor => Ok(Self::SponsorshipDescriptor(Box::new(
-                SponsorshipDescriptor::read_xdr(r)?,
-            ))),
-            TypeVariant::AccountEntryExtensionV3 => Ok(Self::AccountEntryExtensionV3(Box::new(
-                AccountEntryExtensionV3::read_xdr(r)?,
-            ))),
-            TypeVariant::AccountEntryExtensionV2 => Ok(Self::AccountEntryExtensionV2(Box::new(
-                AccountEntryExtensionV2::read_xdr(r)?,
-            ))),
-            TypeVariant::AccountEntryExtensionV2Ext => Ok(Self::AccountEntryExtensionV2Ext(
-                Box::new(AccountEntryExtensionV2Ext::read_xdr(r)?),
-            )),
-            TypeVariant::AccountEntryExtensionV1 => Ok(Self::AccountEntryExtensionV1(Box::new(
-                AccountEntryExtensionV1::read_xdr(r)?,
-            ))),
-            TypeVariant::AccountEntryExtensionV1Ext => Ok(Self::AccountEntryExtensionV1Ext(
-                Box::new(AccountEntryExtensionV1Ext::read_xdr(r)?),
-            )),
-            TypeVariant::AccountEntry => {
+            }),
+            TypeVariant::SponsorshipDescriptor => r.with_limited_depth(|r| {
+                Ok(Self::SponsorshipDescriptor(Box::new(
+                    SponsorshipDescriptor::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AccountEntryExtensionV3 => r.with_limited_depth(|r| {
+                Ok(Self::AccountEntryExtensionV3(Box::new(
+                    AccountEntryExtensionV3::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AccountEntryExtensionV2 => r.with_limited_depth(|r| {
+                Ok(Self::AccountEntryExtensionV2(Box::new(
+                    AccountEntryExtensionV2::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AccountEntryExtensionV2Ext => r.with_limited_depth(|r| {
+                Ok(Self::AccountEntryExtensionV2Ext(Box::new(
+                    AccountEntryExtensionV2Ext::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AccountEntryExtensionV1 => r.with_limited_depth(|r| {
+                Ok(Self::AccountEntryExtensionV1(Box::new(
+                    AccountEntryExtensionV1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AccountEntryExtensionV1Ext => r.with_limited_depth(|r| {
+                Ok(Self::AccountEntryExtensionV1Ext(Box::new(
+                    AccountEntryExtensionV1Ext::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AccountEntry => r.with_limited_depth(|r| {
                 Ok(Self::AccountEntry(Box::new(AccountEntry::read_xdr(r)?)))
-            }
-            TypeVariant::AccountEntryExt => Ok(Self::AccountEntryExt(Box::new(
-                AccountEntryExt::read_xdr(r)?,
-            ))),
-            TypeVariant::TrustLineFlags => {
+            }),
+            TypeVariant::AccountEntryExt => r.with_limited_depth(|r| {
+                Ok(Self::AccountEntryExt(Box::new(AccountEntryExt::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::TrustLineFlags => r.with_limited_depth(|r| {
                 Ok(Self::TrustLineFlags(Box::new(TrustLineFlags::read_xdr(r)?)))
-            }
-            TypeVariant::LiquidityPoolType => Ok(Self::LiquidityPoolType(Box::new(
-                LiquidityPoolType::read_xdr(r)?,
-            ))),
-            TypeVariant::TrustLineAsset => {
+            }),
+            TypeVariant::LiquidityPoolType => r.with_limited_depth(|r| {
+                Ok(Self::LiquidityPoolType(Box::new(
+                    LiquidityPoolType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TrustLineAsset => r.with_limited_depth(|r| {
                 Ok(Self::TrustLineAsset(Box::new(TrustLineAsset::read_xdr(r)?)))
-            }
-            TypeVariant::TrustLineEntryExtensionV2 => Ok(Self::TrustLineEntryExtensionV2(
-                Box::new(TrustLineEntryExtensionV2::read_xdr(r)?),
-            )),
-            TypeVariant::TrustLineEntryExtensionV2Ext => Ok(Self::TrustLineEntryExtensionV2Ext(
-                Box::new(TrustLineEntryExtensionV2Ext::read_xdr(r)?),
-            )),
-            TypeVariant::TrustLineEntry => {
+            }),
+            TypeVariant::TrustLineEntryExtensionV2 => r.with_limited_depth(|r| {
+                Ok(Self::TrustLineEntryExtensionV2(Box::new(
+                    TrustLineEntryExtensionV2::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TrustLineEntryExtensionV2Ext => r.with_limited_depth(|r| {
+                Ok(Self::TrustLineEntryExtensionV2Ext(Box::new(
+                    TrustLineEntryExtensionV2Ext::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TrustLineEntry => r.with_limited_depth(|r| {
                 Ok(Self::TrustLineEntry(Box::new(TrustLineEntry::read_xdr(r)?)))
+            }),
+            TypeVariant::TrustLineEntryExt => r.with_limited_depth(|r| {
+                Ok(Self::TrustLineEntryExt(Box::new(
+                    TrustLineEntryExt::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TrustLineEntryV1 => r.with_limited_depth(|r| {
+                Ok(Self::TrustLineEntryV1(Box::new(
+                    TrustLineEntryV1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TrustLineEntryV1Ext => r.with_limited_depth(|r| {
+                Ok(Self::TrustLineEntryV1Ext(Box::new(
+                    TrustLineEntryV1Ext::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::OfferEntryFlags => r.with_limited_depth(|r| {
+                Ok(Self::OfferEntryFlags(Box::new(OfferEntryFlags::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::OfferEntry => {
+                r.with_limited_depth(|r| Ok(Self::OfferEntry(Box::new(OfferEntry::read_xdr(r)?))))
             }
-            TypeVariant::TrustLineEntryExt => Ok(Self::TrustLineEntryExt(Box::new(
-                TrustLineEntryExt::read_xdr(r)?,
-            ))),
-            TypeVariant::TrustLineEntryV1 => Ok(Self::TrustLineEntryV1(Box::new(
-                TrustLineEntryV1::read_xdr(r)?,
-            ))),
-            TypeVariant::TrustLineEntryV1Ext => Ok(Self::TrustLineEntryV1Ext(Box::new(
-                TrustLineEntryV1Ext::read_xdr(r)?,
-            ))),
-            TypeVariant::OfferEntryFlags => Ok(Self::OfferEntryFlags(Box::new(
-                OfferEntryFlags::read_xdr(r)?,
-            ))),
-            TypeVariant::OfferEntry => Ok(Self::OfferEntry(Box::new(OfferEntry::read_xdr(r)?))),
-            TypeVariant::OfferEntryExt => {
+            TypeVariant::OfferEntryExt => r.with_limited_depth(|r| {
                 Ok(Self::OfferEntryExt(Box::new(OfferEntryExt::read_xdr(r)?)))
+            }),
+            TypeVariant::DataEntry => {
+                r.with_limited_depth(|r| Ok(Self::DataEntry(Box::new(DataEntry::read_xdr(r)?))))
             }
-            TypeVariant::DataEntry => Ok(Self::DataEntry(Box::new(DataEntry::read_xdr(r)?))),
-            TypeVariant::DataEntryExt => {
+            TypeVariant::DataEntryExt => r.with_limited_depth(|r| {
                 Ok(Self::DataEntryExt(Box::new(DataEntryExt::read_xdr(r)?)))
-            }
-            TypeVariant::ClaimPredicateType => Ok(Self::ClaimPredicateType(Box::new(
-                ClaimPredicateType::read_xdr(r)?,
-            ))),
-            TypeVariant::ClaimPredicate => {
+            }),
+            TypeVariant::ClaimPredicateType => r.with_limited_depth(|r| {
+                Ok(Self::ClaimPredicateType(Box::new(
+                    ClaimPredicateType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClaimPredicate => r.with_limited_depth(|r| {
                 Ok(Self::ClaimPredicate(Box::new(ClaimPredicate::read_xdr(r)?)))
-            }
-            TypeVariant::ClaimantType => {
+            }),
+            TypeVariant::ClaimantType => r.with_limited_depth(|r| {
                 Ok(Self::ClaimantType(Box::new(ClaimantType::read_xdr(r)?)))
+            }),
+            TypeVariant::Claimant => {
+                r.with_limited_depth(|r| Ok(Self::Claimant(Box::new(Claimant::read_xdr(r)?))))
             }
-            TypeVariant::Claimant => Ok(Self::Claimant(Box::new(Claimant::read_xdr(r)?))),
-            TypeVariant::ClaimantV0 => Ok(Self::ClaimantV0(Box::new(ClaimantV0::read_xdr(r)?))),
-            TypeVariant::ClaimableBalanceIdType => Ok(Self::ClaimableBalanceIdType(Box::new(
-                ClaimableBalanceIdType::read_xdr(r)?,
-            ))),
-            TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
-                ClaimableBalanceId::read_xdr(r)?,
-            ))),
-            TypeVariant::ClaimableBalanceFlags => Ok(Self::ClaimableBalanceFlags(Box::new(
-                ClaimableBalanceFlags::read_xdr(r)?,
-            ))),
-            TypeVariant::ClaimableBalanceEntryExtensionV1 => {
+            TypeVariant::ClaimantV0 => {
+                r.with_limited_depth(|r| Ok(Self::ClaimantV0(Box::new(ClaimantV0::read_xdr(r)?))))
+            }
+            TypeVariant::ClaimableBalanceIdType => r.with_limited_depth(|r| {
+                Ok(Self::ClaimableBalanceIdType(Box::new(
+                    ClaimableBalanceIdType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClaimableBalanceId => r.with_limited_depth(|r| {
+                Ok(Self::ClaimableBalanceId(Box::new(
+                    ClaimableBalanceId::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClaimableBalanceFlags => r.with_limited_depth(|r| {
+                Ok(Self::ClaimableBalanceFlags(Box::new(
+                    ClaimableBalanceFlags::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClaimableBalanceEntryExtensionV1 => r.with_limited_depth(|r| {
                 Ok(Self::ClaimableBalanceEntryExtensionV1(Box::new(
                     ClaimableBalanceEntryExtensionV1::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::ClaimableBalanceEntryExtensionV1Ext => {
+            }),
+            TypeVariant::ClaimableBalanceEntryExtensionV1Ext => r.with_limited_depth(|r| {
                 Ok(Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(
                     ClaimableBalanceEntryExtensionV1Ext::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::ClaimableBalanceEntry => Ok(Self::ClaimableBalanceEntry(Box::new(
-                ClaimableBalanceEntry::read_xdr(r)?,
-            ))),
-            TypeVariant::ClaimableBalanceEntryExt => Ok(Self::ClaimableBalanceEntryExt(Box::new(
-                ClaimableBalanceEntryExt::read_xdr(r)?,
-            ))),
-            TypeVariant::LiquidityPoolConstantProductParameters => {
+            }),
+            TypeVariant::ClaimableBalanceEntry => r.with_limited_depth(|r| {
+                Ok(Self::ClaimableBalanceEntry(Box::new(
+                    ClaimableBalanceEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClaimableBalanceEntryExt => r.with_limited_depth(|r| {
+                Ok(Self::ClaimableBalanceEntryExt(Box::new(
+                    ClaimableBalanceEntryExt::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LiquidityPoolConstantProductParameters => r.with_limited_depth(|r| {
                 Ok(Self::LiquidityPoolConstantProductParameters(Box::new(
                     LiquidityPoolConstantProductParameters::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::LiquidityPoolEntry => Ok(Self::LiquidityPoolEntry(Box::new(
-                LiquidityPoolEntry::read_xdr(r)?,
-            ))),
-            TypeVariant::LiquidityPoolEntryBody => Ok(Self::LiquidityPoolEntryBody(Box::new(
-                LiquidityPoolEntryBody::read_xdr(r)?,
-            ))),
-            TypeVariant::LiquidityPoolEntryConstantProduct => {
+            }),
+            TypeVariant::LiquidityPoolEntry => r.with_limited_depth(|r| {
+                Ok(Self::LiquidityPoolEntry(Box::new(
+                    LiquidityPoolEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LiquidityPoolEntryBody => r.with_limited_depth(|r| {
+                Ok(Self::LiquidityPoolEntryBody(Box::new(
+                    LiquidityPoolEntryBody::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LiquidityPoolEntryConstantProduct => r.with_limited_depth(|r| {
                 Ok(Self::LiquidityPoolEntryConstantProduct(Box::new(
                     LiquidityPoolEntryConstantProduct::read_xdr(r)?,
                 )))
+            }),
+            TypeVariant::LedgerEntryExtensionV1 => r.with_limited_depth(|r| {
+                Ok(Self::LedgerEntryExtensionV1(Box::new(
+                    LedgerEntryExtensionV1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerEntryExtensionV1Ext => r.with_limited_depth(|r| {
+                Ok(Self::LedgerEntryExtensionV1Ext(Box::new(
+                    LedgerEntryExtensionV1Ext::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerEntry => {
+                r.with_limited_depth(|r| Ok(Self::LedgerEntry(Box::new(LedgerEntry::read_xdr(r)?))))
             }
-            TypeVariant::LedgerEntryExtensionV1 => Ok(Self::LedgerEntryExtensionV1(Box::new(
-                LedgerEntryExtensionV1::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerEntryExtensionV1Ext => Ok(Self::LedgerEntryExtensionV1Ext(
-                Box::new(LedgerEntryExtensionV1Ext::read_xdr(r)?),
-            )),
-            TypeVariant::LedgerEntry => Ok(Self::LedgerEntry(Box::new(LedgerEntry::read_xdr(r)?))),
-            TypeVariant::LedgerEntryData => Ok(Self::LedgerEntryData(Box::new(
-                LedgerEntryData::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerEntryExt => {
+            TypeVariant::LedgerEntryData => r.with_limited_depth(|r| {
+                Ok(Self::LedgerEntryData(Box::new(LedgerEntryData::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::LedgerEntryExt => r.with_limited_depth(|r| {
                 Ok(Self::LedgerEntryExt(Box::new(LedgerEntryExt::read_xdr(r)?)))
+            }),
+            TypeVariant::LedgerKey => {
+                r.with_limited_depth(|r| Ok(Self::LedgerKey(Box::new(LedgerKey::read_xdr(r)?))))
             }
-            TypeVariant::LedgerKey => Ok(Self::LedgerKey(Box::new(LedgerKey::read_xdr(r)?))),
-            TypeVariant::LedgerKeyAccount => Ok(Self::LedgerKeyAccount(Box::new(
-                LedgerKeyAccount::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerKeyTrustLine => Ok(Self::LedgerKeyTrustLine(Box::new(
-                LedgerKeyTrustLine::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerKeyOffer => {
+            TypeVariant::LedgerKeyAccount => r.with_limited_depth(|r| {
+                Ok(Self::LedgerKeyAccount(Box::new(
+                    LedgerKeyAccount::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerKeyTrustLine => r.with_limited_depth(|r| {
+                Ok(Self::LedgerKeyTrustLine(Box::new(
+                    LedgerKeyTrustLine::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerKeyOffer => r.with_limited_depth(|r| {
                 Ok(Self::LedgerKeyOffer(Box::new(LedgerKeyOffer::read_xdr(r)?)))
-            }
-            TypeVariant::LedgerKeyData => {
+            }),
+            TypeVariant::LedgerKeyData => r.with_limited_depth(|r| {
                 Ok(Self::LedgerKeyData(Box::new(LedgerKeyData::read_xdr(r)?)))
-            }
-            TypeVariant::LedgerKeyClaimableBalance => Ok(Self::LedgerKeyClaimableBalance(
-                Box::new(LedgerKeyClaimableBalance::read_xdr(r)?),
-            )),
-            TypeVariant::LedgerKeyLiquidityPool => Ok(Self::LedgerKeyLiquidityPool(Box::new(
-                LedgerKeyLiquidityPool::read_xdr(r)?,
-            ))),
-            TypeVariant::EnvelopeType => {
+            }),
+            TypeVariant::LedgerKeyClaimableBalance => r.with_limited_depth(|r| {
+                Ok(Self::LedgerKeyClaimableBalance(Box::new(
+                    LedgerKeyClaimableBalance::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerKeyLiquidityPool => r.with_limited_depth(|r| {
+                Ok(Self::LedgerKeyLiquidityPool(Box::new(
+                    LedgerKeyLiquidityPool::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::EnvelopeType => r.with_limited_depth(|r| {
                 Ok(Self::EnvelopeType(Box::new(EnvelopeType::read_xdr(r)?)))
+            }),
+            TypeVariant::UpgradeType => {
+                r.with_limited_depth(|r| Ok(Self::UpgradeType(Box::new(UpgradeType::read_xdr(r)?))))
             }
-            TypeVariant::UpgradeType => Ok(Self::UpgradeType(Box::new(UpgradeType::read_xdr(r)?))),
-            TypeVariant::StellarValueType => Ok(Self::StellarValueType(Box::new(
-                StellarValueType::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerCloseValueSignature => Ok(Self::LedgerCloseValueSignature(
-                Box::new(LedgerCloseValueSignature::read_xdr(r)?),
-            )),
-            TypeVariant::StellarValue => {
+            TypeVariant::StellarValueType => r.with_limited_depth(|r| {
+                Ok(Self::StellarValueType(Box::new(
+                    StellarValueType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerCloseValueSignature => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseValueSignature(Box::new(
+                    LedgerCloseValueSignature::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::StellarValue => r.with_limited_depth(|r| {
                 Ok(Self::StellarValue(Box::new(StellarValue::read_xdr(r)?)))
-            }
-            TypeVariant::StellarValueExt => Ok(Self::StellarValueExt(Box::new(
-                StellarValueExt::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
-                LedgerHeaderFlags::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerHeaderExtensionV1 => Ok(Self::LedgerHeaderExtensionV1(Box::new(
-                LedgerHeaderExtensionV1::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerHeaderExtensionV1Ext => Ok(Self::LedgerHeaderExtensionV1Ext(
-                Box::new(LedgerHeaderExtensionV1Ext::read_xdr(r)?),
-            )),
-            TypeVariant::LedgerHeader => {
+            }),
+            TypeVariant::StellarValueExt => r.with_limited_depth(|r| {
+                Ok(Self::StellarValueExt(Box::new(StellarValueExt::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::LedgerHeaderFlags => r.with_limited_depth(|r| {
+                Ok(Self::LedgerHeaderFlags(Box::new(
+                    LedgerHeaderFlags::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerHeaderExtensionV1 => r.with_limited_depth(|r| {
+                Ok(Self::LedgerHeaderExtensionV1(Box::new(
+                    LedgerHeaderExtensionV1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerHeaderExtensionV1Ext => r.with_limited_depth(|r| {
+                Ok(Self::LedgerHeaderExtensionV1Ext(Box::new(
+                    LedgerHeaderExtensionV1Ext::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerHeader => r.with_limited_depth(|r| {
                 Ok(Self::LedgerHeader(Box::new(LedgerHeader::read_xdr(r)?)))
-            }
-            TypeVariant::LedgerHeaderExt => Ok(Self::LedgerHeaderExt(Box::new(
-                LedgerHeaderExt::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerUpgradeType => Ok(Self::LedgerUpgradeType(Box::new(
-                LedgerUpgradeType::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerUpgrade => {
+            }),
+            TypeVariant::LedgerHeaderExt => r.with_limited_depth(|r| {
+                Ok(Self::LedgerHeaderExt(Box::new(LedgerHeaderExt::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::LedgerUpgradeType => r.with_limited_depth(|r| {
+                Ok(Self::LedgerUpgradeType(Box::new(
+                    LedgerUpgradeType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerUpgrade => r.with_limited_depth(|r| {
                 Ok(Self::LedgerUpgrade(Box::new(LedgerUpgrade::read_xdr(r)?)))
-            }
-            TypeVariant::BucketEntryType => Ok(Self::BucketEntryType(Box::new(
-                BucketEntryType::read_xdr(r)?,
-            ))),
-            TypeVariant::BucketMetadata => {
+            }),
+            TypeVariant::BucketEntryType => r.with_limited_depth(|r| {
+                Ok(Self::BucketEntryType(Box::new(BucketEntryType::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::BucketMetadata => r.with_limited_depth(|r| {
                 Ok(Self::BucketMetadata(Box::new(BucketMetadata::read_xdr(r)?)))
+            }),
+            TypeVariant::BucketMetadataExt => r.with_limited_depth(|r| {
+                Ok(Self::BucketMetadataExt(Box::new(
+                    BucketMetadataExt::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::BucketEntry => {
+                r.with_limited_depth(|r| Ok(Self::BucketEntry(Box::new(BucketEntry::read_xdr(r)?))))
             }
-            TypeVariant::BucketMetadataExt => Ok(Self::BucketMetadataExt(Box::new(
-                BucketMetadataExt::read_xdr(r)?,
-            ))),
-            TypeVariant::BucketEntry => Ok(Self::BucketEntry(Box::new(BucketEntry::read_xdr(r)?))),
-            TypeVariant::TxSetComponentType => Ok(Self::TxSetComponentType(Box::new(
-                TxSetComponentType::read_xdr(r)?,
-            ))),
-            TypeVariant::TxSetComponent => {
+            TypeVariant::TxSetComponentType => r.with_limited_depth(|r| {
+                Ok(Self::TxSetComponentType(Box::new(
+                    TxSetComponentType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TxSetComponent => r.with_limited_depth(|r| {
                 Ok(Self::TxSetComponent(Box::new(TxSetComponent::read_xdr(r)?)))
-            }
-            TypeVariant::TxSetComponentTxsMaybeDiscountedFee => {
+            }),
+            TypeVariant::TxSetComponentTxsMaybeDiscountedFee => r.with_limited_depth(|r| {
                 Ok(Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(
                     TxSetComponentTxsMaybeDiscountedFee::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::TransactionPhase => Ok(Self::TransactionPhase(Box::new(
-                TransactionPhase::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionSet => {
+            }),
+            TypeVariant::TransactionPhase => r.with_limited_depth(|r| {
+                Ok(Self::TransactionPhase(Box::new(
+                    TransactionPhase::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionSet => r.with_limited_depth(|r| {
                 Ok(Self::TransactionSet(Box::new(TransactionSet::read_xdr(r)?)))
-            }
-            TypeVariant::TransactionSetV1 => Ok(Self::TransactionSetV1(Box::new(
-                TransactionSetV1::read_xdr(r)?,
-            ))),
-            TypeVariant::GeneralizedTransactionSet => Ok(Self::GeneralizedTransactionSet(
-                Box::new(GeneralizedTransactionSet::read_xdr(r)?),
-            )),
-            TypeVariant::TransactionResultPair => Ok(Self::TransactionResultPair(Box::new(
-                TransactionResultPair::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionResultSet => Ok(Self::TransactionResultSet(Box::new(
-                TransactionResultSet::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionHistoryEntry => Ok(Self::TransactionHistoryEntry(Box::new(
-                TransactionHistoryEntry::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionHistoryEntryExt => Ok(Self::TransactionHistoryEntryExt(
-                Box::new(TransactionHistoryEntryExt::read_xdr(r)?),
-            )),
-            TypeVariant::TransactionHistoryResultEntry => Ok(Self::TransactionHistoryResultEntry(
-                Box::new(TransactionHistoryResultEntry::read_xdr(r)?),
-            )),
-            TypeVariant::TransactionHistoryResultEntryExt => {
+            }),
+            TypeVariant::TransactionSetV1 => r.with_limited_depth(|r| {
+                Ok(Self::TransactionSetV1(Box::new(
+                    TransactionSetV1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::GeneralizedTransactionSet => r.with_limited_depth(|r| {
+                Ok(Self::GeneralizedTransactionSet(Box::new(
+                    GeneralizedTransactionSet::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionResultPair => r.with_limited_depth(|r| {
+                Ok(Self::TransactionResultPair(Box::new(
+                    TransactionResultPair::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionResultSet => r.with_limited_depth(|r| {
+                Ok(Self::TransactionResultSet(Box::new(
+                    TransactionResultSet::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionHistoryEntry => r.with_limited_depth(|r| {
+                Ok(Self::TransactionHistoryEntry(Box::new(
+                    TransactionHistoryEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionHistoryEntryExt => r.with_limited_depth(|r| {
+                Ok(Self::TransactionHistoryEntryExt(Box::new(
+                    TransactionHistoryEntryExt::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionHistoryResultEntry => r.with_limited_depth(|r| {
+                Ok(Self::TransactionHistoryResultEntry(Box::new(
+                    TransactionHistoryResultEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionHistoryResultEntryExt => r.with_limited_depth(|r| {
                 Ok(Self::TransactionHistoryResultEntryExt(Box::new(
                     TransactionHistoryResultEntryExt::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::LedgerHeaderHistoryEntry => Ok(Self::LedgerHeaderHistoryEntry(Box::new(
-                LedgerHeaderHistoryEntry::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerHeaderHistoryEntryExt => Ok(Self::LedgerHeaderHistoryEntryExt(
-                Box::new(LedgerHeaderHistoryEntryExt::read_xdr(r)?),
-            )),
-            TypeVariant::LedgerScpMessages => Ok(Self::LedgerScpMessages(Box::new(
-                LedgerScpMessages::read_xdr(r)?,
-            ))),
-            TypeVariant::ScpHistoryEntryV0 => Ok(Self::ScpHistoryEntryV0(Box::new(
-                ScpHistoryEntryV0::read_xdr(r)?,
-            ))),
-            TypeVariant::ScpHistoryEntry => Ok(Self::ScpHistoryEntry(Box::new(
-                ScpHistoryEntry::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerEntryChangeType => Ok(Self::LedgerEntryChangeType(Box::new(
-                LedgerEntryChangeType::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerEntryChange => Ok(Self::LedgerEntryChange(Box::new(
-                LedgerEntryChange::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerEntryChanges => Ok(Self::LedgerEntryChanges(Box::new(
-                LedgerEntryChanges::read_xdr(r)?,
-            ))),
-            TypeVariant::OperationMeta => {
+            }),
+            TypeVariant::LedgerHeaderHistoryEntry => r.with_limited_depth(|r| {
+                Ok(Self::LedgerHeaderHistoryEntry(Box::new(
+                    LedgerHeaderHistoryEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerHeaderHistoryEntryExt => r.with_limited_depth(|r| {
+                Ok(Self::LedgerHeaderHistoryEntryExt(Box::new(
+                    LedgerHeaderHistoryEntryExt::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerScpMessages => r.with_limited_depth(|r| {
+                Ok(Self::LedgerScpMessages(Box::new(
+                    LedgerScpMessages::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScpHistoryEntryV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScpHistoryEntryV0(Box::new(
+                    ScpHistoryEntryV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScpHistoryEntry => r.with_limited_depth(|r| {
+                Ok(Self::ScpHistoryEntry(Box::new(ScpHistoryEntry::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::LedgerEntryChangeType => r.with_limited_depth(|r| {
+                Ok(Self::LedgerEntryChangeType(Box::new(
+                    LedgerEntryChangeType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerEntryChange => r.with_limited_depth(|r| {
+                Ok(Self::LedgerEntryChange(Box::new(
+                    LedgerEntryChange::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerEntryChanges => r.with_limited_depth(|r| {
+                Ok(Self::LedgerEntryChanges(Box::new(
+                    LedgerEntryChanges::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::OperationMeta => r.with_limited_depth(|r| {
                 Ok(Self::OperationMeta(Box::new(OperationMeta::read_xdr(r)?)))
+            }),
+            TypeVariant::TransactionMetaV1 => r.with_limited_depth(|r| {
+                Ok(Self::TransactionMetaV1(Box::new(
+                    TransactionMetaV1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionMetaV2 => r.with_limited_depth(|r| {
+                Ok(Self::TransactionMetaV2(Box::new(
+                    TransactionMetaV2::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionMeta => r.with_limited_depth(|r| {
+                Ok(Self::TransactionMeta(Box::new(TransactionMeta::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::TransactionResultMeta => r.with_limited_depth(|r| {
+                Ok(Self::TransactionResultMeta(Box::new(
+                    TransactionResultMeta::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::UpgradeEntryMeta => r.with_limited_depth(|r| {
+                Ok(Self::UpgradeEntryMeta(Box::new(
+                    UpgradeEntryMeta::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerCloseMetaV0 => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaV0(Box::new(
+                    LedgerCloseMetaV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerCloseMetaV1 => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaV1(Box::new(
+                    LedgerCloseMetaV1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerCloseMeta => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMeta(Box::new(LedgerCloseMeta::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::ErrorCode => {
+                r.with_limited_depth(|r| Ok(Self::ErrorCode(Box::new(ErrorCode::read_xdr(r)?))))
             }
-            TypeVariant::TransactionMetaV1 => Ok(Self::TransactionMetaV1(Box::new(
-                TransactionMetaV1::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionMetaV2 => Ok(Self::TransactionMetaV2(Box::new(
-                TransactionMetaV2::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionMeta => Ok(Self::TransactionMeta(Box::new(
-                TransactionMeta::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionResultMeta => Ok(Self::TransactionResultMeta(Box::new(
-                TransactionResultMeta::read_xdr(r)?,
-            ))),
-            TypeVariant::UpgradeEntryMeta => Ok(Self::UpgradeEntryMeta(Box::new(
-                UpgradeEntryMeta::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerCloseMetaV0 => Ok(Self::LedgerCloseMetaV0(Box::new(
-                LedgerCloseMetaV0::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerCloseMetaV1 => Ok(Self::LedgerCloseMetaV1(Box::new(
-                LedgerCloseMetaV1::read_xdr(r)?,
-            ))),
-            TypeVariant::LedgerCloseMeta => Ok(Self::LedgerCloseMeta(Box::new(
-                LedgerCloseMeta::read_xdr(r)?,
-            ))),
-            TypeVariant::ErrorCode => Ok(Self::ErrorCode(Box::new(ErrorCode::read_xdr(r)?))),
-            TypeVariant::SError => Ok(Self::SError(Box::new(SError::read_xdr(r)?))),
-            TypeVariant::SendMore => Ok(Self::SendMore(Box::new(SendMore::read_xdr(r)?))),
-            TypeVariant::AuthCert => Ok(Self::AuthCert(Box::new(AuthCert::read_xdr(r)?))),
-            TypeVariant::Hello => Ok(Self::Hello(Box::new(Hello::read_xdr(r)?))),
-            TypeVariant::Auth => Ok(Self::Auth(Box::new(Auth::read_xdr(r)?))),
-            TypeVariant::IpAddrType => Ok(Self::IpAddrType(Box::new(IpAddrType::read_xdr(r)?))),
-            TypeVariant::PeerAddress => Ok(Self::PeerAddress(Box::new(PeerAddress::read_xdr(r)?))),
-            TypeVariant::PeerAddressIp => {
+            TypeVariant::SError => {
+                r.with_limited_depth(|r| Ok(Self::SError(Box::new(SError::read_xdr(r)?))))
+            }
+            TypeVariant::SendMore => {
+                r.with_limited_depth(|r| Ok(Self::SendMore(Box::new(SendMore::read_xdr(r)?))))
+            }
+            TypeVariant::AuthCert => {
+                r.with_limited_depth(|r| Ok(Self::AuthCert(Box::new(AuthCert::read_xdr(r)?))))
+            }
+            TypeVariant::Hello => {
+                r.with_limited_depth(|r| Ok(Self::Hello(Box::new(Hello::read_xdr(r)?))))
+            }
+            TypeVariant::Auth => {
+                r.with_limited_depth(|r| Ok(Self::Auth(Box::new(Auth::read_xdr(r)?))))
+            }
+            TypeVariant::IpAddrType => {
+                r.with_limited_depth(|r| Ok(Self::IpAddrType(Box::new(IpAddrType::read_xdr(r)?))))
+            }
+            TypeVariant::PeerAddress => {
+                r.with_limited_depth(|r| Ok(Self::PeerAddress(Box::new(PeerAddress::read_xdr(r)?))))
+            }
+            TypeVariant::PeerAddressIp => r.with_limited_depth(|r| {
                 Ok(Self::PeerAddressIp(Box::new(PeerAddressIp::read_xdr(r)?)))
+            }),
+            TypeVariant::MessageType => {
+                r.with_limited_depth(|r| Ok(Self::MessageType(Box::new(MessageType::read_xdr(r)?))))
             }
-            TypeVariant::MessageType => Ok(Self::MessageType(Box::new(MessageType::read_xdr(r)?))),
-            TypeVariant::DontHave => Ok(Self::DontHave(Box::new(DontHave::read_xdr(r)?))),
-            TypeVariant::SurveyMessageCommandType => Ok(Self::SurveyMessageCommandType(Box::new(
-                SurveyMessageCommandType::read_xdr(r)?,
-            ))),
-            TypeVariant::SurveyRequestMessage => Ok(Self::SurveyRequestMessage(Box::new(
-                SurveyRequestMessage::read_xdr(r)?,
-            ))),
-            TypeVariant::SignedSurveyRequestMessage => Ok(Self::SignedSurveyRequestMessage(
-                Box::new(SignedSurveyRequestMessage::read_xdr(r)?),
-            )),
-            TypeVariant::EncryptedBody => {
+            TypeVariant::DontHave => {
+                r.with_limited_depth(|r| Ok(Self::DontHave(Box::new(DontHave::read_xdr(r)?))))
+            }
+            TypeVariant::SurveyMessageCommandType => r.with_limited_depth(|r| {
+                Ok(Self::SurveyMessageCommandType(Box::new(
+                    SurveyMessageCommandType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SurveyRequestMessage => r.with_limited_depth(|r| {
+                Ok(Self::SurveyRequestMessage(Box::new(
+                    SurveyRequestMessage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SignedSurveyRequestMessage => r.with_limited_depth(|r| {
+                Ok(Self::SignedSurveyRequestMessage(Box::new(
+                    SignedSurveyRequestMessage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::EncryptedBody => r.with_limited_depth(|r| {
                 Ok(Self::EncryptedBody(Box::new(EncryptedBody::read_xdr(r)?)))
+            }),
+            TypeVariant::SurveyResponseMessage => r.with_limited_depth(|r| {
+                Ok(Self::SurveyResponseMessage(Box::new(
+                    SurveyResponseMessage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SignedSurveyResponseMessage => r.with_limited_depth(|r| {
+                Ok(Self::SignedSurveyResponseMessage(Box::new(
+                    SignedSurveyResponseMessage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::PeerStats => {
+                r.with_limited_depth(|r| Ok(Self::PeerStats(Box::new(PeerStats::read_xdr(r)?))))
             }
-            TypeVariant::SurveyResponseMessage => Ok(Self::SurveyResponseMessage(Box::new(
-                SurveyResponseMessage::read_xdr(r)?,
-            ))),
-            TypeVariant::SignedSurveyResponseMessage => Ok(Self::SignedSurveyResponseMessage(
-                Box::new(SignedSurveyResponseMessage::read_xdr(r)?),
-            )),
-            TypeVariant::PeerStats => Ok(Self::PeerStats(Box::new(PeerStats::read_xdr(r)?))),
-            TypeVariant::PeerStatList => {
+            TypeVariant::PeerStatList => r.with_limited_depth(|r| {
                 Ok(Self::PeerStatList(Box::new(PeerStatList::read_xdr(r)?)))
-            }
-            TypeVariant::TopologyResponseBody => Ok(Self::TopologyResponseBody(Box::new(
-                TopologyResponseBody::read_xdr(r)?,
-            ))),
-            TypeVariant::SurveyResponseBody => Ok(Self::SurveyResponseBody(Box::new(
-                SurveyResponseBody::read_xdr(r)?,
-            ))),
-            TypeVariant::TxAdvertVector => {
+            }),
+            TypeVariant::TopologyResponseBody => r.with_limited_depth(|r| {
+                Ok(Self::TopologyResponseBody(Box::new(
+                    TopologyResponseBody::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SurveyResponseBody => r.with_limited_depth(|r| {
+                Ok(Self::SurveyResponseBody(Box::new(
+                    SurveyResponseBody::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TxAdvertVector => r.with_limited_depth(|r| {
                 Ok(Self::TxAdvertVector(Box::new(TxAdvertVector::read_xdr(r)?)))
+            }),
+            TypeVariant::FloodAdvert => {
+                r.with_limited_depth(|r| Ok(Self::FloodAdvert(Box::new(FloodAdvert::read_xdr(r)?))))
             }
-            TypeVariant::FloodAdvert => Ok(Self::FloodAdvert(Box::new(FloodAdvert::read_xdr(r)?))),
-            TypeVariant::TxDemandVector => {
+            TypeVariant::TxDemandVector => r.with_limited_depth(|r| {
                 Ok(Self::TxDemandVector(Box::new(TxDemandVector::read_xdr(r)?)))
+            }),
+            TypeVariant::FloodDemand => {
+                r.with_limited_depth(|r| Ok(Self::FloodDemand(Box::new(FloodDemand::read_xdr(r)?))))
             }
-            TypeVariant::FloodDemand => Ok(Self::FloodDemand(Box::new(FloodDemand::read_xdr(r)?))),
-            TypeVariant::StellarMessage => {
+            TypeVariant::StellarMessage => r.with_limited_depth(|r| {
                 Ok(Self::StellarMessage(Box::new(StellarMessage::read_xdr(r)?)))
-            }
-            TypeVariant::AuthenticatedMessage => Ok(Self::AuthenticatedMessage(Box::new(
-                AuthenticatedMessage::read_xdr(r)?,
-            ))),
-            TypeVariant::AuthenticatedMessageV0 => Ok(Self::AuthenticatedMessageV0(Box::new(
-                AuthenticatedMessageV0::read_xdr(r)?,
-            ))),
-            TypeVariant::LiquidityPoolParameters => Ok(Self::LiquidityPoolParameters(Box::new(
-                LiquidityPoolParameters::read_xdr(r)?,
-            ))),
-            TypeVariant::MuxedAccount => {
+            }),
+            TypeVariant::AuthenticatedMessage => r.with_limited_depth(|r| {
+                Ok(Self::AuthenticatedMessage(Box::new(
+                    AuthenticatedMessage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AuthenticatedMessageV0 => r.with_limited_depth(|r| {
+                Ok(Self::AuthenticatedMessageV0(Box::new(
+                    AuthenticatedMessageV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LiquidityPoolParameters => r.with_limited_depth(|r| {
+                Ok(Self::LiquidityPoolParameters(Box::new(
+                    LiquidityPoolParameters::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::MuxedAccount => r.with_limited_depth(|r| {
                 Ok(Self::MuxedAccount(Box::new(MuxedAccount::read_xdr(r)?)))
-            }
-            TypeVariant::MuxedAccountMed25519 => Ok(Self::MuxedAccountMed25519(Box::new(
-                MuxedAccountMed25519::read_xdr(r)?,
-            ))),
-            TypeVariant::DecoratedSignature => Ok(Self::DecoratedSignature(Box::new(
-                DecoratedSignature::read_xdr(r)?,
-            ))),
-            TypeVariant::OperationType => {
+            }),
+            TypeVariant::MuxedAccountMed25519 => r.with_limited_depth(|r| {
+                Ok(Self::MuxedAccountMed25519(Box::new(
+                    MuxedAccountMed25519::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::DecoratedSignature => r.with_limited_depth(|r| {
+                Ok(Self::DecoratedSignature(Box::new(
+                    DecoratedSignature::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::OperationType => r.with_limited_depth(|r| {
                 Ok(Self::OperationType(Box::new(OperationType::read_xdr(r)?)))
+            }),
+            TypeVariant::CreateAccountOp => r.with_limited_depth(|r| {
+                Ok(Self::CreateAccountOp(Box::new(CreateAccountOp::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::PaymentOp => {
+                r.with_limited_depth(|r| Ok(Self::PaymentOp(Box::new(PaymentOp::read_xdr(r)?))))
             }
-            TypeVariant::CreateAccountOp => Ok(Self::CreateAccountOp(Box::new(
-                CreateAccountOp::read_xdr(r)?,
-            ))),
-            TypeVariant::PaymentOp => Ok(Self::PaymentOp(Box::new(PaymentOp::read_xdr(r)?))),
-            TypeVariant::PathPaymentStrictReceiveOp => Ok(Self::PathPaymentStrictReceiveOp(
-                Box::new(PathPaymentStrictReceiveOp::read_xdr(r)?),
-            )),
-            TypeVariant::PathPaymentStrictSendOp => Ok(Self::PathPaymentStrictSendOp(Box::new(
-                PathPaymentStrictSendOp::read_xdr(r)?,
-            ))),
-            TypeVariant::ManageSellOfferOp => Ok(Self::ManageSellOfferOp(Box::new(
-                ManageSellOfferOp::read_xdr(r)?,
-            ))),
-            TypeVariant::ManageBuyOfferOp => Ok(Self::ManageBuyOfferOp(Box::new(
-                ManageBuyOfferOp::read_xdr(r)?,
-            ))),
-            TypeVariant::CreatePassiveSellOfferOp => Ok(Self::CreatePassiveSellOfferOp(Box::new(
-                CreatePassiveSellOfferOp::read_xdr(r)?,
-            ))),
-            TypeVariant::SetOptionsOp => {
+            TypeVariant::PathPaymentStrictReceiveOp => r.with_limited_depth(|r| {
+                Ok(Self::PathPaymentStrictReceiveOp(Box::new(
+                    PathPaymentStrictReceiveOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::PathPaymentStrictSendOp => r.with_limited_depth(|r| {
+                Ok(Self::PathPaymentStrictSendOp(Box::new(
+                    PathPaymentStrictSendOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ManageSellOfferOp => r.with_limited_depth(|r| {
+                Ok(Self::ManageSellOfferOp(Box::new(
+                    ManageSellOfferOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ManageBuyOfferOp => r.with_limited_depth(|r| {
+                Ok(Self::ManageBuyOfferOp(Box::new(
+                    ManageBuyOfferOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::CreatePassiveSellOfferOp => r.with_limited_depth(|r| {
+                Ok(Self::CreatePassiveSellOfferOp(Box::new(
+                    CreatePassiveSellOfferOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SetOptionsOp => r.with_limited_depth(|r| {
                 Ok(Self::SetOptionsOp(Box::new(SetOptionsOp::read_xdr(r)?)))
-            }
-            TypeVariant::ChangeTrustAsset => Ok(Self::ChangeTrustAsset(Box::new(
-                ChangeTrustAsset::read_xdr(r)?,
-            ))),
-            TypeVariant::ChangeTrustOp => {
+            }),
+            TypeVariant::ChangeTrustAsset => r.with_limited_depth(|r| {
+                Ok(Self::ChangeTrustAsset(Box::new(
+                    ChangeTrustAsset::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ChangeTrustOp => r.with_limited_depth(|r| {
                 Ok(Self::ChangeTrustOp(Box::new(ChangeTrustOp::read_xdr(r)?)))
-            }
-            TypeVariant::AllowTrustOp => {
+            }),
+            TypeVariant::AllowTrustOp => r.with_limited_depth(|r| {
                 Ok(Self::AllowTrustOp(Box::new(AllowTrustOp::read_xdr(r)?)))
-            }
-            TypeVariant::ManageDataOp => {
+            }),
+            TypeVariant::ManageDataOp => r.with_limited_depth(|r| {
                 Ok(Self::ManageDataOp(Box::new(ManageDataOp::read_xdr(r)?)))
-            }
-            TypeVariant::BumpSequenceOp => {
+            }),
+            TypeVariant::BumpSequenceOp => r.with_limited_depth(|r| {
                 Ok(Self::BumpSequenceOp(Box::new(BumpSequenceOp::read_xdr(r)?)))
-            }
-            TypeVariant::CreateClaimableBalanceOp => Ok(Self::CreateClaimableBalanceOp(Box::new(
-                CreateClaimableBalanceOp::read_xdr(r)?,
-            ))),
-            TypeVariant::ClaimClaimableBalanceOp => Ok(Self::ClaimClaimableBalanceOp(Box::new(
-                ClaimClaimableBalanceOp::read_xdr(r)?,
-            ))),
-            TypeVariant::BeginSponsoringFutureReservesOp => {
+            }),
+            TypeVariant::CreateClaimableBalanceOp => r.with_limited_depth(|r| {
+                Ok(Self::CreateClaimableBalanceOp(Box::new(
+                    CreateClaimableBalanceOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClaimClaimableBalanceOp => r.with_limited_depth(|r| {
+                Ok(Self::ClaimClaimableBalanceOp(Box::new(
+                    ClaimClaimableBalanceOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::BeginSponsoringFutureReservesOp => r.with_limited_depth(|r| {
                 Ok(Self::BeginSponsoringFutureReservesOp(Box::new(
                     BeginSponsoringFutureReservesOp::read_xdr(r)?,
                 )))
+            }),
+            TypeVariant::RevokeSponsorshipType => r.with_limited_depth(|r| {
+                Ok(Self::RevokeSponsorshipType(Box::new(
+                    RevokeSponsorshipType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::RevokeSponsorshipOp => r.with_limited_depth(|r| {
+                Ok(Self::RevokeSponsorshipOp(Box::new(
+                    RevokeSponsorshipOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::RevokeSponsorshipOpSigner => r.with_limited_depth(|r| {
+                Ok(Self::RevokeSponsorshipOpSigner(Box::new(
+                    RevokeSponsorshipOpSigner::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClawbackOp => {
+                r.with_limited_depth(|r| Ok(Self::ClawbackOp(Box::new(ClawbackOp::read_xdr(r)?))))
             }
-            TypeVariant::RevokeSponsorshipType => Ok(Self::RevokeSponsorshipType(Box::new(
-                RevokeSponsorshipType::read_xdr(r)?,
-            ))),
-            TypeVariant::RevokeSponsorshipOp => Ok(Self::RevokeSponsorshipOp(Box::new(
-                RevokeSponsorshipOp::read_xdr(r)?,
-            ))),
-            TypeVariant::RevokeSponsorshipOpSigner => Ok(Self::RevokeSponsorshipOpSigner(
-                Box::new(RevokeSponsorshipOpSigner::read_xdr(r)?),
-            )),
-            TypeVariant::ClawbackOp => Ok(Self::ClawbackOp(Box::new(ClawbackOp::read_xdr(r)?))),
-            TypeVariant::ClawbackClaimableBalanceOp => Ok(Self::ClawbackClaimableBalanceOp(
-                Box::new(ClawbackClaimableBalanceOp::read_xdr(r)?),
-            )),
-            TypeVariant::SetTrustLineFlagsOp => Ok(Self::SetTrustLineFlagsOp(Box::new(
-                SetTrustLineFlagsOp::read_xdr(r)?,
-            ))),
-            TypeVariant::LiquidityPoolDepositOp => Ok(Self::LiquidityPoolDepositOp(Box::new(
-                LiquidityPoolDepositOp::read_xdr(r)?,
-            ))),
-            TypeVariant::LiquidityPoolWithdrawOp => Ok(Self::LiquidityPoolWithdrawOp(Box::new(
-                LiquidityPoolWithdrawOp::read_xdr(r)?,
-            ))),
-            TypeVariant::Operation => Ok(Self::Operation(Box::new(Operation::read_xdr(r)?))),
-            TypeVariant::OperationBody => {
+            TypeVariant::ClawbackClaimableBalanceOp => r.with_limited_depth(|r| {
+                Ok(Self::ClawbackClaimableBalanceOp(Box::new(
+                    ClawbackClaimableBalanceOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SetTrustLineFlagsOp => r.with_limited_depth(|r| {
+                Ok(Self::SetTrustLineFlagsOp(Box::new(
+                    SetTrustLineFlagsOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LiquidityPoolDepositOp => r.with_limited_depth(|r| {
+                Ok(Self::LiquidityPoolDepositOp(Box::new(
+                    LiquidityPoolDepositOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LiquidityPoolWithdrawOp => r.with_limited_depth(|r| {
+                Ok(Self::LiquidityPoolWithdrawOp(Box::new(
+                    LiquidityPoolWithdrawOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::Operation => {
+                r.with_limited_depth(|r| Ok(Self::Operation(Box::new(Operation::read_xdr(r)?))))
+            }
+            TypeVariant::OperationBody => r.with_limited_depth(|r| {
                 Ok(Self::OperationBody(Box::new(OperationBody::read_xdr(r)?)))
-            }
-            TypeVariant::HashIdPreimage => {
+            }),
+            TypeVariant::HashIdPreimage => r.with_limited_depth(|r| {
                 Ok(Self::HashIdPreimage(Box::new(HashIdPreimage::read_xdr(r)?)))
+            }),
+            TypeVariant::HashIdPreimageOperationId => r.with_limited_depth(|r| {
+                Ok(Self::HashIdPreimageOperationId(Box::new(
+                    HashIdPreimageOperationId::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::HashIdPreimageRevokeId => r.with_limited_depth(|r| {
+                Ok(Self::HashIdPreimageRevokeId(Box::new(
+                    HashIdPreimageRevokeId::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::MemoType => {
+                r.with_limited_depth(|r| Ok(Self::MemoType(Box::new(MemoType::read_xdr(r)?))))
             }
-            TypeVariant::HashIdPreimageOperationId => Ok(Self::HashIdPreimageOperationId(
-                Box::new(HashIdPreimageOperationId::read_xdr(r)?),
-            )),
-            TypeVariant::HashIdPreimageRevokeId => Ok(Self::HashIdPreimageRevokeId(Box::new(
-                HashIdPreimageRevokeId::read_xdr(r)?,
-            ))),
-            TypeVariant::MemoType => Ok(Self::MemoType(Box::new(MemoType::read_xdr(r)?))),
-            TypeVariant::Memo => Ok(Self::Memo(Box::new(Memo::read_xdr(r)?))),
-            TypeVariant::TimeBounds => Ok(Self::TimeBounds(Box::new(TimeBounds::read_xdr(r)?))),
-            TypeVariant::LedgerBounds => {
+            TypeVariant::Memo => {
+                r.with_limited_depth(|r| Ok(Self::Memo(Box::new(Memo::read_xdr(r)?))))
+            }
+            TypeVariant::TimeBounds => {
+                r.with_limited_depth(|r| Ok(Self::TimeBounds(Box::new(TimeBounds::read_xdr(r)?))))
+            }
+            TypeVariant::LedgerBounds => r.with_limited_depth(|r| {
                 Ok(Self::LedgerBounds(Box::new(LedgerBounds::read_xdr(r)?)))
-            }
-            TypeVariant::PreconditionsV2 => Ok(Self::PreconditionsV2(Box::new(
-                PreconditionsV2::read_xdr(r)?,
-            ))),
-            TypeVariant::PreconditionType => Ok(Self::PreconditionType(Box::new(
-                PreconditionType::read_xdr(r)?,
-            ))),
-            TypeVariant::Preconditions => {
+            }),
+            TypeVariant::PreconditionsV2 => r.with_limited_depth(|r| {
+                Ok(Self::PreconditionsV2(Box::new(PreconditionsV2::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::PreconditionType => r.with_limited_depth(|r| {
+                Ok(Self::PreconditionType(Box::new(
+                    PreconditionType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::Preconditions => r.with_limited_depth(|r| {
                 Ok(Self::Preconditions(Box::new(Preconditions::read_xdr(r)?)))
-            }
-            TypeVariant::TransactionV0 => {
+            }),
+            TypeVariant::TransactionV0 => r.with_limited_depth(|r| {
                 Ok(Self::TransactionV0(Box::new(TransactionV0::read_xdr(r)?)))
+            }),
+            TypeVariant::TransactionV0Ext => r.with_limited_depth(|r| {
+                Ok(Self::TransactionV0Ext(Box::new(
+                    TransactionV0Ext::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionV0Envelope => r.with_limited_depth(|r| {
+                Ok(Self::TransactionV0Envelope(Box::new(
+                    TransactionV0Envelope::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::Transaction => {
+                r.with_limited_depth(|r| Ok(Self::Transaction(Box::new(Transaction::read_xdr(r)?))))
             }
-            TypeVariant::TransactionV0Ext => Ok(Self::TransactionV0Ext(Box::new(
-                TransactionV0Ext::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionV0Envelope => Ok(Self::TransactionV0Envelope(Box::new(
-                TransactionV0Envelope::read_xdr(r)?,
-            ))),
-            TypeVariant::Transaction => Ok(Self::Transaction(Box::new(Transaction::read_xdr(r)?))),
-            TypeVariant::TransactionExt => {
+            TypeVariant::TransactionExt => r.with_limited_depth(|r| {
                 Ok(Self::TransactionExt(Box::new(TransactionExt::read_xdr(r)?)))
-            }
-            TypeVariant::TransactionV1Envelope => Ok(Self::TransactionV1Envelope(Box::new(
-                TransactionV1Envelope::read_xdr(r)?,
-            ))),
-            TypeVariant::FeeBumpTransaction => Ok(Self::FeeBumpTransaction(Box::new(
-                FeeBumpTransaction::read_xdr(r)?,
-            ))),
-            TypeVariant::FeeBumpTransactionInnerTx => Ok(Self::FeeBumpTransactionInnerTx(
-                Box::new(FeeBumpTransactionInnerTx::read_xdr(r)?),
-            )),
-            TypeVariant::FeeBumpTransactionExt => Ok(Self::FeeBumpTransactionExt(Box::new(
-                FeeBumpTransactionExt::read_xdr(r)?,
-            ))),
-            TypeVariant::FeeBumpTransactionEnvelope => Ok(Self::FeeBumpTransactionEnvelope(
-                Box::new(FeeBumpTransactionEnvelope::read_xdr(r)?),
-            )),
-            TypeVariant::TransactionEnvelope => Ok(Self::TransactionEnvelope(Box::new(
-                TransactionEnvelope::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionSignaturePayload => Ok(Self::TransactionSignaturePayload(
-                Box::new(TransactionSignaturePayload::read_xdr(r)?),
-            )),
+            }),
+            TypeVariant::TransactionV1Envelope => r.with_limited_depth(|r| {
+                Ok(Self::TransactionV1Envelope(Box::new(
+                    TransactionV1Envelope::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::FeeBumpTransaction => r.with_limited_depth(|r| {
+                Ok(Self::FeeBumpTransaction(Box::new(
+                    FeeBumpTransaction::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::FeeBumpTransactionInnerTx => r.with_limited_depth(|r| {
+                Ok(Self::FeeBumpTransactionInnerTx(Box::new(
+                    FeeBumpTransactionInnerTx::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::FeeBumpTransactionExt => r.with_limited_depth(|r| {
+                Ok(Self::FeeBumpTransactionExt(Box::new(
+                    FeeBumpTransactionExt::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::FeeBumpTransactionEnvelope => r.with_limited_depth(|r| {
+                Ok(Self::FeeBumpTransactionEnvelope(Box::new(
+                    FeeBumpTransactionEnvelope::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionEnvelope => r.with_limited_depth(|r| {
+                Ok(Self::TransactionEnvelope(Box::new(
+                    TransactionEnvelope::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionSignaturePayload => r.with_limited_depth(|r| {
+                Ok(Self::TransactionSignaturePayload(Box::new(
+                    TransactionSignaturePayload::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::TransactionSignaturePayloadTaggedTransaction => {
-                Ok(Self::TransactionSignaturePayloadTaggedTransaction(
-                    Box::new(TransactionSignaturePayloadTaggedTransaction::read_xdr(r)?),
-                ))
+                r.with_limited_depth(|r| {
+                    Ok(Self::TransactionSignaturePayloadTaggedTransaction(
+                        Box::new(TransactionSignaturePayloadTaggedTransaction::read_xdr(r)?),
+                    ))
+                })
             }
-            TypeVariant::ClaimAtomType => {
+            TypeVariant::ClaimAtomType => r.with_limited_depth(|r| {
                 Ok(Self::ClaimAtomType(Box::new(ClaimAtomType::read_xdr(r)?)))
-            }
-            TypeVariant::ClaimOfferAtomV0 => Ok(Self::ClaimOfferAtomV0(Box::new(
-                ClaimOfferAtomV0::read_xdr(r)?,
-            ))),
-            TypeVariant::ClaimOfferAtom => {
+            }),
+            TypeVariant::ClaimOfferAtomV0 => r.with_limited_depth(|r| {
+                Ok(Self::ClaimOfferAtomV0(Box::new(
+                    ClaimOfferAtomV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClaimOfferAtom => r.with_limited_depth(|r| {
                 Ok(Self::ClaimOfferAtom(Box::new(ClaimOfferAtom::read_xdr(r)?)))
+            }),
+            TypeVariant::ClaimLiquidityAtom => r.with_limited_depth(|r| {
+                Ok(Self::ClaimLiquidityAtom(Box::new(
+                    ClaimLiquidityAtom::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClaimAtom => {
+                r.with_limited_depth(|r| Ok(Self::ClaimAtom(Box::new(ClaimAtom::read_xdr(r)?))))
             }
-            TypeVariant::ClaimLiquidityAtom => Ok(Self::ClaimLiquidityAtom(Box::new(
-                ClaimLiquidityAtom::read_xdr(r)?,
-            ))),
-            TypeVariant::ClaimAtom => Ok(Self::ClaimAtom(Box::new(ClaimAtom::read_xdr(r)?))),
-            TypeVariant::CreateAccountResultCode => Ok(Self::CreateAccountResultCode(Box::new(
-                CreateAccountResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::CreateAccountResult => Ok(Self::CreateAccountResult(Box::new(
-                CreateAccountResult::read_xdr(r)?,
-            ))),
-            TypeVariant::PaymentResultCode => Ok(Self::PaymentResultCode(Box::new(
-                PaymentResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::PaymentResult => {
+            TypeVariant::CreateAccountResultCode => r.with_limited_depth(|r| {
+                Ok(Self::CreateAccountResultCode(Box::new(
+                    CreateAccountResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::CreateAccountResult => r.with_limited_depth(|r| {
+                Ok(Self::CreateAccountResult(Box::new(
+                    CreateAccountResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::PaymentResultCode => r.with_limited_depth(|r| {
+                Ok(Self::PaymentResultCode(Box::new(
+                    PaymentResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::PaymentResult => r.with_limited_depth(|r| {
                 Ok(Self::PaymentResult(Box::new(PaymentResult::read_xdr(r)?)))
-            }
-            TypeVariant::PathPaymentStrictReceiveResultCode => {
+            }),
+            TypeVariant::PathPaymentStrictReceiveResultCode => r.with_limited_depth(|r| {
                 Ok(Self::PathPaymentStrictReceiveResultCode(Box::new(
                     PathPaymentStrictReceiveResultCode::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::SimplePaymentResult => Ok(Self::SimplePaymentResult(Box::new(
-                SimplePaymentResult::read_xdr(r)?,
-            ))),
-            TypeVariant::PathPaymentStrictReceiveResult => {
+            }),
+            TypeVariant::SimplePaymentResult => r.with_limited_depth(|r| {
+                Ok(Self::SimplePaymentResult(Box::new(
+                    SimplePaymentResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::PathPaymentStrictReceiveResult => r.with_limited_depth(|r| {
                 Ok(Self::PathPaymentStrictReceiveResult(Box::new(
                     PathPaymentStrictReceiveResult::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::PathPaymentStrictReceiveResultSuccess => {
+            }),
+            TypeVariant::PathPaymentStrictReceiveResultSuccess => r.with_limited_depth(|r| {
                 Ok(Self::PathPaymentStrictReceiveResultSuccess(Box::new(
                     PathPaymentStrictReceiveResultSuccess::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::PathPaymentStrictSendResultCode => {
+            }),
+            TypeVariant::PathPaymentStrictSendResultCode => r.with_limited_depth(|r| {
                 Ok(Self::PathPaymentStrictSendResultCode(Box::new(
                     PathPaymentStrictSendResultCode::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::PathPaymentStrictSendResult => Ok(Self::PathPaymentStrictSendResult(
-                Box::new(PathPaymentStrictSendResult::read_xdr(r)?),
-            )),
-            TypeVariant::PathPaymentStrictSendResultSuccess => {
+            }),
+            TypeVariant::PathPaymentStrictSendResult => r.with_limited_depth(|r| {
+                Ok(Self::PathPaymentStrictSendResult(Box::new(
+                    PathPaymentStrictSendResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::PathPaymentStrictSendResultSuccess => r.with_limited_depth(|r| {
                 Ok(Self::PathPaymentStrictSendResultSuccess(Box::new(
                     PathPaymentStrictSendResultSuccess::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::ManageSellOfferResultCode => Ok(Self::ManageSellOfferResultCode(
-                Box::new(ManageSellOfferResultCode::read_xdr(r)?),
-            )),
-            TypeVariant::ManageOfferEffect => Ok(Self::ManageOfferEffect(Box::new(
-                ManageOfferEffect::read_xdr(r)?,
-            ))),
-            TypeVariant::ManageOfferSuccessResult => Ok(Self::ManageOfferSuccessResult(Box::new(
-                ManageOfferSuccessResult::read_xdr(r)?,
-            ))),
-            TypeVariant::ManageOfferSuccessResultOffer => Ok(Self::ManageOfferSuccessResultOffer(
-                Box::new(ManageOfferSuccessResultOffer::read_xdr(r)?),
-            )),
-            TypeVariant::ManageSellOfferResult => Ok(Self::ManageSellOfferResult(Box::new(
-                ManageSellOfferResult::read_xdr(r)?,
-            ))),
-            TypeVariant::ManageBuyOfferResultCode => Ok(Self::ManageBuyOfferResultCode(Box::new(
-                ManageBuyOfferResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::ManageBuyOfferResult => Ok(Self::ManageBuyOfferResult(Box::new(
-                ManageBuyOfferResult::read_xdr(r)?,
-            ))),
-            TypeVariant::SetOptionsResultCode => Ok(Self::SetOptionsResultCode(Box::new(
-                SetOptionsResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::SetOptionsResult => Ok(Self::SetOptionsResult(Box::new(
-                SetOptionsResult::read_xdr(r)?,
-            ))),
-            TypeVariant::ChangeTrustResultCode => Ok(Self::ChangeTrustResultCode(Box::new(
-                ChangeTrustResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::ChangeTrustResult => Ok(Self::ChangeTrustResult(Box::new(
-                ChangeTrustResult::read_xdr(r)?,
-            ))),
-            TypeVariant::AllowTrustResultCode => Ok(Self::AllowTrustResultCode(Box::new(
-                AllowTrustResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::AllowTrustResult => Ok(Self::AllowTrustResult(Box::new(
-                AllowTrustResult::read_xdr(r)?,
-            ))),
-            TypeVariant::AccountMergeResultCode => Ok(Self::AccountMergeResultCode(Box::new(
-                AccountMergeResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::AccountMergeResult => Ok(Self::AccountMergeResult(Box::new(
-                AccountMergeResult::read_xdr(r)?,
-            ))),
-            TypeVariant::InflationResultCode => Ok(Self::InflationResultCode(Box::new(
-                InflationResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::InflationPayout => Ok(Self::InflationPayout(Box::new(
-                InflationPayout::read_xdr(r)?,
-            ))),
-            TypeVariant::InflationResult => Ok(Self::InflationResult(Box::new(
-                InflationResult::read_xdr(r)?,
-            ))),
-            TypeVariant::ManageDataResultCode => Ok(Self::ManageDataResultCode(Box::new(
-                ManageDataResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::ManageDataResult => Ok(Self::ManageDataResult(Box::new(
-                ManageDataResult::read_xdr(r)?,
-            ))),
-            TypeVariant::BumpSequenceResultCode => Ok(Self::BumpSequenceResultCode(Box::new(
-                BumpSequenceResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::BumpSequenceResult => Ok(Self::BumpSequenceResult(Box::new(
-                BumpSequenceResult::read_xdr(r)?,
-            ))),
-            TypeVariant::CreateClaimableBalanceResultCode => {
+            }),
+            TypeVariant::ManageSellOfferResultCode => r.with_limited_depth(|r| {
+                Ok(Self::ManageSellOfferResultCode(Box::new(
+                    ManageSellOfferResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ManageOfferEffect => r.with_limited_depth(|r| {
+                Ok(Self::ManageOfferEffect(Box::new(
+                    ManageOfferEffect::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ManageOfferSuccessResult => r.with_limited_depth(|r| {
+                Ok(Self::ManageOfferSuccessResult(Box::new(
+                    ManageOfferSuccessResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ManageOfferSuccessResultOffer => r.with_limited_depth(|r| {
+                Ok(Self::ManageOfferSuccessResultOffer(Box::new(
+                    ManageOfferSuccessResultOffer::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ManageSellOfferResult => r.with_limited_depth(|r| {
+                Ok(Self::ManageSellOfferResult(Box::new(
+                    ManageSellOfferResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ManageBuyOfferResultCode => r.with_limited_depth(|r| {
+                Ok(Self::ManageBuyOfferResultCode(Box::new(
+                    ManageBuyOfferResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ManageBuyOfferResult => r.with_limited_depth(|r| {
+                Ok(Self::ManageBuyOfferResult(Box::new(
+                    ManageBuyOfferResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SetOptionsResultCode => r.with_limited_depth(|r| {
+                Ok(Self::SetOptionsResultCode(Box::new(
+                    SetOptionsResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SetOptionsResult => r.with_limited_depth(|r| {
+                Ok(Self::SetOptionsResult(Box::new(
+                    SetOptionsResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ChangeTrustResultCode => r.with_limited_depth(|r| {
+                Ok(Self::ChangeTrustResultCode(Box::new(
+                    ChangeTrustResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ChangeTrustResult => r.with_limited_depth(|r| {
+                Ok(Self::ChangeTrustResult(Box::new(
+                    ChangeTrustResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AllowTrustResultCode => r.with_limited_depth(|r| {
+                Ok(Self::AllowTrustResultCode(Box::new(
+                    AllowTrustResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AllowTrustResult => r.with_limited_depth(|r| {
+                Ok(Self::AllowTrustResult(Box::new(
+                    AllowTrustResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AccountMergeResultCode => r.with_limited_depth(|r| {
+                Ok(Self::AccountMergeResultCode(Box::new(
+                    AccountMergeResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::AccountMergeResult => r.with_limited_depth(|r| {
+                Ok(Self::AccountMergeResult(Box::new(
+                    AccountMergeResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::InflationResultCode => r.with_limited_depth(|r| {
+                Ok(Self::InflationResultCode(Box::new(
+                    InflationResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::InflationPayout => r.with_limited_depth(|r| {
+                Ok(Self::InflationPayout(Box::new(InflationPayout::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::InflationResult => r.with_limited_depth(|r| {
+                Ok(Self::InflationResult(Box::new(InflationResult::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::ManageDataResultCode => r.with_limited_depth(|r| {
+                Ok(Self::ManageDataResultCode(Box::new(
+                    ManageDataResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ManageDataResult => r.with_limited_depth(|r| {
+                Ok(Self::ManageDataResult(Box::new(
+                    ManageDataResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::BumpSequenceResultCode => r.with_limited_depth(|r| {
+                Ok(Self::BumpSequenceResultCode(Box::new(
+                    BumpSequenceResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::BumpSequenceResult => r.with_limited_depth(|r| {
+                Ok(Self::BumpSequenceResult(Box::new(
+                    BumpSequenceResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::CreateClaimableBalanceResultCode => r.with_limited_depth(|r| {
                 Ok(Self::CreateClaimableBalanceResultCode(Box::new(
                     CreateClaimableBalanceResultCode::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::CreateClaimableBalanceResult => Ok(Self::CreateClaimableBalanceResult(
-                Box::new(CreateClaimableBalanceResult::read_xdr(r)?),
-            )),
-            TypeVariant::ClaimClaimableBalanceResultCode => {
+            }),
+            TypeVariant::CreateClaimableBalanceResult => r.with_limited_depth(|r| {
+                Ok(Self::CreateClaimableBalanceResult(Box::new(
+                    CreateClaimableBalanceResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClaimClaimableBalanceResultCode => r.with_limited_depth(|r| {
                 Ok(Self::ClaimClaimableBalanceResultCode(Box::new(
                     ClaimClaimableBalanceResultCode::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::ClaimClaimableBalanceResult => Ok(Self::ClaimClaimableBalanceResult(
-                Box::new(ClaimClaimableBalanceResult::read_xdr(r)?),
-            )),
-            TypeVariant::BeginSponsoringFutureReservesResultCode => {
+            }),
+            TypeVariant::ClaimClaimableBalanceResult => r.with_limited_depth(|r| {
+                Ok(Self::ClaimClaimableBalanceResult(Box::new(
+                    ClaimClaimableBalanceResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::BeginSponsoringFutureReservesResultCode => r.with_limited_depth(|r| {
                 Ok(Self::BeginSponsoringFutureReservesResultCode(Box::new(
                     BeginSponsoringFutureReservesResultCode::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::BeginSponsoringFutureReservesResult => {
+            }),
+            TypeVariant::BeginSponsoringFutureReservesResult => r.with_limited_depth(|r| {
                 Ok(Self::BeginSponsoringFutureReservesResult(Box::new(
                     BeginSponsoringFutureReservesResult::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::EndSponsoringFutureReservesResultCode => {
+            }),
+            TypeVariant::EndSponsoringFutureReservesResultCode => r.with_limited_depth(|r| {
                 Ok(Self::EndSponsoringFutureReservesResultCode(Box::new(
                     EndSponsoringFutureReservesResultCode::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::EndSponsoringFutureReservesResult => {
+            }),
+            TypeVariant::EndSponsoringFutureReservesResult => r.with_limited_depth(|r| {
                 Ok(Self::EndSponsoringFutureReservesResult(Box::new(
                     EndSponsoringFutureReservesResult::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::RevokeSponsorshipResultCode => Ok(Self::RevokeSponsorshipResultCode(
-                Box::new(RevokeSponsorshipResultCode::read_xdr(r)?),
-            )),
-            TypeVariant::RevokeSponsorshipResult => Ok(Self::RevokeSponsorshipResult(Box::new(
-                RevokeSponsorshipResult::read_xdr(r)?,
-            ))),
-            TypeVariant::ClawbackResultCode => Ok(Self::ClawbackResultCode(Box::new(
-                ClawbackResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::ClawbackResult => {
+            }),
+            TypeVariant::RevokeSponsorshipResultCode => r.with_limited_depth(|r| {
+                Ok(Self::RevokeSponsorshipResultCode(Box::new(
+                    RevokeSponsorshipResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::RevokeSponsorshipResult => r.with_limited_depth(|r| {
+                Ok(Self::RevokeSponsorshipResult(Box::new(
+                    RevokeSponsorshipResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClawbackResultCode => r.with_limited_depth(|r| {
+                Ok(Self::ClawbackResultCode(Box::new(
+                    ClawbackResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClawbackResult => r.with_limited_depth(|r| {
                 Ok(Self::ClawbackResult(Box::new(ClawbackResult::read_xdr(r)?)))
-            }
-            TypeVariant::ClawbackClaimableBalanceResultCode => {
+            }),
+            TypeVariant::ClawbackClaimableBalanceResultCode => r.with_limited_depth(|r| {
                 Ok(Self::ClawbackClaimableBalanceResultCode(Box::new(
                     ClawbackClaimableBalanceResultCode::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::ClawbackClaimableBalanceResult => {
+            }),
+            TypeVariant::ClawbackClaimableBalanceResult => r.with_limited_depth(|r| {
                 Ok(Self::ClawbackClaimableBalanceResult(Box::new(
                     ClawbackClaimableBalanceResult::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::SetTrustLineFlagsResultCode => Ok(Self::SetTrustLineFlagsResultCode(
-                Box::new(SetTrustLineFlagsResultCode::read_xdr(r)?),
-            )),
-            TypeVariant::SetTrustLineFlagsResult => Ok(Self::SetTrustLineFlagsResult(Box::new(
-                SetTrustLineFlagsResult::read_xdr(r)?,
-            ))),
-            TypeVariant::LiquidityPoolDepositResultCode => {
+            }),
+            TypeVariant::SetTrustLineFlagsResultCode => r.with_limited_depth(|r| {
+                Ok(Self::SetTrustLineFlagsResultCode(Box::new(
+                    SetTrustLineFlagsResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SetTrustLineFlagsResult => r.with_limited_depth(|r| {
+                Ok(Self::SetTrustLineFlagsResult(Box::new(
+                    SetTrustLineFlagsResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LiquidityPoolDepositResultCode => r.with_limited_depth(|r| {
                 Ok(Self::LiquidityPoolDepositResultCode(Box::new(
                     LiquidityPoolDepositResultCode::read_xdr(r)?,
                 )))
-            }
-            TypeVariant::LiquidityPoolDepositResult => Ok(Self::LiquidityPoolDepositResult(
-                Box::new(LiquidityPoolDepositResult::read_xdr(r)?),
-            )),
-            TypeVariant::LiquidityPoolWithdrawResultCode => {
+            }),
+            TypeVariant::LiquidityPoolDepositResult => r.with_limited_depth(|r| {
+                Ok(Self::LiquidityPoolDepositResult(Box::new(
+                    LiquidityPoolDepositResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LiquidityPoolWithdrawResultCode => r.with_limited_depth(|r| {
                 Ok(Self::LiquidityPoolWithdrawResultCode(Box::new(
                     LiquidityPoolWithdrawResultCode::read_xdr(r)?,
                 )))
+            }),
+            TypeVariant::LiquidityPoolWithdrawResult => r.with_limited_depth(|r| {
+                Ok(Self::LiquidityPoolWithdrawResult(Box::new(
+                    LiquidityPoolWithdrawResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::OperationResultCode => r.with_limited_depth(|r| {
+                Ok(Self::OperationResultCode(Box::new(
+                    OperationResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::OperationResult => r.with_limited_depth(|r| {
+                Ok(Self::OperationResult(Box::new(OperationResult::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::OperationResultTr => r.with_limited_depth(|r| {
+                Ok(Self::OperationResultTr(Box::new(
+                    OperationResultTr::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionResultCode => r.with_limited_depth(|r| {
+                Ok(Self::TransactionResultCode(Box::new(
+                    TransactionResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::InnerTransactionResult => r.with_limited_depth(|r| {
+                Ok(Self::InnerTransactionResult(Box::new(
+                    InnerTransactionResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::InnerTransactionResultResult => r.with_limited_depth(|r| {
+                Ok(Self::InnerTransactionResultResult(Box::new(
+                    InnerTransactionResultResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::InnerTransactionResultExt => r.with_limited_depth(|r| {
+                Ok(Self::InnerTransactionResultExt(Box::new(
+                    InnerTransactionResultExt::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::InnerTransactionResultPair => r.with_limited_depth(|r| {
+                Ok(Self::InnerTransactionResultPair(Box::new(
+                    InnerTransactionResultPair::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionResult => r.with_limited_depth(|r| {
+                Ok(Self::TransactionResult(Box::new(
+                    TransactionResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionResultResult => r.with_limited_depth(|r| {
+                Ok(Self::TransactionResultResult(Box::new(
+                    TransactionResultResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionResultExt => r.with_limited_depth(|r| {
+                Ok(Self::TransactionResultExt(Box::new(
+                    TransactionResultExt::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::Hash => {
+                r.with_limited_depth(|r| Ok(Self::Hash(Box::new(Hash::read_xdr(r)?))))
             }
-            TypeVariant::LiquidityPoolWithdrawResult => Ok(Self::LiquidityPoolWithdrawResult(
-                Box::new(LiquidityPoolWithdrawResult::read_xdr(r)?),
-            )),
-            TypeVariant::OperationResultCode => Ok(Self::OperationResultCode(Box::new(
-                OperationResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::OperationResult => Ok(Self::OperationResult(Box::new(
-                OperationResult::read_xdr(r)?,
-            ))),
-            TypeVariant::OperationResultTr => Ok(Self::OperationResultTr(Box::new(
-                OperationResultTr::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionResultCode => Ok(Self::TransactionResultCode(Box::new(
-                TransactionResultCode::read_xdr(r)?,
-            ))),
-            TypeVariant::InnerTransactionResult => Ok(Self::InnerTransactionResult(Box::new(
-                InnerTransactionResult::read_xdr(r)?,
-            ))),
-            TypeVariant::InnerTransactionResultResult => Ok(Self::InnerTransactionResultResult(
-                Box::new(InnerTransactionResultResult::read_xdr(r)?),
-            )),
-            TypeVariant::InnerTransactionResultExt => Ok(Self::InnerTransactionResultExt(
-                Box::new(InnerTransactionResultExt::read_xdr(r)?),
-            )),
-            TypeVariant::InnerTransactionResultPair => Ok(Self::InnerTransactionResultPair(
-                Box::new(InnerTransactionResultPair::read_xdr(r)?),
-            )),
-            TypeVariant::TransactionResult => Ok(Self::TransactionResult(Box::new(
-                TransactionResult::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionResultResult => Ok(Self::TransactionResultResult(Box::new(
-                TransactionResultResult::read_xdr(r)?,
-            ))),
-            TypeVariant::TransactionResultExt => Ok(Self::TransactionResultExt(Box::new(
-                TransactionResultExt::read_xdr(r)?,
-            ))),
-            TypeVariant::Hash => Ok(Self::Hash(Box::new(Hash::read_xdr(r)?))),
-            TypeVariant::Uint256 => Ok(Self::Uint256(Box::new(Uint256::read_xdr(r)?))),
-            TypeVariant::Uint32 => Ok(Self::Uint32(Box::new(Uint32::read_xdr(r)?))),
-            TypeVariant::Int32 => Ok(Self::Int32(Box::new(Int32::read_xdr(r)?))),
-            TypeVariant::Uint64 => Ok(Self::Uint64(Box::new(Uint64::read_xdr(r)?))),
-            TypeVariant::Int64 => Ok(Self::Int64(Box::new(Int64::read_xdr(r)?))),
-            TypeVariant::ExtensionPoint => {
+            TypeVariant::Uint256 => {
+                r.with_limited_depth(|r| Ok(Self::Uint256(Box::new(Uint256::read_xdr(r)?))))
+            }
+            TypeVariant::Uint32 => {
+                r.with_limited_depth(|r| Ok(Self::Uint32(Box::new(Uint32::read_xdr(r)?))))
+            }
+            TypeVariant::Int32 => {
+                r.with_limited_depth(|r| Ok(Self::Int32(Box::new(Int32::read_xdr(r)?))))
+            }
+            TypeVariant::Uint64 => {
+                r.with_limited_depth(|r| Ok(Self::Uint64(Box::new(Uint64::read_xdr(r)?))))
+            }
+            TypeVariant::Int64 => {
+                r.with_limited_depth(|r| Ok(Self::Int64(Box::new(Int64::read_xdr(r)?))))
+            }
+            TypeVariant::ExtensionPoint => r.with_limited_depth(|r| {
                 Ok(Self::ExtensionPoint(Box::new(ExtensionPoint::read_xdr(r)?)))
-            }
-            TypeVariant::CryptoKeyType => {
+            }),
+            TypeVariant::CryptoKeyType => r.with_limited_depth(|r| {
                 Ok(Self::CryptoKeyType(Box::new(CryptoKeyType::read_xdr(r)?)))
-            }
-            TypeVariant::PublicKeyType => {
+            }),
+            TypeVariant::PublicKeyType => r.with_limited_depth(|r| {
                 Ok(Self::PublicKeyType(Box::new(PublicKeyType::read_xdr(r)?)))
-            }
-            TypeVariant::SignerKeyType => {
+            }),
+            TypeVariant::SignerKeyType => r.with_limited_depth(|r| {
                 Ok(Self::SignerKeyType(Box::new(SignerKeyType::read_xdr(r)?)))
+            }),
+            TypeVariant::PublicKey => {
+                r.with_limited_depth(|r| Ok(Self::PublicKey(Box::new(PublicKey::read_xdr(r)?))))
             }
-            TypeVariant::PublicKey => Ok(Self::PublicKey(Box::new(PublicKey::read_xdr(r)?))),
-            TypeVariant::SignerKey => Ok(Self::SignerKey(Box::new(SignerKey::read_xdr(r)?))),
-            TypeVariant::SignerKeyEd25519SignedPayload => Ok(Self::SignerKeyEd25519SignedPayload(
-                Box::new(SignerKeyEd25519SignedPayload::read_xdr(r)?),
-            )),
-            TypeVariant::Signature => Ok(Self::Signature(Box::new(Signature::read_xdr(r)?))),
-            TypeVariant::SignatureHint => {
+            TypeVariant::SignerKey => {
+                r.with_limited_depth(|r| Ok(Self::SignerKey(Box::new(SignerKey::read_xdr(r)?))))
+            }
+            TypeVariant::SignerKeyEd25519SignedPayload => r.with_limited_depth(|r| {
+                Ok(Self::SignerKeyEd25519SignedPayload(Box::new(
+                    SignerKeyEd25519SignedPayload::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::Signature => {
+                r.with_limited_depth(|r| Ok(Self::Signature(Box::new(Signature::read_xdr(r)?))))
+            }
+            TypeVariant::SignatureHint => r.with_limited_depth(|r| {
                 Ok(Self::SignatureHint(Box::new(SignatureHint::read_xdr(r)?)))
+            }),
+            TypeVariant::NodeId => {
+                r.with_limited_depth(|r| Ok(Self::NodeId(Box::new(NodeId::read_xdr(r)?))))
             }
-            TypeVariant::NodeId => Ok(Self::NodeId(Box::new(NodeId::read_xdr(r)?))),
-            TypeVariant::Curve25519Secret => Ok(Self::Curve25519Secret(Box::new(
-                Curve25519Secret::read_xdr(r)?,
-            ))),
-            TypeVariant::Curve25519Public => Ok(Self::Curve25519Public(Box::new(
-                Curve25519Public::read_xdr(r)?,
-            ))),
-            TypeVariant::HmacSha256Key => {
+            TypeVariant::Curve25519Secret => r.with_limited_depth(|r| {
+                Ok(Self::Curve25519Secret(Box::new(
+                    Curve25519Secret::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::Curve25519Public => r.with_limited_depth(|r| {
+                Ok(Self::Curve25519Public(Box::new(
+                    Curve25519Public::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::HmacSha256Key => r.with_limited_depth(|r| {
                 Ok(Self::HmacSha256Key(Box::new(HmacSha256Key::read_xdr(r)?)))
-            }
-            TypeVariant::HmacSha256Mac => {
+            }),
+            TypeVariant::HmacSha256Mac => r.with_limited_depth(|r| {
                 Ok(Self::HmacSha256Mac(Box::new(HmacSha256Mac::read_xdr(r)?)))
-            }
+            }),
         }
     }
 
     #[cfg(feature = "base64")]
-    pub fn read_xdr_base64(v: TypeVariant, r: &mut impl Read) -> Result<Self> {
-        let mut dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+    pub fn read_xdr_base64<R: Read>(v: TypeVariant, r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        let mut dec = DepthLimitedRead::new(
+            base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD),
+            r.depth_remaining,
+        );
         let t = Self::read_xdr(v, &mut dec)?;
         Ok(t)
     }
 
     #[cfg(feature = "std")]
-    pub fn read_xdr_to_end(v: TypeVariant, r: &mut impl Read) -> Result<Self> {
+    pub fn read_xdr_to_end<R: Read>(v: TypeVariant, r: &mut DepthLimitedRead<R>) -> Result<Self> {
         let s = Self::read_xdr(v, r)?;
         // Check that any further reads, such as this read of one byte, read no
         // data, indicating EOF. If a byte is read the data is invalid.
@@ -32818,8 +34767,14 @@ impl Type {
     }
 
     #[cfg(feature = "base64")]
-    pub fn read_xdr_base64_to_end(v: TypeVariant, r: &mut impl Read) -> Result<Self> {
-        let mut dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+    pub fn read_xdr_base64_to_end<R: Read>(
+        v: TypeVariant,
+        r: &mut DepthLimitedRead<R>,
+    ) -> Result<Self> {
+        let mut dec = DepthLimitedRead::new(
+            base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD),
+            r.depth_remaining,
+        );
         let t = Self::read_xdr_to_end(v, &mut dec)?;
         Ok(t)
     }
@@ -32828,1204 +34783,1316 @@ impl Type {
     #[allow(clippy::too_many_lines)]
     pub fn read_xdr_iter<R: Read>(
         v: TypeVariant,
-        r: &mut R,
+        r: &mut DepthLimitedRead<R>,
     ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
         match v {
             TypeVariant::Value => Box::new(
-                ReadXdrIter::<_, Value>::new(r).map(|r| r.map(|t| Self::Value(Box::new(t)))),
+                ReadXdrIter::<_, Value>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Value(Box::new(t)))),
             ),
             TypeVariant::ScpBallot => Box::new(
-                ReadXdrIter::<_, ScpBallot>::new(r)
+                ReadXdrIter::<_, ScpBallot>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpBallot(Box::new(t)))),
             ),
             TypeVariant::ScpStatementType => Box::new(
-                ReadXdrIter::<_, ScpStatementType>::new(r)
+                ReadXdrIter::<_, ScpStatementType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementType(Box::new(t)))),
             ),
             TypeVariant::ScpNomination => Box::new(
-                ReadXdrIter::<_, ScpNomination>::new(r)
+                ReadXdrIter::<_, ScpNomination>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpNomination(Box::new(t)))),
             ),
             TypeVariant::ScpStatement => Box::new(
-                ReadXdrIter::<_, ScpStatement>::new(r)
+                ReadXdrIter::<_, ScpStatement>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatement(Box::new(t)))),
             ),
             TypeVariant::ScpStatementPledges => Box::new(
-                ReadXdrIter::<_, ScpStatementPledges>::new(r)
+                ReadXdrIter::<_, ScpStatementPledges>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementPledges(Box::new(t)))),
             ),
             TypeVariant::ScpStatementPrepare => Box::new(
-                ReadXdrIter::<_, ScpStatementPrepare>::new(r)
+                ReadXdrIter::<_, ScpStatementPrepare>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementPrepare(Box::new(t)))),
             ),
             TypeVariant::ScpStatementConfirm => Box::new(
-                ReadXdrIter::<_, ScpStatementConfirm>::new(r)
+                ReadXdrIter::<_, ScpStatementConfirm>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementConfirm(Box::new(t)))),
             ),
             TypeVariant::ScpStatementExternalize => Box::new(
-                ReadXdrIter::<_, ScpStatementExternalize>::new(r)
+                ReadXdrIter::<_, ScpStatementExternalize>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementExternalize(Box::new(t)))),
             ),
             TypeVariant::ScpEnvelope => Box::new(
-                ReadXdrIter::<_, ScpEnvelope>::new(r)
+                ReadXdrIter::<_, ScpEnvelope>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpEnvelope(Box::new(t)))),
             ),
             TypeVariant::ScpQuorumSet => Box::new(
-                ReadXdrIter::<_, ScpQuorumSet>::new(r)
+                ReadXdrIter::<_, ScpQuorumSet>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
-                ReadXdrIter::<_, StoredTransactionSet>::new(r)
+                ReadXdrIter::<_, StoredTransactionSet>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
             ),
             TypeVariant::PersistedScpStateV0 => Box::new(
-                ReadXdrIter::<_, PersistedScpStateV0>::new(r)
+                ReadXdrIter::<_, PersistedScpStateV0>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpStateV0(Box::new(t)))),
             ),
             TypeVariant::PersistedScpStateV1 => Box::new(
-                ReadXdrIter::<_, PersistedScpStateV1>::new(r)
+                ReadXdrIter::<_, PersistedScpStateV1>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpStateV1(Box::new(t)))),
             ),
             TypeVariant::PersistedScpState => Box::new(
-                ReadXdrIter::<_, PersistedScpState>::new(r)
+                ReadXdrIter::<_, PersistedScpState>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t)))),
             ),
             TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, AccountId>::new(r)
+                ReadXdrIter::<_, AccountId>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
             ),
             TypeVariant::Thresholds => Box::new(
-                ReadXdrIter::<_, Thresholds>::new(r)
+                ReadXdrIter::<_, Thresholds>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Thresholds(Box::new(t)))),
             ),
             TypeVariant::String32 => Box::new(
-                ReadXdrIter::<_, String32>::new(r).map(|r| r.map(|t| Self::String32(Box::new(t)))),
+                ReadXdrIter::<_, String32>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::String32(Box::new(t)))),
             ),
             TypeVariant::String64 => Box::new(
-                ReadXdrIter::<_, String64>::new(r).map(|r| r.map(|t| Self::String64(Box::new(t)))),
+                ReadXdrIter::<_, String64>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::String64(Box::new(t)))),
             ),
             TypeVariant::SequenceNumber => Box::new(
-                ReadXdrIter::<_, SequenceNumber>::new(r)
+                ReadXdrIter::<_, SequenceNumber>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t)))),
             ),
             TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, TimePoint>::new(r)
+                ReadXdrIter::<_, TimePoint>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
             ),
             TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Duration>::new(r).map(|r| r.map(|t| Self::Duration(Box::new(t)))),
+                ReadXdrIter::<_, Duration>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
             TypeVariant::DataValue => Box::new(
-                ReadXdrIter::<_, DataValue>::new(r)
+                ReadXdrIter::<_, DataValue>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DataValue(Box::new(t)))),
             ),
             TypeVariant::PoolId => Box::new(
-                ReadXdrIter::<_, PoolId>::new(r).map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
+                ReadXdrIter::<_, PoolId>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
             ),
             TypeVariant::AssetCode4 => Box::new(
-                ReadXdrIter::<_, AssetCode4>::new(r)
+                ReadXdrIter::<_, AssetCode4>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetCode4(Box::new(t)))),
             ),
             TypeVariant::AssetCode12 => Box::new(
-                ReadXdrIter::<_, AssetCode12>::new(r)
+                ReadXdrIter::<_, AssetCode12>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetCode12(Box::new(t)))),
             ),
             TypeVariant::AssetType => Box::new(
-                ReadXdrIter::<_, AssetType>::new(r)
+                ReadXdrIter::<_, AssetType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetType(Box::new(t)))),
             ),
             TypeVariant::AssetCode => Box::new(
-                ReadXdrIter::<_, AssetCode>::new(r)
+                ReadXdrIter::<_, AssetCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetCode(Box::new(t)))),
             ),
             TypeVariant::AlphaNum4 => Box::new(
-                ReadXdrIter::<_, AlphaNum4>::new(r)
+                ReadXdrIter::<_, AlphaNum4>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AlphaNum4(Box::new(t)))),
             ),
             TypeVariant::AlphaNum12 => Box::new(
-                ReadXdrIter::<_, AlphaNum12>::new(r)
+                ReadXdrIter::<_, AlphaNum12>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AlphaNum12(Box::new(t)))),
             ),
             TypeVariant::Asset => Box::new(
-                ReadXdrIter::<_, Asset>::new(r).map(|r| r.map(|t| Self::Asset(Box::new(t)))),
+                ReadXdrIter::<_, Asset>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Asset(Box::new(t)))),
             ),
             TypeVariant::Price => Box::new(
-                ReadXdrIter::<_, Price>::new(r).map(|r| r.map(|t| Self::Price(Box::new(t)))),
+                ReadXdrIter::<_, Price>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Price(Box::new(t)))),
             ),
             TypeVariant::Liabilities => Box::new(
-                ReadXdrIter::<_, Liabilities>::new(r)
+                ReadXdrIter::<_, Liabilities>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Liabilities(Box::new(t)))),
             ),
             TypeVariant::ThresholdIndexes => Box::new(
-                ReadXdrIter::<_, ThresholdIndexes>::new(r)
+                ReadXdrIter::<_, ThresholdIndexes>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ThresholdIndexes(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryType => Box::new(
-                ReadXdrIter::<_, LedgerEntryType>::new(r)
+                ReadXdrIter::<_, LedgerEntryType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryType(Box::new(t)))),
             ),
             TypeVariant::Signer => Box::new(
-                ReadXdrIter::<_, Signer>::new(r).map(|r| r.map(|t| Self::Signer(Box::new(t)))),
+                ReadXdrIter::<_, Signer>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Signer(Box::new(t)))),
             ),
             TypeVariant::AccountFlags => Box::new(
-                ReadXdrIter::<_, AccountFlags>::new(r)
+                ReadXdrIter::<_, AccountFlags>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountFlags(Box::new(t)))),
             ),
             TypeVariant::SponsorshipDescriptor => Box::new(
-                ReadXdrIter::<_, SponsorshipDescriptor>::new(r)
+                ReadXdrIter::<_, SponsorshipDescriptor>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SponsorshipDescriptor(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV3 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV3>::new(r)
+                ReadXdrIter::<_, AccountEntryExtensionV3>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV3(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV2 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV2>::new(r)
+                ReadXdrIter::<_, AccountEntryExtensionV2>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV2(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV2Ext => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV2Ext>::new(r)
+                ReadXdrIter::<_, AccountEntryExtensionV2Ext>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV1>::new(r)
+                ReadXdrIter::<_, AccountEntryExtensionV1>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV1Ext>::new(r)
+                ReadXdrIter::<_, AccountEntryExtensionV1Ext>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::AccountEntry => Box::new(
-                ReadXdrIter::<_, AccountEntry>::new(r)
+                ReadXdrIter::<_, AccountEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntry(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExt => Box::new(
-                ReadXdrIter::<_, AccountEntryExt>::new(r)
+                ReadXdrIter::<_, AccountEntryExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExt(Box::new(t)))),
             ),
             TypeVariant::TrustLineFlags => Box::new(
-                ReadXdrIter::<_, TrustLineFlags>::new(r)
+                ReadXdrIter::<_, TrustLineFlags>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineFlags(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolType => Box::new(
-                ReadXdrIter::<_, LiquidityPoolType>::new(r)
+                ReadXdrIter::<_, LiquidityPoolType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolType(Box::new(t)))),
             ),
             TypeVariant::TrustLineAsset => Box::new(
-                ReadXdrIter::<_, TrustLineAsset>::new(r)
+                ReadXdrIter::<_, TrustLineAsset>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineAsset(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2 => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExtensionV2>::new(r)
+                ReadXdrIter::<_, TrustLineEntryExtensionV2>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2Ext => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExtensionV2Ext>::new(r)
-                    .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t)))),
+                ReadXdrIter::<_, TrustLineEntryExtensionV2Ext>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntry => Box::new(
-                ReadXdrIter::<_, TrustLineEntry>::new(r)
+                ReadXdrIter::<_, TrustLineEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntry(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExt => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExt>::new(r)
+                ReadXdrIter::<_, TrustLineEntryExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryExt(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryV1 => Box::new(
-                ReadXdrIter::<_, TrustLineEntryV1>::new(r)
+                ReadXdrIter::<_, TrustLineEntryV1>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryV1(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryV1Ext => Box::new(
-                ReadXdrIter::<_, TrustLineEntryV1Ext>::new(r)
+                ReadXdrIter::<_, TrustLineEntryV1Ext>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryV1Ext(Box::new(t)))),
             ),
             TypeVariant::OfferEntryFlags => Box::new(
-                ReadXdrIter::<_, OfferEntryFlags>::new(r)
+                ReadXdrIter::<_, OfferEntryFlags>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OfferEntryFlags(Box::new(t)))),
             ),
             TypeVariant::OfferEntry => Box::new(
-                ReadXdrIter::<_, OfferEntry>::new(r)
+                ReadXdrIter::<_, OfferEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OfferEntry(Box::new(t)))),
             ),
             TypeVariant::OfferEntryExt => Box::new(
-                ReadXdrIter::<_, OfferEntryExt>::new(r)
+                ReadXdrIter::<_, OfferEntryExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OfferEntryExt(Box::new(t)))),
             ),
             TypeVariant::DataEntry => Box::new(
-                ReadXdrIter::<_, DataEntry>::new(r)
+                ReadXdrIter::<_, DataEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DataEntry(Box::new(t)))),
             ),
             TypeVariant::DataEntryExt => Box::new(
-                ReadXdrIter::<_, DataEntryExt>::new(r)
+                ReadXdrIter::<_, DataEntryExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DataEntryExt(Box::new(t)))),
             ),
             TypeVariant::ClaimPredicateType => Box::new(
-                ReadXdrIter::<_, ClaimPredicateType>::new(r)
+                ReadXdrIter::<_, ClaimPredicateType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimPredicateType(Box::new(t)))),
             ),
             TypeVariant::ClaimPredicate => Box::new(
-                ReadXdrIter::<_, ClaimPredicate>::new(r)
+                ReadXdrIter::<_, ClaimPredicate>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimPredicate(Box::new(t)))),
             ),
             TypeVariant::ClaimantType => Box::new(
-                ReadXdrIter::<_, ClaimantType>::new(r)
+                ReadXdrIter::<_, ClaimantType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimantType(Box::new(t)))),
             ),
             TypeVariant::Claimant => Box::new(
-                ReadXdrIter::<_, Claimant>::new(r).map(|r| r.map(|t| Self::Claimant(Box::new(t)))),
+                ReadXdrIter::<_, Claimant>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Claimant(Box::new(t)))),
             ),
             TypeVariant::ClaimantV0 => Box::new(
-                ReadXdrIter::<_, ClaimantV0>::new(r)
+                ReadXdrIter::<_, ClaimantV0>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceIdType => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceIdType>::new(r)
+                ReadXdrIter::<_, ClaimableBalanceIdType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceId => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceId>::new(r)
+                ReadXdrIter::<_, ClaimableBalanceId>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceFlags => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceFlags>::new(r)
+                ReadXdrIter::<_, ClaimableBalanceFlags>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceFlags(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t)))),
+                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1Ext>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t)))),
+                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1Ext>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntry => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntry>::new(r)
+                ReadXdrIter::<_, ClaimableBalanceEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntry(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExt => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntryExt>::new(r)
+                ReadXdrIter::<_, ClaimableBalanceEntryExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntryExt(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolConstantProductParameters => Box::new(
-                ReadXdrIter::<_, LiquidityPoolConstantProductParameters>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t)))),
+                ReadXdrIter::<_, LiquidityPoolConstantProductParameters>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntry => Box::new(
-                ReadXdrIter::<_, LiquidityPoolEntry>::new(r)
+                ReadXdrIter::<_, LiquidityPoolEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntry(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntryBody => Box::new(
-                ReadXdrIter::<_, LiquidityPoolEntryBody>::new(r)
+                ReadXdrIter::<_, LiquidityPoolEntryBody>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryBody(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntryConstantProduct => Box::new(
-                ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
+                ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, LedgerEntryExtensionV1>::new(r)
+                ReadXdrIter::<_, LedgerEntryExtensionV1>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, LedgerEntryExtensionV1Ext>::new(r)
+                ReadXdrIter::<_, LedgerEntryExtensionV1Ext>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::LedgerEntry => Box::new(
-                ReadXdrIter::<_, LedgerEntry>::new(r)
+                ReadXdrIter::<_, LedgerEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryData => Box::new(
-                ReadXdrIter::<_, LedgerEntryData>::new(r)
+                ReadXdrIter::<_, LedgerEntryData>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryData(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExt => Box::new(
-                ReadXdrIter::<_, LedgerEntryExt>::new(r)
+                ReadXdrIter::<_, LedgerEntryExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerKey => Box::new(
-                ReadXdrIter::<_, LedgerKey>::new(r)
+                ReadXdrIter::<_, LedgerKey>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKey(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyAccount => Box::new(
-                ReadXdrIter::<_, LedgerKeyAccount>::new(r)
+                ReadXdrIter::<_, LedgerKeyAccount>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyAccount(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyTrustLine => Box::new(
-                ReadXdrIter::<_, LedgerKeyTrustLine>::new(r)
+                ReadXdrIter::<_, LedgerKeyTrustLine>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyTrustLine(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyOffer => Box::new(
-                ReadXdrIter::<_, LedgerKeyOffer>::new(r)
+                ReadXdrIter::<_, LedgerKeyOffer>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyOffer(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyData => Box::new(
-                ReadXdrIter::<_, LedgerKeyData>::new(r)
+                ReadXdrIter::<_, LedgerKeyData>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyData(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyClaimableBalance => Box::new(
-                ReadXdrIter::<_, LedgerKeyClaimableBalance>::new(r)
+                ReadXdrIter::<_, LedgerKeyClaimableBalance>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyClaimableBalance(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyLiquidityPool => Box::new(
-                ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(r)
+                ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
-                ReadXdrIter::<_, EnvelopeType>::new(r)
+                ReadXdrIter::<_, EnvelopeType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::EnvelopeType(Box::new(t)))),
             ),
             TypeVariant::UpgradeType => Box::new(
-                ReadXdrIter::<_, UpgradeType>::new(r)
+                ReadXdrIter::<_, UpgradeType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::UpgradeType(Box::new(t)))),
             ),
             TypeVariant::StellarValueType => Box::new(
-                ReadXdrIter::<_, StellarValueType>::new(r)
+                ReadXdrIter::<_, StellarValueType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarValueType(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseValueSignature => Box::new(
-                ReadXdrIter::<_, LedgerCloseValueSignature>::new(r)
+                ReadXdrIter::<_, LedgerCloseValueSignature>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseValueSignature(Box::new(t)))),
             ),
             TypeVariant::StellarValue => Box::new(
-                ReadXdrIter::<_, StellarValue>::new(r)
+                ReadXdrIter::<_, StellarValue>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarValue(Box::new(t)))),
             ),
             TypeVariant::StellarValueExt => Box::new(
-                ReadXdrIter::<_, StellarValueExt>::new(r)
+                ReadXdrIter::<_, StellarValueExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
-                ReadXdrIter::<_, LedgerHeaderFlags>::new(r)
+                ReadXdrIter::<_, LedgerHeaderFlags>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderFlags(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1 => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExtensionV1>::new(r)
+                ReadXdrIter::<_, LedgerHeaderExtensionV1>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExtensionV1Ext>::new(r)
+                ReadXdrIter::<_, LedgerHeaderExtensionV1Ext>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::LedgerHeader => Box::new(
-                ReadXdrIter::<_, LedgerHeader>::new(r)
+                ReadXdrIter::<_, LedgerHeader>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeader(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExt => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExt>::new(r)
+                ReadXdrIter::<_, LedgerHeaderExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderExt(Box::new(t)))),
             ),
             TypeVariant::LedgerUpgradeType => Box::new(
-                ReadXdrIter::<_, LedgerUpgradeType>::new(r)
+                ReadXdrIter::<_, LedgerUpgradeType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
             ),
             TypeVariant::LedgerUpgrade => Box::new(
-                ReadXdrIter::<_, LedgerUpgrade>::new(r)
+                ReadXdrIter::<_, LedgerUpgrade>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
-                ReadXdrIter::<_, BucketEntryType>::new(r)
+                ReadXdrIter::<_, BucketEntryType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t)))),
             ),
             TypeVariant::BucketMetadata => Box::new(
-                ReadXdrIter::<_, BucketMetadata>::new(r)
+                ReadXdrIter::<_, BucketMetadata>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t)))),
             ),
             TypeVariant::BucketMetadataExt => Box::new(
-                ReadXdrIter::<_, BucketMetadataExt>::new(r)
+                ReadXdrIter::<_, BucketMetadataExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketMetadataExt(Box::new(t)))),
             ),
             TypeVariant::BucketEntry => Box::new(
-                ReadXdrIter::<_, BucketEntry>::new(r)
+                ReadXdrIter::<_, BucketEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketEntry(Box::new(t)))),
             ),
             TypeVariant::TxSetComponentType => Box::new(
-                ReadXdrIter::<_, TxSetComponentType>::new(r)
+                ReadXdrIter::<_, TxSetComponentType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
-                ReadXdrIter::<_, TxSetComponent>::new(r)
+                ReadXdrIter::<_, TxSetComponent>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxSetComponent(Box::new(t)))),
             ),
             TypeVariant::TxSetComponentTxsMaybeDiscountedFee => Box::new(
-                ReadXdrIter::<_, TxSetComponentTxsMaybeDiscountedFee>::new(r)
-                    .map(|r| r.map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t)))),
+                ReadXdrIter::<_, TxSetComponentTxsMaybeDiscountedFee>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t)))),
             ),
             TypeVariant::TransactionPhase => Box::new(
-                ReadXdrIter::<_, TransactionPhase>::new(r)
+                ReadXdrIter::<_, TransactionPhase>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionPhase(Box::new(t)))),
             ),
             TypeVariant::TransactionSet => Box::new(
-                ReadXdrIter::<_, TransactionSet>::new(r)
+                ReadXdrIter::<_, TransactionSet>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionSet(Box::new(t)))),
             ),
             TypeVariant::TransactionSetV1 => Box::new(
-                ReadXdrIter::<_, TransactionSetV1>::new(r)
+                ReadXdrIter::<_, TransactionSetV1>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionSetV1(Box::new(t)))),
             ),
             TypeVariant::GeneralizedTransactionSet => Box::new(
-                ReadXdrIter::<_, GeneralizedTransactionSet>::new(r)
+                ReadXdrIter::<_, GeneralizedTransactionSet>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::GeneralizedTransactionSet(Box::new(t)))),
             ),
             TypeVariant::TransactionResultPair => Box::new(
-                ReadXdrIter::<_, TransactionResultPair>::new(r)
+                ReadXdrIter::<_, TransactionResultPair>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultPair(Box::new(t)))),
             ),
             TypeVariant::TransactionResultSet => Box::new(
-                ReadXdrIter::<_, TransactionResultSet>::new(r)
+                ReadXdrIter::<_, TransactionResultSet>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultSet(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryEntry => Box::new(
-                ReadXdrIter::<_, TransactionHistoryEntry>::new(r)
+                ReadXdrIter::<_, TransactionHistoryEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryEntryExt => Box::new(
-                ReadXdrIter::<_, TransactionHistoryEntryExt>::new(r)
+                ReadXdrIter::<_, TransactionHistoryEntryExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionHistoryEntryExt(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryResultEntry => Box::new(
-                ReadXdrIter::<_, TransactionHistoryResultEntry>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntry(Box::new(t)))),
+                ReadXdrIter::<_, TransactionHistoryResultEntry>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionHistoryResultEntry(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryResultEntryExt => Box::new(
-                ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))),
+                ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
-                ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(r)
+                ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntryExt => Box::new(
-                ReadXdrIter::<_, LedgerHeaderHistoryEntryExt>::new(r)
+                ReadXdrIter::<_, LedgerHeaderHistoryEntryExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerScpMessages => Box::new(
-                ReadXdrIter::<_, LedgerScpMessages>::new(r)
+                ReadXdrIter::<_, LedgerScpMessages>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerScpMessages(Box::new(t)))),
             ),
             TypeVariant::ScpHistoryEntryV0 => Box::new(
-                ReadXdrIter::<_, ScpHistoryEntryV0>::new(r)
+                ReadXdrIter::<_, ScpHistoryEntryV0>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpHistoryEntryV0(Box::new(t)))),
             ),
             TypeVariant::ScpHistoryEntry => Box::new(
-                ReadXdrIter::<_, ScpHistoryEntry>::new(r)
+                ReadXdrIter::<_, ScpHistoryEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChangeType => Box::new(
-                ReadXdrIter::<_, LedgerEntryChangeType>::new(r)
+                ReadXdrIter::<_, LedgerEntryChangeType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryChangeType(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChange => Box::new(
-                ReadXdrIter::<_, LedgerEntryChange>::new(r)
+                ReadXdrIter::<_, LedgerEntryChange>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryChange(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChanges => Box::new(
-                ReadXdrIter::<_, LedgerEntryChanges>::new(r)
+                ReadXdrIter::<_, LedgerEntryChanges>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryChanges(Box::new(t)))),
             ),
             TypeVariant::OperationMeta => Box::new(
-                ReadXdrIter::<_, OperationMeta>::new(r)
+                ReadXdrIter::<_, OperationMeta>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV1 => Box::new(
-                ReadXdrIter::<_, TransactionMetaV1>::new(r)
+                ReadXdrIter::<_, TransactionMetaV1>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMetaV1(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV2 => Box::new(
-                ReadXdrIter::<_, TransactionMetaV2>::new(r)
+                ReadXdrIter::<_, TransactionMetaV2>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t)))),
             ),
             TypeVariant::TransactionMeta => Box::new(
-                ReadXdrIter::<_, TransactionMeta>::new(r)
+                ReadXdrIter::<_, TransactionMeta>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionResultMeta => Box::new(
-                ReadXdrIter::<_, TransactionResultMeta>::new(r)
+                ReadXdrIter::<_, TransactionResultMeta>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
-                ReadXdrIter::<_, UpgradeEntryMeta>::new(r)
+                ReadXdrIter::<_, UpgradeEntryMeta>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMetaV0 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV0>::new(r)
+                ReadXdrIter::<_, LedgerCloseMetaV0>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV0(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMetaV1 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV1>::new(r)
+                ReadXdrIter::<_, LedgerCloseMetaV1>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
-                ReadXdrIter::<_, LedgerCloseMeta>::new(r)
+                ReadXdrIter::<_, LedgerCloseMeta>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t)))),
             ),
             TypeVariant::ErrorCode => Box::new(
-                ReadXdrIter::<_, ErrorCode>::new(r)
+                ReadXdrIter::<_, ErrorCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ErrorCode(Box::new(t)))),
             ),
             TypeVariant::SError => Box::new(
-                ReadXdrIter::<_, SError>::new(r).map(|r| r.map(|t| Self::SError(Box::new(t)))),
+                ReadXdrIter::<_, SError>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SError(Box::new(t)))),
             ),
             TypeVariant::SendMore => Box::new(
-                ReadXdrIter::<_, SendMore>::new(r).map(|r| r.map(|t| Self::SendMore(Box::new(t)))),
+                ReadXdrIter::<_, SendMore>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SendMore(Box::new(t)))),
             ),
             TypeVariant::AuthCert => Box::new(
-                ReadXdrIter::<_, AuthCert>::new(r).map(|r| r.map(|t| Self::AuthCert(Box::new(t)))),
+                ReadXdrIter::<_, AuthCert>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::AuthCert(Box::new(t)))),
             ),
             TypeVariant::Hello => Box::new(
-                ReadXdrIter::<_, Hello>::new(r).map(|r| r.map(|t| Self::Hello(Box::new(t)))),
+                ReadXdrIter::<_, Hello>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Hello(Box::new(t)))),
             ),
-            TypeVariant::Auth => {
-                Box::new(ReadXdrIter::<_, Auth>::new(r).map(|r| r.map(|t| Self::Auth(Box::new(t)))))
-            }
+            TypeVariant::Auth => Box::new(
+                ReadXdrIter::<_, Auth>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Auth(Box::new(t)))),
+            ),
             TypeVariant::IpAddrType => Box::new(
-                ReadXdrIter::<_, IpAddrType>::new(r)
+                ReadXdrIter::<_, IpAddrType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::IpAddrType(Box::new(t)))),
             ),
             TypeVariant::PeerAddress => Box::new(
-                ReadXdrIter::<_, PeerAddress>::new(r)
+                ReadXdrIter::<_, PeerAddress>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerAddress(Box::new(t)))),
             ),
             TypeVariant::PeerAddressIp => Box::new(
-                ReadXdrIter::<_, PeerAddressIp>::new(r)
+                ReadXdrIter::<_, PeerAddressIp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerAddressIp(Box::new(t)))),
             ),
             TypeVariant::MessageType => Box::new(
-                ReadXdrIter::<_, MessageType>::new(r)
+                ReadXdrIter::<_, MessageType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::MessageType(Box::new(t)))),
             ),
             TypeVariant::DontHave => Box::new(
-                ReadXdrIter::<_, DontHave>::new(r).map(|r| r.map(|t| Self::DontHave(Box::new(t)))),
+                ReadXdrIter::<_, DontHave>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::DontHave(Box::new(t)))),
             ),
             TypeVariant::SurveyMessageCommandType => Box::new(
-                ReadXdrIter::<_, SurveyMessageCommandType>::new(r)
+                ReadXdrIter::<_, SurveyMessageCommandType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t)))),
             ),
             TypeVariant::SurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, SurveyRequestMessage>::new(r)
+                ReadXdrIter::<_, SurveyRequestMessage>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
             ),
             TypeVariant::SignedSurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(r)
+                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t)))),
             ),
             TypeVariant::EncryptedBody => Box::new(
-                ReadXdrIter::<_, EncryptedBody>::new(r)
+                ReadXdrIter::<_, EncryptedBody>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::EncryptedBody(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, SurveyResponseMessage>::new(r)
+                ReadXdrIter::<_, SurveyResponseMessage>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t)))),
             ),
             TypeVariant::SignedSurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(r)
+                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t)))),
             ),
             TypeVariant::PeerStats => Box::new(
-                ReadXdrIter::<_, PeerStats>::new(r)
+                ReadXdrIter::<_, PeerStats>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerStats(Box::new(t)))),
             ),
             TypeVariant::PeerStatList => Box::new(
-                ReadXdrIter::<_, PeerStatList>::new(r)
+                ReadXdrIter::<_, PeerStatList>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
             TypeVariant::TopologyResponseBody => Box::new(
-                ReadXdrIter::<_, TopologyResponseBody>::new(r)
+                ReadXdrIter::<_, TopologyResponseBody>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
-                ReadXdrIter::<_, SurveyResponseBody>::new(r)
+                ReadXdrIter::<_, SurveyResponseBody>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyResponseBody(Box::new(t)))),
             ),
             TypeVariant::TxAdvertVector => Box::new(
-                ReadXdrIter::<_, TxAdvertVector>::new(r)
+                ReadXdrIter::<_, TxAdvertVector>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxAdvertVector(Box::new(t)))),
             ),
             TypeVariant::FloodAdvert => Box::new(
-                ReadXdrIter::<_, FloodAdvert>::new(r)
+                ReadXdrIter::<_, FloodAdvert>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FloodAdvert(Box::new(t)))),
             ),
             TypeVariant::TxDemandVector => Box::new(
-                ReadXdrIter::<_, TxDemandVector>::new(r)
+                ReadXdrIter::<_, TxDemandVector>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxDemandVector(Box::new(t)))),
             ),
             TypeVariant::FloodDemand => Box::new(
-                ReadXdrIter::<_, FloodDemand>::new(r)
+                ReadXdrIter::<_, FloodDemand>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FloodDemand(Box::new(t)))),
             ),
             TypeVariant::StellarMessage => Box::new(
-                ReadXdrIter::<_, StellarMessage>::new(r)
+                ReadXdrIter::<_, StellarMessage>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarMessage(Box::new(t)))),
             ),
             TypeVariant::AuthenticatedMessage => Box::new(
-                ReadXdrIter::<_, AuthenticatedMessage>::new(r)
+                ReadXdrIter::<_, AuthenticatedMessage>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AuthenticatedMessage(Box::new(t)))),
             ),
             TypeVariant::AuthenticatedMessageV0 => Box::new(
-                ReadXdrIter::<_, AuthenticatedMessageV0>::new(r)
+                ReadXdrIter::<_, AuthenticatedMessageV0>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AuthenticatedMessageV0(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolParameters => Box::new(
-                ReadXdrIter::<_, LiquidityPoolParameters>::new(r)
+                ReadXdrIter::<_, LiquidityPoolParameters>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolParameters(Box::new(t)))),
             ),
             TypeVariant::MuxedAccount => Box::new(
-                ReadXdrIter::<_, MuxedAccount>::new(r)
+                ReadXdrIter::<_, MuxedAccount>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::MuxedAccount(Box::new(t)))),
             ),
             TypeVariant::MuxedAccountMed25519 => Box::new(
-                ReadXdrIter::<_, MuxedAccountMed25519>::new(r)
+                ReadXdrIter::<_, MuxedAccountMed25519>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::MuxedAccountMed25519(Box::new(t)))),
             ),
             TypeVariant::DecoratedSignature => Box::new(
-                ReadXdrIter::<_, DecoratedSignature>::new(r)
+                ReadXdrIter::<_, DecoratedSignature>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t)))),
             ),
             TypeVariant::OperationType => Box::new(
-                ReadXdrIter::<_, OperationType>::new(r)
+                ReadXdrIter::<_, OperationType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationType(Box::new(t)))),
             ),
             TypeVariant::CreateAccountOp => Box::new(
-                ReadXdrIter::<_, CreateAccountOp>::new(r)
+                ReadXdrIter::<_, CreateAccountOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateAccountOp(Box::new(t)))),
             ),
             TypeVariant::PaymentOp => Box::new(
-                ReadXdrIter::<_, PaymentOp>::new(r)
+                ReadXdrIter::<_, PaymentOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PaymentOp(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveOp => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveOp>::new(r)
+                ReadXdrIter::<_, PathPaymentStrictReceiveOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendOp => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendOp>::new(r)
+                ReadXdrIter::<_, PathPaymentStrictSendOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendOp(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferOp => Box::new(
-                ReadXdrIter::<_, ManageSellOfferOp>::new(r)
+                ReadXdrIter::<_, ManageSellOfferOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageSellOfferOp(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferOp => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferOp>::new(r)
+                ReadXdrIter::<_, ManageBuyOfferOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageBuyOfferOp(Box::new(t)))),
             ),
             TypeVariant::CreatePassiveSellOfferOp => Box::new(
-                ReadXdrIter::<_, CreatePassiveSellOfferOp>::new(r)
+                ReadXdrIter::<_, CreatePassiveSellOfferOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreatePassiveSellOfferOp(Box::new(t)))),
             ),
             TypeVariant::SetOptionsOp => Box::new(
-                ReadXdrIter::<_, SetOptionsOp>::new(r)
+                ReadXdrIter::<_, SetOptionsOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetOptionsOp(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustAsset => Box::new(
-                ReadXdrIter::<_, ChangeTrustAsset>::new(r)
+                ReadXdrIter::<_, ChangeTrustAsset>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ChangeTrustAsset(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustOp => Box::new(
-                ReadXdrIter::<_, ChangeTrustOp>::new(r)
+                ReadXdrIter::<_, ChangeTrustOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ChangeTrustOp(Box::new(t)))),
             ),
             TypeVariant::AllowTrustOp => Box::new(
-                ReadXdrIter::<_, AllowTrustOp>::new(r)
+                ReadXdrIter::<_, AllowTrustOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AllowTrustOp(Box::new(t)))),
             ),
             TypeVariant::ManageDataOp => Box::new(
-                ReadXdrIter::<_, ManageDataOp>::new(r)
+                ReadXdrIter::<_, ManageDataOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageDataOp(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceOp => Box::new(
-                ReadXdrIter::<_, BumpSequenceOp>::new(r)
+                ReadXdrIter::<_, BumpSequenceOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BumpSequenceOp(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, CreateClaimableBalanceOp>::new(r)
+                ReadXdrIter::<_, CreateClaimableBalanceOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, ClaimClaimableBalanceOp>::new(r)
+                ReadXdrIter::<_, ClaimClaimableBalanceOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesOp => Box::new(
-                ReadXdrIter::<_, BeginSponsoringFutureReservesOp>::new(r)
-                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t)))),
+                ReadXdrIter::<_, BeginSponsoringFutureReservesOp>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipType => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipType>::new(r)
+                ReadXdrIter::<_, RevokeSponsorshipType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::RevokeSponsorshipType(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipOp => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipOp>::new(r)
+                ReadXdrIter::<_, RevokeSponsorshipOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::RevokeSponsorshipOp(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipOpSigner => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipOpSigner>::new(r)
+                ReadXdrIter::<_, RevokeSponsorshipOpSigner>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t)))),
             ),
             TypeVariant::ClawbackOp => Box::new(
-                ReadXdrIter::<_, ClawbackOp>::new(r)
+                ReadXdrIter::<_, ClawbackOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackOp(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, ClawbackClaimableBalanceOp>::new(r)
+                ReadXdrIter::<_, ClawbackClaimableBalanceOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsOp => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsOp>::new(r)
+                ReadXdrIter::<_, SetTrustLineFlagsOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsOp(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositOp => Box::new(
-                ReadXdrIter::<_, LiquidityPoolDepositOp>::new(r)
+                ReadXdrIter::<_, LiquidityPoolDepositOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolDepositOp(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawOp => Box::new(
-                ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(r)
+                ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))),
             ),
             TypeVariant::Operation => Box::new(
-                ReadXdrIter::<_, Operation>::new(r)
+                ReadXdrIter::<_, Operation>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Operation(Box::new(t)))),
             ),
             TypeVariant::OperationBody => Box::new(
-                ReadXdrIter::<_, OperationBody>::new(r)
+                ReadXdrIter::<_, OperationBody>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationBody(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimage => Box::new(
-                ReadXdrIter::<_, HashIdPreimage>::new(r)
+                ReadXdrIter::<_, HashIdPreimage>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HashIdPreimage(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageOperationId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageOperationId>::new(r)
+                ReadXdrIter::<_, HashIdPreimageOperationId>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HashIdPreimageOperationId(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageRevokeId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageRevokeId>::new(r)
+                ReadXdrIter::<_, HashIdPreimageRevokeId>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
-                ReadXdrIter::<_, MemoType>::new(r).map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
+                ReadXdrIter::<_, MemoType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
             ),
-            TypeVariant::Memo => {
-                Box::new(ReadXdrIter::<_, Memo>::new(r).map(|r| r.map(|t| Self::Memo(Box::new(t)))))
-            }
+            TypeVariant::Memo => Box::new(
+                ReadXdrIter::<_, Memo>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Memo(Box::new(t)))),
+            ),
             TypeVariant::TimeBounds => Box::new(
-                ReadXdrIter::<_, TimeBounds>::new(r)
+                ReadXdrIter::<_, TimeBounds>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TimeBounds(Box::new(t)))),
             ),
             TypeVariant::LedgerBounds => Box::new(
-                ReadXdrIter::<_, LedgerBounds>::new(r)
+                ReadXdrIter::<_, LedgerBounds>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerBounds(Box::new(t)))),
             ),
             TypeVariant::PreconditionsV2 => Box::new(
-                ReadXdrIter::<_, PreconditionsV2>::new(r)
+                ReadXdrIter::<_, PreconditionsV2>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PreconditionsV2(Box::new(t)))),
             ),
             TypeVariant::PreconditionType => Box::new(
-                ReadXdrIter::<_, PreconditionType>::new(r)
+                ReadXdrIter::<_, PreconditionType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PreconditionType(Box::new(t)))),
             ),
             TypeVariant::Preconditions => Box::new(
-                ReadXdrIter::<_, Preconditions>::new(r)
+                ReadXdrIter::<_, Preconditions>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Preconditions(Box::new(t)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
-                ReadXdrIter::<_, TransactionV0>::new(r)
+                ReadXdrIter::<_, TransactionV0>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionV0(Box::new(t)))),
             ),
             TypeVariant::TransactionV0Ext => Box::new(
-                ReadXdrIter::<_, TransactionV0Ext>::new(r)
+                ReadXdrIter::<_, TransactionV0Ext>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionV0Ext(Box::new(t)))),
             ),
             TypeVariant::TransactionV0Envelope => Box::new(
-                ReadXdrIter::<_, TransactionV0Envelope>::new(r)
+                ReadXdrIter::<_, TransactionV0Envelope>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionV0Envelope(Box::new(t)))),
             ),
             TypeVariant::Transaction => Box::new(
-                ReadXdrIter::<_, Transaction>::new(r)
+                ReadXdrIter::<_, Transaction>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Transaction(Box::new(t)))),
             ),
             TypeVariant::TransactionExt => Box::new(
-                ReadXdrIter::<_, TransactionExt>::new(r)
+                ReadXdrIter::<_, TransactionExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionExt(Box::new(t)))),
             ),
             TypeVariant::TransactionV1Envelope => Box::new(
-                ReadXdrIter::<_, TransactionV1Envelope>::new(r)
+                ReadXdrIter::<_, TransactionV1Envelope>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionV1Envelope(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransaction => Box::new(
-                ReadXdrIter::<_, FeeBumpTransaction>::new(r)
+                ReadXdrIter::<_, FeeBumpTransaction>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FeeBumpTransaction(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionInnerTx => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionInnerTx>::new(r)
+                ReadXdrIter::<_, FeeBumpTransactionInnerTx>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionExt => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionExt>::new(r)
+                ReadXdrIter::<_, FeeBumpTransactionExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FeeBumpTransactionExt(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionEnvelope => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionEnvelope>::new(r)
+                ReadXdrIter::<_, FeeBumpTransactionEnvelope>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t)))),
             ),
             TypeVariant::TransactionEnvelope => Box::new(
-                ReadXdrIter::<_, TransactionEnvelope>::new(r)
+                ReadXdrIter::<_, TransactionEnvelope>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionEnvelope(Box::new(t)))),
             ),
             TypeVariant::TransactionSignaturePayload => Box::new(
-                ReadXdrIter::<_, TransactionSignaturePayload>::new(r)
+                ReadXdrIter::<_, TransactionSignaturePayload>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionSignaturePayload(Box::new(t)))),
             ),
             TypeVariant::TransactionSignaturePayloadTaggedTransaction => Box::new(
-                ReadXdrIter::<_, TransactionSignaturePayloadTaggedTransaction>::new(r).map(|r| {
+                ReadXdrIter::<_, TransactionSignaturePayloadTaggedTransaction>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| {
                     r.map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t)))
                 }),
             ),
             TypeVariant::ClaimAtomType => Box::new(
-                ReadXdrIter::<_, ClaimAtomType>::new(r)
+                ReadXdrIter::<_, ClaimAtomType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimAtomType(Box::new(t)))),
             ),
             TypeVariant::ClaimOfferAtomV0 => Box::new(
-                ReadXdrIter::<_, ClaimOfferAtomV0>::new(r)
+                ReadXdrIter::<_, ClaimOfferAtomV0>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimOfferAtomV0(Box::new(t)))),
             ),
             TypeVariant::ClaimOfferAtom => Box::new(
-                ReadXdrIter::<_, ClaimOfferAtom>::new(r)
+                ReadXdrIter::<_, ClaimOfferAtom>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimOfferAtom(Box::new(t)))),
             ),
             TypeVariant::ClaimLiquidityAtom => Box::new(
-                ReadXdrIter::<_, ClaimLiquidityAtom>::new(r)
+                ReadXdrIter::<_, ClaimLiquidityAtom>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimLiquidityAtom(Box::new(t)))),
             ),
             TypeVariant::ClaimAtom => Box::new(
-                ReadXdrIter::<_, ClaimAtom>::new(r)
+                ReadXdrIter::<_, ClaimAtom>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimAtom(Box::new(t)))),
             ),
             TypeVariant::CreateAccountResultCode => Box::new(
-                ReadXdrIter::<_, CreateAccountResultCode>::new(r)
+                ReadXdrIter::<_, CreateAccountResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateAccountResultCode(Box::new(t)))),
             ),
             TypeVariant::CreateAccountResult => Box::new(
-                ReadXdrIter::<_, CreateAccountResult>::new(r)
+                ReadXdrIter::<_, CreateAccountResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateAccountResult(Box::new(t)))),
             ),
             TypeVariant::PaymentResultCode => Box::new(
-                ReadXdrIter::<_, PaymentResultCode>::new(r)
+                ReadXdrIter::<_, PaymentResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PaymentResultCode(Box::new(t)))),
             ),
             TypeVariant::PaymentResult => Box::new(
-                ReadXdrIter::<_, PaymentResult>::new(r)
+                ReadXdrIter::<_, PaymentResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PaymentResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultCode => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveResultCode>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t)))),
+                ReadXdrIter::<_, PathPaymentStrictReceiveResultCode>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t)))),
             ),
             TypeVariant::SimplePaymentResult => Box::new(
-                ReadXdrIter::<_, SimplePaymentResult>::new(r)
+                ReadXdrIter::<_, SimplePaymentResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SimplePaymentResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResult => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveResult>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t)))),
+                ReadXdrIter::<_, PathPaymentStrictReceiveResult>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultSuccess => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveResultSuccess>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t)))),
+                ReadXdrIter::<_, PathPaymentStrictReceiveResultSuccess>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResultCode => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendResultCode>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t)))),
+                ReadXdrIter::<_, PathPaymentStrictSendResultCode>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResult => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendResult>::new(r)
+                ReadXdrIter::<_, PathPaymentStrictSendResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResultSuccess => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendResultSuccess>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t)))),
+                ReadXdrIter::<_, PathPaymentStrictSendResultSuccess>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferResultCode => Box::new(
-                ReadXdrIter::<_, ManageSellOfferResultCode>::new(r)
+                ReadXdrIter::<_, ManageSellOfferResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageSellOfferResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageOfferEffect => Box::new(
-                ReadXdrIter::<_, ManageOfferEffect>::new(r)
+                ReadXdrIter::<_, ManageOfferEffect>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageOfferEffect(Box::new(t)))),
             ),
             TypeVariant::ManageOfferSuccessResult => Box::new(
-                ReadXdrIter::<_, ManageOfferSuccessResult>::new(r)
+                ReadXdrIter::<_, ManageOfferSuccessResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageOfferSuccessResult(Box::new(t)))),
             ),
             TypeVariant::ManageOfferSuccessResultOffer => Box::new(
-                ReadXdrIter::<_, ManageOfferSuccessResultOffer>::new(r)
-                    .map(|r| r.map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t)))),
+                ReadXdrIter::<_, ManageOfferSuccessResultOffer>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferResult => Box::new(
-                ReadXdrIter::<_, ManageSellOfferResult>::new(r)
+                ReadXdrIter::<_, ManageSellOfferResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageSellOfferResult(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferResultCode => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferResultCode>::new(r)
+                ReadXdrIter::<_, ManageBuyOfferResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageBuyOfferResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferResult => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferResult>::new(r)
+                ReadXdrIter::<_, ManageBuyOfferResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageBuyOfferResult(Box::new(t)))),
             ),
             TypeVariant::SetOptionsResultCode => Box::new(
-                ReadXdrIter::<_, SetOptionsResultCode>::new(r)
+                ReadXdrIter::<_, SetOptionsResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetOptionsResultCode(Box::new(t)))),
             ),
             TypeVariant::SetOptionsResult => Box::new(
-                ReadXdrIter::<_, SetOptionsResult>::new(r)
+                ReadXdrIter::<_, SetOptionsResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetOptionsResult(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustResultCode => Box::new(
-                ReadXdrIter::<_, ChangeTrustResultCode>::new(r)
+                ReadXdrIter::<_, ChangeTrustResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ChangeTrustResultCode(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustResult => Box::new(
-                ReadXdrIter::<_, ChangeTrustResult>::new(r)
+                ReadXdrIter::<_, ChangeTrustResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ChangeTrustResult(Box::new(t)))),
             ),
             TypeVariant::AllowTrustResultCode => Box::new(
-                ReadXdrIter::<_, AllowTrustResultCode>::new(r)
+                ReadXdrIter::<_, AllowTrustResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AllowTrustResultCode(Box::new(t)))),
             ),
             TypeVariant::AllowTrustResult => Box::new(
-                ReadXdrIter::<_, AllowTrustResult>::new(r)
+                ReadXdrIter::<_, AllowTrustResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AllowTrustResult(Box::new(t)))),
             ),
             TypeVariant::AccountMergeResultCode => Box::new(
-                ReadXdrIter::<_, AccountMergeResultCode>::new(r)
+                ReadXdrIter::<_, AccountMergeResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountMergeResultCode(Box::new(t)))),
             ),
             TypeVariant::AccountMergeResult => Box::new(
-                ReadXdrIter::<_, AccountMergeResult>::new(r)
+                ReadXdrIter::<_, AccountMergeResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountMergeResult(Box::new(t)))),
             ),
             TypeVariant::InflationResultCode => Box::new(
-                ReadXdrIter::<_, InflationResultCode>::new(r)
+                ReadXdrIter::<_, InflationResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InflationResultCode(Box::new(t)))),
             ),
             TypeVariant::InflationPayout => Box::new(
-                ReadXdrIter::<_, InflationPayout>::new(r)
+                ReadXdrIter::<_, InflationPayout>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InflationPayout(Box::new(t)))),
             ),
             TypeVariant::InflationResult => Box::new(
-                ReadXdrIter::<_, InflationResult>::new(r)
+                ReadXdrIter::<_, InflationResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InflationResult(Box::new(t)))),
             ),
             TypeVariant::ManageDataResultCode => Box::new(
-                ReadXdrIter::<_, ManageDataResultCode>::new(r)
+                ReadXdrIter::<_, ManageDataResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageDataResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageDataResult => Box::new(
-                ReadXdrIter::<_, ManageDataResult>::new(r)
+                ReadXdrIter::<_, ManageDataResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageDataResult(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceResultCode => Box::new(
-                ReadXdrIter::<_, BumpSequenceResultCode>::new(r)
+                ReadXdrIter::<_, BumpSequenceResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BumpSequenceResultCode(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceResult => Box::new(
-                ReadXdrIter::<_, BumpSequenceResult>::new(r)
+                ReadXdrIter::<_, BumpSequenceResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BumpSequenceResult(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, CreateClaimableBalanceResultCode>::new(r)
-                    .map(|r| r.map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t)))),
+                ReadXdrIter::<_, CreateClaimableBalanceResultCode>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, CreateClaimableBalanceResult>::new(r)
-                    .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t)))),
+                ReadXdrIter::<_, CreateClaimableBalanceResult>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, ClaimClaimableBalanceResultCode>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t)))),
+                ReadXdrIter::<_, ClaimClaimableBalanceResultCode>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, ClaimClaimableBalanceResult>::new(r)
+                ReadXdrIter::<_, ClaimClaimableBalanceResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResultCode => Box::new(
-                ReadXdrIter::<_, BeginSponsoringFutureReservesResultCode>::new(r)
-                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t)))),
+                ReadXdrIter::<_, BeginSponsoringFutureReservesResultCode>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResult => Box::new(
-                ReadXdrIter::<_, BeginSponsoringFutureReservesResult>::new(r)
-                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t)))),
+                ReadXdrIter::<_, BeginSponsoringFutureReservesResult>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResultCode => Box::new(
-                ReadXdrIter::<_, EndSponsoringFutureReservesResultCode>::new(r)
-                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t)))),
+                ReadXdrIter::<_, EndSponsoringFutureReservesResultCode>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResult => Box::new(
-                ReadXdrIter::<_, EndSponsoringFutureReservesResult>::new(r)
-                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t)))),
+                ReadXdrIter::<_, EndSponsoringFutureReservesResult>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipResultCode => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipResultCode>::new(r)
+                ReadXdrIter::<_, RevokeSponsorshipResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::RevokeSponsorshipResultCode(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipResult => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipResult>::new(r)
+                ReadXdrIter::<_, RevokeSponsorshipResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::RevokeSponsorshipResult(Box::new(t)))),
             ),
             TypeVariant::ClawbackResultCode => Box::new(
-                ReadXdrIter::<_, ClawbackResultCode>::new(r)
+                ReadXdrIter::<_, ClawbackResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackResultCode(Box::new(t)))),
             ),
             TypeVariant::ClawbackResult => Box::new(
-                ReadXdrIter::<_, ClawbackResult>::new(r)
+                ReadXdrIter::<_, ClawbackResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackResult(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, ClawbackClaimableBalanceResultCode>::new(r)
-                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t)))),
+                ReadXdrIter::<_, ClawbackClaimableBalanceResultCode>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, ClawbackClaimableBalanceResult>::new(r)
-                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t)))),
+                ReadXdrIter::<_, ClawbackClaimableBalanceResult>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsResultCode => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsResultCode>::new(r)
+                ReadXdrIter::<_, SetTrustLineFlagsResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsResult => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsResult>::new(r)
+                ReadXdrIter::<_, SetTrustLineFlagsResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsResult(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositResultCode => Box::new(
-                ReadXdrIter::<_, LiquidityPoolDepositResultCode>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t)))),
+                ReadXdrIter::<_, LiquidityPoolDepositResultCode>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositResult => Box::new(
-                ReadXdrIter::<_, LiquidityPoolDepositResult>::new(r)
+                ReadXdrIter::<_, LiquidityPoolDepositResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolDepositResult(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResultCode => Box::new(
-                ReadXdrIter::<_, LiquidityPoolWithdrawResultCode>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t)))),
+                ReadXdrIter::<_, LiquidityPoolWithdrawResultCode>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResult => Box::new(
-                ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(r)
+                ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))),
             ),
             TypeVariant::OperationResultCode => Box::new(
-                ReadXdrIter::<_, OperationResultCode>::new(r)
+                ReadXdrIter::<_, OperationResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t)))),
             ),
             TypeVariant::OperationResult => Box::new(
-                ReadXdrIter::<_, OperationResult>::new(r)
+                ReadXdrIter::<_, OperationResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResult(Box::new(t)))),
             ),
             TypeVariant::OperationResultTr => Box::new(
-                ReadXdrIter::<_, OperationResultTr>::new(r)
+                ReadXdrIter::<_, OperationResultTr>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResultTr(Box::new(t)))),
             ),
             TypeVariant::TransactionResultCode => Box::new(
-                ReadXdrIter::<_, TransactionResultCode>::new(r)
+                ReadXdrIter::<_, TransactionResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultCode(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResult => Box::new(
-                ReadXdrIter::<_, InnerTransactionResult>::new(r)
+                ReadXdrIter::<_, InnerTransactionResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InnerTransactionResult(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultResult => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultResult>::new(r)
-                    .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t)))),
+                ReadXdrIter::<_, InnerTransactionResultResult>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultExt => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultExt>::new(r)
+                ReadXdrIter::<_, InnerTransactionResultExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InnerTransactionResultExt(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultPair => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultPair>::new(r)
+                ReadXdrIter::<_, InnerTransactionResultPair>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InnerTransactionResultPair(Box::new(t)))),
             ),
             TypeVariant::TransactionResult => Box::new(
-                ReadXdrIter::<_, TransactionResult>::new(r)
+                ReadXdrIter::<_, TransactionResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResult(Box::new(t)))),
             ),
             TypeVariant::TransactionResultResult => Box::new(
-                ReadXdrIter::<_, TransactionResultResult>::new(r)
+                ReadXdrIter::<_, TransactionResultResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultResult(Box::new(t)))),
             ),
             TypeVariant::TransactionResultExt => Box::new(
-                ReadXdrIter::<_, TransactionResultExt>::new(r)
+                ReadXdrIter::<_, TransactionResultExt>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultExt(Box::new(t)))),
             ),
-            TypeVariant::Hash => {
-                Box::new(ReadXdrIter::<_, Hash>::new(r).map(|r| r.map(|t| Self::Hash(Box::new(t)))))
-            }
+            TypeVariant::Hash => Box::new(
+                ReadXdrIter::<_, Hash>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Hash(Box::new(t)))),
+            ),
             TypeVariant::Uint256 => Box::new(
-                ReadXdrIter::<_, Uint256>::new(r).map(|r| r.map(|t| Self::Uint256(Box::new(t)))),
+                ReadXdrIter::<_, Uint256>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Uint256(Box::new(t)))),
             ),
             TypeVariant::Uint32 => Box::new(
-                ReadXdrIter::<_, Uint32>::new(r).map(|r| r.map(|t| Self::Uint32(Box::new(t)))),
+                ReadXdrIter::<_, Uint32>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Uint32(Box::new(t)))),
             ),
             TypeVariant::Int32 => Box::new(
-                ReadXdrIter::<_, Int32>::new(r).map(|r| r.map(|t| Self::Int32(Box::new(t)))),
+                ReadXdrIter::<_, Int32>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Int32(Box::new(t)))),
             ),
             TypeVariant::Uint64 => Box::new(
-                ReadXdrIter::<_, Uint64>::new(r).map(|r| r.map(|t| Self::Uint64(Box::new(t)))),
+                ReadXdrIter::<_, Uint64>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Uint64(Box::new(t)))),
             ),
             TypeVariant::Int64 => Box::new(
-                ReadXdrIter::<_, Int64>::new(r).map(|r| r.map(|t| Self::Int64(Box::new(t)))),
+                ReadXdrIter::<_, Int64>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Int64(Box::new(t)))),
             ),
             TypeVariant::ExtensionPoint => Box::new(
-                ReadXdrIter::<_, ExtensionPoint>::new(r)
+                ReadXdrIter::<_, ExtensionPoint>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
             ),
             TypeVariant::CryptoKeyType => Box::new(
-                ReadXdrIter::<_, CryptoKeyType>::new(r)
+                ReadXdrIter::<_, CryptoKeyType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CryptoKeyType(Box::new(t)))),
             ),
             TypeVariant::PublicKeyType => Box::new(
-                ReadXdrIter::<_, PublicKeyType>::new(r)
+                ReadXdrIter::<_, PublicKeyType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PublicKeyType(Box::new(t)))),
             ),
             TypeVariant::SignerKeyType => Box::new(
-                ReadXdrIter::<_, SignerKeyType>::new(r)
+                ReadXdrIter::<_, SignerKeyType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignerKeyType(Box::new(t)))),
             ),
             TypeVariant::PublicKey => Box::new(
-                ReadXdrIter::<_, PublicKey>::new(r)
+                ReadXdrIter::<_, PublicKey>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PublicKey(Box::new(t)))),
             ),
             TypeVariant::SignerKey => Box::new(
-                ReadXdrIter::<_, SignerKey>::new(r)
+                ReadXdrIter::<_, SignerKey>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignerKey(Box::new(t)))),
             ),
             TypeVariant::SignerKeyEd25519SignedPayload => Box::new(
-                ReadXdrIter::<_, SignerKeyEd25519SignedPayload>::new(r)
-                    .map(|r| r.map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t)))),
+                ReadXdrIter::<_, SignerKeyEd25519SignedPayload>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t)))),
             ),
             TypeVariant::Signature => Box::new(
-                ReadXdrIter::<_, Signature>::new(r)
+                ReadXdrIter::<_, Signature>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Signature(Box::new(t)))),
             ),
             TypeVariant::SignatureHint => Box::new(
-                ReadXdrIter::<_, SignatureHint>::new(r)
+                ReadXdrIter::<_, SignatureHint>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignatureHint(Box::new(t)))),
             ),
             TypeVariant::NodeId => Box::new(
-                ReadXdrIter::<_, NodeId>::new(r).map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
+                ReadXdrIter::<_, NodeId>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
             ),
             TypeVariant::Curve25519Secret => Box::new(
-                ReadXdrIter::<_, Curve25519Secret>::new(r)
+                ReadXdrIter::<_, Curve25519Secret>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t)))),
             ),
             TypeVariant::Curve25519Public => Box::new(
-                ReadXdrIter::<_, Curve25519Public>::new(r)
+                ReadXdrIter::<_, Curve25519Public>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Curve25519Public(Box::new(t)))),
             ),
             TypeVariant::HmacSha256Key => Box::new(
-                ReadXdrIter::<_, HmacSha256Key>::new(r)
+                ReadXdrIter::<_, HmacSha256Key>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HmacSha256Key(Box::new(t)))),
             ),
             TypeVariant::HmacSha256Mac => Box::new(
-                ReadXdrIter::<_, HmacSha256Mac>::new(r)
+                ReadXdrIter::<_, HmacSha256Mac>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t)))),
             ),
         }
@@ -34035,1229 +36102,1535 @@ impl Type {
     #[allow(clippy::too_many_lines)]
     pub fn read_xdr_framed_iter<R: Read>(
         v: TypeVariant,
-        r: &mut R,
+        r: &mut DepthLimitedRead<R>,
     ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
         match v {
             TypeVariant::Value => Box::new(
-                ReadXdrIter::<_, Frame<Value>>::new(r)
+                ReadXdrIter::<_, Frame<Value>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Value(Box::new(t.0)))),
             ),
             TypeVariant::ScpBallot => Box::new(
-                ReadXdrIter::<_, Frame<ScpBallot>>::new(r)
+                ReadXdrIter::<_, Frame<ScpBallot>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpBallot(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatementType => Box::new(
-                ReadXdrIter::<_, Frame<ScpStatementType>>::new(r)
+                ReadXdrIter::<_, Frame<ScpStatementType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementType(Box::new(t.0)))),
             ),
             TypeVariant::ScpNomination => Box::new(
-                ReadXdrIter::<_, Frame<ScpNomination>>::new(r)
+                ReadXdrIter::<_, Frame<ScpNomination>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpNomination(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatement => Box::new(
-                ReadXdrIter::<_, Frame<ScpStatement>>::new(r)
+                ReadXdrIter::<_, Frame<ScpStatement>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatement(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatementPledges => Box::new(
-                ReadXdrIter::<_, Frame<ScpStatementPledges>>::new(r)
+                ReadXdrIter::<_, Frame<ScpStatementPledges>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementPledges(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatementPrepare => Box::new(
-                ReadXdrIter::<_, Frame<ScpStatementPrepare>>::new(r)
+                ReadXdrIter::<_, Frame<ScpStatementPrepare>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementPrepare(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatementConfirm => Box::new(
-                ReadXdrIter::<_, Frame<ScpStatementConfirm>>::new(r)
+                ReadXdrIter::<_, Frame<ScpStatementConfirm>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementConfirm(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatementExternalize => Box::new(
-                ReadXdrIter::<_, Frame<ScpStatementExternalize>>::new(r)
-                    .map(|r| r.map(|t| Self::ScpStatementExternalize(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ScpStatementExternalize>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ScpStatementExternalize(Box::new(t.0)))),
             ),
             TypeVariant::ScpEnvelope => Box::new(
-                ReadXdrIter::<_, Frame<ScpEnvelope>>::new(r)
+                ReadXdrIter::<_, Frame<ScpEnvelope>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpEnvelope(Box::new(t.0)))),
             ),
             TypeVariant::ScpQuorumSet => Box::new(
-                ReadXdrIter::<_, Frame<ScpQuorumSet>>::new(r)
+                ReadXdrIter::<_, Frame<ScpQuorumSet>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t.0)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
-                ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(r)
+                ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t.0)))),
             ),
             TypeVariant::PersistedScpStateV0 => Box::new(
-                ReadXdrIter::<_, Frame<PersistedScpStateV0>>::new(r)
+                ReadXdrIter::<_, Frame<PersistedScpStateV0>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpStateV0(Box::new(t.0)))),
             ),
             TypeVariant::PersistedScpStateV1 => Box::new(
-                ReadXdrIter::<_, Frame<PersistedScpStateV1>>::new(r)
+                ReadXdrIter::<_, Frame<PersistedScpStateV1>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpStateV1(Box::new(t.0)))),
             ),
             TypeVariant::PersistedScpState => Box::new(
-                ReadXdrIter::<_, Frame<PersistedScpState>>::new(r)
+                ReadXdrIter::<_, Frame<PersistedScpState>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t.0)))),
             ),
             TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, Frame<AccountId>>::new(r)
+                ReadXdrIter::<_, Frame<AccountId>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountId(Box::new(t.0)))),
             ),
             TypeVariant::Thresholds => Box::new(
-                ReadXdrIter::<_, Frame<Thresholds>>::new(r)
+                ReadXdrIter::<_, Frame<Thresholds>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Thresholds(Box::new(t.0)))),
             ),
             TypeVariant::String32 => Box::new(
-                ReadXdrIter::<_, Frame<String32>>::new(r)
+                ReadXdrIter::<_, Frame<String32>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::String32(Box::new(t.0)))),
             ),
             TypeVariant::String64 => Box::new(
-                ReadXdrIter::<_, Frame<String64>>::new(r)
+                ReadXdrIter::<_, Frame<String64>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::String64(Box::new(t.0)))),
             ),
             TypeVariant::SequenceNumber => Box::new(
-                ReadXdrIter::<_, Frame<SequenceNumber>>::new(r)
+                ReadXdrIter::<_, Frame<SequenceNumber>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t.0)))),
             ),
             TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, Frame<TimePoint>>::new(r)
+                ReadXdrIter::<_, Frame<TimePoint>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TimePoint(Box::new(t.0)))),
             ),
             TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Frame<Duration>>::new(r)
+                ReadXdrIter::<_, Frame<Duration>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Duration(Box::new(t.0)))),
             ),
             TypeVariant::DataValue => Box::new(
-                ReadXdrIter::<_, Frame<DataValue>>::new(r)
+                ReadXdrIter::<_, Frame<DataValue>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DataValue(Box::new(t.0)))),
             ),
             TypeVariant::PoolId => Box::new(
-                ReadXdrIter::<_, Frame<PoolId>>::new(r)
+                ReadXdrIter::<_, Frame<PoolId>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PoolId(Box::new(t.0)))),
             ),
             TypeVariant::AssetCode4 => Box::new(
-                ReadXdrIter::<_, Frame<AssetCode4>>::new(r)
+                ReadXdrIter::<_, Frame<AssetCode4>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetCode4(Box::new(t.0)))),
             ),
             TypeVariant::AssetCode12 => Box::new(
-                ReadXdrIter::<_, Frame<AssetCode12>>::new(r)
+                ReadXdrIter::<_, Frame<AssetCode12>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetCode12(Box::new(t.0)))),
             ),
             TypeVariant::AssetType => Box::new(
-                ReadXdrIter::<_, Frame<AssetType>>::new(r)
+                ReadXdrIter::<_, Frame<AssetType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetType(Box::new(t.0)))),
             ),
             TypeVariant::AssetCode => Box::new(
-                ReadXdrIter::<_, Frame<AssetCode>>::new(r)
+                ReadXdrIter::<_, Frame<AssetCode>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetCode(Box::new(t.0)))),
             ),
             TypeVariant::AlphaNum4 => Box::new(
-                ReadXdrIter::<_, Frame<AlphaNum4>>::new(r)
+                ReadXdrIter::<_, Frame<AlphaNum4>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AlphaNum4(Box::new(t.0)))),
             ),
             TypeVariant::AlphaNum12 => Box::new(
-                ReadXdrIter::<_, Frame<AlphaNum12>>::new(r)
+                ReadXdrIter::<_, Frame<AlphaNum12>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AlphaNum12(Box::new(t.0)))),
             ),
             TypeVariant::Asset => Box::new(
-                ReadXdrIter::<_, Frame<Asset>>::new(r)
+                ReadXdrIter::<_, Frame<Asset>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Asset(Box::new(t.0)))),
             ),
             TypeVariant::Price => Box::new(
-                ReadXdrIter::<_, Frame<Price>>::new(r)
+                ReadXdrIter::<_, Frame<Price>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Price(Box::new(t.0)))),
             ),
             TypeVariant::Liabilities => Box::new(
-                ReadXdrIter::<_, Frame<Liabilities>>::new(r)
+                ReadXdrIter::<_, Frame<Liabilities>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Liabilities(Box::new(t.0)))),
             ),
             TypeVariant::ThresholdIndexes => Box::new(
-                ReadXdrIter::<_, Frame<ThresholdIndexes>>::new(r)
+                ReadXdrIter::<_, Frame<ThresholdIndexes>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ThresholdIndexes(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryType => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryType>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerEntryType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryType(Box::new(t.0)))),
             ),
             TypeVariant::Signer => Box::new(
-                ReadXdrIter::<_, Frame<Signer>>::new(r)
+                ReadXdrIter::<_, Frame<Signer>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Signer(Box::new(t.0)))),
             ),
             TypeVariant::AccountFlags => Box::new(
-                ReadXdrIter::<_, Frame<AccountFlags>>::new(r)
+                ReadXdrIter::<_, Frame<AccountFlags>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountFlags(Box::new(t.0)))),
             ),
             TypeVariant::SponsorshipDescriptor => Box::new(
-                ReadXdrIter::<_, Frame<SponsorshipDescriptor>>::new(r)
-                    .map(|r| r.map(|t| Self::SponsorshipDescriptor(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<SponsorshipDescriptor>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SponsorshipDescriptor(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExtensionV3 => Box::new(
-                ReadXdrIter::<_, Frame<AccountEntryExtensionV3>>::new(r)
-                    .map(|r| r.map(|t| Self::AccountEntryExtensionV3(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<AccountEntryExtensionV3>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::AccountEntryExtensionV3(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExtensionV2 => Box::new(
-                ReadXdrIter::<_, Frame<AccountEntryExtensionV2>>::new(r)
-                    .map(|r| r.map(|t| Self::AccountEntryExtensionV2(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<AccountEntryExtensionV2>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::AccountEntryExtensionV2(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExtensionV2Ext => Box::new(
-                ReadXdrIter::<_, Frame<AccountEntryExtensionV2Ext>>::new(r)
-                    .map(|r| r.map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<AccountEntryExtensionV2Ext>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, Frame<AccountEntryExtensionV1>>::new(r)
-                    .map(|r| r.map(|t| Self::AccountEntryExtensionV1(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<AccountEntryExtensionV1>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::AccountEntryExtensionV1(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, Frame<AccountEntryExtensionV1Ext>>::new(r)
-                    .map(|r| r.map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<AccountEntryExtensionV1Ext>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntry => Box::new(
-                ReadXdrIter::<_, Frame<AccountEntry>>::new(r)
+                ReadXdrIter::<_, Frame<AccountEntry>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntry(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<AccountEntryExt>>::new(r)
+                ReadXdrIter::<_, Frame<AccountEntryExt>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineFlags => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineFlags>>::new(r)
+                ReadXdrIter::<_, Frame<TrustLineFlags>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineFlags(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolType => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolType>>::new(r)
+                ReadXdrIter::<_, Frame<LiquidityPoolType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolType(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineAsset => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineAsset>>::new(r)
+                ReadXdrIter::<_, Frame<TrustLineAsset>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineAsset(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2 => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineEntryExtensionV2>>::new(r)
-                    .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TrustLineEntryExtensionV2>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2Ext => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineEntryExtensionV2Ext>>::new(r)
-                    .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TrustLineEntryExtensionV2Ext>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntry => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineEntry>>::new(r)
+                ReadXdrIter::<_, Frame<TrustLineEntry>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntry(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineEntryExt>>::new(r)
+                ReadXdrIter::<_, Frame<TrustLineEntryExt>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntryV1 => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineEntryV1>>::new(r)
+                ReadXdrIter::<_, Frame<TrustLineEntryV1>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryV1(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntryV1Ext => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineEntryV1Ext>>::new(r)
+                ReadXdrIter::<_, Frame<TrustLineEntryV1Ext>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryV1Ext(Box::new(t.0)))),
             ),
             TypeVariant::OfferEntryFlags => Box::new(
-                ReadXdrIter::<_, Frame<OfferEntryFlags>>::new(r)
+                ReadXdrIter::<_, Frame<OfferEntryFlags>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OfferEntryFlags(Box::new(t.0)))),
             ),
             TypeVariant::OfferEntry => Box::new(
-                ReadXdrIter::<_, Frame<OfferEntry>>::new(r)
+                ReadXdrIter::<_, Frame<OfferEntry>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OfferEntry(Box::new(t.0)))),
             ),
             TypeVariant::OfferEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<OfferEntryExt>>::new(r)
+                ReadXdrIter::<_, Frame<OfferEntryExt>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OfferEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::DataEntry => Box::new(
-                ReadXdrIter::<_, Frame<DataEntry>>::new(r)
+                ReadXdrIter::<_, Frame<DataEntry>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DataEntry(Box::new(t.0)))),
             ),
             TypeVariant::DataEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<DataEntryExt>>::new(r)
+                ReadXdrIter::<_, Frame<DataEntryExt>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DataEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::ClaimPredicateType => Box::new(
-                ReadXdrIter::<_, Frame<ClaimPredicateType>>::new(r)
+                ReadXdrIter::<_, Frame<ClaimPredicateType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimPredicateType(Box::new(t.0)))),
             ),
             TypeVariant::ClaimPredicate => Box::new(
-                ReadXdrIter::<_, Frame<ClaimPredicate>>::new(r)
+                ReadXdrIter::<_, Frame<ClaimPredicate>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimPredicate(Box::new(t.0)))),
             ),
             TypeVariant::ClaimantType => Box::new(
-                ReadXdrIter::<_, Frame<ClaimantType>>::new(r)
+                ReadXdrIter::<_, Frame<ClaimantType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimantType(Box::new(t.0)))),
             ),
             TypeVariant::Claimant => Box::new(
-                ReadXdrIter::<_, Frame<Claimant>>::new(r)
+                ReadXdrIter::<_, Frame<Claimant>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Claimant(Box::new(t.0)))),
             ),
             TypeVariant::ClaimantV0 => Box::new(
-                ReadXdrIter::<_, Frame<ClaimantV0>>::new(r)
+                ReadXdrIter::<_, Frame<ClaimantV0>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceIdType => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceIdType>>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClaimableBalanceIdType>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceId => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceId>>::new(r)
+                ReadXdrIter::<_, Frame<ClaimableBalanceId>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceFlags => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceFlags>>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimableBalanceFlags(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClaimableBalanceFlags>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimableBalanceFlags(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceEntryExtensionV1>>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClaimableBalanceEntryExtensionV1>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceEntryExtensionV1Ext>>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClaimableBalanceEntryExtensionV1Ext>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceEntry => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceEntry>>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimableBalanceEntry(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClaimableBalanceEntry>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimableBalanceEntry(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceEntryExt>>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimableBalanceEntryExt(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClaimableBalanceEntryExt>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimableBalanceEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolConstantProductParameters => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolConstantProductParameters>>::new(r).map(|r| {
-                    r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t.0)))
-                }),
+                ReadXdrIter::<_, Frame<LiquidityPoolConstantProductParameters>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolEntry => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolEntry>>::new(r)
+                ReadXdrIter::<_, Frame<LiquidityPoolEntry>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntry(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolEntryBody => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolEntryBody>>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolEntryBody(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LiquidityPoolEntryBody>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolEntryBody(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolEntryConstantProduct => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolEntryConstantProduct>>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LiquidityPoolEntryConstantProduct>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryExtensionV1>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerEntryExtensionV1>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryExtensionV1Ext>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerEntryExtensionV1Ext>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntry => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntry>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerEntry>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntry(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryData => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryData>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerEntryData>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryData(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryExt>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerEntryExt>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKey => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKey>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerKey>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKey(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyAccount => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyAccount>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerKeyAccount>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyAccount(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyTrustLine => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyTrustLine>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerKeyTrustLine>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyTrustLine(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyOffer => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyOffer>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerKeyOffer>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyOffer(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyData => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyData>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerKeyData>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyData(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyClaimableBalance => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyClaimableBalance>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerKeyClaimableBalance(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerKeyClaimableBalance>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerKeyClaimableBalance(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyLiquidityPool => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyLiquidityPool>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerKeyLiquidityPool>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t.0)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
-                ReadXdrIter::<_, Frame<EnvelopeType>>::new(r)
+                ReadXdrIter::<_, Frame<EnvelopeType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::EnvelopeType(Box::new(t.0)))),
             ),
             TypeVariant::UpgradeType => Box::new(
-                ReadXdrIter::<_, Frame<UpgradeType>>::new(r)
+                ReadXdrIter::<_, Frame<UpgradeType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::UpgradeType(Box::new(t.0)))),
             ),
             TypeVariant::StellarValueType => Box::new(
-                ReadXdrIter::<_, Frame<StellarValueType>>::new(r)
+                ReadXdrIter::<_, Frame<StellarValueType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarValueType(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseValueSignature => Box::new(
-                ReadXdrIter::<_, Frame<LedgerCloseValueSignature>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerCloseValueSignature(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerCloseValueSignature>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerCloseValueSignature(Box::new(t.0)))),
             ),
             TypeVariant::StellarValue => Box::new(
-                ReadXdrIter::<_, Frame<StellarValue>>::new(r)
+                ReadXdrIter::<_, Frame<StellarValue>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarValue(Box::new(t.0)))),
             ),
             TypeVariant::StellarValueExt => Box::new(
-                ReadXdrIter::<_, Frame<StellarValueExt>>::new(r)
+                ReadXdrIter::<_, Frame<StellarValueExt>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
-                ReadXdrIter::<_, Frame<LedgerHeaderFlags>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerHeaderFlags>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderFlags(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1 => Box::new(
-                ReadXdrIter::<_, Frame<LedgerHeaderExtensionV1>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerHeaderExtensionV1>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, Frame<LedgerHeaderExtensionV1Ext>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerHeaderExtensionV1Ext>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeader => Box::new(
-                ReadXdrIter::<_, Frame<LedgerHeader>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerHeader>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeader(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderExt => Box::new(
-                ReadXdrIter::<_, Frame<LedgerHeaderExt>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerHeaderExt>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerUpgradeType => Box::new(
-                ReadXdrIter::<_, Frame<LedgerUpgradeType>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerUpgradeType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t.0)))),
             ),
             TypeVariant::LedgerUpgrade => Box::new(
-                ReadXdrIter::<_, Frame<LedgerUpgrade>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerUpgrade>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t.0)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
-                ReadXdrIter::<_, Frame<BucketEntryType>>::new(r)
+                ReadXdrIter::<_, Frame<BucketEntryType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t.0)))),
             ),
             TypeVariant::BucketMetadata => Box::new(
-                ReadXdrIter::<_, Frame<BucketMetadata>>::new(r)
+                ReadXdrIter::<_, Frame<BucketMetadata>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t.0)))),
             ),
             TypeVariant::BucketMetadataExt => Box::new(
-                ReadXdrIter::<_, Frame<BucketMetadataExt>>::new(r)
+                ReadXdrIter::<_, Frame<BucketMetadataExt>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketMetadataExt(Box::new(t.0)))),
             ),
             TypeVariant::BucketEntry => Box::new(
-                ReadXdrIter::<_, Frame<BucketEntry>>::new(r)
+                ReadXdrIter::<_, Frame<BucketEntry>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketEntry(Box::new(t.0)))),
             ),
             TypeVariant::TxSetComponentType => Box::new(
-                ReadXdrIter::<_, Frame<TxSetComponentType>>::new(r)
+                ReadXdrIter::<_, Frame<TxSetComponentType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t.0)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
-                ReadXdrIter::<_, Frame<TxSetComponent>>::new(r)
+                ReadXdrIter::<_, Frame<TxSetComponent>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxSetComponent(Box::new(t.0)))),
             ),
             TypeVariant::TxSetComponentTxsMaybeDiscountedFee => Box::new(
-                ReadXdrIter::<_, Frame<TxSetComponentTxsMaybeDiscountedFee>>::new(r)
-                    .map(|r| r.map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TxSetComponentTxsMaybeDiscountedFee>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t.0)))),
             ),
             TypeVariant::TransactionPhase => Box::new(
-                ReadXdrIter::<_, Frame<TransactionPhase>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionPhase>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionPhase(Box::new(t.0)))),
             ),
             TypeVariant::TransactionSet => Box::new(
-                ReadXdrIter::<_, Frame<TransactionSet>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionSet>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionSet(Box::new(t.0)))),
             ),
             TypeVariant::TransactionSetV1 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionSetV1>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionSetV1>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionSetV1(Box::new(t.0)))),
             ),
             TypeVariant::GeneralizedTransactionSet => Box::new(
-                ReadXdrIter::<_, Frame<GeneralizedTransactionSet>>::new(r)
-                    .map(|r| r.map(|t| Self::GeneralizedTransactionSet(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<GeneralizedTransactionSet>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::GeneralizedTransactionSet(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultPair => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultPair>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionResultPair(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionResultPair>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionResultPair(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultSet => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultSet>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionResultSet>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultSet(Box::new(t.0)))),
             ),
             TypeVariant::TransactionHistoryEntry => Box::new(
-                ReadXdrIter::<_, Frame<TransactionHistoryEntry>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionHistoryEntry(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionHistoryEntry>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionHistoryEntry(Box::new(t.0)))),
             ),
             TypeVariant::TransactionHistoryEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<TransactionHistoryEntryExt>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionHistoryEntryExt(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionHistoryEntryExt>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionHistoryEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::TransactionHistoryResultEntry => Box::new(
-                ReadXdrIter::<_, Frame<TransactionHistoryResultEntry>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntry(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionHistoryResultEntry>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionHistoryResultEntry(Box::new(t.0)))),
             ),
             TypeVariant::TransactionHistoryResultEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<TransactionHistoryResultEntryExt>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionHistoryResultEntryExt>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
-                ReadXdrIter::<_, Frame<LedgerHeaderHistoryEntry>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerHeaderHistoryEntry>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<LedgerHeaderHistoryEntryExt>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerHeaderHistoryEntryExt>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerScpMessages => Box::new(
-                ReadXdrIter::<_, Frame<LedgerScpMessages>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerScpMessages>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerScpMessages(Box::new(t.0)))),
             ),
             TypeVariant::ScpHistoryEntryV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScpHistoryEntryV0>>::new(r)
+                ReadXdrIter::<_, Frame<ScpHistoryEntryV0>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpHistoryEntryV0(Box::new(t.0)))),
             ),
             TypeVariant::ScpHistoryEntry => Box::new(
-                ReadXdrIter::<_, Frame<ScpHistoryEntry>>::new(r)
+                ReadXdrIter::<_, Frame<ScpHistoryEntry>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpHistoryEntry(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryChangeType => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryChangeType>>::new(r)
-                    .map(|r| r.map(|t| Self::LedgerEntryChangeType(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerEntryChangeType>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerEntryChangeType(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryChange => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryChange>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerEntryChange>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryChange(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryChanges => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryChanges>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerEntryChanges>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryChanges(Box::new(t.0)))),
             ),
             TypeVariant::OperationMeta => Box::new(
-                ReadXdrIter::<_, Frame<OperationMeta>>::new(r)
+                ReadXdrIter::<_, Frame<OperationMeta>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationMeta(Box::new(t.0)))),
             ),
             TypeVariant::TransactionMetaV1 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionMetaV1>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionMetaV1>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMetaV1(Box::new(t.0)))),
             ),
             TypeVariant::TransactionMetaV2 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionMetaV2>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionMetaV2>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t.0)))),
             ),
             TypeVariant::TransactionMeta => Box::new(
-                ReadXdrIter::<_, Frame<TransactionMeta>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionMeta>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultMeta => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultMeta>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionResultMeta>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t.0)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
-                ReadXdrIter::<_, Frame<UpgradeEntryMeta>>::new(r)
+                ReadXdrIter::<_, Frame<UpgradeEntryMeta>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseMetaV0 => Box::new(
-                ReadXdrIter::<_, Frame<LedgerCloseMetaV0>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerCloseMetaV0>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV0(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseMetaV1 => Box::new(
-                ReadXdrIter::<_, Frame<LedgerCloseMetaV1>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerCloseMetaV1>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
-                ReadXdrIter::<_, Frame<LedgerCloseMeta>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerCloseMeta>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t.0)))),
             ),
             TypeVariant::ErrorCode => Box::new(
-                ReadXdrIter::<_, Frame<ErrorCode>>::new(r)
+                ReadXdrIter::<_, Frame<ErrorCode>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ErrorCode(Box::new(t.0)))),
             ),
             TypeVariant::SError => Box::new(
-                ReadXdrIter::<_, Frame<SError>>::new(r)
+                ReadXdrIter::<_, Frame<SError>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SError(Box::new(t.0)))),
             ),
             TypeVariant::SendMore => Box::new(
-                ReadXdrIter::<_, Frame<SendMore>>::new(r)
+                ReadXdrIter::<_, Frame<SendMore>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SendMore(Box::new(t.0)))),
             ),
             TypeVariant::AuthCert => Box::new(
-                ReadXdrIter::<_, Frame<AuthCert>>::new(r)
+                ReadXdrIter::<_, Frame<AuthCert>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AuthCert(Box::new(t.0)))),
             ),
             TypeVariant::Hello => Box::new(
-                ReadXdrIter::<_, Frame<Hello>>::new(r)
+                ReadXdrIter::<_, Frame<Hello>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Hello(Box::new(t.0)))),
             ),
             TypeVariant::Auth => Box::new(
-                ReadXdrIter::<_, Frame<Auth>>::new(r).map(|r| r.map(|t| Self::Auth(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<Auth>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Auth(Box::new(t.0)))),
             ),
             TypeVariant::IpAddrType => Box::new(
-                ReadXdrIter::<_, Frame<IpAddrType>>::new(r)
+                ReadXdrIter::<_, Frame<IpAddrType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::IpAddrType(Box::new(t.0)))),
             ),
             TypeVariant::PeerAddress => Box::new(
-                ReadXdrIter::<_, Frame<PeerAddress>>::new(r)
+                ReadXdrIter::<_, Frame<PeerAddress>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerAddress(Box::new(t.0)))),
             ),
             TypeVariant::PeerAddressIp => Box::new(
-                ReadXdrIter::<_, Frame<PeerAddressIp>>::new(r)
+                ReadXdrIter::<_, Frame<PeerAddressIp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerAddressIp(Box::new(t.0)))),
             ),
             TypeVariant::MessageType => Box::new(
-                ReadXdrIter::<_, Frame<MessageType>>::new(r)
+                ReadXdrIter::<_, Frame<MessageType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::MessageType(Box::new(t.0)))),
             ),
             TypeVariant::DontHave => Box::new(
-                ReadXdrIter::<_, Frame<DontHave>>::new(r)
+                ReadXdrIter::<_, Frame<DontHave>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DontHave(Box::new(t.0)))),
             ),
             TypeVariant::SurveyMessageCommandType => Box::new(
-                ReadXdrIter::<_, Frame<SurveyMessageCommandType>>::new(r)
-                    .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<SurveyMessageCommandType>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t.0)))),
             ),
             TypeVariant::SurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, Frame<SurveyRequestMessage>>::new(r)
+                ReadXdrIter::<_, Frame<SurveyRequestMessage>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t.0)))),
             ),
             TypeVariant::SignedSurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, Frame<SignedSurveyRequestMessage>>::new(r)
-                    .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<SignedSurveyRequestMessage>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t.0)))),
             ),
             TypeVariant::EncryptedBody => Box::new(
-                ReadXdrIter::<_, Frame<EncryptedBody>>::new(r)
+                ReadXdrIter::<_, Frame<EncryptedBody>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::EncryptedBody(Box::new(t.0)))),
             ),
             TypeVariant::SurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, Frame<SurveyResponseMessage>>::new(r)
-                    .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<SurveyResponseMessage>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t.0)))),
             ),
             TypeVariant::SignedSurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, Frame<SignedSurveyResponseMessage>>::new(r)
-                    .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<SignedSurveyResponseMessage>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t.0)))),
             ),
             TypeVariant::PeerStats => Box::new(
-                ReadXdrIter::<_, Frame<PeerStats>>::new(r)
+                ReadXdrIter::<_, Frame<PeerStats>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerStats(Box::new(t.0)))),
             ),
             TypeVariant::PeerStatList => Box::new(
-                ReadXdrIter::<_, Frame<PeerStatList>>::new(r)
+                ReadXdrIter::<_, Frame<PeerStatList>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t.0)))),
             ),
             TypeVariant::TopologyResponseBody => Box::new(
-                ReadXdrIter::<_, Frame<TopologyResponseBody>>::new(r)
+                ReadXdrIter::<_, Frame<TopologyResponseBody>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t.0)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
-                ReadXdrIter::<_, Frame<SurveyResponseBody>>::new(r)
+                ReadXdrIter::<_, Frame<SurveyResponseBody>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyResponseBody(Box::new(t.0)))),
             ),
             TypeVariant::TxAdvertVector => Box::new(
-                ReadXdrIter::<_, Frame<TxAdvertVector>>::new(r)
+                ReadXdrIter::<_, Frame<TxAdvertVector>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxAdvertVector(Box::new(t.0)))),
             ),
             TypeVariant::FloodAdvert => Box::new(
-                ReadXdrIter::<_, Frame<FloodAdvert>>::new(r)
+                ReadXdrIter::<_, Frame<FloodAdvert>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FloodAdvert(Box::new(t.0)))),
             ),
             TypeVariant::TxDemandVector => Box::new(
-                ReadXdrIter::<_, Frame<TxDemandVector>>::new(r)
+                ReadXdrIter::<_, Frame<TxDemandVector>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxDemandVector(Box::new(t.0)))),
             ),
             TypeVariant::FloodDemand => Box::new(
-                ReadXdrIter::<_, Frame<FloodDemand>>::new(r)
+                ReadXdrIter::<_, Frame<FloodDemand>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FloodDemand(Box::new(t.0)))),
             ),
             TypeVariant::StellarMessage => Box::new(
-                ReadXdrIter::<_, Frame<StellarMessage>>::new(r)
+                ReadXdrIter::<_, Frame<StellarMessage>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarMessage(Box::new(t.0)))),
             ),
             TypeVariant::AuthenticatedMessage => Box::new(
-                ReadXdrIter::<_, Frame<AuthenticatedMessage>>::new(r)
+                ReadXdrIter::<_, Frame<AuthenticatedMessage>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AuthenticatedMessage(Box::new(t.0)))),
             ),
             TypeVariant::AuthenticatedMessageV0 => Box::new(
-                ReadXdrIter::<_, Frame<AuthenticatedMessageV0>>::new(r)
-                    .map(|r| r.map(|t| Self::AuthenticatedMessageV0(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<AuthenticatedMessageV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::AuthenticatedMessageV0(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolParameters => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolParameters>>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolParameters(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LiquidityPoolParameters>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolParameters(Box::new(t.0)))),
             ),
             TypeVariant::MuxedAccount => Box::new(
-                ReadXdrIter::<_, Frame<MuxedAccount>>::new(r)
+                ReadXdrIter::<_, Frame<MuxedAccount>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::MuxedAccount(Box::new(t.0)))),
             ),
             TypeVariant::MuxedAccountMed25519 => Box::new(
-                ReadXdrIter::<_, Frame<MuxedAccountMed25519>>::new(r)
+                ReadXdrIter::<_, Frame<MuxedAccountMed25519>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::MuxedAccountMed25519(Box::new(t.0)))),
             ),
             TypeVariant::DecoratedSignature => Box::new(
-                ReadXdrIter::<_, Frame<DecoratedSignature>>::new(r)
+                ReadXdrIter::<_, Frame<DecoratedSignature>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t.0)))),
             ),
             TypeVariant::OperationType => Box::new(
-                ReadXdrIter::<_, Frame<OperationType>>::new(r)
+                ReadXdrIter::<_, Frame<OperationType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationType(Box::new(t.0)))),
             ),
             TypeVariant::CreateAccountOp => Box::new(
-                ReadXdrIter::<_, Frame<CreateAccountOp>>::new(r)
+                ReadXdrIter::<_, Frame<CreateAccountOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateAccountOp(Box::new(t.0)))),
             ),
             TypeVariant::PaymentOp => Box::new(
-                ReadXdrIter::<_, Frame<PaymentOp>>::new(r)
+                ReadXdrIter::<_, Frame<PaymentOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PaymentOp(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictReceiveOp => Box::new(
-                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveOp>>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveOp>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictSendOp => Box::new(
-                ReadXdrIter::<_, Frame<PathPaymentStrictSendOp>>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictSendOp(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<PathPaymentStrictSendOp>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictSendOp(Box::new(t.0)))),
             ),
             TypeVariant::ManageSellOfferOp => Box::new(
-                ReadXdrIter::<_, Frame<ManageSellOfferOp>>::new(r)
+                ReadXdrIter::<_, Frame<ManageSellOfferOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageSellOfferOp(Box::new(t.0)))),
             ),
             TypeVariant::ManageBuyOfferOp => Box::new(
-                ReadXdrIter::<_, Frame<ManageBuyOfferOp>>::new(r)
+                ReadXdrIter::<_, Frame<ManageBuyOfferOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageBuyOfferOp(Box::new(t.0)))),
             ),
             TypeVariant::CreatePassiveSellOfferOp => Box::new(
-                ReadXdrIter::<_, Frame<CreatePassiveSellOfferOp>>::new(r)
-                    .map(|r| r.map(|t| Self::CreatePassiveSellOfferOp(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<CreatePassiveSellOfferOp>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::CreatePassiveSellOfferOp(Box::new(t.0)))),
             ),
             TypeVariant::SetOptionsOp => Box::new(
-                ReadXdrIter::<_, Frame<SetOptionsOp>>::new(r)
+                ReadXdrIter::<_, Frame<SetOptionsOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetOptionsOp(Box::new(t.0)))),
             ),
             TypeVariant::ChangeTrustAsset => Box::new(
-                ReadXdrIter::<_, Frame<ChangeTrustAsset>>::new(r)
+                ReadXdrIter::<_, Frame<ChangeTrustAsset>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ChangeTrustAsset(Box::new(t.0)))),
             ),
             TypeVariant::ChangeTrustOp => Box::new(
-                ReadXdrIter::<_, Frame<ChangeTrustOp>>::new(r)
+                ReadXdrIter::<_, Frame<ChangeTrustOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ChangeTrustOp(Box::new(t.0)))),
             ),
             TypeVariant::AllowTrustOp => Box::new(
-                ReadXdrIter::<_, Frame<AllowTrustOp>>::new(r)
+                ReadXdrIter::<_, Frame<AllowTrustOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AllowTrustOp(Box::new(t.0)))),
             ),
             TypeVariant::ManageDataOp => Box::new(
-                ReadXdrIter::<_, Frame<ManageDataOp>>::new(r)
+                ReadXdrIter::<_, Frame<ManageDataOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageDataOp(Box::new(t.0)))),
             ),
             TypeVariant::BumpSequenceOp => Box::new(
-                ReadXdrIter::<_, Frame<BumpSequenceOp>>::new(r)
+                ReadXdrIter::<_, Frame<BumpSequenceOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BumpSequenceOp(Box::new(t.0)))),
             ),
             TypeVariant::CreateClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, Frame<CreateClaimableBalanceOp>>::new(r)
-                    .map(|r| r.map(|t| Self::CreateClaimableBalanceOp(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<CreateClaimableBalanceOp>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::CreateClaimableBalanceOp(Box::new(t.0)))),
             ),
             TypeVariant::ClaimClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, Frame<ClaimClaimableBalanceOp>>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceOp(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClaimClaimableBalanceOp>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimClaimableBalanceOp(Box::new(t.0)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesOp => Box::new(
-                ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesOp>>::new(r)
-                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesOp>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t.0)))),
             ),
             TypeVariant::RevokeSponsorshipType => Box::new(
-                ReadXdrIter::<_, Frame<RevokeSponsorshipType>>::new(r)
-                    .map(|r| r.map(|t| Self::RevokeSponsorshipType(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<RevokeSponsorshipType>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::RevokeSponsorshipType(Box::new(t.0)))),
             ),
             TypeVariant::RevokeSponsorshipOp => Box::new(
-                ReadXdrIter::<_, Frame<RevokeSponsorshipOp>>::new(r)
+                ReadXdrIter::<_, Frame<RevokeSponsorshipOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::RevokeSponsorshipOp(Box::new(t.0)))),
             ),
             TypeVariant::RevokeSponsorshipOpSigner => Box::new(
-                ReadXdrIter::<_, Frame<RevokeSponsorshipOpSigner>>::new(r)
-                    .map(|r| r.map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<RevokeSponsorshipOpSigner>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackOp => Box::new(
-                ReadXdrIter::<_, Frame<ClawbackOp>>::new(r)
+                ReadXdrIter::<_, Frame<ClawbackOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackOp(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, Frame<ClawbackClaimableBalanceOp>>::new(r)
-                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClawbackClaimableBalanceOp>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t.0)))),
             ),
             TypeVariant::SetTrustLineFlagsOp => Box::new(
-                ReadXdrIter::<_, Frame<SetTrustLineFlagsOp>>::new(r)
+                ReadXdrIter::<_, Frame<SetTrustLineFlagsOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsOp(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolDepositOp => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolDepositOp>>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolDepositOp(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LiquidityPoolDepositOp>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolDepositOp(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolWithdrawOp => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolWithdrawOp>>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LiquidityPoolWithdrawOp>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t.0)))),
             ),
             TypeVariant::Operation => Box::new(
-                ReadXdrIter::<_, Frame<Operation>>::new(r)
+                ReadXdrIter::<_, Frame<Operation>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Operation(Box::new(t.0)))),
             ),
             TypeVariant::OperationBody => Box::new(
-                ReadXdrIter::<_, Frame<OperationBody>>::new(r)
+                ReadXdrIter::<_, Frame<OperationBody>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationBody(Box::new(t.0)))),
             ),
             TypeVariant::HashIdPreimage => Box::new(
-                ReadXdrIter::<_, Frame<HashIdPreimage>>::new(r)
+                ReadXdrIter::<_, Frame<HashIdPreimage>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HashIdPreimage(Box::new(t.0)))),
             ),
             TypeVariant::HashIdPreimageOperationId => Box::new(
-                ReadXdrIter::<_, Frame<HashIdPreimageOperationId>>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageOperationId(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<HashIdPreimageOperationId>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::HashIdPreimageOperationId(Box::new(t.0)))),
             ),
             TypeVariant::HashIdPreimageRevokeId => Box::new(
-                ReadXdrIter::<_, Frame<HashIdPreimageRevokeId>>::new(r)
-                    .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<HashIdPreimageRevokeId>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t.0)))),
             ),
             TypeVariant::MemoType => Box::new(
-                ReadXdrIter::<_, Frame<MemoType>>::new(r)
+                ReadXdrIter::<_, Frame<MemoType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::MemoType(Box::new(t.0)))),
             ),
             TypeVariant::Memo => Box::new(
-                ReadXdrIter::<_, Frame<Memo>>::new(r).map(|r| r.map(|t| Self::Memo(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<Memo>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Memo(Box::new(t.0)))),
             ),
             TypeVariant::TimeBounds => Box::new(
-                ReadXdrIter::<_, Frame<TimeBounds>>::new(r)
+                ReadXdrIter::<_, Frame<TimeBounds>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TimeBounds(Box::new(t.0)))),
             ),
             TypeVariant::LedgerBounds => Box::new(
-                ReadXdrIter::<_, Frame<LedgerBounds>>::new(r)
+                ReadXdrIter::<_, Frame<LedgerBounds>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerBounds(Box::new(t.0)))),
             ),
             TypeVariant::PreconditionsV2 => Box::new(
-                ReadXdrIter::<_, Frame<PreconditionsV2>>::new(r)
+                ReadXdrIter::<_, Frame<PreconditionsV2>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PreconditionsV2(Box::new(t.0)))),
             ),
             TypeVariant::PreconditionType => Box::new(
-                ReadXdrIter::<_, Frame<PreconditionType>>::new(r)
+                ReadXdrIter::<_, Frame<PreconditionType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PreconditionType(Box::new(t.0)))),
             ),
             TypeVariant::Preconditions => Box::new(
-                ReadXdrIter::<_, Frame<Preconditions>>::new(r)
+                ReadXdrIter::<_, Frame<Preconditions>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Preconditions(Box::new(t.0)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionV0>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionV0>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionV0(Box::new(t.0)))),
             ),
             TypeVariant::TransactionV0Ext => Box::new(
-                ReadXdrIter::<_, Frame<TransactionV0Ext>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionV0Ext>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionV0Ext(Box::new(t.0)))),
             ),
             TypeVariant::TransactionV0Envelope => Box::new(
-                ReadXdrIter::<_, Frame<TransactionV0Envelope>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionV0Envelope(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionV0Envelope>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionV0Envelope(Box::new(t.0)))),
             ),
             TypeVariant::Transaction => Box::new(
-                ReadXdrIter::<_, Frame<Transaction>>::new(r)
+                ReadXdrIter::<_, Frame<Transaction>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Transaction(Box::new(t.0)))),
             ),
             TypeVariant::TransactionExt => Box::new(
-                ReadXdrIter::<_, Frame<TransactionExt>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionExt>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionExt(Box::new(t.0)))),
             ),
             TypeVariant::TransactionV1Envelope => Box::new(
-                ReadXdrIter::<_, Frame<TransactionV1Envelope>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionV1Envelope(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionV1Envelope>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionV1Envelope(Box::new(t.0)))),
             ),
             TypeVariant::FeeBumpTransaction => Box::new(
-                ReadXdrIter::<_, Frame<FeeBumpTransaction>>::new(r)
+                ReadXdrIter::<_, Frame<FeeBumpTransaction>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FeeBumpTransaction(Box::new(t.0)))),
             ),
             TypeVariant::FeeBumpTransactionInnerTx => Box::new(
-                ReadXdrIter::<_, Frame<FeeBumpTransactionInnerTx>>::new(r)
-                    .map(|r| r.map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<FeeBumpTransactionInnerTx>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t.0)))),
             ),
             TypeVariant::FeeBumpTransactionExt => Box::new(
-                ReadXdrIter::<_, Frame<FeeBumpTransactionExt>>::new(r)
-                    .map(|r| r.map(|t| Self::FeeBumpTransactionExt(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<FeeBumpTransactionExt>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::FeeBumpTransactionExt(Box::new(t.0)))),
             ),
             TypeVariant::FeeBumpTransactionEnvelope => Box::new(
-                ReadXdrIter::<_, Frame<FeeBumpTransactionEnvelope>>::new(r)
-                    .map(|r| r.map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<FeeBumpTransactionEnvelope>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t.0)))),
             ),
             TypeVariant::TransactionEnvelope => Box::new(
-                ReadXdrIter::<_, Frame<TransactionEnvelope>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionEnvelope>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionEnvelope(Box::new(t.0)))),
             ),
             TypeVariant::TransactionSignaturePayload => Box::new(
-                ReadXdrIter::<_, Frame<TransactionSignaturePayload>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionSignaturePayload(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionSignaturePayload>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionSignaturePayload(Box::new(t.0)))),
             ),
             TypeVariant::TransactionSignaturePayloadTaggedTransaction => Box::new(
-                ReadXdrIter::<_, Frame<TransactionSignaturePayloadTaggedTransaction>>::new(r).map(
-                    |r| {
-                        r.map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t.0)))
-                    },
-                ),
+                ReadXdrIter::<_, Frame<TransactionSignaturePayloadTaggedTransaction>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| {
+                    r.map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t.0)))
+                }),
             ),
             TypeVariant::ClaimAtomType => Box::new(
-                ReadXdrIter::<_, Frame<ClaimAtomType>>::new(r)
+                ReadXdrIter::<_, Frame<ClaimAtomType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimAtomType(Box::new(t.0)))),
             ),
             TypeVariant::ClaimOfferAtomV0 => Box::new(
-                ReadXdrIter::<_, Frame<ClaimOfferAtomV0>>::new(r)
+                ReadXdrIter::<_, Frame<ClaimOfferAtomV0>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimOfferAtomV0(Box::new(t.0)))),
             ),
             TypeVariant::ClaimOfferAtom => Box::new(
-                ReadXdrIter::<_, Frame<ClaimOfferAtom>>::new(r)
+                ReadXdrIter::<_, Frame<ClaimOfferAtom>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimOfferAtom(Box::new(t.0)))),
             ),
             TypeVariant::ClaimLiquidityAtom => Box::new(
-                ReadXdrIter::<_, Frame<ClaimLiquidityAtom>>::new(r)
+                ReadXdrIter::<_, Frame<ClaimLiquidityAtom>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimLiquidityAtom(Box::new(t.0)))),
             ),
             TypeVariant::ClaimAtom => Box::new(
-                ReadXdrIter::<_, Frame<ClaimAtom>>::new(r)
+                ReadXdrIter::<_, Frame<ClaimAtom>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimAtom(Box::new(t.0)))),
             ),
             TypeVariant::CreateAccountResultCode => Box::new(
-                ReadXdrIter::<_, Frame<CreateAccountResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::CreateAccountResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<CreateAccountResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::CreateAccountResultCode(Box::new(t.0)))),
             ),
             TypeVariant::CreateAccountResult => Box::new(
-                ReadXdrIter::<_, Frame<CreateAccountResult>>::new(r)
+                ReadXdrIter::<_, Frame<CreateAccountResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateAccountResult(Box::new(t.0)))),
             ),
             TypeVariant::PaymentResultCode => Box::new(
-                ReadXdrIter::<_, Frame<PaymentResultCode>>::new(r)
+                ReadXdrIter::<_, Frame<PaymentResultCode>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PaymentResultCode(Box::new(t.0)))),
             ),
             TypeVariant::PaymentResult => Box::new(
-                ReadXdrIter::<_, Frame<PaymentResult>>::new(r)
+                ReadXdrIter::<_, Frame<PaymentResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PaymentResult(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultCode => Box::new(
-                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t.0)))),
             ),
             TypeVariant::SimplePaymentResult => Box::new(
-                ReadXdrIter::<_, Frame<SimplePaymentResult>>::new(r)
+                ReadXdrIter::<_, Frame<SimplePaymentResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SimplePaymentResult(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResult => Box::new(
-                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResult>>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultSuccess => Box::new(
-                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResultSuccess>>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResultSuccess>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictSendResultCode => Box::new(
-                ReadXdrIter::<_, Frame<PathPaymentStrictSendResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<PathPaymentStrictSendResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictSendResult => Box::new(
-                ReadXdrIter::<_, Frame<PathPaymentStrictSendResult>>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<PathPaymentStrictSendResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictSendResult(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictSendResultSuccess => Box::new(
-                ReadXdrIter::<_, Frame<PathPaymentStrictSendResultSuccess>>::new(r)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<PathPaymentStrictSendResultSuccess>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t.0)))),
             ),
             TypeVariant::ManageSellOfferResultCode => Box::new(
-                ReadXdrIter::<_, Frame<ManageSellOfferResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::ManageSellOfferResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ManageSellOfferResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ManageSellOfferResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ManageOfferEffect => Box::new(
-                ReadXdrIter::<_, Frame<ManageOfferEffect>>::new(r)
+                ReadXdrIter::<_, Frame<ManageOfferEffect>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageOfferEffect(Box::new(t.0)))),
             ),
             TypeVariant::ManageOfferSuccessResult => Box::new(
-                ReadXdrIter::<_, Frame<ManageOfferSuccessResult>>::new(r)
-                    .map(|r| r.map(|t| Self::ManageOfferSuccessResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ManageOfferSuccessResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ManageOfferSuccessResult(Box::new(t.0)))),
             ),
             TypeVariant::ManageOfferSuccessResultOffer => Box::new(
-                ReadXdrIter::<_, Frame<ManageOfferSuccessResultOffer>>::new(r)
-                    .map(|r| r.map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ManageOfferSuccessResultOffer>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t.0)))),
             ),
             TypeVariant::ManageSellOfferResult => Box::new(
-                ReadXdrIter::<_, Frame<ManageSellOfferResult>>::new(r)
-                    .map(|r| r.map(|t| Self::ManageSellOfferResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ManageSellOfferResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ManageSellOfferResult(Box::new(t.0)))),
             ),
             TypeVariant::ManageBuyOfferResultCode => Box::new(
-                ReadXdrIter::<_, Frame<ManageBuyOfferResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::ManageBuyOfferResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ManageBuyOfferResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ManageBuyOfferResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ManageBuyOfferResult => Box::new(
-                ReadXdrIter::<_, Frame<ManageBuyOfferResult>>::new(r)
+                ReadXdrIter::<_, Frame<ManageBuyOfferResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageBuyOfferResult(Box::new(t.0)))),
             ),
             TypeVariant::SetOptionsResultCode => Box::new(
-                ReadXdrIter::<_, Frame<SetOptionsResultCode>>::new(r)
+                ReadXdrIter::<_, Frame<SetOptionsResultCode>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetOptionsResultCode(Box::new(t.0)))),
             ),
             TypeVariant::SetOptionsResult => Box::new(
-                ReadXdrIter::<_, Frame<SetOptionsResult>>::new(r)
+                ReadXdrIter::<_, Frame<SetOptionsResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetOptionsResult(Box::new(t.0)))),
             ),
             TypeVariant::ChangeTrustResultCode => Box::new(
-                ReadXdrIter::<_, Frame<ChangeTrustResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::ChangeTrustResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ChangeTrustResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ChangeTrustResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ChangeTrustResult => Box::new(
-                ReadXdrIter::<_, Frame<ChangeTrustResult>>::new(r)
+                ReadXdrIter::<_, Frame<ChangeTrustResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ChangeTrustResult(Box::new(t.0)))),
             ),
             TypeVariant::AllowTrustResultCode => Box::new(
-                ReadXdrIter::<_, Frame<AllowTrustResultCode>>::new(r)
+                ReadXdrIter::<_, Frame<AllowTrustResultCode>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AllowTrustResultCode(Box::new(t.0)))),
             ),
             TypeVariant::AllowTrustResult => Box::new(
-                ReadXdrIter::<_, Frame<AllowTrustResult>>::new(r)
+                ReadXdrIter::<_, Frame<AllowTrustResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AllowTrustResult(Box::new(t.0)))),
             ),
             TypeVariant::AccountMergeResultCode => Box::new(
-                ReadXdrIter::<_, Frame<AccountMergeResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::AccountMergeResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<AccountMergeResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::AccountMergeResultCode(Box::new(t.0)))),
             ),
             TypeVariant::AccountMergeResult => Box::new(
-                ReadXdrIter::<_, Frame<AccountMergeResult>>::new(r)
+                ReadXdrIter::<_, Frame<AccountMergeResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountMergeResult(Box::new(t.0)))),
             ),
             TypeVariant::InflationResultCode => Box::new(
-                ReadXdrIter::<_, Frame<InflationResultCode>>::new(r)
+                ReadXdrIter::<_, Frame<InflationResultCode>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InflationResultCode(Box::new(t.0)))),
             ),
             TypeVariant::InflationPayout => Box::new(
-                ReadXdrIter::<_, Frame<InflationPayout>>::new(r)
+                ReadXdrIter::<_, Frame<InflationPayout>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InflationPayout(Box::new(t.0)))),
             ),
             TypeVariant::InflationResult => Box::new(
-                ReadXdrIter::<_, Frame<InflationResult>>::new(r)
+                ReadXdrIter::<_, Frame<InflationResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InflationResult(Box::new(t.0)))),
             ),
             TypeVariant::ManageDataResultCode => Box::new(
-                ReadXdrIter::<_, Frame<ManageDataResultCode>>::new(r)
+                ReadXdrIter::<_, Frame<ManageDataResultCode>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageDataResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ManageDataResult => Box::new(
-                ReadXdrIter::<_, Frame<ManageDataResult>>::new(r)
+                ReadXdrIter::<_, Frame<ManageDataResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageDataResult(Box::new(t.0)))),
             ),
             TypeVariant::BumpSequenceResultCode => Box::new(
-                ReadXdrIter::<_, Frame<BumpSequenceResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::BumpSequenceResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<BumpSequenceResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BumpSequenceResultCode(Box::new(t.0)))),
             ),
             TypeVariant::BumpSequenceResult => Box::new(
-                ReadXdrIter::<_, Frame<BumpSequenceResult>>::new(r)
+                ReadXdrIter::<_, Frame<BumpSequenceResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BumpSequenceResult(Box::new(t.0)))),
             ),
             TypeVariant::CreateClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, Frame<CreateClaimableBalanceResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<CreateClaimableBalanceResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t.0)))),
             ),
             TypeVariant::CreateClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, Frame<CreateClaimableBalanceResult>>::new(r)
-                    .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<CreateClaimableBalanceResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t.0)))),
             ),
             TypeVariant::ClaimClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, Frame<ClaimClaimableBalanceResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClaimClaimableBalanceResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ClaimClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, Frame<ClaimClaimableBalanceResult>>::new(r)
-                    .map(|r| r.map(|t| Self::ClaimClaimableBalanceResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClaimClaimableBalanceResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClaimClaimableBalanceResult(Box::new(t.0)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResultCode => Box::new(
-                ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesResultCode>>::new(r).map(|r| {
-                    r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t.0)))
-                }),
+                ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t.0)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResult => Box::new(
-                ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesResult>>::new(r)
-                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t.0)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResultCode => Box::new(
-                ReadXdrIter::<_, Frame<EndSponsoringFutureReservesResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<EndSponsoringFutureReservesResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t.0)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResult => Box::new(
-                ReadXdrIter::<_, Frame<EndSponsoringFutureReservesResult>>::new(r)
-                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<EndSponsoringFutureReservesResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t.0)))),
             ),
             TypeVariant::RevokeSponsorshipResultCode => Box::new(
-                ReadXdrIter::<_, Frame<RevokeSponsorshipResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::RevokeSponsorshipResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<RevokeSponsorshipResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::RevokeSponsorshipResultCode(Box::new(t.0)))),
             ),
             TypeVariant::RevokeSponsorshipResult => Box::new(
-                ReadXdrIter::<_, Frame<RevokeSponsorshipResult>>::new(r)
-                    .map(|r| r.map(|t| Self::RevokeSponsorshipResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<RevokeSponsorshipResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::RevokeSponsorshipResult(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackResultCode => Box::new(
-                ReadXdrIter::<_, Frame<ClawbackResultCode>>::new(r)
+                ReadXdrIter::<_, Frame<ClawbackResultCode>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackResult => Box::new(
-                ReadXdrIter::<_, Frame<ClawbackResult>>::new(r)
+                ReadXdrIter::<_, Frame<ClawbackResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackResult(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, Frame<ClawbackClaimableBalanceResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClawbackClaimableBalanceResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, Frame<ClawbackClaimableBalanceResult>>::new(r)
-                    .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClawbackClaimableBalanceResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t.0)))),
             ),
             TypeVariant::SetTrustLineFlagsResultCode => Box::new(
-                ReadXdrIter::<_, Frame<SetTrustLineFlagsResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<SetTrustLineFlagsResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t.0)))),
             ),
             TypeVariant::SetTrustLineFlagsResult => Box::new(
-                ReadXdrIter::<_, Frame<SetTrustLineFlagsResult>>::new(r)
-                    .map(|r| r.map(|t| Self::SetTrustLineFlagsResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<SetTrustLineFlagsResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SetTrustLineFlagsResult(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolDepositResultCode => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolDepositResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LiquidityPoolDepositResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolDepositResult => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolDepositResult>>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolDepositResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LiquidityPoolDepositResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolDepositResult(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResultCode => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolWithdrawResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LiquidityPoolWithdrawResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResult => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolWithdrawResult>>::new(r)
-                    .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LiquidityPoolWithdrawResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t.0)))),
             ),
             TypeVariant::OperationResultCode => Box::new(
-                ReadXdrIter::<_, Frame<OperationResultCode>>::new(r)
+                ReadXdrIter::<_, Frame<OperationResultCode>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t.0)))),
             ),
             TypeVariant::OperationResult => Box::new(
-                ReadXdrIter::<_, Frame<OperationResult>>::new(r)
+                ReadXdrIter::<_, Frame<OperationResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResult(Box::new(t.0)))),
             ),
             TypeVariant::OperationResultTr => Box::new(
-                ReadXdrIter::<_, Frame<OperationResultTr>>::new(r)
+                ReadXdrIter::<_, Frame<OperationResultTr>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResultTr(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultCode => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultCode>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionResultCode(Box::new(t.0)))),
             ),
             TypeVariant::InnerTransactionResult => Box::new(
-                ReadXdrIter::<_, Frame<InnerTransactionResult>>::new(r)
-                    .map(|r| r.map(|t| Self::InnerTransactionResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<InnerTransactionResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::InnerTransactionResult(Box::new(t.0)))),
             ),
             TypeVariant::InnerTransactionResultResult => Box::new(
-                ReadXdrIter::<_, Frame<InnerTransactionResultResult>>::new(r)
-                    .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<InnerTransactionResultResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t.0)))),
             ),
             TypeVariant::InnerTransactionResultExt => Box::new(
-                ReadXdrIter::<_, Frame<InnerTransactionResultExt>>::new(r)
-                    .map(|r| r.map(|t| Self::InnerTransactionResultExt(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<InnerTransactionResultExt>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::InnerTransactionResultExt(Box::new(t.0)))),
             ),
             TypeVariant::InnerTransactionResultPair => Box::new(
-                ReadXdrIter::<_, Frame<InnerTransactionResultPair>>::new(r)
-                    .map(|r| r.map(|t| Self::InnerTransactionResultPair(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<InnerTransactionResultPair>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::InnerTransactionResultPair(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResult => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResult>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionResult>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResult(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultResult => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultResult>>::new(r)
-                    .map(|r| r.map(|t| Self::TransactionResultResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionResultResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TransactionResultResult(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultExt => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultExt>>::new(r)
+                ReadXdrIter::<_, Frame<TransactionResultExt>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultExt(Box::new(t.0)))),
             ),
             TypeVariant::Hash => Box::new(
-                ReadXdrIter::<_, Frame<Hash>>::new(r).map(|r| r.map(|t| Self::Hash(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<Hash>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Hash(Box::new(t.0)))),
             ),
             TypeVariant::Uint256 => Box::new(
-                ReadXdrIter::<_, Frame<Uint256>>::new(r)
+                ReadXdrIter::<_, Frame<Uint256>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Uint256(Box::new(t.0)))),
             ),
             TypeVariant::Uint32 => Box::new(
-                ReadXdrIter::<_, Frame<Uint32>>::new(r)
+                ReadXdrIter::<_, Frame<Uint32>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Uint32(Box::new(t.0)))),
             ),
             TypeVariant::Int32 => Box::new(
-                ReadXdrIter::<_, Frame<Int32>>::new(r)
+                ReadXdrIter::<_, Frame<Int32>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Int32(Box::new(t.0)))),
             ),
             TypeVariant::Uint64 => Box::new(
-                ReadXdrIter::<_, Frame<Uint64>>::new(r)
+                ReadXdrIter::<_, Frame<Uint64>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Uint64(Box::new(t.0)))),
             ),
             TypeVariant::Int64 => Box::new(
-                ReadXdrIter::<_, Frame<Int64>>::new(r)
+                ReadXdrIter::<_, Frame<Int64>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Int64(Box::new(t.0)))),
             ),
             TypeVariant::ExtensionPoint => Box::new(
-                ReadXdrIter::<_, Frame<ExtensionPoint>>::new(r)
+                ReadXdrIter::<_, Frame<ExtensionPoint>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t.0)))),
             ),
             TypeVariant::CryptoKeyType => Box::new(
-                ReadXdrIter::<_, Frame<CryptoKeyType>>::new(r)
+                ReadXdrIter::<_, Frame<CryptoKeyType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CryptoKeyType(Box::new(t.0)))),
             ),
             TypeVariant::PublicKeyType => Box::new(
-                ReadXdrIter::<_, Frame<PublicKeyType>>::new(r)
+                ReadXdrIter::<_, Frame<PublicKeyType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PublicKeyType(Box::new(t.0)))),
             ),
             TypeVariant::SignerKeyType => Box::new(
-                ReadXdrIter::<_, Frame<SignerKeyType>>::new(r)
+                ReadXdrIter::<_, Frame<SignerKeyType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignerKeyType(Box::new(t.0)))),
             ),
             TypeVariant::PublicKey => Box::new(
-                ReadXdrIter::<_, Frame<PublicKey>>::new(r)
+                ReadXdrIter::<_, Frame<PublicKey>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PublicKey(Box::new(t.0)))),
             ),
             TypeVariant::SignerKey => Box::new(
-                ReadXdrIter::<_, Frame<SignerKey>>::new(r)
+                ReadXdrIter::<_, Frame<SignerKey>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignerKey(Box::new(t.0)))),
             ),
             TypeVariant::SignerKeyEd25519SignedPayload => Box::new(
-                ReadXdrIter::<_, Frame<SignerKeyEd25519SignedPayload>>::new(r)
-                    .map(|r| r.map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<SignerKeyEd25519SignedPayload>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t.0)))),
             ),
             TypeVariant::Signature => Box::new(
-                ReadXdrIter::<_, Frame<Signature>>::new(r)
+                ReadXdrIter::<_, Frame<Signature>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Signature(Box::new(t.0)))),
             ),
             TypeVariant::SignatureHint => Box::new(
-                ReadXdrIter::<_, Frame<SignatureHint>>::new(r)
+                ReadXdrIter::<_, Frame<SignatureHint>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignatureHint(Box::new(t.0)))),
             ),
             TypeVariant::NodeId => Box::new(
-                ReadXdrIter::<_, Frame<NodeId>>::new(r)
+                ReadXdrIter::<_, Frame<NodeId>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::NodeId(Box::new(t.0)))),
             ),
             TypeVariant::Curve25519Secret => Box::new(
-                ReadXdrIter::<_, Frame<Curve25519Secret>>::new(r)
+                ReadXdrIter::<_, Frame<Curve25519Secret>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t.0)))),
             ),
             TypeVariant::Curve25519Public => Box::new(
-                ReadXdrIter::<_, Frame<Curve25519Public>>::new(r)
+                ReadXdrIter::<_, Frame<Curve25519Public>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Curve25519Public(Box::new(t.0)))),
             ),
             TypeVariant::HmacSha256Key => Box::new(
-                ReadXdrIter::<_, Frame<HmacSha256Key>>::new(r)
+                ReadXdrIter::<_, Frame<HmacSha256Key>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HmacSha256Key(Box::new(t.0)))),
             ),
             TypeVariant::HmacSha256Mac => Box::new(
-                ReadXdrIter::<_, Frame<HmacSha256Mac>>::new(r)
+                ReadXdrIter::<_, Frame<HmacSha256Mac>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t.0)))),
             ),
         }
@@ -35267,1213 +37640,1245 @@ impl Type {
     #[allow(clippy::too_many_lines)]
     pub fn read_xdr_base64_iter<R: Read>(
         v: TypeVariant,
-        r: &mut R,
+        r: &mut DepthLimitedRead<R>,
     ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
-        let dec = base64::read::DecoderReader::new(r, base64::STANDARD);
+        let dec = base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD);
         match v {
             TypeVariant::Value => Box::new(
-                ReadXdrIter::<_, Value>::new(dec).map(|r| r.map(|t| Self::Value(Box::new(t)))),
+                ReadXdrIter::<_, Value>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Value(Box::new(t)))),
             ),
             TypeVariant::ScpBallot => Box::new(
-                ReadXdrIter::<_, ScpBallot>::new(dec)
+                ReadXdrIter::<_, ScpBallot>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpBallot(Box::new(t)))),
             ),
             TypeVariant::ScpStatementType => Box::new(
-                ReadXdrIter::<_, ScpStatementType>::new(dec)
+                ReadXdrIter::<_, ScpStatementType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementType(Box::new(t)))),
             ),
             TypeVariant::ScpNomination => Box::new(
-                ReadXdrIter::<_, ScpNomination>::new(dec)
+                ReadXdrIter::<_, ScpNomination>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpNomination(Box::new(t)))),
             ),
             TypeVariant::ScpStatement => Box::new(
-                ReadXdrIter::<_, ScpStatement>::new(dec)
+                ReadXdrIter::<_, ScpStatement>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatement(Box::new(t)))),
             ),
             TypeVariant::ScpStatementPledges => Box::new(
-                ReadXdrIter::<_, ScpStatementPledges>::new(dec)
+                ReadXdrIter::<_, ScpStatementPledges>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementPledges(Box::new(t)))),
             ),
             TypeVariant::ScpStatementPrepare => Box::new(
-                ReadXdrIter::<_, ScpStatementPrepare>::new(dec)
+                ReadXdrIter::<_, ScpStatementPrepare>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementPrepare(Box::new(t)))),
             ),
             TypeVariant::ScpStatementConfirm => Box::new(
-                ReadXdrIter::<_, ScpStatementConfirm>::new(dec)
+                ReadXdrIter::<_, ScpStatementConfirm>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementConfirm(Box::new(t)))),
             ),
             TypeVariant::ScpStatementExternalize => Box::new(
-                ReadXdrIter::<_, ScpStatementExternalize>::new(dec)
+                ReadXdrIter::<_, ScpStatementExternalize>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpStatementExternalize(Box::new(t)))),
             ),
             TypeVariant::ScpEnvelope => Box::new(
-                ReadXdrIter::<_, ScpEnvelope>::new(dec)
+                ReadXdrIter::<_, ScpEnvelope>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpEnvelope(Box::new(t)))),
             ),
             TypeVariant::ScpQuorumSet => Box::new(
-                ReadXdrIter::<_, ScpQuorumSet>::new(dec)
+                ReadXdrIter::<_, ScpQuorumSet>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
-                ReadXdrIter::<_, StoredTransactionSet>::new(dec)
+                ReadXdrIter::<_, StoredTransactionSet>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
             ),
             TypeVariant::PersistedScpStateV0 => Box::new(
-                ReadXdrIter::<_, PersistedScpStateV0>::new(dec)
+                ReadXdrIter::<_, PersistedScpStateV0>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpStateV0(Box::new(t)))),
             ),
             TypeVariant::PersistedScpStateV1 => Box::new(
-                ReadXdrIter::<_, PersistedScpStateV1>::new(dec)
+                ReadXdrIter::<_, PersistedScpStateV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpStateV1(Box::new(t)))),
             ),
             TypeVariant::PersistedScpState => Box::new(
-                ReadXdrIter::<_, PersistedScpState>::new(dec)
+                ReadXdrIter::<_, PersistedScpState>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t)))),
             ),
             TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, AccountId>::new(dec)
+                ReadXdrIter::<_, AccountId>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
             ),
             TypeVariant::Thresholds => Box::new(
-                ReadXdrIter::<_, Thresholds>::new(dec)
+                ReadXdrIter::<_, Thresholds>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Thresholds(Box::new(t)))),
             ),
             TypeVariant::String32 => Box::new(
-                ReadXdrIter::<_, String32>::new(dec)
+                ReadXdrIter::<_, String32>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::String32(Box::new(t)))),
             ),
             TypeVariant::String64 => Box::new(
-                ReadXdrIter::<_, String64>::new(dec)
+                ReadXdrIter::<_, String64>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::String64(Box::new(t)))),
             ),
             TypeVariant::SequenceNumber => Box::new(
-                ReadXdrIter::<_, SequenceNumber>::new(dec)
+                ReadXdrIter::<_, SequenceNumber>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t)))),
             ),
             TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, TimePoint>::new(dec)
+                ReadXdrIter::<_, TimePoint>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
             ),
             TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Duration>::new(dec)
+                ReadXdrIter::<_, Duration>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
             TypeVariant::DataValue => Box::new(
-                ReadXdrIter::<_, DataValue>::new(dec)
+                ReadXdrIter::<_, DataValue>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DataValue(Box::new(t)))),
             ),
             TypeVariant::PoolId => Box::new(
-                ReadXdrIter::<_, PoolId>::new(dec).map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
+                ReadXdrIter::<_, PoolId>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
             ),
             TypeVariant::AssetCode4 => Box::new(
-                ReadXdrIter::<_, AssetCode4>::new(dec)
+                ReadXdrIter::<_, AssetCode4>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetCode4(Box::new(t)))),
             ),
             TypeVariant::AssetCode12 => Box::new(
-                ReadXdrIter::<_, AssetCode12>::new(dec)
+                ReadXdrIter::<_, AssetCode12>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetCode12(Box::new(t)))),
             ),
             TypeVariant::AssetType => Box::new(
-                ReadXdrIter::<_, AssetType>::new(dec)
+                ReadXdrIter::<_, AssetType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetType(Box::new(t)))),
             ),
             TypeVariant::AssetCode => Box::new(
-                ReadXdrIter::<_, AssetCode>::new(dec)
+                ReadXdrIter::<_, AssetCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AssetCode(Box::new(t)))),
             ),
             TypeVariant::AlphaNum4 => Box::new(
-                ReadXdrIter::<_, AlphaNum4>::new(dec)
+                ReadXdrIter::<_, AlphaNum4>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AlphaNum4(Box::new(t)))),
             ),
             TypeVariant::AlphaNum12 => Box::new(
-                ReadXdrIter::<_, AlphaNum12>::new(dec)
+                ReadXdrIter::<_, AlphaNum12>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AlphaNum12(Box::new(t)))),
             ),
             TypeVariant::Asset => Box::new(
-                ReadXdrIter::<_, Asset>::new(dec).map(|r| r.map(|t| Self::Asset(Box::new(t)))),
+                ReadXdrIter::<_, Asset>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Asset(Box::new(t)))),
             ),
             TypeVariant::Price => Box::new(
-                ReadXdrIter::<_, Price>::new(dec).map(|r| r.map(|t| Self::Price(Box::new(t)))),
+                ReadXdrIter::<_, Price>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Price(Box::new(t)))),
             ),
             TypeVariant::Liabilities => Box::new(
-                ReadXdrIter::<_, Liabilities>::new(dec)
+                ReadXdrIter::<_, Liabilities>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Liabilities(Box::new(t)))),
             ),
             TypeVariant::ThresholdIndexes => Box::new(
-                ReadXdrIter::<_, ThresholdIndexes>::new(dec)
+                ReadXdrIter::<_, ThresholdIndexes>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ThresholdIndexes(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryType => Box::new(
-                ReadXdrIter::<_, LedgerEntryType>::new(dec)
+                ReadXdrIter::<_, LedgerEntryType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryType(Box::new(t)))),
             ),
             TypeVariant::Signer => Box::new(
-                ReadXdrIter::<_, Signer>::new(dec).map(|r| r.map(|t| Self::Signer(Box::new(t)))),
+                ReadXdrIter::<_, Signer>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Signer(Box::new(t)))),
             ),
             TypeVariant::AccountFlags => Box::new(
-                ReadXdrIter::<_, AccountFlags>::new(dec)
+                ReadXdrIter::<_, AccountFlags>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountFlags(Box::new(t)))),
             ),
             TypeVariant::SponsorshipDescriptor => Box::new(
-                ReadXdrIter::<_, SponsorshipDescriptor>::new(dec)
+                ReadXdrIter::<_, SponsorshipDescriptor>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SponsorshipDescriptor(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV3 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV3>::new(dec)
+                ReadXdrIter::<_, AccountEntryExtensionV3>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV3(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV2 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV2>::new(dec)
+                ReadXdrIter::<_, AccountEntryExtensionV2>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV2(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV2Ext => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV2Ext>::new(dec)
+                ReadXdrIter::<_, AccountEntryExtensionV2Ext>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV1>::new(dec)
+                ReadXdrIter::<_, AccountEntryExtensionV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV1Ext>::new(dec)
+                ReadXdrIter::<_, AccountEntryExtensionV1Ext>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::AccountEntry => Box::new(
-                ReadXdrIter::<_, AccountEntry>::new(dec)
+                ReadXdrIter::<_, AccountEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntry(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExt => Box::new(
-                ReadXdrIter::<_, AccountEntryExt>::new(dec)
+                ReadXdrIter::<_, AccountEntryExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountEntryExt(Box::new(t)))),
             ),
             TypeVariant::TrustLineFlags => Box::new(
-                ReadXdrIter::<_, TrustLineFlags>::new(dec)
+                ReadXdrIter::<_, TrustLineFlags>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineFlags(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolType => Box::new(
-                ReadXdrIter::<_, LiquidityPoolType>::new(dec)
+                ReadXdrIter::<_, LiquidityPoolType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolType(Box::new(t)))),
             ),
             TypeVariant::TrustLineAsset => Box::new(
-                ReadXdrIter::<_, TrustLineAsset>::new(dec)
+                ReadXdrIter::<_, TrustLineAsset>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineAsset(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2 => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExtensionV2>::new(dec)
+                ReadXdrIter::<_, TrustLineEntryExtensionV2>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2Ext => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExtensionV2Ext>::new(dec)
+                ReadXdrIter::<_, TrustLineEntryExtensionV2Ext>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntry => Box::new(
-                ReadXdrIter::<_, TrustLineEntry>::new(dec)
+                ReadXdrIter::<_, TrustLineEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntry(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExt => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExt>::new(dec)
+                ReadXdrIter::<_, TrustLineEntryExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryExt(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryV1 => Box::new(
-                ReadXdrIter::<_, TrustLineEntryV1>::new(dec)
+                ReadXdrIter::<_, TrustLineEntryV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryV1(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryV1Ext => Box::new(
-                ReadXdrIter::<_, TrustLineEntryV1Ext>::new(dec)
+                ReadXdrIter::<_, TrustLineEntryV1Ext>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TrustLineEntryV1Ext(Box::new(t)))),
             ),
             TypeVariant::OfferEntryFlags => Box::new(
-                ReadXdrIter::<_, OfferEntryFlags>::new(dec)
+                ReadXdrIter::<_, OfferEntryFlags>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OfferEntryFlags(Box::new(t)))),
             ),
             TypeVariant::OfferEntry => Box::new(
-                ReadXdrIter::<_, OfferEntry>::new(dec)
+                ReadXdrIter::<_, OfferEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OfferEntry(Box::new(t)))),
             ),
             TypeVariant::OfferEntryExt => Box::new(
-                ReadXdrIter::<_, OfferEntryExt>::new(dec)
+                ReadXdrIter::<_, OfferEntryExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OfferEntryExt(Box::new(t)))),
             ),
             TypeVariant::DataEntry => Box::new(
-                ReadXdrIter::<_, DataEntry>::new(dec)
+                ReadXdrIter::<_, DataEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DataEntry(Box::new(t)))),
             ),
             TypeVariant::DataEntryExt => Box::new(
-                ReadXdrIter::<_, DataEntryExt>::new(dec)
+                ReadXdrIter::<_, DataEntryExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DataEntryExt(Box::new(t)))),
             ),
             TypeVariant::ClaimPredicateType => Box::new(
-                ReadXdrIter::<_, ClaimPredicateType>::new(dec)
+                ReadXdrIter::<_, ClaimPredicateType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimPredicateType(Box::new(t)))),
             ),
             TypeVariant::ClaimPredicate => Box::new(
-                ReadXdrIter::<_, ClaimPredicate>::new(dec)
+                ReadXdrIter::<_, ClaimPredicate>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimPredicate(Box::new(t)))),
             ),
             TypeVariant::ClaimantType => Box::new(
-                ReadXdrIter::<_, ClaimantType>::new(dec)
+                ReadXdrIter::<_, ClaimantType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimantType(Box::new(t)))),
             ),
             TypeVariant::Claimant => Box::new(
-                ReadXdrIter::<_, Claimant>::new(dec)
+                ReadXdrIter::<_, Claimant>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Claimant(Box::new(t)))),
             ),
             TypeVariant::ClaimantV0 => Box::new(
-                ReadXdrIter::<_, ClaimantV0>::new(dec)
+                ReadXdrIter::<_, ClaimantV0>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceIdType => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceIdType>::new(dec)
+                ReadXdrIter::<_, ClaimableBalanceIdType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceId => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceId>::new(dec)
+                ReadXdrIter::<_, ClaimableBalanceId>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceFlags => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceFlags>::new(dec)
+                ReadXdrIter::<_, ClaimableBalanceFlags>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceFlags(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1>::new(dec)
+                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1Ext>::new(dec)
+                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1Ext>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntry => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntry>::new(dec)
+                ReadXdrIter::<_, ClaimableBalanceEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntry(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExt => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntryExt>::new(dec)
+                ReadXdrIter::<_, ClaimableBalanceEntryExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntryExt(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolConstantProductParameters => Box::new(
-                ReadXdrIter::<_, LiquidityPoolConstantProductParameters>::new(dec)
-                    .map(|r| r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t)))),
+                ReadXdrIter::<_, LiquidityPoolConstantProductParameters>::new(
+                    dec,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntry => Box::new(
-                ReadXdrIter::<_, LiquidityPoolEntry>::new(dec)
+                ReadXdrIter::<_, LiquidityPoolEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntry(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntryBody => Box::new(
-                ReadXdrIter::<_, LiquidityPoolEntryBody>::new(dec)
+                ReadXdrIter::<_, LiquidityPoolEntryBody>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryBody(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntryConstantProduct => Box::new(
-                ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(dec)
+                ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec)
+                ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, LedgerEntryExtensionV1Ext>::new(dec)
+                ReadXdrIter::<_, LedgerEntryExtensionV1Ext>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::LedgerEntry => Box::new(
-                ReadXdrIter::<_, LedgerEntry>::new(dec)
+                ReadXdrIter::<_, LedgerEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryData => Box::new(
-                ReadXdrIter::<_, LedgerEntryData>::new(dec)
+                ReadXdrIter::<_, LedgerEntryData>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryData(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExt => Box::new(
-                ReadXdrIter::<_, LedgerEntryExt>::new(dec)
+                ReadXdrIter::<_, LedgerEntryExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerKey => Box::new(
-                ReadXdrIter::<_, LedgerKey>::new(dec)
+                ReadXdrIter::<_, LedgerKey>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKey(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyAccount => Box::new(
-                ReadXdrIter::<_, LedgerKeyAccount>::new(dec)
+                ReadXdrIter::<_, LedgerKeyAccount>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyAccount(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyTrustLine => Box::new(
-                ReadXdrIter::<_, LedgerKeyTrustLine>::new(dec)
+                ReadXdrIter::<_, LedgerKeyTrustLine>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyTrustLine(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyOffer => Box::new(
-                ReadXdrIter::<_, LedgerKeyOffer>::new(dec)
+                ReadXdrIter::<_, LedgerKeyOffer>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyOffer(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyData => Box::new(
-                ReadXdrIter::<_, LedgerKeyData>::new(dec)
+                ReadXdrIter::<_, LedgerKeyData>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyData(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyClaimableBalance => Box::new(
-                ReadXdrIter::<_, LedgerKeyClaimableBalance>::new(dec)
+                ReadXdrIter::<_, LedgerKeyClaimableBalance>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyClaimableBalance(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyLiquidityPool => Box::new(
-                ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(dec)
+                ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
-                ReadXdrIter::<_, EnvelopeType>::new(dec)
+                ReadXdrIter::<_, EnvelopeType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::EnvelopeType(Box::new(t)))),
             ),
             TypeVariant::UpgradeType => Box::new(
-                ReadXdrIter::<_, UpgradeType>::new(dec)
+                ReadXdrIter::<_, UpgradeType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::UpgradeType(Box::new(t)))),
             ),
             TypeVariant::StellarValueType => Box::new(
-                ReadXdrIter::<_, StellarValueType>::new(dec)
+                ReadXdrIter::<_, StellarValueType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarValueType(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseValueSignature => Box::new(
-                ReadXdrIter::<_, LedgerCloseValueSignature>::new(dec)
+                ReadXdrIter::<_, LedgerCloseValueSignature>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseValueSignature(Box::new(t)))),
             ),
             TypeVariant::StellarValue => Box::new(
-                ReadXdrIter::<_, StellarValue>::new(dec)
+                ReadXdrIter::<_, StellarValue>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarValue(Box::new(t)))),
             ),
             TypeVariant::StellarValueExt => Box::new(
-                ReadXdrIter::<_, StellarValueExt>::new(dec)
+                ReadXdrIter::<_, StellarValueExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
-                ReadXdrIter::<_, LedgerHeaderFlags>::new(dec)
+                ReadXdrIter::<_, LedgerHeaderFlags>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderFlags(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1 => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExtensionV1>::new(dec)
+                ReadXdrIter::<_, LedgerHeaderExtensionV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExtensionV1Ext>::new(dec)
+                ReadXdrIter::<_, LedgerHeaderExtensionV1Ext>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::LedgerHeader => Box::new(
-                ReadXdrIter::<_, LedgerHeader>::new(dec)
+                ReadXdrIter::<_, LedgerHeader>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeader(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExt => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExt>::new(dec)
+                ReadXdrIter::<_, LedgerHeaderExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderExt(Box::new(t)))),
             ),
             TypeVariant::LedgerUpgradeType => Box::new(
-                ReadXdrIter::<_, LedgerUpgradeType>::new(dec)
+                ReadXdrIter::<_, LedgerUpgradeType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
             ),
             TypeVariant::LedgerUpgrade => Box::new(
-                ReadXdrIter::<_, LedgerUpgrade>::new(dec)
+                ReadXdrIter::<_, LedgerUpgrade>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
-                ReadXdrIter::<_, BucketEntryType>::new(dec)
+                ReadXdrIter::<_, BucketEntryType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t)))),
             ),
             TypeVariant::BucketMetadata => Box::new(
-                ReadXdrIter::<_, BucketMetadata>::new(dec)
+                ReadXdrIter::<_, BucketMetadata>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t)))),
             ),
             TypeVariant::BucketMetadataExt => Box::new(
-                ReadXdrIter::<_, BucketMetadataExt>::new(dec)
+                ReadXdrIter::<_, BucketMetadataExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketMetadataExt(Box::new(t)))),
             ),
             TypeVariant::BucketEntry => Box::new(
-                ReadXdrIter::<_, BucketEntry>::new(dec)
+                ReadXdrIter::<_, BucketEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BucketEntry(Box::new(t)))),
             ),
             TypeVariant::TxSetComponentType => Box::new(
-                ReadXdrIter::<_, TxSetComponentType>::new(dec)
+                ReadXdrIter::<_, TxSetComponentType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
-                ReadXdrIter::<_, TxSetComponent>::new(dec)
+                ReadXdrIter::<_, TxSetComponent>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxSetComponent(Box::new(t)))),
             ),
             TypeVariant::TxSetComponentTxsMaybeDiscountedFee => Box::new(
-                ReadXdrIter::<_, TxSetComponentTxsMaybeDiscountedFee>::new(dec)
+                ReadXdrIter::<_, TxSetComponentTxsMaybeDiscountedFee>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t)))),
             ),
             TypeVariant::TransactionPhase => Box::new(
-                ReadXdrIter::<_, TransactionPhase>::new(dec)
+                ReadXdrIter::<_, TransactionPhase>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionPhase(Box::new(t)))),
             ),
             TypeVariant::TransactionSet => Box::new(
-                ReadXdrIter::<_, TransactionSet>::new(dec)
+                ReadXdrIter::<_, TransactionSet>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionSet(Box::new(t)))),
             ),
             TypeVariant::TransactionSetV1 => Box::new(
-                ReadXdrIter::<_, TransactionSetV1>::new(dec)
+                ReadXdrIter::<_, TransactionSetV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionSetV1(Box::new(t)))),
             ),
             TypeVariant::GeneralizedTransactionSet => Box::new(
-                ReadXdrIter::<_, GeneralizedTransactionSet>::new(dec)
+                ReadXdrIter::<_, GeneralizedTransactionSet>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::GeneralizedTransactionSet(Box::new(t)))),
             ),
             TypeVariant::TransactionResultPair => Box::new(
-                ReadXdrIter::<_, TransactionResultPair>::new(dec)
+                ReadXdrIter::<_, TransactionResultPair>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultPair(Box::new(t)))),
             ),
             TypeVariant::TransactionResultSet => Box::new(
-                ReadXdrIter::<_, TransactionResultSet>::new(dec)
+                ReadXdrIter::<_, TransactionResultSet>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultSet(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryEntry => Box::new(
-                ReadXdrIter::<_, TransactionHistoryEntry>::new(dec)
+                ReadXdrIter::<_, TransactionHistoryEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryEntryExt => Box::new(
-                ReadXdrIter::<_, TransactionHistoryEntryExt>::new(dec)
+                ReadXdrIter::<_, TransactionHistoryEntryExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionHistoryEntryExt(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryResultEntry => Box::new(
-                ReadXdrIter::<_, TransactionHistoryResultEntry>::new(dec)
+                ReadXdrIter::<_, TransactionHistoryResultEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionHistoryResultEntry(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryResultEntryExt => Box::new(
-                ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(dec)
+                ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
-                ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(dec)
+                ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntryExt => Box::new(
-                ReadXdrIter::<_, LedgerHeaderHistoryEntryExt>::new(dec)
+                ReadXdrIter::<_, LedgerHeaderHistoryEntryExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerScpMessages => Box::new(
-                ReadXdrIter::<_, LedgerScpMessages>::new(dec)
+                ReadXdrIter::<_, LedgerScpMessages>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerScpMessages(Box::new(t)))),
             ),
             TypeVariant::ScpHistoryEntryV0 => Box::new(
-                ReadXdrIter::<_, ScpHistoryEntryV0>::new(dec)
+                ReadXdrIter::<_, ScpHistoryEntryV0>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpHistoryEntryV0(Box::new(t)))),
             ),
             TypeVariant::ScpHistoryEntry => Box::new(
-                ReadXdrIter::<_, ScpHistoryEntry>::new(dec)
+                ReadXdrIter::<_, ScpHistoryEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChangeType => Box::new(
-                ReadXdrIter::<_, LedgerEntryChangeType>::new(dec)
+                ReadXdrIter::<_, LedgerEntryChangeType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryChangeType(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChange => Box::new(
-                ReadXdrIter::<_, LedgerEntryChange>::new(dec)
+                ReadXdrIter::<_, LedgerEntryChange>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryChange(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChanges => Box::new(
-                ReadXdrIter::<_, LedgerEntryChanges>::new(dec)
+                ReadXdrIter::<_, LedgerEntryChanges>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryChanges(Box::new(t)))),
             ),
             TypeVariant::OperationMeta => Box::new(
-                ReadXdrIter::<_, OperationMeta>::new(dec)
+                ReadXdrIter::<_, OperationMeta>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV1 => Box::new(
-                ReadXdrIter::<_, TransactionMetaV1>::new(dec)
+                ReadXdrIter::<_, TransactionMetaV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMetaV1(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV2 => Box::new(
-                ReadXdrIter::<_, TransactionMetaV2>::new(dec)
+                ReadXdrIter::<_, TransactionMetaV2>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t)))),
             ),
             TypeVariant::TransactionMeta => Box::new(
-                ReadXdrIter::<_, TransactionMeta>::new(dec)
+                ReadXdrIter::<_, TransactionMeta>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionResultMeta => Box::new(
-                ReadXdrIter::<_, TransactionResultMeta>::new(dec)
+                ReadXdrIter::<_, TransactionResultMeta>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
-                ReadXdrIter::<_, UpgradeEntryMeta>::new(dec)
+                ReadXdrIter::<_, UpgradeEntryMeta>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMetaV0 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV0>::new(dec)
+                ReadXdrIter::<_, LedgerCloseMetaV0>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV0(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMetaV1 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV1>::new(dec)
+                ReadXdrIter::<_, LedgerCloseMetaV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
-                ReadXdrIter::<_, LedgerCloseMeta>::new(dec)
+                ReadXdrIter::<_, LedgerCloseMeta>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t)))),
             ),
             TypeVariant::ErrorCode => Box::new(
-                ReadXdrIter::<_, ErrorCode>::new(dec)
+                ReadXdrIter::<_, ErrorCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ErrorCode(Box::new(t)))),
             ),
             TypeVariant::SError => Box::new(
-                ReadXdrIter::<_, SError>::new(dec).map(|r| r.map(|t| Self::SError(Box::new(t)))),
+                ReadXdrIter::<_, SError>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SError(Box::new(t)))),
             ),
             TypeVariant::SendMore => Box::new(
-                ReadXdrIter::<_, SendMore>::new(dec)
+                ReadXdrIter::<_, SendMore>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SendMore(Box::new(t)))),
             ),
             TypeVariant::AuthCert => Box::new(
-                ReadXdrIter::<_, AuthCert>::new(dec)
+                ReadXdrIter::<_, AuthCert>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AuthCert(Box::new(t)))),
             ),
             TypeVariant::Hello => Box::new(
-                ReadXdrIter::<_, Hello>::new(dec).map(|r| r.map(|t| Self::Hello(Box::new(t)))),
+                ReadXdrIter::<_, Hello>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Hello(Box::new(t)))),
             ),
             TypeVariant::Auth => Box::new(
-                ReadXdrIter::<_, Auth>::new(dec).map(|r| r.map(|t| Self::Auth(Box::new(t)))),
+                ReadXdrIter::<_, Auth>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Auth(Box::new(t)))),
             ),
             TypeVariant::IpAddrType => Box::new(
-                ReadXdrIter::<_, IpAddrType>::new(dec)
+                ReadXdrIter::<_, IpAddrType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::IpAddrType(Box::new(t)))),
             ),
             TypeVariant::PeerAddress => Box::new(
-                ReadXdrIter::<_, PeerAddress>::new(dec)
+                ReadXdrIter::<_, PeerAddress>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerAddress(Box::new(t)))),
             ),
             TypeVariant::PeerAddressIp => Box::new(
-                ReadXdrIter::<_, PeerAddressIp>::new(dec)
+                ReadXdrIter::<_, PeerAddressIp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerAddressIp(Box::new(t)))),
             ),
             TypeVariant::MessageType => Box::new(
-                ReadXdrIter::<_, MessageType>::new(dec)
+                ReadXdrIter::<_, MessageType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::MessageType(Box::new(t)))),
             ),
             TypeVariant::DontHave => Box::new(
-                ReadXdrIter::<_, DontHave>::new(dec)
+                ReadXdrIter::<_, DontHave>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DontHave(Box::new(t)))),
             ),
             TypeVariant::SurveyMessageCommandType => Box::new(
-                ReadXdrIter::<_, SurveyMessageCommandType>::new(dec)
+                ReadXdrIter::<_, SurveyMessageCommandType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t)))),
             ),
             TypeVariant::SurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, SurveyRequestMessage>::new(dec)
+                ReadXdrIter::<_, SurveyRequestMessage>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
             ),
             TypeVariant::SignedSurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(dec)
+                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t)))),
             ),
             TypeVariant::EncryptedBody => Box::new(
-                ReadXdrIter::<_, EncryptedBody>::new(dec)
+                ReadXdrIter::<_, EncryptedBody>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::EncryptedBody(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, SurveyResponseMessage>::new(dec)
+                ReadXdrIter::<_, SurveyResponseMessage>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t)))),
             ),
             TypeVariant::SignedSurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(dec)
+                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t)))),
             ),
             TypeVariant::PeerStats => Box::new(
-                ReadXdrIter::<_, PeerStats>::new(dec)
+                ReadXdrIter::<_, PeerStats>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerStats(Box::new(t)))),
             ),
             TypeVariant::PeerStatList => Box::new(
-                ReadXdrIter::<_, PeerStatList>::new(dec)
+                ReadXdrIter::<_, PeerStatList>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
             TypeVariant::TopologyResponseBody => Box::new(
-                ReadXdrIter::<_, TopologyResponseBody>::new(dec)
+                ReadXdrIter::<_, TopologyResponseBody>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
-                ReadXdrIter::<_, SurveyResponseBody>::new(dec)
+                ReadXdrIter::<_, SurveyResponseBody>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyResponseBody(Box::new(t)))),
             ),
             TypeVariant::TxAdvertVector => Box::new(
-                ReadXdrIter::<_, TxAdvertVector>::new(dec)
+                ReadXdrIter::<_, TxAdvertVector>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxAdvertVector(Box::new(t)))),
             ),
             TypeVariant::FloodAdvert => Box::new(
-                ReadXdrIter::<_, FloodAdvert>::new(dec)
+                ReadXdrIter::<_, FloodAdvert>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FloodAdvert(Box::new(t)))),
             ),
             TypeVariant::TxDemandVector => Box::new(
-                ReadXdrIter::<_, TxDemandVector>::new(dec)
+                ReadXdrIter::<_, TxDemandVector>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TxDemandVector(Box::new(t)))),
             ),
             TypeVariant::FloodDemand => Box::new(
-                ReadXdrIter::<_, FloodDemand>::new(dec)
+                ReadXdrIter::<_, FloodDemand>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FloodDemand(Box::new(t)))),
             ),
             TypeVariant::StellarMessage => Box::new(
-                ReadXdrIter::<_, StellarMessage>::new(dec)
+                ReadXdrIter::<_, StellarMessage>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StellarMessage(Box::new(t)))),
             ),
             TypeVariant::AuthenticatedMessage => Box::new(
-                ReadXdrIter::<_, AuthenticatedMessage>::new(dec)
+                ReadXdrIter::<_, AuthenticatedMessage>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AuthenticatedMessage(Box::new(t)))),
             ),
             TypeVariant::AuthenticatedMessageV0 => Box::new(
-                ReadXdrIter::<_, AuthenticatedMessageV0>::new(dec)
+                ReadXdrIter::<_, AuthenticatedMessageV0>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AuthenticatedMessageV0(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolParameters => Box::new(
-                ReadXdrIter::<_, LiquidityPoolParameters>::new(dec)
+                ReadXdrIter::<_, LiquidityPoolParameters>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolParameters(Box::new(t)))),
             ),
             TypeVariant::MuxedAccount => Box::new(
-                ReadXdrIter::<_, MuxedAccount>::new(dec)
+                ReadXdrIter::<_, MuxedAccount>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::MuxedAccount(Box::new(t)))),
             ),
             TypeVariant::MuxedAccountMed25519 => Box::new(
-                ReadXdrIter::<_, MuxedAccountMed25519>::new(dec)
+                ReadXdrIter::<_, MuxedAccountMed25519>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::MuxedAccountMed25519(Box::new(t)))),
             ),
             TypeVariant::DecoratedSignature => Box::new(
-                ReadXdrIter::<_, DecoratedSignature>::new(dec)
+                ReadXdrIter::<_, DecoratedSignature>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t)))),
             ),
             TypeVariant::OperationType => Box::new(
-                ReadXdrIter::<_, OperationType>::new(dec)
+                ReadXdrIter::<_, OperationType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationType(Box::new(t)))),
             ),
             TypeVariant::CreateAccountOp => Box::new(
-                ReadXdrIter::<_, CreateAccountOp>::new(dec)
+                ReadXdrIter::<_, CreateAccountOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateAccountOp(Box::new(t)))),
             ),
             TypeVariant::PaymentOp => Box::new(
-                ReadXdrIter::<_, PaymentOp>::new(dec)
+                ReadXdrIter::<_, PaymentOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PaymentOp(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveOp => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveOp>::new(dec)
+                ReadXdrIter::<_, PathPaymentStrictReceiveOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendOp => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendOp>::new(dec)
+                ReadXdrIter::<_, PathPaymentStrictSendOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendOp(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferOp => Box::new(
-                ReadXdrIter::<_, ManageSellOfferOp>::new(dec)
+                ReadXdrIter::<_, ManageSellOfferOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageSellOfferOp(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferOp => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferOp>::new(dec)
+                ReadXdrIter::<_, ManageBuyOfferOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageBuyOfferOp(Box::new(t)))),
             ),
             TypeVariant::CreatePassiveSellOfferOp => Box::new(
-                ReadXdrIter::<_, CreatePassiveSellOfferOp>::new(dec)
+                ReadXdrIter::<_, CreatePassiveSellOfferOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreatePassiveSellOfferOp(Box::new(t)))),
             ),
             TypeVariant::SetOptionsOp => Box::new(
-                ReadXdrIter::<_, SetOptionsOp>::new(dec)
+                ReadXdrIter::<_, SetOptionsOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetOptionsOp(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustAsset => Box::new(
-                ReadXdrIter::<_, ChangeTrustAsset>::new(dec)
+                ReadXdrIter::<_, ChangeTrustAsset>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ChangeTrustAsset(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustOp => Box::new(
-                ReadXdrIter::<_, ChangeTrustOp>::new(dec)
+                ReadXdrIter::<_, ChangeTrustOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ChangeTrustOp(Box::new(t)))),
             ),
             TypeVariant::AllowTrustOp => Box::new(
-                ReadXdrIter::<_, AllowTrustOp>::new(dec)
+                ReadXdrIter::<_, AllowTrustOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AllowTrustOp(Box::new(t)))),
             ),
             TypeVariant::ManageDataOp => Box::new(
-                ReadXdrIter::<_, ManageDataOp>::new(dec)
+                ReadXdrIter::<_, ManageDataOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageDataOp(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceOp => Box::new(
-                ReadXdrIter::<_, BumpSequenceOp>::new(dec)
+                ReadXdrIter::<_, BumpSequenceOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BumpSequenceOp(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, CreateClaimableBalanceOp>::new(dec)
+                ReadXdrIter::<_, CreateClaimableBalanceOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, ClaimClaimableBalanceOp>::new(dec)
+                ReadXdrIter::<_, ClaimClaimableBalanceOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesOp => Box::new(
-                ReadXdrIter::<_, BeginSponsoringFutureReservesOp>::new(dec)
+                ReadXdrIter::<_, BeginSponsoringFutureReservesOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipType => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipType>::new(dec)
+                ReadXdrIter::<_, RevokeSponsorshipType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::RevokeSponsorshipType(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipOp => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipOp>::new(dec)
+                ReadXdrIter::<_, RevokeSponsorshipOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::RevokeSponsorshipOp(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipOpSigner => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipOpSigner>::new(dec)
+                ReadXdrIter::<_, RevokeSponsorshipOpSigner>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t)))),
             ),
             TypeVariant::ClawbackOp => Box::new(
-                ReadXdrIter::<_, ClawbackOp>::new(dec)
+                ReadXdrIter::<_, ClawbackOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackOp(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, ClawbackClaimableBalanceOp>::new(dec)
+                ReadXdrIter::<_, ClawbackClaimableBalanceOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsOp => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsOp>::new(dec)
+                ReadXdrIter::<_, SetTrustLineFlagsOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsOp(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositOp => Box::new(
-                ReadXdrIter::<_, LiquidityPoolDepositOp>::new(dec)
+                ReadXdrIter::<_, LiquidityPoolDepositOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolDepositOp(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawOp => Box::new(
-                ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(dec)
+                ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))),
             ),
             TypeVariant::Operation => Box::new(
-                ReadXdrIter::<_, Operation>::new(dec)
+                ReadXdrIter::<_, Operation>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Operation(Box::new(t)))),
             ),
             TypeVariant::OperationBody => Box::new(
-                ReadXdrIter::<_, OperationBody>::new(dec)
+                ReadXdrIter::<_, OperationBody>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationBody(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimage => Box::new(
-                ReadXdrIter::<_, HashIdPreimage>::new(dec)
+                ReadXdrIter::<_, HashIdPreimage>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HashIdPreimage(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageOperationId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageOperationId>::new(dec)
+                ReadXdrIter::<_, HashIdPreimageOperationId>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HashIdPreimageOperationId(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageRevokeId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageRevokeId>::new(dec)
+                ReadXdrIter::<_, HashIdPreimageRevokeId>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
-                ReadXdrIter::<_, MemoType>::new(dec)
+                ReadXdrIter::<_, MemoType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
             ),
             TypeVariant::Memo => Box::new(
-                ReadXdrIter::<_, Memo>::new(dec).map(|r| r.map(|t| Self::Memo(Box::new(t)))),
+                ReadXdrIter::<_, Memo>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Memo(Box::new(t)))),
             ),
             TypeVariant::TimeBounds => Box::new(
-                ReadXdrIter::<_, TimeBounds>::new(dec)
+                ReadXdrIter::<_, TimeBounds>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TimeBounds(Box::new(t)))),
             ),
             TypeVariant::LedgerBounds => Box::new(
-                ReadXdrIter::<_, LedgerBounds>::new(dec)
+                ReadXdrIter::<_, LedgerBounds>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerBounds(Box::new(t)))),
             ),
             TypeVariant::PreconditionsV2 => Box::new(
-                ReadXdrIter::<_, PreconditionsV2>::new(dec)
+                ReadXdrIter::<_, PreconditionsV2>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PreconditionsV2(Box::new(t)))),
             ),
             TypeVariant::PreconditionType => Box::new(
-                ReadXdrIter::<_, PreconditionType>::new(dec)
+                ReadXdrIter::<_, PreconditionType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PreconditionType(Box::new(t)))),
             ),
             TypeVariant::Preconditions => Box::new(
-                ReadXdrIter::<_, Preconditions>::new(dec)
+                ReadXdrIter::<_, Preconditions>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Preconditions(Box::new(t)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
-                ReadXdrIter::<_, TransactionV0>::new(dec)
+                ReadXdrIter::<_, TransactionV0>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionV0(Box::new(t)))),
             ),
             TypeVariant::TransactionV0Ext => Box::new(
-                ReadXdrIter::<_, TransactionV0Ext>::new(dec)
+                ReadXdrIter::<_, TransactionV0Ext>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionV0Ext(Box::new(t)))),
             ),
             TypeVariant::TransactionV0Envelope => Box::new(
-                ReadXdrIter::<_, TransactionV0Envelope>::new(dec)
+                ReadXdrIter::<_, TransactionV0Envelope>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionV0Envelope(Box::new(t)))),
             ),
             TypeVariant::Transaction => Box::new(
-                ReadXdrIter::<_, Transaction>::new(dec)
+                ReadXdrIter::<_, Transaction>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Transaction(Box::new(t)))),
             ),
             TypeVariant::TransactionExt => Box::new(
-                ReadXdrIter::<_, TransactionExt>::new(dec)
+                ReadXdrIter::<_, TransactionExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionExt(Box::new(t)))),
             ),
             TypeVariant::TransactionV1Envelope => Box::new(
-                ReadXdrIter::<_, TransactionV1Envelope>::new(dec)
+                ReadXdrIter::<_, TransactionV1Envelope>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionV1Envelope(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransaction => Box::new(
-                ReadXdrIter::<_, FeeBumpTransaction>::new(dec)
+                ReadXdrIter::<_, FeeBumpTransaction>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FeeBumpTransaction(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionInnerTx => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionInnerTx>::new(dec)
+                ReadXdrIter::<_, FeeBumpTransactionInnerTx>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionExt => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionExt>::new(dec)
+                ReadXdrIter::<_, FeeBumpTransactionExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FeeBumpTransactionExt(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionEnvelope => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionEnvelope>::new(dec)
+                ReadXdrIter::<_, FeeBumpTransactionEnvelope>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t)))),
             ),
             TypeVariant::TransactionEnvelope => Box::new(
-                ReadXdrIter::<_, TransactionEnvelope>::new(dec)
+                ReadXdrIter::<_, TransactionEnvelope>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionEnvelope(Box::new(t)))),
             ),
             TypeVariant::TransactionSignaturePayload => Box::new(
-                ReadXdrIter::<_, TransactionSignaturePayload>::new(dec)
+                ReadXdrIter::<_, TransactionSignaturePayload>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionSignaturePayload(Box::new(t)))),
             ),
             TypeVariant::TransactionSignaturePayloadTaggedTransaction => Box::new(
-                ReadXdrIter::<_, TransactionSignaturePayloadTaggedTransaction>::new(dec).map(|r| {
+                ReadXdrIter::<_, TransactionSignaturePayloadTaggedTransaction>::new(
+                    dec,
+                    r.depth_remaining,
+                )
+                .map(|r| {
                     r.map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t)))
                 }),
             ),
             TypeVariant::ClaimAtomType => Box::new(
-                ReadXdrIter::<_, ClaimAtomType>::new(dec)
+                ReadXdrIter::<_, ClaimAtomType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimAtomType(Box::new(t)))),
             ),
             TypeVariant::ClaimOfferAtomV0 => Box::new(
-                ReadXdrIter::<_, ClaimOfferAtomV0>::new(dec)
+                ReadXdrIter::<_, ClaimOfferAtomV0>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimOfferAtomV0(Box::new(t)))),
             ),
             TypeVariant::ClaimOfferAtom => Box::new(
-                ReadXdrIter::<_, ClaimOfferAtom>::new(dec)
+                ReadXdrIter::<_, ClaimOfferAtom>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimOfferAtom(Box::new(t)))),
             ),
             TypeVariant::ClaimLiquidityAtom => Box::new(
-                ReadXdrIter::<_, ClaimLiquidityAtom>::new(dec)
+                ReadXdrIter::<_, ClaimLiquidityAtom>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimLiquidityAtom(Box::new(t)))),
             ),
             TypeVariant::ClaimAtom => Box::new(
-                ReadXdrIter::<_, ClaimAtom>::new(dec)
+                ReadXdrIter::<_, ClaimAtom>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimAtom(Box::new(t)))),
             ),
             TypeVariant::CreateAccountResultCode => Box::new(
-                ReadXdrIter::<_, CreateAccountResultCode>::new(dec)
+                ReadXdrIter::<_, CreateAccountResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateAccountResultCode(Box::new(t)))),
             ),
             TypeVariant::CreateAccountResult => Box::new(
-                ReadXdrIter::<_, CreateAccountResult>::new(dec)
+                ReadXdrIter::<_, CreateAccountResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateAccountResult(Box::new(t)))),
             ),
             TypeVariant::PaymentResultCode => Box::new(
-                ReadXdrIter::<_, PaymentResultCode>::new(dec)
+                ReadXdrIter::<_, PaymentResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PaymentResultCode(Box::new(t)))),
             ),
             TypeVariant::PaymentResult => Box::new(
-                ReadXdrIter::<_, PaymentResult>::new(dec)
+                ReadXdrIter::<_, PaymentResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PaymentResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultCode => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveResultCode>::new(dec)
+                ReadXdrIter::<_, PathPaymentStrictReceiveResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t)))),
             ),
             TypeVariant::SimplePaymentResult => Box::new(
-                ReadXdrIter::<_, SimplePaymentResult>::new(dec)
+                ReadXdrIter::<_, SimplePaymentResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SimplePaymentResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResult => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveResult>::new(dec)
+                ReadXdrIter::<_, PathPaymentStrictReceiveResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultSuccess => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveResultSuccess>::new(dec)
-                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t)))),
+                ReadXdrIter::<_, PathPaymentStrictReceiveResultSuccess>::new(
+                    dec,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResultCode => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendResultCode>::new(dec)
+                ReadXdrIter::<_, PathPaymentStrictSendResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResult => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendResult>::new(dec)
+                ReadXdrIter::<_, PathPaymentStrictSendResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResultSuccess => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendResultSuccess>::new(dec)
+                ReadXdrIter::<_, PathPaymentStrictSendResultSuccess>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferResultCode => Box::new(
-                ReadXdrIter::<_, ManageSellOfferResultCode>::new(dec)
+                ReadXdrIter::<_, ManageSellOfferResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageSellOfferResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageOfferEffect => Box::new(
-                ReadXdrIter::<_, ManageOfferEffect>::new(dec)
+                ReadXdrIter::<_, ManageOfferEffect>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageOfferEffect(Box::new(t)))),
             ),
             TypeVariant::ManageOfferSuccessResult => Box::new(
-                ReadXdrIter::<_, ManageOfferSuccessResult>::new(dec)
+                ReadXdrIter::<_, ManageOfferSuccessResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageOfferSuccessResult(Box::new(t)))),
             ),
             TypeVariant::ManageOfferSuccessResultOffer => Box::new(
-                ReadXdrIter::<_, ManageOfferSuccessResultOffer>::new(dec)
+                ReadXdrIter::<_, ManageOfferSuccessResultOffer>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferResult => Box::new(
-                ReadXdrIter::<_, ManageSellOfferResult>::new(dec)
+                ReadXdrIter::<_, ManageSellOfferResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageSellOfferResult(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferResultCode => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferResultCode>::new(dec)
+                ReadXdrIter::<_, ManageBuyOfferResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageBuyOfferResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferResult => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferResult>::new(dec)
+                ReadXdrIter::<_, ManageBuyOfferResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageBuyOfferResult(Box::new(t)))),
             ),
             TypeVariant::SetOptionsResultCode => Box::new(
-                ReadXdrIter::<_, SetOptionsResultCode>::new(dec)
+                ReadXdrIter::<_, SetOptionsResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetOptionsResultCode(Box::new(t)))),
             ),
             TypeVariant::SetOptionsResult => Box::new(
-                ReadXdrIter::<_, SetOptionsResult>::new(dec)
+                ReadXdrIter::<_, SetOptionsResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetOptionsResult(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustResultCode => Box::new(
-                ReadXdrIter::<_, ChangeTrustResultCode>::new(dec)
+                ReadXdrIter::<_, ChangeTrustResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ChangeTrustResultCode(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustResult => Box::new(
-                ReadXdrIter::<_, ChangeTrustResult>::new(dec)
+                ReadXdrIter::<_, ChangeTrustResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ChangeTrustResult(Box::new(t)))),
             ),
             TypeVariant::AllowTrustResultCode => Box::new(
-                ReadXdrIter::<_, AllowTrustResultCode>::new(dec)
+                ReadXdrIter::<_, AllowTrustResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AllowTrustResultCode(Box::new(t)))),
             ),
             TypeVariant::AllowTrustResult => Box::new(
-                ReadXdrIter::<_, AllowTrustResult>::new(dec)
+                ReadXdrIter::<_, AllowTrustResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AllowTrustResult(Box::new(t)))),
             ),
             TypeVariant::AccountMergeResultCode => Box::new(
-                ReadXdrIter::<_, AccountMergeResultCode>::new(dec)
+                ReadXdrIter::<_, AccountMergeResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountMergeResultCode(Box::new(t)))),
             ),
             TypeVariant::AccountMergeResult => Box::new(
-                ReadXdrIter::<_, AccountMergeResult>::new(dec)
+                ReadXdrIter::<_, AccountMergeResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::AccountMergeResult(Box::new(t)))),
             ),
             TypeVariant::InflationResultCode => Box::new(
-                ReadXdrIter::<_, InflationResultCode>::new(dec)
+                ReadXdrIter::<_, InflationResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InflationResultCode(Box::new(t)))),
             ),
             TypeVariant::InflationPayout => Box::new(
-                ReadXdrIter::<_, InflationPayout>::new(dec)
+                ReadXdrIter::<_, InflationPayout>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InflationPayout(Box::new(t)))),
             ),
             TypeVariant::InflationResult => Box::new(
-                ReadXdrIter::<_, InflationResult>::new(dec)
+                ReadXdrIter::<_, InflationResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InflationResult(Box::new(t)))),
             ),
             TypeVariant::ManageDataResultCode => Box::new(
-                ReadXdrIter::<_, ManageDataResultCode>::new(dec)
+                ReadXdrIter::<_, ManageDataResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageDataResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageDataResult => Box::new(
-                ReadXdrIter::<_, ManageDataResult>::new(dec)
+                ReadXdrIter::<_, ManageDataResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ManageDataResult(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceResultCode => Box::new(
-                ReadXdrIter::<_, BumpSequenceResultCode>::new(dec)
+                ReadXdrIter::<_, BumpSequenceResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BumpSequenceResultCode(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceResult => Box::new(
-                ReadXdrIter::<_, BumpSequenceResult>::new(dec)
+                ReadXdrIter::<_, BumpSequenceResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BumpSequenceResult(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, CreateClaimableBalanceResultCode>::new(dec)
+                ReadXdrIter::<_, CreateClaimableBalanceResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, CreateClaimableBalanceResult>::new(dec)
+                ReadXdrIter::<_, CreateClaimableBalanceResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, ClaimClaimableBalanceResultCode>::new(dec)
+                ReadXdrIter::<_, ClaimClaimableBalanceResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, ClaimClaimableBalanceResult>::new(dec)
+                ReadXdrIter::<_, ClaimClaimableBalanceResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClaimClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResultCode => Box::new(
-                ReadXdrIter::<_, BeginSponsoringFutureReservesResultCode>::new(dec)
-                    .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t)))),
+                ReadXdrIter::<_, BeginSponsoringFutureReservesResultCode>::new(
+                    dec,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResult => Box::new(
-                ReadXdrIter::<_, BeginSponsoringFutureReservesResult>::new(dec)
+                ReadXdrIter::<_, BeginSponsoringFutureReservesResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResultCode => Box::new(
-                ReadXdrIter::<_, EndSponsoringFutureReservesResultCode>::new(dec)
-                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t)))),
+                ReadXdrIter::<_, EndSponsoringFutureReservesResultCode>::new(
+                    dec,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResult => Box::new(
-                ReadXdrIter::<_, EndSponsoringFutureReservesResult>::new(dec)
+                ReadXdrIter::<_, EndSponsoringFutureReservesResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipResultCode => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipResultCode>::new(dec)
+                ReadXdrIter::<_, RevokeSponsorshipResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::RevokeSponsorshipResultCode(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipResult => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipResult>::new(dec)
+                ReadXdrIter::<_, RevokeSponsorshipResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::RevokeSponsorshipResult(Box::new(t)))),
             ),
             TypeVariant::ClawbackResultCode => Box::new(
-                ReadXdrIter::<_, ClawbackResultCode>::new(dec)
+                ReadXdrIter::<_, ClawbackResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackResultCode(Box::new(t)))),
             ),
             TypeVariant::ClawbackResult => Box::new(
-                ReadXdrIter::<_, ClawbackResult>::new(dec)
+                ReadXdrIter::<_, ClawbackResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackResult(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, ClawbackClaimableBalanceResultCode>::new(dec)
+                ReadXdrIter::<_, ClawbackClaimableBalanceResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, ClawbackClaimableBalanceResult>::new(dec)
+                ReadXdrIter::<_, ClawbackClaimableBalanceResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsResultCode => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsResultCode>::new(dec)
+                ReadXdrIter::<_, SetTrustLineFlagsResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsResult => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsResult>::new(dec)
+                ReadXdrIter::<_, SetTrustLineFlagsResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsResult(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositResultCode => Box::new(
-                ReadXdrIter::<_, LiquidityPoolDepositResultCode>::new(dec)
+                ReadXdrIter::<_, LiquidityPoolDepositResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositResult => Box::new(
-                ReadXdrIter::<_, LiquidityPoolDepositResult>::new(dec)
+                ReadXdrIter::<_, LiquidityPoolDepositResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolDepositResult(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResultCode => Box::new(
-                ReadXdrIter::<_, LiquidityPoolWithdrawResultCode>::new(dec)
+                ReadXdrIter::<_, LiquidityPoolWithdrawResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResult => Box::new(
-                ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(dec)
+                ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))),
             ),
             TypeVariant::OperationResultCode => Box::new(
-                ReadXdrIter::<_, OperationResultCode>::new(dec)
+                ReadXdrIter::<_, OperationResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t)))),
             ),
             TypeVariant::OperationResult => Box::new(
-                ReadXdrIter::<_, OperationResult>::new(dec)
+                ReadXdrIter::<_, OperationResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResult(Box::new(t)))),
             ),
             TypeVariant::OperationResultTr => Box::new(
-                ReadXdrIter::<_, OperationResultTr>::new(dec)
+                ReadXdrIter::<_, OperationResultTr>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResultTr(Box::new(t)))),
             ),
             TypeVariant::TransactionResultCode => Box::new(
-                ReadXdrIter::<_, TransactionResultCode>::new(dec)
+                ReadXdrIter::<_, TransactionResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultCode(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResult => Box::new(
-                ReadXdrIter::<_, InnerTransactionResult>::new(dec)
+                ReadXdrIter::<_, InnerTransactionResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InnerTransactionResult(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultResult => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultResult>::new(dec)
+                ReadXdrIter::<_, InnerTransactionResultResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultExt => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultExt>::new(dec)
+                ReadXdrIter::<_, InnerTransactionResultExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InnerTransactionResultExt(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultPair => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultPair>::new(dec)
+                ReadXdrIter::<_, InnerTransactionResultPair>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InnerTransactionResultPair(Box::new(t)))),
             ),
             TypeVariant::TransactionResult => Box::new(
-                ReadXdrIter::<_, TransactionResult>::new(dec)
+                ReadXdrIter::<_, TransactionResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResult(Box::new(t)))),
             ),
             TypeVariant::TransactionResultResult => Box::new(
-                ReadXdrIter::<_, TransactionResultResult>::new(dec)
+                ReadXdrIter::<_, TransactionResultResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultResult(Box::new(t)))),
             ),
             TypeVariant::TransactionResultExt => Box::new(
-                ReadXdrIter::<_, TransactionResultExt>::new(dec)
+                ReadXdrIter::<_, TransactionResultExt>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionResultExt(Box::new(t)))),
             ),
             TypeVariant::Hash => Box::new(
-                ReadXdrIter::<_, Hash>::new(dec).map(|r| r.map(|t| Self::Hash(Box::new(t)))),
+                ReadXdrIter::<_, Hash>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Hash(Box::new(t)))),
             ),
             TypeVariant::Uint256 => Box::new(
-                ReadXdrIter::<_, Uint256>::new(dec).map(|r| r.map(|t| Self::Uint256(Box::new(t)))),
+                ReadXdrIter::<_, Uint256>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Uint256(Box::new(t)))),
             ),
             TypeVariant::Uint32 => Box::new(
-                ReadXdrIter::<_, Uint32>::new(dec).map(|r| r.map(|t| Self::Uint32(Box::new(t)))),
+                ReadXdrIter::<_, Uint32>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Uint32(Box::new(t)))),
             ),
             TypeVariant::Int32 => Box::new(
-                ReadXdrIter::<_, Int32>::new(dec).map(|r| r.map(|t| Self::Int32(Box::new(t)))),
+                ReadXdrIter::<_, Int32>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Int32(Box::new(t)))),
             ),
             TypeVariant::Uint64 => Box::new(
-                ReadXdrIter::<_, Uint64>::new(dec).map(|r| r.map(|t| Self::Uint64(Box::new(t)))),
+                ReadXdrIter::<_, Uint64>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Uint64(Box::new(t)))),
             ),
             TypeVariant::Int64 => Box::new(
-                ReadXdrIter::<_, Int64>::new(dec).map(|r| r.map(|t| Self::Int64(Box::new(t)))),
+                ReadXdrIter::<_, Int64>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Int64(Box::new(t)))),
             ),
             TypeVariant::ExtensionPoint => Box::new(
-                ReadXdrIter::<_, ExtensionPoint>::new(dec)
+                ReadXdrIter::<_, ExtensionPoint>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
             ),
             TypeVariant::CryptoKeyType => Box::new(
-                ReadXdrIter::<_, CryptoKeyType>::new(dec)
+                ReadXdrIter::<_, CryptoKeyType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::CryptoKeyType(Box::new(t)))),
             ),
             TypeVariant::PublicKeyType => Box::new(
-                ReadXdrIter::<_, PublicKeyType>::new(dec)
+                ReadXdrIter::<_, PublicKeyType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PublicKeyType(Box::new(t)))),
             ),
             TypeVariant::SignerKeyType => Box::new(
-                ReadXdrIter::<_, SignerKeyType>::new(dec)
+                ReadXdrIter::<_, SignerKeyType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignerKeyType(Box::new(t)))),
             ),
             TypeVariant::PublicKey => Box::new(
-                ReadXdrIter::<_, PublicKey>::new(dec)
+                ReadXdrIter::<_, PublicKey>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PublicKey(Box::new(t)))),
             ),
             TypeVariant::SignerKey => Box::new(
-                ReadXdrIter::<_, SignerKey>::new(dec)
+                ReadXdrIter::<_, SignerKey>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignerKey(Box::new(t)))),
             ),
             TypeVariant::SignerKeyEd25519SignedPayload => Box::new(
-                ReadXdrIter::<_, SignerKeyEd25519SignedPayload>::new(dec)
+                ReadXdrIter::<_, SignerKeyEd25519SignedPayload>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t)))),
             ),
             TypeVariant::Signature => Box::new(
-                ReadXdrIter::<_, Signature>::new(dec)
+                ReadXdrIter::<_, Signature>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Signature(Box::new(t)))),
             ),
             TypeVariant::SignatureHint => Box::new(
-                ReadXdrIter::<_, SignatureHint>::new(dec)
+                ReadXdrIter::<_, SignatureHint>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SignatureHint(Box::new(t)))),
             ),
             TypeVariant::NodeId => Box::new(
-                ReadXdrIter::<_, NodeId>::new(dec).map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
+                ReadXdrIter::<_, NodeId>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
             ),
             TypeVariant::Curve25519Secret => Box::new(
-                ReadXdrIter::<_, Curve25519Secret>::new(dec)
+                ReadXdrIter::<_, Curve25519Secret>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t)))),
             ),
             TypeVariant::Curve25519Public => Box::new(
-                ReadXdrIter::<_, Curve25519Public>::new(dec)
+                ReadXdrIter::<_, Curve25519Public>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Curve25519Public(Box::new(t)))),
             ),
             TypeVariant::HmacSha256Key => Box::new(
-                ReadXdrIter::<_, HmacSha256Key>::new(dec)
+                ReadXdrIter::<_, HmacSha256Key>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HmacSha256Key(Box::new(t)))),
             ),
             TypeVariant::HmacSha256Mac => Box::new(
-                ReadXdrIter::<_, HmacSha256Mac>::new(dec)
+                ReadXdrIter::<_, HmacSha256Mac>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t)))),
             ),
         }
@@ -36481,7 +38886,8 @@ impl Type {
 
     #[cfg(feature = "std")]
     pub fn from_xdr<B: AsRef<[u8]>>(v: TypeVariant, bytes: B) -> Result<Self> {
-        let mut cursor = Cursor::new(bytes.as_ref());
+        let mut cursor =
+            DepthLimitedRead::new(Cursor::new(bytes.as_ref()), DEFAULT_XDR_RW_DEPTH_LIMIT);
         let t = Self::read_xdr_to_end(v, &mut cursor)?;
         Ok(t)
     }
@@ -36489,7 +38895,10 @@ impl Type {
     #[cfg(feature = "base64")]
     pub fn from_xdr_base64(v: TypeVariant, b64: String) -> Result<Self> {
         let mut b64_reader = Cursor::new(b64);
-        let mut dec = base64::read::DecoderReader::new(&mut b64_reader, base64::STANDARD);
+        let mut dec = DepthLimitedRead::new(
+            base64::read::DecoderReader::new(&mut b64_reader, base64::STANDARD),
+            DEFAULT_XDR_RW_DEPTH_LIMIT,
+        );
         let t = Self::read_xdr_to_end(v, &mut dec)?;
         Ok(t)
     }

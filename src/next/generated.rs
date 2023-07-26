@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "c8750a8ef0db66d4dd2e56f263c6b33ccaf0111128fdcf875e63efed9effe0a5",
+        "773b50e3b2bc6f715a7f47ec7f8a122f0545329b721f26aa8cbade3ac62e51de",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -38,7 +38,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "b00ea4057101f92e61851a79ba10812138ace1243b1a2f5ce65931210190f84a",
+        "6d89a51015b272d26c132f5d9316710792f2aeec8ba9ee5fba7ec7e1ade029f9",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -3372,14 +3372,14 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
     }
 }
 
-// ConfigSettingContractMetaDataV0 is an XDR Struct defines as:
+// ConfigSettingContractEventsV0 is an XDR Struct defines as:
 //
-//   struct ConfigSettingContractMetaDataV0
+//   struct ConfigSettingContractEventsV0
 //    {
-//        // Maximum size of extended meta data produced by a transaction
-//        uint32 txMaxExtendedMetaDataSizeBytes;
-//        // Fee for generating 1KB of extended meta data
-//        int64 feeExtendedMetaData1KB;
+//        // Maximum size of events that a contract call can emit.
+//        uint32 txMaxContractEventsSizeBytes;
+//        // Fee for generating 1KB of contract events.
+//        int64 feeContractEvents1KB;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -3389,29 +3389,29 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct ConfigSettingContractMetaDataV0 {
-    pub tx_max_extended_meta_data_size_bytes: u32,
-    pub fee_extended_meta_data1_kb: i64,
+pub struct ConfigSettingContractEventsV0 {
+    pub tx_max_contract_events_size_bytes: u32,
+    pub fee_contract_events1_kb: i64,
 }
 
-impl ReadXdr for ConfigSettingContractMetaDataV0 {
+impl ReadXdr for ConfigSettingContractEventsV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                tx_max_extended_meta_data_size_bytes: u32::read_xdr(r)?,
-                fee_extended_meta_data1_kb: i64::read_xdr(r)?,
+                tx_max_contract_events_size_bytes: u32::read_xdr(r)?,
+                fee_contract_events1_kb: i64::read_xdr(r)?,
             })
         })
     }
 }
 
-impl WriteXdr for ConfigSettingContractMetaDataV0 {
+impl WriteXdr for ConfigSettingContractEventsV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
-            self.tx_max_extended_meta_data_size_bytes.write_xdr(w)?;
-            self.fee_extended_meta_data1_kb.write_xdr(w)?;
+            self.tx_max_contract_events_size_bytes.write_xdr(w)?;
+            self.fee_contract_events1_kb.write_xdr(w)?;
             Ok(())
         })
     }
@@ -3421,13 +3421,13 @@ impl WriteXdr for ConfigSettingContractMetaDataV0 {
 //
 //   struct ConfigSettingContractBandwidthV0
 //    {
-//        // Maximum size in bytes to propagate per ledger
-//        uint32 ledgerMaxPropagateSizeBytes;
+//        // Maximum sum of all transaction sizes in the ledger in bytes
+//        uint32 ledgerMaxTxsSizeBytes;
 //        // Maximum size in bytes for a transaction
 //        uint32 txMaxSizeBytes;
 //
-//        // Fee for propagating 1KB of data
-//        int64 feePropagateData1KB;
+//        // Fee for 1 KB of transaction size
+//        int64 feeTxSize1KB;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -3438,9 +3438,9 @@ impl WriteXdr for ConfigSettingContractMetaDataV0 {
     serde(rename_all = "snake_case")
 )]
 pub struct ConfigSettingContractBandwidthV0 {
-    pub ledger_max_propagate_size_bytes: u32,
+    pub ledger_max_txs_size_bytes: u32,
     pub tx_max_size_bytes: u32,
-    pub fee_propagate_data1_kb: i64,
+    pub fee_tx_size1_kb: i64,
 }
 
 impl ReadXdr for ConfigSettingContractBandwidthV0 {
@@ -3448,9 +3448,9 @@ impl ReadXdr for ConfigSettingContractBandwidthV0 {
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                ledger_max_propagate_size_bytes: u32::read_xdr(r)?,
+                ledger_max_txs_size_bytes: u32::read_xdr(r)?,
                 tx_max_size_bytes: u32::read_xdr(r)?,
-                fee_propagate_data1_kb: i64::read_xdr(r)?,
+                fee_tx_size1_kb: i64::read_xdr(r)?,
             })
         })
     }
@@ -3460,9 +3460,9 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
-            self.ledger_max_propagate_size_bytes.write_xdr(w)?;
+            self.ledger_max_txs_size_bytes.write_xdr(w)?;
             self.tx_max_size_bytes.write_xdr(w)?;
-            self.fee_propagate_data1_kb.write_xdr(w)?;
+            self.fee_tx_size1_kb.write_xdr(w)?;
             Ok(())
         })
     }
@@ -4206,7 +4206,7 @@ impl WriteXdr for ConfigSettingId {
 //    case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0:
 //        ConfigSettingContractHistoricalDataV0 contractHistoricalData;
 //    case CONFIG_SETTING_CONTRACT_META_DATA_V0:
-//        ConfigSettingContractMetaDataV0 contractMetaData;
+//        ConfigSettingContractEventsV0 contractEvents;
 //    case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0:
 //        ConfigSettingContractBandwidthV0 contractBandwidth;
 //    case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS:
@@ -4239,7 +4239,7 @@ pub enum ConfigSettingEntry {
     ContractComputeV0(ConfigSettingContractComputeV0),
     ContractLedgerCostV0(ConfigSettingContractLedgerCostV0),
     ContractHistoricalDataV0(ConfigSettingContractHistoricalDataV0),
-    ContractMetaDataV0(ConfigSettingContractMetaDataV0),
+    ContractMetaDataV0(ConfigSettingContractEventsV0),
     ContractBandwidthV0(ConfigSettingContractBandwidthV0),
     ContractCostParamsCpuInstructions(ContractCostParams),
     ContractCostParamsMemoryBytes(ContractCostParams),
@@ -4373,7 +4373,7 @@ impl ReadXdr for ConfigSettingEntry {
                     ConfigSettingContractHistoricalDataV0::read_xdr(r)?,
                 ),
                 ConfigSettingId::ContractMetaDataV0 => {
-                    Self::ContractMetaDataV0(ConfigSettingContractMetaDataV0::read_xdr(r)?)
+                    Self::ContractMetaDataV0(ConfigSettingContractEventsV0::read_xdr(r)?)
                 }
                 ConfigSettingId::ContractBandwidthV0 => {
                     Self::ContractBandwidthV0(ConfigSettingContractBandwidthV0::read_xdr(r)?)
@@ -6807,8 +6807,7 @@ impl WriteXdr for ScSpecEntry {
 //
 //        // 128 bits is naturally supported by Rust and we use it for Soroban
 //        // fixed-point arithmetic prices / balances / similar "quantities". These
-//        // are represented in XDR as a pair of 2 u64s, unlike {u,i}256 which is
-//        // represented as an array of 32 bytes.
+//        // are represented in XDR as a pair of 2 u64s.
 //        SCV_U128 = 9,
 //        SCV_I128 = 10,
 //
@@ -41305,7 +41304,7 @@ pub enum TypeVariant {
     ConfigSettingContractComputeV0,
     ConfigSettingContractLedgerCostV0,
     ConfigSettingContractHistoricalDataV0,
-    ConfigSettingContractMetaDataV0,
+    ConfigSettingContractEventsV0,
     ConfigSettingContractBandwidthV0,
     ContractCostType,
     ContractCostParamEntry,
@@ -41730,7 +41729,7 @@ impl TypeVariant {
         TypeVariant::ConfigSettingContractComputeV0,
         TypeVariant::ConfigSettingContractLedgerCostV0,
         TypeVariant::ConfigSettingContractHistoricalDataV0,
-        TypeVariant::ConfigSettingContractMetaDataV0,
+        TypeVariant::ConfigSettingContractEventsV0,
         TypeVariant::ConfigSettingContractBandwidthV0,
         TypeVariant::ContractCostType,
         TypeVariant::ContractCostParamEntry,
@@ -42153,7 +42152,7 @@ impl TypeVariant {
         "ConfigSettingContractComputeV0",
         "ConfigSettingContractLedgerCostV0",
         "ConfigSettingContractHistoricalDataV0",
-        "ConfigSettingContractMetaDataV0",
+        "ConfigSettingContractEventsV0",
         "ConfigSettingContractBandwidthV0",
         "ContractCostType",
         "ContractCostParamEntry",
@@ -42580,7 +42579,7 @@ impl TypeVariant {
             Self::ConfigSettingContractComputeV0 => "ConfigSettingContractComputeV0",
             Self::ConfigSettingContractLedgerCostV0 => "ConfigSettingContractLedgerCostV0",
             Self::ConfigSettingContractHistoricalDataV0 => "ConfigSettingContractHistoricalDataV0",
-            Self::ConfigSettingContractMetaDataV0 => "ConfigSettingContractMetaDataV0",
+            Self::ConfigSettingContractEventsV0 => "ConfigSettingContractEventsV0",
             Self::ConfigSettingContractBandwidthV0 => "ConfigSettingContractBandwidthV0",
             Self::ContractCostType => "ContractCostType",
             Self::ContractCostParamEntry => "ContractCostParamEntry",
@@ -43039,7 +43038,7 @@ impl core::str::FromStr for TypeVariant {
             "ConfigSettingContractHistoricalDataV0" => {
                 Ok(Self::ConfigSettingContractHistoricalDataV0)
             }
-            "ConfigSettingContractMetaDataV0" => Ok(Self::ConfigSettingContractMetaDataV0),
+            "ConfigSettingContractEventsV0" => Ok(Self::ConfigSettingContractEventsV0),
             "ConfigSettingContractBandwidthV0" => Ok(Self::ConfigSettingContractBandwidthV0),
             "ContractCostType" => Ok(Self::ContractCostType),
             "ContractCostParamEntry" => Ok(Self::ContractCostParamEntry),
@@ -43483,7 +43482,7 @@ pub enum Type {
     ConfigSettingContractComputeV0(Box<ConfigSettingContractComputeV0>),
     ConfigSettingContractLedgerCostV0(Box<ConfigSettingContractLedgerCostV0>),
     ConfigSettingContractHistoricalDataV0(Box<ConfigSettingContractHistoricalDataV0>),
-    ConfigSettingContractMetaDataV0(Box<ConfigSettingContractMetaDataV0>),
+    ConfigSettingContractEventsV0(Box<ConfigSettingContractEventsV0>),
     ConfigSettingContractBandwidthV0(Box<ConfigSettingContractBandwidthV0>),
     ContractCostType(Box<ContractCostType>),
     ContractCostParamEntry(Box<ContractCostParamEntry>),
@@ -43908,7 +43907,7 @@ impl Type {
         TypeVariant::ConfigSettingContractComputeV0,
         TypeVariant::ConfigSettingContractLedgerCostV0,
         TypeVariant::ConfigSettingContractHistoricalDataV0,
-        TypeVariant::ConfigSettingContractMetaDataV0,
+        TypeVariant::ConfigSettingContractEventsV0,
         TypeVariant::ConfigSettingContractBandwidthV0,
         TypeVariant::ContractCostType,
         TypeVariant::ContractCostParamEntry,
@@ -44331,7 +44330,7 @@ impl Type {
         "ConfigSettingContractComputeV0",
         "ConfigSettingContractLedgerCostV0",
         "ConfigSettingContractHistoricalDataV0",
-        "ConfigSettingContractMetaDataV0",
+        "ConfigSettingContractEventsV0",
         "ConfigSettingContractBandwidthV0",
         "ContractCostType",
         "ContractCostParamEntry",
@@ -44806,9 +44805,9 @@ impl Type {
                     ConfigSettingContractHistoricalDataV0::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ConfigSettingContractMetaDataV0 => r.with_limited_depth(|r| {
-                Ok(Self::ConfigSettingContractMetaDataV0(Box::new(
-                    ConfigSettingContractMetaDataV0::read_xdr(r)?,
+            TypeVariant::ConfigSettingContractEventsV0 => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingContractEventsV0(Box::new(
+                    ConfigSettingContractEventsV0::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ConfigSettingContractBandwidthV0 => r.with_limited_depth(|r| {
@@ -46675,12 +46674,12 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
             ),
-            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractMetaDataV0>::new(
+            TypeVariant::ConfigSettingContractEventsV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractEventsV0>::new(
                     &mut r.inner,
                     r.depth_remaining,
                 )
-                .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t)))),
+                .map(|r| r.map(|t| Self::ConfigSettingContractEventsV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(
@@ -48500,12 +48499,12 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t.0)))),
             ),
-            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingContractMetaDataV0>>::new(
+            TypeVariant::ConfigSettingContractEventsV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractEventsV0>>::new(
                     &mut r.inner,
                     r.depth_remaining,
                 )
-                .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t.0)))),
+                .map(|r| r.map(|t| Self::ConfigSettingContractEventsV0(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractBandwidthV0>>::new(
@@ -50632,9 +50631,9 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
             ),
-            TypeVariant::ConfigSettingContractMetaDataV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractMetaDataV0>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ConfigSettingContractMetaDataV0(Box::new(t)))),
+            TypeVariant::ConfigSettingContractEventsV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractEventsV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractEventsV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(dec, r.depth_remaining)
@@ -52316,7 +52315,7 @@ impl Type {
             Self::ConfigSettingContractComputeV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractLedgerCostV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractHistoricalDataV0(ref v) => v.as_ref(),
-            Self::ConfigSettingContractMetaDataV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractEventsV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractBandwidthV0(ref v) => v.as_ref(),
             Self::ContractCostType(ref v) => v.as_ref(),
             Self::ContractCostParamEntry(ref v) => v.as_ref(),
@@ -52748,7 +52747,7 @@ impl Type {
             Self::ConfigSettingContractHistoricalDataV0(_) => {
                 "ConfigSettingContractHistoricalDataV0"
             }
-            Self::ConfigSettingContractMetaDataV0(_) => "ConfigSettingContractMetaDataV0",
+            Self::ConfigSettingContractEventsV0(_) => "ConfigSettingContractEventsV0",
             Self::ConfigSettingContractBandwidthV0(_) => "ConfigSettingContractBandwidthV0",
             Self::ContractCostType(_) => "ContractCostType",
             Self::ContractCostParamEntry(_) => "ContractCostParamEntry",
@@ -53198,9 +53197,7 @@ impl Type {
             Self::ConfigSettingContractHistoricalDataV0(_) => {
                 TypeVariant::ConfigSettingContractHistoricalDataV0
             }
-            Self::ConfigSettingContractMetaDataV0(_) => {
-                TypeVariant::ConfigSettingContractMetaDataV0
-            }
+            Self::ConfigSettingContractEventsV0(_) => TypeVariant::ConfigSettingContractEventsV0,
             Self::ConfigSettingContractBandwidthV0(_) => {
                 TypeVariant::ConfigSettingContractBandwidthV0
             }

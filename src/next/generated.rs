@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "50460419c6dce766685db1898f5e8b554ac04d481200a57e1ea66b7f80e48cf3",
+        "236ae9631757a957d0057d6cbfa8a5e5f2c7219986d3b9e6d0844571865dd6fc",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -28338,9 +28338,9 @@ impl WriteXdr for LedgerFootprint {
 //        // The maximum number of bytes this transaction can write to ledger
 //        uint32 writeBytes;
 //
-//        // Maximum size of dynamic metadata produced by this contract (
-//        // bytes read from ledger + bytes written to ledger + event bytes written to meta).
-//        uint32 extendedMetaDataSizeBytes;
+//        // Maximum size of the contract events (serialized to XDR) this transaction
+//        // can emit.
+//        uint32 contractEventsSizeBytes;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -28355,7 +28355,7 @@ pub struct SorobanResources {
     pub instructions: u32,
     pub read_bytes: u32,
     pub write_bytes: u32,
-    pub extended_meta_data_size_bytes: u32,
+    pub contract_events_size_bytes: u32,
 }
 
 impl ReadXdr for SorobanResources {
@@ -28367,7 +28367,7 @@ impl ReadXdr for SorobanResources {
                 instructions: u32::read_xdr(r)?,
                 read_bytes: u32::read_xdr(r)?,
                 write_bytes: u32::read_xdr(r)?,
-                extended_meta_data_size_bytes: u32::read_xdr(r)?,
+                contract_events_size_bytes: u32::read_xdr(r)?,
             })
         })
     }
@@ -28381,7 +28381,7 @@ impl WriteXdr for SorobanResources {
             self.instructions.write_xdr(w)?;
             self.read_bytes.write_xdr(w)?;
             self.write_bytes.write_xdr(w)?;
-            self.extended_meta_data_size_bytes.write_xdr(w)?;
+            self.contract_events_size_bytes.write_xdr(w)?;
             Ok(())
         })
     }

@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "773b50e3b2bc6f715a7f47ec7f8a122f0545329b721f26aa8cbade3ac62e51de",
+        "2f4916a76b81499ec554f524c38ddd80ec65d0bd97090a28fa7376a10b470d6c",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -4026,7 +4026,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 //        CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1,
 //        CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2,
 //        CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3,
-//        CONFIG_SETTING_CONTRACT_META_DATA_V0 = 4,
+//        CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4,
 //        CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5,
 //        CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6,
 //        CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7,
@@ -4051,7 +4051,7 @@ pub enum ConfigSettingId {
     ContractComputeV0 = 1,
     ContractLedgerCostV0 = 2,
     ContractHistoricalDataV0 = 3,
-    ContractMetaDataV0 = 4,
+    ContractEventsV0 = 4,
     ContractBandwidthV0 = 5,
     ContractCostParamsCpuInstructions = 6,
     ContractCostParamsMemoryBytes = 7,
@@ -4068,7 +4068,7 @@ impl ConfigSettingId {
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
         ConfigSettingId::ContractHistoricalDataV0,
-        ConfigSettingId::ContractMetaDataV0,
+        ConfigSettingId::ContractEventsV0,
         ConfigSettingId::ContractBandwidthV0,
         ConfigSettingId::ContractCostParamsCpuInstructions,
         ConfigSettingId::ContractCostParamsMemoryBytes,
@@ -4083,7 +4083,7 @@ impl ConfigSettingId {
         "ContractComputeV0",
         "ContractLedgerCostV0",
         "ContractHistoricalDataV0",
-        "ContractMetaDataV0",
+        "ContractEventsV0",
         "ContractBandwidthV0",
         "ContractCostParamsCpuInstructions",
         "ContractCostParamsMemoryBytes",
@@ -4101,7 +4101,7 @@ impl ConfigSettingId {
             Self::ContractComputeV0 => "ContractComputeV0",
             Self::ContractLedgerCostV0 => "ContractLedgerCostV0",
             Self::ContractHistoricalDataV0 => "ContractHistoricalDataV0",
-            Self::ContractMetaDataV0 => "ContractMetaDataV0",
+            Self::ContractEventsV0 => "ContractEventsV0",
             Self::ContractBandwidthV0 => "ContractBandwidthV0",
             Self::ContractCostParamsCpuInstructions => "ContractCostParamsCpuInstructions",
             Self::ContractCostParamsMemoryBytes => "ContractCostParamsMemoryBytes",
@@ -4149,7 +4149,7 @@ impl TryFrom<i32> for ConfigSettingId {
             1 => ConfigSettingId::ContractComputeV0,
             2 => ConfigSettingId::ContractLedgerCostV0,
             3 => ConfigSettingId::ContractHistoricalDataV0,
-            4 => ConfigSettingId::ContractMetaDataV0,
+            4 => ConfigSettingId::ContractEventsV0,
             5 => ConfigSettingId::ContractBandwidthV0,
             6 => ConfigSettingId::ContractCostParamsCpuInstructions,
             7 => ConfigSettingId::ContractCostParamsMemoryBytes,
@@ -4205,7 +4205,7 @@ impl WriteXdr for ConfigSettingId {
 //        ConfigSettingContractLedgerCostV0 contractLedgerCost;
 //    case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0:
 //        ConfigSettingContractHistoricalDataV0 contractHistoricalData;
-//    case CONFIG_SETTING_CONTRACT_META_DATA_V0:
+//    case CONFIG_SETTING_CONTRACT_EVENTS_V0:
 //        ConfigSettingContractEventsV0 contractEvents;
 //    case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0:
 //        ConfigSettingContractBandwidthV0 contractBandwidth;
@@ -4239,7 +4239,7 @@ pub enum ConfigSettingEntry {
     ContractComputeV0(ConfigSettingContractComputeV0),
     ContractLedgerCostV0(ConfigSettingContractLedgerCostV0),
     ContractHistoricalDataV0(ConfigSettingContractHistoricalDataV0),
-    ContractMetaDataV0(ConfigSettingContractEventsV0),
+    ContractEventsV0(ConfigSettingContractEventsV0),
     ContractBandwidthV0(ConfigSettingContractBandwidthV0),
     ContractCostParamsCpuInstructions(ContractCostParams),
     ContractCostParamsMemoryBytes(ContractCostParams),
@@ -4256,7 +4256,7 @@ impl ConfigSettingEntry {
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
         ConfigSettingId::ContractHistoricalDataV0,
-        ConfigSettingId::ContractMetaDataV0,
+        ConfigSettingId::ContractEventsV0,
         ConfigSettingId::ContractBandwidthV0,
         ConfigSettingId::ContractCostParamsCpuInstructions,
         ConfigSettingId::ContractCostParamsMemoryBytes,
@@ -4271,7 +4271,7 @@ impl ConfigSettingEntry {
         "ContractComputeV0",
         "ContractLedgerCostV0",
         "ContractHistoricalDataV0",
-        "ContractMetaDataV0",
+        "ContractEventsV0",
         "ContractBandwidthV0",
         "ContractCostParamsCpuInstructions",
         "ContractCostParamsMemoryBytes",
@@ -4289,7 +4289,7 @@ impl ConfigSettingEntry {
             Self::ContractComputeV0(_) => "ContractComputeV0",
             Self::ContractLedgerCostV0(_) => "ContractLedgerCostV0",
             Self::ContractHistoricalDataV0(_) => "ContractHistoricalDataV0",
-            Self::ContractMetaDataV0(_) => "ContractMetaDataV0",
+            Self::ContractEventsV0(_) => "ContractEventsV0",
             Self::ContractBandwidthV0(_) => "ContractBandwidthV0",
             Self::ContractCostParamsCpuInstructions(_) => "ContractCostParamsCpuInstructions",
             Self::ContractCostParamsMemoryBytes(_) => "ContractCostParamsMemoryBytes",
@@ -4309,7 +4309,7 @@ impl ConfigSettingEntry {
             Self::ContractComputeV0(_) => ConfigSettingId::ContractComputeV0,
             Self::ContractLedgerCostV0(_) => ConfigSettingId::ContractLedgerCostV0,
             Self::ContractHistoricalDataV0(_) => ConfigSettingId::ContractHistoricalDataV0,
-            Self::ContractMetaDataV0(_) => ConfigSettingId::ContractMetaDataV0,
+            Self::ContractEventsV0(_) => ConfigSettingId::ContractEventsV0,
             Self::ContractBandwidthV0(_) => ConfigSettingId::ContractBandwidthV0,
             Self::ContractCostParamsCpuInstructions(_) => {
                 ConfigSettingId::ContractCostParamsCpuInstructions
@@ -4372,8 +4372,8 @@ impl ReadXdr for ConfigSettingEntry {
                 ConfigSettingId::ContractHistoricalDataV0 => Self::ContractHistoricalDataV0(
                     ConfigSettingContractHistoricalDataV0::read_xdr(r)?,
                 ),
-                ConfigSettingId::ContractMetaDataV0 => {
-                    Self::ContractMetaDataV0(ConfigSettingContractEventsV0::read_xdr(r)?)
+                ConfigSettingId::ContractEventsV0 => {
+                    Self::ContractEventsV0(ConfigSettingContractEventsV0::read_xdr(r)?)
                 }
                 ConfigSettingId::ContractBandwidthV0 => {
                     Self::ContractBandwidthV0(ConfigSettingContractBandwidthV0::read_xdr(r)?)
@@ -4418,7 +4418,7 @@ impl WriteXdr for ConfigSettingEntry {
                 Self::ContractComputeV0(v) => v.write_xdr(w)?,
                 Self::ContractLedgerCostV0(v) => v.write_xdr(w)?,
                 Self::ContractHistoricalDataV0(v) => v.write_xdr(w)?,
-                Self::ContractMetaDataV0(v) => v.write_xdr(w)?,
+                Self::ContractEventsV0(v) => v.write_xdr(w)?,
                 Self::ContractBandwidthV0(v) => v.write_xdr(w)?,
                 Self::ContractCostParamsCpuInstructions(v) => v.write_xdr(w)?,
                 Self::ContractCostParamsMemoryBytes(v) => v.write_xdr(w)?,

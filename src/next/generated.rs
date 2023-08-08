@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "2f4916a76b81499ec554f524c38ddd80ec65d0bd97090a28fa7376a10b470d6c",
+        "10b2da88dd4148151ebddd41e4ad412d9d3aace3db35bf33e863d2a16493eaa8",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -3481,61 +3481,56 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 //        HostMemCpy = 3,
 //        // Cost of comparing two slices of host memory
 //        HostMemCmp = 4,
-//        // Cost of a host function invocation, not including the actual work done by the function
-//        InvokeHostFunction = 5,
-//        // Cost of visiting a host object from the host object storage
-//        // Only thing to make sure is the guest can't visitObject repeatly without incurring some charges elsewhere.
+//        // Cost of a host function dispatch, not including the actual work done by
+//        // the function nor the cost of VM invocation machinary
+//        DispatchHostFunction = 5,
+//        // Cost of visiting a host object from the host object storage. Exists to
+//        // make sure some baseline cost coverage, i.e. repeatly visiting objects
+//        // by the guest will always incur some charges.
 //        VisitObject = 6,
-//        // Tracks a single Val (RawVal or primative Object like U64) <=> ScVal
-//        // conversion cost. Most of these Val counterparts in ScVal (except e.g.
-//        // Symbol) consumes a single int64 and therefore is a constant overhead.
-//        ValXdrConv = 7,
 //        // Cost of serializing an xdr object to bytes
-//        ValSer = 8,
+//        ValSer = 7,
 //        // Cost of deserializing an xdr object from bytes
-//        ValDeser = 9,
+//        ValDeser = 8,
 //        // Cost of computing the sha256 hash from bytes
-//        ComputeSha256Hash = 10,
+//        ComputeSha256Hash = 9,
 //        // Cost of computing the ed25519 pubkey from bytes
-//        ComputeEd25519PubKey = 11,
+//        ComputeEd25519PubKey = 10,
 //        // Cost of accessing an entry in a Map.
-//        MapEntry = 12,
+//        MapEntry = 11,
 //        // Cost of accessing an entry in a Vec
-//        VecEntry = 13,
-//        // Cost of guarding a frame, which involves pushing and poping a frame and capturing a rollback point.
-//        GuardFrame = 14,
+//        VecEntry = 12,
 //        // Cost of verifying ed25519 signature of a payload.
-//        VerifyEd25519Sig = 15,
+//        VerifyEd25519Sig = 13,
 //        // Cost of reading a slice of vm linear memory
-//        VmMemRead = 16,
+//        VmMemRead = 14,
 //        // Cost of writing to a slice of vm linear memory
-//        VmMemWrite = 17,
+//        VmMemWrite = 15,
 //        // Cost of instantiation a VM from wasm bytes code.
-//        VmInstantiation = 18,
+//        VmInstantiation = 16,
 //        // Cost of instantiation a VM from a cached state.
-//        VmCachedInstantiation = 19,
-//        // Roundtrip cost of invoking a VM function from the host.
-//        InvokeVmFunction = 20,
-//        // Cost of charging a value to the budgeting system.
-//        ChargeBudget = 21,
+//        VmCachedInstantiation = 17,
+//        // Cost of invoking a function on the VM. If the function is a host function,
+//        // additional cost will be covered by `DispatchHostFunction`.
+//        InvokeVmFunction = 18,
 //        // Cost of computing a keccak256 hash from bytes.
-//        ComputeKeccak256Hash = 22,
+//        ComputeKeccak256Hash = 19,
 //        // Cost of computing an ECDSA secp256k1 pubkey from bytes.
-//        ComputeEcdsaSecp256k1Key = 23,
+//        ComputeEcdsaSecp256k1Key = 20,
 //        // Cost of computing an ECDSA secp256k1 signature from bytes.
-//        ComputeEcdsaSecp256k1Sig = 24,
+//        ComputeEcdsaSecp256k1Sig = 21,
 //        // Cost of recovering an ECDSA secp256k1 key from a signature.
-//        RecoverEcdsaSecp256k1Key = 25,
+//        RecoverEcdsaSecp256k1Key = 22,
 //        // Cost of int256 addition (`+`) and subtraction (`-`) operations
-//        Int256AddSub = 26,
+//        Int256AddSub = 23,
 //        // Cost of int256 multiplication (`*`) operation
-//        Int256Mul = 27,
+//        Int256Mul = 24,
 //        // Cost of int256 division (`/`) operation
-//        Int256Div = 28,
+//        Int256Div = 25,
 //        // Cost of int256 power (`exp`) operation
-//        Int256Pow = 29,
+//        Int256Pow = 26,
 //        // Cost of int256 shift (`shl`, `shr`) operation
-//        Int256Shift = 30
+//        Int256Shift = 27
 //    };
 //
 // enum
@@ -3553,58 +3548,52 @@ pub enum ContractCostType {
     HostMemAlloc = 2,
     HostMemCpy = 3,
     HostMemCmp = 4,
-    InvokeHostFunction = 5,
+    DispatchHostFunction = 5,
     VisitObject = 6,
-    ValXdrConv = 7,
-    ValSer = 8,
-    ValDeser = 9,
-    ComputeSha256Hash = 10,
-    ComputeEd25519PubKey = 11,
-    MapEntry = 12,
-    VecEntry = 13,
-    GuardFrame = 14,
-    VerifyEd25519Sig = 15,
-    VmMemRead = 16,
-    VmMemWrite = 17,
-    VmInstantiation = 18,
-    VmCachedInstantiation = 19,
-    InvokeVmFunction = 20,
-    ChargeBudget = 21,
-    ComputeKeccak256Hash = 22,
-    ComputeEcdsaSecp256k1Key = 23,
-    ComputeEcdsaSecp256k1Sig = 24,
-    RecoverEcdsaSecp256k1Key = 25,
-    Int256AddSub = 26,
-    Int256Mul = 27,
-    Int256Div = 28,
-    Int256Pow = 29,
-    Int256Shift = 30,
+    ValSer = 7,
+    ValDeser = 8,
+    ComputeSha256Hash = 9,
+    ComputeEd25519PubKey = 10,
+    MapEntry = 11,
+    VecEntry = 12,
+    VerifyEd25519Sig = 13,
+    VmMemRead = 14,
+    VmMemWrite = 15,
+    VmInstantiation = 16,
+    VmCachedInstantiation = 17,
+    InvokeVmFunction = 18,
+    ComputeKeccak256Hash = 19,
+    ComputeEcdsaSecp256k1Key = 20,
+    ComputeEcdsaSecp256k1Sig = 21,
+    RecoverEcdsaSecp256k1Key = 22,
+    Int256AddSub = 23,
+    Int256Mul = 24,
+    Int256Div = 25,
+    Int256Pow = 26,
+    Int256Shift = 27,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 31] = [
+    pub const VARIANTS: [ContractCostType; 28] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::WasmMemAlloc,
         ContractCostType::HostMemAlloc,
         ContractCostType::HostMemCpy,
         ContractCostType::HostMemCmp,
-        ContractCostType::InvokeHostFunction,
+        ContractCostType::DispatchHostFunction,
         ContractCostType::VisitObject,
-        ContractCostType::ValXdrConv,
         ContractCostType::ValSer,
         ContractCostType::ValDeser,
         ContractCostType::ComputeSha256Hash,
         ContractCostType::ComputeEd25519PubKey,
         ContractCostType::MapEntry,
         ContractCostType::VecEntry,
-        ContractCostType::GuardFrame,
         ContractCostType::VerifyEd25519Sig,
         ContractCostType::VmMemRead,
         ContractCostType::VmMemWrite,
         ContractCostType::VmInstantiation,
         ContractCostType::VmCachedInstantiation,
         ContractCostType::InvokeVmFunction,
-        ContractCostType::ChargeBudget,
         ContractCostType::ComputeKeccak256Hash,
         ContractCostType::ComputeEcdsaSecp256k1Key,
         ContractCostType::ComputeEcdsaSecp256k1Sig,
@@ -3615,29 +3604,26 @@ impl ContractCostType {
         ContractCostType::Int256Pow,
         ContractCostType::Int256Shift,
     ];
-    pub const VARIANTS_STR: [&'static str; 31] = [
+    pub const VARIANTS_STR: [&'static str; 28] = [
         "WasmInsnExec",
         "WasmMemAlloc",
         "HostMemAlloc",
         "HostMemCpy",
         "HostMemCmp",
-        "InvokeHostFunction",
+        "DispatchHostFunction",
         "VisitObject",
-        "ValXdrConv",
         "ValSer",
         "ValDeser",
         "ComputeSha256Hash",
         "ComputeEd25519PubKey",
         "MapEntry",
         "VecEntry",
-        "GuardFrame",
         "VerifyEd25519Sig",
         "VmMemRead",
         "VmMemWrite",
         "VmInstantiation",
         "VmCachedInstantiation",
         "InvokeVmFunction",
-        "ChargeBudget",
         "ComputeKeccak256Hash",
         "ComputeEcdsaSecp256k1Key",
         "ComputeEcdsaSecp256k1Sig",
@@ -3657,23 +3643,20 @@ impl ContractCostType {
             Self::HostMemAlloc => "HostMemAlloc",
             Self::HostMemCpy => "HostMemCpy",
             Self::HostMemCmp => "HostMemCmp",
-            Self::InvokeHostFunction => "InvokeHostFunction",
+            Self::DispatchHostFunction => "DispatchHostFunction",
             Self::VisitObject => "VisitObject",
-            Self::ValXdrConv => "ValXdrConv",
             Self::ValSer => "ValSer",
             Self::ValDeser => "ValDeser",
             Self::ComputeSha256Hash => "ComputeSha256Hash",
             Self::ComputeEd25519PubKey => "ComputeEd25519PubKey",
             Self::MapEntry => "MapEntry",
             Self::VecEntry => "VecEntry",
-            Self::GuardFrame => "GuardFrame",
             Self::VerifyEd25519Sig => "VerifyEd25519Sig",
             Self::VmMemRead => "VmMemRead",
             Self::VmMemWrite => "VmMemWrite",
             Self::VmInstantiation => "VmInstantiation",
             Self::VmCachedInstantiation => "VmCachedInstantiation",
             Self::InvokeVmFunction => "InvokeVmFunction",
-            Self::ChargeBudget => "ChargeBudget",
             Self::ComputeKeccak256Hash => "ComputeKeccak256Hash",
             Self::ComputeEcdsaSecp256k1Key => "ComputeEcdsaSecp256k1Key",
             Self::ComputeEcdsaSecp256k1Sig => "ComputeEcdsaSecp256k1Sig",
@@ -3687,7 +3670,7 @@ impl ContractCostType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 31] {
+    pub const fn variants() -> [ContractCostType; 28] {
         Self::VARIANTS
     }
 }
@@ -3723,32 +3706,29 @@ impl TryFrom<i32> for ContractCostType {
             2 => ContractCostType::HostMemAlloc,
             3 => ContractCostType::HostMemCpy,
             4 => ContractCostType::HostMemCmp,
-            5 => ContractCostType::InvokeHostFunction,
+            5 => ContractCostType::DispatchHostFunction,
             6 => ContractCostType::VisitObject,
-            7 => ContractCostType::ValXdrConv,
-            8 => ContractCostType::ValSer,
-            9 => ContractCostType::ValDeser,
-            10 => ContractCostType::ComputeSha256Hash,
-            11 => ContractCostType::ComputeEd25519PubKey,
-            12 => ContractCostType::MapEntry,
-            13 => ContractCostType::VecEntry,
-            14 => ContractCostType::GuardFrame,
-            15 => ContractCostType::VerifyEd25519Sig,
-            16 => ContractCostType::VmMemRead,
-            17 => ContractCostType::VmMemWrite,
-            18 => ContractCostType::VmInstantiation,
-            19 => ContractCostType::VmCachedInstantiation,
-            20 => ContractCostType::InvokeVmFunction,
-            21 => ContractCostType::ChargeBudget,
-            22 => ContractCostType::ComputeKeccak256Hash,
-            23 => ContractCostType::ComputeEcdsaSecp256k1Key,
-            24 => ContractCostType::ComputeEcdsaSecp256k1Sig,
-            25 => ContractCostType::RecoverEcdsaSecp256k1Key,
-            26 => ContractCostType::Int256AddSub,
-            27 => ContractCostType::Int256Mul,
-            28 => ContractCostType::Int256Div,
-            29 => ContractCostType::Int256Pow,
-            30 => ContractCostType::Int256Shift,
+            7 => ContractCostType::ValSer,
+            8 => ContractCostType::ValDeser,
+            9 => ContractCostType::ComputeSha256Hash,
+            10 => ContractCostType::ComputeEd25519PubKey,
+            11 => ContractCostType::MapEntry,
+            12 => ContractCostType::VecEntry,
+            13 => ContractCostType::VerifyEd25519Sig,
+            14 => ContractCostType::VmMemRead,
+            15 => ContractCostType::VmMemWrite,
+            16 => ContractCostType::VmInstantiation,
+            17 => ContractCostType::VmCachedInstantiation,
+            18 => ContractCostType::InvokeVmFunction,
+            19 => ContractCostType::ComputeKeccak256Hash,
+            20 => ContractCostType::ComputeEcdsaSecp256k1Key,
+            21 => ContractCostType::ComputeEcdsaSecp256k1Sig,
+            22 => ContractCostType::RecoverEcdsaSecp256k1Key,
+            23 => ContractCostType::Int256AddSub,
+            24 => ContractCostType::Int256Mul,
+            25 => ContractCostType::Int256Div,
+            26 => ContractCostType::Int256Pow,
+            27 => ContractCostType::Int256Shift,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -3852,6 +3832,9 @@ impl WriteXdr for ContractCostParamEntry {
 //
 //        // Maximum number of bytes that we scan for eviction per ledger
 //        uint64 evictionScanSize;
+//
+//        // Lowest BucketList level to be scanned to evict entries
+//        uint32 startingEvictionScanLevel;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -3871,6 +3854,7 @@ pub struct StateExpirationSettings {
     pub max_entries_to_expire: u32,
     pub bucket_list_size_window_sample_size: u32,
     pub eviction_scan_size: u64,
+    pub starting_eviction_scan_level: u32,
 }
 
 impl ReadXdr for StateExpirationSettings {
@@ -3887,6 +3871,7 @@ impl ReadXdr for StateExpirationSettings {
                 max_entries_to_expire: u32::read_xdr(r)?,
                 bucket_list_size_window_sample_size: u32::read_xdr(r)?,
                 eviction_scan_size: u64::read_xdr(r)?,
+                starting_eviction_scan_level: u32::read_xdr(r)?,
             })
         })
     }
@@ -3905,6 +3890,53 @@ impl WriteXdr for StateExpirationSettings {
             self.max_entries_to_expire.write_xdr(w)?;
             self.bucket_list_size_window_sample_size.write_xdr(w)?;
             self.eviction_scan_size.write_xdr(w)?;
+            self.starting_eviction_scan_level.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// EvictionIterator is an XDR Struct defines as:
+//
+//   struct EvictionIterator {
+//        uint32 bucketListLevel;
+//        bool isCurrBucket;
+//        uint64 bucketFileOffset;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct EvictionIterator {
+    pub bucket_list_level: u32,
+    pub is_curr_bucket: bool,
+    pub bucket_file_offset: u64,
+}
+
+impl ReadXdr for EvictionIterator {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                bucket_list_level: u32::read_xdr(r)?,
+                is_curr_bucket: bool::read_xdr(r)?,
+                bucket_file_offset: u64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for EvictionIterator {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.bucket_list_level.write_xdr(w)?;
+            self.is_curr_bucket.write_xdr(w)?;
+            self.bucket_file_offset.write_xdr(w)?;
             Ok(())
         })
     }
@@ -4034,7 +4066,8 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 //        CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9,
 //        CONFIG_SETTING_STATE_EXPIRATION = 10,
 //        CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11,
-//        CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12
+//        CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12,
+//        CONFIG_SETTING_EVICTION_ITERATOR = 13
 //    };
 //
 // enum
@@ -4060,10 +4093,11 @@ pub enum ConfigSettingId {
     StateExpiration = 10,
     ContractExecutionLanes = 11,
     BucketlistSizeWindow = 12,
+    EvictionIterator = 13,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 13] = [
+    pub const VARIANTS: [ConfigSettingId; 14] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -4077,8 +4111,9 @@ impl ConfigSettingId {
         ConfigSettingId::StateExpiration,
         ConfigSettingId::ContractExecutionLanes,
         ConfigSettingId::BucketlistSizeWindow,
+        ConfigSettingId::EvictionIterator,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: [&'static str; 14] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -4092,6 +4127,7 @@ impl ConfigSettingId {
         "StateExpiration",
         "ContractExecutionLanes",
         "BucketlistSizeWindow",
+        "EvictionIterator",
     ];
 
     #[must_use]
@@ -4110,11 +4146,12 @@ impl ConfigSettingId {
             Self::StateExpiration => "StateExpiration",
             Self::ContractExecutionLanes => "ContractExecutionLanes",
             Self::BucketlistSizeWindow => "BucketlistSizeWindow",
+            Self::EvictionIterator => "EvictionIterator",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 13] {
+    pub const fn variants() -> [ConfigSettingId; 14] {
         Self::VARIANTS
     }
 }
@@ -4158,6 +4195,7 @@ impl TryFrom<i32> for ConfigSettingId {
             10 => ConfigSettingId::StateExpiration,
             11 => ConfigSettingId::ContractExecutionLanes,
             12 => ConfigSettingId::BucketlistSizeWindow,
+            13 => ConfigSettingId::EvictionIterator,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -4223,6 +4261,8 @@ impl WriteXdr for ConfigSettingId {
 //        ConfigSettingContractExecutionLanesV0 contractExecutionLanes;
 //    case CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW:
 //        uint64 bucketListSizeWindow<>;
+//    case CONFIG_SETTING_EVICTION_ITERATOR:
+//        EvictionIterator evictionIterator;
 //    };
 //
 // union with discriminant ConfigSettingId
@@ -4248,10 +4288,11 @@ pub enum ConfigSettingEntry {
     StateExpiration(StateExpirationSettings),
     ContractExecutionLanes(ConfigSettingContractExecutionLanesV0),
     BucketlistSizeWindow(VecM<u64>),
+    EvictionIterator(EvictionIterator),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 13] = [
+    pub const VARIANTS: [ConfigSettingId; 14] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -4265,8 +4306,9 @@ impl ConfigSettingEntry {
         ConfigSettingId::StateExpiration,
         ConfigSettingId::ContractExecutionLanes,
         ConfigSettingId::BucketlistSizeWindow,
+        ConfigSettingId::EvictionIterator,
     ];
-    pub const VARIANTS_STR: [&'static str; 13] = [
+    pub const VARIANTS_STR: [&'static str; 14] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -4280,6 +4322,7 @@ impl ConfigSettingEntry {
         "StateExpiration",
         "ContractExecutionLanes",
         "BucketlistSizeWindow",
+        "EvictionIterator",
     ];
 
     #[must_use]
@@ -4298,6 +4341,7 @@ impl ConfigSettingEntry {
             Self::StateExpiration(_) => "StateExpiration",
             Self::ContractExecutionLanes(_) => "ContractExecutionLanes",
             Self::BucketlistSizeWindow(_) => "BucketlistSizeWindow",
+            Self::EvictionIterator(_) => "EvictionIterator",
         }
     }
 
@@ -4322,11 +4366,12 @@ impl ConfigSettingEntry {
             Self::StateExpiration(_) => ConfigSettingId::StateExpiration,
             Self::ContractExecutionLanes(_) => ConfigSettingId::ContractExecutionLanes,
             Self::BucketlistSizeWindow(_) => ConfigSettingId::BucketlistSizeWindow,
+            Self::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 13] {
+    pub const fn variants() -> [ConfigSettingId; 14] {
         Self::VARIANTS
     }
 }
@@ -4399,6 +4444,9 @@ impl ReadXdr for ConfigSettingEntry {
                 ConfigSettingId::BucketlistSizeWindow => {
                     Self::BucketlistSizeWindow(VecM::<u64>::read_xdr(r)?)
                 }
+                ConfigSettingId::EvictionIterator => {
+                    Self::EvictionIterator(EvictionIterator::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -4427,6 +4475,7 @@ impl WriteXdr for ConfigSettingEntry {
                 Self::StateExpiration(v) => v.write_xdr(w)?,
                 Self::ContractExecutionLanes(v) => v.write_xdr(w)?,
                 Self::BucketlistSizeWindow(v) => v.write_xdr(w)?,
+                Self::EvictionIterator(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -41309,6 +41358,7 @@ pub enum TypeVariant {
     ContractCostType,
     ContractCostParamEntry,
     StateExpirationSettings,
+    EvictionIterator,
     ContractCostParams,
     ConfigSettingId,
     ConfigSettingEntry,
@@ -41713,7 +41763,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 421] = [
+    pub const VARIANTS: [TypeVariant; 422] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -41734,6 +41784,7 @@ impl TypeVariant {
         TypeVariant::ContractCostType,
         TypeVariant::ContractCostParamEntry,
         TypeVariant::StateExpirationSettings,
+        TypeVariant::EvictionIterator,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
@@ -42136,7 +42187,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 421] = [
+    pub const VARIANTS_STR: [&'static str; 422] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -42157,6 +42208,7 @@ impl TypeVariant {
         "ContractCostType",
         "ContractCostParamEntry",
         "StateExpirationSettings",
+        "EvictionIterator",
         "ContractCostParams",
         "ConfigSettingId",
         "ConfigSettingEntry",
@@ -42584,6 +42636,7 @@ impl TypeVariant {
             Self::ContractCostType => "ContractCostType",
             Self::ContractCostParamEntry => "ContractCostParamEntry",
             Self::StateExpirationSettings => "StateExpirationSettings",
+            Self::EvictionIterator => "EvictionIterator",
             Self::ContractCostParams => "ContractCostParams",
             Self::ConfigSettingId => "ConfigSettingId",
             Self::ConfigSettingEntry => "ConfigSettingEntry",
@@ -42996,7 +43049,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 421] {
+    pub const fn variants() -> [TypeVariant; 422] {
         Self::VARIANTS
     }
 }
@@ -43043,6 +43096,7 @@ impl core::str::FromStr for TypeVariant {
             "ContractCostType" => Ok(Self::ContractCostType),
             "ContractCostParamEntry" => Ok(Self::ContractCostParamEntry),
             "StateExpirationSettings" => Ok(Self::StateExpirationSettings),
+            "EvictionIterator" => Ok(Self::EvictionIterator),
             "ContractCostParams" => Ok(Self::ContractCostParams),
             "ConfigSettingId" => Ok(Self::ConfigSettingId),
             "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
@@ -43487,6 +43541,7 @@ pub enum Type {
     ContractCostType(Box<ContractCostType>),
     ContractCostParamEntry(Box<ContractCostParamEntry>),
     StateExpirationSettings(Box<StateExpirationSettings>),
+    EvictionIterator(Box<EvictionIterator>),
     ContractCostParams(Box<ContractCostParams>),
     ConfigSettingId(Box<ConfigSettingId>),
     ConfigSettingEntry(Box<ConfigSettingEntry>),
@@ -43891,7 +43946,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 421] = [
+    pub const VARIANTS: [TypeVariant; 422] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -43912,6 +43967,7 @@ impl Type {
         TypeVariant::ContractCostType,
         TypeVariant::ContractCostParamEntry,
         TypeVariant::StateExpirationSettings,
+        TypeVariant::EvictionIterator,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
         TypeVariant::ConfigSettingEntry,
@@ -44314,7 +44370,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 421] = [
+    pub const VARIANTS_STR: [&'static str; 422] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -44335,6 +44391,7 @@ impl Type {
         "ContractCostType",
         "ContractCostParamEntry",
         "StateExpirationSettings",
+        "EvictionIterator",
         "ContractCostParams",
         "ConfigSettingId",
         "ConfigSettingEntry",
@@ -44828,6 +44885,11 @@ impl Type {
             TypeVariant::StateExpirationSettings => r.with_limited_depth(|r| {
                 Ok(Self::StateExpirationSettings(Box::new(
                     StateExpirationSettings::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::EvictionIterator => r.with_limited_depth(|r| {
+                Ok(Self::EvictionIterator(Box::new(
+                    EvictionIterator::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ContractCostParams => r.with_limited_depth(|r| {
@@ -46700,6 +46762,10 @@ impl Type {
                 ReadXdrIter::<_, StateExpirationSettings>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StateExpirationSettings(Box::new(t)))),
             ),
+            TypeVariant::EvictionIterator => Box::new(
+                ReadXdrIter::<_, EvictionIterator>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
+            ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, ContractCostParams>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
@@ -48530,6 +48596,10 @@ impl Type {
                     r.depth_remaining,
                 )
                 .map(|r| r.map(|t| Self::StateExpirationSettings(Box::new(t.0)))),
+            ),
+            TypeVariant::EvictionIterator => Box::new(
+                ReadXdrIter::<_, Frame<EvictionIterator>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t.0)))),
             ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, Frame<ContractCostParams>>::new(&mut r.inner, r.depth_remaining)
@@ -50651,6 +50721,10 @@ impl Type {
                 ReadXdrIter::<_, StateExpirationSettings>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StateExpirationSettings(Box::new(t)))),
             ),
+            TypeVariant::EvictionIterator => Box::new(
+                ReadXdrIter::<_, EvictionIterator>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
+            ),
             TypeVariant::ContractCostParams => Box::new(
                 ReadXdrIter::<_, ContractCostParams>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
@@ -52320,6 +52394,7 @@ impl Type {
             Self::ContractCostType(ref v) => v.as_ref(),
             Self::ContractCostParamEntry(ref v) => v.as_ref(),
             Self::StateExpirationSettings(ref v) => v.as_ref(),
+            Self::EvictionIterator(ref v) => v.as_ref(),
             Self::ContractCostParams(ref v) => v.as_ref(),
             Self::ConfigSettingId(ref v) => v.as_ref(),
             Self::ConfigSettingEntry(ref v) => v.as_ref(),
@@ -52752,6 +52827,7 @@ impl Type {
             Self::ContractCostType(_) => "ContractCostType",
             Self::ContractCostParamEntry(_) => "ContractCostParamEntry",
             Self::StateExpirationSettings(_) => "StateExpirationSettings",
+            Self::EvictionIterator(_) => "EvictionIterator",
             Self::ContractCostParams(_) => "ContractCostParams",
             Self::ConfigSettingId(_) => "ConfigSettingId",
             Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
@@ -53168,7 +53244,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 421] {
+    pub const fn variants() -> [TypeVariant; 422] {
         Self::VARIANTS
     }
 
@@ -53204,6 +53280,7 @@ impl Type {
             Self::ContractCostType(_) => TypeVariant::ContractCostType,
             Self::ContractCostParamEntry(_) => TypeVariant::ContractCostParamEntry,
             Self::StateExpirationSettings(_) => TypeVariant::StateExpirationSettings,
+            Self::EvictionIterator(_) => TypeVariant::EvictionIterator,
             Self::ContractCostParams(_) => TypeVariant::ContractCostParams,
             Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
             Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,

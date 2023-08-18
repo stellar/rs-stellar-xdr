@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "236ae9631757a957d0057d6cbfa8a5e5f2c7219986d3b9e6d0844571865dd6fc",
+        "6acd73c1f9f0fe9a8d7e7911b78f9d1f9d23d512d347f32c58de47f8b895466a",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -28386,10 +28386,6 @@ impl WriteXdr for LedgerFootprint {
 //        uint32 readBytes;
 //        // The maximum number of bytes this transaction can write to ledger
 //        uint32 writeBytes;
-//
-//        // Maximum size of the contract events (serialized to XDR) this transaction
-//        // can emit.
-//        uint32 contractEventsSizeBytes;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -28404,7 +28400,6 @@ pub struct SorobanResources {
     pub instructions: u32,
     pub read_bytes: u32,
     pub write_bytes: u32,
-    pub contract_events_size_bytes: u32,
 }
 
 impl ReadXdr for SorobanResources {
@@ -28416,7 +28411,6 @@ impl ReadXdr for SorobanResources {
                 instructions: u32::read_xdr(r)?,
                 read_bytes: u32::read_xdr(r)?,
                 write_bytes: u32::read_xdr(r)?,
-                contract_events_size_bytes: u32::read_xdr(r)?,
             })
         })
     }
@@ -28430,7 +28424,6 @@ impl WriteXdr for SorobanResources {
             self.instructions.write_xdr(w)?;
             self.read_bytes.write_xdr(w)?;
             self.write_bytes.write_xdr(w)?;
-            self.contract_events_size_bytes.write_xdr(w)?;
             Ok(())
         })
     }
@@ -37205,7 +37198,8 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 //        INVOKE_HOST_FUNCTION_MALFORMED = -1,
 //        INVOKE_HOST_FUNCTION_TRAPPED = -2,
 //        INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3,
-//        INVOKE_HOST_FUNCTION_ENTRY_EXPIRED = -4
+//        INVOKE_HOST_FUNCTION_ENTRY_EXPIRED = -4,
+//        INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE = -5
 //    };
 //
 // enum
@@ -37223,22 +37217,25 @@ pub enum InvokeHostFunctionResultCode {
     Trapped = -2,
     ResourceLimitExceeded = -3,
     EntryExpired = -4,
+    InsufficientRefundableFee = -5,
 }
 
 impl InvokeHostFunctionResultCode {
-    pub const VARIANTS: [InvokeHostFunctionResultCode; 5] = [
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 6] = [
         InvokeHostFunctionResultCode::Success,
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
         InvokeHostFunctionResultCode::ResourceLimitExceeded,
         InvokeHostFunctionResultCode::EntryExpired,
+        InvokeHostFunctionResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: [&'static str; 6] = [
         "Success",
         "Malformed",
         "Trapped",
         "ResourceLimitExceeded",
         "EntryExpired",
+        "InsufficientRefundableFee",
     ];
 
     #[must_use]
@@ -37249,11 +37246,12 @@ impl InvokeHostFunctionResultCode {
             Self::Trapped => "Trapped",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
             Self::EntryExpired => "EntryExpired",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [InvokeHostFunctionResultCode; 5] {
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 6] {
         Self::VARIANTS
     }
 }
@@ -37289,6 +37287,7 @@ impl TryFrom<i32> for InvokeHostFunctionResultCode {
             -2 => InvokeHostFunctionResultCode::Trapped,
             -3 => InvokeHostFunctionResultCode::ResourceLimitExceeded,
             -4 => InvokeHostFunctionResultCode::EntryExpired,
+            -5 => InvokeHostFunctionResultCode::InsufficientRefundableFee,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -37334,6 +37333,7 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 //    case INVOKE_HOST_FUNCTION_TRAPPED:
 //    case INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED:
 //    case INVOKE_HOST_FUNCTION_ENTRY_EXPIRED:
+//    case INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE:
 //        void;
 //    };
 //
@@ -37352,22 +37352,25 @@ pub enum InvokeHostFunctionResult {
     Trapped,
     ResourceLimitExceeded,
     EntryExpired,
+    InsufficientRefundableFee,
 }
 
 impl InvokeHostFunctionResult {
-    pub const VARIANTS: [InvokeHostFunctionResultCode; 5] = [
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 6] = [
         InvokeHostFunctionResultCode::Success,
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
         InvokeHostFunctionResultCode::ResourceLimitExceeded,
         InvokeHostFunctionResultCode::EntryExpired,
+        InvokeHostFunctionResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: [&'static str; 6] = [
         "Success",
         "Malformed",
         "Trapped",
         "ResourceLimitExceeded",
         "EntryExpired",
+        "InsufficientRefundableFee",
     ];
 
     #[must_use]
@@ -37378,6 +37381,7 @@ impl InvokeHostFunctionResult {
             Self::Trapped => "Trapped",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
             Self::EntryExpired => "EntryExpired",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
         }
     }
 
@@ -37390,11 +37394,14 @@ impl InvokeHostFunctionResult {
             Self::Trapped => InvokeHostFunctionResultCode::Trapped,
             Self::ResourceLimitExceeded => InvokeHostFunctionResultCode::ResourceLimitExceeded,
             Self::EntryExpired => InvokeHostFunctionResultCode::EntryExpired,
+            Self::InsufficientRefundableFee => {
+                InvokeHostFunctionResultCode::InsufficientRefundableFee
+            }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [InvokeHostFunctionResultCode; 5] {
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 6] {
         Self::VARIANTS
     }
 }
@@ -37434,6 +37441,9 @@ impl ReadXdr for InvokeHostFunctionResult {
                 InvokeHostFunctionResultCode::Trapped => Self::Trapped,
                 InvokeHostFunctionResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
                 InvokeHostFunctionResultCode::EntryExpired => Self::EntryExpired,
+                InvokeHostFunctionResultCode::InsufficientRefundableFee => {
+                    Self::InsufficientRefundableFee
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -37454,6 +37464,7 @@ impl WriteXdr for InvokeHostFunctionResult {
                 Self::Trapped => ().write_xdr(w)?,
                 Self::ResourceLimitExceeded => ().write_xdr(w)?,
                 Self::EntryExpired => ().write_xdr(w)?,
+                Self::InsufficientRefundableFee => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -37469,7 +37480,8 @@ impl WriteXdr for InvokeHostFunctionResult {
 //
 //        // codes considered as "failure" for the operation
 //        BUMP_FOOTPRINT_EXPIRATION_MALFORMED = -1,
-//        BUMP_FOOTPRINT_EXPIRATION_RESOURCE_LIMIT_EXCEEDED = -2
+//        BUMP_FOOTPRINT_EXPIRATION_RESOURCE_LIMIT_EXCEEDED = -2,
+//        BUMP_FOOTPRINT_EXPIRATION_INSUFFICIENT_REFUNDABLE_FEE = -3
 //    };
 //
 // enum
@@ -37485,15 +37497,22 @@ pub enum BumpFootprintExpirationResultCode {
     Success = 0,
     Malformed = -1,
     ResourceLimitExceeded = -2,
+    InsufficientRefundableFee = -3,
 }
 
 impl BumpFootprintExpirationResultCode {
-    pub const VARIANTS: [BumpFootprintExpirationResultCode; 3] = [
+    pub const VARIANTS: [BumpFootprintExpirationResultCode; 4] = [
         BumpFootprintExpirationResultCode::Success,
         BumpFootprintExpirationResultCode::Malformed,
         BumpFootprintExpirationResultCode::ResourceLimitExceeded,
+        BumpFootprintExpirationResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Success", "Malformed", "ResourceLimitExceeded"];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "Success",
+        "Malformed",
+        "ResourceLimitExceeded",
+        "InsufficientRefundableFee",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -37501,11 +37520,12 @@ impl BumpFootprintExpirationResultCode {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [BumpFootprintExpirationResultCode; 3] {
+    pub const fn variants() -> [BumpFootprintExpirationResultCode; 4] {
         Self::VARIANTS
     }
 }
@@ -37539,6 +37559,7 @@ impl TryFrom<i32> for BumpFootprintExpirationResultCode {
             0 => BumpFootprintExpirationResultCode::Success,
             -1 => BumpFootprintExpirationResultCode::Malformed,
             -2 => BumpFootprintExpirationResultCode::ResourceLimitExceeded,
+            -3 => BumpFootprintExpirationResultCode::InsufficientRefundableFee,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -37582,6 +37603,7 @@ impl WriteXdr for BumpFootprintExpirationResultCode {
 //        void;
 //    case BUMP_FOOTPRINT_EXPIRATION_MALFORMED:
 //    case BUMP_FOOTPRINT_EXPIRATION_RESOURCE_LIMIT_EXCEEDED:
+//    case BUMP_FOOTPRINT_EXPIRATION_INSUFFICIENT_REFUNDABLE_FEE:
 //        void;
 //    };
 //
@@ -37598,15 +37620,22 @@ pub enum BumpFootprintExpirationResult {
     Success,
     Malformed,
     ResourceLimitExceeded,
+    InsufficientRefundableFee,
 }
 
 impl BumpFootprintExpirationResult {
-    pub const VARIANTS: [BumpFootprintExpirationResultCode; 3] = [
+    pub const VARIANTS: [BumpFootprintExpirationResultCode; 4] = [
         BumpFootprintExpirationResultCode::Success,
         BumpFootprintExpirationResultCode::Malformed,
         BumpFootprintExpirationResultCode::ResourceLimitExceeded,
+        BumpFootprintExpirationResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Success", "Malformed", "ResourceLimitExceeded"];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "Success",
+        "Malformed",
+        "ResourceLimitExceeded",
+        "InsufficientRefundableFee",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -37614,6 +37643,7 @@ impl BumpFootprintExpirationResult {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
         }
     }
 
@@ -37624,11 +37654,14 @@ impl BumpFootprintExpirationResult {
             Self::Success => BumpFootprintExpirationResultCode::Success,
             Self::Malformed => BumpFootprintExpirationResultCode::Malformed,
             Self::ResourceLimitExceeded => BumpFootprintExpirationResultCode::ResourceLimitExceeded,
+            Self::InsufficientRefundableFee => {
+                BumpFootprintExpirationResultCode::InsufficientRefundableFee
+            }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [BumpFootprintExpirationResultCode; 3] {
+    pub const fn variants() -> [BumpFootprintExpirationResultCode; 4] {
         Self::VARIANTS
     }
 }
@@ -37668,6 +37701,9 @@ impl ReadXdr for BumpFootprintExpirationResult {
                 BumpFootprintExpirationResultCode::ResourceLimitExceeded => {
                     Self::ResourceLimitExceeded
                 }
+                BumpFootprintExpirationResultCode::InsufficientRefundableFee => {
+                    Self::InsufficientRefundableFee
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -37686,6 +37722,7 @@ impl WriteXdr for BumpFootprintExpirationResult {
                 Self::Success => ().write_xdr(w)?,
                 Self::Malformed => ().write_xdr(w)?,
                 Self::ResourceLimitExceeded => ().write_xdr(w)?,
+                Self::InsufficientRefundableFee => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -37701,7 +37738,8 @@ impl WriteXdr for BumpFootprintExpirationResult {
 //
 //        // codes considered as "failure" for the operation
 //        RESTORE_FOOTPRINT_MALFORMED = -1,
-//        RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED = -2
+//        RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED = -2,
+//        RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE = -3
 //    };
 //
 // enum
@@ -37717,15 +37755,22 @@ pub enum RestoreFootprintResultCode {
     Success = 0,
     Malformed = -1,
     ResourceLimitExceeded = -2,
+    InsufficientRefundableFee = -3,
 }
 
 impl RestoreFootprintResultCode {
-    pub const VARIANTS: [RestoreFootprintResultCode; 3] = [
+    pub const VARIANTS: [RestoreFootprintResultCode; 4] = [
         RestoreFootprintResultCode::Success,
         RestoreFootprintResultCode::Malformed,
         RestoreFootprintResultCode::ResourceLimitExceeded,
+        RestoreFootprintResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Success", "Malformed", "ResourceLimitExceeded"];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "Success",
+        "Malformed",
+        "ResourceLimitExceeded",
+        "InsufficientRefundableFee",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -37733,11 +37778,12 @@ impl RestoreFootprintResultCode {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [RestoreFootprintResultCode; 3] {
+    pub const fn variants() -> [RestoreFootprintResultCode; 4] {
         Self::VARIANTS
     }
 }
@@ -37771,6 +37817,7 @@ impl TryFrom<i32> for RestoreFootprintResultCode {
             0 => RestoreFootprintResultCode::Success,
             -1 => RestoreFootprintResultCode::Malformed,
             -2 => RestoreFootprintResultCode::ResourceLimitExceeded,
+            -3 => RestoreFootprintResultCode::InsufficientRefundableFee,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -37814,6 +37861,7 @@ impl WriteXdr for RestoreFootprintResultCode {
 //        void;
 //    case RESTORE_FOOTPRINT_MALFORMED:
 //    case RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED:
+//    case RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE:
 //        void;
 //    };
 //
@@ -37830,15 +37878,22 @@ pub enum RestoreFootprintResult {
     Success,
     Malformed,
     ResourceLimitExceeded,
+    InsufficientRefundableFee,
 }
 
 impl RestoreFootprintResult {
-    pub const VARIANTS: [RestoreFootprintResultCode; 3] = [
+    pub const VARIANTS: [RestoreFootprintResultCode; 4] = [
         RestoreFootprintResultCode::Success,
         RestoreFootprintResultCode::Malformed,
         RestoreFootprintResultCode::ResourceLimitExceeded,
+        RestoreFootprintResultCode::InsufficientRefundableFee,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Success", "Malformed", "ResourceLimitExceeded"];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "Success",
+        "Malformed",
+        "ResourceLimitExceeded",
+        "InsufficientRefundableFee",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -37846,6 +37901,7 @@ impl RestoreFootprintResult {
             Self::Success => "Success",
             Self::Malformed => "Malformed",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
         }
     }
 
@@ -37856,11 +37912,14 @@ impl RestoreFootprintResult {
             Self::Success => RestoreFootprintResultCode::Success,
             Self::Malformed => RestoreFootprintResultCode::Malformed,
             Self::ResourceLimitExceeded => RestoreFootprintResultCode::ResourceLimitExceeded,
+            Self::InsufficientRefundableFee => {
+                RestoreFootprintResultCode::InsufficientRefundableFee
+            }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [RestoreFootprintResultCode; 3] {
+    pub const fn variants() -> [RestoreFootprintResultCode; 4] {
         Self::VARIANTS
     }
 }
@@ -37898,6 +37957,9 @@ impl ReadXdr for RestoreFootprintResult {
                 RestoreFootprintResultCode::Success => Self::Success,
                 RestoreFootprintResultCode::Malformed => Self::Malformed,
                 RestoreFootprintResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
+                RestoreFootprintResultCode::InsufficientRefundableFee => {
+                    Self::InsufficientRefundableFee
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -37916,6 +37978,7 @@ impl WriteXdr for RestoreFootprintResult {
                 Self::Success => ().write_xdr(w)?,
                 Self::Malformed => ().write_xdr(w)?,
                 Self::ResourceLimitExceeded => ().write_xdr(w)?,
+                Self::InsufficientRefundableFee => ().write_xdr(w)?,
             };
             Ok(())
         })

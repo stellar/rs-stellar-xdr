@@ -34,7 +34,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "739e2480ba197aa859f122632a93172668cb0dbe93e30a54c192b96878af207a",
+        "c7ffa21d2e91afb8e666b33524d307955426ff553a486d670c29217ed9888d49",
     ),
     (
         "xdr/next/Stellar-contract.x",
@@ -4956,7 +4956,6 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 //        SC_SPEC_TYPE_OPTION = 1000,
 //        SC_SPEC_TYPE_RESULT = 1001,
 //        SC_SPEC_TYPE_VEC = 1002,
-//        SC_SPEC_TYPE_SET = 1003,
 //        SC_SPEC_TYPE_MAP = 1004,
 //        SC_SPEC_TYPE_TUPLE = 1005,
 //        SC_SPEC_TYPE_BYTES_N = 1006,
@@ -4996,7 +4995,6 @@ pub enum ScSpecType {
     Option = 1000,
     Result = 1001,
     Vec = 1002,
-    Set = 1003,
     Map = 1004,
     Tuple = 1005,
     BytesN = 1006,
@@ -5004,7 +5002,7 @@ pub enum ScSpecType {
 }
 
 impl ScSpecType {
-    pub const VARIANTS: [ScSpecType; 26] = [
+    pub const VARIANTS: [ScSpecType; 25] = [
         ScSpecType::Val,
         ScSpecType::Bool,
         ScSpecType::Void,
@@ -5026,13 +5024,12 @@ impl ScSpecType {
         ScSpecType::Option,
         ScSpecType::Result,
         ScSpecType::Vec,
-        ScSpecType::Set,
         ScSpecType::Map,
         ScSpecType::Tuple,
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 26] = [
+    pub const VARIANTS_STR: [&'static str; 25] = [
         "Val",
         "Bool",
         "Void",
@@ -5054,7 +5051,6 @@ impl ScSpecType {
         "Option",
         "Result",
         "Vec",
-        "Set",
         "Map",
         "Tuple",
         "BytesN",
@@ -5085,7 +5081,6 @@ impl ScSpecType {
             Self::Option => "Option",
             Self::Result => "Result",
             Self::Vec => "Vec",
-            Self::Set => "Set",
             Self::Map => "Map",
             Self::Tuple => "Tuple",
             Self::BytesN => "BytesN",
@@ -5094,7 +5089,7 @@ impl ScSpecType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 26] {
+    pub const fn variants() -> [ScSpecType; 25] {
         Self::VARIANTS
     }
 }
@@ -5146,7 +5141,6 @@ impl TryFrom<i32> for ScSpecType {
             1000 => ScSpecType::Option,
             1001 => ScSpecType::Result,
             1002 => ScSpecType::Vec,
-            1003 => ScSpecType::Set,
             1004 => ScSpecType::Map,
             1005 => ScSpecType::Tuple,
             1006 => ScSpecType::BytesN,
@@ -5350,45 +5344,6 @@ impl WriteXdr for ScSpecTypeMap {
     }
 }
 
-// ScSpecTypeSet is an XDR Struct defines as:
-//
-//   struct SCSpecTypeSet
-//    {
-//        SCSpecTypeDef elementType;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ScSpecTypeSet {
-    pub element_type: Box<ScSpecTypeDef>,
-}
-
-impl ReadXdr for ScSpecTypeSet {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                element_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ScSpecTypeSet {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.element_type.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 // ScSpecTypeTuple is an XDR Struct defines as:
 //
 //   struct SCSpecTypeTuple
@@ -5537,8 +5492,6 @@ impl WriteXdr for ScSpecTypeUdt {
 //        SCSpecTypeVec vec;
 //    case SC_SPEC_TYPE_MAP:
 //        SCSpecTypeMap map;
-//    case SC_SPEC_TYPE_SET:
-//        SCSpecTypeSet set;
 //    case SC_SPEC_TYPE_TUPLE:
 //        SCSpecTypeTuple tuple;
 //    case SC_SPEC_TYPE_BYTES_N:
@@ -5579,14 +5532,13 @@ pub enum ScSpecTypeDef {
     Result(Box<ScSpecTypeResult>),
     Vec(Box<ScSpecTypeVec>),
     Map(Box<ScSpecTypeMap>),
-    Set(Box<ScSpecTypeSet>),
     Tuple(Box<ScSpecTypeTuple>),
     BytesN(ScSpecTypeBytesN),
     Udt(ScSpecTypeUdt),
 }
 
 impl ScSpecTypeDef {
-    pub const VARIANTS: [ScSpecType; 26] = [
+    pub const VARIANTS: [ScSpecType; 25] = [
         ScSpecType::Val,
         ScSpecType::Bool,
         ScSpecType::Void,
@@ -5609,12 +5561,11 @@ impl ScSpecTypeDef {
         ScSpecType::Result,
         ScSpecType::Vec,
         ScSpecType::Map,
-        ScSpecType::Set,
         ScSpecType::Tuple,
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 26] = [
+    pub const VARIANTS_STR: [&'static str; 25] = [
         "Val",
         "Bool",
         "Void",
@@ -5637,7 +5588,6 @@ impl ScSpecTypeDef {
         "Result",
         "Vec",
         "Map",
-        "Set",
         "Tuple",
         "BytesN",
         "Udt",
@@ -5668,7 +5618,6 @@ impl ScSpecTypeDef {
             Self::Result(_) => "Result",
             Self::Vec(_) => "Vec",
             Self::Map(_) => "Map",
-            Self::Set(_) => "Set",
             Self::Tuple(_) => "Tuple",
             Self::BytesN(_) => "BytesN",
             Self::Udt(_) => "Udt",
@@ -5701,7 +5650,6 @@ impl ScSpecTypeDef {
             Self::Result(_) => ScSpecType::Result,
             Self::Vec(_) => ScSpecType::Vec,
             Self::Map(_) => ScSpecType::Map,
-            Self::Set(_) => ScSpecType::Set,
             Self::Tuple(_) => ScSpecType::Tuple,
             Self::BytesN(_) => ScSpecType::BytesN,
             Self::Udt(_) => ScSpecType::Udt,
@@ -5709,7 +5657,7 @@ impl ScSpecTypeDef {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 26] {
+    pub const fn variants() -> [ScSpecType; 25] {
         Self::VARIANTS
     }
 }
@@ -5765,7 +5713,6 @@ impl ReadXdr for ScSpecTypeDef {
                 ScSpecType::Result => Self::Result(Box::<ScSpecTypeResult>::read_xdr(r)?),
                 ScSpecType::Vec => Self::Vec(Box::<ScSpecTypeVec>::read_xdr(r)?),
                 ScSpecType::Map => Self::Map(Box::<ScSpecTypeMap>::read_xdr(r)?),
-                ScSpecType::Set => Self::Set(Box::<ScSpecTypeSet>::read_xdr(r)?),
                 ScSpecType::Tuple => Self::Tuple(Box::<ScSpecTypeTuple>::read_xdr(r)?),
                 ScSpecType::BytesN => Self::BytesN(ScSpecTypeBytesN::read_xdr(r)?),
                 ScSpecType::Udt => Self::Udt(ScSpecTypeUdt::read_xdr(r)?),
@@ -5806,7 +5753,6 @@ impl WriteXdr for ScSpecTypeDef {
                 Self::Result(v) => v.write_xdr(w)?,
                 Self::Vec(v) => v.write_xdr(w)?,
                 Self::Map(v) => v.write_xdr(w)?,
-                Self::Set(v) => v.write_xdr(w)?,
                 Self::Tuple(v) => v.write_xdr(w)?,
                 Self::BytesN(v) => v.write_xdr(w)?,
                 Self::Udt(v) => v.write_xdr(w)?,
@@ -41435,7 +41381,6 @@ pub enum TypeVariant {
     ScSpecTypeResult,
     ScSpecTypeVec,
     ScSpecTypeMap,
-    ScSpecTypeSet,
     ScSpecTypeTuple,
     ScSpecTypeBytesN,
     ScSpecTypeUdt,
@@ -41826,7 +41771,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 422] = [
+    pub const VARIANTS: [TypeVariant; 421] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -41861,7 +41806,6 @@ impl TypeVariant {
         TypeVariant::ScSpecTypeResult,
         TypeVariant::ScSpecTypeVec,
         TypeVariant::ScSpecTypeMap,
-        TypeVariant::ScSpecTypeSet,
         TypeVariant::ScSpecTypeTuple,
         TypeVariant::ScSpecTypeBytesN,
         TypeVariant::ScSpecTypeUdt,
@@ -42250,7 +42194,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 422] = [
+    pub const VARIANTS_STR: [&'static str; 421] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -42285,7 +42229,6 @@ impl TypeVariant {
         "ScSpecTypeResult",
         "ScSpecTypeVec",
         "ScSpecTypeMap",
-        "ScSpecTypeSet",
         "ScSpecTypeTuple",
         "ScSpecTypeBytesN",
         "ScSpecTypeUdt",
@@ -42713,7 +42656,6 @@ impl TypeVariant {
             Self::ScSpecTypeResult => "ScSpecTypeResult",
             Self::ScSpecTypeVec => "ScSpecTypeVec",
             Self::ScSpecTypeMap => "ScSpecTypeMap",
-            Self::ScSpecTypeSet => "ScSpecTypeSet",
             Self::ScSpecTypeTuple => "ScSpecTypeTuple",
             Self::ScSpecTypeBytesN => "ScSpecTypeBytesN",
             Self::ScSpecTypeUdt => "ScSpecTypeUdt",
@@ -43112,7 +43054,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 422] {
+    pub const fn variants() -> [TypeVariant; 421] {
         Self::VARIANTS
     }
 }
@@ -43173,7 +43115,6 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecTypeResult" => Ok(Self::ScSpecTypeResult),
             "ScSpecTypeVec" => Ok(Self::ScSpecTypeVec),
             "ScSpecTypeMap" => Ok(Self::ScSpecTypeMap),
-            "ScSpecTypeSet" => Ok(Self::ScSpecTypeSet),
             "ScSpecTypeTuple" => Ok(Self::ScSpecTypeTuple),
             "ScSpecTypeBytesN" => Ok(Self::ScSpecTypeBytesN),
             "ScSpecTypeUdt" => Ok(Self::ScSpecTypeUdt),
@@ -43618,7 +43559,6 @@ pub enum Type {
     ScSpecTypeResult(Box<ScSpecTypeResult>),
     ScSpecTypeVec(Box<ScSpecTypeVec>),
     ScSpecTypeMap(Box<ScSpecTypeMap>),
-    ScSpecTypeSet(Box<ScSpecTypeSet>),
     ScSpecTypeTuple(Box<ScSpecTypeTuple>),
     ScSpecTypeBytesN(Box<ScSpecTypeBytesN>),
     ScSpecTypeUdt(Box<ScSpecTypeUdt>),
@@ -44009,7 +43949,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 422] = [
+    pub const VARIANTS: [TypeVariant; 421] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -44044,7 +43984,6 @@ impl Type {
         TypeVariant::ScSpecTypeResult,
         TypeVariant::ScSpecTypeVec,
         TypeVariant::ScSpecTypeMap,
-        TypeVariant::ScSpecTypeSet,
         TypeVariant::ScSpecTypeTuple,
         TypeVariant::ScSpecTypeBytesN,
         TypeVariant::ScSpecTypeUdt,
@@ -44433,7 +44372,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 422] = [
+    pub const VARIANTS_STR: [&'static str; 421] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -44468,7 +44407,6 @@ impl Type {
         "ScSpecTypeResult",
         "ScSpecTypeVec",
         "ScSpecTypeMap",
-        "ScSpecTypeSet",
         "ScSpecTypeTuple",
         "ScSpecTypeBytesN",
         "ScSpecTypeUdt",
@@ -45003,9 +44941,6 @@ impl Type {
             }),
             TypeVariant::ScSpecTypeMap => r.with_limited_depth(|r| {
                 Ok(Self::ScSpecTypeMap(Box::new(ScSpecTypeMap::read_xdr(r)?)))
-            }),
-            TypeVariant::ScSpecTypeSet => r.with_limited_depth(|r| {
-                Ok(Self::ScSpecTypeSet(Box::new(ScSpecTypeSet::read_xdr(r)?)))
             }),
             TypeVariant::ScSpecTypeTuple => r.with_limited_depth(|r| {
                 Ok(Self::ScSpecTypeTuple(Box::new(ScSpecTypeTuple::read_xdr(
@@ -46881,10 +46816,6 @@ impl Type {
                 ReadXdrIter::<_, ScSpecTypeMap>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t)))),
             ),
-            TypeVariant::ScSpecTypeSet => Box::new(
-                ReadXdrIter::<_, ScSpecTypeSet>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ScSpecTypeSet(Box::new(t)))),
-            ),
             TypeVariant::ScSpecTypeTuple => Box::new(
                 ReadXdrIter::<_, ScSpecTypeTuple>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScSpecTypeTuple(Box::new(t)))),
@@ -48715,10 +48646,6 @@ impl Type {
             TypeVariant::ScSpecTypeMap => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecTypeMap>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t.0)))),
-            ),
-            TypeVariant::ScSpecTypeSet => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecTypeSet>>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ScSpecTypeSet(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecTypeTuple => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecTypeTuple>>::new(&mut r.inner, r.depth_remaining)
@@ -50840,10 +50767,6 @@ impl Type {
                 ReadXdrIter::<_, ScSpecTypeMap>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t)))),
             ),
-            TypeVariant::ScSpecTypeSet => Box::new(
-                ReadXdrIter::<_, ScSpecTypeSet>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ScSpecTypeSet(Box::new(t)))),
-            ),
             TypeVariant::ScSpecTypeTuple => Box::new(
                 ReadXdrIter::<_, ScSpecTypeTuple>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScSpecTypeTuple(Box::new(t)))),
@@ -52471,7 +52394,6 @@ impl Type {
             Self::ScSpecTypeResult(ref v) => v.as_ref(),
             Self::ScSpecTypeVec(ref v) => v.as_ref(),
             Self::ScSpecTypeMap(ref v) => v.as_ref(),
-            Self::ScSpecTypeSet(ref v) => v.as_ref(),
             Self::ScSpecTypeTuple(ref v) => v.as_ref(),
             Self::ScSpecTypeBytesN(ref v) => v.as_ref(),
             Self::ScSpecTypeUdt(ref v) => v.as_ref(),
@@ -52904,7 +52826,6 @@ impl Type {
             Self::ScSpecTypeResult(_) => "ScSpecTypeResult",
             Self::ScSpecTypeVec(_) => "ScSpecTypeVec",
             Self::ScSpecTypeMap(_) => "ScSpecTypeMap",
-            Self::ScSpecTypeSet(_) => "ScSpecTypeSet",
             Self::ScSpecTypeTuple(_) => "ScSpecTypeTuple",
             Self::ScSpecTypeBytesN(_) => "ScSpecTypeBytesN",
             Self::ScSpecTypeUdt(_) => "ScSpecTypeUdt",
@@ -53307,7 +53228,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 422] {
+    pub const fn variants() -> [TypeVariant; 421] {
         Self::VARIANTS
     }
 
@@ -53357,7 +53278,6 @@ impl Type {
             Self::ScSpecTypeResult(_) => TypeVariant::ScSpecTypeResult,
             Self::ScSpecTypeVec(_) => TypeVariant::ScSpecTypeVec,
             Self::ScSpecTypeMap(_) => TypeVariant::ScSpecTypeMap,
-            Self::ScSpecTypeSet(_) => TypeVariant::ScSpecTypeSet,
             Self::ScSpecTypeTuple(_) => TypeVariant::ScSpecTypeTuple,
             Self::ScSpecTypeBytesN(_) => TypeVariant::ScSpecTypeBytesN,
             Self::ScSpecTypeUdt(_) => TypeVariant::ScSpecTypeUdt,

@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "10b2da88dd4148151ebddd41e4ad412d9d3aace3db35bf33e863d2a16493eaa8",
+        "fd8709d1bcc36a90a1f7b1fd8cb4407f7733bec5ca06494cac9b6a99b942ef99",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -46,7 +46,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "3d1714508129ca3cf7bfd0fa0cb7b3e3bbd2f9496b7f766dda8fbb1d9c46a0ca",
+        "32408e1b76a9b9901b7623635dbb470d4d1e471bc3709e74d47eee5682f52d98",
     ),
     (
         "xdr/next/Stellar-ledger.x",
@@ -3818,7 +3818,6 @@ impl WriteXdr for ContractCostParamEntry {
 //        uint32 maxEntryExpiration;
 //        uint32 minTempEntryExpiration;
 //        uint32 minPersistentEntryExpiration;
-//        uint32 autoBumpLedgers;
 //
 //        // rent_fee = wfee_rate_average / rent_rate_denominator_for_type
 //        int64 persistentRentRateDenominator;
@@ -3848,7 +3847,6 @@ pub struct StateExpirationSettings {
     pub max_entry_expiration: u32,
     pub min_temp_entry_expiration: u32,
     pub min_persistent_entry_expiration: u32,
-    pub auto_bump_ledgers: u32,
     pub persistent_rent_rate_denominator: i64,
     pub temp_rent_rate_denominator: i64,
     pub max_entries_to_expire: u32,
@@ -3865,7 +3863,6 @@ impl ReadXdr for StateExpirationSettings {
                 max_entry_expiration: u32::read_xdr(r)?,
                 min_temp_entry_expiration: u32::read_xdr(r)?,
                 min_persistent_entry_expiration: u32::read_xdr(r)?,
-                auto_bump_ledgers: u32::read_xdr(r)?,
                 persistent_rent_rate_denominator: i64::read_xdr(r)?,
                 temp_rent_rate_denominator: i64::read_xdr(r)?,
                 max_entries_to_expire: u32::read_xdr(r)?,
@@ -3884,7 +3881,6 @@ impl WriteXdr for StateExpirationSettings {
             self.max_entry_expiration.write_xdr(w)?;
             self.min_temp_entry_expiration.write_xdr(w)?;
             self.min_persistent_entry_expiration.write_xdr(w)?;
-            self.auto_bump_ledgers.write_xdr(w)?;
             self.persistent_rent_rate_denominator.write_xdr(w)?;
             self.temp_rent_rate_denominator.write_xdr(w)?;
             self.max_entries_to_expire.write_xdr(w)?;
@@ -10768,7 +10764,8 @@ impl WriteXdr for ThresholdIndexes {
 //        LIQUIDITY_POOL = 5,
 //        CONTRACT_DATA = 6,
 //        CONTRACT_CODE = 7,
-//        CONFIG_SETTING = 8
+//        CONFIG_SETTING = 8,
+//        EXPIRATION = 9
 //    };
 //
 // enum
@@ -10790,10 +10787,11 @@ pub enum LedgerEntryType {
     ContractData = 6,
     ContractCode = 7,
     ConfigSetting = 8,
+    Expiration = 9,
 }
 
 impl LedgerEntryType {
-    pub const VARIANTS: [LedgerEntryType; 9] = [
+    pub const VARIANTS: [LedgerEntryType; 10] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
@@ -10803,8 +10801,9 @@ impl LedgerEntryType {
         LedgerEntryType::ContractData,
         LedgerEntryType::ContractCode,
         LedgerEntryType::ConfigSetting,
+        LedgerEntryType::Expiration,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "Account",
         "Trustline",
         "Offer",
@@ -10814,6 +10813,7 @@ impl LedgerEntryType {
         "ContractData",
         "ContractCode",
         "ConfigSetting",
+        "Expiration",
     ];
 
     #[must_use]
@@ -10828,11 +10828,12 @@ impl LedgerEntryType {
             Self::ContractData => "ContractData",
             Self::ContractCode => "ContractCode",
             Self::ConfigSetting => "ConfigSetting",
+            Self::Expiration => "Expiration",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 9] {
+    pub const fn variants() -> [LedgerEntryType; 10] {
         Self::VARIANTS
     }
 }
@@ -10872,6 +10873,7 @@ impl TryFrom<i32> for LedgerEntryType {
             6 => LedgerEntryType::ContractData,
             7 => LedgerEntryType::ContractCode,
             8 => LedgerEntryType::ConfigSetting,
+            9 => LedgerEntryType::Expiration,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14466,217 +14468,6 @@ impl WriteXdr for LiquidityPoolEntry {
     }
 }
 
-// ContractEntryBodyType is an XDR Enum defines as:
-//
-//   enum ContractEntryBodyType {
-//        DATA_ENTRY = 0,
-//        EXPIRATION_EXTENSION = 1
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[repr(i32)]
-pub enum ContractEntryBodyType {
-    DataEntry = 0,
-    ExpirationExtension = 1,
-}
-
-impl ContractEntryBodyType {
-    pub const VARIANTS: [ContractEntryBodyType; 2] = [
-        ContractEntryBodyType::DataEntry,
-        ContractEntryBodyType::ExpirationExtension,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["DataEntry", "ExpirationExtension"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::DataEntry => "DataEntry",
-            Self::ExpirationExtension => "ExpirationExtension",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ContractEntryBodyType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ContractEntryBodyType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ContractEntryBodyType> for ContractEntryBodyType {
-    fn variants() -> slice::Iter<'static, ContractEntryBodyType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ContractEntryBodyType {}
-
-impl fmt::Display for ContractEntryBodyType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ContractEntryBodyType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ContractEntryBodyType::DataEntry,
-            1 => ContractEntryBodyType::ExpirationExtension,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ContractEntryBodyType> for i32 {
-    #[must_use]
-    fn from(e: ContractEntryBodyType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ContractEntryBodyType {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let e = i32::read_xdr(r)?;
-            let v: Self = e.try_into()?;
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ContractEntryBodyType {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            let i: i32 = (*self).into();
-            i.write_xdr(w)
-        })
-    }
-}
-
-// MaskContractDataFlagsV20 is an XDR Const defines as:
-//
-//   const MASK_CONTRACT_DATA_FLAGS_V20 = 0x1;
-//
-pub const MASK_CONTRACT_DATA_FLAGS_V20: u64 = 0x1;
-
-// ContractDataFlags is an XDR Enum defines as:
-//
-//   enum ContractDataFlags {
-//        // When set, the given entry does not recieve automatic expiration bumps
-//        // on access. Note that entries can still be bumped manually via the footprint.
-//        NO_AUTOBUMP = 0x1
-//    };
-//
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[repr(i32)]
-pub enum ContractDataFlags {
-    NoAutobump = 1,
-}
-
-impl ContractDataFlags {
-    pub const VARIANTS: [ContractDataFlags; 1] = [ContractDataFlags::NoAutobump];
-    pub const VARIANTS_STR: [&'static str; 1] = ["NoAutobump"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::NoAutobump => "NoAutobump",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ContractDataFlags; 1] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ContractDataFlags {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ContractDataFlags> for ContractDataFlags {
-    fn variants() -> slice::Iter<'static, ContractDataFlags> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ContractDataFlags {}
-
-impl fmt::Display for ContractDataFlags {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ContractDataFlags {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            1 => ContractDataFlags::NoAutobump,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ContractDataFlags> for i32 {
-    #[must_use]
-    fn from(e: ContractDataFlags) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ContractDataFlags {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let e = i32::read_xdr(r)?;
-            let v: Self = e.try_into()?;
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ContractDataFlags {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            let i: i32 = (*self).into();
-            i.write_xdr(w)
-        })
-    }
-}
-
 // ContractDataDurability is an XDR Enum defines as:
 //
 //   enum ContractDataDurability {
@@ -14782,183 +14573,15 @@ impl WriteXdr for ContractDataDurability {
     }
 }
 
-// ContractDataEntryData is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            uint32 flags;
-//            SCVal val;
-//        }
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct ContractDataEntryData {
-    pub flags: u32,
-    pub val: ScVal,
-}
-
-impl ReadXdr for ContractDataEntryData {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                flags: u32::read_xdr(r)?,
-                val: ScVal::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ContractDataEntryData {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.flags.write_xdr(w)?;
-            self.val.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-// ContractDataEntryBody is an XDR NestedUnion defines as:
-//
-//   union switch (ContractEntryBodyType bodyType)
-//        {
-//        case DATA_ENTRY:
-//        struct
-//        {
-//            uint32 flags;
-//            SCVal val;
-//        } data;
-//        case EXPIRATION_EXTENSION:
-//            void;
-//        }
-//
-// union with discriminant ContractEntryBodyType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum ContractDataEntryBody {
-    DataEntry(ContractDataEntryData),
-    ExpirationExtension,
-}
-
-impl ContractDataEntryBody {
-    pub const VARIANTS: [ContractEntryBodyType; 2] = [
-        ContractEntryBodyType::DataEntry,
-        ContractEntryBodyType::ExpirationExtension,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["DataEntry", "ExpirationExtension"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::DataEntry(_) => "DataEntry",
-            Self::ExpirationExtension => "ExpirationExtension",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ContractEntryBodyType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::DataEntry(_) => ContractEntryBodyType::DataEntry,
-            Self::ExpirationExtension => ContractEntryBodyType::ExpirationExtension,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ContractEntryBodyType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ContractDataEntryBody {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ContractEntryBodyType> for ContractDataEntryBody {
-    #[must_use]
-    fn discriminant(&self) -> ContractEntryBodyType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ContractEntryBodyType> for ContractDataEntryBody {
-    fn variants() -> slice::Iter<'static, ContractEntryBodyType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ContractEntryBodyType> for ContractDataEntryBody {}
-
-impl ReadXdr for ContractDataEntryBody {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let dv: ContractEntryBodyType = <ContractEntryBodyType as ReadXdr>::read_xdr(r)?;
-            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-            let v = match dv {
-                ContractEntryBodyType::DataEntry => {
-                    Self::DataEntry(ContractDataEntryData::read_xdr(r)?)
-                }
-                ContractEntryBodyType::ExpirationExtension => Self::ExpirationExtension,
-                #[allow(unreachable_patterns)]
-                _ => return Err(Error::Invalid),
-            };
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ContractDataEntryBody {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::DataEntry(v) => v.write_xdr(w)?,
-                Self::ExpirationExtension => ().write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 // ContractDataEntry is an XDR Struct defines as:
 //
 //   struct ContractDataEntry {
+//        ExtensionPoint ext;
+//
 //        SCAddress contract;
 //        SCVal key;
 //        ContractDataDurability durability;
-//
-//        union switch (ContractEntryBodyType bodyType)
-//        {
-//        case DATA_ENTRY:
-//        struct
-//        {
-//            uint32 flags;
-//            SCVal val;
-//        } data;
-//        case EXPIRATION_EXTENSION:
-//            void;
-//        } body;
-//
-//        uint32 expirationLedgerSeq;
+//        SCVal val;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -14969,11 +14592,11 @@ impl WriteXdr for ContractDataEntryBody {
     serde(rename_all = "snake_case")
 )]
 pub struct ContractDataEntry {
+    pub ext: ExtensionPoint,
     pub contract: ScAddress,
     pub key: ScVal,
     pub durability: ContractDataDurability,
-    pub body: ContractDataEntryBody,
-    pub expiration_ledger_seq: u32,
+    pub val: ScVal,
 }
 
 impl ReadXdr for ContractDataEntry {
@@ -14981,11 +14604,11 @@ impl ReadXdr for ContractDataEntry {
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
                 contract: ScAddress::read_xdr(r)?,
                 key: ScVal::read_xdr(r)?,
                 durability: ContractDataDurability::read_xdr(r)?,
-                body: ContractDataEntryBody::read_xdr(r)?,
-                expiration_ledger_seq: u32::read_xdr(r)?,
+                val: ScVal::read_xdr(r)?,
             })
         })
     }
@@ -14995,119 +14618,11 @@ impl WriteXdr for ContractDataEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
             self.contract.write_xdr(w)?;
             self.key.write_xdr(w)?;
             self.durability.write_xdr(w)?;
-            self.body.write_xdr(w)?;
-            self.expiration_ledger_seq.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-// ContractCodeEntryBody is an XDR NestedUnion defines as:
-//
-//   union switch (ContractEntryBodyType bodyType)
-//        {
-//        case DATA_ENTRY:
-//            opaque code<>;
-//        case EXPIRATION_EXTENSION:
-//            void;
-//        }
-//
-// union with discriminant ContractEntryBodyType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum ContractCodeEntryBody {
-    DataEntry(BytesM),
-    ExpirationExtension,
-}
-
-impl ContractCodeEntryBody {
-    pub const VARIANTS: [ContractEntryBodyType; 2] = [
-        ContractEntryBodyType::DataEntry,
-        ContractEntryBodyType::ExpirationExtension,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["DataEntry", "ExpirationExtension"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::DataEntry(_) => "DataEntry",
-            Self::ExpirationExtension => "ExpirationExtension",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ContractEntryBodyType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::DataEntry(_) => ContractEntryBodyType::DataEntry,
-            Self::ExpirationExtension => ContractEntryBodyType::ExpirationExtension,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ContractEntryBodyType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ContractCodeEntryBody {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ContractEntryBodyType> for ContractCodeEntryBody {
-    #[must_use]
-    fn discriminant(&self) -> ContractEntryBodyType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ContractEntryBodyType> for ContractCodeEntryBody {
-    fn variants() -> slice::Iter<'static, ContractEntryBodyType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ContractEntryBodyType> for ContractCodeEntryBody {}
-
-impl ReadXdr for ContractCodeEntryBody {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let dv: ContractEntryBodyType = <ContractEntryBodyType as ReadXdr>::read_xdr(r)?;
-            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-            let v = match dv {
-                ContractEntryBodyType::DataEntry => Self::DataEntry(BytesM::read_xdr(r)?),
-                ContractEntryBodyType::ExpirationExtension => Self::ExpirationExtension,
-                #[allow(unreachable_patterns)]
-                _ => return Err(Error::Invalid),
-            };
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ContractCodeEntryBody {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::DataEntry(v) => v.write_xdr(w)?,
-                Self::ExpirationExtension => ().write_xdr(w)?,
-            };
+            self.val.write_xdr(w)?;
             Ok(())
         })
     }
@@ -15119,15 +14634,7 @@ impl WriteXdr for ContractCodeEntryBody {
 //        ExtensionPoint ext;
 //
 //        Hash hash;
-//        union switch (ContractEntryBodyType bodyType)
-//        {
-//        case DATA_ENTRY:
-//            opaque code<>;
-//        case EXPIRATION_EXTENSION:
-//            void;
-//        } body;
-//
-//        uint32 expirationLedgerSeq;
+//        opaque code<>;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -15140,8 +14647,7 @@ impl WriteXdr for ContractCodeEntryBody {
 pub struct ContractCodeEntry {
     pub ext: ExtensionPoint,
     pub hash: Hash,
-    pub body: ContractCodeEntryBody,
-    pub expiration_ledger_seq: u32,
+    pub code: BytesM,
 }
 
 impl ReadXdr for ContractCodeEntry {
@@ -15151,8 +14657,7 @@ impl ReadXdr for ContractCodeEntry {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
                 hash: Hash::read_xdr(r)?,
-                body: ContractCodeEntryBody::read_xdr(r)?,
-                expiration_ledger_seq: u32::read_xdr(r)?,
+                code: BytesM::read_xdr(r)?,
             })
         })
     }
@@ -15164,7 +14669,49 @@ impl WriteXdr for ContractCodeEntry {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.hash.write_xdr(w)?;
-            self.body.write_xdr(w)?;
+            self.code.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ExpirationEntry is an XDR Struct defines as:
+//
+//   struct ExpirationEntry {
+//        // Hash of the LedgerKey that is associated with this ExpirationEntry
+//        Hash keyHash;
+//        uint32 expirationLedgerSeq;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ExpirationEntry {
+    pub key_hash: Hash,
+    pub expiration_ledger_seq: u32,
+}
+
+impl ReadXdr for ExpirationEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                key_hash: Hash::read_xdr(r)?,
+                expiration_ledger_seq: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ExpirationEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.key_hash.write_xdr(w)?;
             self.expiration_ledger_seq.write_xdr(w)?;
             Ok(())
         })
@@ -15340,6 +14887,8 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 //            ContractCodeEntry contractCode;
 //        case CONFIG_SETTING:
 //            ConfigSettingEntry configSetting;
+//        case EXPIRATION:
+//            ExpirationEntry expiration;
 //        }
 //
 // union with discriminant LedgerEntryType
@@ -15361,10 +14910,11 @@ pub enum LedgerEntryData {
     ContractData(ContractDataEntry),
     ContractCode(ContractCodeEntry),
     ConfigSetting(ConfigSettingEntry),
+    Expiration(ExpirationEntry),
 }
 
 impl LedgerEntryData {
-    pub const VARIANTS: [LedgerEntryType; 9] = [
+    pub const VARIANTS: [LedgerEntryType; 10] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
@@ -15374,8 +14924,9 @@ impl LedgerEntryData {
         LedgerEntryType::ContractData,
         LedgerEntryType::ContractCode,
         LedgerEntryType::ConfigSetting,
+        LedgerEntryType::Expiration,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "Account",
         "Trustline",
         "Offer",
@@ -15385,6 +14936,7 @@ impl LedgerEntryData {
         "ContractData",
         "ContractCode",
         "ConfigSetting",
+        "Expiration",
     ];
 
     #[must_use]
@@ -15399,6 +14951,7 @@ impl LedgerEntryData {
             Self::ContractData(_) => "ContractData",
             Self::ContractCode(_) => "ContractCode",
             Self::ConfigSetting(_) => "ConfigSetting",
+            Self::Expiration(_) => "Expiration",
         }
     }
 
@@ -15415,11 +14968,12 @@ impl LedgerEntryData {
             Self::ContractData(_) => LedgerEntryType::ContractData,
             Self::ContractCode(_) => LedgerEntryType::ContractCode,
             Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
+            Self::Expiration(_) => LedgerEntryType::Expiration,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 9] {
+    pub const fn variants() -> [LedgerEntryType; 10] {
         Self::VARIANTS
     }
 }
@@ -15472,6 +15026,7 @@ impl ReadXdr for LedgerEntryData {
                 LedgerEntryType::ConfigSetting => {
                     Self::ConfigSetting(ConfigSettingEntry::read_xdr(r)?)
                 }
+                LedgerEntryType::Expiration => Self::Expiration(ExpirationEntry::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -15496,6 +15051,7 @@ impl WriteXdr for LedgerEntryData {
                 Self::ContractData(v) => v.write_xdr(w)?,
                 Self::ContractCode(v) => v.write_xdr(w)?,
                 Self::ConfigSetting(v) => v.write_xdr(w)?,
+                Self::Expiration(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -15633,6 +15189,8 @@ impl WriteXdr for LedgerEntryExt {
 //            ContractCodeEntry contractCode;
 //        case CONFIG_SETTING:
 //            ConfigSettingEntry configSetting;
+//        case EXPIRATION:
+//            ExpirationEntry expiration;
 //        }
 //        data;
 //
@@ -15938,7 +15496,6 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 //            SCAddress contract;
 //            SCVal key;
 //            ContractDataDurability durability;
-//            ContractEntryBodyType bodyType;
 //        }
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -15952,7 +15509,6 @@ pub struct LedgerKeyContractData {
     pub contract: ScAddress,
     pub key: ScVal,
     pub durability: ContractDataDurability,
-    pub body_type: ContractEntryBodyType,
 }
 
 impl ReadXdr for LedgerKeyContractData {
@@ -15963,7 +15519,6 @@ impl ReadXdr for LedgerKeyContractData {
                 contract: ScAddress::read_xdr(r)?,
                 key: ScVal::read_xdr(r)?,
                 durability: ContractDataDurability::read_xdr(r)?,
-                body_type: ContractEntryBodyType::read_xdr(r)?,
             })
         })
     }
@@ -15976,7 +15531,6 @@ impl WriteXdr for LedgerKeyContractData {
             self.contract.write_xdr(w)?;
             self.key.write_xdr(w)?;
             self.durability.write_xdr(w)?;
-            self.body_type.write_xdr(w)?;
             Ok(())
         })
     }
@@ -15987,7 +15541,6 @@ impl WriteXdr for LedgerKeyContractData {
 //   struct
 //        {
 //            Hash hash;
-//            ContractEntryBodyType bodyType;
 //        }
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -15999,7 +15552,6 @@ impl WriteXdr for LedgerKeyContractData {
 )]
 pub struct LedgerKeyContractCode {
     pub hash: Hash,
-    pub body_type: ContractEntryBodyType,
 }
 
 impl ReadXdr for LedgerKeyContractCode {
@@ -16008,7 +15560,6 @@ impl ReadXdr for LedgerKeyContractCode {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hash: Hash::read_xdr(r)?,
-                body_type: ContractEntryBodyType::read_xdr(r)?,
             })
         })
     }
@@ -16019,7 +15570,6 @@ impl WriteXdr for LedgerKeyContractCode {
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hash.write_xdr(w)?;
-            self.body_type.write_xdr(w)?;
             Ok(())
         })
     }
@@ -16059,6 +15609,46 @@ impl WriteXdr for LedgerKeyConfigSetting {
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.config_setting_id.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// LedgerKeyExpiration is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            // Hash of the LedgerKey that is associated with this ExpirationEntry
+//            Hash keyHash;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerKeyExpiration {
+    pub key_hash: Hash,
+}
+
+impl ReadXdr for LedgerKeyExpiration {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                key_hash: Hash::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerKeyExpiration {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.key_hash.write_xdr(w)?;
             Ok(())
         })
     }
@@ -16112,19 +15702,23 @@ impl WriteXdr for LedgerKeyConfigSetting {
 //            SCAddress contract;
 //            SCVal key;
 //            ContractDataDurability durability;
-//            ContractEntryBodyType bodyType;
 //        } contractData;
 //    case CONTRACT_CODE:
 //        struct
 //        {
 //            Hash hash;
-//            ContractEntryBodyType bodyType;
 //        } contractCode;
 //    case CONFIG_SETTING:
 //        struct
 //        {
 //            ConfigSettingID configSettingID;
 //        } configSetting;
+//    case EXPIRATION:
+//        struct
+//        {
+//            // Hash of the LedgerKey that is associated with this ExpirationEntry
+//            Hash keyHash;
+//        } expiration;
 //    };
 //
 // union with discriminant LedgerEntryType
@@ -16146,10 +15740,11 @@ pub enum LedgerKey {
     ContractData(LedgerKeyContractData),
     ContractCode(LedgerKeyContractCode),
     ConfigSetting(LedgerKeyConfigSetting),
+    Expiration(LedgerKeyExpiration),
 }
 
 impl LedgerKey {
-    pub const VARIANTS: [LedgerEntryType; 9] = [
+    pub const VARIANTS: [LedgerEntryType; 10] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
@@ -16159,8 +15754,9 @@ impl LedgerKey {
         LedgerEntryType::ContractData,
         LedgerEntryType::ContractCode,
         LedgerEntryType::ConfigSetting,
+        LedgerEntryType::Expiration,
     ];
-    pub const VARIANTS_STR: [&'static str; 9] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "Account",
         "Trustline",
         "Offer",
@@ -16170,6 +15766,7 @@ impl LedgerKey {
         "ContractData",
         "ContractCode",
         "ConfigSetting",
+        "Expiration",
     ];
 
     #[must_use]
@@ -16184,6 +15781,7 @@ impl LedgerKey {
             Self::ContractData(_) => "ContractData",
             Self::ContractCode(_) => "ContractCode",
             Self::ConfigSetting(_) => "ConfigSetting",
+            Self::Expiration(_) => "Expiration",
         }
     }
 
@@ -16200,11 +15798,12 @@ impl LedgerKey {
             Self::ContractData(_) => LedgerEntryType::ContractData,
             Self::ContractCode(_) => LedgerEntryType::ContractCode,
             Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
+            Self::Expiration(_) => LedgerEntryType::Expiration,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 9] {
+    pub const fn variants() -> [LedgerEntryType; 10] {
         Self::VARIANTS
     }
 }
@@ -16257,6 +15856,7 @@ impl ReadXdr for LedgerKey {
                 LedgerEntryType::ConfigSetting => {
                     Self::ConfigSetting(LedgerKeyConfigSetting::read_xdr(r)?)
                 }
+                LedgerEntryType::Expiration => Self::Expiration(LedgerKeyExpiration::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -16281,6 +15881,7 @@ impl WriteXdr for LedgerKey {
                 Self::ContractData(v) => v.write_xdr(w)?,
                 Self::ContractCode(v) => v.write_xdr(w)?,
                 Self::ConfigSetting(v) => v.write_xdr(w)?,
+                Self::Expiration(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -41482,14 +41083,10 @@ pub enum TypeVariant {
     LiquidityPoolEntry,
     LiquidityPoolEntryBody,
     LiquidityPoolEntryConstantProduct,
-    ContractEntryBodyType,
-    ContractDataFlags,
     ContractDataDurability,
     ContractDataEntry,
-    ContractDataEntryBody,
-    ContractDataEntryData,
     ContractCodeEntry,
-    ContractCodeEntryBody,
+    ExpirationEntry,
     LedgerEntryExtensionV1,
     LedgerEntryExtensionV1Ext,
     LedgerEntry,
@@ -41505,6 +41102,7 @@ pub enum TypeVariant {
     LedgerKeyContractData,
     LedgerKeyContractCode,
     LedgerKeyConfigSetting,
+    LedgerKeyExpiration,
     EnvelopeType,
     UpgradeType,
     StellarValueType,
@@ -41771,7 +41369,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 421] = [
+    pub const VARIANTS: [TypeVariant; 418] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -41907,14 +41505,10 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolEntry,
         TypeVariant::LiquidityPoolEntryBody,
         TypeVariant::LiquidityPoolEntryConstantProduct,
-        TypeVariant::ContractEntryBodyType,
-        TypeVariant::ContractDataFlags,
         TypeVariant::ContractDataDurability,
         TypeVariant::ContractDataEntry,
-        TypeVariant::ContractDataEntryBody,
-        TypeVariant::ContractDataEntryData,
         TypeVariant::ContractCodeEntry,
-        TypeVariant::ContractCodeEntryBody,
+        TypeVariant::ExpirationEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -41930,6 +41524,7 @@ impl TypeVariant {
         TypeVariant::LedgerKeyContractData,
         TypeVariant::LedgerKeyContractCode,
         TypeVariant::LedgerKeyConfigSetting,
+        TypeVariant::LedgerKeyExpiration,
         TypeVariant::EnvelopeType,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
@@ -42194,7 +41789,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 421] = [
+    pub const VARIANTS_STR: [&'static str; 418] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -42330,14 +41925,10 @@ impl TypeVariant {
         "LiquidityPoolEntry",
         "LiquidityPoolEntryBody",
         "LiquidityPoolEntryConstantProduct",
-        "ContractEntryBodyType",
-        "ContractDataFlags",
         "ContractDataDurability",
         "ContractDataEntry",
-        "ContractDataEntryBody",
-        "ContractDataEntryData",
         "ContractCodeEntry",
-        "ContractCodeEntryBody",
+        "ExpirationEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -42353,6 +41944,7 @@ impl TypeVariant {
         "LedgerKeyContractData",
         "LedgerKeyContractCode",
         "LedgerKeyConfigSetting",
+        "LedgerKeyExpiration",
         "EnvelopeType",
         "UpgradeType",
         "StellarValueType",
@@ -42759,14 +42351,10 @@ impl TypeVariant {
             Self::LiquidityPoolEntry => "LiquidityPoolEntry",
             Self::LiquidityPoolEntryBody => "LiquidityPoolEntryBody",
             Self::LiquidityPoolEntryConstantProduct => "LiquidityPoolEntryConstantProduct",
-            Self::ContractEntryBodyType => "ContractEntryBodyType",
-            Self::ContractDataFlags => "ContractDataFlags",
             Self::ContractDataDurability => "ContractDataDurability",
             Self::ContractDataEntry => "ContractDataEntry",
-            Self::ContractDataEntryBody => "ContractDataEntryBody",
-            Self::ContractDataEntryData => "ContractDataEntryData",
             Self::ContractCodeEntry => "ContractCodeEntry",
-            Self::ContractCodeEntryBody => "ContractCodeEntryBody",
+            Self::ExpirationEntry => "ExpirationEntry",
             Self::LedgerEntryExtensionV1 => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry => "LedgerEntry",
@@ -42782,6 +42370,7 @@ impl TypeVariant {
             Self::LedgerKeyContractData => "LedgerKeyContractData",
             Self::LedgerKeyContractCode => "LedgerKeyContractCode",
             Self::LedgerKeyConfigSetting => "LedgerKeyConfigSetting",
+            Self::LedgerKeyExpiration => "LedgerKeyExpiration",
             Self::EnvelopeType => "EnvelopeType",
             Self::UpgradeType => "UpgradeType",
             Self::StellarValueType => "StellarValueType",
@@ -43054,7 +42643,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 421] {
+    pub const fn variants() -> [TypeVariant; 418] {
         Self::VARIANTS
     }
 }
@@ -43218,14 +42807,10 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolEntry" => Ok(Self::LiquidityPoolEntry),
             "LiquidityPoolEntryBody" => Ok(Self::LiquidityPoolEntryBody),
             "LiquidityPoolEntryConstantProduct" => Ok(Self::LiquidityPoolEntryConstantProduct),
-            "ContractEntryBodyType" => Ok(Self::ContractEntryBodyType),
-            "ContractDataFlags" => Ok(Self::ContractDataFlags),
             "ContractDataDurability" => Ok(Self::ContractDataDurability),
             "ContractDataEntry" => Ok(Self::ContractDataEntry),
-            "ContractDataEntryBody" => Ok(Self::ContractDataEntryBody),
-            "ContractDataEntryData" => Ok(Self::ContractDataEntryData),
             "ContractCodeEntry" => Ok(Self::ContractCodeEntry),
-            "ContractCodeEntryBody" => Ok(Self::ContractCodeEntryBody),
+            "ExpirationEntry" => Ok(Self::ExpirationEntry),
             "LedgerEntryExtensionV1" => Ok(Self::LedgerEntryExtensionV1),
             "LedgerEntryExtensionV1Ext" => Ok(Self::LedgerEntryExtensionV1Ext),
             "LedgerEntry" => Ok(Self::LedgerEntry),
@@ -43241,6 +42826,7 @@ impl core::str::FromStr for TypeVariant {
             "LedgerKeyContractData" => Ok(Self::LedgerKeyContractData),
             "LedgerKeyContractCode" => Ok(Self::LedgerKeyContractCode),
             "LedgerKeyConfigSetting" => Ok(Self::LedgerKeyConfigSetting),
+            "LedgerKeyExpiration" => Ok(Self::LedgerKeyExpiration),
             "EnvelopeType" => Ok(Self::EnvelopeType),
             "UpgradeType" => Ok(Self::UpgradeType),
             "StellarValueType" => Ok(Self::StellarValueType),
@@ -43660,14 +43246,10 @@ pub enum Type {
     LiquidityPoolEntry(Box<LiquidityPoolEntry>),
     LiquidityPoolEntryBody(Box<LiquidityPoolEntryBody>),
     LiquidityPoolEntryConstantProduct(Box<LiquidityPoolEntryConstantProduct>),
-    ContractEntryBodyType(Box<ContractEntryBodyType>),
-    ContractDataFlags(Box<ContractDataFlags>),
     ContractDataDurability(Box<ContractDataDurability>),
     ContractDataEntry(Box<ContractDataEntry>),
-    ContractDataEntryBody(Box<ContractDataEntryBody>),
-    ContractDataEntryData(Box<ContractDataEntryData>),
     ContractCodeEntry(Box<ContractCodeEntry>),
-    ContractCodeEntryBody(Box<ContractCodeEntryBody>),
+    ExpirationEntry(Box<ExpirationEntry>),
     LedgerEntryExtensionV1(Box<LedgerEntryExtensionV1>),
     LedgerEntryExtensionV1Ext(Box<LedgerEntryExtensionV1Ext>),
     LedgerEntry(Box<LedgerEntry>),
@@ -43683,6 +43265,7 @@ pub enum Type {
     LedgerKeyContractData(Box<LedgerKeyContractData>),
     LedgerKeyContractCode(Box<LedgerKeyContractCode>),
     LedgerKeyConfigSetting(Box<LedgerKeyConfigSetting>),
+    LedgerKeyExpiration(Box<LedgerKeyExpiration>),
     EnvelopeType(Box<EnvelopeType>),
     UpgradeType(Box<UpgradeType>),
     StellarValueType(Box<StellarValueType>),
@@ -43949,7 +43532,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 421] = [
+    pub const VARIANTS: [TypeVariant; 418] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -44085,14 +43668,10 @@ impl Type {
         TypeVariant::LiquidityPoolEntry,
         TypeVariant::LiquidityPoolEntryBody,
         TypeVariant::LiquidityPoolEntryConstantProduct,
-        TypeVariant::ContractEntryBodyType,
-        TypeVariant::ContractDataFlags,
         TypeVariant::ContractDataDurability,
         TypeVariant::ContractDataEntry,
-        TypeVariant::ContractDataEntryBody,
-        TypeVariant::ContractDataEntryData,
         TypeVariant::ContractCodeEntry,
-        TypeVariant::ContractCodeEntryBody,
+        TypeVariant::ExpirationEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -44108,6 +43687,7 @@ impl Type {
         TypeVariant::LedgerKeyContractData,
         TypeVariant::LedgerKeyContractCode,
         TypeVariant::LedgerKeyConfigSetting,
+        TypeVariant::LedgerKeyExpiration,
         TypeVariant::EnvelopeType,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
@@ -44372,7 +43952,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 421] = [
+    pub const VARIANTS_STR: [&'static str; 418] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -44508,14 +44088,10 @@ impl Type {
         "LiquidityPoolEntry",
         "LiquidityPoolEntryBody",
         "LiquidityPoolEntryConstantProduct",
-        "ContractEntryBodyType",
-        "ContractDataFlags",
         "ContractDataDurability",
         "ContractDataEntry",
-        "ContractDataEntryBody",
-        "ContractDataEntryData",
         "ContractCodeEntry",
-        "ContractCodeEntryBody",
+        "ExpirationEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -44531,6 +44107,7 @@ impl Type {
         "LedgerKeyContractData",
         "LedgerKeyContractCode",
         "LedgerKeyConfigSetting",
+        "LedgerKeyExpiration",
         "EnvelopeType",
         "UpgradeType",
         "StellarValueType",
@@ -45347,16 +44924,6 @@ impl Type {
                     LiquidityPoolEntryConstantProduct::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ContractEntryBodyType => r.with_limited_depth(|r| {
-                Ok(Self::ContractEntryBodyType(Box::new(
-                    ContractEntryBodyType::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ContractDataFlags => r.with_limited_depth(|r| {
-                Ok(Self::ContractDataFlags(Box::new(
-                    ContractDataFlags::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::ContractDataDurability => r.with_limited_depth(|r| {
                 Ok(Self::ContractDataDurability(Box::new(
                     ContractDataDurability::read_xdr(r)?,
@@ -45367,25 +44934,15 @@ impl Type {
                     ContractDataEntry::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ContractDataEntryBody => r.with_limited_depth(|r| {
-                Ok(Self::ContractDataEntryBody(Box::new(
-                    ContractDataEntryBody::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ContractDataEntryData => r.with_limited_depth(|r| {
-                Ok(Self::ContractDataEntryData(Box::new(
-                    ContractDataEntryData::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::ContractCodeEntry => r.with_limited_depth(|r| {
                 Ok(Self::ContractCodeEntry(Box::new(
                     ContractCodeEntry::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ContractCodeEntryBody => r.with_limited_depth(|r| {
-                Ok(Self::ContractCodeEntryBody(Box::new(
-                    ContractCodeEntryBody::read_xdr(r)?,
-                )))
+            TypeVariant::ExpirationEntry => r.with_limited_depth(|r| {
+                Ok(Self::ExpirationEntry(Box::new(ExpirationEntry::read_xdr(
+                    r,
+                )?)))
             }),
             TypeVariant::LedgerEntryExtensionV1 => r.with_limited_depth(|r| {
                 Ok(Self::LedgerEntryExtensionV1(Box::new(
@@ -45450,6 +45007,11 @@ impl Type {
             TypeVariant::LedgerKeyConfigSetting => r.with_limited_depth(|r| {
                 Ok(Self::LedgerKeyConfigSetting(Box::new(
                     LedgerKeyConfigSetting::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerKeyExpiration => r.with_limited_depth(|r| {
+                Ok(Self::LedgerKeyExpiration(Box::new(
+                    LedgerKeyExpiration::read_xdr(r)?,
                 )))
             }),
             TypeVariant::EnvelopeType => r.with_limited_depth(|r| {
@@ -47235,14 +46797,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
-            TypeVariant::ContractEntryBodyType => Box::new(
-                ReadXdrIter::<_, ContractEntryBodyType>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ContractEntryBodyType(Box::new(t)))),
-            ),
-            TypeVariant::ContractDataFlags => Box::new(
-                ReadXdrIter::<_, ContractDataFlags>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ContractDataFlags(Box::new(t)))),
-            ),
             TypeVariant::ContractDataDurability => Box::new(
                 ReadXdrIter::<_, ContractDataDurability>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractDataDurability(Box::new(t)))),
@@ -47251,21 +46805,13 @@ impl Type {
                 ReadXdrIter::<_, ContractDataEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t)))),
             ),
-            TypeVariant::ContractDataEntryBody => Box::new(
-                ReadXdrIter::<_, ContractDataEntryBody>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ContractDataEntryBody(Box::new(t)))),
-            ),
-            TypeVariant::ContractDataEntryData => Box::new(
-                ReadXdrIter::<_, ContractDataEntryData>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ContractDataEntryData(Box::new(t)))),
-            ),
             TypeVariant::ContractCodeEntry => Box::new(
                 ReadXdrIter::<_, ContractCodeEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
             ),
-            TypeVariant::ContractCodeEntryBody => Box::new(
-                ReadXdrIter::<_, ContractCodeEntryBody>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ContractCodeEntryBody(Box::new(t)))),
+            TypeVariant::ExpirationEntry => Box::new(
+                ReadXdrIter::<_, ExpirationEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExpirationEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(&mut r.inner, r.depth_remaining)
@@ -47326,6 +46872,10 @@ impl Type {
             TypeVariant::LedgerKeyConfigSetting => Box::new(
                 ReadXdrIter::<_, LedgerKeyConfigSetting>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyExpiration => Box::new(
+                ReadXdrIter::<_, LedgerKeyExpiration>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyExpiration(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, EnvelopeType>::new(&mut r.inner, r.depth_remaining)
@@ -49123,17 +48673,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t.0)))),
             ),
-            TypeVariant::ContractEntryBodyType => Box::new(
-                ReadXdrIter::<_, Frame<ContractEntryBodyType>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ContractEntryBodyType(Box::new(t.0)))),
-            ),
-            TypeVariant::ContractDataFlags => Box::new(
-                ReadXdrIter::<_, Frame<ContractDataFlags>>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ContractDataFlags(Box::new(t.0)))),
-            ),
             TypeVariant::ContractDataDurability => Box::new(
                 ReadXdrIter::<_, Frame<ContractDataDurability>>::new(
                     &mut r.inner,
@@ -49145,30 +48684,13 @@ impl Type {
                 ReadXdrIter::<_, Frame<ContractDataEntry>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t.0)))),
             ),
-            TypeVariant::ContractDataEntryBody => Box::new(
-                ReadXdrIter::<_, Frame<ContractDataEntryBody>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ContractDataEntryBody(Box::new(t.0)))),
-            ),
-            TypeVariant::ContractDataEntryData => Box::new(
-                ReadXdrIter::<_, Frame<ContractDataEntryData>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ContractDataEntryData(Box::new(t.0)))),
-            ),
             TypeVariant::ContractCodeEntry => Box::new(
                 ReadXdrIter::<_, Frame<ContractCodeEntry>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t.0)))),
             ),
-            TypeVariant::ContractCodeEntryBody => Box::new(
-                ReadXdrIter::<_, Frame<ContractCodeEntryBody>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ContractCodeEntryBody(Box::new(t.0)))),
+            TypeVariant::ExpirationEntry => Box::new(
+                ReadXdrIter::<_, Frame<ExpirationEntry>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExpirationEntry(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerEntryExtensionV1>>::new(
@@ -49250,6 +48772,10 @@ impl Type {
                     r.depth_remaining,
                 )
                 .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyExpiration => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyExpiration>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyExpiration(Box::new(t.0)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, Frame<EnvelopeType>>::new(&mut r.inner, r.depth_remaining)
@@ -51174,14 +50700,6 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
-            TypeVariant::ContractEntryBodyType => Box::new(
-                ReadXdrIter::<_, ContractEntryBodyType>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ContractEntryBodyType(Box::new(t)))),
-            ),
-            TypeVariant::ContractDataFlags => Box::new(
-                ReadXdrIter::<_, ContractDataFlags>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ContractDataFlags(Box::new(t)))),
-            ),
             TypeVariant::ContractDataDurability => Box::new(
                 ReadXdrIter::<_, ContractDataDurability>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractDataDurability(Box::new(t)))),
@@ -51190,21 +50708,13 @@ impl Type {
                 ReadXdrIter::<_, ContractDataEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t)))),
             ),
-            TypeVariant::ContractDataEntryBody => Box::new(
-                ReadXdrIter::<_, ContractDataEntryBody>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ContractDataEntryBody(Box::new(t)))),
-            ),
-            TypeVariant::ContractDataEntryData => Box::new(
-                ReadXdrIter::<_, ContractDataEntryData>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ContractDataEntryData(Box::new(t)))),
-            ),
             TypeVariant::ContractCodeEntry => Box::new(
                 ReadXdrIter::<_, ContractCodeEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
             ),
-            TypeVariant::ContractCodeEntryBody => Box::new(
-                ReadXdrIter::<_, ContractCodeEntryBody>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ContractCodeEntryBody(Box::new(t)))),
+            TypeVariant::ExpirationEntry => Box::new(
+                ReadXdrIter::<_, ExpirationEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExpirationEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec, r.depth_remaining)
@@ -51265,6 +50775,10 @@ impl Type {
             TypeVariant::LedgerKeyConfigSetting => Box::new(
                 ReadXdrIter::<_, LedgerKeyConfigSetting>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyExpiration => Box::new(
+                ReadXdrIter::<_, LedgerKeyExpiration>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyExpiration(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, EnvelopeType>::new(dec, r.depth_remaining)
@@ -52495,14 +52009,10 @@ impl Type {
             Self::LiquidityPoolEntry(ref v) => v.as_ref(),
             Self::LiquidityPoolEntryBody(ref v) => v.as_ref(),
             Self::LiquidityPoolEntryConstantProduct(ref v) => v.as_ref(),
-            Self::ContractEntryBodyType(ref v) => v.as_ref(),
-            Self::ContractDataFlags(ref v) => v.as_ref(),
             Self::ContractDataDurability(ref v) => v.as_ref(),
             Self::ContractDataEntry(ref v) => v.as_ref(),
-            Self::ContractDataEntryBody(ref v) => v.as_ref(),
-            Self::ContractDataEntryData(ref v) => v.as_ref(),
             Self::ContractCodeEntry(ref v) => v.as_ref(),
-            Self::ContractCodeEntryBody(ref v) => v.as_ref(),
+            Self::ExpirationEntry(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1Ext(ref v) => v.as_ref(),
             Self::LedgerEntry(ref v) => v.as_ref(),
@@ -52518,6 +52028,7 @@ impl Type {
             Self::LedgerKeyContractData(ref v) => v.as_ref(),
             Self::LedgerKeyContractCode(ref v) => v.as_ref(),
             Self::LedgerKeyConfigSetting(ref v) => v.as_ref(),
+            Self::LedgerKeyExpiration(ref v) => v.as_ref(),
             Self::EnvelopeType(ref v) => v.as_ref(),
             Self::UpgradeType(ref v) => v.as_ref(),
             Self::StellarValueType(ref v) => v.as_ref(),
@@ -52929,14 +52440,10 @@ impl Type {
             Self::LiquidityPoolEntry(_) => "LiquidityPoolEntry",
             Self::LiquidityPoolEntryBody(_) => "LiquidityPoolEntryBody",
             Self::LiquidityPoolEntryConstantProduct(_) => "LiquidityPoolEntryConstantProduct",
-            Self::ContractEntryBodyType(_) => "ContractEntryBodyType",
-            Self::ContractDataFlags(_) => "ContractDataFlags",
             Self::ContractDataDurability(_) => "ContractDataDurability",
             Self::ContractDataEntry(_) => "ContractDataEntry",
-            Self::ContractDataEntryBody(_) => "ContractDataEntryBody",
-            Self::ContractDataEntryData(_) => "ContractDataEntryData",
             Self::ContractCodeEntry(_) => "ContractCodeEntry",
-            Self::ContractCodeEntryBody(_) => "ContractCodeEntryBody",
+            Self::ExpirationEntry(_) => "ExpirationEntry",
             Self::LedgerEntryExtensionV1(_) => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext(_) => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry(_) => "LedgerEntry",
@@ -52952,6 +52459,7 @@ impl Type {
             Self::LedgerKeyContractData(_) => "LedgerKeyContractData",
             Self::LedgerKeyContractCode(_) => "LedgerKeyContractCode",
             Self::LedgerKeyConfigSetting(_) => "LedgerKeyConfigSetting",
+            Self::LedgerKeyExpiration(_) => "LedgerKeyExpiration",
             Self::EnvelopeType(_) => "EnvelopeType",
             Self::UpgradeType(_) => "UpgradeType",
             Self::StellarValueType(_) => "StellarValueType",
@@ -53228,7 +52736,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 421] {
+    pub const fn variants() -> [TypeVariant; 418] {
         Self::VARIANTS
     }
 
@@ -53387,14 +52895,10 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(_) => {
                 TypeVariant::LiquidityPoolEntryConstantProduct
             }
-            Self::ContractEntryBodyType(_) => TypeVariant::ContractEntryBodyType,
-            Self::ContractDataFlags(_) => TypeVariant::ContractDataFlags,
             Self::ContractDataDurability(_) => TypeVariant::ContractDataDurability,
             Self::ContractDataEntry(_) => TypeVariant::ContractDataEntry,
-            Self::ContractDataEntryBody(_) => TypeVariant::ContractDataEntryBody,
-            Self::ContractDataEntryData(_) => TypeVariant::ContractDataEntryData,
             Self::ContractCodeEntry(_) => TypeVariant::ContractCodeEntry,
-            Self::ContractCodeEntryBody(_) => TypeVariant::ContractCodeEntryBody,
+            Self::ExpirationEntry(_) => TypeVariant::ExpirationEntry,
             Self::LedgerEntryExtensionV1(_) => TypeVariant::LedgerEntryExtensionV1,
             Self::LedgerEntryExtensionV1Ext(_) => TypeVariant::LedgerEntryExtensionV1Ext,
             Self::LedgerEntry(_) => TypeVariant::LedgerEntry,
@@ -53410,6 +52914,7 @@ impl Type {
             Self::LedgerKeyContractData(_) => TypeVariant::LedgerKeyContractData,
             Self::LedgerKeyContractCode(_) => TypeVariant::LedgerKeyContractCode,
             Self::LedgerKeyConfigSetting(_) => TypeVariant::LedgerKeyConfigSetting,
+            Self::LedgerKeyExpiration(_) => TypeVariant::LedgerKeyExpiration,
             Self::EnvelopeType(_) => TypeVariant::EnvelopeType,
             Self::UpgradeType(_) => TypeVariant::UpgradeType,
             Self::StellarValueType(_) => TypeVariant::StellarValueType,

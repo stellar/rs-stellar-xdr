@@ -38,7 +38,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "6d89a51015b272d26c132f5d9316710792f2aeec8ba9ee5fba7ec7e1ade029f9",
+        "234d2adf0c9bdf7c42ea64a2650884d8e36ed31cd1cbe13fb8d12b335fb4e5c3",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "6acd73c1f9f0fe9a8d7e7911b78f9d1f9d23d512d347f32c58de47f8b895466a",
+        "ce8194511afb4cbb165921c720d057381bcd4829999027d42753c11d5dcaa7f8",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -7038,16 +7038,16 @@ impl WriteXdr for ScValType {
 //
 //   enum SCErrorType
 //    {
-//        SCE_CONTRACT = 0,
-//        SCE_WASM_VM = 1,
-//        SCE_CONTEXT = 2,
-//        SCE_STORAGE = 3,
-//        SCE_OBJECT = 4,
-//        SCE_CRYPTO = 5,
-//        SCE_EVENTS = 6,
-//        SCE_BUDGET = 7,
-//        SCE_VALUE = 8,
-//        SCE_AUTH = 9
+//        SCE_CONTRACT = 0,          // Contract-specific, user-defined codes.
+//        SCE_WASM_VM = 1,           // Errors while interpreting WASM bytecode.
+//        SCE_CONTEXT = 2,           // Errors in the contract's host context.
+//        SCE_STORAGE = 3,           // Errors accessing host storage.
+//        SCE_OBJECT = 4,            // Errors working with host objects.
+//        SCE_CRYPTO = 5,            // Errors in cryptographic operations.
+//        SCE_EVENTS = 6,            // Errors while emitting events.
+//        SCE_BUDGET = 7,            // Errors relating to budget limits.
+//        SCE_VALUE = 8,             // Errors working with host values or SCVals.
+//        SCE_AUTH = 9               // Errors from the authentication subsystem.
 //    };
 //
 // enum
@@ -7187,16 +7187,16 @@ impl WriteXdr for ScErrorType {
 //
 //   enum SCErrorCode
 //    {
-//        SCEC_ARITH_DOMAIN = 0,      // some arithmetic wasn't defined (overflow, divide-by-zero)
-//        SCEC_INDEX_BOUNDS = 1,      // something was indexed beyond its bounds
-//        SCEC_INVALID_INPUT = 2,     // user provided some otherwise-bad data
-//        SCEC_MISSING_VALUE = 3,     // some value was required but not provided
-//        SCEC_EXISTING_VALUE = 4,    // some value was provided where not allowed
-//        SCEC_EXCEEDED_LIMIT = 5,    // some arbitrary limit -- gas or otherwise -- was hit
-//        SCEC_INVALID_ACTION = 6,    // data was valid but action requested was not
-//        SCEC_INTERNAL_ERROR = 7,    // the internal state of the host was otherwise-bad
-//        SCEC_UNEXPECTED_TYPE = 8,   // some type wasn't as expected
-//        SCEC_UNEXPECTED_SIZE = 9    // something's size wasn't as expected
+//        SCEC_ARITH_DOMAIN = 0,      // Some arithmetic was undefined (overflow, divide-by-zero).
+//        SCEC_INDEX_BOUNDS = 1,      // Something was indexed beyond its bounds.
+//        SCEC_INVALID_INPUT = 2,     // User provided some otherwise-bad data.
+//        SCEC_MISSING_VALUE = 3,     // Some value was required but not provided.
+//        SCEC_EXISTING_VALUE = 4,    // Some value was provided where not allowed.
+//        SCEC_EXCEEDED_LIMIT = 5,    // Some arbitrary limit -- gas or otherwise -- was hit.
+//        SCEC_INVALID_ACTION = 6,    // Data was valid but action requested was not.
+//        SCEC_INTERNAL_ERROR = 7,    // The host detected an error in its own logic.
+//        SCEC_UNEXPECTED_TYPE = 8,   // Some type wasn't as expected.
+//        SCEC_UNEXPECTED_SIZE = 9    // Something's size wasn't as expected.
 //    };
 //
 // enum
@@ -38275,14 +38275,12 @@ impl WriteXdr for OperationResult {
 //        txBAD_AUTH_EXTRA = -10,      // unused signatures attached to transaction
 //        txINTERNAL_ERROR = -11,      // an unknown error occurred
 //
-//        txNOT_SUPPORTED = -12,         // transaction type not supported
-//        txFEE_BUMP_INNER_FAILED = -13, // fee bump inner transaction failed
-//        txBAD_SPONSORSHIP = -14,       // sponsorship not confirmed
-//        txBAD_MIN_SEQ_AGE_OR_GAP =
-//            -15, // minSeqAge or minSeqLedgerGap conditions not met
-//        txMALFORMED = -16, // precondition is invalid
-//        // declared Soroban resource usage exceeds the network limit
-//        txSOROBAN_RESOURCE_LIMIT_EXCEEDED = -17
+//        txNOT_SUPPORTED = -12,          // transaction type not supported
+//        txFEE_BUMP_INNER_FAILED = -13,  // fee bump inner transaction failed
+//        txBAD_SPONSORSHIP = -14,        // sponsorship not confirmed
+//        txBAD_MIN_SEQ_AGE_OR_GAP = -15, // minSeqAge or minSeqLedgerGap conditions not met
+//        txMALFORMED = -16,              // precondition is invalid
+//        txSOROBAN_INVALID = -17         // soroban-specific preconditions were not met
 //    };
 //
 // enum
@@ -38313,7 +38311,7 @@ pub enum TransactionResultCode {
     TxBadSponsorship = -14,
     TxBadMinSeqAgeOrGap = -15,
     TxMalformed = -16,
-    TxSorobanResourceLimitExceeded = -17,
+    TxSorobanInvalid = -17,
 }
 
 impl TransactionResultCode {
@@ -38336,7 +38334,7 @@ impl TransactionResultCode {
         TransactionResultCode::TxBadSponsorship,
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
-        TransactionResultCode::TxSorobanResourceLimitExceeded,
+        TransactionResultCode::TxSorobanInvalid,
     ];
     pub const VARIANTS_STR: [&'static str; 19] = [
         "TxFeeBumpInnerSuccess",
@@ -38357,7 +38355,7 @@ impl TransactionResultCode {
         "TxBadSponsorship",
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
-        "TxSorobanResourceLimitExceeded",
+        "TxSorobanInvalid",
     ];
 
     #[must_use]
@@ -38381,7 +38379,7 @@ impl TransactionResultCode {
             Self::TxBadSponsorship => "TxBadSponsorship",
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
-            Self::TxSorobanResourceLimitExceeded => "TxSorobanResourceLimitExceeded",
+            Self::TxSorobanInvalid => "TxSorobanInvalid",
         }
     }
 
@@ -38435,7 +38433,7 @@ impl TryFrom<i32> for TransactionResultCode {
             -14 => TransactionResultCode::TxBadSponsorship,
             -15 => TransactionResultCode::TxBadMinSeqAgeOrGap,
             -16 => TransactionResultCode::TxMalformed,
-            -17 => TransactionResultCode::TxSorobanResourceLimitExceeded,
+            -17 => TransactionResultCode::TxSorobanInvalid,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -38494,7 +38492,7 @@ impl WriteXdr for TransactionResultCode {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
-//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
+//        case txSOROBAN_INVALID:
 //            void;
 //        }
 //
@@ -38524,7 +38522,7 @@ pub enum InnerTransactionResultResult {
     TxBadSponsorship,
     TxBadMinSeqAgeOrGap,
     TxMalformed,
-    TxSorobanResourceLimitExceeded,
+    TxSorobanInvalid,
 }
 
 impl InnerTransactionResultResult {
@@ -38545,7 +38543,7 @@ impl InnerTransactionResultResult {
         TransactionResultCode::TxBadSponsorship,
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
-        TransactionResultCode::TxSorobanResourceLimitExceeded,
+        TransactionResultCode::TxSorobanInvalid,
     ];
     pub const VARIANTS_STR: [&'static str; 17] = [
         "TxSuccess",
@@ -38564,7 +38562,7 @@ impl InnerTransactionResultResult {
         "TxBadSponsorship",
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
-        "TxSorobanResourceLimitExceeded",
+        "TxSorobanInvalid",
     ];
 
     #[must_use]
@@ -38586,7 +38584,7 @@ impl InnerTransactionResultResult {
             Self::TxBadSponsorship => "TxBadSponsorship",
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
-            Self::TxSorobanResourceLimitExceeded => "TxSorobanResourceLimitExceeded",
+            Self::TxSorobanInvalid => "TxSorobanInvalid",
         }
     }
 
@@ -38610,9 +38608,7 @@ impl InnerTransactionResultResult {
             Self::TxBadSponsorship => TransactionResultCode::TxBadSponsorship,
             Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
             Self::TxMalformed => TransactionResultCode::TxMalformed,
-            Self::TxSorobanResourceLimitExceeded => {
-                TransactionResultCode::TxSorobanResourceLimitExceeded
-            }
+            Self::TxSorobanInvalid => TransactionResultCode::TxSorobanInvalid,
         }
     }
 
@@ -38671,9 +38667,7 @@ impl ReadXdr for InnerTransactionResultResult {
                 TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
                 TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
                 TransactionResultCode::TxMalformed => Self::TxMalformed,
-                TransactionResultCode::TxSorobanResourceLimitExceeded => {
-                    Self::TxSorobanResourceLimitExceeded
-                }
+                TransactionResultCode::TxSorobanInvalid => Self::TxSorobanInvalid,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -38705,7 +38699,7 @@ impl WriteXdr for InnerTransactionResultResult {
                 Self::TxBadSponsorship => ().write_xdr(w)?,
                 Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
                 Self::TxMalformed => ().write_xdr(w)?,
-                Self::TxSorobanResourceLimitExceeded => ().write_xdr(w)?,
+                Self::TxSorobanInvalid => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -38838,7 +38832,7 @@ impl WriteXdr for InnerTransactionResultExt {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
-//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
+//        case txSOROBAN_INVALID:
 //            void;
 //        }
 //        result;
@@ -38958,7 +38952,7 @@ impl WriteXdr for InnerTransactionResultPair {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
-//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
+//        case txSOROBAN_INVALID:
 //            void;
 //        }
 //
@@ -38990,7 +38984,7 @@ pub enum TransactionResultResult {
     TxBadSponsorship,
     TxBadMinSeqAgeOrGap,
     TxMalformed,
-    TxSorobanResourceLimitExceeded,
+    TxSorobanInvalid,
 }
 
 impl TransactionResultResult {
@@ -39013,7 +39007,7 @@ impl TransactionResultResult {
         TransactionResultCode::TxBadSponsorship,
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
-        TransactionResultCode::TxSorobanResourceLimitExceeded,
+        TransactionResultCode::TxSorobanInvalid,
     ];
     pub const VARIANTS_STR: [&'static str; 19] = [
         "TxFeeBumpInnerSuccess",
@@ -39034,7 +39028,7 @@ impl TransactionResultResult {
         "TxBadSponsorship",
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
-        "TxSorobanResourceLimitExceeded",
+        "TxSorobanInvalid",
     ];
 
     #[must_use]
@@ -39058,7 +39052,7 @@ impl TransactionResultResult {
             Self::TxBadSponsorship => "TxBadSponsorship",
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
-            Self::TxSorobanResourceLimitExceeded => "TxSorobanResourceLimitExceeded",
+            Self::TxSorobanInvalid => "TxSorobanInvalid",
         }
     }
 
@@ -39084,9 +39078,7 @@ impl TransactionResultResult {
             Self::TxBadSponsorship => TransactionResultCode::TxBadSponsorship,
             Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
             Self::TxMalformed => TransactionResultCode::TxMalformed,
-            Self::TxSorobanResourceLimitExceeded => {
-                TransactionResultCode::TxSorobanResourceLimitExceeded
-            }
+            Self::TxSorobanInvalid => TransactionResultCode::TxSorobanInvalid,
         }
     }
 
@@ -39151,9 +39143,7 @@ impl ReadXdr for TransactionResultResult {
                 TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
                 TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
                 TransactionResultCode::TxMalformed => Self::TxMalformed,
-                TransactionResultCode::TxSorobanResourceLimitExceeded => {
-                    Self::TxSorobanResourceLimitExceeded
-                }
+                TransactionResultCode::TxSorobanInvalid => Self::TxSorobanInvalid,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -39187,7 +39177,7 @@ impl WriteXdr for TransactionResultResult {
                 Self::TxBadSponsorship => ().write_xdr(w)?,
                 Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
                 Self::TxMalformed => ().write_xdr(w)?,
-                Self::TxSorobanResourceLimitExceeded => ().write_xdr(w)?,
+                Self::TxSorobanInvalid => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -39321,7 +39311,7 @@ impl WriteXdr for TransactionResultExt {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
-//        case txSOROBAN_RESOURCE_LIMIT_EXCEEDED:
+//        case txSOROBAN_INVALID:
 //            void;
 //        }
 //        result;

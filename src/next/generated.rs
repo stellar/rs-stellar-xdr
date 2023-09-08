@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "59077cbb5a1517fdaaaf7b1f0f750cf02f84984ed024441dc37b7f974866fa58",
+        "f9dcc0d632cc7d8f921e5d991c77a18838c68f4234e90f2abf90d297716968e3",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -16466,9 +16466,9 @@ impl WriteXdr for StellarValue {
 
 // MaskLedgerHeaderFlags is an XDR Const defines as:
 //
-//   const MASK_LEDGER_HEADER_FLAGS = 0x7F;
+//   const MASK_LEDGER_HEADER_FLAGS = 0x7;
 //
-pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7F;
+pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 
 // LedgerHeaderFlags is an XDR Enum defines as:
 //
@@ -16476,11 +16476,7 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7F;
 //    {
 //        DISABLE_LIQUIDITY_POOL_TRADING_FLAG = 0x1,
 //        DISABLE_LIQUIDITY_POOL_DEPOSIT_FLAG = 0x2,
-//        DISABLE_LIQUIDITY_POOL_WITHDRAWAL_FLAG = 0x4,
-//        DISABLE_CONTRACT_CREATE = 0x8,
-//        DISABLE_CONTRACT_UPDATE = 0x10,
-//        DISABLE_CONTRACT_REMOVE = 0x20,
-//        DISABLE_CONTRACT_INVOKE = 0x40
+//        DISABLE_LIQUIDITY_POOL_WITHDRAWAL_FLAG = 0x4
 //    };
 //
 // enum
@@ -16493,50 +16489,30 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7F;
 )]
 #[repr(i32)]
 pub enum LedgerHeaderFlags {
-    LiquidityPoolTradingFlag = 1,
-    LiquidityPoolDepositFlag = 2,
-    LiquidityPoolWithdrawalFlag = 4,
-    ContractCreate = 8,
-    ContractUpdate = 16,
-    ContractRemove = 32,
-    ContractInvoke = 64,
+    TradingFlag = 1,
+    DepositFlag = 2,
+    WithdrawalFlag = 4,
 }
 
 impl LedgerHeaderFlags {
-    pub const VARIANTS: [LedgerHeaderFlags; 7] = [
-        LedgerHeaderFlags::LiquidityPoolTradingFlag,
-        LedgerHeaderFlags::LiquidityPoolDepositFlag,
-        LedgerHeaderFlags::LiquidityPoolWithdrawalFlag,
-        LedgerHeaderFlags::ContractCreate,
-        LedgerHeaderFlags::ContractUpdate,
-        LedgerHeaderFlags::ContractRemove,
-        LedgerHeaderFlags::ContractInvoke,
+    pub const VARIANTS: [LedgerHeaderFlags; 3] = [
+        LedgerHeaderFlags::TradingFlag,
+        LedgerHeaderFlags::DepositFlag,
+        LedgerHeaderFlags::WithdrawalFlag,
     ];
-    pub const VARIANTS_STR: [&'static str; 7] = [
-        "LiquidityPoolTradingFlag",
-        "LiquidityPoolDepositFlag",
-        "LiquidityPoolWithdrawalFlag",
-        "ContractCreate",
-        "ContractUpdate",
-        "ContractRemove",
-        "ContractInvoke",
-    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["TradingFlag", "DepositFlag", "WithdrawalFlag"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::LiquidityPoolTradingFlag => "LiquidityPoolTradingFlag",
-            Self::LiquidityPoolDepositFlag => "LiquidityPoolDepositFlag",
-            Self::LiquidityPoolWithdrawalFlag => "LiquidityPoolWithdrawalFlag",
-            Self::ContractCreate => "ContractCreate",
-            Self::ContractUpdate => "ContractUpdate",
-            Self::ContractRemove => "ContractRemove",
-            Self::ContractInvoke => "ContractInvoke",
+            Self::TradingFlag => "TradingFlag",
+            Self::DepositFlag => "DepositFlag",
+            Self::WithdrawalFlag => "WithdrawalFlag",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerHeaderFlags; 7] {
+    pub const fn variants() -> [LedgerHeaderFlags; 3] {
         Self::VARIANTS
     }
 }
@@ -16567,13 +16543,9 @@ impl TryFrom<i32> for LedgerHeaderFlags {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            1 => LedgerHeaderFlags::LiquidityPoolTradingFlag,
-            2 => LedgerHeaderFlags::LiquidityPoolDepositFlag,
-            4 => LedgerHeaderFlags::LiquidityPoolWithdrawalFlag,
-            8 => LedgerHeaderFlags::ContractCreate,
-            16 => LedgerHeaderFlags::ContractUpdate,
-            32 => LedgerHeaderFlags::ContractRemove,
-            64 => LedgerHeaderFlags::ContractInvoke,
+            1 => LedgerHeaderFlags::TradingFlag,
+            2 => LedgerHeaderFlags::DepositFlag,
+            4 => LedgerHeaderFlags::WithdrawalFlag,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

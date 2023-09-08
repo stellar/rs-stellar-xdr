@@ -1,5 +1,10 @@
 // Module  is generated from:
 //  xdr/curr/Stellar-SCP.x
+//  xdr/curr/Stellar-contract-config-setting.x
+//  xdr/curr/Stellar-contract-env-meta.x
+//  xdr/curr/Stellar-contract-meta.x
+//  xdr/curr/Stellar-contract-spec.x
+//  xdr/curr/Stellar-contract.x
 //  xdr/curr/Stellar-internal.x
 //  xdr/curr/Stellar-ledger-entries.x
 //  xdr/curr/Stellar-ledger.x
@@ -10,10 +15,30 @@
 #![allow(clippy::missing_errors_doc, clippy::unreadable_literal)]
 
 /// `XDR_FILES_SHA256` is a list of pairs of source files and their SHA256 hashes.
-pub const XDR_FILES_SHA256: [(&str, &str); 7] = [
+pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     (
         "xdr/curr/Stellar-SCP.x",
         "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+    ),
+    (
+        "xdr/curr/Stellar-contract-config-setting.x",
+        "fd8709d1bcc36a90a1f7b1fd8cb4407f7733bec5ca06494cac9b6a99b942ef99",
+    ),
+    (
+        "xdr/curr/Stellar-contract-env-meta.x",
+        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
+    ),
+    (
+        "xdr/curr/Stellar-contract-meta.x",
+        "f01532c11ca044e19d9f9f16fe373e9af64835da473be556b9a807ee3319ae0d",
+    ),
+    (
+        "xdr/curr/Stellar-contract-spec.x",
+        "c7ffa21d2e91afb8e666b33524d307955426ff553a486d670c29217ed9888d49",
+    ),
+    (
+        "xdr/curr/Stellar-contract.x",
+        "234d2adf0c9bdf7c42ea64a2650884d8e36ed31cd1cbe13fb8d12b335fb4e5c3",
     ),
     (
         "xdr/curr/Stellar-internal.x",
@@ -21,23 +46,23 @@ pub const XDR_FILES_SHA256: [(&str, &str); 7] = [
     ),
     (
         "xdr/curr/Stellar-ledger-entries.x",
-        "3aa135c309c2d67883f165961739b4940c90df59240d8aeef55deced8d7708b5",
+        "73b467bce654c5b19d0fba24008c9ccae77b439320a4c9eef9128e1818fdd76d",
     ),
     (
         "xdr/curr/Stellar-ledger.x",
-        "96ac88de23d2b0f2f23a0495527c8aefb8623b4db0e39ba34f357d10a211c214",
+        "247d1b486d546f5c37f3d8a719b195e3331106302bcdc54cd1f52a6f94a9a7ed",
     ),
     (
         "xdr/curr/Stellar-overlay.x",
-        "3093b425866f34b32702d80d5298f9f2dc00736b0fdaac7efa653490a39fb231",
+        "de3957c58b96ae07968b3d3aebea84f83603e95322d1fa336360e13e3aba737a",
     ),
     (
         "xdr/curr/Stellar-transaction.x",
-        "45fdeb428e68d6b07e3e3157b6404567e0efb712c9d4c90a61a1035854c32b90",
+        "ce8194511afb4cbb165921c720d057381bcd4829999027d42753c11d5dcaa7f8",
     ),
     (
         "xdr/curr/Stellar-types.x",
-        "60b7588e573f5e5518766eb5e6b6ea42f0e53144663cbe557e485cceb6306c85",
+        "6e3b13f0d3e360b09fa5e2b0e55d43f4d974a769df66afb34e8aecbb329d3f15",
     ),
 ];
 
@@ -3099,6 +3124,5937 @@ impl WriteXdr for ScpQuorumSet {
     }
 }
 
+// ConfigSettingContractExecutionLanesV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractExecutionLanesV0
+//    {
+//        // maximum number of Soroban transactions per ledger
+//        uint32 ledgerMaxTxCount;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractExecutionLanesV0 {
+    pub ledger_max_tx_count: u32,
+}
+
+impl ReadXdr for ConfigSettingContractExecutionLanesV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_max_tx_count: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_max_tx_count.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ConfigSettingContractComputeV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractComputeV0
+//    {
+//        // Maximum instructions per ledger
+//        int64 ledgerMaxInstructions;
+//        // Maximum instructions per transaction
+//        int64 txMaxInstructions;
+//        // Cost of 10000 instructions
+//        int64 feeRatePerInstructionsIncrement;
+//
+//        // Memory limit per transaction. Unlike instructions, there is no fee
+//        // for memory, just the limit.
+//        uint32 txMemoryLimit;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractComputeV0 {
+    pub ledger_max_instructions: i64,
+    pub tx_max_instructions: i64,
+    pub fee_rate_per_instructions_increment: i64,
+    pub tx_memory_limit: u32,
+}
+
+impl ReadXdr for ConfigSettingContractComputeV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_max_instructions: i64::read_xdr(r)?,
+                tx_max_instructions: i64::read_xdr(r)?,
+                fee_rate_per_instructions_increment: i64::read_xdr(r)?,
+                tx_memory_limit: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractComputeV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_max_instructions.write_xdr(w)?;
+            self.tx_max_instructions.write_xdr(w)?;
+            self.fee_rate_per_instructions_increment.write_xdr(w)?;
+            self.tx_memory_limit.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractLedgerCostV0
+//    {
+//        // Maximum number of ledger entry read operations per ledger
+//        uint32 ledgerMaxReadLedgerEntries;
+//        // Maximum number of bytes that can be read per ledger
+//        uint32 ledgerMaxReadBytes;
+//        // Maximum number of ledger entry write operations per ledger
+//        uint32 ledgerMaxWriteLedgerEntries;
+//        // Maximum number of bytes that can be written per ledger
+//        uint32 ledgerMaxWriteBytes;
+//
+//        // Maximum number of ledger entry read operations per transaction
+//        uint32 txMaxReadLedgerEntries;
+//        // Maximum number of bytes that can be read per transaction
+//        uint32 txMaxReadBytes;
+//        // Maximum number of ledger entry write operations per transaction
+//        uint32 txMaxWriteLedgerEntries;
+//        // Maximum number of bytes that can be written per transaction
+//        uint32 txMaxWriteBytes;
+//
+//        int64 feeReadLedgerEntry;  // Fee per ledger entry read
+//        int64 feeWriteLedgerEntry; // Fee per ledger entry write
+//
+//        int64 feeRead1KB;  // Fee for reading 1KB
+//
+//        // The following parameters determine the write fee per 1KB.
+//        // Write fee grows linearly until bucket list reaches this size
+//        int64 bucketListTargetSizeBytes;
+//        // Fee per 1KB write when the bucket list is empty
+//        int64 writeFee1KBBucketListLow;
+//        // Fee per 1KB write when the bucket list has reached `bucketListTargetSizeBytes`
+//        int64 writeFee1KBBucketListHigh;
+//        // Write fee multiplier for any additional data past the first `bucketListTargetSizeBytes`
+//        uint32 bucketListWriteFeeGrowthFactor;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractLedgerCostV0 {
+    pub ledger_max_read_ledger_entries: u32,
+    pub ledger_max_read_bytes: u32,
+    pub ledger_max_write_ledger_entries: u32,
+    pub ledger_max_write_bytes: u32,
+    pub tx_max_read_ledger_entries: u32,
+    pub tx_max_read_bytes: u32,
+    pub tx_max_write_ledger_entries: u32,
+    pub tx_max_write_bytes: u32,
+    pub fee_read_ledger_entry: i64,
+    pub fee_write_ledger_entry: i64,
+    pub fee_read1_kb: i64,
+    pub bucket_list_target_size_bytes: i64,
+    pub write_fee1_kb_bucket_list_low: i64,
+    pub write_fee1_kb_bucket_list_high: i64,
+    pub bucket_list_write_fee_growth_factor: u32,
+}
+
+impl ReadXdr for ConfigSettingContractLedgerCostV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_max_read_ledger_entries: u32::read_xdr(r)?,
+                ledger_max_read_bytes: u32::read_xdr(r)?,
+                ledger_max_write_ledger_entries: u32::read_xdr(r)?,
+                ledger_max_write_bytes: u32::read_xdr(r)?,
+                tx_max_read_ledger_entries: u32::read_xdr(r)?,
+                tx_max_read_bytes: u32::read_xdr(r)?,
+                tx_max_write_ledger_entries: u32::read_xdr(r)?,
+                tx_max_write_bytes: u32::read_xdr(r)?,
+                fee_read_ledger_entry: i64::read_xdr(r)?,
+                fee_write_ledger_entry: i64::read_xdr(r)?,
+                fee_read1_kb: i64::read_xdr(r)?,
+                bucket_list_target_size_bytes: i64::read_xdr(r)?,
+                write_fee1_kb_bucket_list_low: i64::read_xdr(r)?,
+                write_fee1_kb_bucket_list_high: i64::read_xdr(r)?,
+                bucket_list_write_fee_growth_factor: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractLedgerCostV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_max_read_ledger_entries.write_xdr(w)?;
+            self.ledger_max_read_bytes.write_xdr(w)?;
+            self.ledger_max_write_ledger_entries.write_xdr(w)?;
+            self.ledger_max_write_bytes.write_xdr(w)?;
+            self.tx_max_read_ledger_entries.write_xdr(w)?;
+            self.tx_max_read_bytes.write_xdr(w)?;
+            self.tx_max_write_ledger_entries.write_xdr(w)?;
+            self.tx_max_write_bytes.write_xdr(w)?;
+            self.fee_read_ledger_entry.write_xdr(w)?;
+            self.fee_write_ledger_entry.write_xdr(w)?;
+            self.fee_read1_kb.write_xdr(w)?;
+            self.bucket_list_target_size_bytes.write_xdr(w)?;
+            self.write_fee1_kb_bucket_list_low.write_xdr(w)?;
+            self.write_fee1_kb_bucket_list_high.write_xdr(w)?;
+            self.bucket_list_write_fee_growth_factor.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ConfigSettingContractHistoricalDataV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractHistoricalDataV0
+//    {
+//        int64 feeHistorical1KB; // Fee for storing 1KB in archives
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractHistoricalDataV0 {
+    pub fee_historical1_kb: i64,
+}
+
+impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                fee_historical1_kb: i64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.fee_historical1_kb.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ConfigSettingContractEventsV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractEventsV0
+//    {
+//        // Maximum size of events that a contract call can emit.
+//        uint32 txMaxContractEventsSizeBytes;
+//        // Fee for generating 1KB of contract events.
+//        int64 feeContractEvents1KB;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractEventsV0 {
+    pub tx_max_contract_events_size_bytes: u32,
+    pub fee_contract_events1_kb: i64,
+}
+
+impl ReadXdr for ConfigSettingContractEventsV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx_max_contract_events_size_bytes: u32::read_xdr(r)?,
+                fee_contract_events1_kb: i64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractEventsV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.tx_max_contract_events_size_bytes.write_xdr(w)?;
+            self.fee_contract_events1_kb.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ConfigSettingContractBandwidthV0 is an XDR Struct defines as:
+//
+//   struct ConfigSettingContractBandwidthV0
+//    {
+//        // Maximum sum of all transaction sizes in the ledger in bytes
+//        uint32 ledgerMaxTxsSizeBytes;
+//        // Maximum size in bytes for a transaction
+//        uint32 txMaxSizeBytes;
+//
+//        // Fee for 1 KB of transaction size
+//        int64 feeTxSize1KB;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigSettingContractBandwidthV0 {
+    pub ledger_max_txs_size_bytes: u32,
+    pub tx_max_size_bytes: u32,
+    pub fee_tx_size1_kb: i64,
+}
+
+impl ReadXdr for ConfigSettingContractBandwidthV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_max_txs_size_bytes: u32::read_xdr(r)?,
+                tx_max_size_bytes: u32::read_xdr(r)?,
+                fee_tx_size1_kb: i64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractBandwidthV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_max_txs_size_bytes.write_xdr(w)?;
+            self.tx_max_size_bytes.write_xdr(w)?;
+            self.fee_tx_size1_kb.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ContractCostType is an XDR Enum defines as:
+//
+//   enum ContractCostType {
+//        // Cost of running 1 wasm instruction
+//        WasmInsnExec = 0,
+//        // Cost of growing wasm linear memory by 1 page
+//        WasmMemAlloc = 1,
+//        // Cost of allocating a chuck of host memory (in bytes)
+//        HostMemAlloc = 2,
+//        // Cost of copying a chuck of bytes into a pre-allocated host memory
+//        HostMemCpy = 3,
+//        // Cost of comparing two slices of host memory
+//        HostMemCmp = 4,
+//        // Cost of a host function dispatch, not including the actual work done by
+//        // the function nor the cost of VM invocation machinary
+//        DispatchHostFunction = 5,
+//        // Cost of visiting a host object from the host object storage. Exists to
+//        // make sure some baseline cost coverage, i.e. repeatly visiting objects
+//        // by the guest will always incur some charges.
+//        VisitObject = 6,
+//        // Cost of serializing an xdr object to bytes
+//        ValSer = 7,
+//        // Cost of deserializing an xdr object from bytes
+//        ValDeser = 8,
+//        // Cost of computing the sha256 hash from bytes
+//        ComputeSha256Hash = 9,
+//        // Cost of computing the ed25519 pubkey from bytes
+//        ComputeEd25519PubKey = 10,
+//        // Cost of accessing an entry in a Map.
+//        MapEntry = 11,
+//        // Cost of accessing an entry in a Vec
+//        VecEntry = 12,
+//        // Cost of verifying ed25519 signature of a payload.
+//        VerifyEd25519Sig = 13,
+//        // Cost of reading a slice of vm linear memory
+//        VmMemRead = 14,
+//        // Cost of writing to a slice of vm linear memory
+//        VmMemWrite = 15,
+//        // Cost of instantiation a VM from wasm bytes code.
+//        VmInstantiation = 16,
+//        // Cost of instantiation a VM from a cached state.
+//        VmCachedInstantiation = 17,
+//        // Cost of invoking a function on the VM. If the function is a host function,
+//        // additional cost will be covered by `DispatchHostFunction`.
+//        InvokeVmFunction = 18,
+//        // Cost of computing a keccak256 hash from bytes.
+//        ComputeKeccak256Hash = 19,
+//        // Cost of computing an ECDSA secp256k1 pubkey from bytes.
+//        ComputeEcdsaSecp256k1Key = 20,
+//        // Cost of computing an ECDSA secp256k1 signature from bytes.
+//        ComputeEcdsaSecp256k1Sig = 21,
+//        // Cost of recovering an ECDSA secp256k1 key from a signature.
+//        RecoverEcdsaSecp256k1Key = 22,
+//        // Cost of int256 addition (`+`) and subtraction (`-`) operations
+//        Int256AddSub = 23,
+//        // Cost of int256 multiplication (`*`) operation
+//        Int256Mul = 24,
+//        // Cost of int256 division (`/`) operation
+//        Int256Div = 25,
+//        // Cost of int256 power (`exp`) operation
+//        Int256Pow = 26,
+//        // Cost of int256 shift (`shl`, `shr`) operation
+//        Int256Shift = 27
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ContractCostType {
+    WasmInsnExec = 0,
+    WasmMemAlloc = 1,
+    HostMemAlloc = 2,
+    HostMemCpy = 3,
+    HostMemCmp = 4,
+    DispatchHostFunction = 5,
+    VisitObject = 6,
+    ValSer = 7,
+    ValDeser = 8,
+    ComputeSha256Hash = 9,
+    ComputeEd25519PubKey = 10,
+    MapEntry = 11,
+    VecEntry = 12,
+    VerifyEd25519Sig = 13,
+    VmMemRead = 14,
+    VmMemWrite = 15,
+    VmInstantiation = 16,
+    VmCachedInstantiation = 17,
+    InvokeVmFunction = 18,
+    ComputeKeccak256Hash = 19,
+    ComputeEcdsaSecp256k1Key = 20,
+    ComputeEcdsaSecp256k1Sig = 21,
+    RecoverEcdsaSecp256k1Key = 22,
+    Int256AddSub = 23,
+    Int256Mul = 24,
+    Int256Div = 25,
+    Int256Pow = 26,
+    Int256Shift = 27,
+}
+
+impl ContractCostType {
+    pub const VARIANTS: [ContractCostType; 28] = [
+        ContractCostType::WasmInsnExec,
+        ContractCostType::WasmMemAlloc,
+        ContractCostType::HostMemAlloc,
+        ContractCostType::HostMemCpy,
+        ContractCostType::HostMemCmp,
+        ContractCostType::DispatchHostFunction,
+        ContractCostType::VisitObject,
+        ContractCostType::ValSer,
+        ContractCostType::ValDeser,
+        ContractCostType::ComputeSha256Hash,
+        ContractCostType::ComputeEd25519PubKey,
+        ContractCostType::MapEntry,
+        ContractCostType::VecEntry,
+        ContractCostType::VerifyEd25519Sig,
+        ContractCostType::VmMemRead,
+        ContractCostType::VmMemWrite,
+        ContractCostType::VmInstantiation,
+        ContractCostType::VmCachedInstantiation,
+        ContractCostType::InvokeVmFunction,
+        ContractCostType::ComputeKeccak256Hash,
+        ContractCostType::ComputeEcdsaSecp256k1Key,
+        ContractCostType::ComputeEcdsaSecp256k1Sig,
+        ContractCostType::RecoverEcdsaSecp256k1Key,
+        ContractCostType::Int256AddSub,
+        ContractCostType::Int256Mul,
+        ContractCostType::Int256Div,
+        ContractCostType::Int256Pow,
+        ContractCostType::Int256Shift,
+    ];
+    pub const VARIANTS_STR: [&'static str; 28] = [
+        "WasmInsnExec",
+        "WasmMemAlloc",
+        "HostMemAlloc",
+        "HostMemCpy",
+        "HostMemCmp",
+        "DispatchHostFunction",
+        "VisitObject",
+        "ValSer",
+        "ValDeser",
+        "ComputeSha256Hash",
+        "ComputeEd25519PubKey",
+        "MapEntry",
+        "VecEntry",
+        "VerifyEd25519Sig",
+        "VmMemRead",
+        "VmMemWrite",
+        "VmInstantiation",
+        "VmCachedInstantiation",
+        "InvokeVmFunction",
+        "ComputeKeccak256Hash",
+        "ComputeEcdsaSecp256k1Key",
+        "ComputeEcdsaSecp256k1Sig",
+        "RecoverEcdsaSecp256k1Key",
+        "Int256AddSub",
+        "Int256Mul",
+        "Int256Div",
+        "Int256Pow",
+        "Int256Shift",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::WasmInsnExec => "WasmInsnExec",
+            Self::WasmMemAlloc => "WasmMemAlloc",
+            Self::HostMemAlloc => "HostMemAlloc",
+            Self::HostMemCpy => "HostMemCpy",
+            Self::HostMemCmp => "HostMemCmp",
+            Self::DispatchHostFunction => "DispatchHostFunction",
+            Self::VisitObject => "VisitObject",
+            Self::ValSer => "ValSer",
+            Self::ValDeser => "ValDeser",
+            Self::ComputeSha256Hash => "ComputeSha256Hash",
+            Self::ComputeEd25519PubKey => "ComputeEd25519PubKey",
+            Self::MapEntry => "MapEntry",
+            Self::VecEntry => "VecEntry",
+            Self::VerifyEd25519Sig => "VerifyEd25519Sig",
+            Self::VmMemRead => "VmMemRead",
+            Self::VmMemWrite => "VmMemWrite",
+            Self::VmInstantiation => "VmInstantiation",
+            Self::VmCachedInstantiation => "VmCachedInstantiation",
+            Self::InvokeVmFunction => "InvokeVmFunction",
+            Self::ComputeKeccak256Hash => "ComputeKeccak256Hash",
+            Self::ComputeEcdsaSecp256k1Key => "ComputeEcdsaSecp256k1Key",
+            Self::ComputeEcdsaSecp256k1Sig => "ComputeEcdsaSecp256k1Sig",
+            Self::RecoverEcdsaSecp256k1Key => "RecoverEcdsaSecp256k1Key",
+            Self::Int256AddSub => "Int256AddSub",
+            Self::Int256Mul => "Int256Mul",
+            Self::Int256Div => "Int256Div",
+            Self::Int256Pow => "Int256Pow",
+            Self::Int256Shift => "Int256Shift",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractCostType; 28] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractCostType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ContractCostType> for ContractCostType {
+    fn variants() -> slice::Iter<'static, ContractCostType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ContractCostType {}
+
+impl fmt::Display for ContractCostType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ContractCostType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ContractCostType::WasmInsnExec,
+            1 => ContractCostType::WasmMemAlloc,
+            2 => ContractCostType::HostMemAlloc,
+            3 => ContractCostType::HostMemCpy,
+            4 => ContractCostType::HostMemCmp,
+            5 => ContractCostType::DispatchHostFunction,
+            6 => ContractCostType::VisitObject,
+            7 => ContractCostType::ValSer,
+            8 => ContractCostType::ValDeser,
+            9 => ContractCostType::ComputeSha256Hash,
+            10 => ContractCostType::ComputeEd25519PubKey,
+            11 => ContractCostType::MapEntry,
+            12 => ContractCostType::VecEntry,
+            13 => ContractCostType::VerifyEd25519Sig,
+            14 => ContractCostType::VmMemRead,
+            15 => ContractCostType::VmMemWrite,
+            16 => ContractCostType::VmInstantiation,
+            17 => ContractCostType::VmCachedInstantiation,
+            18 => ContractCostType::InvokeVmFunction,
+            19 => ContractCostType::ComputeKeccak256Hash,
+            20 => ContractCostType::ComputeEcdsaSecp256k1Key,
+            21 => ContractCostType::ComputeEcdsaSecp256k1Sig,
+            22 => ContractCostType::RecoverEcdsaSecp256k1Key,
+            23 => ContractCostType::Int256AddSub,
+            24 => ContractCostType::Int256Mul,
+            25 => ContractCostType::Int256Div,
+            26 => ContractCostType::Int256Pow,
+            27 => ContractCostType::Int256Shift,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ContractCostType> for i32 {
+    #[must_use]
+    fn from(e: ContractCostType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ContractCostType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ContractCostType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ContractCostParamEntry is an XDR Struct defines as:
+//
+//   struct ContractCostParamEntry {
+//        // use `ext` to add more terms (e.g. higher order polynomials) in the future
+//        ExtensionPoint ext;
+//
+//        int64 constTerm;
+//        int64 linearTerm;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractCostParamEntry {
+    pub ext: ExtensionPoint,
+    pub const_term: i64,
+    pub linear_term: i64,
+}
+
+impl ReadXdr for ContractCostParamEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                const_term: i64::read_xdr(r)?,
+                linear_term: i64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ContractCostParamEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.const_term.write_xdr(w)?;
+            self.linear_term.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// StateExpirationSettings is an XDR Struct defines as:
+//
+//   struct StateExpirationSettings {
+//        uint32 maxEntryExpiration;
+//        uint32 minTempEntryExpiration;
+//        uint32 minPersistentEntryExpiration;
+//
+//        // rent_fee = wfee_rate_average / rent_rate_denominator_for_type
+//        int64 persistentRentRateDenominator;
+//        int64 tempRentRateDenominator;
+//
+//        // max number of entries that emit expiration meta in a single ledger
+//        uint32 maxEntriesToExpire;
+//
+//        // Number of snapshots to use when calculating average BucketList size
+//        uint32 bucketListSizeWindowSampleSize;
+//
+//        // Maximum number of bytes that we scan for eviction per ledger
+//        uint64 evictionScanSize;
+//
+//        // Lowest BucketList level to be scanned to evict entries
+//        uint32 startingEvictionScanLevel;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct StateExpirationSettings {
+    pub max_entry_expiration: u32,
+    pub min_temp_entry_expiration: u32,
+    pub min_persistent_entry_expiration: u32,
+    pub persistent_rent_rate_denominator: i64,
+    pub temp_rent_rate_denominator: i64,
+    pub max_entries_to_expire: u32,
+    pub bucket_list_size_window_sample_size: u32,
+    pub eviction_scan_size: u64,
+    pub starting_eviction_scan_level: u32,
+}
+
+impl ReadXdr for StateExpirationSettings {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                max_entry_expiration: u32::read_xdr(r)?,
+                min_temp_entry_expiration: u32::read_xdr(r)?,
+                min_persistent_entry_expiration: u32::read_xdr(r)?,
+                persistent_rent_rate_denominator: i64::read_xdr(r)?,
+                temp_rent_rate_denominator: i64::read_xdr(r)?,
+                max_entries_to_expire: u32::read_xdr(r)?,
+                bucket_list_size_window_sample_size: u32::read_xdr(r)?,
+                eviction_scan_size: u64::read_xdr(r)?,
+                starting_eviction_scan_level: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for StateExpirationSettings {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.max_entry_expiration.write_xdr(w)?;
+            self.min_temp_entry_expiration.write_xdr(w)?;
+            self.min_persistent_entry_expiration.write_xdr(w)?;
+            self.persistent_rent_rate_denominator.write_xdr(w)?;
+            self.temp_rent_rate_denominator.write_xdr(w)?;
+            self.max_entries_to_expire.write_xdr(w)?;
+            self.bucket_list_size_window_sample_size.write_xdr(w)?;
+            self.eviction_scan_size.write_xdr(w)?;
+            self.starting_eviction_scan_level.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// EvictionIterator is an XDR Struct defines as:
+//
+//   struct EvictionIterator {
+//        uint32 bucketListLevel;
+//        bool isCurrBucket;
+//        uint64 bucketFileOffset;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct EvictionIterator {
+    pub bucket_list_level: u32,
+    pub is_curr_bucket: bool,
+    pub bucket_file_offset: u64,
+}
+
+impl ReadXdr for EvictionIterator {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                bucket_list_level: u32::read_xdr(r)?,
+                is_curr_bucket: bool::read_xdr(r)?,
+                bucket_file_offset: u64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for EvictionIterator {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.bucket_list_level.write_xdr(w)?;
+            self.is_curr_bucket.write_xdr(w)?;
+            self.bucket_file_offset.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ContractCostCountLimit is an XDR Const defines as:
+//
+//   const CONTRACT_COST_COUNT_LIMIT = 1024;
+//
+pub const CONTRACT_COST_COUNT_LIMIT: u64 = 1024;
+
+// ContractCostParams is an XDR Typedef defines as:
+//
+//   typedef ContractCostParamEntry ContractCostParams<CONTRACT_COST_COUNT_LIMIT>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractCostParams(pub VecM<ContractCostParamEntry, 1024>);
+
+impl From<ContractCostParams> for VecM<ContractCostParamEntry, 1024> {
+    #[must_use]
+    fn from(x: ContractCostParams) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<ContractCostParamEntry, 1024>> for ContractCostParams {
+    #[must_use]
+    fn from(x: VecM<ContractCostParamEntry, 1024>) -> Self {
+        ContractCostParams(x)
+    }
+}
+
+impl AsRef<VecM<ContractCostParamEntry, 1024>> for ContractCostParams {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<ContractCostParamEntry, 1024> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ContractCostParams {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<ContractCostParamEntry, 1024>::read_xdr(r)?;
+            let v = ContractCostParams(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ContractCostParams {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for ContractCostParams {
+    type Target = VecM<ContractCostParamEntry, 1024>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ContractCostParams> for Vec<ContractCostParamEntry> {
+    #[must_use]
+    fn from(x: ContractCostParams) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ContractCostParamEntry>> for ContractCostParams {
+    type Error = Error;
+    fn try_from(x: Vec<ContractCostParamEntry>) -> Result<Self> {
+        Ok(ContractCostParams(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<ContractCostParamEntry>> for ContractCostParams {
+    type Error = Error;
+    fn try_from(x: &Vec<ContractCostParamEntry>) -> Result<Self> {
+        Ok(ContractCostParams(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ContractCostParamEntry>> for ContractCostParams {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<ContractCostParamEntry> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[ContractCostParamEntry] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ContractCostParamEntry] {
+        self.0 .0
+    }
+}
+
+// ConfigSettingId is an XDR Enum defines as:
+//
+//   enum ConfigSettingID
+//    {
+//        CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0,
+//        CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1,
+//        CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2,
+//        CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3,
+//        CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4,
+//        CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5,
+//        CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6,
+//        CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7,
+//        CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8,
+//        CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9,
+//        CONFIG_SETTING_STATE_EXPIRATION = 10,
+//        CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11,
+//        CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12,
+//        CONFIG_SETTING_EVICTION_ITERATOR = 13
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ConfigSettingId {
+    ContractMaxSizeBytes = 0,
+    ContractComputeV0 = 1,
+    ContractLedgerCostV0 = 2,
+    ContractHistoricalDataV0 = 3,
+    ContractEventsV0 = 4,
+    ContractBandwidthV0 = 5,
+    ContractCostParamsCpuInstructions = 6,
+    ContractCostParamsMemoryBytes = 7,
+    ContractDataKeySizeBytes = 8,
+    ContractDataEntrySizeBytes = 9,
+    StateExpiration = 10,
+    ContractExecutionLanes = 11,
+    BucketlistSizeWindow = 12,
+    EvictionIterator = 13,
+}
+
+impl ConfigSettingId {
+    pub const VARIANTS: [ConfigSettingId; 14] = [
+        ConfigSettingId::ContractMaxSizeBytes,
+        ConfigSettingId::ContractComputeV0,
+        ConfigSettingId::ContractLedgerCostV0,
+        ConfigSettingId::ContractHistoricalDataV0,
+        ConfigSettingId::ContractEventsV0,
+        ConfigSettingId::ContractBandwidthV0,
+        ConfigSettingId::ContractCostParamsCpuInstructions,
+        ConfigSettingId::ContractCostParamsMemoryBytes,
+        ConfigSettingId::ContractDataKeySizeBytes,
+        ConfigSettingId::ContractDataEntrySizeBytes,
+        ConfigSettingId::StateExpiration,
+        ConfigSettingId::ContractExecutionLanes,
+        ConfigSettingId::BucketlistSizeWindow,
+        ConfigSettingId::EvictionIterator,
+    ];
+    pub const VARIANTS_STR: [&'static str; 14] = [
+        "ContractMaxSizeBytes",
+        "ContractComputeV0",
+        "ContractLedgerCostV0",
+        "ContractHistoricalDataV0",
+        "ContractEventsV0",
+        "ContractBandwidthV0",
+        "ContractCostParamsCpuInstructions",
+        "ContractCostParamsMemoryBytes",
+        "ContractDataKeySizeBytes",
+        "ContractDataEntrySizeBytes",
+        "StateExpiration",
+        "ContractExecutionLanes",
+        "BucketlistSizeWindow",
+        "EvictionIterator",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ContractMaxSizeBytes => "ContractMaxSizeBytes",
+            Self::ContractComputeV0 => "ContractComputeV0",
+            Self::ContractLedgerCostV0 => "ContractLedgerCostV0",
+            Self::ContractHistoricalDataV0 => "ContractHistoricalDataV0",
+            Self::ContractEventsV0 => "ContractEventsV0",
+            Self::ContractBandwidthV0 => "ContractBandwidthV0",
+            Self::ContractCostParamsCpuInstructions => "ContractCostParamsCpuInstructions",
+            Self::ContractCostParamsMemoryBytes => "ContractCostParamsMemoryBytes",
+            Self::ContractDataKeySizeBytes => "ContractDataKeySizeBytes",
+            Self::ContractDataEntrySizeBytes => "ContractDataEntrySizeBytes",
+            Self::StateExpiration => "StateExpiration",
+            Self::ContractExecutionLanes => "ContractExecutionLanes",
+            Self::BucketlistSizeWindow => "BucketlistSizeWindow",
+            Self::EvictionIterator => "EvictionIterator",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ConfigSettingId; 14] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ConfigSettingId {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ConfigSettingId> for ConfigSettingId {
+    fn variants() -> slice::Iter<'static, ConfigSettingId> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ConfigSettingId {}
+
+impl fmt::Display for ConfigSettingId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ConfigSettingId {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ConfigSettingId::ContractMaxSizeBytes,
+            1 => ConfigSettingId::ContractComputeV0,
+            2 => ConfigSettingId::ContractLedgerCostV0,
+            3 => ConfigSettingId::ContractHistoricalDataV0,
+            4 => ConfigSettingId::ContractEventsV0,
+            5 => ConfigSettingId::ContractBandwidthV0,
+            6 => ConfigSettingId::ContractCostParamsCpuInstructions,
+            7 => ConfigSettingId::ContractCostParamsMemoryBytes,
+            8 => ConfigSettingId::ContractDataKeySizeBytes,
+            9 => ConfigSettingId::ContractDataEntrySizeBytes,
+            10 => ConfigSettingId::StateExpiration,
+            11 => ConfigSettingId::ContractExecutionLanes,
+            12 => ConfigSettingId::BucketlistSizeWindow,
+            13 => ConfigSettingId::EvictionIterator,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ConfigSettingId> for i32 {
+    #[must_use]
+    fn from(e: ConfigSettingId) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ConfigSettingId {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingId {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ConfigSettingEntry is an XDR Union defines as:
+//
+//   union ConfigSettingEntry switch (ConfigSettingID configSettingID)
+//    {
+//    case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES:
+//        uint32 contractMaxSizeBytes;
+//    case CONFIG_SETTING_CONTRACT_COMPUTE_V0:
+//        ConfigSettingContractComputeV0 contractCompute;
+//    case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0:
+//        ConfigSettingContractLedgerCostV0 contractLedgerCost;
+//    case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0:
+//        ConfigSettingContractHistoricalDataV0 contractHistoricalData;
+//    case CONFIG_SETTING_CONTRACT_EVENTS_V0:
+//        ConfigSettingContractEventsV0 contractEvents;
+//    case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0:
+//        ConfigSettingContractBandwidthV0 contractBandwidth;
+//    case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS:
+//        ContractCostParams contractCostParamsCpuInsns;
+//    case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES:
+//        ContractCostParams contractCostParamsMemBytes;
+//    case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES:
+//        uint32 contractDataKeySizeBytes;
+//    case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES:
+//        uint32 contractDataEntrySizeBytes;
+//    case CONFIG_SETTING_STATE_EXPIRATION:
+//        StateExpirationSettings stateExpirationSettings;
+//    case CONFIG_SETTING_CONTRACT_EXECUTION_LANES:
+//        ConfigSettingContractExecutionLanesV0 contractExecutionLanes;
+//    case CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW:
+//        uint64 bucketListSizeWindow<>;
+//    case CONFIG_SETTING_EVICTION_ITERATOR:
+//        EvictionIterator evictionIterator;
+//    };
+//
+// union with discriminant ConfigSettingId
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ConfigSettingEntry {
+    ContractMaxSizeBytes(u32),
+    ContractComputeV0(ConfigSettingContractComputeV0),
+    ContractLedgerCostV0(ConfigSettingContractLedgerCostV0),
+    ContractHistoricalDataV0(ConfigSettingContractHistoricalDataV0),
+    ContractEventsV0(ConfigSettingContractEventsV0),
+    ContractBandwidthV0(ConfigSettingContractBandwidthV0),
+    ContractCostParamsCpuInstructions(ContractCostParams),
+    ContractCostParamsMemoryBytes(ContractCostParams),
+    ContractDataKeySizeBytes(u32),
+    ContractDataEntrySizeBytes(u32),
+    StateExpiration(StateExpirationSettings),
+    ContractExecutionLanes(ConfigSettingContractExecutionLanesV0),
+    BucketlistSizeWindow(VecM<u64>),
+    EvictionIterator(EvictionIterator),
+}
+
+impl ConfigSettingEntry {
+    pub const VARIANTS: [ConfigSettingId; 14] = [
+        ConfigSettingId::ContractMaxSizeBytes,
+        ConfigSettingId::ContractComputeV0,
+        ConfigSettingId::ContractLedgerCostV0,
+        ConfigSettingId::ContractHistoricalDataV0,
+        ConfigSettingId::ContractEventsV0,
+        ConfigSettingId::ContractBandwidthV0,
+        ConfigSettingId::ContractCostParamsCpuInstructions,
+        ConfigSettingId::ContractCostParamsMemoryBytes,
+        ConfigSettingId::ContractDataKeySizeBytes,
+        ConfigSettingId::ContractDataEntrySizeBytes,
+        ConfigSettingId::StateExpiration,
+        ConfigSettingId::ContractExecutionLanes,
+        ConfigSettingId::BucketlistSizeWindow,
+        ConfigSettingId::EvictionIterator,
+    ];
+    pub const VARIANTS_STR: [&'static str; 14] = [
+        "ContractMaxSizeBytes",
+        "ContractComputeV0",
+        "ContractLedgerCostV0",
+        "ContractHistoricalDataV0",
+        "ContractEventsV0",
+        "ContractBandwidthV0",
+        "ContractCostParamsCpuInstructions",
+        "ContractCostParamsMemoryBytes",
+        "ContractDataKeySizeBytes",
+        "ContractDataEntrySizeBytes",
+        "StateExpiration",
+        "ContractExecutionLanes",
+        "BucketlistSizeWindow",
+        "EvictionIterator",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ContractMaxSizeBytes(_) => "ContractMaxSizeBytes",
+            Self::ContractComputeV0(_) => "ContractComputeV0",
+            Self::ContractLedgerCostV0(_) => "ContractLedgerCostV0",
+            Self::ContractHistoricalDataV0(_) => "ContractHistoricalDataV0",
+            Self::ContractEventsV0(_) => "ContractEventsV0",
+            Self::ContractBandwidthV0(_) => "ContractBandwidthV0",
+            Self::ContractCostParamsCpuInstructions(_) => "ContractCostParamsCpuInstructions",
+            Self::ContractCostParamsMemoryBytes(_) => "ContractCostParamsMemoryBytes",
+            Self::ContractDataKeySizeBytes(_) => "ContractDataKeySizeBytes",
+            Self::ContractDataEntrySizeBytes(_) => "ContractDataEntrySizeBytes",
+            Self::StateExpiration(_) => "StateExpiration",
+            Self::ContractExecutionLanes(_) => "ContractExecutionLanes",
+            Self::BucketlistSizeWindow(_) => "BucketlistSizeWindow",
+            Self::EvictionIterator(_) => "EvictionIterator",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ConfigSettingId {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ContractMaxSizeBytes(_) => ConfigSettingId::ContractMaxSizeBytes,
+            Self::ContractComputeV0(_) => ConfigSettingId::ContractComputeV0,
+            Self::ContractLedgerCostV0(_) => ConfigSettingId::ContractLedgerCostV0,
+            Self::ContractHistoricalDataV0(_) => ConfigSettingId::ContractHistoricalDataV0,
+            Self::ContractEventsV0(_) => ConfigSettingId::ContractEventsV0,
+            Self::ContractBandwidthV0(_) => ConfigSettingId::ContractBandwidthV0,
+            Self::ContractCostParamsCpuInstructions(_) => {
+                ConfigSettingId::ContractCostParamsCpuInstructions
+            }
+            Self::ContractCostParamsMemoryBytes(_) => {
+                ConfigSettingId::ContractCostParamsMemoryBytes
+            }
+            Self::ContractDataKeySizeBytes(_) => ConfigSettingId::ContractDataKeySizeBytes,
+            Self::ContractDataEntrySizeBytes(_) => ConfigSettingId::ContractDataEntrySizeBytes,
+            Self::StateExpiration(_) => ConfigSettingId::StateExpiration,
+            Self::ContractExecutionLanes(_) => ConfigSettingId::ContractExecutionLanes,
+            Self::BucketlistSizeWindow(_) => ConfigSettingId::BucketlistSizeWindow,
+            Self::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ConfigSettingId; 14] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ConfigSettingEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ConfigSettingId> for ConfigSettingEntry {
+    #[must_use]
+    fn discriminant(&self) -> ConfigSettingId {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ConfigSettingId> for ConfigSettingEntry {
+    fn variants() -> slice::Iter<'static, ConfigSettingId> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ConfigSettingId> for ConfigSettingEntry {}
+
+impl ReadXdr for ConfigSettingEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ConfigSettingId::ContractMaxSizeBytes => {
+                    Self::ContractMaxSizeBytes(u32::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractComputeV0 => {
+                    Self::ContractComputeV0(ConfigSettingContractComputeV0::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractLedgerCostV0 => {
+                    Self::ContractLedgerCostV0(ConfigSettingContractLedgerCostV0::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractHistoricalDataV0 => Self::ContractHistoricalDataV0(
+                    ConfigSettingContractHistoricalDataV0::read_xdr(r)?,
+                ),
+                ConfigSettingId::ContractEventsV0 => {
+                    Self::ContractEventsV0(ConfigSettingContractEventsV0::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractBandwidthV0 => {
+                    Self::ContractBandwidthV0(ConfigSettingContractBandwidthV0::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractCostParamsCpuInstructions => {
+                    Self::ContractCostParamsCpuInstructions(ContractCostParams::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractCostParamsMemoryBytes => {
+                    Self::ContractCostParamsMemoryBytes(ContractCostParams::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractDataKeySizeBytes => {
+                    Self::ContractDataKeySizeBytes(u32::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractDataEntrySizeBytes => {
+                    Self::ContractDataEntrySizeBytes(u32::read_xdr(r)?)
+                }
+                ConfigSettingId::StateExpiration => {
+                    Self::StateExpiration(StateExpirationSettings::read_xdr(r)?)
+                }
+                ConfigSettingId::ContractExecutionLanes => Self::ContractExecutionLanes(
+                    ConfigSettingContractExecutionLanesV0::read_xdr(r)?,
+                ),
+                ConfigSettingId::BucketlistSizeWindow => {
+                    Self::BucketlistSizeWindow(VecM::<u64>::read_xdr(r)?)
+                }
+                ConfigSettingId::EvictionIterator => {
+                    Self::EvictionIterator(EvictionIterator::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ContractMaxSizeBytes(v) => v.write_xdr(w)?,
+                Self::ContractComputeV0(v) => v.write_xdr(w)?,
+                Self::ContractLedgerCostV0(v) => v.write_xdr(w)?,
+                Self::ContractHistoricalDataV0(v) => v.write_xdr(w)?,
+                Self::ContractEventsV0(v) => v.write_xdr(w)?,
+                Self::ContractBandwidthV0(v) => v.write_xdr(w)?,
+                Self::ContractCostParamsCpuInstructions(v) => v.write_xdr(w)?,
+                Self::ContractCostParamsMemoryBytes(v) => v.write_xdr(w)?,
+                Self::ContractDataKeySizeBytes(v) => v.write_xdr(w)?,
+                Self::ContractDataEntrySizeBytes(v) => v.write_xdr(w)?,
+                Self::StateExpiration(v) => v.write_xdr(w)?,
+                Self::ContractExecutionLanes(v) => v.write_xdr(w)?,
+                Self::BucketlistSizeWindow(v) => v.write_xdr(w)?,
+                Self::EvictionIterator(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// ScEnvMetaKind is an XDR Enum defines as:
+//
+//   enum SCEnvMetaKind
+//    {
+//        SC_ENV_META_KIND_INTERFACE_VERSION = 0
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScEnvMetaKind {
+    ScEnvMetaKindInterfaceVersion = 0,
+}
+
+impl ScEnvMetaKind {
+    pub const VARIANTS: [ScEnvMetaKind; 1] = [ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ScEnvMetaKindInterfaceVersion"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ScEnvMetaKindInterfaceVersion => "ScEnvMetaKindInterfaceVersion",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScEnvMetaKind; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScEnvMetaKind {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScEnvMetaKind> for ScEnvMetaKind {
+    fn variants() -> slice::Iter<'static, ScEnvMetaKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScEnvMetaKind {}
+
+impl fmt::Display for ScEnvMetaKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScEnvMetaKind {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScEnvMetaKind::ScEnvMetaKindInterfaceVersion,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScEnvMetaKind> for i32 {
+    #[must_use]
+    fn from(e: ScEnvMetaKind) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScEnvMetaKind {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScEnvMetaKind {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ScEnvMetaEntry is an XDR Union defines as:
+//
+//   union SCEnvMetaEntry switch (SCEnvMetaKind kind)
+//    {
+//    case SC_ENV_META_KIND_INTERFACE_VERSION:
+//        uint64 interfaceVersion;
+//    };
+//
+// union with discriminant ScEnvMetaKind
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScEnvMetaEntry {
+    ScEnvMetaKindInterfaceVersion(u64),
+}
+
+impl ScEnvMetaEntry {
+    pub const VARIANTS: [ScEnvMetaKind; 1] = [ScEnvMetaKind::ScEnvMetaKindInterfaceVersion];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ScEnvMetaKindInterfaceVersion"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ScEnvMetaKindInterfaceVersion(_) => "ScEnvMetaKindInterfaceVersion",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScEnvMetaKind {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ScEnvMetaKindInterfaceVersion(_) => ScEnvMetaKind::ScEnvMetaKindInterfaceVersion,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScEnvMetaKind; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScEnvMetaEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScEnvMetaKind> for ScEnvMetaEntry {
+    #[must_use]
+    fn discriminant(&self) -> ScEnvMetaKind {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScEnvMetaKind> for ScEnvMetaEntry {
+    fn variants() -> slice::Iter<'static, ScEnvMetaKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScEnvMetaKind> for ScEnvMetaEntry {}
+
+impl ReadXdr for ScEnvMetaEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ScEnvMetaKind = <ScEnvMetaKind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ScEnvMetaKind::ScEnvMetaKindInterfaceVersion => {
+                    Self::ScEnvMetaKindInterfaceVersion(u64::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScEnvMetaEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ScEnvMetaKindInterfaceVersion(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// ScMetaV0 is an XDR Struct defines as:
+//
+//   struct SCMetaV0
+//    {
+//        string key<>;
+//        string val<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScMetaV0 {
+    pub key: StringM,
+    pub val: StringM,
+}
+
+impl ReadXdr for ScMetaV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                key: StringM::read_xdr(r)?,
+                val: StringM::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScMetaV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.key.write_xdr(w)?;
+            self.val.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScMetaKind is an XDR Enum defines as:
+//
+//   enum SCMetaKind
+//    {
+//        SC_META_V0 = 0
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScMetaKind {
+    ScMetaV0 = 0,
+}
+
+impl ScMetaKind {
+    pub const VARIANTS: [ScMetaKind; 1] = [ScMetaKind::ScMetaV0];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ScMetaV0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ScMetaV0 => "ScMetaV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScMetaKind; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScMetaKind {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScMetaKind> for ScMetaKind {
+    fn variants() -> slice::Iter<'static, ScMetaKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScMetaKind {}
+
+impl fmt::Display for ScMetaKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScMetaKind {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScMetaKind::ScMetaV0,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScMetaKind> for i32 {
+    #[must_use]
+    fn from(e: ScMetaKind) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScMetaKind {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScMetaKind {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ScMetaEntry is an XDR Union defines as:
+//
+//   union SCMetaEntry switch (SCMetaKind kind)
+//    {
+//    case SC_META_V0:
+//        SCMetaV0 v0;
+//    };
+//
+// union with discriminant ScMetaKind
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScMetaEntry {
+    ScMetaV0(ScMetaV0),
+}
+
+impl ScMetaEntry {
+    pub const VARIANTS: [ScMetaKind; 1] = [ScMetaKind::ScMetaV0];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ScMetaV0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ScMetaV0(_) => "ScMetaV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScMetaKind {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ScMetaV0(_) => ScMetaKind::ScMetaV0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScMetaKind; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScMetaEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScMetaKind> for ScMetaEntry {
+    #[must_use]
+    fn discriminant(&self) -> ScMetaKind {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScMetaKind> for ScMetaEntry {
+    fn variants() -> slice::Iter<'static, ScMetaKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScMetaKind> for ScMetaEntry {}
+
+impl ReadXdr for ScMetaEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ScMetaKind = <ScMetaKind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ScMetaKind::ScMetaV0 => Self::ScMetaV0(ScMetaV0::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScMetaEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ScMetaV0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// ScSpecDocLimit is an XDR Const defines as:
+//
+//   const SC_SPEC_DOC_LIMIT = 1024;
+//
+pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
+
+// ScSpecType is an XDR Enum defines as:
+//
+//   enum SCSpecType
+//    {
+//        SC_SPEC_TYPE_VAL = 0,
+//
+//        // Types with no parameters.
+//        SC_SPEC_TYPE_BOOL = 1,
+//        SC_SPEC_TYPE_VOID = 2,
+//        SC_SPEC_TYPE_ERROR = 3,
+//        SC_SPEC_TYPE_U32 = 4,
+//        SC_SPEC_TYPE_I32 = 5,
+//        SC_SPEC_TYPE_U64 = 6,
+//        SC_SPEC_TYPE_I64 = 7,
+//        SC_SPEC_TYPE_TIMEPOINT = 8,
+//        SC_SPEC_TYPE_DURATION = 9,
+//        SC_SPEC_TYPE_U128 = 10,
+//        SC_SPEC_TYPE_I128 = 11,
+//        SC_SPEC_TYPE_U256 = 12,
+//        SC_SPEC_TYPE_I256 = 13,
+//        SC_SPEC_TYPE_BYTES = 14,
+//        SC_SPEC_TYPE_STRING = 16,
+//        SC_SPEC_TYPE_SYMBOL = 17,
+//        SC_SPEC_TYPE_ADDRESS = 19,
+//
+//        // Types with parameters.
+//        SC_SPEC_TYPE_OPTION = 1000,
+//        SC_SPEC_TYPE_RESULT = 1001,
+//        SC_SPEC_TYPE_VEC = 1002,
+//        SC_SPEC_TYPE_MAP = 1004,
+//        SC_SPEC_TYPE_TUPLE = 1005,
+//        SC_SPEC_TYPE_BYTES_N = 1006,
+//
+//        // User defined types.
+//        SC_SPEC_TYPE_UDT = 2000
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScSpecType {
+    Val = 0,
+    Bool = 1,
+    Void = 2,
+    Error = 3,
+    U32 = 4,
+    I32 = 5,
+    U64 = 6,
+    I64 = 7,
+    Timepoint = 8,
+    Duration = 9,
+    U128 = 10,
+    I128 = 11,
+    U256 = 12,
+    I256 = 13,
+    Bytes = 14,
+    String = 16,
+    Symbol = 17,
+    Address = 19,
+    Option = 1000,
+    Result = 1001,
+    Vec = 1002,
+    Map = 1004,
+    Tuple = 1005,
+    BytesN = 1006,
+    Udt = 2000,
+}
+
+impl ScSpecType {
+    pub const VARIANTS: [ScSpecType; 25] = [
+        ScSpecType::Val,
+        ScSpecType::Bool,
+        ScSpecType::Void,
+        ScSpecType::Error,
+        ScSpecType::U32,
+        ScSpecType::I32,
+        ScSpecType::U64,
+        ScSpecType::I64,
+        ScSpecType::Timepoint,
+        ScSpecType::Duration,
+        ScSpecType::U128,
+        ScSpecType::I128,
+        ScSpecType::U256,
+        ScSpecType::I256,
+        ScSpecType::Bytes,
+        ScSpecType::String,
+        ScSpecType::Symbol,
+        ScSpecType::Address,
+        ScSpecType::Option,
+        ScSpecType::Result,
+        ScSpecType::Vec,
+        ScSpecType::Map,
+        ScSpecType::Tuple,
+        ScSpecType::BytesN,
+        ScSpecType::Udt,
+    ];
+    pub const VARIANTS_STR: [&'static str; 25] = [
+        "Val",
+        "Bool",
+        "Void",
+        "Error",
+        "U32",
+        "I32",
+        "U64",
+        "I64",
+        "Timepoint",
+        "Duration",
+        "U128",
+        "I128",
+        "U256",
+        "I256",
+        "Bytes",
+        "String",
+        "Symbol",
+        "Address",
+        "Option",
+        "Result",
+        "Vec",
+        "Map",
+        "Tuple",
+        "BytesN",
+        "Udt",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Val => "Val",
+            Self::Bool => "Bool",
+            Self::Void => "Void",
+            Self::Error => "Error",
+            Self::U32 => "U32",
+            Self::I32 => "I32",
+            Self::U64 => "U64",
+            Self::I64 => "I64",
+            Self::Timepoint => "Timepoint",
+            Self::Duration => "Duration",
+            Self::U128 => "U128",
+            Self::I128 => "I128",
+            Self::U256 => "U256",
+            Self::I256 => "I256",
+            Self::Bytes => "Bytes",
+            Self::String => "String",
+            Self::Symbol => "Symbol",
+            Self::Address => "Address",
+            Self::Option => "Option",
+            Self::Result => "Result",
+            Self::Vec => "Vec",
+            Self::Map => "Map",
+            Self::Tuple => "Tuple",
+            Self::BytesN => "BytesN",
+            Self::Udt => "Udt",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecType; 25] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScSpecType> for ScSpecType {
+    fn variants() -> slice::Iter<'static, ScSpecType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScSpecType {}
+
+impl fmt::Display for ScSpecType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScSpecType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScSpecType::Val,
+            1 => ScSpecType::Bool,
+            2 => ScSpecType::Void,
+            3 => ScSpecType::Error,
+            4 => ScSpecType::U32,
+            5 => ScSpecType::I32,
+            6 => ScSpecType::U64,
+            7 => ScSpecType::I64,
+            8 => ScSpecType::Timepoint,
+            9 => ScSpecType::Duration,
+            10 => ScSpecType::U128,
+            11 => ScSpecType::I128,
+            12 => ScSpecType::U256,
+            13 => ScSpecType::I256,
+            14 => ScSpecType::Bytes,
+            16 => ScSpecType::String,
+            17 => ScSpecType::Symbol,
+            19 => ScSpecType::Address,
+            1000 => ScSpecType::Option,
+            1001 => ScSpecType::Result,
+            1002 => ScSpecType::Vec,
+            1004 => ScSpecType::Map,
+            1005 => ScSpecType::Tuple,
+            1006 => ScSpecType::BytesN,
+            2000 => ScSpecType::Udt,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScSpecType> for i32 {
+    #[must_use]
+    fn from(e: ScSpecType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScSpecType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScSpecType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ScSpecTypeOption is an XDR Struct defines as:
+//
+//   struct SCSpecTypeOption
+//    {
+//        SCSpecTypeDef valueType;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeOption {
+    pub value_type: Box<ScSpecTypeDef>,
+}
+
+impl ReadXdr for ScSpecTypeOption {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                value_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeOption {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.value_type.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecTypeResult is an XDR Struct defines as:
+//
+//   struct SCSpecTypeResult
+//    {
+//        SCSpecTypeDef okType;
+//        SCSpecTypeDef errorType;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeResult {
+    pub ok_type: Box<ScSpecTypeDef>,
+    pub error_type: Box<ScSpecTypeDef>,
+}
+
+impl ReadXdr for ScSpecTypeResult {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ok_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+                error_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeResult {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ok_type.write_xdr(w)?;
+            self.error_type.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecTypeVec is an XDR Struct defines as:
+//
+//   struct SCSpecTypeVec
+//    {
+//        SCSpecTypeDef elementType;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeVec {
+    pub element_type: Box<ScSpecTypeDef>,
+}
+
+impl ReadXdr for ScSpecTypeVec {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                element_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeVec {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.element_type.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecTypeMap is an XDR Struct defines as:
+//
+//   struct SCSpecTypeMap
+//    {
+//        SCSpecTypeDef keyType;
+//        SCSpecTypeDef valueType;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeMap {
+    pub key_type: Box<ScSpecTypeDef>,
+    pub value_type: Box<ScSpecTypeDef>,
+}
+
+impl ReadXdr for ScSpecTypeMap {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                key_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+                value_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeMap {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.key_type.write_xdr(w)?;
+            self.value_type.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecTypeTuple is an XDR Struct defines as:
+//
+//   struct SCSpecTypeTuple
+//    {
+//        SCSpecTypeDef valueTypes<12>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeTuple {
+    pub value_types: VecM<ScSpecTypeDef, 12>,
+}
+
+impl ReadXdr for ScSpecTypeTuple {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                value_types: VecM::<ScSpecTypeDef, 12>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeTuple {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.value_types.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecTypeBytesN is an XDR Struct defines as:
+//
+//   struct SCSpecTypeBytesN
+//    {
+//        uint32 n;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeBytesN {
+    pub n: u32,
+}
+
+impl ReadXdr for ScSpecTypeBytesN {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                n: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeBytesN {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.n.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecTypeUdt is an XDR Struct defines as:
+//
+//   struct SCSpecTypeUDT
+//    {
+//        string name<60>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecTypeUdt {
+    pub name: StringM<60>,
+}
+
+impl ReadXdr for ScSpecTypeUdt {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                name: StringM::<60>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeUdt {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.name.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecTypeDef is an XDR Union defines as:
+//
+//   union SCSpecTypeDef switch (SCSpecType type)
+//    {
+//    case SC_SPEC_TYPE_VAL:
+//    case SC_SPEC_TYPE_BOOL:
+//    case SC_SPEC_TYPE_VOID:
+//    case SC_SPEC_TYPE_ERROR:
+//    case SC_SPEC_TYPE_U32:
+//    case SC_SPEC_TYPE_I32:
+//    case SC_SPEC_TYPE_U64:
+//    case SC_SPEC_TYPE_I64:
+//    case SC_SPEC_TYPE_TIMEPOINT:
+//    case SC_SPEC_TYPE_DURATION:
+//    case SC_SPEC_TYPE_U128:
+//    case SC_SPEC_TYPE_I128:
+//    case SC_SPEC_TYPE_U256:
+//    case SC_SPEC_TYPE_I256:
+//    case SC_SPEC_TYPE_BYTES:
+//    case SC_SPEC_TYPE_STRING:
+//    case SC_SPEC_TYPE_SYMBOL:
+//    case SC_SPEC_TYPE_ADDRESS:
+//        void;
+//    case SC_SPEC_TYPE_OPTION:
+//        SCSpecTypeOption option;
+//    case SC_SPEC_TYPE_RESULT:
+//        SCSpecTypeResult result;
+//    case SC_SPEC_TYPE_VEC:
+//        SCSpecTypeVec vec;
+//    case SC_SPEC_TYPE_MAP:
+//        SCSpecTypeMap map;
+//    case SC_SPEC_TYPE_TUPLE:
+//        SCSpecTypeTuple tuple;
+//    case SC_SPEC_TYPE_BYTES_N:
+//        SCSpecTypeBytesN bytesN;
+//    case SC_SPEC_TYPE_UDT:
+//        SCSpecTypeUDT udt;
+//    };
+//
+// union with discriminant ScSpecType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScSpecTypeDef {
+    Val,
+    Bool,
+    Void,
+    Error,
+    U32,
+    I32,
+    U64,
+    I64,
+    Timepoint,
+    Duration,
+    U128,
+    I128,
+    U256,
+    I256,
+    Bytes,
+    String,
+    Symbol,
+    Address,
+    Option(Box<ScSpecTypeOption>),
+    Result(Box<ScSpecTypeResult>),
+    Vec(Box<ScSpecTypeVec>),
+    Map(Box<ScSpecTypeMap>),
+    Tuple(Box<ScSpecTypeTuple>),
+    BytesN(ScSpecTypeBytesN),
+    Udt(ScSpecTypeUdt),
+}
+
+impl ScSpecTypeDef {
+    pub const VARIANTS: [ScSpecType; 25] = [
+        ScSpecType::Val,
+        ScSpecType::Bool,
+        ScSpecType::Void,
+        ScSpecType::Error,
+        ScSpecType::U32,
+        ScSpecType::I32,
+        ScSpecType::U64,
+        ScSpecType::I64,
+        ScSpecType::Timepoint,
+        ScSpecType::Duration,
+        ScSpecType::U128,
+        ScSpecType::I128,
+        ScSpecType::U256,
+        ScSpecType::I256,
+        ScSpecType::Bytes,
+        ScSpecType::String,
+        ScSpecType::Symbol,
+        ScSpecType::Address,
+        ScSpecType::Option,
+        ScSpecType::Result,
+        ScSpecType::Vec,
+        ScSpecType::Map,
+        ScSpecType::Tuple,
+        ScSpecType::BytesN,
+        ScSpecType::Udt,
+    ];
+    pub const VARIANTS_STR: [&'static str; 25] = [
+        "Val",
+        "Bool",
+        "Void",
+        "Error",
+        "U32",
+        "I32",
+        "U64",
+        "I64",
+        "Timepoint",
+        "Duration",
+        "U128",
+        "I128",
+        "U256",
+        "I256",
+        "Bytes",
+        "String",
+        "Symbol",
+        "Address",
+        "Option",
+        "Result",
+        "Vec",
+        "Map",
+        "Tuple",
+        "BytesN",
+        "Udt",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Val => "Val",
+            Self::Bool => "Bool",
+            Self::Void => "Void",
+            Self::Error => "Error",
+            Self::U32 => "U32",
+            Self::I32 => "I32",
+            Self::U64 => "U64",
+            Self::I64 => "I64",
+            Self::Timepoint => "Timepoint",
+            Self::Duration => "Duration",
+            Self::U128 => "U128",
+            Self::I128 => "I128",
+            Self::U256 => "U256",
+            Self::I256 => "I256",
+            Self::Bytes => "Bytes",
+            Self::String => "String",
+            Self::Symbol => "Symbol",
+            Self::Address => "Address",
+            Self::Option(_) => "Option",
+            Self::Result(_) => "Result",
+            Self::Vec(_) => "Vec",
+            Self::Map(_) => "Map",
+            Self::Tuple(_) => "Tuple",
+            Self::BytesN(_) => "BytesN",
+            Self::Udt(_) => "Udt",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScSpecType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Val => ScSpecType::Val,
+            Self::Bool => ScSpecType::Bool,
+            Self::Void => ScSpecType::Void,
+            Self::Error => ScSpecType::Error,
+            Self::U32 => ScSpecType::U32,
+            Self::I32 => ScSpecType::I32,
+            Self::U64 => ScSpecType::U64,
+            Self::I64 => ScSpecType::I64,
+            Self::Timepoint => ScSpecType::Timepoint,
+            Self::Duration => ScSpecType::Duration,
+            Self::U128 => ScSpecType::U128,
+            Self::I128 => ScSpecType::I128,
+            Self::U256 => ScSpecType::U256,
+            Self::I256 => ScSpecType::I256,
+            Self::Bytes => ScSpecType::Bytes,
+            Self::String => ScSpecType::String,
+            Self::Symbol => ScSpecType::Symbol,
+            Self::Address => ScSpecType::Address,
+            Self::Option(_) => ScSpecType::Option,
+            Self::Result(_) => ScSpecType::Result,
+            Self::Vec(_) => ScSpecType::Vec,
+            Self::Map(_) => ScSpecType::Map,
+            Self::Tuple(_) => ScSpecType::Tuple,
+            Self::BytesN(_) => ScSpecType::BytesN,
+            Self::Udt(_) => ScSpecType::Udt,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecType; 25] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecTypeDef {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScSpecType> for ScSpecTypeDef {
+    #[must_use]
+    fn discriminant(&self) -> ScSpecType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScSpecType> for ScSpecTypeDef {
+    fn variants() -> slice::Iter<'static, ScSpecType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScSpecType> for ScSpecTypeDef {}
+
+impl ReadXdr for ScSpecTypeDef {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ScSpecType = <ScSpecType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ScSpecType::Val => Self::Val,
+                ScSpecType::Bool => Self::Bool,
+                ScSpecType::Void => Self::Void,
+                ScSpecType::Error => Self::Error,
+                ScSpecType::U32 => Self::U32,
+                ScSpecType::I32 => Self::I32,
+                ScSpecType::U64 => Self::U64,
+                ScSpecType::I64 => Self::I64,
+                ScSpecType::Timepoint => Self::Timepoint,
+                ScSpecType::Duration => Self::Duration,
+                ScSpecType::U128 => Self::U128,
+                ScSpecType::I128 => Self::I128,
+                ScSpecType::U256 => Self::U256,
+                ScSpecType::I256 => Self::I256,
+                ScSpecType::Bytes => Self::Bytes,
+                ScSpecType::String => Self::String,
+                ScSpecType::Symbol => Self::Symbol,
+                ScSpecType::Address => Self::Address,
+                ScSpecType::Option => Self::Option(Box::<ScSpecTypeOption>::read_xdr(r)?),
+                ScSpecType::Result => Self::Result(Box::<ScSpecTypeResult>::read_xdr(r)?),
+                ScSpecType::Vec => Self::Vec(Box::<ScSpecTypeVec>::read_xdr(r)?),
+                ScSpecType::Map => Self::Map(Box::<ScSpecTypeMap>::read_xdr(r)?),
+                ScSpecType::Tuple => Self::Tuple(Box::<ScSpecTypeTuple>::read_xdr(r)?),
+                ScSpecType::BytesN => Self::BytesN(ScSpecTypeBytesN::read_xdr(r)?),
+                ScSpecType::Udt => Self::Udt(ScSpecTypeUdt::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScSpecTypeDef {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Val => ().write_xdr(w)?,
+                Self::Bool => ().write_xdr(w)?,
+                Self::Void => ().write_xdr(w)?,
+                Self::Error => ().write_xdr(w)?,
+                Self::U32 => ().write_xdr(w)?,
+                Self::I32 => ().write_xdr(w)?,
+                Self::U64 => ().write_xdr(w)?,
+                Self::I64 => ().write_xdr(w)?,
+                Self::Timepoint => ().write_xdr(w)?,
+                Self::Duration => ().write_xdr(w)?,
+                Self::U128 => ().write_xdr(w)?,
+                Self::I128 => ().write_xdr(w)?,
+                Self::U256 => ().write_xdr(w)?,
+                Self::I256 => ().write_xdr(w)?,
+                Self::Bytes => ().write_xdr(w)?,
+                Self::String => ().write_xdr(w)?,
+                Self::Symbol => ().write_xdr(w)?,
+                Self::Address => ().write_xdr(w)?,
+                Self::Option(v) => v.write_xdr(w)?,
+                Self::Result(v) => v.write_xdr(w)?,
+                Self::Vec(v) => v.write_xdr(w)?,
+                Self::Map(v) => v.write_xdr(w)?,
+                Self::Tuple(v) => v.write_xdr(w)?,
+                Self::BytesN(v) => v.write_xdr(w)?,
+                Self::Udt(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// ScSpecUdtStructFieldV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTStructFieldV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        string name<30>;
+//        SCSpecTypeDef type;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtStructFieldV0 {
+    pub doc: StringM<1024>,
+    pub name: StringM<30>,
+    pub type_: ScSpecTypeDef,
+}
+
+impl ReadXdr for ScSpecUdtStructFieldV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                name: StringM::<30>::read_xdr(r)?,
+                type_: ScSpecTypeDef::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtStructFieldV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.type_.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecUdtStructV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTStructV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        string lib<80>;
+//        string name<60>;
+//        SCSpecUDTStructFieldV0 fields<40>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtStructV0 {
+    pub doc: StringM<1024>,
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
+    pub fields: VecM<ScSpecUdtStructFieldV0, 40>,
+}
+
+impl ReadXdr for ScSpecUdtStructV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                lib: StringM::<80>::read_xdr(r)?,
+                name: StringM::<60>::read_xdr(r)?,
+                fields: VecM::<ScSpecUdtStructFieldV0, 40>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtStructV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.lib.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.fields.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecUdtUnionCaseVoidV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTUnionCaseVoidV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        string name<60>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtUnionCaseVoidV0 {
+    pub doc: StringM<1024>,
+    pub name: StringM<60>,
+}
+
+impl ReadXdr for ScSpecUdtUnionCaseVoidV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                name: StringM::<60>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecUdtUnionCaseTupleV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTUnionCaseTupleV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        string name<60>;
+//        SCSpecTypeDef type<12>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtUnionCaseTupleV0 {
+    pub doc: StringM<1024>,
+    pub name: StringM<60>,
+    pub type_: VecM<ScSpecTypeDef, 12>,
+}
+
+impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                name: StringM::<60>::read_xdr(r)?,
+                type_: VecM::<ScSpecTypeDef, 12>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.type_.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecUdtUnionCaseV0Kind is an XDR Enum defines as:
+//
+//   enum SCSpecUDTUnionCaseV0Kind
+//    {
+//        SC_SPEC_UDT_UNION_CASE_VOID_V0 = 0,
+//        SC_SPEC_UDT_UNION_CASE_TUPLE_V0 = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScSpecUdtUnionCaseV0Kind {
+    VoidV0 = 0,
+    TupleV0 = 1,
+}
+
+impl ScSpecUdtUnionCaseV0Kind {
+    pub const VARIANTS: [ScSpecUdtUnionCaseV0Kind; 2] = [
+        ScSpecUdtUnionCaseV0Kind::VoidV0,
+        ScSpecUdtUnionCaseV0Kind::TupleV0,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["VoidV0", "TupleV0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::VoidV0 => "VoidV0",
+            Self::TupleV0 => "TupleV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecUdtUnionCaseV0Kind; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecUdtUnionCaseV0Kind {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0Kind {
+    fn variants() -> slice::Iter<'static, ScSpecUdtUnionCaseV0Kind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScSpecUdtUnionCaseV0Kind {}
+
+impl fmt::Display for ScSpecUdtUnionCaseV0Kind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScSpecUdtUnionCaseV0Kind {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScSpecUdtUnionCaseV0Kind::VoidV0,
+            1 => ScSpecUdtUnionCaseV0Kind::TupleV0,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScSpecUdtUnionCaseV0Kind> for i32 {
+    #[must_use]
+    fn from(e: ScSpecUdtUnionCaseV0Kind) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScSpecUdtUnionCaseV0Kind {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ScSpecUdtUnionCaseV0 is an XDR Union defines as:
+//
+//   union SCSpecUDTUnionCaseV0 switch (SCSpecUDTUnionCaseV0Kind kind)
+//    {
+//    case SC_SPEC_UDT_UNION_CASE_VOID_V0:
+//        SCSpecUDTUnionCaseVoidV0 voidCase;
+//    case SC_SPEC_UDT_UNION_CASE_TUPLE_V0:
+//        SCSpecUDTUnionCaseTupleV0 tupleCase;
+//    };
+//
+// union with discriminant ScSpecUdtUnionCaseV0Kind
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScSpecUdtUnionCaseV0 {
+    VoidV0(ScSpecUdtUnionCaseVoidV0),
+    TupleV0(ScSpecUdtUnionCaseTupleV0),
+}
+
+impl ScSpecUdtUnionCaseV0 {
+    pub const VARIANTS: [ScSpecUdtUnionCaseV0Kind; 2] = [
+        ScSpecUdtUnionCaseV0Kind::VoidV0,
+        ScSpecUdtUnionCaseV0Kind::TupleV0,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["VoidV0", "TupleV0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::VoidV0(_) => "VoidV0",
+            Self::TupleV0(_) => "TupleV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScSpecUdtUnionCaseV0Kind {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::VoidV0(_) => ScSpecUdtUnionCaseV0Kind::VoidV0,
+            Self::TupleV0(_) => ScSpecUdtUnionCaseV0Kind::TupleV0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecUdtUnionCaseV0Kind; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecUdtUnionCaseV0 {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {
+    #[must_use]
+    fn discriminant(&self) -> ScSpecUdtUnionCaseV0Kind {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {
+    fn variants() -> slice::Iter<'static, ScSpecUdtUnionCaseV0Kind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {}
+
+impl ReadXdr for ScSpecUdtUnionCaseV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ScSpecUdtUnionCaseV0Kind = <ScSpecUdtUnionCaseV0Kind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ScSpecUdtUnionCaseV0Kind::VoidV0 => {
+                    Self::VoidV0(ScSpecUdtUnionCaseVoidV0::read_xdr(r)?)
+                }
+                ScSpecUdtUnionCaseV0Kind::TupleV0 => {
+                    Self::TupleV0(ScSpecUdtUnionCaseTupleV0::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtUnionCaseV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::VoidV0(v) => v.write_xdr(w)?,
+                Self::TupleV0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// ScSpecUdtUnionV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTUnionV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        string lib<80>;
+//        string name<60>;
+//        SCSpecUDTUnionCaseV0 cases<50>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtUnionV0 {
+    pub doc: StringM<1024>,
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
+    pub cases: VecM<ScSpecUdtUnionCaseV0, 50>,
+}
+
+impl ReadXdr for ScSpecUdtUnionV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                lib: StringM::<80>::read_xdr(r)?,
+                name: StringM::<60>::read_xdr(r)?,
+                cases: VecM::<ScSpecUdtUnionCaseV0, 50>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtUnionV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.lib.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.cases.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecUdtEnumCaseV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTEnumCaseV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        string name<60>;
+//        uint32 value;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtEnumCaseV0 {
+    pub doc: StringM<1024>,
+    pub name: StringM<60>,
+    pub value: u32,
+}
+
+impl ReadXdr for ScSpecUdtEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                name: StringM::<60>::read_xdr(r)?,
+                value: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecUdtEnumV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTEnumV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        string lib<80>;
+//        string name<60>;
+//        SCSpecUDTEnumCaseV0 cases<50>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtEnumV0 {
+    pub doc: StringM<1024>,
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
+    pub cases: VecM<ScSpecUdtEnumCaseV0, 50>,
+}
+
+impl ReadXdr for ScSpecUdtEnumV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                lib: StringM::<80>::read_xdr(r)?,
+                name: StringM::<60>::read_xdr(r)?,
+                cases: VecM::<ScSpecUdtEnumCaseV0, 50>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtEnumV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.lib.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.cases.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecUdtErrorEnumCaseV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTErrorEnumCaseV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        string name<60>;
+//        uint32 value;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtErrorEnumCaseV0 {
+    pub doc: StringM<1024>,
+    pub name: StringM<60>,
+    pub value: u32,
+}
+
+impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                name: StringM::<60>::read_xdr(r)?,
+                value: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecUdtErrorEnumV0 is an XDR Struct defines as:
+//
+//   struct SCSpecUDTErrorEnumV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        string lib<80>;
+//        string name<60>;
+//        SCSpecUDTErrorEnumCaseV0 cases<50>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecUdtErrorEnumV0 {
+    pub doc: StringM<1024>,
+    pub lib: StringM<80>,
+    pub name: StringM<60>,
+    pub cases: VecM<ScSpecUdtErrorEnumCaseV0, 50>,
+}
+
+impl ReadXdr for ScSpecUdtErrorEnumV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                lib: StringM::<80>::read_xdr(r)?,
+                name: StringM::<60>::read_xdr(r)?,
+                cases: VecM::<ScSpecUdtErrorEnumCaseV0, 50>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecUdtErrorEnumV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.lib.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.cases.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecFunctionInputV0 is an XDR Struct defines as:
+//
+//   struct SCSpecFunctionInputV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        string name<30>;
+//        SCSpecTypeDef type;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecFunctionInputV0 {
+    pub doc: StringM<1024>,
+    pub name: StringM<30>,
+    pub type_: ScSpecTypeDef,
+}
+
+impl ReadXdr for ScSpecFunctionInputV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                name: StringM::<30>::read_xdr(r)?,
+                type_: ScSpecTypeDef::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecFunctionInputV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.type_.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecFunctionV0 is an XDR Struct defines as:
+//
+//   struct SCSpecFunctionV0
+//    {
+//        string doc<SC_SPEC_DOC_LIMIT>;
+//        SCSymbol name;
+//        SCSpecFunctionInputV0 inputs<10>;
+//        SCSpecTypeDef outputs<1>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSpecFunctionV0 {
+    pub doc: StringM<1024>,
+    pub name: ScSymbol,
+    pub inputs: VecM<ScSpecFunctionInputV0, 10>,
+    pub outputs: VecM<ScSpecTypeDef, 1>,
+}
+
+impl ReadXdr for ScSpecFunctionV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                doc: StringM::<1024>::read_xdr(r)?,
+                name: ScSymbol::read_xdr(r)?,
+                inputs: VecM::<ScSpecFunctionInputV0, 10>::read_xdr(r)?,
+                outputs: VecM::<ScSpecTypeDef, 1>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScSpecFunctionV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.doc.write_xdr(w)?;
+            self.name.write_xdr(w)?;
+            self.inputs.write_xdr(w)?;
+            self.outputs.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScSpecEntryKind is an XDR Enum defines as:
+//
+//   enum SCSpecEntryKind
+//    {
+//        SC_SPEC_ENTRY_FUNCTION_V0 = 0,
+//        SC_SPEC_ENTRY_UDT_STRUCT_V0 = 1,
+//        SC_SPEC_ENTRY_UDT_UNION_V0 = 2,
+//        SC_SPEC_ENTRY_UDT_ENUM_V0 = 3,
+//        SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0 = 4
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScSpecEntryKind {
+    FunctionV0 = 0,
+    UdtStructV0 = 1,
+    UdtUnionV0 = 2,
+    UdtEnumV0 = 3,
+    UdtErrorEnumV0 = 4,
+}
+
+impl ScSpecEntryKind {
+    pub const VARIANTS: [ScSpecEntryKind; 5] = [
+        ScSpecEntryKind::FunctionV0,
+        ScSpecEntryKind::UdtStructV0,
+        ScSpecEntryKind::UdtUnionV0,
+        ScSpecEntryKind::UdtEnumV0,
+        ScSpecEntryKind::UdtErrorEnumV0,
+    ];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "FunctionV0",
+        "UdtStructV0",
+        "UdtUnionV0",
+        "UdtEnumV0",
+        "UdtErrorEnumV0",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::FunctionV0 => "FunctionV0",
+            Self::UdtStructV0 => "UdtStructV0",
+            Self::UdtUnionV0 => "UdtUnionV0",
+            Self::UdtEnumV0 => "UdtEnumV0",
+            Self::UdtErrorEnumV0 => "UdtErrorEnumV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecEntryKind; 5] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecEntryKind {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScSpecEntryKind> for ScSpecEntryKind {
+    fn variants() -> slice::Iter<'static, ScSpecEntryKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScSpecEntryKind {}
+
+impl fmt::Display for ScSpecEntryKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScSpecEntryKind {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScSpecEntryKind::FunctionV0,
+            1 => ScSpecEntryKind::UdtStructV0,
+            2 => ScSpecEntryKind::UdtUnionV0,
+            3 => ScSpecEntryKind::UdtEnumV0,
+            4 => ScSpecEntryKind::UdtErrorEnumV0,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScSpecEntryKind> for i32 {
+    #[must_use]
+    fn from(e: ScSpecEntryKind) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScSpecEntryKind {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScSpecEntryKind {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ScSpecEntry is an XDR Union defines as:
+//
+//   union SCSpecEntry switch (SCSpecEntryKind kind)
+//    {
+//    case SC_SPEC_ENTRY_FUNCTION_V0:
+//        SCSpecFunctionV0 functionV0;
+//    case SC_SPEC_ENTRY_UDT_STRUCT_V0:
+//        SCSpecUDTStructV0 udtStructV0;
+//    case SC_SPEC_ENTRY_UDT_UNION_V0:
+//        SCSpecUDTUnionV0 udtUnionV0;
+//    case SC_SPEC_ENTRY_UDT_ENUM_V0:
+//        SCSpecUDTEnumV0 udtEnumV0;
+//    case SC_SPEC_ENTRY_UDT_ERROR_ENUM_V0:
+//        SCSpecUDTErrorEnumV0 udtErrorEnumV0;
+//    };
+//
+// union with discriminant ScSpecEntryKind
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScSpecEntry {
+    FunctionV0(ScSpecFunctionV0),
+    UdtStructV0(ScSpecUdtStructV0),
+    UdtUnionV0(ScSpecUdtUnionV0),
+    UdtEnumV0(ScSpecUdtEnumV0),
+    UdtErrorEnumV0(ScSpecUdtErrorEnumV0),
+}
+
+impl ScSpecEntry {
+    pub const VARIANTS: [ScSpecEntryKind; 5] = [
+        ScSpecEntryKind::FunctionV0,
+        ScSpecEntryKind::UdtStructV0,
+        ScSpecEntryKind::UdtUnionV0,
+        ScSpecEntryKind::UdtEnumV0,
+        ScSpecEntryKind::UdtErrorEnumV0,
+    ];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "FunctionV0",
+        "UdtStructV0",
+        "UdtUnionV0",
+        "UdtEnumV0",
+        "UdtErrorEnumV0",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::FunctionV0(_) => "FunctionV0",
+            Self::UdtStructV0(_) => "UdtStructV0",
+            Self::UdtUnionV0(_) => "UdtUnionV0",
+            Self::UdtEnumV0(_) => "UdtEnumV0",
+            Self::UdtErrorEnumV0(_) => "UdtErrorEnumV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScSpecEntryKind {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::FunctionV0(_) => ScSpecEntryKind::FunctionV0,
+            Self::UdtStructV0(_) => ScSpecEntryKind::UdtStructV0,
+            Self::UdtUnionV0(_) => ScSpecEntryKind::UdtUnionV0,
+            Self::UdtEnumV0(_) => ScSpecEntryKind::UdtEnumV0,
+            Self::UdtErrorEnumV0(_) => ScSpecEntryKind::UdtErrorEnumV0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScSpecEntryKind; 5] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScSpecEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScSpecEntryKind> for ScSpecEntry {
+    #[must_use]
+    fn discriminant(&self) -> ScSpecEntryKind {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScSpecEntryKind> for ScSpecEntry {
+    fn variants() -> slice::Iter<'static, ScSpecEntryKind> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScSpecEntryKind> for ScSpecEntry {}
+
+impl ReadXdr for ScSpecEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ScSpecEntryKind = <ScSpecEntryKind as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ScSpecEntryKind::FunctionV0 => Self::FunctionV0(ScSpecFunctionV0::read_xdr(r)?),
+                ScSpecEntryKind::UdtStructV0 => Self::UdtStructV0(ScSpecUdtStructV0::read_xdr(r)?),
+                ScSpecEntryKind::UdtUnionV0 => Self::UdtUnionV0(ScSpecUdtUnionV0::read_xdr(r)?),
+                ScSpecEntryKind::UdtEnumV0 => Self::UdtEnumV0(ScSpecUdtEnumV0::read_xdr(r)?),
+                ScSpecEntryKind::UdtErrorEnumV0 => {
+                    Self::UdtErrorEnumV0(ScSpecUdtErrorEnumV0::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScSpecEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::FunctionV0(v) => v.write_xdr(w)?,
+                Self::UdtStructV0(v) => v.write_xdr(w)?,
+                Self::UdtUnionV0(v) => v.write_xdr(w)?,
+                Self::UdtEnumV0(v) => v.write_xdr(w)?,
+                Self::UdtErrorEnumV0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// ScValType is an XDR Enum defines as:
+//
+//   enum SCValType
+//    {
+//        SCV_BOOL = 0,
+//        SCV_VOID = 1,
+//        SCV_ERROR = 2,
+//
+//        // 32 bits is the smallest type in WASM or XDR; no need for u8/u16.
+//        SCV_U32 = 3,
+//        SCV_I32 = 4,
+//
+//        // 64 bits is naturally supported by both WASM and XDR also.
+//        SCV_U64 = 5,
+//        SCV_I64 = 6,
+//
+//        // Time-related u64 subtypes with their own functions and formatting.
+//        SCV_TIMEPOINT = 7,
+//        SCV_DURATION = 8,
+//
+//        // 128 bits is naturally supported by Rust and we use it for Soroban
+//        // fixed-point arithmetic prices / balances / similar "quantities". These
+//        // are represented in XDR as a pair of 2 u64s.
+//        SCV_U128 = 9,
+//        SCV_I128 = 10,
+//
+//        // 256 bits is the size of sha256 output, ed25519 keys, and the EVM machine
+//        // word, so for interop use we include this even though it requires a small
+//        // amount of Rust guest and/or host library code.
+//        SCV_U256 = 11,
+//        SCV_I256 = 12,
+//
+//        // Bytes come in 3 flavors, 2 of which have meaningfully different
+//        // formatting and validity-checking / domain-restriction.
+//        SCV_BYTES = 13,
+//        SCV_STRING = 14,
+//        SCV_SYMBOL = 15,
+//
+//        // Vecs and maps are just polymorphic containers of other ScVals.
+//        SCV_VEC = 16,
+//        SCV_MAP = 17,
+//
+//        // Address is the universal identifier for contracts and classic
+//        // accounts.
+//        SCV_ADDRESS = 18,
+//
+//        // The following are the internal SCVal variants that are not
+//        // exposed to the contracts.
+//        SCV_CONTRACT_INSTANCE = 19,
+//
+//        // SCV_LEDGER_KEY_CONTRACT_INSTANCE and SCV_LEDGER_KEY_NONCE are unique
+//        // symbolic SCVals used as the key for ledger entries for a contract's
+//        // instance and an address' nonce, respectively.
+//        SCV_LEDGER_KEY_CONTRACT_INSTANCE = 20,
+//        SCV_LEDGER_KEY_NONCE = 21
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScValType {
+    Bool = 0,
+    Void = 1,
+    Error = 2,
+    U32 = 3,
+    I32 = 4,
+    U64 = 5,
+    I64 = 6,
+    Timepoint = 7,
+    Duration = 8,
+    U128 = 9,
+    I128 = 10,
+    U256 = 11,
+    I256 = 12,
+    Bytes = 13,
+    String = 14,
+    Symbol = 15,
+    Vec = 16,
+    Map = 17,
+    Address = 18,
+    ContractInstance = 19,
+    LedgerKeyContractInstance = 20,
+    LedgerKeyNonce = 21,
+}
+
+impl ScValType {
+    pub const VARIANTS: [ScValType; 22] = [
+        ScValType::Bool,
+        ScValType::Void,
+        ScValType::Error,
+        ScValType::U32,
+        ScValType::I32,
+        ScValType::U64,
+        ScValType::I64,
+        ScValType::Timepoint,
+        ScValType::Duration,
+        ScValType::U128,
+        ScValType::I128,
+        ScValType::U256,
+        ScValType::I256,
+        ScValType::Bytes,
+        ScValType::String,
+        ScValType::Symbol,
+        ScValType::Vec,
+        ScValType::Map,
+        ScValType::Address,
+        ScValType::ContractInstance,
+        ScValType::LedgerKeyContractInstance,
+        ScValType::LedgerKeyNonce,
+    ];
+    pub const VARIANTS_STR: [&'static str; 22] = [
+        "Bool",
+        "Void",
+        "Error",
+        "U32",
+        "I32",
+        "U64",
+        "I64",
+        "Timepoint",
+        "Duration",
+        "U128",
+        "I128",
+        "U256",
+        "I256",
+        "Bytes",
+        "String",
+        "Symbol",
+        "Vec",
+        "Map",
+        "Address",
+        "ContractInstance",
+        "LedgerKeyContractInstance",
+        "LedgerKeyNonce",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Bool => "Bool",
+            Self::Void => "Void",
+            Self::Error => "Error",
+            Self::U32 => "U32",
+            Self::I32 => "I32",
+            Self::U64 => "U64",
+            Self::I64 => "I64",
+            Self::Timepoint => "Timepoint",
+            Self::Duration => "Duration",
+            Self::U128 => "U128",
+            Self::I128 => "I128",
+            Self::U256 => "U256",
+            Self::I256 => "I256",
+            Self::Bytes => "Bytes",
+            Self::String => "String",
+            Self::Symbol => "Symbol",
+            Self::Vec => "Vec",
+            Self::Map => "Map",
+            Self::Address => "Address",
+            Self::ContractInstance => "ContractInstance",
+            Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
+            Self::LedgerKeyNonce => "LedgerKeyNonce",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScValType; 22] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScValType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScValType> for ScValType {
+    fn variants() -> slice::Iter<'static, ScValType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScValType {}
+
+impl fmt::Display for ScValType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScValType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScValType::Bool,
+            1 => ScValType::Void,
+            2 => ScValType::Error,
+            3 => ScValType::U32,
+            4 => ScValType::I32,
+            5 => ScValType::U64,
+            6 => ScValType::I64,
+            7 => ScValType::Timepoint,
+            8 => ScValType::Duration,
+            9 => ScValType::U128,
+            10 => ScValType::I128,
+            11 => ScValType::U256,
+            12 => ScValType::I256,
+            13 => ScValType::Bytes,
+            14 => ScValType::String,
+            15 => ScValType::Symbol,
+            16 => ScValType::Vec,
+            17 => ScValType::Map,
+            18 => ScValType::Address,
+            19 => ScValType::ContractInstance,
+            20 => ScValType::LedgerKeyContractInstance,
+            21 => ScValType::LedgerKeyNonce,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScValType> for i32 {
+    #[must_use]
+    fn from(e: ScValType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScValType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScValType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ScErrorType is an XDR Enum defines as:
+//
+//   enum SCErrorType
+//    {
+//        SCE_CONTRACT = 0,          // Contract-specific, user-defined codes.
+//        SCE_WASM_VM = 1,           // Errors while interpreting WASM bytecode.
+//        SCE_CONTEXT = 2,           // Errors in the contract's host context.
+//        SCE_STORAGE = 3,           // Errors accessing host storage.
+//        SCE_OBJECT = 4,            // Errors working with host objects.
+//        SCE_CRYPTO = 5,            // Errors in cryptographic operations.
+//        SCE_EVENTS = 6,            // Errors while emitting events.
+//        SCE_BUDGET = 7,            // Errors relating to budget limits.
+//        SCE_VALUE = 8,             // Errors working with host values or SCVals.
+//        SCE_AUTH = 9               // Errors from the authentication subsystem.
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScErrorType {
+    Contract = 0,
+    WasmVm = 1,
+    Context = 2,
+    Storage = 3,
+    Object = 4,
+    Crypto = 5,
+    Events = 6,
+    Budget = 7,
+    Value = 8,
+    Auth = 9,
+}
+
+impl ScErrorType {
+    pub const VARIANTS: [ScErrorType; 10] = [
+        ScErrorType::Contract,
+        ScErrorType::WasmVm,
+        ScErrorType::Context,
+        ScErrorType::Storage,
+        ScErrorType::Object,
+        ScErrorType::Crypto,
+        ScErrorType::Events,
+        ScErrorType::Budget,
+        ScErrorType::Value,
+        ScErrorType::Auth,
+    ];
+    pub const VARIANTS_STR: [&'static str; 10] = [
+        "Contract", "WasmVm", "Context", "Storage", "Object", "Crypto", "Events", "Budget",
+        "Value", "Auth",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Contract => "Contract",
+            Self::WasmVm => "WasmVm",
+            Self::Context => "Context",
+            Self::Storage => "Storage",
+            Self::Object => "Object",
+            Self::Crypto => "Crypto",
+            Self::Events => "Events",
+            Self::Budget => "Budget",
+            Self::Value => "Value",
+            Self::Auth => "Auth",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScErrorType; 10] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScErrorType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScErrorType> for ScErrorType {
+    fn variants() -> slice::Iter<'static, ScErrorType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScErrorType {}
+
+impl fmt::Display for ScErrorType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScErrorType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScErrorType::Contract,
+            1 => ScErrorType::WasmVm,
+            2 => ScErrorType::Context,
+            3 => ScErrorType::Storage,
+            4 => ScErrorType::Object,
+            5 => ScErrorType::Crypto,
+            6 => ScErrorType::Events,
+            7 => ScErrorType::Budget,
+            8 => ScErrorType::Value,
+            9 => ScErrorType::Auth,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScErrorType> for i32 {
+    #[must_use]
+    fn from(e: ScErrorType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScErrorType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScErrorType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ScErrorCode is an XDR Enum defines as:
+//
+//   enum SCErrorCode
+//    {
+//        SCEC_ARITH_DOMAIN = 0,      // Some arithmetic was undefined (overflow, divide-by-zero).
+//        SCEC_INDEX_BOUNDS = 1,      // Something was indexed beyond its bounds.
+//        SCEC_INVALID_INPUT = 2,     // User provided some otherwise-bad data.
+//        SCEC_MISSING_VALUE = 3,     // Some value was required but not provided.
+//        SCEC_EXISTING_VALUE = 4,    // Some value was provided where not allowed.
+//        SCEC_EXCEEDED_LIMIT = 5,    // Some arbitrary limit -- gas or otherwise -- was hit.
+//        SCEC_INVALID_ACTION = 6,    // Data was valid but action requested was not.
+//        SCEC_INTERNAL_ERROR = 7,    // The host detected an error in its own logic.
+//        SCEC_UNEXPECTED_TYPE = 8,   // Some type wasn't as expected.
+//        SCEC_UNEXPECTED_SIZE = 9    // Something's size wasn't as expected.
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScErrorCode {
+    ArithDomain = 0,
+    IndexBounds = 1,
+    InvalidInput = 2,
+    MissingValue = 3,
+    ExistingValue = 4,
+    ExceededLimit = 5,
+    InvalidAction = 6,
+    InternalError = 7,
+    UnexpectedType = 8,
+    UnexpectedSize = 9,
+}
+
+impl ScErrorCode {
+    pub const VARIANTS: [ScErrorCode; 10] = [
+        ScErrorCode::ArithDomain,
+        ScErrorCode::IndexBounds,
+        ScErrorCode::InvalidInput,
+        ScErrorCode::MissingValue,
+        ScErrorCode::ExistingValue,
+        ScErrorCode::ExceededLimit,
+        ScErrorCode::InvalidAction,
+        ScErrorCode::InternalError,
+        ScErrorCode::UnexpectedType,
+        ScErrorCode::UnexpectedSize,
+    ];
+    pub const VARIANTS_STR: [&'static str; 10] = [
+        "ArithDomain",
+        "IndexBounds",
+        "InvalidInput",
+        "MissingValue",
+        "ExistingValue",
+        "ExceededLimit",
+        "InvalidAction",
+        "InternalError",
+        "UnexpectedType",
+        "UnexpectedSize",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ArithDomain => "ArithDomain",
+            Self::IndexBounds => "IndexBounds",
+            Self::InvalidInput => "InvalidInput",
+            Self::MissingValue => "MissingValue",
+            Self::ExistingValue => "ExistingValue",
+            Self::ExceededLimit => "ExceededLimit",
+            Self::InvalidAction => "InvalidAction",
+            Self::InternalError => "InternalError",
+            Self::UnexpectedType => "UnexpectedType",
+            Self::UnexpectedSize => "UnexpectedSize",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScErrorCode; 10] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScErrorCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScErrorCode> for ScErrorCode {
+    fn variants() -> slice::Iter<'static, ScErrorCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScErrorCode {}
+
+impl fmt::Display for ScErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScErrorCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScErrorCode::ArithDomain,
+            1 => ScErrorCode::IndexBounds,
+            2 => ScErrorCode::InvalidInput,
+            3 => ScErrorCode::MissingValue,
+            4 => ScErrorCode::ExistingValue,
+            5 => ScErrorCode::ExceededLimit,
+            6 => ScErrorCode::InvalidAction,
+            7 => ScErrorCode::InternalError,
+            8 => ScErrorCode::UnexpectedType,
+            9 => ScErrorCode::UnexpectedSize,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScErrorCode> for i32 {
+    #[must_use]
+    fn from(e: ScErrorCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScErrorCode {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScErrorCode {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ScError is an XDR Union defines as:
+//
+//   union SCError switch (SCErrorType type)
+//    {
+//    case SCE_CONTRACT:
+//        uint32 contractCode;
+//    case SCE_WASM_VM:
+//    case SCE_CONTEXT:
+//    case SCE_STORAGE:
+//    case SCE_OBJECT:
+//    case SCE_CRYPTO:
+//    case SCE_EVENTS:
+//    case SCE_BUDGET:
+//    case SCE_VALUE:
+//    case SCE_AUTH:
+//        SCErrorCode code;
+//    };
+//
+// union with discriminant ScErrorType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScError {
+    Contract(u32),
+    WasmVm(ScErrorCode),
+    Context(ScErrorCode),
+    Storage(ScErrorCode),
+    Object(ScErrorCode),
+    Crypto(ScErrorCode),
+    Events(ScErrorCode),
+    Budget(ScErrorCode),
+    Value(ScErrorCode),
+    Auth(ScErrorCode),
+}
+
+impl ScError {
+    pub const VARIANTS: [ScErrorType; 10] = [
+        ScErrorType::Contract,
+        ScErrorType::WasmVm,
+        ScErrorType::Context,
+        ScErrorType::Storage,
+        ScErrorType::Object,
+        ScErrorType::Crypto,
+        ScErrorType::Events,
+        ScErrorType::Budget,
+        ScErrorType::Value,
+        ScErrorType::Auth,
+    ];
+    pub const VARIANTS_STR: [&'static str; 10] = [
+        "Contract", "WasmVm", "Context", "Storage", "Object", "Crypto", "Events", "Budget",
+        "Value", "Auth",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Contract(_) => "Contract",
+            Self::WasmVm(_) => "WasmVm",
+            Self::Context(_) => "Context",
+            Self::Storage(_) => "Storage",
+            Self::Object(_) => "Object",
+            Self::Crypto(_) => "Crypto",
+            Self::Events(_) => "Events",
+            Self::Budget(_) => "Budget",
+            Self::Value(_) => "Value",
+            Self::Auth(_) => "Auth",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScErrorType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Contract(_) => ScErrorType::Contract,
+            Self::WasmVm(_) => ScErrorType::WasmVm,
+            Self::Context(_) => ScErrorType::Context,
+            Self::Storage(_) => ScErrorType::Storage,
+            Self::Object(_) => ScErrorType::Object,
+            Self::Crypto(_) => ScErrorType::Crypto,
+            Self::Events(_) => ScErrorType::Events,
+            Self::Budget(_) => ScErrorType::Budget,
+            Self::Value(_) => ScErrorType::Value,
+            Self::Auth(_) => ScErrorType::Auth,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScErrorType; 10] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScError {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScErrorType> for ScError {
+    #[must_use]
+    fn discriminant(&self) -> ScErrorType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScErrorType> for ScError {
+    fn variants() -> slice::Iter<'static, ScErrorType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScErrorType> for ScError {}
+
+impl ReadXdr for ScError {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ScErrorType = <ScErrorType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ScErrorType::Contract => Self::Contract(u32::read_xdr(r)?),
+                ScErrorType::WasmVm => Self::WasmVm(ScErrorCode::read_xdr(r)?),
+                ScErrorType::Context => Self::Context(ScErrorCode::read_xdr(r)?),
+                ScErrorType::Storage => Self::Storage(ScErrorCode::read_xdr(r)?),
+                ScErrorType::Object => Self::Object(ScErrorCode::read_xdr(r)?),
+                ScErrorType::Crypto => Self::Crypto(ScErrorCode::read_xdr(r)?),
+                ScErrorType::Events => Self::Events(ScErrorCode::read_xdr(r)?),
+                ScErrorType::Budget => Self::Budget(ScErrorCode::read_xdr(r)?),
+                ScErrorType::Value => Self::Value(ScErrorCode::read_xdr(r)?),
+                ScErrorType::Auth => Self::Auth(ScErrorCode::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScError {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Contract(v) => v.write_xdr(w)?,
+                Self::WasmVm(v) => v.write_xdr(w)?,
+                Self::Context(v) => v.write_xdr(w)?,
+                Self::Storage(v) => v.write_xdr(w)?,
+                Self::Object(v) => v.write_xdr(w)?,
+                Self::Crypto(v) => v.write_xdr(w)?,
+                Self::Events(v) => v.write_xdr(w)?,
+                Self::Budget(v) => v.write_xdr(w)?,
+                Self::Value(v) => v.write_xdr(w)?,
+                Self::Auth(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// UInt128Parts is an XDR Struct defines as:
+//
+//   struct UInt128Parts {
+//        uint64 hi;
+//        uint64 lo;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct UInt128Parts {
+    pub hi: u64,
+    pub lo: u64,
+}
+
+impl ReadXdr for UInt128Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                hi: u64::read_xdr(r)?,
+                lo: u64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for UInt128Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.hi.write_xdr(w)?;
+            self.lo.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// Int128Parts is an XDR Struct defines as:
+//
+//   struct Int128Parts {
+//        int64 hi;
+//        uint64 lo;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct Int128Parts {
+    pub hi: i64,
+    pub lo: u64,
+}
+
+impl ReadXdr for Int128Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                hi: i64::read_xdr(r)?,
+                lo: u64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for Int128Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.hi.write_xdr(w)?;
+            self.lo.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// UInt256Parts is an XDR Struct defines as:
+//
+//   struct UInt256Parts {
+//        uint64 hi_hi;
+//        uint64 hi_lo;
+//        uint64 lo_hi;
+//        uint64 lo_lo;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct UInt256Parts {
+    pub hi_hi: u64,
+    pub hi_lo: u64,
+    pub lo_hi: u64,
+    pub lo_lo: u64,
+}
+
+impl ReadXdr for UInt256Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                hi_hi: u64::read_xdr(r)?,
+                hi_lo: u64::read_xdr(r)?,
+                lo_hi: u64::read_xdr(r)?,
+                lo_lo: u64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for UInt256Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.hi_hi.write_xdr(w)?;
+            self.hi_lo.write_xdr(w)?;
+            self.lo_hi.write_xdr(w)?;
+            self.lo_lo.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// Int256Parts is an XDR Struct defines as:
+//
+//   struct Int256Parts {
+//        int64 hi_hi;
+//        uint64 hi_lo;
+//        uint64 lo_hi;
+//        uint64 lo_lo;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct Int256Parts {
+    pub hi_hi: i64,
+    pub hi_lo: u64,
+    pub lo_hi: u64,
+    pub lo_lo: u64,
+}
+
+impl ReadXdr for Int256Parts {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                hi_hi: i64::read_xdr(r)?,
+                hi_lo: u64::read_xdr(r)?,
+                lo_hi: u64::read_xdr(r)?,
+                lo_lo: u64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for Int256Parts {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.hi_hi.write_xdr(w)?;
+            self.hi_lo.write_xdr(w)?;
+            self.lo_hi.write_xdr(w)?;
+            self.lo_lo.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ContractExecutableType is an XDR Enum defines as:
+//
+//   enum ContractExecutableType
+//    {
+//        CONTRACT_EXECUTABLE_WASM = 0,
+//        CONTRACT_EXECUTABLE_TOKEN = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ContractExecutableType {
+    Wasm = 0,
+    Token = 1,
+}
+
+impl ContractExecutableType {
+    pub const VARIANTS: [ContractExecutableType; 2] =
+        [ContractExecutableType::Wasm, ContractExecutableType::Token];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "Token"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Wasm => "Wasm",
+            Self::Token => "Token",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractExecutableType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractExecutableType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ContractExecutableType> for ContractExecutableType {
+    fn variants() -> slice::Iter<'static, ContractExecutableType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ContractExecutableType {}
+
+impl fmt::Display for ContractExecutableType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ContractExecutableType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ContractExecutableType::Wasm,
+            1 => ContractExecutableType::Token,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ContractExecutableType> for i32 {
+    #[must_use]
+    fn from(e: ContractExecutableType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ContractExecutableType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ContractExecutableType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ContractExecutable is an XDR Union defines as:
+//
+//   union ContractExecutable switch (ContractExecutableType type)
+//    {
+//    case CONTRACT_EXECUTABLE_WASM:
+//        Hash wasm_hash;
+//    case CONTRACT_EXECUTABLE_TOKEN:
+//        void;
+//    };
+//
+// union with discriminant ContractExecutableType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ContractExecutable {
+    Wasm(Hash),
+    Token,
+}
+
+impl ContractExecutable {
+    pub const VARIANTS: [ContractExecutableType; 2] =
+        [ContractExecutableType::Wasm, ContractExecutableType::Token];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "Token"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Wasm(_) => "Wasm",
+            Self::Token => "Token",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ContractExecutableType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Wasm(_) => ContractExecutableType::Wasm,
+            Self::Token => ContractExecutableType::Token,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractExecutableType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractExecutable {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ContractExecutableType> for ContractExecutable {
+    #[must_use]
+    fn discriminant(&self) -> ContractExecutableType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ContractExecutableType> for ContractExecutable {
+    fn variants() -> slice::Iter<'static, ContractExecutableType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ContractExecutableType> for ContractExecutable {}
+
+impl ReadXdr for ContractExecutable {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ContractExecutableType = <ContractExecutableType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ContractExecutableType::Wasm => Self::Wasm(Hash::read_xdr(r)?),
+                ContractExecutableType::Token => Self::Token,
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ContractExecutable {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Wasm(v) => v.write_xdr(w)?,
+                Self::Token => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// ScAddressType is an XDR Enum defines as:
+//
+//   enum SCAddressType
+//    {
+//        SC_ADDRESS_TYPE_ACCOUNT = 0,
+//        SC_ADDRESS_TYPE_CONTRACT = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ScAddressType {
+    Account = 0,
+    Contract = 1,
+}
+
+impl ScAddressType {
+    pub const VARIANTS: [ScAddressType; 2] = [ScAddressType::Account, ScAddressType::Contract];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Account", "Contract"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Account => "Account",
+            Self::Contract => "Contract",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScAddressType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScAddressType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ScAddressType> for ScAddressType {
+    fn variants() -> slice::Iter<'static, ScAddressType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ScAddressType {}
+
+impl fmt::Display for ScAddressType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ScAddressType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ScAddressType::Account,
+            1 => ScAddressType::Contract,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ScAddressType> for i32 {
+    #[must_use]
+    fn from(e: ScAddressType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ScAddressType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScAddressType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ScAddress is an XDR Union defines as:
+//
+//   union SCAddress switch (SCAddressType type)
+//    {
+//    case SC_ADDRESS_TYPE_ACCOUNT:
+//        AccountID accountId;
+//    case SC_ADDRESS_TYPE_CONTRACT:
+//        Hash contractId;
+//    };
+//
+// union with discriminant ScAddressType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScAddress {
+    Account(AccountId),
+    Contract(Hash),
+}
+
+impl ScAddress {
+    pub const VARIANTS: [ScAddressType; 2] = [ScAddressType::Account, ScAddressType::Contract];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Account", "Contract"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Account(_) => "Account",
+            Self::Contract(_) => "Contract",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScAddressType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Account(_) => ScAddressType::Account,
+            Self::Contract(_) => ScAddressType::Contract,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScAddressType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScAddress {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScAddressType> for ScAddress {
+    #[must_use]
+    fn discriminant(&self) -> ScAddressType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScAddressType> for ScAddress {
+    fn variants() -> slice::Iter<'static, ScAddressType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScAddressType> for ScAddress {}
+
+impl ReadXdr for ScAddress {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ScAddressType = <ScAddressType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ScAddressType::Account => Self::Account(AccountId::read_xdr(r)?),
+                ScAddressType::Contract => Self::Contract(Hash::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScAddress {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Account(v) => v.write_xdr(w)?,
+                Self::Contract(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// ScsymbolLimit is an XDR Const defines as:
+//
+//   const SCSYMBOL_LIMIT = 32;
+//
+pub const SCSYMBOL_LIMIT: u64 = 32;
+
+// ScVec is an XDR Typedef defines as:
+//
+//   typedef SCVal SCVec<>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScVec(pub VecM<ScVal>);
+
+impl From<ScVec> for VecM<ScVal> {
+    #[must_use]
+    fn from(x: ScVec) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<ScVal>> for ScVec {
+    #[must_use]
+    fn from(x: VecM<ScVal>) -> Self {
+        ScVec(x)
+    }
+}
+
+impl AsRef<VecM<ScVal>> for ScVec {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<ScVal> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScVec {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<ScVal>::read_xdr(r)?;
+            let v = ScVec(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScVec {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for ScVec {
+    type Target = VecM<ScVal>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScVec> for Vec<ScVal> {
+    #[must_use]
+    fn from(x: ScVec) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ScVal>> for ScVec {
+    type Error = Error;
+    fn try_from(x: Vec<ScVal>) -> Result<Self> {
+        Ok(ScVec(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<ScVal>> for ScVec {
+    type Error = Error;
+    fn try_from(x: &Vec<ScVal>) -> Result<Self> {
+        Ok(ScVec(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ScVal>> for ScVec {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<ScVal> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ScVal]> for ScVec {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[ScVal] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ScVal] {
+        self.0 .0
+    }
+}
+
+// ScMap is an XDR Typedef defines as:
+//
+//   typedef SCMapEntry SCMap<>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScMap(pub VecM<ScMapEntry>);
+
+impl From<ScMap> for VecM<ScMapEntry> {
+    #[must_use]
+    fn from(x: ScMap) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<ScMapEntry>> for ScMap {
+    #[must_use]
+    fn from(x: VecM<ScMapEntry>) -> Self {
+        ScMap(x)
+    }
+}
+
+impl AsRef<VecM<ScMapEntry>> for ScMap {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<ScMapEntry> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScMap {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<ScMapEntry>::read_xdr(r)?;
+            let v = ScMap(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScMap {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for ScMap {
+    type Target = VecM<ScMapEntry>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScMap> for Vec<ScMapEntry> {
+    #[must_use]
+    fn from(x: ScMap) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ScMapEntry>> for ScMap {
+    type Error = Error;
+    fn try_from(x: Vec<ScMapEntry>) -> Result<Self> {
+        Ok(ScMap(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<ScMapEntry>> for ScMap {
+    type Error = Error;
+    fn try_from(x: &Vec<ScMapEntry>) -> Result<Self> {
+        Ok(ScMap(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ScMapEntry>> for ScMap {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<ScMapEntry> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ScMapEntry]> for ScMap {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[ScMapEntry] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ScMapEntry] {
+        self.0 .0
+    }
+}
+
+// ScBytes is an XDR Typedef defines as:
+//
+//   typedef opaque SCBytes<>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScBytes(pub BytesM);
+
+impl From<ScBytes> for BytesM {
+    #[must_use]
+    fn from(x: ScBytes) -> Self {
+        x.0
+    }
+}
+
+impl From<BytesM> for ScBytes {
+    #[must_use]
+    fn from(x: BytesM) -> Self {
+        ScBytes(x)
+    }
+}
+
+impl AsRef<BytesM> for ScBytes {
+    #[must_use]
+    fn as_ref(&self) -> &BytesM {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScBytes {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = BytesM::read_xdr(r)?;
+            let v = ScBytes(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScBytes {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for ScBytes {
+    type Target = BytesM;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScBytes> for Vec<u8> {
+    #[must_use]
+    fn from(x: ScBytes) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for ScBytes {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(ScBytes(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for ScBytes {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(ScBytes(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for ScBytes {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for ScBytes {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
+
+// ScString is an XDR Typedef defines as:
+//
+//   typedef string SCString<>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScString(pub StringM);
+
+impl From<ScString> for StringM {
+    #[must_use]
+    fn from(x: ScString) -> Self {
+        x.0
+    }
+}
+
+impl From<StringM> for ScString {
+    #[must_use]
+    fn from(x: StringM) -> Self {
+        ScString(x)
+    }
+}
+
+impl AsRef<StringM> for ScString {
+    #[must_use]
+    fn as_ref(&self) -> &StringM {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScString {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = StringM::read_xdr(r)?;
+            let v = ScString(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScString {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for ScString {
+    type Target = StringM;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScString> for Vec<u8> {
+    #[must_use]
+    fn from(x: ScString) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for ScString {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(ScString(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for ScString {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(ScString(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for ScString {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for ScString {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
+
+// ScSymbol is an XDR Typedef defines as:
+//
+//   typedef string SCSymbol<SCSYMBOL_LIMIT>;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default, Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScSymbol(pub StringM<32>);
+
+impl From<ScSymbol> for StringM<32> {
+    #[must_use]
+    fn from(x: ScSymbol) -> Self {
+        x.0
+    }
+}
+
+impl From<StringM<32>> for ScSymbol {
+    #[must_use]
+    fn from(x: StringM<32>) -> Self {
+        ScSymbol(x)
+    }
+}
+
+impl AsRef<StringM<32>> for ScSymbol {
+    #[must_use]
+    fn as_ref(&self) -> &StringM<32> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ScSymbol {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = StringM::<32>::read_xdr(r)?;
+            let v = ScSymbol(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScSymbol {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for ScSymbol {
+    type Target = StringM<32>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ScSymbol> for Vec<u8> {
+    #[must_use]
+    fn from(x: ScSymbol) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<u8>> for ScSymbol {
+    type Error = Error;
+    fn try_from(x: Vec<u8>) -> Result<Self> {
+        Ok(ScSymbol(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<u8>> for ScSymbol {
+    type Error = Error;
+    fn try_from(x: &Vec<u8>) -> Result<Self> {
+        Ok(ScSymbol(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<u8>> for ScSymbol {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<u8> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[u8]> for ScSymbol {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[u8] {
+        self.0 .0
+    }
+}
+
+// ScNonceKey is an XDR Struct defines as:
+//
+//   struct SCNonceKey {
+//        int64 nonce;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScNonceKey {
+    pub nonce: i64,
+}
+
+impl ReadXdr for ScNonceKey {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                nonce: i64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScNonceKey {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.nonce.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScContractInstance is an XDR Struct defines as:
+//
+//   struct SCContractInstance {
+//        ContractExecutable executable;
+//        SCMap* storage;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScContractInstance {
+    pub executable: ContractExecutable,
+    pub storage: Option<ScMap>,
+}
+
+impl ReadXdr for ScContractInstance {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                executable: ContractExecutable::read_xdr(r)?,
+                storage: Option::<ScMap>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScContractInstance {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.executable.write_xdr(w)?;
+            self.storage.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ScVal is an XDR Union defines as:
+//
+//   union SCVal switch (SCValType type)
+//    {
+//
+//    case SCV_BOOL:
+//        bool b;
+//    case SCV_VOID:
+//        void;
+//    case SCV_ERROR:
+//        SCError error;
+//
+//    case SCV_U32:
+//        uint32 u32;
+//    case SCV_I32:
+//        int32 i32;
+//
+//    case SCV_U64:
+//        uint64 u64;
+//    case SCV_I64:
+//        int64 i64;
+//    case SCV_TIMEPOINT:
+//        TimePoint timepoint;
+//    case SCV_DURATION:
+//        Duration duration;
+//
+//    case SCV_U128:
+//        UInt128Parts u128;
+//    case SCV_I128:
+//        Int128Parts i128;
+//
+//    case SCV_U256:
+//        UInt256Parts u256;
+//    case SCV_I256:
+//        Int256Parts i256;
+//
+//    case SCV_BYTES:
+//        SCBytes bytes;
+//    case SCV_STRING:
+//        SCString str;
+//    case SCV_SYMBOL:
+//        SCSymbol sym;
+//
+//    // Vec and Map are recursive so need to live
+//    // behind an option, due to xdrpp limitations.
+//    case SCV_VEC:
+//        SCVec *vec;
+//    case SCV_MAP:
+//        SCMap *map;
+//
+//    case SCV_ADDRESS:
+//        SCAddress address;
+//
+//    // Special SCVals reserved for system-constructed contract-data
+//    // ledger keys, not generally usable elsewhere.
+//    case SCV_LEDGER_KEY_CONTRACT_INSTANCE:
+//        void;
+//    case SCV_LEDGER_KEY_NONCE:
+//        SCNonceKey nonce_key;
+//
+//    case SCV_CONTRACT_INSTANCE:
+//        SCContractInstance instance;
+//    };
+//
+// union with discriminant ScValType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ScVal {
+    Bool(bool),
+    Void,
+    Error(ScError),
+    U32(u32),
+    I32(i32),
+    U64(u64),
+    I64(i64),
+    Timepoint(TimePoint),
+    Duration(Duration),
+    U128(UInt128Parts),
+    I128(Int128Parts),
+    U256(UInt256Parts),
+    I256(Int256Parts),
+    Bytes(ScBytes),
+    String(ScString),
+    Symbol(ScSymbol),
+    Vec(Option<ScVec>),
+    Map(Option<ScMap>),
+    Address(ScAddress),
+    LedgerKeyContractInstance,
+    LedgerKeyNonce(ScNonceKey),
+    ContractInstance(ScContractInstance),
+}
+
+impl ScVal {
+    pub const VARIANTS: [ScValType; 22] = [
+        ScValType::Bool,
+        ScValType::Void,
+        ScValType::Error,
+        ScValType::U32,
+        ScValType::I32,
+        ScValType::U64,
+        ScValType::I64,
+        ScValType::Timepoint,
+        ScValType::Duration,
+        ScValType::U128,
+        ScValType::I128,
+        ScValType::U256,
+        ScValType::I256,
+        ScValType::Bytes,
+        ScValType::String,
+        ScValType::Symbol,
+        ScValType::Vec,
+        ScValType::Map,
+        ScValType::Address,
+        ScValType::LedgerKeyContractInstance,
+        ScValType::LedgerKeyNonce,
+        ScValType::ContractInstance,
+    ];
+    pub const VARIANTS_STR: [&'static str; 22] = [
+        "Bool",
+        "Void",
+        "Error",
+        "U32",
+        "I32",
+        "U64",
+        "I64",
+        "Timepoint",
+        "Duration",
+        "U128",
+        "I128",
+        "U256",
+        "I256",
+        "Bytes",
+        "String",
+        "Symbol",
+        "Vec",
+        "Map",
+        "Address",
+        "LedgerKeyContractInstance",
+        "LedgerKeyNonce",
+        "ContractInstance",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Bool(_) => "Bool",
+            Self::Void => "Void",
+            Self::Error(_) => "Error",
+            Self::U32(_) => "U32",
+            Self::I32(_) => "I32",
+            Self::U64(_) => "U64",
+            Self::I64(_) => "I64",
+            Self::Timepoint(_) => "Timepoint",
+            Self::Duration(_) => "Duration",
+            Self::U128(_) => "U128",
+            Self::I128(_) => "I128",
+            Self::U256(_) => "U256",
+            Self::I256(_) => "I256",
+            Self::Bytes(_) => "Bytes",
+            Self::String(_) => "String",
+            Self::Symbol(_) => "Symbol",
+            Self::Vec(_) => "Vec",
+            Self::Map(_) => "Map",
+            Self::Address(_) => "Address",
+            Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
+            Self::LedgerKeyNonce(_) => "LedgerKeyNonce",
+            Self::ContractInstance(_) => "ContractInstance",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ScValType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Bool(_) => ScValType::Bool,
+            Self::Void => ScValType::Void,
+            Self::Error(_) => ScValType::Error,
+            Self::U32(_) => ScValType::U32,
+            Self::I32(_) => ScValType::I32,
+            Self::U64(_) => ScValType::U64,
+            Self::I64(_) => ScValType::I64,
+            Self::Timepoint(_) => ScValType::Timepoint,
+            Self::Duration(_) => ScValType::Duration,
+            Self::U128(_) => ScValType::U128,
+            Self::I128(_) => ScValType::I128,
+            Self::U256(_) => ScValType::U256,
+            Self::I256(_) => ScValType::I256,
+            Self::Bytes(_) => ScValType::Bytes,
+            Self::String(_) => ScValType::String,
+            Self::Symbol(_) => ScValType::Symbol,
+            Self::Vec(_) => ScValType::Vec,
+            Self::Map(_) => ScValType::Map,
+            Self::Address(_) => ScValType::Address,
+            Self::LedgerKeyContractInstance => ScValType::LedgerKeyContractInstance,
+            Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
+            Self::ContractInstance(_) => ScValType::ContractInstance,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ScValType; 22] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ScVal {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ScValType> for ScVal {
+    #[must_use]
+    fn discriminant(&self) -> ScValType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ScValType> for ScVal {
+    fn variants() -> slice::Iter<'static, ScValType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ScValType> for ScVal {}
+
+impl ReadXdr for ScVal {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ScValType::Bool => Self::Bool(bool::read_xdr(r)?),
+                ScValType::Void => Self::Void,
+                ScValType::Error => Self::Error(ScError::read_xdr(r)?),
+                ScValType::U32 => Self::U32(u32::read_xdr(r)?),
+                ScValType::I32 => Self::I32(i32::read_xdr(r)?),
+                ScValType::U64 => Self::U64(u64::read_xdr(r)?),
+                ScValType::I64 => Self::I64(i64::read_xdr(r)?),
+                ScValType::Timepoint => Self::Timepoint(TimePoint::read_xdr(r)?),
+                ScValType::Duration => Self::Duration(Duration::read_xdr(r)?),
+                ScValType::U128 => Self::U128(UInt128Parts::read_xdr(r)?),
+                ScValType::I128 => Self::I128(Int128Parts::read_xdr(r)?),
+                ScValType::U256 => Self::U256(UInt256Parts::read_xdr(r)?),
+                ScValType::I256 => Self::I256(Int256Parts::read_xdr(r)?),
+                ScValType::Bytes => Self::Bytes(ScBytes::read_xdr(r)?),
+                ScValType::String => Self::String(ScString::read_xdr(r)?),
+                ScValType::Symbol => Self::Symbol(ScSymbol::read_xdr(r)?),
+                ScValType::Vec => Self::Vec(Option::<ScVec>::read_xdr(r)?),
+                ScValType::Map => Self::Map(Option::<ScMap>::read_xdr(r)?),
+                ScValType::Address => Self::Address(ScAddress::read_xdr(r)?),
+                ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
+                ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
+                ScValType::ContractInstance => {
+                    Self::ContractInstance(ScContractInstance::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ScVal {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Bool(v) => v.write_xdr(w)?,
+                Self::Void => ().write_xdr(w)?,
+                Self::Error(v) => v.write_xdr(w)?,
+                Self::U32(v) => v.write_xdr(w)?,
+                Self::I32(v) => v.write_xdr(w)?,
+                Self::U64(v) => v.write_xdr(w)?,
+                Self::I64(v) => v.write_xdr(w)?,
+                Self::Timepoint(v) => v.write_xdr(w)?,
+                Self::Duration(v) => v.write_xdr(w)?,
+                Self::U128(v) => v.write_xdr(w)?,
+                Self::I128(v) => v.write_xdr(w)?,
+                Self::U256(v) => v.write_xdr(w)?,
+                Self::I256(v) => v.write_xdr(w)?,
+                Self::Bytes(v) => v.write_xdr(w)?,
+                Self::String(v) => v.write_xdr(w)?,
+                Self::Symbol(v) => v.write_xdr(w)?,
+                Self::Vec(v) => v.write_xdr(w)?,
+                Self::Map(v) => v.write_xdr(w)?,
+                Self::Address(v) => v.write_xdr(w)?,
+                Self::LedgerKeyContractInstance => ().write_xdr(w)?,
+                Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
+                Self::ContractInstance(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// ScMapEntry is an XDR Struct defines as:
+//
+//   struct SCMapEntry
+//    {
+//        SCVal key;
+//        SCVal val;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ScMapEntry {
+    pub key: ScVal,
+    pub val: ScVal,
+}
+
+impl ReadXdr for ScMapEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                key: ScVal::read_xdr(r)?,
+                val: ScVal::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScMapEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.key.write_xdr(w)?;
+            self.val.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 // StoredTransactionSet is an XDR Union defines as:
 //
 //   union StoredTransactionSet switch (int v)
@@ -3397,59 +9353,6 @@ impl WriteXdr for PersistedScpState {
             };
             Ok(())
         })
-    }
-}
-
-// AccountId is an XDR Typedef defines as:
-//
-//   typedef PublicKey AccountID;
-//
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct AccountId(pub PublicKey);
-
-impl From<AccountId> for PublicKey {
-    #[must_use]
-    fn from(x: AccountId) -> Self {
-        x.0
-    }
-}
-
-impl From<PublicKey> for AccountId {
-    #[must_use]
-    fn from(x: PublicKey) -> Self {
-        AccountId(x)
-    }
-}
-
-impl AsRef<PublicKey> for AccountId {
-    #[must_use]
-    fn as_ref(&self) -> &PublicKey {
-        &self.0
-    }
-}
-
-impl ReadXdr for AccountId {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let i = PublicKey::read_xdr(r)?;
-            let v = AccountId(i);
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for AccountId {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -3821,112 +9724,6 @@ impl ReadXdr for SequenceNumber {
 }
 
 impl WriteXdr for SequenceNumber {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
-
-// TimePoint is an XDR Typedef defines as:
-//
-//   typedef uint64 TimePoint;
-//
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct TimePoint(pub u64);
-
-impl From<TimePoint> for u64 {
-    #[must_use]
-    fn from(x: TimePoint) -> Self {
-        x.0
-    }
-}
-
-impl From<u64> for TimePoint {
-    #[must_use]
-    fn from(x: u64) -> Self {
-        TimePoint(x)
-    }
-}
-
-impl AsRef<u64> for TimePoint {
-    #[must_use]
-    fn as_ref(&self) -> &u64 {
-        &self.0
-    }
-}
-
-impl ReadXdr for TimePoint {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let i = u64::read_xdr(r)?;
-            let v = TimePoint(i);
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for TimePoint {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
-
-// Duration is an XDR Typedef defines as:
-//
-//   typedef uint64 Duration;
-//
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct Duration(pub u64);
-
-impl From<Duration> for u64 {
-    #[must_use]
-    fn from(x: Duration) -> Self {
-        x.0
-    }
-}
-
-impl From<u64> for Duration {
-    #[must_use]
-    fn from(x: u64) -> Self {
-        Duration(x)
-    }
-}
-
-impl AsRef<u64> for Duration {
-    #[must_use]
-    fn as_ref(&self) -> &u64 {
-        &self.0
-    }
-}
-
-impl ReadXdr for Duration {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let i = u64::read_xdr(r)?;
-            let v = Duration(i);
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for Duration {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
@@ -4964,7 +10761,11 @@ impl WriteXdr for ThresholdIndexes {
 //        OFFER = 2,
 //        DATA = 3,
 //        CLAIMABLE_BALANCE = 4,
-//        LIQUIDITY_POOL = 5
+//        LIQUIDITY_POOL = 5,
+//        CONTRACT_DATA = 6,
+//        CONTRACT_CODE = 7,
+//        CONFIG_SETTING = 8,
+//        EXPIRATION = 9
 //    };
 //
 // enum
@@ -4983,24 +10784,36 @@ pub enum LedgerEntryType {
     Data = 3,
     ClaimableBalance = 4,
     LiquidityPool = 5,
+    ContractData = 6,
+    ContractCode = 7,
+    ConfigSetting = 8,
+    Expiration = 9,
 }
 
 impl LedgerEntryType {
-    pub const VARIANTS: [LedgerEntryType; 6] = [
+    pub const VARIANTS: [LedgerEntryType; 10] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
         LedgerEntryType::Data,
         LedgerEntryType::ClaimableBalance,
         LedgerEntryType::LiquidityPool,
+        LedgerEntryType::ContractData,
+        LedgerEntryType::ContractCode,
+        LedgerEntryType::ConfigSetting,
+        LedgerEntryType::Expiration,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "Account",
         "Trustline",
         "Offer",
         "Data",
         "ClaimableBalance",
         "LiquidityPool",
+        "ContractData",
+        "ContractCode",
+        "ConfigSetting",
+        "Expiration",
     ];
 
     #[must_use]
@@ -5012,11 +10825,15 @@ impl LedgerEntryType {
             Self::Data => "Data",
             Self::ClaimableBalance => "ClaimableBalance",
             Self::LiquidityPool => "LiquidityPool",
+            Self::ContractData => "ContractData",
+            Self::ContractCode => "ContractCode",
+            Self::ConfigSetting => "ConfigSetting",
+            Self::Expiration => "Expiration",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 6] {
+    pub const fn variants() -> [LedgerEntryType; 10] {
         Self::VARIANTS
     }
 }
@@ -5053,6 +10870,10 @@ impl TryFrom<i32> for LedgerEntryType {
             3 => LedgerEntryType::Data,
             4 => LedgerEntryType::ClaimableBalance,
             5 => LedgerEntryType::LiquidityPool,
+            6 => LedgerEntryType::ContractData,
+            7 => LedgerEntryType::ContractCode,
+            8 => LedgerEntryType::ConfigSetting,
+            9 => LedgerEntryType::Expiration,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -8647,6 +14468,256 @@ impl WriteXdr for LiquidityPoolEntry {
     }
 }
 
+// ContractDataDurability is an XDR Enum defines as:
+//
+//   enum ContractDataDurability {
+//        TEMPORARY = 0,
+//        PERSISTENT = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ContractDataDurability {
+    Temporary = 0,
+    Persistent = 1,
+}
+
+impl ContractDataDurability {
+    pub const VARIANTS: [ContractDataDurability; 2] = [
+        ContractDataDurability::Temporary,
+        ContractDataDurability::Persistent,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Temporary", "Persistent"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Temporary => "Temporary",
+            Self::Persistent => "Persistent",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractDataDurability; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractDataDurability {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ContractDataDurability> for ContractDataDurability {
+    fn variants() -> slice::Iter<'static, ContractDataDurability> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ContractDataDurability {}
+
+impl fmt::Display for ContractDataDurability {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ContractDataDurability {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ContractDataDurability::Temporary,
+            1 => ContractDataDurability::Persistent,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ContractDataDurability> for i32 {
+    #[must_use]
+    fn from(e: ContractDataDurability) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ContractDataDurability {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ContractDataDurability {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ContractDataEntry is an XDR Struct defines as:
+//
+//   struct ContractDataEntry {
+//        ExtensionPoint ext;
+//
+//        SCAddress contract;
+//        SCVal key;
+//        ContractDataDurability durability;
+//        SCVal val;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractDataEntry {
+    pub ext: ExtensionPoint,
+    pub contract: ScAddress,
+    pub key: ScVal,
+    pub durability: ContractDataDurability,
+    pub val: ScVal,
+}
+
+impl ReadXdr for ContractDataEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                contract: ScAddress::read_xdr(r)?,
+                key: ScVal::read_xdr(r)?,
+                durability: ContractDataDurability::read_xdr(r)?,
+                val: ScVal::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ContractDataEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.contract.write_xdr(w)?;
+            self.key.write_xdr(w)?;
+            self.durability.write_xdr(w)?;
+            self.val.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ContractCodeEntry is an XDR Struct defines as:
+//
+//   struct ContractCodeEntry {
+//        ExtensionPoint ext;
+//
+//        Hash hash;
+//        opaque code<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractCodeEntry {
+    pub ext: ExtensionPoint,
+    pub hash: Hash,
+    pub code: BytesM,
+}
+
+impl ReadXdr for ContractCodeEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                hash: Hash::read_xdr(r)?,
+                code: BytesM::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ContractCodeEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.hash.write_xdr(w)?;
+            self.code.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ExpirationEntry is an XDR Struct defines as:
+//
+//   struct ExpirationEntry {
+//        // Hash of the LedgerKey that is associated with this ExpirationEntry
+//        Hash keyHash;
+//        uint32 expirationLedgerSeq;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ExpirationEntry {
+    pub key_hash: Hash,
+    pub expiration_ledger_seq: u32,
+}
+
+impl ReadXdr for ExpirationEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                key_hash: Hash::read_xdr(r)?,
+                expiration_ledger_seq: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ExpirationEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.key_hash.write_xdr(w)?;
+            self.expiration_ledger_seq.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 // LedgerEntryExtensionV1Ext is an XDR NestedUnion defines as:
 //
 //   union switch (int v)
@@ -8810,6 +14881,14 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 //            ClaimableBalanceEntry claimableBalance;
 //        case LIQUIDITY_POOL:
 //            LiquidityPoolEntry liquidityPool;
+//        case CONTRACT_DATA:
+//            ContractDataEntry contractData;
+//        case CONTRACT_CODE:
+//            ContractCodeEntry contractCode;
+//        case CONFIG_SETTING:
+//            ConfigSettingEntry configSetting;
+//        case EXPIRATION:
+//            ExpirationEntry expiration;
 //        }
 //
 // union with discriminant LedgerEntryType
@@ -8828,24 +14907,36 @@ pub enum LedgerEntryData {
     Data(DataEntry),
     ClaimableBalance(ClaimableBalanceEntry),
     LiquidityPool(LiquidityPoolEntry),
+    ContractData(ContractDataEntry),
+    ContractCode(ContractCodeEntry),
+    ConfigSetting(ConfigSettingEntry),
+    Expiration(ExpirationEntry),
 }
 
 impl LedgerEntryData {
-    pub const VARIANTS: [LedgerEntryType; 6] = [
+    pub const VARIANTS: [LedgerEntryType; 10] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
         LedgerEntryType::Data,
         LedgerEntryType::ClaimableBalance,
         LedgerEntryType::LiquidityPool,
+        LedgerEntryType::ContractData,
+        LedgerEntryType::ContractCode,
+        LedgerEntryType::ConfigSetting,
+        LedgerEntryType::Expiration,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "Account",
         "Trustline",
         "Offer",
         "Data",
         "ClaimableBalance",
         "LiquidityPool",
+        "ContractData",
+        "ContractCode",
+        "ConfigSetting",
+        "Expiration",
     ];
 
     #[must_use]
@@ -8857,6 +14948,10 @@ impl LedgerEntryData {
             Self::Data(_) => "Data",
             Self::ClaimableBalance(_) => "ClaimableBalance",
             Self::LiquidityPool(_) => "LiquidityPool",
+            Self::ContractData(_) => "ContractData",
+            Self::ContractCode(_) => "ContractCode",
+            Self::ConfigSetting(_) => "ConfigSetting",
+            Self::Expiration(_) => "Expiration",
         }
     }
 
@@ -8870,11 +14965,15 @@ impl LedgerEntryData {
             Self::Data(_) => LedgerEntryType::Data,
             Self::ClaimableBalance(_) => LedgerEntryType::ClaimableBalance,
             Self::LiquidityPool(_) => LedgerEntryType::LiquidityPool,
+            Self::ContractData(_) => LedgerEntryType::ContractData,
+            Self::ContractCode(_) => LedgerEntryType::ContractCode,
+            Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
+            Self::Expiration(_) => LedgerEntryType::Expiration,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 6] {
+    pub const fn variants() -> [LedgerEntryType; 10] {
         Self::VARIANTS
     }
 }
@@ -8918,6 +15017,16 @@ impl ReadXdr for LedgerEntryData {
                 LedgerEntryType::LiquidityPool => {
                     Self::LiquidityPool(LiquidityPoolEntry::read_xdr(r)?)
                 }
+                LedgerEntryType::ContractData => {
+                    Self::ContractData(ContractDataEntry::read_xdr(r)?)
+                }
+                LedgerEntryType::ContractCode => {
+                    Self::ContractCode(ContractCodeEntry::read_xdr(r)?)
+                }
+                LedgerEntryType::ConfigSetting => {
+                    Self::ConfigSetting(ConfigSettingEntry::read_xdr(r)?)
+                }
+                LedgerEntryType::Expiration => Self::Expiration(ExpirationEntry::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -8939,6 +15048,10 @@ impl WriteXdr for LedgerEntryData {
                 Self::Data(v) => v.write_xdr(w)?,
                 Self::ClaimableBalance(v) => v.write_xdr(w)?,
                 Self::LiquidityPool(v) => v.write_xdr(w)?,
+                Self::ContractData(v) => v.write_xdr(w)?,
+                Self::ContractCode(v) => v.write_xdr(w)?,
+                Self::ConfigSetting(v) => v.write_xdr(w)?,
+                Self::Expiration(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -9070,6 +15183,14 @@ impl WriteXdr for LedgerEntryExt {
 //            ClaimableBalanceEntry claimableBalance;
 //        case LIQUIDITY_POOL:
 //            LiquidityPoolEntry liquidityPool;
+//        case CONTRACT_DATA:
+//            ContractDataEntry contractData;
+//        case CONTRACT_CODE:
+//            ContractCodeEntry contractCode;
+//        case CONFIG_SETTING:
+//            ConfigSettingEntry configSetting;
+//        case EXPIRATION:
+//            ExpirationEntry expiration;
 //        }
 //        data;
 //
@@ -9368,6 +15489,171 @@ impl WriteXdr for LedgerKeyLiquidityPool {
     }
 }
 
+// LedgerKeyContractData is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            SCAddress contract;
+//            SCVal key;
+//            ContractDataDurability durability;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerKeyContractData {
+    pub contract: ScAddress,
+    pub key: ScVal,
+    pub durability: ContractDataDurability,
+}
+
+impl ReadXdr for LedgerKeyContractData {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                contract: ScAddress::read_xdr(r)?,
+                key: ScVal::read_xdr(r)?,
+                durability: ContractDataDurability::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerKeyContractData {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.contract.write_xdr(w)?;
+            self.key.write_xdr(w)?;
+            self.durability.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// LedgerKeyContractCode is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash hash;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerKeyContractCode {
+    pub hash: Hash,
+}
+
+impl ReadXdr for LedgerKeyContractCode {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                hash: Hash::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerKeyContractCode {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// LedgerKeyConfigSetting is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            ConfigSettingID configSettingID;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerKeyConfigSetting {
+    pub config_setting_id: ConfigSettingId,
+}
+
+impl ReadXdr for LedgerKeyConfigSetting {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                config_setting_id: ConfigSettingId::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerKeyConfigSetting {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.config_setting_id.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// LedgerKeyExpiration is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            // Hash of the LedgerKey that is associated with this ExpirationEntry
+//            Hash keyHash;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerKeyExpiration {
+    pub key_hash: Hash,
+}
+
+impl ReadXdr for LedgerKeyExpiration {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                key_hash: Hash::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerKeyExpiration {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.key_hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 // LedgerKey is an XDR Union defines as:
 //
 //   union LedgerKey switch (LedgerEntryType type)
@@ -9410,6 +15696,29 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 //        {
 //            PoolID liquidityPoolID;
 //        } liquidityPool;
+//    case CONTRACT_DATA:
+//        struct
+//        {
+//            SCAddress contract;
+//            SCVal key;
+//            ContractDataDurability durability;
+//        } contractData;
+//    case CONTRACT_CODE:
+//        struct
+//        {
+//            Hash hash;
+//        } contractCode;
+//    case CONFIG_SETTING:
+//        struct
+//        {
+//            ConfigSettingID configSettingID;
+//        } configSetting;
+//    case EXPIRATION:
+//        struct
+//        {
+//            // Hash of the LedgerKey that is associated with this ExpirationEntry
+//            Hash keyHash;
+//        } expiration;
 //    };
 //
 // union with discriminant LedgerEntryType
@@ -9428,24 +15737,36 @@ pub enum LedgerKey {
     Data(LedgerKeyData),
     ClaimableBalance(LedgerKeyClaimableBalance),
     LiquidityPool(LedgerKeyLiquidityPool),
+    ContractData(LedgerKeyContractData),
+    ContractCode(LedgerKeyContractCode),
+    ConfigSetting(LedgerKeyConfigSetting),
+    Expiration(LedgerKeyExpiration),
 }
 
 impl LedgerKey {
-    pub const VARIANTS: [LedgerEntryType; 6] = [
+    pub const VARIANTS: [LedgerEntryType; 10] = [
         LedgerEntryType::Account,
         LedgerEntryType::Trustline,
         LedgerEntryType::Offer,
         LedgerEntryType::Data,
         LedgerEntryType::ClaimableBalance,
         LedgerEntryType::LiquidityPool,
+        LedgerEntryType::ContractData,
+        LedgerEntryType::ContractCode,
+        LedgerEntryType::ConfigSetting,
+        LedgerEntryType::Expiration,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "Account",
         "Trustline",
         "Offer",
         "Data",
         "ClaimableBalance",
         "LiquidityPool",
+        "ContractData",
+        "ContractCode",
+        "ConfigSetting",
+        "Expiration",
     ];
 
     #[must_use]
@@ -9457,6 +15778,10 @@ impl LedgerKey {
             Self::Data(_) => "Data",
             Self::ClaimableBalance(_) => "ClaimableBalance",
             Self::LiquidityPool(_) => "LiquidityPool",
+            Self::ContractData(_) => "ContractData",
+            Self::ContractCode(_) => "ContractCode",
+            Self::ConfigSetting(_) => "ConfigSetting",
+            Self::Expiration(_) => "Expiration",
         }
     }
 
@@ -9470,11 +15795,15 @@ impl LedgerKey {
             Self::Data(_) => LedgerEntryType::Data,
             Self::ClaimableBalance(_) => LedgerEntryType::ClaimableBalance,
             Self::LiquidityPool(_) => LedgerEntryType::LiquidityPool,
+            Self::ContractData(_) => LedgerEntryType::ContractData,
+            Self::ContractCode(_) => LedgerEntryType::ContractCode,
+            Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
+            Self::Expiration(_) => LedgerEntryType::Expiration,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryType; 6] {
+    pub const fn variants() -> [LedgerEntryType; 10] {
         Self::VARIANTS
     }
 }
@@ -9518,6 +15847,16 @@ impl ReadXdr for LedgerKey {
                 LedgerEntryType::LiquidityPool => {
                     Self::LiquidityPool(LedgerKeyLiquidityPool::read_xdr(r)?)
                 }
+                LedgerEntryType::ContractData => {
+                    Self::ContractData(LedgerKeyContractData::read_xdr(r)?)
+                }
+                LedgerEntryType::ContractCode => {
+                    Self::ContractCode(LedgerKeyContractCode::read_xdr(r)?)
+                }
+                LedgerEntryType::ConfigSetting => {
+                    Self::ConfigSetting(LedgerKeyConfigSetting::read_xdr(r)?)
+                }
+                LedgerEntryType::Expiration => Self::Expiration(LedgerKeyExpiration::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -9539,6 +15878,10 @@ impl WriteXdr for LedgerKey {
                 Self::Data(v) => v.write_xdr(w)?,
                 Self::ClaimableBalance(v) => v.write_xdr(w)?,
                 Self::LiquidityPool(v) => v.write_xdr(w)?,
+                Self::ContractData(v) => v.write_xdr(w)?,
+                Self::ContractCode(v) => v.write_xdr(w)?,
+                Self::ConfigSetting(v) => v.write_xdr(w)?,
+                Self::Expiration(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -9556,7 +15899,9 @@ impl WriteXdr for LedgerKey {
 //        ENVELOPE_TYPE_SCPVALUE = 4,
 //        ENVELOPE_TYPE_TX_FEE_BUMP = 5,
 //        ENVELOPE_TYPE_OP_ID = 6,
-//        ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7
+//        ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7,
+//        ENVELOPE_TYPE_CONTRACT_ID = 8,
+//        ENVELOPE_TYPE_SOROBAN_AUTHORIZATION = 9
 //    };
 //
 // enum
@@ -9577,10 +15922,12 @@ pub enum EnvelopeType {
     TxFeeBump = 5,
     OpId = 6,
     PoolRevokeOpId = 7,
+    ContractId = 8,
+    SorobanAuthorization = 9,
 }
 
 impl EnvelopeType {
-    pub const VARIANTS: [EnvelopeType; 8] = [
+    pub const VARIANTS: [EnvelopeType; 10] = [
         EnvelopeType::TxV0,
         EnvelopeType::Scp,
         EnvelopeType::Tx,
@@ -9589,8 +15936,10 @@ impl EnvelopeType {
         EnvelopeType::TxFeeBump,
         EnvelopeType::OpId,
         EnvelopeType::PoolRevokeOpId,
+        EnvelopeType::ContractId,
+        EnvelopeType::SorobanAuthorization,
     ];
-    pub const VARIANTS_STR: [&'static str; 8] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "TxV0",
         "Scp",
         "Tx",
@@ -9599,6 +15948,8 @@ impl EnvelopeType {
         "TxFeeBump",
         "OpId",
         "PoolRevokeOpId",
+        "ContractId",
+        "SorobanAuthorization",
     ];
 
     #[must_use]
@@ -9612,11 +15963,13 @@ impl EnvelopeType {
             Self::TxFeeBump => "TxFeeBump",
             Self::OpId => "OpId",
             Self::PoolRevokeOpId => "PoolRevokeOpId",
+            Self::ContractId => "ContractId",
+            Self::SorobanAuthorization => "SorobanAuthorization",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 8] {
+    pub const fn variants() -> [EnvelopeType; 10] {
         Self::VARIANTS
     }
 }
@@ -9655,6 +16008,8 @@ impl TryFrom<i32> for EnvelopeType {
             5 => EnvelopeType::TxFeeBump,
             6 => EnvelopeType::OpId,
             7 => EnvelopeType::PoolRevokeOpId,
+            8 => EnvelopeType::ContractId,
+            9 => EnvelopeType::SorobanAuthorization,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10602,7 +16957,9 @@ impl WriteXdr for LedgerHeader {
 //        LEDGER_UPGRADE_BASE_FEE = 2,
 //        LEDGER_UPGRADE_MAX_TX_SET_SIZE = 3,
 //        LEDGER_UPGRADE_BASE_RESERVE = 4,
-//        LEDGER_UPGRADE_FLAGS = 5
+//        LEDGER_UPGRADE_FLAGS = 5,
+//        LEDGER_UPGRADE_CONFIG = 6,
+//        LEDGER_UPGRADE_MAX_SOROBAN_TX_SET_SIZE = 7
 //    };
 //
 // enum
@@ -10620,18 +16977,29 @@ pub enum LedgerUpgradeType {
     MaxTxSetSize = 3,
     BaseReserve = 4,
     Flags = 5,
+    Config = 6,
+    MaxSorobanTxSetSize = 7,
 }
 
 impl LedgerUpgradeType {
-    pub const VARIANTS: [LedgerUpgradeType; 5] = [
+    pub const VARIANTS: [LedgerUpgradeType; 7] = [
         LedgerUpgradeType::Version,
         LedgerUpgradeType::BaseFee,
         LedgerUpgradeType::MaxTxSetSize,
         LedgerUpgradeType::BaseReserve,
         LedgerUpgradeType::Flags,
+        LedgerUpgradeType::Config,
+        LedgerUpgradeType::MaxSorobanTxSetSize,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] =
-        ["Version", "BaseFee", "MaxTxSetSize", "BaseReserve", "Flags"];
+    pub const VARIANTS_STR: [&'static str; 7] = [
+        "Version",
+        "BaseFee",
+        "MaxTxSetSize",
+        "BaseReserve",
+        "Flags",
+        "Config",
+        "MaxSorobanTxSetSize",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -10641,11 +17009,13 @@ impl LedgerUpgradeType {
             Self::MaxTxSetSize => "MaxTxSetSize",
             Self::BaseReserve => "BaseReserve",
             Self::Flags => "Flags",
+            Self::Config => "Config",
+            Self::MaxSorobanTxSetSize => "MaxSorobanTxSetSize",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerUpgradeType; 5] {
+    pub const fn variants() -> [LedgerUpgradeType; 7] {
         Self::VARIANTS
     }
 }
@@ -10681,6 +17051,8 @@ impl TryFrom<i32> for LedgerUpgradeType {
             3 => LedgerUpgradeType::MaxTxSetSize,
             4 => LedgerUpgradeType::BaseReserve,
             5 => LedgerUpgradeType::Flags,
+            6 => LedgerUpgradeType::Config,
+            7 => LedgerUpgradeType::MaxSorobanTxSetSize,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -10716,6 +17088,48 @@ impl WriteXdr for LedgerUpgradeType {
     }
 }
 
+// ConfigUpgradeSetKey is an XDR Struct defines as:
+//
+//   struct ConfigUpgradeSetKey {
+//        Hash contractID;
+//        Hash contentHash;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigUpgradeSetKey {
+    pub contract_id: Hash,
+    pub content_hash: Hash,
+}
+
+impl ReadXdr for ConfigUpgradeSetKey {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                contract_id: Hash::read_xdr(r)?,
+                content_hash: Hash::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigUpgradeSetKey {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.contract_id.write_xdr(w)?;
+            self.content_hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 // LedgerUpgrade is an XDR Union defines as:
 //
 //   union LedgerUpgrade switch (LedgerUpgradeType type)
@@ -10730,6 +17144,13 @@ impl WriteXdr for LedgerUpgradeType {
 //        uint32 newBaseReserve; // update baseReserve
 //    case LEDGER_UPGRADE_FLAGS:
 //        uint32 newFlags; // update flags
+//    case LEDGER_UPGRADE_CONFIG:
+//        // Update arbitrary `ConfigSetting` entries identified by the key.
+//        ConfigUpgradeSetKey newConfig;
+//    case LEDGER_UPGRADE_MAX_SOROBAN_TX_SET_SIZE:
+//        // Update ConfigSettingContractExecutionLanesV0.ledgerMaxTxCount without
+//        // using `LEDGER_UPGRADE_CONFIG`.
+//        uint32 newMaxSorobanTxSetSize;
 //    };
 //
 // union with discriminant LedgerUpgradeType
@@ -10747,18 +17168,29 @@ pub enum LedgerUpgrade {
     MaxTxSetSize(u32),
     BaseReserve(u32),
     Flags(u32),
+    Config(ConfigUpgradeSetKey),
+    MaxSorobanTxSetSize(u32),
 }
 
 impl LedgerUpgrade {
-    pub const VARIANTS: [LedgerUpgradeType; 5] = [
+    pub const VARIANTS: [LedgerUpgradeType; 7] = [
         LedgerUpgradeType::Version,
         LedgerUpgradeType::BaseFee,
         LedgerUpgradeType::MaxTxSetSize,
         LedgerUpgradeType::BaseReserve,
         LedgerUpgradeType::Flags,
+        LedgerUpgradeType::Config,
+        LedgerUpgradeType::MaxSorobanTxSetSize,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] =
-        ["Version", "BaseFee", "MaxTxSetSize", "BaseReserve", "Flags"];
+    pub const VARIANTS_STR: [&'static str; 7] = [
+        "Version",
+        "BaseFee",
+        "MaxTxSetSize",
+        "BaseReserve",
+        "Flags",
+        "Config",
+        "MaxSorobanTxSetSize",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -10768,6 +17200,8 @@ impl LedgerUpgrade {
             Self::MaxTxSetSize(_) => "MaxTxSetSize",
             Self::BaseReserve(_) => "BaseReserve",
             Self::Flags(_) => "Flags",
+            Self::Config(_) => "Config",
+            Self::MaxSorobanTxSetSize(_) => "MaxSorobanTxSetSize",
         }
     }
 
@@ -10780,11 +17214,13 @@ impl LedgerUpgrade {
             Self::MaxTxSetSize(_) => LedgerUpgradeType::MaxTxSetSize,
             Self::BaseReserve(_) => LedgerUpgradeType::BaseReserve,
             Self::Flags(_) => LedgerUpgradeType::Flags,
+            Self::Config(_) => LedgerUpgradeType::Config,
+            Self::MaxSorobanTxSetSize(_) => LedgerUpgradeType::MaxSorobanTxSetSize,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerUpgradeType; 5] {
+    pub const fn variants() -> [LedgerUpgradeType; 7] {
         Self::VARIANTS
     }
 }
@@ -10823,6 +17259,10 @@ impl ReadXdr for LedgerUpgrade {
                 LedgerUpgradeType::MaxTxSetSize => Self::MaxTxSetSize(u32::read_xdr(r)?),
                 LedgerUpgradeType::BaseReserve => Self::BaseReserve(u32::read_xdr(r)?),
                 LedgerUpgradeType::Flags => Self::Flags(u32::read_xdr(r)?),
+                LedgerUpgradeType::Config => Self::Config(ConfigUpgradeSetKey::read_xdr(r)?),
+                LedgerUpgradeType::MaxSorobanTxSetSize => {
+                    Self::MaxSorobanTxSetSize(u32::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -10843,7 +17283,47 @@ impl WriteXdr for LedgerUpgrade {
                 Self::MaxTxSetSize(v) => v.write_xdr(w)?,
                 Self::BaseReserve(v) => v.write_xdr(w)?,
                 Self::Flags(v) => v.write_xdr(w)?,
+                Self::Config(v) => v.write_xdr(w)?,
+                Self::MaxSorobanTxSetSize(v) => v.write_xdr(w)?,
             };
+            Ok(())
+        })
+    }
+}
+
+// ConfigUpgradeSet is an XDR Struct defines as:
+//
+//   struct ConfigUpgradeSet {
+//        ConfigSettingEntry updatedEntry<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ConfigUpgradeSet {
+    pub updated_entry: VecM<ConfigSettingEntry>,
+}
+
+impl ReadXdr for ConfigUpgradeSet {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                updated_entry: VecM::<ConfigSettingEntry>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigUpgradeSet {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.updated_entry.write_xdr(w)?;
             Ok(())
         })
     }
@@ -12983,6 +19463,528 @@ impl WriteXdr for TransactionMetaV2 {
     }
 }
 
+// ContractEventType is an XDR Enum defines as:
+//
+//   enum ContractEventType
+//    {
+//        SYSTEM = 0,
+//        CONTRACT = 1,
+//        DIAGNOSTIC = 2
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ContractEventType {
+    System = 0,
+    Contract = 1,
+    Diagnostic = 2,
+}
+
+impl ContractEventType {
+    pub const VARIANTS: [ContractEventType; 3] = [
+        ContractEventType::System,
+        ContractEventType::Contract,
+        ContractEventType::Diagnostic,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["System", "Contract", "Diagnostic"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::System => "System",
+            Self::Contract => "Contract",
+            Self::Diagnostic => "Diagnostic",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractEventType; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractEventType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ContractEventType> for ContractEventType {
+    fn variants() -> slice::Iter<'static, ContractEventType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ContractEventType {}
+
+impl fmt::Display for ContractEventType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ContractEventType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ContractEventType::System,
+            1 => ContractEventType::Contract,
+            2 => ContractEventType::Diagnostic,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ContractEventType> for i32 {
+    #[must_use]
+    fn from(e: ContractEventType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ContractEventType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ContractEventType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ContractEventV0 is an XDR NestedStruct defines as:
+//
+//   struct
+//            {
+//                SCVal topics<>;
+//                SCVal data;
+//            }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractEventV0 {
+    pub topics: VecM<ScVal>,
+    pub data: ScVal,
+}
+
+impl ReadXdr for ContractEventV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                topics: VecM::<ScVal>::read_xdr(r)?,
+                data: ScVal::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ContractEventV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.topics.write_xdr(w)?;
+            self.data.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ContractEventBody is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            struct
+//            {
+//                SCVal topics<>;
+//                SCVal data;
+//            } v0;
+//        }
+//
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ContractEventBody {
+    V0(ContractEventV0),
+}
+
+impl ContractEventBody {
+    pub const VARIANTS: [i32; 1] = [0];
+    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0(_) => "V0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0(_) => 0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractEventBody {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for ContractEventBody {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for ContractEventBody {
+    fn variants() -> slice::Iter<'static, i32> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<i32> for ContractEventBody {}
+
+impl ReadXdr for ContractEventBody {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0(ContractEventV0::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ContractEventBody {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// ContractEvent is an XDR Struct defines as:
+//
+//   struct ContractEvent
+//    {
+//        // We can use this to add more fields, or because it
+//        // is first, to change ContractEvent into a union.
+//        ExtensionPoint ext;
+//
+//        Hash* contractID;
+//        ContractEventType type;
+//
+//        union switch (int v)
+//        {
+//        case 0:
+//            struct
+//            {
+//                SCVal topics<>;
+//                SCVal data;
+//            } v0;
+//        }
+//        body;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractEvent {
+    pub ext: ExtensionPoint,
+    pub contract_id: Option<Hash>,
+    pub type_: ContractEventType,
+    pub body: ContractEventBody,
+}
+
+impl ReadXdr for ContractEvent {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                contract_id: Option::<Hash>::read_xdr(r)?,
+                type_: ContractEventType::read_xdr(r)?,
+                body: ContractEventBody::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ContractEvent {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.contract_id.write_xdr(w)?;
+            self.type_.write_xdr(w)?;
+            self.body.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// DiagnosticEvent is an XDR Struct defines as:
+//
+//   struct DiagnosticEvent
+//    {
+//        bool inSuccessfulContractCall;
+//        ContractEvent event;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct DiagnosticEvent {
+    pub in_successful_contract_call: bool,
+    pub event: ContractEvent,
+}
+
+impl ReadXdr for DiagnosticEvent {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                in_successful_contract_call: bool::read_xdr(r)?,
+                event: ContractEvent::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for DiagnosticEvent {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.in_successful_contract_call.write_xdr(w)?;
+            self.event.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// SorobanTransactionMeta is an XDR Struct defines as:
+//
+//   struct SorobanTransactionMeta
+//    {
+//        ExtensionPoint ext;
+//
+//        ContractEvent events<>;             // custom events populated by the
+//                                            // contracts themselves.
+//        SCVal returnValue;                  // return value of the host fn invocation
+//
+//        // Diagnostics events that are not hashed.
+//        // This will contain all contract and diagnostic events. Even ones
+//        // that were emitted in a failed contract call.
+//        DiagnosticEvent diagnosticEvents<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct SorobanTransactionMeta {
+    pub ext: ExtensionPoint,
+    pub events: VecM<ContractEvent>,
+    pub return_value: ScVal,
+    pub diagnostic_events: VecM<DiagnosticEvent>,
+}
+
+impl ReadXdr for SorobanTransactionMeta {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                events: VecM::<ContractEvent>::read_xdr(r)?,
+                return_value: ScVal::read_xdr(r)?,
+                diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SorobanTransactionMeta {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.events.write_xdr(w)?;
+            self.return_value.write_xdr(w)?;
+            self.diagnostic_events.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// TransactionMetaV3 is an XDR Struct defines as:
+//
+//   struct TransactionMetaV3
+//    {
+//        ExtensionPoint ext;
+//
+//        LedgerEntryChanges txChangesBefore;  // tx level changes before operations
+//                                             // are applied if any
+//        OperationMeta operations<>;          // meta for each operation
+//        LedgerEntryChanges txChangesAfter;   // tx level changes after operations are
+//                                             // applied if any
+//        SorobanTransactionMeta* sorobanMeta; // Soroban-specific meta (only for
+//                                             // Soroban transactions).
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct TransactionMetaV3 {
+    pub ext: ExtensionPoint,
+    pub tx_changes_before: LedgerEntryChanges,
+    pub operations: VecM<OperationMeta>,
+    pub tx_changes_after: LedgerEntryChanges,
+    pub soroban_meta: Option<SorobanTransactionMeta>,
+}
+
+impl ReadXdr for TransactionMetaV3 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
+                operations: VecM::<OperationMeta>::read_xdr(r)?,
+                tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
+                soroban_meta: Option::<SorobanTransactionMeta>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TransactionMetaV3 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.tx_changes_before.write_xdr(w)?;
+            self.operations.write_xdr(w)?;
+            self.tx_changes_after.write_xdr(w)?;
+            self.soroban_meta.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// InvokeHostFunctionSuccessPreImage is an XDR Struct defines as:
+//
+//   struct InvokeHostFunctionSuccessPreImage
+//    {
+//        SCVal returnValue;
+//        ContractEvent events<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct InvokeHostFunctionSuccessPreImage {
+    pub return_value: ScVal,
+    pub events: VecM<ContractEvent>,
+}
+
+impl ReadXdr for InvokeHostFunctionSuccessPreImage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                return_value: ScVal::read_xdr(r)?,
+                events: VecM::<ContractEvent>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for InvokeHostFunctionSuccessPreImage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.return_value.write_xdr(w)?;
+            self.events.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 // TransactionMeta is an XDR Union defines as:
 //
 //   union TransactionMeta switch (int v)
@@ -12993,6 +19995,8 @@ impl WriteXdr for TransactionMetaV2 {
 //        TransactionMetaV1 v1;
 //    case 2:
 //        TransactionMetaV2 v2;
+//    case 3:
+//        TransactionMetaV3 v3;
 //    };
 //
 // union with discriminant i32
@@ -13008,11 +20012,12 @@ pub enum TransactionMeta {
     V0(VecM<OperationMeta>),
     V1(TransactionMetaV1),
     V2(TransactionMetaV2),
+    V3(TransactionMetaV3),
 }
 
 impl TransactionMeta {
-    pub const VARIANTS: [i32; 3] = [0, 1, 2];
-    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
+    pub const VARIANTS: [i32; 4] = [0, 1, 2, 3];
+    pub const VARIANTS_STR: [&'static str; 4] = ["V0", "V1", "V2", "V3"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -13020,6 +20025,7 @@ impl TransactionMeta {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
             Self::V2(_) => "V2",
+            Self::V3(_) => "V3",
         }
     }
 
@@ -13030,11 +20036,12 @@ impl TransactionMeta {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
             Self::V2(_) => 2,
+            Self::V3(_) => 3,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 3] {
+    pub const fn variants() -> [i32; 4] {
         Self::VARIANTS
     }
 }
@@ -13071,6 +20078,7 @@ impl ReadXdr for TransactionMeta {
                 0 => Self::V0(VecM::<OperationMeta>::read_xdr(r)?),
                 1 => Self::V1(TransactionMetaV1::read_xdr(r)?),
                 2 => Self::V2(TransactionMetaV2::read_xdr(r)?),
+                3 => Self::V3(TransactionMetaV3::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -13089,6 +20097,7 @@ impl WriteXdr for TransactionMeta {
                 Self::V0(v) => v.write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
                 Self::V2(v) => v.write_xdr(w)?,
+                Self::V3(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -13313,6 +20322,97 @@ impl WriteXdr for LedgerCloseMetaV1 {
     }
 }
 
+// LedgerCloseMetaV2 is an XDR Struct defines as:
+//
+//   struct LedgerCloseMetaV2
+//    {
+//        // We forgot to add an ExtensionPoint in v1 but at least
+//        // we can add one now in v2.
+//        ExtensionPoint ext;
+//
+//        LedgerHeaderHistoryEntry ledgerHeader;
+//
+//        GeneralizedTransactionSet txSet;
+//
+//        // NB: transactions are sorted in apply order here
+//        // fees for all transactions are processed first
+//        // followed by applying transactions
+//        TransactionResultMeta txProcessing<>;
+//
+//        // upgrades are applied last
+//        UpgradeEntryMeta upgradesProcessing<>;
+//
+//        // other misc information attached to the ledger close
+//        SCPHistoryEntry scpInfo<>;
+//
+//        // Size in bytes of BucketList, to support downstream
+//        // systems calculating storage fees correctly.
+//        uint64 totalByteSizeOfBucketList;
+//
+//        // Expired temp keys that are being evicted at this ledger.
+//        LedgerKey evictedTemporaryLedgerKeys<>;
+//
+//        // Expired restorable ledger entries that are being
+//        // evicted at this ledger.
+//        LedgerEntry evictedPersistentLedgerEntries<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerCloseMetaV2 {
+    pub ext: ExtensionPoint,
+    pub ledger_header: LedgerHeaderHistoryEntry,
+    pub tx_set: GeneralizedTransactionSet,
+    pub tx_processing: VecM<TransactionResultMeta>,
+    pub upgrades_processing: VecM<UpgradeEntryMeta>,
+    pub scp_info: VecM<ScpHistoryEntry>,
+    pub total_byte_size_of_bucket_list: u64,
+    pub evicted_temporary_ledger_keys: VecM<LedgerKey>,
+    pub evicted_persistent_ledger_entries: VecM<LedgerEntry>,
+}
+
+impl ReadXdr for LedgerCloseMetaV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
+                tx_set: GeneralizedTransactionSet::read_xdr(r)?,
+                tx_processing: VecM::<TransactionResultMeta>::read_xdr(r)?,
+                upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
+                scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
+                total_byte_size_of_bucket_list: u64::read_xdr(r)?,
+                evicted_temporary_ledger_keys: VecM::<LedgerKey>::read_xdr(r)?,
+                evicted_persistent_ledger_entries: VecM::<LedgerEntry>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerCloseMetaV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.ledger_header.write_xdr(w)?;
+            self.tx_set.write_xdr(w)?;
+            self.tx_processing.write_xdr(w)?;
+            self.upgrades_processing.write_xdr(w)?;
+            self.scp_info.write_xdr(w)?;
+            self.total_byte_size_of_bucket_list.write_xdr(w)?;
+            self.evicted_temporary_ledger_keys.write_xdr(w)?;
+            self.evicted_persistent_ledger_entries.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 // LedgerCloseMeta is an XDR Union defines as:
 //
 //   union LedgerCloseMeta switch (int v)
@@ -13321,6 +20421,8 @@ impl WriteXdr for LedgerCloseMetaV1 {
 //        LedgerCloseMetaV0 v0;
 //    case 1:
 //        LedgerCloseMetaV1 v1;
+//    case 2:
+//        LedgerCloseMetaV2 v2;
 //    };
 //
 // union with discriminant i32
@@ -13335,17 +20437,19 @@ impl WriteXdr for LedgerCloseMetaV1 {
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
     V1(LedgerCloseMetaV1),
+    V2(LedgerCloseMetaV2),
 }
 
 impl LedgerCloseMeta {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: [i32; 3] = [0, 1, 2];
+    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
+            Self::V2(_) => "V2",
         }
     }
 
@@ -13355,11 +20459,12 @@ impl LedgerCloseMeta {
         match self {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
+            Self::V2(_) => 2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> [i32; 3] {
         Self::VARIANTS
     }
 }
@@ -13395,6 +20500,7 @@ impl ReadXdr for LedgerCloseMeta {
             let v = match dv {
                 0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
                 1 => Self::V1(LedgerCloseMetaV1::read_xdr(r)?),
+                2 => Self::V2(LedgerCloseMetaV2::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -13412,6 +20518,7 @@ impl WriteXdr for LedgerCloseMeta {
             match self {
                 Self::V0(v) => v.write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
+                Self::V2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -13621,6 +20728,49 @@ impl WriteXdr for SendMore {
     }
 }
 
+// SendMoreExtended is an XDR Struct defines as:
+//
+//   struct SendMoreExtended
+//    {
+//        uint32 numMessages;
+//        uint32 numBytes;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct SendMoreExtended {
+    pub num_messages: u32,
+    pub num_bytes: u32,
+}
+
+impl ReadXdr for SendMoreExtended {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                num_messages: u32::read_xdr(r)?,
+                num_bytes: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SendMoreExtended {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.num_messages.write_xdr(w)?;
+            self.num_bytes.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 // AuthCert is an XDR Struct defines as:
 //
 //   struct AuthCert
@@ -13739,11 +20889,11 @@ impl WriteXdr for Hello {
     }
 }
 
-// AuthMsgFlagPullModeRequested is an XDR Const defines as:
+// AuthMsgFlagFlowControlBytesRequested is an XDR Const defines as:
 //
-//   const AUTH_MSG_FLAG_PULL_MODE_REQUESTED = 100;
+//   const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED = 200;
 //
-pub const AUTH_MSG_FLAG_PULL_MODE_REQUESTED: u64 = 100;
+pub const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED: u64 = 200;
 
 // Auth is an XDR Struct defines as:
 //
@@ -14076,6 +21226,8 @@ impl WriteXdr for PeerAddress {
 //        SURVEY_RESPONSE = 15,
 //
 //        SEND_MORE = 16,
+//        SEND_MORE_EXTENDED = 20,
+//
 //        FLOOD_ADVERT = 18,
 //        FLOOD_DEMAND = 19
 //    };
@@ -14107,12 +21259,13 @@ pub enum MessageType {
     SurveyRequest = 14,
     SurveyResponse = 15,
     SendMore = 16,
+    SendMoreExtended = 20,
     FloodAdvert = 18,
     FloodDemand = 19,
 }
 
 impl MessageType {
-    pub const VARIANTS: [MessageType; 19] = [
+    pub const VARIANTS: [MessageType; 20] = [
         MessageType::ErrorMsg,
         MessageType::Auth,
         MessageType::DontHave,
@@ -14130,10 +21283,11 @@ impl MessageType {
         MessageType::SurveyRequest,
         MessageType::SurveyResponse,
         MessageType::SendMore,
+        MessageType::SendMoreExtended,
         MessageType::FloodAdvert,
         MessageType::FloodDemand,
     ];
-    pub const VARIANTS_STR: [&'static str; 19] = [
+    pub const VARIANTS_STR: [&'static str; 20] = [
         "ErrorMsg",
         "Auth",
         "DontHave",
@@ -14151,6 +21305,7 @@ impl MessageType {
         "SurveyRequest",
         "SurveyResponse",
         "SendMore",
+        "SendMoreExtended",
         "FloodAdvert",
         "FloodDemand",
     ];
@@ -14175,13 +21330,14 @@ impl MessageType {
             Self::SurveyRequest => "SurveyRequest",
             Self::SurveyResponse => "SurveyResponse",
             Self::SendMore => "SendMore",
+            Self::SendMoreExtended => "SendMoreExtended",
             Self::FloodAdvert => "FloodAdvert",
             Self::FloodDemand => "FloodDemand",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 19] {
+    pub const fn variants() -> [MessageType; 20] {
         Self::VARIANTS
     }
 }
@@ -14229,6 +21385,7 @@ impl TryFrom<i32> for MessageType {
             14 => MessageType::SurveyRequest,
             15 => MessageType::SurveyResponse,
             16 => MessageType::SendMore,
+            20 => MessageType::SendMoreExtended,
             18 => MessageType::FloodAdvert,
             19 => MessageType::FloodDemand,
             #[allow(unreachable_patterns)]
@@ -14399,6 +21556,110 @@ impl ReadXdr for SurveyMessageCommandType {
 }
 
 impl WriteXdr for SurveyMessageCommandType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// SurveyMessageResponseType is an XDR Enum defines as:
+//
+//   enum SurveyMessageResponseType
+//    {
+//        SURVEY_TOPOLOGY_RESPONSE_V0 = 0,
+//        SURVEY_TOPOLOGY_RESPONSE_V1 = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum SurveyMessageResponseType {
+    V0 = 0,
+    V1 = 1,
+}
+
+impl SurveyMessageResponseType {
+    pub const VARIANTS: [SurveyMessageResponseType; 2] =
+        [SurveyMessageResponseType::V0, SurveyMessageResponseType::V1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0 => "V0",
+            Self::V1 => "V1",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [SurveyMessageResponseType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SurveyMessageResponseType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<SurveyMessageResponseType> for SurveyMessageResponseType {
+    fn variants() -> slice::Iter<'static, SurveyMessageResponseType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for SurveyMessageResponseType {}
+
+impl fmt::Display for SurveyMessageResponseType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for SurveyMessageResponseType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => SurveyMessageResponseType::V0,
+            1 => SurveyMessageResponseType::V1,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<SurveyMessageResponseType> for i32 {
+    #[must_use]
+    fn from(e: SurveyMessageResponseType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for SurveyMessageResponseType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for SurveyMessageResponseType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -14905,9 +22166,9 @@ impl AsRef<[PeerStats]> for PeerStatList {
     }
 }
 
-// TopologyResponseBody is an XDR Struct defines as:
+// TopologyResponseBodyV0 is an XDR Struct defines as:
 //
-//   struct TopologyResponseBody
+//   struct TopologyResponseBodyV0
 //    {
 //        PeerStatList inboundPeers;
 //        PeerStatList outboundPeers;
@@ -14923,14 +22184,14 @@ impl AsRef<[PeerStats]> for PeerStatList {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct TopologyResponseBody {
+pub struct TopologyResponseBodyV0 {
     pub inbound_peers: PeerStatList,
     pub outbound_peers: PeerStatList,
     pub total_inbound_peer_count: u32,
     pub total_outbound_peer_count: u32,
 }
 
-impl ReadXdr for TopologyResponseBody {
+impl ReadXdr for TopologyResponseBodyV0 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
@@ -14944,7 +22205,7 @@ impl ReadXdr for TopologyResponseBody {
     }
 }
 
-impl WriteXdr for TopologyResponseBody {
+impl WriteXdr for TopologyResponseBodyV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -14957,15 +22218,78 @@ impl WriteXdr for TopologyResponseBody {
     }
 }
 
-// SurveyResponseBody is an XDR Union defines as:
+// TopologyResponseBodyV1 is an XDR Struct defines as:
 //
-//   union SurveyResponseBody switch (SurveyMessageCommandType type)
+//   struct TopologyResponseBodyV1
 //    {
-//    case SURVEY_TOPOLOGY:
-//        TopologyResponseBody topologyResponseBody;
+//        PeerStatList inboundPeers;
+//        PeerStatList outboundPeers;
+//
+//        uint32 totalInboundPeerCount;
+//        uint32 totalOutboundPeerCount;
+//
+//        uint32 maxInboundPeerCount;
+//        uint32 maxOutboundPeerCount;
 //    };
 //
-// union with discriminant SurveyMessageCommandType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct TopologyResponseBodyV1 {
+    pub inbound_peers: PeerStatList,
+    pub outbound_peers: PeerStatList,
+    pub total_inbound_peer_count: u32,
+    pub total_outbound_peer_count: u32,
+    pub max_inbound_peer_count: u32,
+    pub max_outbound_peer_count: u32,
+}
+
+impl ReadXdr for TopologyResponseBodyV1 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                inbound_peers: PeerStatList::read_xdr(r)?,
+                outbound_peers: PeerStatList::read_xdr(r)?,
+                total_inbound_peer_count: u32::read_xdr(r)?,
+                total_outbound_peer_count: u32::read_xdr(r)?,
+                max_inbound_peer_count: u32::read_xdr(r)?,
+                max_outbound_peer_count: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TopologyResponseBodyV1 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.inbound_peers.write_xdr(w)?;
+            self.outbound_peers.write_xdr(w)?;
+            self.total_inbound_peer_count.write_xdr(w)?;
+            self.total_outbound_peer_count.write_xdr(w)?;
+            self.max_inbound_peer_count.write_xdr(w)?;
+            self.max_outbound_peer_count.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// SurveyResponseBody is an XDR Union defines as:
+//
+//   union SurveyResponseBody switch (SurveyMessageResponseType type)
+//    {
+//    case SURVEY_TOPOLOGY_RESPONSE_V0:
+//        TopologyResponseBodyV0 topologyResponseBodyV0;
+//    case SURVEY_TOPOLOGY_RESPONSE_V1:
+//        TopologyResponseBodyV1 topologyResponseBodyV1;
+//    };
+//
+// union with discriminant SurveyMessageResponseType
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -14975,30 +22299,34 @@ impl WriteXdr for TopologyResponseBody {
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SurveyResponseBody {
-    SurveyTopology(TopologyResponseBody),
+    V0(TopologyResponseBodyV0),
+    V1(TopologyResponseBodyV1),
 }
 
 impl SurveyResponseBody {
-    pub const VARIANTS: [SurveyMessageCommandType; 1] = [SurveyMessageCommandType::SurveyTopology];
-    pub const VARIANTS_STR: [&'static str; 1] = ["SurveyTopology"];
+    pub const VARIANTS: [SurveyMessageResponseType; 2] =
+        [SurveyMessageResponseType::V0, SurveyMessageResponseType::V1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::SurveyTopology(_) => "SurveyTopology",
+            Self::V0(_) => "V0",
+            Self::V1(_) => "V1",
         }
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> SurveyMessageCommandType {
+    pub const fn discriminant(&self) -> SurveyMessageResponseType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::SurveyTopology(_) => SurveyMessageCommandType::SurveyTopology,
+            Self::V0(_) => SurveyMessageResponseType::V0,
+            Self::V1(_) => SurveyMessageResponseType::V1,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SurveyMessageCommandType; 1] {
+    pub const fn variants() -> [SurveyMessageResponseType; 2] {
         Self::VARIANTS
     }
 }
@@ -15010,31 +22338,31 @@ impl Name for SurveyResponseBody {
     }
 }
 
-impl Discriminant<SurveyMessageCommandType> for SurveyResponseBody {
+impl Discriminant<SurveyMessageResponseType> for SurveyResponseBody {
     #[must_use]
-    fn discriminant(&self) -> SurveyMessageCommandType {
+    fn discriminant(&self) -> SurveyMessageResponseType {
         Self::discriminant(self)
     }
 }
 
-impl Variants<SurveyMessageCommandType> for SurveyResponseBody {
-    fn variants() -> slice::Iter<'static, SurveyMessageCommandType> {
+impl Variants<SurveyMessageResponseType> for SurveyResponseBody {
+    fn variants() -> slice::Iter<'static, SurveyMessageResponseType> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<SurveyMessageCommandType> for SurveyResponseBody {}
+impl Union<SurveyMessageResponseType> for SurveyResponseBody {}
 
 impl ReadXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
-            let dv: SurveyMessageCommandType = <SurveyMessageCommandType as ReadXdr>::read_xdr(r)?;
+            let dv: SurveyMessageResponseType =
+                <SurveyMessageResponseType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                SurveyMessageCommandType::SurveyTopology => {
-                    Self::SurveyTopology(TopologyResponseBody::read_xdr(r)?)
-                }
+                SurveyMessageResponseType::V0 => Self::V0(TopologyResponseBodyV0::read_xdr(r)?),
+                SurveyMessageResponseType::V1 => Self::V1(TopologyResponseBodyV1::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -15050,7 +22378,8 @@ impl WriteXdr for SurveyResponseBody {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
             match self {
-                Self::SurveyTopology(v) => v.write_xdr(w)?,
+                Self::V0(v) => v.write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -15395,7 +22724,8 @@ impl WriteXdr for FloodDemand {
 //        uint32 getSCPLedgerSeq; // ledger seq requested ; if 0, requests the latest
 //    case SEND_MORE:
 //        SendMore sendMoreMessage;
-//
+//    case SEND_MORE_EXTENDED:
+//        SendMoreExtended sendMoreExtendedMessage;
 //    // Pull mode
 //    case FLOOD_ADVERT:
 //         FloodAdvert floodAdvert;
@@ -15430,12 +22760,13 @@ pub enum StellarMessage {
     ScpMessage(ScpEnvelope),
     GetScpState(u32),
     SendMore(SendMore),
+    SendMoreExtended(SendMoreExtended),
     FloodAdvert(FloodAdvert),
     FloodDemand(FloodDemand),
 }
 
 impl StellarMessage {
-    pub const VARIANTS: [MessageType; 19] = [
+    pub const VARIANTS: [MessageType; 20] = [
         MessageType::ErrorMsg,
         MessageType::Hello,
         MessageType::Auth,
@@ -15453,10 +22784,11 @@ impl StellarMessage {
         MessageType::ScpMessage,
         MessageType::GetScpState,
         MessageType::SendMore,
+        MessageType::SendMoreExtended,
         MessageType::FloodAdvert,
         MessageType::FloodDemand,
     ];
-    pub const VARIANTS_STR: [&'static str; 19] = [
+    pub const VARIANTS_STR: [&'static str; 20] = [
         "ErrorMsg",
         "Hello",
         "Auth",
@@ -15474,6 +22806,7 @@ impl StellarMessage {
         "ScpMessage",
         "GetScpState",
         "SendMore",
+        "SendMoreExtended",
         "FloodAdvert",
         "FloodDemand",
     ];
@@ -15498,6 +22831,7 @@ impl StellarMessage {
             Self::ScpMessage(_) => "ScpMessage",
             Self::GetScpState(_) => "GetScpState",
             Self::SendMore(_) => "SendMore",
+            Self::SendMoreExtended(_) => "SendMoreExtended",
             Self::FloodAdvert(_) => "FloodAdvert",
             Self::FloodDemand(_) => "FloodDemand",
         }
@@ -15524,13 +22858,14 @@ impl StellarMessage {
             Self::ScpMessage(_) => MessageType::ScpMessage,
             Self::GetScpState(_) => MessageType::GetScpState,
             Self::SendMore(_) => MessageType::SendMore,
+            Self::SendMoreExtended(_) => MessageType::SendMoreExtended,
             Self::FloodAdvert(_) => MessageType::FloodAdvert,
             Self::FloodDemand(_) => MessageType::FloodDemand,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 19] {
+    pub const fn variants() -> [MessageType; 20] {
         Self::VARIANTS
     }
 }
@@ -15587,6 +22922,9 @@ impl ReadXdr for StellarMessage {
                 MessageType::ScpMessage => Self::ScpMessage(ScpEnvelope::read_xdr(r)?),
                 MessageType::GetScpState => Self::GetScpState(u32::read_xdr(r)?),
                 MessageType::SendMore => Self::SendMore(SendMore::read_xdr(r)?),
+                MessageType::SendMoreExtended => {
+                    Self::SendMoreExtended(SendMoreExtended::read_xdr(r)?)
+                }
                 MessageType::FloodAdvert => Self::FloodAdvert(FloodAdvert::read_xdr(r)?),
                 MessageType::FloodDemand => Self::FloodDemand(FloodDemand::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
@@ -15621,6 +22959,7 @@ impl WriteXdr for StellarMessage {
                 Self::ScpMessage(v) => v.write_xdr(w)?,
                 Self::GetScpState(v) => v.write_xdr(w)?,
                 Self::SendMore(v) => v.write_xdr(w)?,
+                Self::SendMoreExtended(v) => v.write_xdr(w)?,
                 Self::FloodAdvert(v) => v.write_xdr(w)?,
                 Self::FloodDemand(v) => v.write_xdr(w)?,
             };
@@ -15778,6 +23117,12 @@ impl WriteXdr for AuthenticatedMessage {
         })
     }
 }
+
+// MaxOpsPerTx is an XDR Const defines as:
+//
+//   const MAX_OPS_PER_TX = 100;
+//
+pub const MAX_OPS_PER_TX: u64 = 100;
 
 // LiquidityPoolParameters is an XDR Union defines as:
 //
@@ -16107,7 +23452,10 @@ impl WriteXdr for DecoratedSignature {
 //        CLAWBACK_CLAIMABLE_BALANCE = 20,
 //        SET_TRUST_LINE_FLAGS = 21,
 //        LIQUIDITY_POOL_DEPOSIT = 22,
-//        LIQUIDITY_POOL_WITHDRAW = 23
+//        LIQUIDITY_POOL_WITHDRAW = 23,
+//        INVOKE_HOST_FUNCTION = 24,
+//        BUMP_FOOTPRINT_EXPIRATION = 25,
+//        RESTORE_FOOTPRINT = 26
 //    };
 //
 // enum
@@ -16144,10 +23492,13 @@ pub enum OperationType {
     SetTrustLineFlags = 21,
     LiquidityPoolDeposit = 22,
     LiquidityPoolWithdraw = 23,
+    InvokeHostFunction = 24,
+    BumpFootprintExpiration = 25,
+    RestoreFootprint = 26,
 }
 
 impl OperationType {
-    pub const VARIANTS: [OperationType; 24] = [
+    pub const VARIANTS: [OperationType; 27] = [
         OperationType::CreateAccount,
         OperationType::Payment,
         OperationType::PathPaymentStrictReceive,
@@ -16172,8 +23523,11 @@ impl OperationType {
         OperationType::SetTrustLineFlags,
         OperationType::LiquidityPoolDeposit,
         OperationType::LiquidityPoolWithdraw,
+        OperationType::InvokeHostFunction,
+        OperationType::BumpFootprintExpiration,
+        OperationType::RestoreFootprint,
     ];
-    pub const VARIANTS_STR: [&'static str; 24] = [
+    pub const VARIANTS_STR: [&'static str; 27] = [
         "CreateAccount",
         "Payment",
         "PathPaymentStrictReceive",
@@ -16198,6 +23552,9 @@ impl OperationType {
         "SetTrustLineFlags",
         "LiquidityPoolDeposit",
         "LiquidityPoolWithdraw",
+        "InvokeHostFunction",
+        "BumpFootprintExpiration",
+        "RestoreFootprint",
     ];
 
     #[must_use]
@@ -16227,11 +23584,14 @@ impl OperationType {
             Self::SetTrustLineFlags => "SetTrustLineFlags",
             Self::LiquidityPoolDeposit => "LiquidityPoolDeposit",
             Self::LiquidityPoolWithdraw => "LiquidityPoolWithdraw",
+            Self::InvokeHostFunction => "InvokeHostFunction",
+            Self::BumpFootprintExpiration => "BumpFootprintExpiration",
+            Self::RestoreFootprint => "RestoreFootprint",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [OperationType; 24] {
+    pub const fn variants() -> [OperationType; 27] {
         Self::VARIANTS
     }
 }
@@ -16286,6 +23646,9 @@ impl TryFrom<i32> for OperationType {
             21 => OperationType::SetTrustLineFlags,
             22 => OperationType::LiquidityPoolDeposit,
             23 => OperationType::LiquidityPoolWithdraw,
+            24 => OperationType::InvokeHostFunction,
+            25 => OperationType::BumpFootprintExpiration,
+            26 => OperationType::RestoreFootprint,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17725,6 +25088,1292 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
     }
 }
 
+// HostFunctionType is an XDR Enum defines as:
+//
+//   enum HostFunctionType
+//    {
+//        HOST_FUNCTION_TYPE_INVOKE_CONTRACT = 0,
+//        HOST_FUNCTION_TYPE_CREATE_CONTRACT = 1,
+//        HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM = 2
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum HostFunctionType {
+    InvokeContract = 0,
+    CreateContract = 1,
+    UploadContractWasm = 2,
+}
+
+impl HostFunctionType {
+    pub const VARIANTS: [HostFunctionType; 3] = [
+        HostFunctionType::InvokeContract,
+        HostFunctionType::CreateContract,
+        HostFunctionType::UploadContractWasm,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] =
+        ["InvokeContract", "CreateContract", "UploadContractWasm"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::InvokeContract => "InvokeContract",
+            Self::CreateContract => "CreateContract",
+            Self::UploadContractWasm => "UploadContractWasm",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [HostFunctionType; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for HostFunctionType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<HostFunctionType> for HostFunctionType {
+    fn variants() -> slice::Iter<'static, HostFunctionType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for HostFunctionType {}
+
+impl fmt::Display for HostFunctionType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for HostFunctionType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => HostFunctionType::InvokeContract,
+            1 => HostFunctionType::CreateContract,
+            2 => HostFunctionType::UploadContractWasm,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<HostFunctionType> for i32 {
+    #[must_use]
+    fn from(e: HostFunctionType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for HostFunctionType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for HostFunctionType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ContractIdPreimageType is an XDR Enum defines as:
+//
+//   enum ContractIDPreimageType
+//    {
+//        CONTRACT_ID_PREIMAGE_FROM_ADDRESS = 0,
+//        CONTRACT_ID_PREIMAGE_FROM_ASSET = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum ContractIdPreimageType {
+    Address = 0,
+    Asset = 1,
+}
+
+impl ContractIdPreimageType {
+    pub const VARIANTS: [ContractIdPreimageType; 2] = [
+        ContractIdPreimageType::Address,
+        ContractIdPreimageType::Asset,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Address", "Asset"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Address => "Address",
+            Self::Asset => "Asset",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractIdPreimageType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractIdPreimageType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ContractIdPreimageType> for ContractIdPreimageType {
+    fn variants() -> slice::Iter<'static, ContractIdPreimageType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ContractIdPreimageType {}
+
+impl fmt::Display for ContractIdPreimageType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ContractIdPreimageType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ContractIdPreimageType::Address,
+            1 => ContractIdPreimageType::Asset,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ContractIdPreimageType> for i32 {
+    #[must_use]
+    fn from(e: ContractIdPreimageType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ContractIdPreimageType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ContractIdPreimageType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// ContractIdPreimageFromAddress is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            SCAddress address;
+//            uint256 salt;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractIdPreimageFromAddress {
+    pub address: ScAddress,
+    pub salt: Uint256,
+}
+
+impl ReadXdr for ContractIdPreimageFromAddress {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                address: ScAddress::read_xdr(r)?,
+                salt: Uint256::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ContractIdPreimageFromAddress {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.address.write_xdr(w)?;
+            self.salt.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// ContractIdPreimage is an XDR Union defines as:
+//
+//   union ContractIDPreimage switch (ContractIDPreimageType type)
+//    {
+//    case CONTRACT_ID_PREIMAGE_FROM_ADDRESS:
+//        struct
+//        {
+//            SCAddress address;
+//            uint256 salt;
+//        } fromAddress;
+//    case CONTRACT_ID_PREIMAGE_FROM_ASSET:
+//        Asset fromAsset;
+//    };
+//
+// union with discriminant ContractIdPreimageType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ContractIdPreimage {
+    Address(ContractIdPreimageFromAddress),
+    Asset(Asset),
+}
+
+impl ContractIdPreimage {
+    pub const VARIANTS: [ContractIdPreimageType; 2] = [
+        ContractIdPreimageType::Address,
+        ContractIdPreimageType::Asset,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Address", "Asset"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Address(_) => "Address",
+            Self::Asset(_) => "Asset",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ContractIdPreimageType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Address(_) => ContractIdPreimageType::Address,
+            Self::Asset(_) => ContractIdPreimageType::Asset,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ContractIdPreimageType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractIdPreimage {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ContractIdPreimageType> for ContractIdPreimage {
+    #[must_use]
+    fn discriminant(&self) -> ContractIdPreimageType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ContractIdPreimageType> for ContractIdPreimage {
+    fn variants() -> slice::Iter<'static, ContractIdPreimageType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ContractIdPreimageType> for ContractIdPreimage {}
+
+impl ReadXdr for ContractIdPreimage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ContractIdPreimageType = <ContractIdPreimageType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ContractIdPreimageType::Address => {
+                    Self::Address(ContractIdPreimageFromAddress::read_xdr(r)?)
+                }
+                ContractIdPreimageType::Asset => Self::Asset(Asset::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ContractIdPreimage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Address(v) => v.write_xdr(w)?,
+                Self::Asset(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// CreateContractArgs is an XDR Struct defines as:
+//
+//   struct CreateContractArgs
+//    {
+//        ContractIDPreimage contractIDPreimage;
+//        ContractExecutable executable;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct CreateContractArgs {
+    pub contract_id_preimage: ContractIdPreimage,
+    pub executable: ContractExecutable,
+}
+
+impl ReadXdr for CreateContractArgs {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                contract_id_preimage: ContractIdPreimage::read_xdr(r)?,
+                executable: ContractExecutable::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for CreateContractArgs {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.contract_id_preimage.write_xdr(w)?;
+            self.executable.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// InvokeContractArgs is an XDR Struct defines as:
+//
+//   struct InvokeContractArgs {
+//        SCAddress contractAddress;
+//        SCSymbol functionName;
+//        SCVal args<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct InvokeContractArgs {
+    pub contract_address: ScAddress,
+    pub function_name: ScSymbol,
+    pub args: VecM<ScVal>,
+}
+
+impl ReadXdr for InvokeContractArgs {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                contract_address: ScAddress::read_xdr(r)?,
+                function_name: ScSymbol::read_xdr(r)?,
+                args: VecM::<ScVal>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for InvokeContractArgs {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.contract_address.write_xdr(w)?;
+            self.function_name.write_xdr(w)?;
+            self.args.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// HostFunction is an XDR Union defines as:
+//
+//   union HostFunction switch (HostFunctionType type)
+//    {
+//    case HOST_FUNCTION_TYPE_INVOKE_CONTRACT:
+//        InvokeContractArgs invokeContract;
+//    case HOST_FUNCTION_TYPE_CREATE_CONTRACT:
+//        CreateContractArgs createContract;
+//    case HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM:
+//        opaque wasm<>;
+//    };
+//
+// union with discriminant HostFunctionType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum HostFunction {
+    InvokeContract(InvokeContractArgs),
+    CreateContract(CreateContractArgs),
+    UploadContractWasm(BytesM),
+}
+
+impl HostFunction {
+    pub const VARIANTS: [HostFunctionType; 3] = [
+        HostFunctionType::InvokeContract,
+        HostFunctionType::CreateContract,
+        HostFunctionType::UploadContractWasm,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] =
+        ["InvokeContract", "CreateContract", "UploadContractWasm"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::InvokeContract(_) => "InvokeContract",
+            Self::CreateContract(_) => "CreateContract",
+            Self::UploadContractWasm(_) => "UploadContractWasm",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> HostFunctionType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::InvokeContract(_) => HostFunctionType::InvokeContract,
+            Self::CreateContract(_) => HostFunctionType::CreateContract,
+            Self::UploadContractWasm(_) => HostFunctionType::UploadContractWasm,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [HostFunctionType; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for HostFunction {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<HostFunctionType> for HostFunction {
+    #[must_use]
+    fn discriminant(&self) -> HostFunctionType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<HostFunctionType> for HostFunction {
+    fn variants() -> slice::Iter<'static, HostFunctionType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<HostFunctionType> for HostFunction {}
+
+impl ReadXdr for HostFunction {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: HostFunctionType = <HostFunctionType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                HostFunctionType::InvokeContract => {
+                    Self::InvokeContract(InvokeContractArgs::read_xdr(r)?)
+                }
+                HostFunctionType::CreateContract => {
+                    Self::CreateContract(CreateContractArgs::read_xdr(r)?)
+                }
+                HostFunctionType::UploadContractWasm => {
+                    Self::UploadContractWasm(BytesM::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for HostFunction {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::InvokeContract(v) => v.write_xdr(w)?,
+                Self::CreateContract(v) => v.write_xdr(w)?,
+                Self::UploadContractWasm(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// SorobanAuthorizedFunctionType is an XDR Enum defines as:
+//
+//   enum SorobanAuthorizedFunctionType
+//    {
+//        SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN = 0,
+//        SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum SorobanAuthorizedFunctionType {
+    ContractFn = 0,
+    CreateContractHostFn = 1,
+}
+
+impl SorobanAuthorizedFunctionType {
+    pub const VARIANTS: [SorobanAuthorizedFunctionType; 2] = [
+        SorobanAuthorizedFunctionType::ContractFn,
+        SorobanAuthorizedFunctionType::CreateContractHostFn,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["ContractFn", "CreateContractHostFn"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ContractFn => "ContractFn",
+            Self::CreateContractHostFn => "CreateContractHostFn",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [SorobanAuthorizedFunctionType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SorobanAuthorizedFunctionType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunctionType {
+    fn variants() -> slice::Iter<'static, SorobanAuthorizedFunctionType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for SorobanAuthorizedFunctionType {}
+
+impl fmt::Display for SorobanAuthorizedFunctionType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for SorobanAuthorizedFunctionType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => SorobanAuthorizedFunctionType::ContractFn,
+            1 => SorobanAuthorizedFunctionType::CreateContractHostFn,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<SorobanAuthorizedFunctionType> for i32 {
+    #[must_use]
+    fn from(e: SorobanAuthorizedFunctionType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for SorobanAuthorizedFunctionType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for SorobanAuthorizedFunctionType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// SorobanAuthorizedFunction is an XDR Union defines as:
+//
+//   union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type)
+//    {
+//    case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN:
+//        InvokeContractArgs contractFn;
+//    case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN:
+//        CreateContractArgs createContractHostFn;
+//    };
+//
+// union with discriminant SorobanAuthorizedFunctionType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum SorobanAuthorizedFunction {
+    ContractFn(InvokeContractArgs),
+    CreateContractHostFn(CreateContractArgs),
+}
+
+impl SorobanAuthorizedFunction {
+    pub const VARIANTS: [SorobanAuthorizedFunctionType; 2] = [
+        SorobanAuthorizedFunctionType::ContractFn,
+        SorobanAuthorizedFunctionType::CreateContractHostFn,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["ContractFn", "CreateContractHostFn"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ContractFn(_) => "ContractFn",
+            Self::CreateContractHostFn(_) => "CreateContractHostFn",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> SorobanAuthorizedFunctionType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ContractFn(_) => SorobanAuthorizedFunctionType::ContractFn,
+            Self::CreateContractHostFn(_) => SorobanAuthorizedFunctionType::CreateContractHostFn,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [SorobanAuthorizedFunctionType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SorobanAuthorizedFunction {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {
+    #[must_use]
+    fn discriminant(&self) -> SorobanAuthorizedFunctionType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {
+    fn variants() -> slice::Iter<'static, SorobanAuthorizedFunctionType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {}
+
+impl ReadXdr for SorobanAuthorizedFunction {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: SorobanAuthorizedFunctionType =
+                <SorobanAuthorizedFunctionType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                SorobanAuthorizedFunctionType::ContractFn => {
+                    Self::ContractFn(InvokeContractArgs::read_xdr(r)?)
+                }
+                SorobanAuthorizedFunctionType::CreateContractHostFn => {
+                    Self::CreateContractHostFn(CreateContractArgs::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for SorobanAuthorizedFunction {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ContractFn(v) => v.write_xdr(w)?,
+                Self::CreateContractHostFn(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// SorobanAuthorizedInvocation is an XDR Struct defines as:
+//
+//   struct SorobanAuthorizedInvocation
+//    {
+//        SorobanAuthorizedFunction function;
+//        SorobanAuthorizedInvocation subInvocations<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct SorobanAuthorizedInvocation {
+    pub function: SorobanAuthorizedFunction,
+    pub sub_invocations: VecM<SorobanAuthorizedInvocation>,
+}
+
+impl ReadXdr for SorobanAuthorizedInvocation {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                function: SorobanAuthorizedFunction::read_xdr(r)?,
+                sub_invocations: VecM::<SorobanAuthorizedInvocation>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SorobanAuthorizedInvocation {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.function.write_xdr(w)?;
+            self.sub_invocations.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// SorobanAddressCredentials is an XDR Struct defines as:
+//
+//   struct SorobanAddressCredentials
+//    {
+//        SCAddress address;
+//        int64 nonce;
+//        uint32 signatureExpirationLedger;
+//        SCVal signature;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct SorobanAddressCredentials {
+    pub address: ScAddress,
+    pub nonce: i64,
+    pub signature_expiration_ledger: u32,
+    pub signature: ScVal,
+}
+
+impl ReadXdr for SorobanAddressCredentials {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                address: ScAddress::read_xdr(r)?,
+                nonce: i64::read_xdr(r)?,
+                signature_expiration_ledger: u32::read_xdr(r)?,
+                signature: ScVal::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SorobanAddressCredentials {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.address.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            self.signature_expiration_ledger.write_xdr(w)?;
+            self.signature.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// SorobanCredentialsType is an XDR Enum defines as:
+//
+//   enum SorobanCredentialsType
+//    {
+//        SOROBAN_CREDENTIALS_SOURCE_ACCOUNT = 0,
+//        SOROBAN_CREDENTIALS_ADDRESS = 1
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum SorobanCredentialsType {
+    SourceAccount = 0,
+    Address = 1,
+}
+
+impl SorobanCredentialsType {
+    pub const VARIANTS: [SorobanCredentialsType; 2] = [
+        SorobanCredentialsType::SourceAccount,
+        SorobanCredentialsType::Address,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::SourceAccount => "SourceAccount",
+            Self::Address => "Address",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [SorobanCredentialsType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SorobanCredentialsType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<SorobanCredentialsType> for SorobanCredentialsType {
+    fn variants() -> slice::Iter<'static, SorobanCredentialsType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for SorobanCredentialsType {}
+
+impl fmt::Display for SorobanCredentialsType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for SorobanCredentialsType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => SorobanCredentialsType::SourceAccount,
+            1 => SorobanCredentialsType::Address,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<SorobanCredentialsType> for i32 {
+    #[must_use]
+    fn from(e: SorobanCredentialsType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for SorobanCredentialsType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for SorobanCredentialsType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// SorobanCredentials is an XDR Union defines as:
+//
+//   union SorobanCredentials switch (SorobanCredentialsType type)
+//    {
+//    case SOROBAN_CREDENTIALS_SOURCE_ACCOUNT:
+//        void;
+//    case SOROBAN_CREDENTIALS_ADDRESS:
+//        SorobanAddressCredentials address;
+//    };
+//
+// union with discriminant SorobanCredentialsType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum SorobanCredentials {
+    SourceAccount,
+    Address(SorobanAddressCredentials),
+}
+
+impl SorobanCredentials {
+    pub const VARIANTS: [SorobanCredentialsType; 2] = [
+        SorobanCredentialsType::SourceAccount,
+        SorobanCredentialsType::Address,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::SourceAccount => "SourceAccount",
+            Self::Address(_) => "Address",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> SorobanCredentialsType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::SourceAccount => SorobanCredentialsType::SourceAccount,
+            Self::Address(_) => SorobanCredentialsType::Address,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [SorobanCredentialsType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SorobanCredentials {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<SorobanCredentialsType> for SorobanCredentials {
+    #[must_use]
+    fn discriminant(&self) -> SorobanCredentialsType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<SorobanCredentialsType> for SorobanCredentials {
+    fn variants() -> slice::Iter<'static, SorobanCredentialsType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<SorobanCredentialsType> for SorobanCredentials {}
+
+impl ReadXdr for SorobanCredentials {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: SorobanCredentialsType = <SorobanCredentialsType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                SorobanCredentialsType::SourceAccount => Self::SourceAccount,
+                SorobanCredentialsType::Address => {
+                    Self::Address(SorobanAddressCredentials::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for SorobanCredentials {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::SourceAccount => ().write_xdr(w)?,
+                Self::Address(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// SorobanAuthorizationEntry is an XDR Struct defines as:
+//
+//   struct SorobanAuthorizationEntry
+//    {
+//        SorobanCredentials credentials;
+//        SorobanAuthorizedInvocation rootInvocation;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct SorobanAuthorizationEntry {
+    pub credentials: SorobanCredentials,
+    pub root_invocation: SorobanAuthorizedInvocation,
+}
+
+impl ReadXdr for SorobanAuthorizationEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                credentials: SorobanCredentials::read_xdr(r)?,
+                root_invocation: SorobanAuthorizedInvocation::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SorobanAuthorizationEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.credentials.write_xdr(w)?;
+            self.root_invocation.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// InvokeHostFunctionOp is an XDR Struct defines as:
+//
+//   struct InvokeHostFunctionOp
+//    {
+//        // Host function to invoke.
+//        HostFunction hostFunction;
+//        // Per-address authorizations for this host function.
+//        SorobanAuthorizationEntry auth<>;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct InvokeHostFunctionOp {
+    pub host_function: HostFunction,
+    pub auth: VecM<SorobanAuthorizationEntry>,
+}
+
+impl ReadXdr for InvokeHostFunctionOp {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                host_function: HostFunction::read_xdr(r)?,
+                auth: VecM::<SorobanAuthorizationEntry>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for InvokeHostFunctionOp {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.host_function.write_xdr(w)?;
+            self.auth.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// BumpFootprintExpirationOp is an XDR Struct defines as:
+//
+//   struct BumpFootprintExpirationOp
+//    {
+//        ExtensionPoint ext;
+//        uint32 ledgersToExpire;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct BumpFootprintExpirationOp {
+    pub ext: ExtensionPoint,
+    pub ledgers_to_expire: u32,
+}
+
+impl ReadXdr for BumpFootprintExpirationOp {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                ledgers_to_expire: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for BumpFootprintExpirationOp {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.ledgers_to_expire.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// RestoreFootprintOp is an XDR Struct defines as:
+//
+//   struct RestoreFootprintOp
+//    {
+//        ExtensionPoint ext;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct RestoreFootprintOp {
+    pub ext: ExtensionPoint,
+}
+
+impl ReadXdr for RestoreFootprintOp {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for RestoreFootprintOp {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 // OperationBody is an XDR NestedUnion defines as:
 //
 //   union switch (OperationType type)
@@ -17777,6 +26426,12 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 //            LiquidityPoolDepositOp liquidityPoolDepositOp;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawOp liquidityPoolWithdrawOp;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionOp invokeHostFunctionOp;
+//        case BUMP_FOOTPRINT_EXPIRATION:
+//            BumpFootprintExpirationOp bumpFootprintExpirationOp;
+//        case RESTORE_FOOTPRINT:
+//            RestoreFootprintOp restoreFootprintOp;
 //        }
 //
 // union with discriminant OperationType
@@ -17813,10 +26468,13 @@ pub enum OperationBody {
     SetTrustLineFlags(SetTrustLineFlagsOp),
     LiquidityPoolDeposit(LiquidityPoolDepositOp),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawOp),
+    InvokeHostFunction(InvokeHostFunctionOp),
+    BumpFootprintExpiration(BumpFootprintExpirationOp),
+    RestoreFootprint(RestoreFootprintOp),
 }
 
 impl OperationBody {
-    pub const VARIANTS: [OperationType; 24] = [
+    pub const VARIANTS: [OperationType; 27] = [
         OperationType::CreateAccount,
         OperationType::Payment,
         OperationType::PathPaymentStrictReceive,
@@ -17841,8 +26499,11 @@ impl OperationBody {
         OperationType::SetTrustLineFlags,
         OperationType::LiquidityPoolDeposit,
         OperationType::LiquidityPoolWithdraw,
+        OperationType::InvokeHostFunction,
+        OperationType::BumpFootprintExpiration,
+        OperationType::RestoreFootprint,
     ];
-    pub const VARIANTS_STR: [&'static str; 24] = [
+    pub const VARIANTS_STR: [&'static str; 27] = [
         "CreateAccount",
         "Payment",
         "PathPaymentStrictReceive",
@@ -17867,6 +26528,9 @@ impl OperationBody {
         "SetTrustLineFlags",
         "LiquidityPoolDeposit",
         "LiquidityPoolWithdraw",
+        "InvokeHostFunction",
+        "BumpFootprintExpiration",
+        "RestoreFootprint",
     ];
 
     #[must_use]
@@ -17896,6 +26560,9 @@ impl OperationBody {
             Self::SetTrustLineFlags(_) => "SetTrustLineFlags",
             Self::LiquidityPoolDeposit(_) => "LiquidityPoolDeposit",
             Self::LiquidityPoolWithdraw(_) => "LiquidityPoolWithdraw",
+            Self::InvokeHostFunction(_) => "InvokeHostFunction",
+            Self::BumpFootprintExpiration(_) => "BumpFootprintExpiration",
+            Self::RestoreFootprint(_) => "RestoreFootprint",
         }
     }
 
@@ -17927,11 +26594,14 @@ impl OperationBody {
             Self::SetTrustLineFlags(_) => OperationType::SetTrustLineFlags,
             Self::LiquidityPoolDeposit(_) => OperationType::LiquidityPoolDeposit,
             Self::LiquidityPoolWithdraw(_) => OperationType::LiquidityPoolWithdraw,
+            Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
+            Self::BumpFootprintExpiration(_) => OperationType::BumpFootprintExpiration,
+            Self::RestoreFootprint(_) => OperationType::RestoreFootprint,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [OperationType; 24] {
+    pub const fn variants() -> [OperationType; 27] {
         Self::VARIANTS
     }
 }
@@ -18017,6 +26687,15 @@ impl ReadXdr for OperationBody {
                 OperationType::LiquidityPoolWithdraw => {
                     Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawOp::read_xdr(r)?)
                 }
+                OperationType::InvokeHostFunction => {
+                    Self::InvokeHostFunction(InvokeHostFunctionOp::read_xdr(r)?)
+                }
+                OperationType::BumpFootprintExpiration => {
+                    Self::BumpFootprintExpiration(BumpFootprintExpirationOp::read_xdr(r)?)
+                }
+                OperationType::RestoreFootprint => {
+                    Self::RestoreFootprint(RestoreFootprintOp::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -18056,6 +26735,9 @@ impl WriteXdr for OperationBody {
                 Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
                 Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
                 Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+                Self::InvokeHostFunction(v) => v.write_xdr(w)?,
+                Self::BumpFootprintExpiration(v) => v.write_xdr(w)?,
+                Self::RestoreFootprint(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -18121,6 +26803,12 @@ impl WriteXdr for OperationBody {
 //            LiquidityPoolDepositOp liquidityPoolDepositOp;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawOp liquidityPoolWithdrawOp;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionOp invokeHostFunctionOp;
+//        case BUMP_FOOTPRINT_EXPIRATION:
+//            BumpFootprintExpirationOp bumpFootprintExpirationOp;
+//        case RESTORE_FOOTPRINT:
+//            RestoreFootprintOp restoreFootprintOp;
 //        }
 //        body;
 //    };
@@ -18262,6 +26950,100 @@ impl WriteXdr for HashIdPreimageRevokeId {
     }
 }
 
+// HashIdPreimageContractId is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash networkID;
+//            ContractIDPreimage contractIDPreimage;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct HashIdPreimageContractId {
+    pub network_id: Hash,
+    pub contract_id_preimage: ContractIdPreimage,
+}
+
+impl ReadXdr for HashIdPreimageContractId {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                network_id: Hash::read_xdr(r)?,
+                contract_id_preimage: ContractIdPreimage::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for HashIdPreimageContractId {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.network_id.write_xdr(w)?;
+            self.contract_id_preimage.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// HashIdPreimageSorobanAuthorization is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            Hash networkID;
+//            int64 nonce;
+//            uint32 signatureExpirationLedger;
+//            SorobanAuthorizedInvocation invocation;
+//        }
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct HashIdPreimageSorobanAuthorization {
+    pub network_id: Hash,
+    pub nonce: i64,
+    pub signature_expiration_ledger: u32,
+    pub invocation: SorobanAuthorizedInvocation,
+}
+
+impl ReadXdr for HashIdPreimageSorobanAuthorization {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                network_id: Hash::read_xdr(r)?,
+                nonce: i64::read_xdr(r)?,
+                signature_expiration_ledger: u32::read_xdr(r)?,
+                invocation: SorobanAuthorizedInvocation::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for HashIdPreimageSorobanAuthorization {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.network_id.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            self.signature_expiration_ledger.write_xdr(w)?;
+            self.invocation.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 // HashIdPreimage is an XDR Union defines as:
 //
 //   union HashIDPreimage switch (EnvelopeType type)
@@ -18282,6 +27064,20 @@ impl WriteXdr for HashIdPreimageRevokeId {
 //            PoolID liquidityPoolID;
 //            Asset asset;
 //        } revokeID;
+//    case ENVELOPE_TYPE_CONTRACT_ID:
+//        struct
+//        {
+//            Hash networkID;
+//            ContractIDPreimage contractIDPreimage;
+//        } contractID;
+//    case ENVELOPE_TYPE_SOROBAN_AUTHORIZATION:
+//        struct
+//        {
+//            Hash networkID;
+//            int64 nonce;
+//            uint32 signatureExpirationLedger;
+//            SorobanAuthorizedInvocation invocation;
+//        } sorobanAuthorization;
 //    };
 //
 // union with discriminant EnvelopeType
@@ -18296,17 +27092,31 @@ impl WriteXdr for HashIdPreimageRevokeId {
 pub enum HashIdPreimage {
     OpId(HashIdPreimageOperationId),
     PoolRevokeOpId(HashIdPreimageRevokeId),
+    ContractId(HashIdPreimageContractId),
+    SorobanAuthorization(HashIdPreimageSorobanAuthorization),
 }
 
 impl HashIdPreimage {
-    pub const VARIANTS: [EnvelopeType; 2] = [EnvelopeType::OpId, EnvelopeType::PoolRevokeOpId];
-    pub const VARIANTS_STR: [&'static str; 2] = ["OpId", "PoolRevokeOpId"];
+    pub const VARIANTS: [EnvelopeType; 4] = [
+        EnvelopeType::OpId,
+        EnvelopeType::PoolRevokeOpId,
+        EnvelopeType::ContractId,
+        EnvelopeType::SorobanAuthorization,
+    ];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "OpId",
+        "PoolRevokeOpId",
+        "ContractId",
+        "SorobanAuthorization",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::OpId(_) => "OpId",
             Self::PoolRevokeOpId(_) => "PoolRevokeOpId",
+            Self::ContractId(_) => "ContractId",
+            Self::SorobanAuthorization(_) => "SorobanAuthorization",
         }
     }
 
@@ -18316,11 +27126,13 @@ impl HashIdPreimage {
         match self {
             Self::OpId(_) => EnvelopeType::OpId,
             Self::PoolRevokeOpId(_) => EnvelopeType::PoolRevokeOpId,
+            Self::ContractId(_) => EnvelopeType::ContractId,
+            Self::SorobanAuthorization(_) => EnvelopeType::SorobanAuthorization,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 2] {
+    pub const fn variants() -> [EnvelopeType; 4] {
         Self::VARIANTS
     }
 }
@@ -18358,6 +27170,12 @@ impl ReadXdr for HashIdPreimage {
                 EnvelopeType::PoolRevokeOpId => {
                     Self::PoolRevokeOpId(HashIdPreimageRevokeId::read_xdr(r)?)
                 }
+                EnvelopeType::ContractId => {
+                    Self::ContractId(HashIdPreimageContractId::read_xdr(r)?)
+                }
+                EnvelopeType::SorobanAuthorization => {
+                    Self::SorobanAuthorization(HashIdPreimageSorobanAuthorization::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -18375,6 +27193,8 @@ impl WriteXdr for HashIdPreimage {
             match self {
                 Self::OpId(v) => v.write_xdr(w)?,
                 Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
+                Self::ContractId(v) => v.write_xdr(w)?,
+                Self::SorobanAuthorization(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -19029,11 +27849,152 @@ impl WriteXdr for Preconditions {
     }
 }
 
-// MaxOpsPerTx is an XDR Const defines as:
+// LedgerFootprint is an XDR Struct defines as:
 //
-//   const MAX_OPS_PER_TX = 100;
+//   struct LedgerFootprint
+//    {
+//        LedgerKey readOnly<>;
+//        LedgerKey readWrite<>;
+//    };
 //
-pub const MAX_OPS_PER_TX: u64 = 100;
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct LedgerFootprint {
+    pub read_only: VecM<LedgerKey>,
+    pub read_write: VecM<LedgerKey>,
+}
+
+impl ReadXdr for LedgerFootprint {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                read_only: VecM::<LedgerKey>::read_xdr(r)?,
+                read_write: VecM::<LedgerKey>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerFootprint {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.read_only.write_xdr(w)?;
+            self.read_write.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// SorobanResources is an XDR Struct defines as:
+//
+//   struct SorobanResources
+//    {
+//        // The ledger footprint of the transaction.
+//        LedgerFootprint footprint;
+//        // The maximum number of instructions this transaction can use
+//        uint32 instructions;
+//
+//        // The maximum number of bytes this transaction can read from ledger
+//        uint32 readBytes;
+//        // The maximum number of bytes this transaction can write to ledger
+//        uint32 writeBytes;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct SorobanResources {
+    pub footprint: LedgerFootprint,
+    pub instructions: u32,
+    pub read_bytes: u32,
+    pub write_bytes: u32,
+}
+
+impl ReadXdr for SorobanResources {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                footprint: LedgerFootprint::read_xdr(r)?,
+                instructions: u32::read_xdr(r)?,
+                read_bytes: u32::read_xdr(r)?,
+                write_bytes: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SorobanResources {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.footprint.write_xdr(w)?;
+            self.instructions.write_xdr(w)?;
+            self.read_bytes.write_xdr(w)?;
+            self.write_bytes.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+// SorobanTransactionData is an XDR Struct defines as:
+//
+//   struct SorobanTransactionData
+//    {
+//        ExtensionPoint ext;
+//        SorobanResources resources;
+//        // Portion of transaction `fee` allocated to refundable fees.
+//        int64 refundableFee;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct SorobanTransactionData {
+    pub ext: ExtensionPoint,
+    pub resources: SorobanResources,
+    pub refundable_fee: i64,
+}
+
+impl ReadXdr for SorobanTransactionData {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                resources: SorobanResources::read_xdr(r)?,
+                refundable_fee: i64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SorobanTransactionData {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.resources.write_xdr(w)?;
+            self.refundable_fee.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
 
 // TransactionV0Ext is an XDR NestedUnion defines as:
 //
@@ -19252,6 +28213,8 @@ impl WriteXdr for TransactionV0Envelope {
 //        {
 //        case 0:
 //            void;
+//        case 1:
+//            SorobanTransactionData sorobanData;
 //        }
 //
 // union with discriminant i32
@@ -19265,16 +28228,18 @@ impl WriteXdr for TransactionV0Envelope {
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionExt {
     V0,
+    V1(SorobanTransactionData),
 }
 
 impl TransactionExt {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
+            Self::V1(_) => "V1",
         }
     }
 
@@ -19283,11 +28248,12 @@ impl TransactionExt {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
+            Self::V1(_) => 1,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> [i32; 2] {
         Self::VARIANTS
     }
 }
@@ -19322,6 +28288,7 @@ impl ReadXdr for TransactionExt {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 0 => Self::V0,
+                1 => Self::V1(SorobanTransactionData::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -19338,6 +28305,7 @@ impl WriteXdr for TransactionExt {
             #[allow(clippy::match_same_arms)]
             match self {
                 Self::V0 => ().write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -19369,6 +28337,8 @@ impl WriteXdr for TransactionExt {
 //        {
 //        case 0:
 //            void;
+//        case 1:
+//            SorobanTransactionData sorobanData;
 //        }
 //        ext;
 //    };
@@ -27736,6 +36706,804 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
     }
 }
 
+// InvokeHostFunctionResultCode is an XDR Enum defines as:
+//
+//   enum InvokeHostFunctionResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        INVOKE_HOST_FUNCTION_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        INVOKE_HOST_FUNCTION_MALFORMED = -1,
+//        INVOKE_HOST_FUNCTION_TRAPPED = -2,
+//        INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3,
+//        INVOKE_HOST_FUNCTION_ENTRY_EXPIRED = -4,
+//        INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE = -5
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum InvokeHostFunctionResultCode {
+    Success = 0,
+    Malformed = -1,
+    Trapped = -2,
+    ResourceLimitExceeded = -3,
+    EntryExpired = -4,
+    InsufficientRefundableFee = -5,
+}
+
+impl InvokeHostFunctionResultCode {
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 6] = [
+        InvokeHostFunctionResultCode::Success,
+        InvokeHostFunctionResultCode::Malformed,
+        InvokeHostFunctionResultCode::Trapped,
+        InvokeHostFunctionResultCode::ResourceLimitExceeded,
+        InvokeHostFunctionResultCode::EntryExpired,
+        InvokeHostFunctionResultCode::InsufficientRefundableFee,
+    ];
+    pub const VARIANTS_STR: [&'static str; 6] = [
+        "Success",
+        "Malformed",
+        "Trapped",
+        "ResourceLimitExceeded",
+        "EntryExpired",
+        "InsufficientRefundableFee",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::Trapped => "Trapped",
+            Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::EntryExpired => "EntryExpired",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 6] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for InvokeHostFunctionResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<InvokeHostFunctionResultCode> for InvokeHostFunctionResultCode {
+    fn variants() -> slice::Iter<'static, InvokeHostFunctionResultCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for InvokeHostFunctionResultCode {}
+
+impl fmt::Display for InvokeHostFunctionResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for InvokeHostFunctionResultCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => InvokeHostFunctionResultCode::Success,
+            -1 => InvokeHostFunctionResultCode::Malformed,
+            -2 => InvokeHostFunctionResultCode::Trapped,
+            -3 => InvokeHostFunctionResultCode::ResourceLimitExceeded,
+            -4 => InvokeHostFunctionResultCode::EntryExpired,
+            -5 => InvokeHostFunctionResultCode::InsufficientRefundableFee,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<InvokeHostFunctionResultCode> for i32 {
+    #[must_use]
+    fn from(e: InvokeHostFunctionResultCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for InvokeHostFunctionResultCode {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for InvokeHostFunctionResultCode {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// InvokeHostFunctionResult is an XDR Union defines as:
+//
+//   union InvokeHostFunctionResult switch (InvokeHostFunctionResultCode code)
+//    {
+//    case INVOKE_HOST_FUNCTION_SUCCESS:
+//        Hash success; // sha256(InvokeHostFunctionSuccessPreImage)
+//    case INVOKE_HOST_FUNCTION_MALFORMED:
+//    case INVOKE_HOST_FUNCTION_TRAPPED:
+//    case INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED:
+//    case INVOKE_HOST_FUNCTION_ENTRY_EXPIRED:
+//    case INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE:
+//        void;
+//    };
+//
+// union with discriminant InvokeHostFunctionResultCode
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum InvokeHostFunctionResult {
+    Success(Hash),
+    Malformed,
+    Trapped,
+    ResourceLimitExceeded,
+    EntryExpired,
+    InsufficientRefundableFee,
+}
+
+impl InvokeHostFunctionResult {
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 6] = [
+        InvokeHostFunctionResultCode::Success,
+        InvokeHostFunctionResultCode::Malformed,
+        InvokeHostFunctionResultCode::Trapped,
+        InvokeHostFunctionResultCode::ResourceLimitExceeded,
+        InvokeHostFunctionResultCode::EntryExpired,
+        InvokeHostFunctionResultCode::InsufficientRefundableFee,
+    ];
+    pub const VARIANTS_STR: [&'static str; 6] = [
+        "Success",
+        "Malformed",
+        "Trapped",
+        "ResourceLimitExceeded",
+        "EntryExpired",
+        "InsufficientRefundableFee",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Success(_) => "Success",
+            Self::Malformed => "Malformed",
+            Self::Trapped => "Trapped",
+            Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::EntryExpired => "EntryExpired",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> InvokeHostFunctionResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success(_) => InvokeHostFunctionResultCode::Success,
+            Self::Malformed => InvokeHostFunctionResultCode::Malformed,
+            Self::Trapped => InvokeHostFunctionResultCode::Trapped,
+            Self::ResourceLimitExceeded => InvokeHostFunctionResultCode::ResourceLimitExceeded,
+            Self::EntryExpired => InvokeHostFunctionResultCode::EntryExpired,
+            Self::InsufficientRefundableFee => {
+                InvokeHostFunctionResultCode::InsufficientRefundableFee
+            }
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 6] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for InvokeHostFunctionResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {
+    #[must_use]
+    fn discriminant(&self) -> InvokeHostFunctionResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {
+    fn variants() -> slice::Iter<'static, InvokeHostFunctionResultCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {}
+
+impl ReadXdr for InvokeHostFunctionResult {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: InvokeHostFunctionResultCode =
+                <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                InvokeHostFunctionResultCode::Success => Self::Success(Hash::read_xdr(r)?),
+                InvokeHostFunctionResultCode::Malformed => Self::Malformed,
+                InvokeHostFunctionResultCode::Trapped => Self::Trapped,
+                InvokeHostFunctionResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
+                InvokeHostFunctionResultCode::EntryExpired => Self::EntryExpired,
+                InvokeHostFunctionResultCode::InsufficientRefundableFee => {
+                    Self::InsufficientRefundableFee
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for InvokeHostFunctionResult {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success(v) => v.write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::Trapped => ().write_xdr(w)?,
+                Self::ResourceLimitExceeded => ().write_xdr(w)?,
+                Self::EntryExpired => ().write_xdr(w)?,
+                Self::InsufficientRefundableFee => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// BumpFootprintExpirationResultCode is an XDR Enum defines as:
+//
+//   enum BumpFootprintExpirationResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        BUMP_FOOTPRINT_EXPIRATION_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        BUMP_FOOTPRINT_EXPIRATION_MALFORMED = -1,
+//        BUMP_FOOTPRINT_EXPIRATION_RESOURCE_LIMIT_EXCEEDED = -2,
+//        BUMP_FOOTPRINT_EXPIRATION_INSUFFICIENT_REFUNDABLE_FEE = -3
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum BumpFootprintExpirationResultCode {
+    Success = 0,
+    Malformed = -1,
+    ResourceLimitExceeded = -2,
+    InsufficientRefundableFee = -3,
+}
+
+impl BumpFootprintExpirationResultCode {
+    pub const VARIANTS: [BumpFootprintExpirationResultCode; 4] = [
+        BumpFootprintExpirationResultCode::Success,
+        BumpFootprintExpirationResultCode::Malformed,
+        BumpFootprintExpirationResultCode::ResourceLimitExceeded,
+        BumpFootprintExpirationResultCode::InsufficientRefundableFee,
+    ];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "Success",
+        "Malformed",
+        "ResourceLimitExceeded",
+        "InsufficientRefundableFee",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [BumpFootprintExpirationResultCode; 4] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for BumpFootprintExpirationResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResultCode {
+    fn variants() -> slice::Iter<'static, BumpFootprintExpirationResultCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for BumpFootprintExpirationResultCode {}
+
+impl fmt::Display for BumpFootprintExpirationResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for BumpFootprintExpirationResultCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => BumpFootprintExpirationResultCode::Success,
+            -1 => BumpFootprintExpirationResultCode::Malformed,
+            -2 => BumpFootprintExpirationResultCode::ResourceLimitExceeded,
+            -3 => BumpFootprintExpirationResultCode::InsufficientRefundableFee,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<BumpFootprintExpirationResultCode> for i32 {
+    #[must_use]
+    fn from(e: BumpFootprintExpirationResultCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for BumpFootprintExpirationResultCode {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for BumpFootprintExpirationResultCode {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// BumpFootprintExpirationResult is an XDR Union defines as:
+//
+//   union BumpFootprintExpirationResult switch (BumpFootprintExpirationResultCode code)
+//    {
+//    case BUMP_FOOTPRINT_EXPIRATION_SUCCESS:
+//        void;
+//    case BUMP_FOOTPRINT_EXPIRATION_MALFORMED:
+//    case BUMP_FOOTPRINT_EXPIRATION_RESOURCE_LIMIT_EXCEEDED:
+//    case BUMP_FOOTPRINT_EXPIRATION_INSUFFICIENT_REFUNDABLE_FEE:
+//        void;
+//    };
+//
+// union with discriminant BumpFootprintExpirationResultCode
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum BumpFootprintExpirationResult {
+    Success,
+    Malformed,
+    ResourceLimitExceeded,
+    InsufficientRefundableFee,
+}
+
+impl BumpFootprintExpirationResult {
+    pub const VARIANTS: [BumpFootprintExpirationResultCode; 4] = [
+        BumpFootprintExpirationResultCode::Success,
+        BumpFootprintExpirationResultCode::Malformed,
+        BumpFootprintExpirationResultCode::ResourceLimitExceeded,
+        BumpFootprintExpirationResultCode::InsufficientRefundableFee,
+    ];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "Success",
+        "Malformed",
+        "ResourceLimitExceeded",
+        "InsufficientRefundableFee",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> BumpFootprintExpirationResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => BumpFootprintExpirationResultCode::Success,
+            Self::Malformed => BumpFootprintExpirationResultCode::Malformed,
+            Self::ResourceLimitExceeded => BumpFootprintExpirationResultCode::ResourceLimitExceeded,
+            Self::InsufficientRefundableFee => {
+                BumpFootprintExpirationResultCode::InsufficientRefundableFee
+            }
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [BumpFootprintExpirationResultCode; 4] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for BumpFootprintExpirationResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResult {
+    #[must_use]
+    fn discriminant(&self) -> BumpFootprintExpirationResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResult {
+    fn variants() -> slice::Iter<'static, BumpFootprintExpirationResultCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResult {}
+
+impl ReadXdr for BumpFootprintExpirationResult {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: BumpFootprintExpirationResultCode =
+                <BumpFootprintExpirationResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                BumpFootprintExpirationResultCode::Success => Self::Success,
+                BumpFootprintExpirationResultCode::Malformed => Self::Malformed,
+                BumpFootprintExpirationResultCode::ResourceLimitExceeded => {
+                    Self::ResourceLimitExceeded
+                }
+                BumpFootprintExpirationResultCode::InsufficientRefundableFee => {
+                    Self::InsufficientRefundableFee
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for BumpFootprintExpirationResult {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::ResourceLimitExceeded => ().write_xdr(w)?,
+                Self::InsufficientRefundableFee => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+// RestoreFootprintResultCode is an XDR Enum defines as:
+//
+//   enum RestoreFootprintResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        RESTORE_FOOTPRINT_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        RESTORE_FOOTPRINT_MALFORMED = -1,
+//        RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED = -2,
+//        RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE = -3
+//    };
+//
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[repr(i32)]
+pub enum RestoreFootprintResultCode {
+    Success = 0,
+    Malformed = -1,
+    ResourceLimitExceeded = -2,
+    InsufficientRefundableFee = -3,
+}
+
+impl RestoreFootprintResultCode {
+    pub const VARIANTS: [RestoreFootprintResultCode; 4] = [
+        RestoreFootprintResultCode::Success,
+        RestoreFootprintResultCode::Malformed,
+        RestoreFootprintResultCode::ResourceLimitExceeded,
+        RestoreFootprintResultCode::InsufficientRefundableFee,
+    ];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "Success",
+        "Malformed",
+        "ResourceLimitExceeded",
+        "InsufficientRefundableFee",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [RestoreFootprintResultCode; 4] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for RestoreFootprintResultCode {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<RestoreFootprintResultCode> for RestoreFootprintResultCode {
+    fn variants() -> slice::Iter<'static, RestoreFootprintResultCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for RestoreFootprintResultCode {}
+
+impl fmt::Display for RestoreFootprintResultCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for RestoreFootprintResultCode {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => RestoreFootprintResultCode::Success,
+            -1 => RestoreFootprintResultCode::Malformed,
+            -2 => RestoreFootprintResultCode::ResourceLimitExceeded,
+            -3 => RestoreFootprintResultCode::InsufficientRefundableFee,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<RestoreFootprintResultCode> for i32 {
+    #[must_use]
+    fn from(e: RestoreFootprintResultCode) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for RestoreFootprintResultCode {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for RestoreFootprintResultCode {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+// RestoreFootprintResult is an XDR Union defines as:
+//
+//   union RestoreFootprintResult switch (RestoreFootprintResultCode code)
+//    {
+//    case RESTORE_FOOTPRINT_SUCCESS:
+//        void;
+//    case RESTORE_FOOTPRINT_MALFORMED:
+//    case RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED:
+//    case RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE:
+//        void;
+//    };
+//
+// union with discriminant RestoreFootprintResultCode
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum RestoreFootprintResult {
+    Success,
+    Malformed,
+    ResourceLimitExceeded,
+    InsufficientRefundableFee,
+}
+
+impl RestoreFootprintResult {
+    pub const VARIANTS: [RestoreFootprintResultCode; 4] = [
+        RestoreFootprintResultCode::Success,
+        RestoreFootprintResultCode::Malformed,
+        RestoreFootprintResultCode::ResourceLimitExceeded,
+        RestoreFootprintResultCode::InsufficientRefundableFee,
+    ];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "Success",
+        "Malformed",
+        "ResourceLimitExceeded",
+        "InsufficientRefundableFee",
+    ];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Success => "Success",
+            Self::Malformed => "Malformed",
+            Self::ResourceLimitExceeded => "ResourceLimitExceeded",
+            Self::InsufficientRefundableFee => "InsufficientRefundableFee",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> RestoreFootprintResultCode {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Success => RestoreFootprintResultCode::Success,
+            Self::Malformed => RestoreFootprintResultCode::Malformed,
+            Self::ResourceLimitExceeded => RestoreFootprintResultCode::ResourceLimitExceeded,
+            Self::InsufficientRefundableFee => {
+                RestoreFootprintResultCode::InsufficientRefundableFee
+            }
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [RestoreFootprintResultCode; 4] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for RestoreFootprintResult {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<RestoreFootprintResultCode> for RestoreFootprintResult {
+    #[must_use]
+    fn discriminant(&self) -> RestoreFootprintResultCode {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<RestoreFootprintResultCode> for RestoreFootprintResult {
+    fn variants() -> slice::Iter<'static, RestoreFootprintResultCode> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<RestoreFootprintResultCode> for RestoreFootprintResult {}
+
+impl ReadXdr for RestoreFootprintResult {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: RestoreFootprintResultCode =
+                <RestoreFootprintResultCode as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                RestoreFootprintResultCode::Success => Self::Success,
+                RestoreFootprintResultCode::Malformed => Self::Malformed,
+                RestoreFootprintResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
+                RestoreFootprintResultCode::InsufficientRefundableFee => {
+                    Self::InsufficientRefundableFee
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for RestoreFootprintResult {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Success => ().write_xdr(w)?,
+                Self::Malformed => ().write_xdr(w)?,
+                Self::ResourceLimitExceeded => ().write_xdr(w)?,
+                Self::InsufficientRefundableFee => ().write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
 // OperationResultCode is an XDR Enum defines as:
 //
 //   enum OperationResultCode
@@ -27928,6 +37696,12 @@ impl WriteXdr for OperationResultCode {
 //            LiquidityPoolDepositResult liquidityPoolDepositResult;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionResult invokeHostFunctionResult;
+//        case BUMP_FOOTPRINT_EXPIRATION:
+//            BumpFootprintExpirationResult bumpFootprintExpirationResult;
+//        case RESTORE_FOOTPRINT:
+//            RestoreFootprintResult restoreFootprintResult;
 //        }
 //
 // union with discriminant OperationType
@@ -27964,10 +37738,13 @@ pub enum OperationResultTr {
     SetTrustLineFlags(SetTrustLineFlagsResult),
     LiquidityPoolDeposit(LiquidityPoolDepositResult),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawResult),
+    InvokeHostFunction(InvokeHostFunctionResult),
+    BumpFootprintExpiration(BumpFootprintExpirationResult),
+    RestoreFootprint(RestoreFootprintResult),
 }
 
 impl OperationResultTr {
-    pub const VARIANTS: [OperationType; 24] = [
+    pub const VARIANTS: [OperationType; 27] = [
         OperationType::CreateAccount,
         OperationType::Payment,
         OperationType::PathPaymentStrictReceive,
@@ -27992,8 +37769,11 @@ impl OperationResultTr {
         OperationType::SetTrustLineFlags,
         OperationType::LiquidityPoolDeposit,
         OperationType::LiquidityPoolWithdraw,
+        OperationType::InvokeHostFunction,
+        OperationType::BumpFootprintExpiration,
+        OperationType::RestoreFootprint,
     ];
-    pub const VARIANTS_STR: [&'static str; 24] = [
+    pub const VARIANTS_STR: [&'static str; 27] = [
         "CreateAccount",
         "Payment",
         "PathPaymentStrictReceive",
@@ -28018,6 +37798,9 @@ impl OperationResultTr {
         "SetTrustLineFlags",
         "LiquidityPoolDeposit",
         "LiquidityPoolWithdraw",
+        "InvokeHostFunction",
+        "BumpFootprintExpiration",
+        "RestoreFootprint",
     ];
 
     #[must_use]
@@ -28047,6 +37830,9 @@ impl OperationResultTr {
             Self::SetTrustLineFlags(_) => "SetTrustLineFlags",
             Self::LiquidityPoolDeposit(_) => "LiquidityPoolDeposit",
             Self::LiquidityPoolWithdraw(_) => "LiquidityPoolWithdraw",
+            Self::InvokeHostFunction(_) => "InvokeHostFunction",
+            Self::BumpFootprintExpiration(_) => "BumpFootprintExpiration",
+            Self::RestoreFootprint(_) => "RestoreFootprint",
         }
     }
 
@@ -28078,11 +37864,14 @@ impl OperationResultTr {
             Self::SetTrustLineFlags(_) => OperationType::SetTrustLineFlags,
             Self::LiquidityPoolDeposit(_) => OperationType::LiquidityPoolDeposit,
             Self::LiquidityPoolWithdraw(_) => OperationType::LiquidityPoolWithdraw,
+            Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
+            Self::BumpFootprintExpiration(_) => OperationType::BumpFootprintExpiration,
+            Self::RestoreFootprint(_) => OperationType::RestoreFootprint,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [OperationType; 24] {
+    pub const fn variants() -> [OperationType; 27] {
         Self::VARIANTS
     }
 }
@@ -28172,6 +37961,15 @@ impl ReadXdr for OperationResultTr {
                 OperationType::LiquidityPoolWithdraw => {
                     Self::LiquidityPoolWithdraw(LiquidityPoolWithdrawResult::read_xdr(r)?)
                 }
+                OperationType::InvokeHostFunction => {
+                    Self::InvokeHostFunction(InvokeHostFunctionResult::read_xdr(r)?)
+                }
+                OperationType::BumpFootprintExpiration => {
+                    Self::BumpFootprintExpiration(BumpFootprintExpirationResult::read_xdr(r)?)
+                }
+                OperationType::RestoreFootprint => {
+                    Self::RestoreFootprint(RestoreFootprintResult::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -28211,6 +38009,9 @@ impl WriteXdr for OperationResultTr {
                 Self::SetTrustLineFlags(v) => v.write_xdr(w)?,
                 Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
                 Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
+                Self::InvokeHostFunction(v) => v.write_xdr(w)?,
+                Self::BumpFootprintExpiration(v) => v.write_xdr(w)?,
+                Self::RestoreFootprint(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -28272,6 +38073,12 @@ impl WriteXdr for OperationResultTr {
 //            LiquidityPoolDepositResult liquidityPoolDepositResult;
 //        case LIQUIDITY_POOL_WITHDRAW:
 //            LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
+//        case INVOKE_HOST_FUNCTION:
+//            InvokeHostFunctionResult invokeHostFunctionResult;
+//        case BUMP_FOOTPRINT_EXPIRATION:
+//            BumpFootprintExpirationResult bumpFootprintExpirationResult;
+//        case RESTORE_FOOTPRINT:
+//            RestoreFootprintResult restoreFootprintResult;
 //        }
 //        tr;
 //    case opBAD_AUTH:
@@ -28440,12 +38247,12 @@ impl WriteXdr for OperationResult {
 //        txBAD_AUTH_EXTRA = -10,      // unused signatures attached to transaction
 //        txINTERNAL_ERROR = -11,      // an unknown error occurred
 //
-//        txNOT_SUPPORTED = -12,         // transaction type not supported
-//        txFEE_BUMP_INNER_FAILED = -13, // fee bump inner transaction failed
-//        txBAD_SPONSORSHIP = -14,       // sponsorship not confirmed
-//        txBAD_MIN_SEQ_AGE_OR_GAP =
-//            -15, // minSeqAge or minSeqLedgerGap conditions not met
-//        txMALFORMED = -16 // precondition is invalid
+//        txNOT_SUPPORTED = -12,          // transaction type not supported
+//        txFEE_BUMP_INNER_FAILED = -13,  // fee bump inner transaction failed
+//        txBAD_SPONSORSHIP = -14,        // sponsorship not confirmed
+//        txBAD_MIN_SEQ_AGE_OR_GAP = -15, // minSeqAge or minSeqLedgerGap conditions not met
+//        txMALFORMED = -16,              // precondition is invalid
+//        txSOROBAN_INVALID = -17         // soroban-specific preconditions were not met
 //    };
 //
 // enum
@@ -28476,10 +38283,11 @@ pub enum TransactionResultCode {
     TxBadSponsorship = -14,
     TxBadMinSeqAgeOrGap = -15,
     TxMalformed = -16,
+    TxSorobanInvalid = -17,
 }
 
 impl TransactionResultCode {
-    pub const VARIANTS: [TransactionResultCode; 18] = [
+    pub const VARIANTS: [TransactionResultCode; 19] = [
         TransactionResultCode::TxFeeBumpInnerSuccess,
         TransactionResultCode::TxSuccess,
         TransactionResultCode::TxFailed,
@@ -28498,8 +38306,9 @@ impl TransactionResultCode {
         TransactionResultCode::TxBadSponsorship,
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
+        TransactionResultCode::TxSorobanInvalid,
     ];
-    pub const VARIANTS_STR: [&'static str; 18] = [
+    pub const VARIANTS_STR: [&'static str; 19] = [
         "TxFeeBumpInnerSuccess",
         "TxSuccess",
         "TxFailed",
@@ -28518,6 +38327,7 @@ impl TransactionResultCode {
         "TxBadSponsorship",
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
+        "TxSorobanInvalid",
     ];
 
     #[must_use]
@@ -28541,11 +38351,12 @@ impl TransactionResultCode {
             Self::TxBadSponsorship => "TxBadSponsorship",
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
+            Self::TxSorobanInvalid => "TxSorobanInvalid",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [TransactionResultCode; 18] {
+    pub const fn variants() -> [TransactionResultCode; 19] {
         Self::VARIANTS
     }
 }
@@ -28594,6 +38405,7 @@ impl TryFrom<i32> for TransactionResultCode {
             -14 => TransactionResultCode::TxBadSponsorship,
             -15 => TransactionResultCode::TxBadMinSeqAgeOrGap,
             -16 => TransactionResultCode::TxMalformed,
+            -17 => TransactionResultCode::TxSorobanInvalid,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -28652,6 +38464,7 @@ impl WriteXdr for TransactionResultCode {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_INVALID:
 //            void;
 //        }
 //
@@ -28681,10 +38494,11 @@ pub enum InnerTransactionResultResult {
     TxBadSponsorship,
     TxBadMinSeqAgeOrGap,
     TxMalformed,
+    TxSorobanInvalid,
 }
 
 impl InnerTransactionResultResult {
-    pub const VARIANTS: [TransactionResultCode; 16] = [
+    pub const VARIANTS: [TransactionResultCode; 17] = [
         TransactionResultCode::TxSuccess,
         TransactionResultCode::TxFailed,
         TransactionResultCode::TxTooEarly,
@@ -28701,8 +38515,9 @@ impl InnerTransactionResultResult {
         TransactionResultCode::TxBadSponsorship,
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
+        TransactionResultCode::TxSorobanInvalid,
     ];
-    pub const VARIANTS_STR: [&'static str; 16] = [
+    pub const VARIANTS_STR: [&'static str; 17] = [
         "TxSuccess",
         "TxFailed",
         "TxTooEarly",
@@ -28719,6 +38534,7 @@ impl InnerTransactionResultResult {
         "TxBadSponsorship",
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
+        "TxSorobanInvalid",
     ];
 
     #[must_use]
@@ -28740,6 +38556,7 @@ impl InnerTransactionResultResult {
             Self::TxBadSponsorship => "TxBadSponsorship",
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
+            Self::TxSorobanInvalid => "TxSorobanInvalid",
         }
     }
 
@@ -28763,11 +38580,12 @@ impl InnerTransactionResultResult {
             Self::TxBadSponsorship => TransactionResultCode::TxBadSponsorship,
             Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
             Self::TxMalformed => TransactionResultCode::TxMalformed,
+            Self::TxSorobanInvalid => TransactionResultCode::TxSorobanInvalid,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [TransactionResultCode; 16] {
+    pub const fn variants() -> [TransactionResultCode; 17] {
         Self::VARIANTS
     }
 }
@@ -28821,6 +38639,7 @@ impl ReadXdr for InnerTransactionResultResult {
                 TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
                 TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
                 TransactionResultCode::TxMalformed => Self::TxMalformed,
+                TransactionResultCode::TxSorobanInvalid => Self::TxSorobanInvalid,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -28852,6 +38671,7 @@ impl WriteXdr for InnerTransactionResultResult {
                 Self::TxBadSponsorship => ().write_xdr(w)?,
                 Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
                 Self::TxMalformed => ().write_xdr(w)?,
+                Self::TxSorobanInvalid => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -28984,6 +38804,7 @@ impl WriteXdr for InnerTransactionResultExt {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_INVALID:
 //            void;
 //        }
 //        result;
@@ -29103,6 +38924,7 @@ impl WriteXdr for InnerTransactionResultPair {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_INVALID:
 //            void;
 //        }
 //
@@ -29134,10 +38956,11 @@ pub enum TransactionResultResult {
     TxBadSponsorship,
     TxBadMinSeqAgeOrGap,
     TxMalformed,
+    TxSorobanInvalid,
 }
 
 impl TransactionResultResult {
-    pub const VARIANTS: [TransactionResultCode; 18] = [
+    pub const VARIANTS: [TransactionResultCode; 19] = [
         TransactionResultCode::TxFeeBumpInnerSuccess,
         TransactionResultCode::TxFeeBumpInnerFailed,
         TransactionResultCode::TxSuccess,
@@ -29156,8 +38979,9 @@ impl TransactionResultResult {
         TransactionResultCode::TxBadSponsorship,
         TransactionResultCode::TxBadMinSeqAgeOrGap,
         TransactionResultCode::TxMalformed,
+        TransactionResultCode::TxSorobanInvalid,
     ];
-    pub const VARIANTS_STR: [&'static str; 18] = [
+    pub const VARIANTS_STR: [&'static str; 19] = [
         "TxFeeBumpInnerSuccess",
         "TxFeeBumpInnerFailed",
         "TxSuccess",
@@ -29176,6 +39000,7 @@ impl TransactionResultResult {
         "TxBadSponsorship",
         "TxBadMinSeqAgeOrGap",
         "TxMalformed",
+        "TxSorobanInvalid",
     ];
 
     #[must_use]
@@ -29199,6 +39024,7 @@ impl TransactionResultResult {
             Self::TxBadSponsorship => "TxBadSponsorship",
             Self::TxBadMinSeqAgeOrGap => "TxBadMinSeqAgeOrGap",
             Self::TxMalformed => "TxMalformed",
+            Self::TxSorobanInvalid => "TxSorobanInvalid",
         }
     }
 
@@ -29224,11 +39050,12 @@ impl TransactionResultResult {
             Self::TxBadSponsorship => TransactionResultCode::TxBadSponsorship,
             Self::TxBadMinSeqAgeOrGap => TransactionResultCode::TxBadMinSeqAgeOrGap,
             Self::TxMalformed => TransactionResultCode::TxMalformed,
+            Self::TxSorobanInvalid => TransactionResultCode::TxSorobanInvalid,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [TransactionResultCode; 18] {
+    pub const fn variants() -> [TransactionResultCode; 19] {
         Self::VARIANTS
     }
 }
@@ -29288,6 +39115,7 @@ impl ReadXdr for TransactionResultResult {
                 TransactionResultCode::TxBadSponsorship => Self::TxBadSponsorship,
                 TransactionResultCode::TxBadMinSeqAgeOrGap => Self::TxBadMinSeqAgeOrGap,
                 TransactionResultCode::TxMalformed => Self::TxMalformed,
+                TransactionResultCode::TxSorobanInvalid => Self::TxSorobanInvalid,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -29321,6 +39149,7 @@ impl WriteXdr for TransactionResultResult {
                 Self::TxBadSponsorship => ().write_xdr(w)?,
                 Self::TxBadMinSeqAgeOrGap => ().write_xdr(w)?,
                 Self::TxMalformed => ().write_xdr(w)?,
+                Self::TxSorobanInvalid => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -29454,6 +39283,7 @@ impl WriteXdr for TransactionResultExt {
 //        case txBAD_SPONSORSHIP:
 //        case txBAD_MIN_SEQ_AGE_OR_GAP:
 //        case txMALFORMED:
+//        case txSOROBAN_INVALID:
 //            void;
 //        }
 //        result;
@@ -29762,6 +39592,112 @@ pub type Uint64 = u64;
 //   typedef hyper int64;
 //
 pub type Int64 = i64;
+
+// TimePoint is an XDR Typedef defines as:
+//
+//   typedef uint64 TimePoint;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct TimePoint(pub u64);
+
+impl From<TimePoint> for u64 {
+    #[must_use]
+    fn from(x: TimePoint) -> Self {
+        x.0
+    }
+}
+
+impl From<u64> for TimePoint {
+    #[must_use]
+    fn from(x: u64) -> Self {
+        TimePoint(x)
+    }
+}
+
+impl AsRef<u64> for TimePoint {
+    #[must_use]
+    fn as_ref(&self) -> &u64 {
+        &self.0
+    }
+}
+
+impl ReadXdr for TimePoint {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = u64::read_xdr(r)?;
+            let v = TimePoint(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for TimePoint {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+// Duration is an XDR Typedef defines as:
+//
+//   typedef uint64 Duration;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct Duration(pub u64);
+
+impl From<Duration> for u64 {
+    #[must_use]
+    fn from(x: Duration) -> Self {
+        x.0
+    }
+}
+
+impl From<u64> for Duration {
+    #[must_use]
+    fn from(x: u64) -> Self {
+        Duration(x)
+    }
+}
+
+impl AsRef<u64> for Duration {
+    #[must_use]
+    fn as_ref(&self) -> &u64 {
+        &self.0
+    }
+}
+
+impl ReadXdr for Duration {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = u64::read_xdr(r)?;
+            let v = Duration(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for Duration {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
 
 // ExtensionPoint is an XDR Union defines as:
 //
@@ -30758,6 +40694,59 @@ impl WriteXdr for NodeId {
     }
 }
 
+// AccountId is an XDR Typedef defines as:
+//
+//   typedef PublicKey AccountID;
+//
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Debug)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct AccountId(pub PublicKey);
+
+impl From<AccountId> for PublicKey {
+    #[must_use]
+    fn from(x: AccountId) -> Self {
+        x.0
+    }
+}
+
+impl From<PublicKey> for AccountId {
+    #[must_use]
+    fn from(x: PublicKey) -> Self {
+        AccountId(x)
+    }
+}
+
+impl AsRef<PublicKey> for AccountId {
+    #[must_use]
+    fn as_ref(&self) -> &PublicKey {
+        &self.0
+    }
+}
+
+impl ReadXdr for AccountId {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = PublicKey::read_xdr(r)?;
+            let v = AccountId(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for AccountId {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
 // Curve25519Secret is an XDR Struct defines as:
 //
 //   struct Curve25519Secret
@@ -30932,17 +40921,77 @@ pub enum TypeVariant {
     ScpStatementExternalize,
     ScpEnvelope,
     ScpQuorumSet,
+    ConfigSettingContractExecutionLanesV0,
+    ConfigSettingContractComputeV0,
+    ConfigSettingContractLedgerCostV0,
+    ConfigSettingContractHistoricalDataV0,
+    ConfigSettingContractEventsV0,
+    ConfigSettingContractBandwidthV0,
+    ContractCostType,
+    ContractCostParamEntry,
+    StateExpirationSettings,
+    EvictionIterator,
+    ContractCostParams,
+    ConfigSettingId,
+    ConfigSettingEntry,
+    ScEnvMetaKind,
+    ScEnvMetaEntry,
+    ScMetaV0,
+    ScMetaKind,
+    ScMetaEntry,
+    ScSpecType,
+    ScSpecTypeOption,
+    ScSpecTypeResult,
+    ScSpecTypeVec,
+    ScSpecTypeMap,
+    ScSpecTypeTuple,
+    ScSpecTypeBytesN,
+    ScSpecTypeUdt,
+    ScSpecTypeDef,
+    ScSpecUdtStructFieldV0,
+    ScSpecUdtStructV0,
+    ScSpecUdtUnionCaseVoidV0,
+    ScSpecUdtUnionCaseTupleV0,
+    ScSpecUdtUnionCaseV0Kind,
+    ScSpecUdtUnionCaseV0,
+    ScSpecUdtUnionV0,
+    ScSpecUdtEnumCaseV0,
+    ScSpecUdtEnumV0,
+    ScSpecUdtErrorEnumCaseV0,
+    ScSpecUdtErrorEnumV0,
+    ScSpecFunctionInputV0,
+    ScSpecFunctionV0,
+    ScSpecEntryKind,
+    ScSpecEntry,
+    ScValType,
+    ScErrorType,
+    ScErrorCode,
+    ScError,
+    UInt128Parts,
+    Int128Parts,
+    UInt256Parts,
+    Int256Parts,
+    ContractExecutableType,
+    ContractExecutable,
+    ScAddressType,
+    ScAddress,
+    ScVec,
+    ScMap,
+    ScBytes,
+    ScString,
+    ScSymbol,
+    ScNonceKey,
+    ScContractInstance,
+    ScVal,
+    ScMapEntry,
     StoredTransactionSet,
     PersistedScpStateV0,
     PersistedScpStateV1,
     PersistedScpState,
-    AccountId,
     Thresholds,
     String32,
     String64,
     SequenceNumber,
-    TimePoint,
-    Duration,
     DataValue,
     PoolId,
     AssetCode4,
@@ -30996,6 +41045,10 @@ pub enum TypeVariant {
     LiquidityPoolEntry,
     LiquidityPoolEntryBody,
     LiquidityPoolEntryConstantProduct,
+    ContractDataDurability,
+    ContractDataEntry,
+    ContractCodeEntry,
+    ExpirationEntry,
     LedgerEntryExtensionV1,
     LedgerEntryExtensionV1Ext,
     LedgerEntry,
@@ -31008,6 +41061,10 @@ pub enum TypeVariant {
     LedgerKeyData,
     LedgerKeyClaimableBalance,
     LedgerKeyLiquidityPool,
+    LedgerKeyContractData,
+    LedgerKeyContractCode,
+    LedgerKeyConfigSetting,
+    LedgerKeyExpiration,
     EnvelopeType,
     UpgradeType,
     StellarValueType,
@@ -31020,7 +41077,9 @@ pub enum TypeVariant {
     LedgerHeader,
     LedgerHeaderExt,
     LedgerUpgradeType,
+    ConfigUpgradeSetKey,
     LedgerUpgrade,
+    ConfigUpgradeSet,
     BucketEntryType,
     BucketMetadata,
     BucketMetadataExt,
@@ -31049,15 +41108,25 @@ pub enum TypeVariant {
     OperationMeta,
     TransactionMetaV1,
     TransactionMetaV2,
+    ContractEventType,
+    ContractEvent,
+    ContractEventBody,
+    ContractEventV0,
+    DiagnosticEvent,
+    SorobanTransactionMeta,
+    TransactionMetaV3,
+    InvokeHostFunctionSuccessPreImage,
     TransactionMeta,
     TransactionResultMeta,
     UpgradeEntryMeta,
     LedgerCloseMetaV0,
     LedgerCloseMetaV1,
+    LedgerCloseMetaV2,
     LedgerCloseMeta,
     ErrorCode,
     SError,
     SendMore,
+    SendMoreExtended,
     AuthCert,
     Hello,
     Auth,
@@ -31067,6 +41136,7 @@ pub enum TypeVariant {
     MessageType,
     DontHave,
     SurveyMessageCommandType,
+    SurveyMessageResponseType,
     SurveyRequestMessage,
     SignedSurveyRequestMessage,
     EncryptedBody,
@@ -31074,7 +41144,8 @@ pub enum TypeVariant {
     SignedSurveyResponseMessage,
     PeerStats,
     PeerStatList,
-    TopologyResponseBody,
+    TopologyResponseBodyV0,
+    TopologyResponseBodyV1,
     SurveyResponseBody,
     TxAdvertVector,
     FloodAdvert,
@@ -31112,11 +41183,30 @@ pub enum TypeVariant {
     SetTrustLineFlagsOp,
     LiquidityPoolDepositOp,
     LiquidityPoolWithdrawOp,
+    HostFunctionType,
+    ContractIdPreimageType,
+    ContractIdPreimage,
+    ContractIdPreimageFromAddress,
+    CreateContractArgs,
+    InvokeContractArgs,
+    HostFunction,
+    SorobanAuthorizedFunctionType,
+    SorobanAuthorizedFunction,
+    SorobanAuthorizedInvocation,
+    SorobanAddressCredentials,
+    SorobanCredentialsType,
+    SorobanCredentials,
+    SorobanAuthorizationEntry,
+    InvokeHostFunctionOp,
+    BumpFootprintExpirationOp,
+    RestoreFootprintOp,
     Operation,
     OperationBody,
     HashIdPreimage,
     HashIdPreimageOperationId,
     HashIdPreimageRevokeId,
+    HashIdPreimageContractId,
+    HashIdPreimageSorobanAuthorization,
     MemoType,
     Memo,
     TimeBounds,
@@ -31124,6 +41214,9 @@ pub enum TypeVariant {
     PreconditionsV2,
     PreconditionType,
     Preconditions,
+    LedgerFootprint,
+    SorobanResources,
+    SorobanTransactionData,
     TransactionV0,
     TransactionV0Ext,
     TransactionV0Envelope,
@@ -31195,6 +41288,12 @@ pub enum TypeVariant {
     LiquidityPoolDepositResult,
     LiquidityPoolWithdrawResultCode,
     LiquidityPoolWithdrawResult,
+    InvokeHostFunctionResultCode,
+    InvokeHostFunctionResult,
+    BumpFootprintExpirationResultCode,
+    BumpFootprintExpirationResult,
+    RestoreFootprintResultCode,
+    RestoreFootprintResult,
     OperationResultCode,
     OperationResult,
     OperationResultTr,
@@ -31212,6 +41311,8 @@ pub enum TypeVariant {
     Int32,
     Uint64,
     Int64,
+    TimePoint,
+    Duration,
     ExtensionPoint,
     CryptoKeyType,
     PublicKeyType,
@@ -31222,6 +41323,7 @@ pub enum TypeVariant {
     Signature,
     SignatureHint,
     NodeId,
+    AccountId,
     Curve25519Secret,
     Curve25519Public,
     HmacSha256Key,
@@ -31229,7 +41331,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 305] = [
+    pub const VARIANTS: [TypeVariant; 418] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -31241,17 +41343,77 @@ impl TypeVariant {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::ConfigSettingContractExecutionLanesV0,
+        TypeVariant::ConfigSettingContractComputeV0,
+        TypeVariant::ConfigSettingContractLedgerCostV0,
+        TypeVariant::ConfigSettingContractHistoricalDataV0,
+        TypeVariant::ConfigSettingContractEventsV0,
+        TypeVariant::ConfigSettingContractBandwidthV0,
+        TypeVariant::ContractCostType,
+        TypeVariant::ContractCostParamEntry,
+        TypeVariant::StateExpirationSettings,
+        TypeVariant::EvictionIterator,
+        TypeVariant::ContractCostParams,
+        TypeVariant::ConfigSettingId,
+        TypeVariant::ConfigSettingEntry,
+        TypeVariant::ScEnvMetaKind,
+        TypeVariant::ScEnvMetaEntry,
+        TypeVariant::ScMetaV0,
+        TypeVariant::ScMetaKind,
+        TypeVariant::ScMetaEntry,
+        TypeVariant::ScSpecType,
+        TypeVariant::ScSpecTypeOption,
+        TypeVariant::ScSpecTypeResult,
+        TypeVariant::ScSpecTypeVec,
+        TypeVariant::ScSpecTypeMap,
+        TypeVariant::ScSpecTypeTuple,
+        TypeVariant::ScSpecTypeBytesN,
+        TypeVariant::ScSpecTypeUdt,
+        TypeVariant::ScSpecTypeDef,
+        TypeVariant::ScSpecUdtStructFieldV0,
+        TypeVariant::ScSpecUdtStructV0,
+        TypeVariant::ScSpecUdtUnionCaseVoidV0,
+        TypeVariant::ScSpecUdtUnionCaseTupleV0,
+        TypeVariant::ScSpecUdtUnionCaseV0Kind,
+        TypeVariant::ScSpecUdtUnionCaseV0,
+        TypeVariant::ScSpecUdtUnionV0,
+        TypeVariant::ScSpecUdtEnumCaseV0,
+        TypeVariant::ScSpecUdtEnumV0,
+        TypeVariant::ScSpecUdtErrorEnumCaseV0,
+        TypeVariant::ScSpecUdtErrorEnumV0,
+        TypeVariant::ScSpecFunctionInputV0,
+        TypeVariant::ScSpecFunctionV0,
+        TypeVariant::ScSpecEntryKind,
+        TypeVariant::ScSpecEntry,
+        TypeVariant::ScValType,
+        TypeVariant::ScErrorType,
+        TypeVariant::ScErrorCode,
+        TypeVariant::ScError,
+        TypeVariant::UInt128Parts,
+        TypeVariant::Int128Parts,
+        TypeVariant::UInt256Parts,
+        TypeVariant::Int256Parts,
+        TypeVariant::ContractExecutableType,
+        TypeVariant::ContractExecutable,
+        TypeVariant::ScAddressType,
+        TypeVariant::ScAddress,
+        TypeVariant::ScVec,
+        TypeVariant::ScMap,
+        TypeVariant::ScBytes,
+        TypeVariant::ScString,
+        TypeVariant::ScSymbol,
+        TypeVariant::ScNonceKey,
+        TypeVariant::ScContractInstance,
+        TypeVariant::ScVal,
+        TypeVariant::ScMapEntry,
         TypeVariant::StoredTransactionSet,
         TypeVariant::PersistedScpStateV0,
         TypeVariant::PersistedScpStateV1,
         TypeVariant::PersistedScpState,
-        TypeVariant::AccountId,
         TypeVariant::Thresholds,
         TypeVariant::String32,
         TypeVariant::String64,
         TypeVariant::SequenceNumber,
-        TypeVariant::TimePoint,
-        TypeVariant::Duration,
         TypeVariant::DataValue,
         TypeVariant::PoolId,
         TypeVariant::AssetCode4,
@@ -31305,6 +41467,10 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolEntry,
         TypeVariant::LiquidityPoolEntryBody,
         TypeVariant::LiquidityPoolEntryConstantProduct,
+        TypeVariant::ContractDataDurability,
+        TypeVariant::ContractDataEntry,
+        TypeVariant::ContractCodeEntry,
+        TypeVariant::ExpirationEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -31317,6 +41483,10 @@ impl TypeVariant {
         TypeVariant::LedgerKeyData,
         TypeVariant::LedgerKeyClaimableBalance,
         TypeVariant::LedgerKeyLiquidityPool,
+        TypeVariant::LedgerKeyContractData,
+        TypeVariant::LedgerKeyContractCode,
+        TypeVariant::LedgerKeyConfigSetting,
+        TypeVariant::LedgerKeyExpiration,
         TypeVariant::EnvelopeType,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
@@ -31329,7 +41499,9 @@ impl TypeVariant {
         TypeVariant::LedgerHeader,
         TypeVariant::LedgerHeaderExt,
         TypeVariant::LedgerUpgradeType,
+        TypeVariant::ConfigUpgradeSetKey,
         TypeVariant::LedgerUpgrade,
+        TypeVariant::ConfigUpgradeSet,
         TypeVariant::BucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
@@ -31358,15 +41530,25 @@ impl TypeVariant {
         TypeVariant::OperationMeta,
         TypeVariant::TransactionMetaV1,
         TypeVariant::TransactionMetaV2,
+        TypeVariant::ContractEventType,
+        TypeVariant::ContractEvent,
+        TypeVariant::ContractEventBody,
+        TypeVariant::ContractEventV0,
+        TypeVariant::DiagnosticEvent,
+        TypeVariant::SorobanTransactionMeta,
+        TypeVariant::TransactionMetaV3,
+        TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaV1,
+        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
         TypeVariant::SendMore,
+        TypeVariant::SendMoreExtended,
         TypeVariant::AuthCert,
         TypeVariant::Hello,
         TypeVariant::Auth,
@@ -31376,6 +41558,7 @@ impl TypeVariant {
         TypeVariant::MessageType,
         TypeVariant::DontHave,
         TypeVariant::SurveyMessageCommandType,
+        TypeVariant::SurveyMessageResponseType,
         TypeVariant::SurveyRequestMessage,
         TypeVariant::SignedSurveyRequestMessage,
         TypeVariant::EncryptedBody,
@@ -31383,7 +41566,8 @@ impl TypeVariant {
         TypeVariant::SignedSurveyResponseMessage,
         TypeVariant::PeerStats,
         TypeVariant::PeerStatList,
-        TypeVariant::TopologyResponseBody,
+        TypeVariant::TopologyResponseBodyV0,
+        TypeVariant::TopologyResponseBodyV1,
         TypeVariant::SurveyResponseBody,
         TypeVariant::TxAdvertVector,
         TypeVariant::FloodAdvert,
@@ -31421,11 +41605,30 @@ impl TypeVariant {
         TypeVariant::SetTrustLineFlagsOp,
         TypeVariant::LiquidityPoolDepositOp,
         TypeVariant::LiquidityPoolWithdrawOp,
+        TypeVariant::HostFunctionType,
+        TypeVariant::ContractIdPreimageType,
+        TypeVariant::ContractIdPreimage,
+        TypeVariant::ContractIdPreimageFromAddress,
+        TypeVariant::CreateContractArgs,
+        TypeVariant::InvokeContractArgs,
+        TypeVariant::HostFunction,
+        TypeVariant::SorobanAuthorizedFunctionType,
+        TypeVariant::SorobanAuthorizedFunction,
+        TypeVariant::SorobanAuthorizedInvocation,
+        TypeVariant::SorobanAddressCredentials,
+        TypeVariant::SorobanCredentialsType,
+        TypeVariant::SorobanCredentials,
+        TypeVariant::SorobanAuthorizationEntry,
+        TypeVariant::InvokeHostFunctionOp,
+        TypeVariant::BumpFootprintExpirationOp,
+        TypeVariant::RestoreFootprintOp,
         TypeVariant::Operation,
         TypeVariant::OperationBody,
         TypeVariant::HashIdPreimage,
         TypeVariant::HashIdPreimageOperationId,
         TypeVariant::HashIdPreimageRevokeId,
+        TypeVariant::HashIdPreimageContractId,
+        TypeVariant::HashIdPreimageSorobanAuthorization,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -31433,6 +41636,9 @@ impl TypeVariant {
         TypeVariant::PreconditionsV2,
         TypeVariant::PreconditionType,
         TypeVariant::Preconditions,
+        TypeVariant::LedgerFootprint,
+        TypeVariant::SorobanResources,
+        TypeVariant::SorobanTransactionData,
         TypeVariant::TransactionV0,
         TypeVariant::TransactionV0Ext,
         TypeVariant::TransactionV0Envelope,
@@ -31504,6 +41710,12 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolDepositResult,
         TypeVariant::LiquidityPoolWithdrawResultCode,
         TypeVariant::LiquidityPoolWithdrawResult,
+        TypeVariant::InvokeHostFunctionResultCode,
+        TypeVariant::InvokeHostFunctionResult,
+        TypeVariant::BumpFootprintExpirationResultCode,
+        TypeVariant::BumpFootprintExpirationResult,
+        TypeVariant::RestoreFootprintResultCode,
+        TypeVariant::RestoreFootprintResult,
         TypeVariant::OperationResultCode,
         TypeVariant::OperationResult,
         TypeVariant::OperationResultTr,
@@ -31521,6 +41733,8 @@ impl TypeVariant {
         TypeVariant::Int32,
         TypeVariant::Uint64,
         TypeVariant::Int64,
+        TypeVariant::TimePoint,
+        TypeVariant::Duration,
         TypeVariant::ExtensionPoint,
         TypeVariant::CryptoKeyType,
         TypeVariant::PublicKeyType,
@@ -31531,12 +41745,13 @@ impl TypeVariant {
         TypeVariant::Signature,
         TypeVariant::SignatureHint,
         TypeVariant::NodeId,
+        TypeVariant::AccountId,
         TypeVariant::Curve25519Secret,
         TypeVariant::Curve25519Public,
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 305] = [
+    pub const VARIANTS_STR: [&'static str; 418] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -31548,17 +41763,77 @@ impl TypeVariant {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "ConfigSettingContractExecutionLanesV0",
+        "ConfigSettingContractComputeV0",
+        "ConfigSettingContractLedgerCostV0",
+        "ConfigSettingContractHistoricalDataV0",
+        "ConfigSettingContractEventsV0",
+        "ConfigSettingContractBandwidthV0",
+        "ContractCostType",
+        "ContractCostParamEntry",
+        "StateExpirationSettings",
+        "EvictionIterator",
+        "ContractCostParams",
+        "ConfigSettingId",
+        "ConfigSettingEntry",
+        "ScEnvMetaKind",
+        "ScEnvMetaEntry",
+        "ScMetaV0",
+        "ScMetaKind",
+        "ScMetaEntry",
+        "ScSpecType",
+        "ScSpecTypeOption",
+        "ScSpecTypeResult",
+        "ScSpecTypeVec",
+        "ScSpecTypeMap",
+        "ScSpecTypeTuple",
+        "ScSpecTypeBytesN",
+        "ScSpecTypeUdt",
+        "ScSpecTypeDef",
+        "ScSpecUdtStructFieldV0",
+        "ScSpecUdtStructV0",
+        "ScSpecUdtUnionCaseVoidV0",
+        "ScSpecUdtUnionCaseTupleV0",
+        "ScSpecUdtUnionCaseV0Kind",
+        "ScSpecUdtUnionCaseV0",
+        "ScSpecUdtUnionV0",
+        "ScSpecUdtEnumCaseV0",
+        "ScSpecUdtEnumV0",
+        "ScSpecUdtErrorEnumCaseV0",
+        "ScSpecUdtErrorEnumV0",
+        "ScSpecFunctionInputV0",
+        "ScSpecFunctionV0",
+        "ScSpecEntryKind",
+        "ScSpecEntry",
+        "ScValType",
+        "ScErrorType",
+        "ScErrorCode",
+        "ScError",
+        "UInt128Parts",
+        "Int128Parts",
+        "UInt256Parts",
+        "Int256Parts",
+        "ContractExecutableType",
+        "ContractExecutable",
+        "ScAddressType",
+        "ScAddress",
+        "ScVec",
+        "ScMap",
+        "ScBytes",
+        "ScString",
+        "ScSymbol",
+        "ScNonceKey",
+        "ScContractInstance",
+        "ScVal",
+        "ScMapEntry",
         "StoredTransactionSet",
         "PersistedScpStateV0",
         "PersistedScpStateV1",
         "PersistedScpState",
-        "AccountId",
         "Thresholds",
         "String32",
         "String64",
         "SequenceNumber",
-        "TimePoint",
-        "Duration",
         "DataValue",
         "PoolId",
         "AssetCode4",
@@ -31612,6 +41887,10 @@ impl TypeVariant {
         "LiquidityPoolEntry",
         "LiquidityPoolEntryBody",
         "LiquidityPoolEntryConstantProduct",
+        "ContractDataDurability",
+        "ContractDataEntry",
+        "ContractCodeEntry",
+        "ExpirationEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -31624,6 +41903,10 @@ impl TypeVariant {
         "LedgerKeyData",
         "LedgerKeyClaimableBalance",
         "LedgerKeyLiquidityPool",
+        "LedgerKeyContractData",
+        "LedgerKeyContractCode",
+        "LedgerKeyConfigSetting",
+        "LedgerKeyExpiration",
         "EnvelopeType",
         "UpgradeType",
         "StellarValueType",
@@ -31636,7 +41919,9 @@ impl TypeVariant {
         "LedgerHeader",
         "LedgerHeaderExt",
         "LedgerUpgradeType",
+        "ConfigUpgradeSetKey",
         "LedgerUpgrade",
+        "ConfigUpgradeSet",
         "BucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
@@ -31665,15 +41950,25 @@ impl TypeVariant {
         "OperationMeta",
         "TransactionMetaV1",
         "TransactionMetaV2",
+        "ContractEventType",
+        "ContractEvent",
+        "ContractEventBody",
+        "ContractEventV0",
+        "DiagnosticEvent",
+        "SorobanTransactionMeta",
+        "TransactionMetaV3",
+        "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaV1",
+        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
         "SendMore",
+        "SendMoreExtended",
         "AuthCert",
         "Hello",
         "Auth",
@@ -31683,6 +41978,7 @@ impl TypeVariant {
         "MessageType",
         "DontHave",
         "SurveyMessageCommandType",
+        "SurveyMessageResponseType",
         "SurveyRequestMessage",
         "SignedSurveyRequestMessage",
         "EncryptedBody",
@@ -31690,7 +41986,8 @@ impl TypeVariant {
         "SignedSurveyResponseMessage",
         "PeerStats",
         "PeerStatList",
-        "TopologyResponseBody",
+        "TopologyResponseBodyV0",
+        "TopologyResponseBodyV1",
         "SurveyResponseBody",
         "TxAdvertVector",
         "FloodAdvert",
@@ -31728,11 +42025,30 @@ impl TypeVariant {
         "SetTrustLineFlagsOp",
         "LiquidityPoolDepositOp",
         "LiquidityPoolWithdrawOp",
+        "HostFunctionType",
+        "ContractIdPreimageType",
+        "ContractIdPreimage",
+        "ContractIdPreimageFromAddress",
+        "CreateContractArgs",
+        "InvokeContractArgs",
+        "HostFunction",
+        "SorobanAuthorizedFunctionType",
+        "SorobanAuthorizedFunction",
+        "SorobanAuthorizedInvocation",
+        "SorobanAddressCredentials",
+        "SorobanCredentialsType",
+        "SorobanCredentials",
+        "SorobanAuthorizationEntry",
+        "InvokeHostFunctionOp",
+        "BumpFootprintExpirationOp",
+        "RestoreFootprintOp",
         "Operation",
         "OperationBody",
         "HashIdPreimage",
         "HashIdPreimageOperationId",
         "HashIdPreimageRevokeId",
+        "HashIdPreimageContractId",
+        "HashIdPreimageSorobanAuthorization",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -31740,6 +42056,9 @@ impl TypeVariant {
         "PreconditionsV2",
         "PreconditionType",
         "Preconditions",
+        "LedgerFootprint",
+        "SorobanResources",
+        "SorobanTransactionData",
         "TransactionV0",
         "TransactionV0Ext",
         "TransactionV0Envelope",
@@ -31811,6 +42130,12 @@ impl TypeVariant {
         "LiquidityPoolDepositResult",
         "LiquidityPoolWithdrawResultCode",
         "LiquidityPoolWithdrawResult",
+        "InvokeHostFunctionResultCode",
+        "InvokeHostFunctionResult",
+        "BumpFootprintExpirationResultCode",
+        "BumpFootprintExpirationResult",
+        "RestoreFootprintResultCode",
+        "RestoreFootprintResult",
         "OperationResultCode",
         "OperationResult",
         "OperationResultTr",
@@ -31828,6 +42153,8 @@ impl TypeVariant {
         "Int32",
         "Uint64",
         "Int64",
+        "TimePoint",
+        "Duration",
         "ExtensionPoint",
         "CryptoKeyType",
         "PublicKeyType",
@@ -31838,6 +42165,7 @@ impl TypeVariant {
         "Signature",
         "SignatureHint",
         "NodeId",
+        "AccountId",
         "Curve25519Secret",
         "Curve25519Public",
         "HmacSha256Key",
@@ -31859,17 +42187,77 @@ impl TypeVariant {
             Self::ScpStatementExternalize => "ScpStatementExternalize",
             Self::ScpEnvelope => "ScpEnvelope",
             Self::ScpQuorumSet => "ScpQuorumSet",
+            Self::ConfigSettingContractExecutionLanesV0 => "ConfigSettingContractExecutionLanesV0",
+            Self::ConfigSettingContractComputeV0 => "ConfigSettingContractComputeV0",
+            Self::ConfigSettingContractLedgerCostV0 => "ConfigSettingContractLedgerCostV0",
+            Self::ConfigSettingContractHistoricalDataV0 => "ConfigSettingContractHistoricalDataV0",
+            Self::ConfigSettingContractEventsV0 => "ConfigSettingContractEventsV0",
+            Self::ConfigSettingContractBandwidthV0 => "ConfigSettingContractBandwidthV0",
+            Self::ContractCostType => "ContractCostType",
+            Self::ContractCostParamEntry => "ContractCostParamEntry",
+            Self::StateExpirationSettings => "StateExpirationSettings",
+            Self::EvictionIterator => "EvictionIterator",
+            Self::ContractCostParams => "ContractCostParams",
+            Self::ConfigSettingId => "ConfigSettingId",
+            Self::ConfigSettingEntry => "ConfigSettingEntry",
+            Self::ScEnvMetaKind => "ScEnvMetaKind",
+            Self::ScEnvMetaEntry => "ScEnvMetaEntry",
+            Self::ScMetaV0 => "ScMetaV0",
+            Self::ScMetaKind => "ScMetaKind",
+            Self::ScMetaEntry => "ScMetaEntry",
+            Self::ScSpecType => "ScSpecType",
+            Self::ScSpecTypeOption => "ScSpecTypeOption",
+            Self::ScSpecTypeResult => "ScSpecTypeResult",
+            Self::ScSpecTypeVec => "ScSpecTypeVec",
+            Self::ScSpecTypeMap => "ScSpecTypeMap",
+            Self::ScSpecTypeTuple => "ScSpecTypeTuple",
+            Self::ScSpecTypeBytesN => "ScSpecTypeBytesN",
+            Self::ScSpecTypeUdt => "ScSpecTypeUdt",
+            Self::ScSpecTypeDef => "ScSpecTypeDef",
+            Self::ScSpecUdtStructFieldV0 => "ScSpecUdtStructFieldV0",
+            Self::ScSpecUdtStructV0 => "ScSpecUdtStructV0",
+            Self::ScSpecUdtUnionCaseVoidV0 => "ScSpecUdtUnionCaseVoidV0",
+            Self::ScSpecUdtUnionCaseTupleV0 => "ScSpecUdtUnionCaseTupleV0",
+            Self::ScSpecUdtUnionCaseV0Kind => "ScSpecUdtUnionCaseV0Kind",
+            Self::ScSpecUdtUnionCaseV0 => "ScSpecUdtUnionCaseV0",
+            Self::ScSpecUdtUnionV0 => "ScSpecUdtUnionV0",
+            Self::ScSpecUdtEnumCaseV0 => "ScSpecUdtEnumCaseV0",
+            Self::ScSpecUdtEnumV0 => "ScSpecUdtEnumV0",
+            Self::ScSpecUdtErrorEnumCaseV0 => "ScSpecUdtErrorEnumCaseV0",
+            Self::ScSpecUdtErrorEnumV0 => "ScSpecUdtErrorEnumV0",
+            Self::ScSpecFunctionInputV0 => "ScSpecFunctionInputV0",
+            Self::ScSpecFunctionV0 => "ScSpecFunctionV0",
+            Self::ScSpecEntryKind => "ScSpecEntryKind",
+            Self::ScSpecEntry => "ScSpecEntry",
+            Self::ScValType => "ScValType",
+            Self::ScErrorType => "ScErrorType",
+            Self::ScErrorCode => "ScErrorCode",
+            Self::ScError => "ScError",
+            Self::UInt128Parts => "UInt128Parts",
+            Self::Int128Parts => "Int128Parts",
+            Self::UInt256Parts => "UInt256Parts",
+            Self::Int256Parts => "Int256Parts",
+            Self::ContractExecutableType => "ContractExecutableType",
+            Self::ContractExecutable => "ContractExecutable",
+            Self::ScAddressType => "ScAddressType",
+            Self::ScAddress => "ScAddress",
+            Self::ScVec => "ScVec",
+            Self::ScMap => "ScMap",
+            Self::ScBytes => "ScBytes",
+            Self::ScString => "ScString",
+            Self::ScSymbol => "ScSymbol",
+            Self::ScNonceKey => "ScNonceKey",
+            Self::ScContractInstance => "ScContractInstance",
+            Self::ScVal => "ScVal",
+            Self::ScMapEntry => "ScMapEntry",
             Self::StoredTransactionSet => "StoredTransactionSet",
             Self::PersistedScpStateV0 => "PersistedScpStateV0",
             Self::PersistedScpStateV1 => "PersistedScpStateV1",
             Self::PersistedScpState => "PersistedScpState",
-            Self::AccountId => "AccountId",
             Self::Thresholds => "Thresholds",
             Self::String32 => "String32",
             Self::String64 => "String64",
             Self::SequenceNumber => "SequenceNumber",
-            Self::TimePoint => "TimePoint",
-            Self::Duration => "Duration",
             Self::DataValue => "DataValue",
             Self::PoolId => "PoolId",
             Self::AssetCode4 => "AssetCode4",
@@ -31925,6 +42313,10 @@ impl TypeVariant {
             Self::LiquidityPoolEntry => "LiquidityPoolEntry",
             Self::LiquidityPoolEntryBody => "LiquidityPoolEntryBody",
             Self::LiquidityPoolEntryConstantProduct => "LiquidityPoolEntryConstantProduct",
+            Self::ContractDataDurability => "ContractDataDurability",
+            Self::ContractDataEntry => "ContractDataEntry",
+            Self::ContractCodeEntry => "ContractCodeEntry",
+            Self::ExpirationEntry => "ExpirationEntry",
             Self::LedgerEntryExtensionV1 => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry => "LedgerEntry",
@@ -31937,6 +42329,10 @@ impl TypeVariant {
             Self::LedgerKeyData => "LedgerKeyData",
             Self::LedgerKeyClaimableBalance => "LedgerKeyClaimableBalance",
             Self::LedgerKeyLiquidityPool => "LedgerKeyLiquidityPool",
+            Self::LedgerKeyContractData => "LedgerKeyContractData",
+            Self::LedgerKeyContractCode => "LedgerKeyContractCode",
+            Self::LedgerKeyConfigSetting => "LedgerKeyConfigSetting",
+            Self::LedgerKeyExpiration => "LedgerKeyExpiration",
             Self::EnvelopeType => "EnvelopeType",
             Self::UpgradeType => "UpgradeType",
             Self::StellarValueType => "StellarValueType",
@@ -31949,7 +42345,9 @@ impl TypeVariant {
             Self::LedgerHeader => "LedgerHeader",
             Self::LedgerHeaderExt => "LedgerHeaderExt",
             Self::LedgerUpgradeType => "LedgerUpgradeType",
+            Self::ConfigUpgradeSetKey => "ConfigUpgradeSetKey",
             Self::LedgerUpgrade => "LedgerUpgrade",
+            Self::ConfigUpgradeSet => "ConfigUpgradeSet",
             Self::BucketEntryType => "BucketEntryType",
             Self::BucketMetadata => "BucketMetadata",
             Self::BucketMetadataExt => "BucketMetadataExt",
@@ -31978,15 +42376,25 @@ impl TypeVariant {
             Self::OperationMeta => "OperationMeta",
             Self::TransactionMetaV1 => "TransactionMetaV1",
             Self::TransactionMetaV2 => "TransactionMetaV2",
+            Self::ContractEventType => "ContractEventType",
+            Self::ContractEvent => "ContractEvent",
+            Self::ContractEventBody => "ContractEventBody",
+            Self::ContractEventV0 => "ContractEventV0",
+            Self::DiagnosticEvent => "DiagnosticEvent",
+            Self::SorobanTransactionMeta => "SorobanTransactionMeta",
+            Self::TransactionMetaV3 => "TransactionMetaV3",
+            Self::InvokeHostFunctionSuccessPreImage => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta => "TransactionMeta",
             Self::TransactionResultMeta => "TransactionResultMeta",
             Self::UpgradeEntryMeta => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0 => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaV1 => "LedgerCloseMetaV1",
+            Self::LedgerCloseMetaV2 => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta => "LedgerCloseMeta",
             Self::ErrorCode => "ErrorCode",
             Self::SError => "SError",
             Self::SendMore => "SendMore",
+            Self::SendMoreExtended => "SendMoreExtended",
             Self::AuthCert => "AuthCert",
             Self::Hello => "Hello",
             Self::Auth => "Auth",
@@ -31996,6 +42404,7 @@ impl TypeVariant {
             Self::MessageType => "MessageType",
             Self::DontHave => "DontHave",
             Self::SurveyMessageCommandType => "SurveyMessageCommandType",
+            Self::SurveyMessageResponseType => "SurveyMessageResponseType",
             Self::SurveyRequestMessage => "SurveyRequestMessage",
             Self::SignedSurveyRequestMessage => "SignedSurveyRequestMessage",
             Self::EncryptedBody => "EncryptedBody",
@@ -32003,7 +42412,8 @@ impl TypeVariant {
             Self::SignedSurveyResponseMessage => "SignedSurveyResponseMessage",
             Self::PeerStats => "PeerStats",
             Self::PeerStatList => "PeerStatList",
-            Self::TopologyResponseBody => "TopologyResponseBody",
+            Self::TopologyResponseBodyV0 => "TopologyResponseBodyV0",
+            Self::TopologyResponseBodyV1 => "TopologyResponseBodyV1",
             Self::SurveyResponseBody => "SurveyResponseBody",
             Self::TxAdvertVector => "TxAdvertVector",
             Self::FloodAdvert => "FloodAdvert",
@@ -32041,11 +42451,30 @@ impl TypeVariant {
             Self::SetTrustLineFlagsOp => "SetTrustLineFlagsOp",
             Self::LiquidityPoolDepositOp => "LiquidityPoolDepositOp",
             Self::LiquidityPoolWithdrawOp => "LiquidityPoolWithdrawOp",
+            Self::HostFunctionType => "HostFunctionType",
+            Self::ContractIdPreimageType => "ContractIdPreimageType",
+            Self::ContractIdPreimage => "ContractIdPreimage",
+            Self::ContractIdPreimageFromAddress => "ContractIdPreimageFromAddress",
+            Self::CreateContractArgs => "CreateContractArgs",
+            Self::InvokeContractArgs => "InvokeContractArgs",
+            Self::HostFunction => "HostFunction",
+            Self::SorobanAuthorizedFunctionType => "SorobanAuthorizedFunctionType",
+            Self::SorobanAuthorizedFunction => "SorobanAuthorizedFunction",
+            Self::SorobanAuthorizedInvocation => "SorobanAuthorizedInvocation",
+            Self::SorobanAddressCredentials => "SorobanAddressCredentials",
+            Self::SorobanCredentialsType => "SorobanCredentialsType",
+            Self::SorobanCredentials => "SorobanCredentials",
+            Self::SorobanAuthorizationEntry => "SorobanAuthorizationEntry",
+            Self::InvokeHostFunctionOp => "InvokeHostFunctionOp",
+            Self::BumpFootprintExpirationOp => "BumpFootprintExpirationOp",
+            Self::RestoreFootprintOp => "RestoreFootprintOp",
             Self::Operation => "Operation",
             Self::OperationBody => "OperationBody",
             Self::HashIdPreimage => "HashIdPreimage",
             Self::HashIdPreimageOperationId => "HashIdPreimageOperationId",
             Self::HashIdPreimageRevokeId => "HashIdPreimageRevokeId",
+            Self::HashIdPreimageContractId => "HashIdPreimageContractId",
+            Self::HashIdPreimageSorobanAuthorization => "HashIdPreimageSorobanAuthorization",
             Self::MemoType => "MemoType",
             Self::Memo => "Memo",
             Self::TimeBounds => "TimeBounds",
@@ -32053,6 +42482,9 @@ impl TypeVariant {
             Self::PreconditionsV2 => "PreconditionsV2",
             Self::PreconditionType => "PreconditionType",
             Self::Preconditions => "Preconditions",
+            Self::LedgerFootprint => "LedgerFootprint",
+            Self::SorobanResources => "SorobanResources",
+            Self::SorobanTransactionData => "SorobanTransactionData",
             Self::TransactionV0 => "TransactionV0",
             Self::TransactionV0Ext => "TransactionV0Ext",
             Self::TransactionV0Envelope => "TransactionV0Envelope",
@@ -32128,6 +42560,12 @@ impl TypeVariant {
             Self::LiquidityPoolDepositResult => "LiquidityPoolDepositResult",
             Self::LiquidityPoolWithdrawResultCode => "LiquidityPoolWithdrawResultCode",
             Self::LiquidityPoolWithdrawResult => "LiquidityPoolWithdrawResult",
+            Self::InvokeHostFunctionResultCode => "InvokeHostFunctionResultCode",
+            Self::InvokeHostFunctionResult => "InvokeHostFunctionResult",
+            Self::BumpFootprintExpirationResultCode => "BumpFootprintExpirationResultCode",
+            Self::BumpFootprintExpirationResult => "BumpFootprintExpirationResult",
+            Self::RestoreFootprintResultCode => "RestoreFootprintResultCode",
+            Self::RestoreFootprintResult => "RestoreFootprintResult",
             Self::OperationResultCode => "OperationResultCode",
             Self::OperationResult => "OperationResult",
             Self::OperationResultTr => "OperationResultTr",
@@ -32145,6 +42583,8 @@ impl TypeVariant {
             Self::Int32 => "Int32",
             Self::Uint64 => "Uint64",
             Self::Int64 => "Int64",
+            Self::TimePoint => "TimePoint",
+            Self::Duration => "Duration",
             Self::ExtensionPoint => "ExtensionPoint",
             Self::CryptoKeyType => "CryptoKeyType",
             Self::PublicKeyType => "PublicKeyType",
@@ -32155,6 +42595,7 @@ impl TypeVariant {
             Self::Signature => "Signature",
             Self::SignatureHint => "SignatureHint",
             Self::NodeId => "NodeId",
+            Self::AccountId => "AccountId",
             Self::Curve25519Secret => "Curve25519Secret",
             Self::Curve25519Public => "Curve25519Public",
             Self::HmacSha256Key => "HmacSha256Key",
@@ -32164,7 +42605,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 305] {
+    pub const fn variants() -> [TypeVariant; 418] {
         Self::VARIANTS
     }
 }
@@ -32198,17 +42639,81 @@ impl core::str::FromStr for TypeVariant {
             "ScpStatementExternalize" => Ok(Self::ScpStatementExternalize),
             "ScpEnvelope" => Ok(Self::ScpEnvelope),
             "ScpQuorumSet" => Ok(Self::ScpQuorumSet),
+            "ConfigSettingContractExecutionLanesV0" => {
+                Ok(Self::ConfigSettingContractExecutionLanesV0)
+            }
+            "ConfigSettingContractComputeV0" => Ok(Self::ConfigSettingContractComputeV0),
+            "ConfigSettingContractLedgerCostV0" => Ok(Self::ConfigSettingContractLedgerCostV0),
+            "ConfigSettingContractHistoricalDataV0" => {
+                Ok(Self::ConfigSettingContractHistoricalDataV0)
+            }
+            "ConfigSettingContractEventsV0" => Ok(Self::ConfigSettingContractEventsV0),
+            "ConfigSettingContractBandwidthV0" => Ok(Self::ConfigSettingContractBandwidthV0),
+            "ContractCostType" => Ok(Self::ContractCostType),
+            "ContractCostParamEntry" => Ok(Self::ContractCostParamEntry),
+            "StateExpirationSettings" => Ok(Self::StateExpirationSettings),
+            "EvictionIterator" => Ok(Self::EvictionIterator),
+            "ContractCostParams" => Ok(Self::ContractCostParams),
+            "ConfigSettingId" => Ok(Self::ConfigSettingId),
+            "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
+            "ScEnvMetaKind" => Ok(Self::ScEnvMetaKind),
+            "ScEnvMetaEntry" => Ok(Self::ScEnvMetaEntry),
+            "ScMetaV0" => Ok(Self::ScMetaV0),
+            "ScMetaKind" => Ok(Self::ScMetaKind),
+            "ScMetaEntry" => Ok(Self::ScMetaEntry),
+            "ScSpecType" => Ok(Self::ScSpecType),
+            "ScSpecTypeOption" => Ok(Self::ScSpecTypeOption),
+            "ScSpecTypeResult" => Ok(Self::ScSpecTypeResult),
+            "ScSpecTypeVec" => Ok(Self::ScSpecTypeVec),
+            "ScSpecTypeMap" => Ok(Self::ScSpecTypeMap),
+            "ScSpecTypeTuple" => Ok(Self::ScSpecTypeTuple),
+            "ScSpecTypeBytesN" => Ok(Self::ScSpecTypeBytesN),
+            "ScSpecTypeUdt" => Ok(Self::ScSpecTypeUdt),
+            "ScSpecTypeDef" => Ok(Self::ScSpecTypeDef),
+            "ScSpecUdtStructFieldV0" => Ok(Self::ScSpecUdtStructFieldV0),
+            "ScSpecUdtStructV0" => Ok(Self::ScSpecUdtStructV0),
+            "ScSpecUdtUnionCaseVoidV0" => Ok(Self::ScSpecUdtUnionCaseVoidV0),
+            "ScSpecUdtUnionCaseTupleV0" => Ok(Self::ScSpecUdtUnionCaseTupleV0),
+            "ScSpecUdtUnionCaseV0Kind" => Ok(Self::ScSpecUdtUnionCaseV0Kind),
+            "ScSpecUdtUnionCaseV0" => Ok(Self::ScSpecUdtUnionCaseV0),
+            "ScSpecUdtUnionV0" => Ok(Self::ScSpecUdtUnionV0),
+            "ScSpecUdtEnumCaseV0" => Ok(Self::ScSpecUdtEnumCaseV0),
+            "ScSpecUdtEnumV0" => Ok(Self::ScSpecUdtEnumV0),
+            "ScSpecUdtErrorEnumCaseV0" => Ok(Self::ScSpecUdtErrorEnumCaseV0),
+            "ScSpecUdtErrorEnumV0" => Ok(Self::ScSpecUdtErrorEnumV0),
+            "ScSpecFunctionInputV0" => Ok(Self::ScSpecFunctionInputV0),
+            "ScSpecFunctionV0" => Ok(Self::ScSpecFunctionV0),
+            "ScSpecEntryKind" => Ok(Self::ScSpecEntryKind),
+            "ScSpecEntry" => Ok(Self::ScSpecEntry),
+            "ScValType" => Ok(Self::ScValType),
+            "ScErrorType" => Ok(Self::ScErrorType),
+            "ScErrorCode" => Ok(Self::ScErrorCode),
+            "ScError" => Ok(Self::ScError),
+            "UInt128Parts" => Ok(Self::UInt128Parts),
+            "Int128Parts" => Ok(Self::Int128Parts),
+            "UInt256Parts" => Ok(Self::UInt256Parts),
+            "Int256Parts" => Ok(Self::Int256Parts),
+            "ContractExecutableType" => Ok(Self::ContractExecutableType),
+            "ContractExecutable" => Ok(Self::ContractExecutable),
+            "ScAddressType" => Ok(Self::ScAddressType),
+            "ScAddress" => Ok(Self::ScAddress),
+            "ScVec" => Ok(Self::ScVec),
+            "ScMap" => Ok(Self::ScMap),
+            "ScBytes" => Ok(Self::ScBytes),
+            "ScString" => Ok(Self::ScString),
+            "ScSymbol" => Ok(Self::ScSymbol),
+            "ScNonceKey" => Ok(Self::ScNonceKey),
+            "ScContractInstance" => Ok(Self::ScContractInstance),
+            "ScVal" => Ok(Self::ScVal),
+            "ScMapEntry" => Ok(Self::ScMapEntry),
             "StoredTransactionSet" => Ok(Self::StoredTransactionSet),
             "PersistedScpStateV0" => Ok(Self::PersistedScpStateV0),
             "PersistedScpStateV1" => Ok(Self::PersistedScpStateV1),
             "PersistedScpState" => Ok(Self::PersistedScpState),
-            "AccountId" => Ok(Self::AccountId),
             "Thresholds" => Ok(Self::Thresholds),
             "String32" => Ok(Self::String32),
             "String64" => Ok(Self::String64),
             "SequenceNumber" => Ok(Self::SequenceNumber),
-            "TimePoint" => Ok(Self::TimePoint),
-            "Duration" => Ok(Self::Duration),
             "DataValue" => Ok(Self::DataValue),
             "PoolId" => Ok(Self::PoolId),
             "AssetCode4" => Ok(Self::AssetCode4),
@@ -32264,6 +42769,10 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolEntry" => Ok(Self::LiquidityPoolEntry),
             "LiquidityPoolEntryBody" => Ok(Self::LiquidityPoolEntryBody),
             "LiquidityPoolEntryConstantProduct" => Ok(Self::LiquidityPoolEntryConstantProduct),
+            "ContractDataDurability" => Ok(Self::ContractDataDurability),
+            "ContractDataEntry" => Ok(Self::ContractDataEntry),
+            "ContractCodeEntry" => Ok(Self::ContractCodeEntry),
+            "ExpirationEntry" => Ok(Self::ExpirationEntry),
             "LedgerEntryExtensionV1" => Ok(Self::LedgerEntryExtensionV1),
             "LedgerEntryExtensionV1Ext" => Ok(Self::LedgerEntryExtensionV1Ext),
             "LedgerEntry" => Ok(Self::LedgerEntry),
@@ -32276,6 +42785,10 @@ impl core::str::FromStr for TypeVariant {
             "LedgerKeyData" => Ok(Self::LedgerKeyData),
             "LedgerKeyClaimableBalance" => Ok(Self::LedgerKeyClaimableBalance),
             "LedgerKeyLiquidityPool" => Ok(Self::LedgerKeyLiquidityPool),
+            "LedgerKeyContractData" => Ok(Self::LedgerKeyContractData),
+            "LedgerKeyContractCode" => Ok(Self::LedgerKeyContractCode),
+            "LedgerKeyConfigSetting" => Ok(Self::LedgerKeyConfigSetting),
+            "LedgerKeyExpiration" => Ok(Self::LedgerKeyExpiration),
             "EnvelopeType" => Ok(Self::EnvelopeType),
             "UpgradeType" => Ok(Self::UpgradeType),
             "StellarValueType" => Ok(Self::StellarValueType),
@@ -32288,7 +42801,9 @@ impl core::str::FromStr for TypeVariant {
             "LedgerHeader" => Ok(Self::LedgerHeader),
             "LedgerHeaderExt" => Ok(Self::LedgerHeaderExt),
             "LedgerUpgradeType" => Ok(Self::LedgerUpgradeType),
+            "ConfigUpgradeSetKey" => Ok(Self::ConfigUpgradeSetKey),
             "LedgerUpgrade" => Ok(Self::LedgerUpgrade),
+            "ConfigUpgradeSet" => Ok(Self::ConfigUpgradeSet),
             "BucketEntryType" => Ok(Self::BucketEntryType),
             "BucketMetadata" => Ok(Self::BucketMetadata),
             "BucketMetadataExt" => Ok(Self::BucketMetadataExt),
@@ -32317,15 +42832,25 @@ impl core::str::FromStr for TypeVariant {
             "OperationMeta" => Ok(Self::OperationMeta),
             "TransactionMetaV1" => Ok(Self::TransactionMetaV1),
             "TransactionMetaV2" => Ok(Self::TransactionMetaV2),
+            "ContractEventType" => Ok(Self::ContractEventType),
+            "ContractEvent" => Ok(Self::ContractEvent),
+            "ContractEventBody" => Ok(Self::ContractEventBody),
+            "ContractEventV0" => Ok(Self::ContractEventV0),
+            "DiagnosticEvent" => Ok(Self::DiagnosticEvent),
+            "SorobanTransactionMeta" => Ok(Self::SorobanTransactionMeta),
+            "TransactionMetaV3" => Ok(Self::TransactionMetaV3),
+            "InvokeHostFunctionSuccessPreImage" => Ok(Self::InvokeHostFunctionSuccessPreImage),
             "TransactionMeta" => Ok(Self::TransactionMeta),
             "TransactionResultMeta" => Ok(Self::TransactionResultMeta),
             "UpgradeEntryMeta" => Ok(Self::UpgradeEntryMeta),
             "LedgerCloseMetaV0" => Ok(Self::LedgerCloseMetaV0),
             "LedgerCloseMetaV1" => Ok(Self::LedgerCloseMetaV1),
+            "LedgerCloseMetaV2" => Ok(Self::LedgerCloseMetaV2),
             "LedgerCloseMeta" => Ok(Self::LedgerCloseMeta),
             "ErrorCode" => Ok(Self::ErrorCode),
             "SError" => Ok(Self::SError),
             "SendMore" => Ok(Self::SendMore),
+            "SendMoreExtended" => Ok(Self::SendMoreExtended),
             "AuthCert" => Ok(Self::AuthCert),
             "Hello" => Ok(Self::Hello),
             "Auth" => Ok(Self::Auth),
@@ -32335,6 +42860,7 @@ impl core::str::FromStr for TypeVariant {
             "MessageType" => Ok(Self::MessageType),
             "DontHave" => Ok(Self::DontHave),
             "SurveyMessageCommandType" => Ok(Self::SurveyMessageCommandType),
+            "SurveyMessageResponseType" => Ok(Self::SurveyMessageResponseType),
             "SurveyRequestMessage" => Ok(Self::SurveyRequestMessage),
             "SignedSurveyRequestMessage" => Ok(Self::SignedSurveyRequestMessage),
             "EncryptedBody" => Ok(Self::EncryptedBody),
@@ -32342,7 +42868,8 @@ impl core::str::FromStr for TypeVariant {
             "SignedSurveyResponseMessage" => Ok(Self::SignedSurveyResponseMessage),
             "PeerStats" => Ok(Self::PeerStats),
             "PeerStatList" => Ok(Self::PeerStatList),
-            "TopologyResponseBody" => Ok(Self::TopologyResponseBody),
+            "TopologyResponseBodyV0" => Ok(Self::TopologyResponseBodyV0),
+            "TopologyResponseBodyV1" => Ok(Self::TopologyResponseBodyV1),
             "SurveyResponseBody" => Ok(Self::SurveyResponseBody),
             "TxAdvertVector" => Ok(Self::TxAdvertVector),
             "FloodAdvert" => Ok(Self::FloodAdvert),
@@ -32380,11 +42907,30 @@ impl core::str::FromStr for TypeVariant {
             "SetTrustLineFlagsOp" => Ok(Self::SetTrustLineFlagsOp),
             "LiquidityPoolDepositOp" => Ok(Self::LiquidityPoolDepositOp),
             "LiquidityPoolWithdrawOp" => Ok(Self::LiquidityPoolWithdrawOp),
+            "HostFunctionType" => Ok(Self::HostFunctionType),
+            "ContractIdPreimageType" => Ok(Self::ContractIdPreimageType),
+            "ContractIdPreimage" => Ok(Self::ContractIdPreimage),
+            "ContractIdPreimageFromAddress" => Ok(Self::ContractIdPreimageFromAddress),
+            "CreateContractArgs" => Ok(Self::CreateContractArgs),
+            "InvokeContractArgs" => Ok(Self::InvokeContractArgs),
+            "HostFunction" => Ok(Self::HostFunction),
+            "SorobanAuthorizedFunctionType" => Ok(Self::SorobanAuthorizedFunctionType),
+            "SorobanAuthorizedFunction" => Ok(Self::SorobanAuthorizedFunction),
+            "SorobanAuthorizedInvocation" => Ok(Self::SorobanAuthorizedInvocation),
+            "SorobanAddressCredentials" => Ok(Self::SorobanAddressCredentials),
+            "SorobanCredentialsType" => Ok(Self::SorobanCredentialsType),
+            "SorobanCredentials" => Ok(Self::SorobanCredentials),
+            "SorobanAuthorizationEntry" => Ok(Self::SorobanAuthorizationEntry),
+            "InvokeHostFunctionOp" => Ok(Self::InvokeHostFunctionOp),
+            "BumpFootprintExpirationOp" => Ok(Self::BumpFootprintExpirationOp),
+            "RestoreFootprintOp" => Ok(Self::RestoreFootprintOp),
             "Operation" => Ok(Self::Operation),
             "OperationBody" => Ok(Self::OperationBody),
             "HashIdPreimage" => Ok(Self::HashIdPreimage),
             "HashIdPreimageOperationId" => Ok(Self::HashIdPreimageOperationId),
             "HashIdPreimageRevokeId" => Ok(Self::HashIdPreimageRevokeId),
+            "HashIdPreimageContractId" => Ok(Self::HashIdPreimageContractId),
+            "HashIdPreimageSorobanAuthorization" => Ok(Self::HashIdPreimageSorobanAuthorization),
             "MemoType" => Ok(Self::MemoType),
             "Memo" => Ok(Self::Memo),
             "TimeBounds" => Ok(Self::TimeBounds),
@@ -32392,6 +42938,9 @@ impl core::str::FromStr for TypeVariant {
             "PreconditionsV2" => Ok(Self::PreconditionsV2),
             "PreconditionType" => Ok(Self::PreconditionType),
             "Preconditions" => Ok(Self::Preconditions),
+            "LedgerFootprint" => Ok(Self::LedgerFootprint),
+            "SorobanResources" => Ok(Self::SorobanResources),
+            "SorobanTransactionData" => Ok(Self::SorobanTransactionData),
             "TransactionV0" => Ok(Self::TransactionV0),
             "TransactionV0Ext" => Ok(Self::TransactionV0Ext),
             "TransactionV0Envelope" => Ok(Self::TransactionV0Envelope),
@@ -32471,6 +43020,12 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolDepositResult" => Ok(Self::LiquidityPoolDepositResult),
             "LiquidityPoolWithdrawResultCode" => Ok(Self::LiquidityPoolWithdrawResultCode),
             "LiquidityPoolWithdrawResult" => Ok(Self::LiquidityPoolWithdrawResult),
+            "InvokeHostFunctionResultCode" => Ok(Self::InvokeHostFunctionResultCode),
+            "InvokeHostFunctionResult" => Ok(Self::InvokeHostFunctionResult),
+            "BumpFootprintExpirationResultCode" => Ok(Self::BumpFootprintExpirationResultCode),
+            "BumpFootprintExpirationResult" => Ok(Self::BumpFootprintExpirationResult),
+            "RestoreFootprintResultCode" => Ok(Self::RestoreFootprintResultCode),
+            "RestoreFootprintResult" => Ok(Self::RestoreFootprintResult),
             "OperationResultCode" => Ok(Self::OperationResultCode),
             "OperationResult" => Ok(Self::OperationResult),
             "OperationResultTr" => Ok(Self::OperationResultTr),
@@ -32488,6 +43043,8 @@ impl core::str::FromStr for TypeVariant {
             "Int32" => Ok(Self::Int32),
             "Uint64" => Ok(Self::Uint64),
             "Int64" => Ok(Self::Int64),
+            "TimePoint" => Ok(Self::TimePoint),
+            "Duration" => Ok(Self::Duration),
             "ExtensionPoint" => Ok(Self::ExtensionPoint),
             "CryptoKeyType" => Ok(Self::CryptoKeyType),
             "PublicKeyType" => Ok(Self::PublicKeyType),
@@ -32498,6 +43055,7 @@ impl core::str::FromStr for TypeVariant {
             "Signature" => Ok(Self::Signature),
             "SignatureHint" => Ok(Self::SignatureHint),
             "NodeId" => Ok(Self::NodeId),
+            "AccountId" => Ok(Self::AccountId),
             "Curve25519Secret" => Ok(Self::Curve25519Secret),
             "Curve25519Public" => Ok(Self::Curve25519Public),
             "HmacSha256Key" => Ok(Self::HmacSha256Key),
@@ -32526,17 +43084,77 @@ pub enum Type {
     ScpStatementExternalize(Box<ScpStatementExternalize>),
     ScpEnvelope(Box<ScpEnvelope>),
     ScpQuorumSet(Box<ScpQuorumSet>),
+    ConfigSettingContractExecutionLanesV0(Box<ConfigSettingContractExecutionLanesV0>),
+    ConfigSettingContractComputeV0(Box<ConfigSettingContractComputeV0>),
+    ConfigSettingContractLedgerCostV0(Box<ConfigSettingContractLedgerCostV0>),
+    ConfigSettingContractHistoricalDataV0(Box<ConfigSettingContractHistoricalDataV0>),
+    ConfigSettingContractEventsV0(Box<ConfigSettingContractEventsV0>),
+    ConfigSettingContractBandwidthV0(Box<ConfigSettingContractBandwidthV0>),
+    ContractCostType(Box<ContractCostType>),
+    ContractCostParamEntry(Box<ContractCostParamEntry>),
+    StateExpirationSettings(Box<StateExpirationSettings>),
+    EvictionIterator(Box<EvictionIterator>),
+    ContractCostParams(Box<ContractCostParams>),
+    ConfigSettingId(Box<ConfigSettingId>),
+    ConfigSettingEntry(Box<ConfigSettingEntry>),
+    ScEnvMetaKind(Box<ScEnvMetaKind>),
+    ScEnvMetaEntry(Box<ScEnvMetaEntry>),
+    ScMetaV0(Box<ScMetaV0>),
+    ScMetaKind(Box<ScMetaKind>),
+    ScMetaEntry(Box<ScMetaEntry>),
+    ScSpecType(Box<ScSpecType>),
+    ScSpecTypeOption(Box<ScSpecTypeOption>),
+    ScSpecTypeResult(Box<ScSpecTypeResult>),
+    ScSpecTypeVec(Box<ScSpecTypeVec>),
+    ScSpecTypeMap(Box<ScSpecTypeMap>),
+    ScSpecTypeTuple(Box<ScSpecTypeTuple>),
+    ScSpecTypeBytesN(Box<ScSpecTypeBytesN>),
+    ScSpecTypeUdt(Box<ScSpecTypeUdt>),
+    ScSpecTypeDef(Box<ScSpecTypeDef>),
+    ScSpecUdtStructFieldV0(Box<ScSpecUdtStructFieldV0>),
+    ScSpecUdtStructV0(Box<ScSpecUdtStructV0>),
+    ScSpecUdtUnionCaseVoidV0(Box<ScSpecUdtUnionCaseVoidV0>),
+    ScSpecUdtUnionCaseTupleV0(Box<ScSpecUdtUnionCaseTupleV0>),
+    ScSpecUdtUnionCaseV0Kind(Box<ScSpecUdtUnionCaseV0Kind>),
+    ScSpecUdtUnionCaseV0(Box<ScSpecUdtUnionCaseV0>),
+    ScSpecUdtUnionV0(Box<ScSpecUdtUnionV0>),
+    ScSpecUdtEnumCaseV0(Box<ScSpecUdtEnumCaseV0>),
+    ScSpecUdtEnumV0(Box<ScSpecUdtEnumV0>),
+    ScSpecUdtErrorEnumCaseV0(Box<ScSpecUdtErrorEnumCaseV0>),
+    ScSpecUdtErrorEnumV0(Box<ScSpecUdtErrorEnumV0>),
+    ScSpecFunctionInputV0(Box<ScSpecFunctionInputV0>),
+    ScSpecFunctionV0(Box<ScSpecFunctionV0>),
+    ScSpecEntryKind(Box<ScSpecEntryKind>),
+    ScSpecEntry(Box<ScSpecEntry>),
+    ScValType(Box<ScValType>),
+    ScErrorType(Box<ScErrorType>),
+    ScErrorCode(Box<ScErrorCode>),
+    ScError(Box<ScError>),
+    UInt128Parts(Box<UInt128Parts>),
+    Int128Parts(Box<Int128Parts>),
+    UInt256Parts(Box<UInt256Parts>),
+    Int256Parts(Box<Int256Parts>),
+    ContractExecutableType(Box<ContractExecutableType>),
+    ContractExecutable(Box<ContractExecutable>),
+    ScAddressType(Box<ScAddressType>),
+    ScAddress(Box<ScAddress>),
+    ScVec(Box<ScVec>),
+    ScMap(Box<ScMap>),
+    ScBytes(Box<ScBytes>),
+    ScString(Box<ScString>),
+    ScSymbol(Box<ScSymbol>),
+    ScNonceKey(Box<ScNonceKey>),
+    ScContractInstance(Box<ScContractInstance>),
+    ScVal(Box<ScVal>),
+    ScMapEntry(Box<ScMapEntry>),
     StoredTransactionSet(Box<StoredTransactionSet>),
     PersistedScpStateV0(Box<PersistedScpStateV0>),
     PersistedScpStateV1(Box<PersistedScpStateV1>),
     PersistedScpState(Box<PersistedScpState>),
-    AccountId(Box<AccountId>),
     Thresholds(Box<Thresholds>),
     String32(Box<String32>),
     String64(Box<String64>),
     SequenceNumber(Box<SequenceNumber>),
-    TimePoint(Box<TimePoint>),
-    Duration(Box<Duration>),
     DataValue(Box<DataValue>),
     PoolId(Box<PoolId>),
     AssetCode4(Box<AssetCode4>),
@@ -32590,6 +43208,10 @@ pub enum Type {
     LiquidityPoolEntry(Box<LiquidityPoolEntry>),
     LiquidityPoolEntryBody(Box<LiquidityPoolEntryBody>),
     LiquidityPoolEntryConstantProduct(Box<LiquidityPoolEntryConstantProduct>),
+    ContractDataDurability(Box<ContractDataDurability>),
+    ContractDataEntry(Box<ContractDataEntry>),
+    ContractCodeEntry(Box<ContractCodeEntry>),
+    ExpirationEntry(Box<ExpirationEntry>),
     LedgerEntryExtensionV1(Box<LedgerEntryExtensionV1>),
     LedgerEntryExtensionV1Ext(Box<LedgerEntryExtensionV1Ext>),
     LedgerEntry(Box<LedgerEntry>),
@@ -32602,6 +43224,10 @@ pub enum Type {
     LedgerKeyData(Box<LedgerKeyData>),
     LedgerKeyClaimableBalance(Box<LedgerKeyClaimableBalance>),
     LedgerKeyLiquidityPool(Box<LedgerKeyLiquidityPool>),
+    LedgerKeyContractData(Box<LedgerKeyContractData>),
+    LedgerKeyContractCode(Box<LedgerKeyContractCode>),
+    LedgerKeyConfigSetting(Box<LedgerKeyConfigSetting>),
+    LedgerKeyExpiration(Box<LedgerKeyExpiration>),
     EnvelopeType(Box<EnvelopeType>),
     UpgradeType(Box<UpgradeType>),
     StellarValueType(Box<StellarValueType>),
@@ -32614,7 +43240,9 @@ pub enum Type {
     LedgerHeader(Box<LedgerHeader>),
     LedgerHeaderExt(Box<LedgerHeaderExt>),
     LedgerUpgradeType(Box<LedgerUpgradeType>),
+    ConfigUpgradeSetKey(Box<ConfigUpgradeSetKey>),
     LedgerUpgrade(Box<LedgerUpgrade>),
+    ConfigUpgradeSet(Box<ConfigUpgradeSet>),
     BucketEntryType(Box<BucketEntryType>),
     BucketMetadata(Box<BucketMetadata>),
     BucketMetadataExt(Box<BucketMetadataExt>),
@@ -32643,15 +43271,25 @@ pub enum Type {
     OperationMeta(Box<OperationMeta>),
     TransactionMetaV1(Box<TransactionMetaV1>),
     TransactionMetaV2(Box<TransactionMetaV2>),
+    ContractEventType(Box<ContractEventType>),
+    ContractEvent(Box<ContractEvent>),
+    ContractEventBody(Box<ContractEventBody>),
+    ContractEventV0(Box<ContractEventV0>),
+    DiagnosticEvent(Box<DiagnosticEvent>),
+    SorobanTransactionMeta(Box<SorobanTransactionMeta>),
+    TransactionMetaV3(Box<TransactionMetaV3>),
+    InvokeHostFunctionSuccessPreImage(Box<InvokeHostFunctionSuccessPreImage>),
     TransactionMeta(Box<TransactionMeta>),
     TransactionResultMeta(Box<TransactionResultMeta>),
     UpgradeEntryMeta(Box<UpgradeEntryMeta>),
     LedgerCloseMetaV0(Box<LedgerCloseMetaV0>),
     LedgerCloseMetaV1(Box<LedgerCloseMetaV1>),
+    LedgerCloseMetaV2(Box<LedgerCloseMetaV2>),
     LedgerCloseMeta(Box<LedgerCloseMeta>),
     ErrorCode(Box<ErrorCode>),
     SError(Box<SError>),
     SendMore(Box<SendMore>),
+    SendMoreExtended(Box<SendMoreExtended>),
     AuthCert(Box<AuthCert>),
     Hello(Box<Hello>),
     Auth(Box<Auth>),
@@ -32661,6 +43299,7 @@ pub enum Type {
     MessageType(Box<MessageType>),
     DontHave(Box<DontHave>),
     SurveyMessageCommandType(Box<SurveyMessageCommandType>),
+    SurveyMessageResponseType(Box<SurveyMessageResponseType>),
     SurveyRequestMessage(Box<SurveyRequestMessage>),
     SignedSurveyRequestMessage(Box<SignedSurveyRequestMessage>),
     EncryptedBody(Box<EncryptedBody>),
@@ -32668,7 +43307,8 @@ pub enum Type {
     SignedSurveyResponseMessage(Box<SignedSurveyResponseMessage>),
     PeerStats(Box<PeerStats>),
     PeerStatList(Box<PeerStatList>),
-    TopologyResponseBody(Box<TopologyResponseBody>),
+    TopologyResponseBodyV0(Box<TopologyResponseBodyV0>),
+    TopologyResponseBodyV1(Box<TopologyResponseBodyV1>),
     SurveyResponseBody(Box<SurveyResponseBody>),
     TxAdvertVector(Box<TxAdvertVector>),
     FloodAdvert(Box<FloodAdvert>),
@@ -32706,11 +43346,30 @@ pub enum Type {
     SetTrustLineFlagsOp(Box<SetTrustLineFlagsOp>),
     LiquidityPoolDepositOp(Box<LiquidityPoolDepositOp>),
     LiquidityPoolWithdrawOp(Box<LiquidityPoolWithdrawOp>),
+    HostFunctionType(Box<HostFunctionType>),
+    ContractIdPreimageType(Box<ContractIdPreimageType>),
+    ContractIdPreimage(Box<ContractIdPreimage>),
+    ContractIdPreimageFromAddress(Box<ContractIdPreimageFromAddress>),
+    CreateContractArgs(Box<CreateContractArgs>),
+    InvokeContractArgs(Box<InvokeContractArgs>),
+    HostFunction(Box<HostFunction>),
+    SorobanAuthorizedFunctionType(Box<SorobanAuthorizedFunctionType>),
+    SorobanAuthorizedFunction(Box<SorobanAuthorizedFunction>),
+    SorobanAuthorizedInvocation(Box<SorobanAuthorizedInvocation>),
+    SorobanAddressCredentials(Box<SorobanAddressCredentials>),
+    SorobanCredentialsType(Box<SorobanCredentialsType>),
+    SorobanCredentials(Box<SorobanCredentials>),
+    SorobanAuthorizationEntry(Box<SorobanAuthorizationEntry>),
+    InvokeHostFunctionOp(Box<InvokeHostFunctionOp>),
+    BumpFootprintExpirationOp(Box<BumpFootprintExpirationOp>),
+    RestoreFootprintOp(Box<RestoreFootprintOp>),
     Operation(Box<Operation>),
     OperationBody(Box<OperationBody>),
     HashIdPreimage(Box<HashIdPreimage>),
     HashIdPreimageOperationId(Box<HashIdPreimageOperationId>),
     HashIdPreimageRevokeId(Box<HashIdPreimageRevokeId>),
+    HashIdPreimageContractId(Box<HashIdPreimageContractId>),
+    HashIdPreimageSorobanAuthorization(Box<HashIdPreimageSorobanAuthorization>),
     MemoType(Box<MemoType>),
     Memo(Box<Memo>),
     TimeBounds(Box<TimeBounds>),
@@ -32718,6 +43377,9 @@ pub enum Type {
     PreconditionsV2(Box<PreconditionsV2>),
     PreconditionType(Box<PreconditionType>),
     Preconditions(Box<Preconditions>),
+    LedgerFootprint(Box<LedgerFootprint>),
+    SorobanResources(Box<SorobanResources>),
+    SorobanTransactionData(Box<SorobanTransactionData>),
     TransactionV0(Box<TransactionV0>),
     TransactionV0Ext(Box<TransactionV0Ext>),
     TransactionV0Envelope(Box<TransactionV0Envelope>),
@@ -32789,6 +43451,12 @@ pub enum Type {
     LiquidityPoolDepositResult(Box<LiquidityPoolDepositResult>),
     LiquidityPoolWithdrawResultCode(Box<LiquidityPoolWithdrawResultCode>),
     LiquidityPoolWithdrawResult(Box<LiquidityPoolWithdrawResult>),
+    InvokeHostFunctionResultCode(Box<InvokeHostFunctionResultCode>),
+    InvokeHostFunctionResult(Box<InvokeHostFunctionResult>),
+    BumpFootprintExpirationResultCode(Box<BumpFootprintExpirationResultCode>),
+    BumpFootprintExpirationResult(Box<BumpFootprintExpirationResult>),
+    RestoreFootprintResultCode(Box<RestoreFootprintResultCode>),
+    RestoreFootprintResult(Box<RestoreFootprintResult>),
     OperationResultCode(Box<OperationResultCode>),
     OperationResult(Box<OperationResult>),
     OperationResultTr(Box<OperationResultTr>),
@@ -32806,6 +43474,8 @@ pub enum Type {
     Int32(Box<Int32>),
     Uint64(Box<Uint64>),
     Int64(Box<Int64>),
+    TimePoint(Box<TimePoint>),
+    Duration(Box<Duration>),
     ExtensionPoint(Box<ExtensionPoint>),
     CryptoKeyType(Box<CryptoKeyType>),
     PublicKeyType(Box<PublicKeyType>),
@@ -32816,6 +43486,7 @@ pub enum Type {
     Signature(Box<Signature>),
     SignatureHint(Box<SignatureHint>),
     NodeId(Box<NodeId>),
+    AccountId(Box<AccountId>),
     Curve25519Secret(Box<Curve25519Secret>),
     Curve25519Public(Box<Curve25519Public>),
     HmacSha256Key(Box<HmacSha256Key>),
@@ -32823,7 +43494,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 305] = [
+    pub const VARIANTS: [TypeVariant; 418] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -32835,17 +43506,77 @@ impl Type {
         TypeVariant::ScpStatementExternalize,
         TypeVariant::ScpEnvelope,
         TypeVariant::ScpQuorumSet,
+        TypeVariant::ConfigSettingContractExecutionLanesV0,
+        TypeVariant::ConfigSettingContractComputeV0,
+        TypeVariant::ConfigSettingContractLedgerCostV0,
+        TypeVariant::ConfigSettingContractHistoricalDataV0,
+        TypeVariant::ConfigSettingContractEventsV0,
+        TypeVariant::ConfigSettingContractBandwidthV0,
+        TypeVariant::ContractCostType,
+        TypeVariant::ContractCostParamEntry,
+        TypeVariant::StateExpirationSettings,
+        TypeVariant::EvictionIterator,
+        TypeVariant::ContractCostParams,
+        TypeVariant::ConfigSettingId,
+        TypeVariant::ConfigSettingEntry,
+        TypeVariant::ScEnvMetaKind,
+        TypeVariant::ScEnvMetaEntry,
+        TypeVariant::ScMetaV0,
+        TypeVariant::ScMetaKind,
+        TypeVariant::ScMetaEntry,
+        TypeVariant::ScSpecType,
+        TypeVariant::ScSpecTypeOption,
+        TypeVariant::ScSpecTypeResult,
+        TypeVariant::ScSpecTypeVec,
+        TypeVariant::ScSpecTypeMap,
+        TypeVariant::ScSpecTypeTuple,
+        TypeVariant::ScSpecTypeBytesN,
+        TypeVariant::ScSpecTypeUdt,
+        TypeVariant::ScSpecTypeDef,
+        TypeVariant::ScSpecUdtStructFieldV0,
+        TypeVariant::ScSpecUdtStructV0,
+        TypeVariant::ScSpecUdtUnionCaseVoidV0,
+        TypeVariant::ScSpecUdtUnionCaseTupleV0,
+        TypeVariant::ScSpecUdtUnionCaseV0Kind,
+        TypeVariant::ScSpecUdtUnionCaseV0,
+        TypeVariant::ScSpecUdtUnionV0,
+        TypeVariant::ScSpecUdtEnumCaseV0,
+        TypeVariant::ScSpecUdtEnumV0,
+        TypeVariant::ScSpecUdtErrorEnumCaseV0,
+        TypeVariant::ScSpecUdtErrorEnumV0,
+        TypeVariant::ScSpecFunctionInputV0,
+        TypeVariant::ScSpecFunctionV0,
+        TypeVariant::ScSpecEntryKind,
+        TypeVariant::ScSpecEntry,
+        TypeVariant::ScValType,
+        TypeVariant::ScErrorType,
+        TypeVariant::ScErrorCode,
+        TypeVariant::ScError,
+        TypeVariant::UInt128Parts,
+        TypeVariant::Int128Parts,
+        TypeVariant::UInt256Parts,
+        TypeVariant::Int256Parts,
+        TypeVariant::ContractExecutableType,
+        TypeVariant::ContractExecutable,
+        TypeVariant::ScAddressType,
+        TypeVariant::ScAddress,
+        TypeVariant::ScVec,
+        TypeVariant::ScMap,
+        TypeVariant::ScBytes,
+        TypeVariant::ScString,
+        TypeVariant::ScSymbol,
+        TypeVariant::ScNonceKey,
+        TypeVariant::ScContractInstance,
+        TypeVariant::ScVal,
+        TypeVariant::ScMapEntry,
         TypeVariant::StoredTransactionSet,
         TypeVariant::PersistedScpStateV0,
         TypeVariant::PersistedScpStateV1,
         TypeVariant::PersistedScpState,
-        TypeVariant::AccountId,
         TypeVariant::Thresholds,
         TypeVariant::String32,
         TypeVariant::String64,
         TypeVariant::SequenceNumber,
-        TypeVariant::TimePoint,
-        TypeVariant::Duration,
         TypeVariant::DataValue,
         TypeVariant::PoolId,
         TypeVariant::AssetCode4,
@@ -32899,6 +43630,10 @@ impl Type {
         TypeVariant::LiquidityPoolEntry,
         TypeVariant::LiquidityPoolEntryBody,
         TypeVariant::LiquidityPoolEntryConstantProduct,
+        TypeVariant::ContractDataDurability,
+        TypeVariant::ContractDataEntry,
+        TypeVariant::ContractCodeEntry,
+        TypeVariant::ExpirationEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -32911,6 +43646,10 @@ impl Type {
         TypeVariant::LedgerKeyData,
         TypeVariant::LedgerKeyClaimableBalance,
         TypeVariant::LedgerKeyLiquidityPool,
+        TypeVariant::LedgerKeyContractData,
+        TypeVariant::LedgerKeyContractCode,
+        TypeVariant::LedgerKeyConfigSetting,
+        TypeVariant::LedgerKeyExpiration,
         TypeVariant::EnvelopeType,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
@@ -32923,7 +43662,9 @@ impl Type {
         TypeVariant::LedgerHeader,
         TypeVariant::LedgerHeaderExt,
         TypeVariant::LedgerUpgradeType,
+        TypeVariant::ConfigUpgradeSetKey,
         TypeVariant::LedgerUpgrade,
+        TypeVariant::ConfigUpgradeSet,
         TypeVariant::BucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
@@ -32952,15 +43693,25 @@ impl Type {
         TypeVariant::OperationMeta,
         TypeVariant::TransactionMetaV1,
         TypeVariant::TransactionMetaV2,
+        TypeVariant::ContractEventType,
+        TypeVariant::ContractEvent,
+        TypeVariant::ContractEventBody,
+        TypeVariant::ContractEventV0,
+        TypeVariant::DiagnosticEvent,
+        TypeVariant::SorobanTransactionMeta,
+        TypeVariant::TransactionMetaV3,
+        TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaV1,
+        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
         TypeVariant::SendMore,
+        TypeVariant::SendMoreExtended,
         TypeVariant::AuthCert,
         TypeVariant::Hello,
         TypeVariant::Auth,
@@ -32970,6 +43721,7 @@ impl Type {
         TypeVariant::MessageType,
         TypeVariant::DontHave,
         TypeVariant::SurveyMessageCommandType,
+        TypeVariant::SurveyMessageResponseType,
         TypeVariant::SurveyRequestMessage,
         TypeVariant::SignedSurveyRequestMessage,
         TypeVariant::EncryptedBody,
@@ -32977,7 +43729,8 @@ impl Type {
         TypeVariant::SignedSurveyResponseMessage,
         TypeVariant::PeerStats,
         TypeVariant::PeerStatList,
-        TypeVariant::TopologyResponseBody,
+        TypeVariant::TopologyResponseBodyV0,
+        TypeVariant::TopologyResponseBodyV1,
         TypeVariant::SurveyResponseBody,
         TypeVariant::TxAdvertVector,
         TypeVariant::FloodAdvert,
@@ -33015,11 +43768,30 @@ impl Type {
         TypeVariant::SetTrustLineFlagsOp,
         TypeVariant::LiquidityPoolDepositOp,
         TypeVariant::LiquidityPoolWithdrawOp,
+        TypeVariant::HostFunctionType,
+        TypeVariant::ContractIdPreimageType,
+        TypeVariant::ContractIdPreimage,
+        TypeVariant::ContractIdPreimageFromAddress,
+        TypeVariant::CreateContractArgs,
+        TypeVariant::InvokeContractArgs,
+        TypeVariant::HostFunction,
+        TypeVariant::SorobanAuthorizedFunctionType,
+        TypeVariant::SorobanAuthorizedFunction,
+        TypeVariant::SorobanAuthorizedInvocation,
+        TypeVariant::SorobanAddressCredentials,
+        TypeVariant::SorobanCredentialsType,
+        TypeVariant::SorobanCredentials,
+        TypeVariant::SorobanAuthorizationEntry,
+        TypeVariant::InvokeHostFunctionOp,
+        TypeVariant::BumpFootprintExpirationOp,
+        TypeVariant::RestoreFootprintOp,
         TypeVariant::Operation,
         TypeVariant::OperationBody,
         TypeVariant::HashIdPreimage,
         TypeVariant::HashIdPreimageOperationId,
         TypeVariant::HashIdPreimageRevokeId,
+        TypeVariant::HashIdPreimageContractId,
+        TypeVariant::HashIdPreimageSorobanAuthorization,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -33027,6 +43799,9 @@ impl Type {
         TypeVariant::PreconditionsV2,
         TypeVariant::PreconditionType,
         TypeVariant::Preconditions,
+        TypeVariant::LedgerFootprint,
+        TypeVariant::SorobanResources,
+        TypeVariant::SorobanTransactionData,
         TypeVariant::TransactionV0,
         TypeVariant::TransactionV0Ext,
         TypeVariant::TransactionV0Envelope,
@@ -33098,6 +43873,12 @@ impl Type {
         TypeVariant::LiquidityPoolDepositResult,
         TypeVariant::LiquidityPoolWithdrawResultCode,
         TypeVariant::LiquidityPoolWithdrawResult,
+        TypeVariant::InvokeHostFunctionResultCode,
+        TypeVariant::InvokeHostFunctionResult,
+        TypeVariant::BumpFootprintExpirationResultCode,
+        TypeVariant::BumpFootprintExpirationResult,
+        TypeVariant::RestoreFootprintResultCode,
+        TypeVariant::RestoreFootprintResult,
         TypeVariant::OperationResultCode,
         TypeVariant::OperationResult,
         TypeVariant::OperationResultTr,
@@ -33115,6 +43896,8 @@ impl Type {
         TypeVariant::Int32,
         TypeVariant::Uint64,
         TypeVariant::Int64,
+        TypeVariant::TimePoint,
+        TypeVariant::Duration,
         TypeVariant::ExtensionPoint,
         TypeVariant::CryptoKeyType,
         TypeVariant::PublicKeyType,
@@ -33125,12 +43908,13 @@ impl Type {
         TypeVariant::Signature,
         TypeVariant::SignatureHint,
         TypeVariant::NodeId,
+        TypeVariant::AccountId,
         TypeVariant::Curve25519Secret,
         TypeVariant::Curve25519Public,
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 305] = [
+    pub const VARIANTS_STR: [&'static str; 418] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -33142,17 +43926,77 @@ impl Type {
         "ScpStatementExternalize",
         "ScpEnvelope",
         "ScpQuorumSet",
+        "ConfigSettingContractExecutionLanesV0",
+        "ConfigSettingContractComputeV0",
+        "ConfigSettingContractLedgerCostV0",
+        "ConfigSettingContractHistoricalDataV0",
+        "ConfigSettingContractEventsV0",
+        "ConfigSettingContractBandwidthV0",
+        "ContractCostType",
+        "ContractCostParamEntry",
+        "StateExpirationSettings",
+        "EvictionIterator",
+        "ContractCostParams",
+        "ConfigSettingId",
+        "ConfigSettingEntry",
+        "ScEnvMetaKind",
+        "ScEnvMetaEntry",
+        "ScMetaV0",
+        "ScMetaKind",
+        "ScMetaEntry",
+        "ScSpecType",
+        "ScSpecTypeOption",
+        "ScSpecTypeResult",
+        "ScSpecTypeVec",
+        "ScSpecTypeMap",
+        "ScSpecTypeTuple",
+        "ScSpecTypeBytesN",
+        "ScSpecTypeUdt",
+        "ScSpecTypeDef",
+        "ScSpecUdtStructFieldV0",
+        "ScSpecUdtStructV0",
+        "ScSpecUdtUnionCaseVoidV0",
+        "ScSpecUdtUnionCaseTupleV0",
+        "ScSpecUdtUnionCaseV0Kind",
+        "ScSpecUdtUnionCaseV0",
+        "ScSpecUdtUnionV0",
+        "ScSpecUdtEnumCaseV0",
+        "ScSpecUdtEnumV0",
+        "ScSpecUdtErrorEnumCaseV0",
+        "ScSpecUdtErrorEnumV0",
+        "ScSpecFunctionInputV0",
+        "ScSpecFunctionV0",
+        "ScSpecEntryKind",
+        "ScSpecEntry",
+        "ScValType",
+        "ScErrorType",
+        "ScErrorCode",
+        "ScError",
+        "UInt128Parts",
+        "Int128Parts",
+        "UInt256Parts",
+        "Int256Parts",
+        "ContractExecutableType",
+        "ContractExecutable",
+        "ScAddressType",
+        "ScAddress",
+        "ScVec",
+        "ScMap",
+        "ScBytes",
+        "ScString",
+        "ScSymbol",
+        "ScNonceKey",
+        "ScContractInstance",
+        "ScVal",
+        "ScMapEntry",
         "StoredTransactionSet",
         "PersistedScpStateV0",
         "PersistedScpStateV1",
         "PersistedScpState",
-        "AccountId",
         "Thresholds",
         "String32",
         "String64",
         "SequenceNumber",
-        "TimePoint",
-        "Duration",
         "DataValue",
         "PoolId",
         "AssetCode4",
@@ -33206,6 +44050,10 @@ impl Type {
         "LiquidityPoolEntry",
         "LiquidityPoolEntryBody",
         "LiquidityPoolEntryConstantProduct",
+        "ContractDataDurability",
+        "ContractDataEntry",
+        "ContractCodeEntry",
+        "ExpirationEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -33218,6 +44066,10 @@ impl Type {
         "LedgerKeyData",
         "LedgerKeyClaimableBalance",
         "LedgerKeyLiquidityPool",
+        "LedgerKeyContractData",
+        "LedgerKeyContractCode",
+        "LedgerKeyConfigSetting",
+        "LedgerKeyExpiration",
         "EnvelopeType",
         "UpgradeType",
         "StellarValueType",
@@ -33230,7 +44082,9 @@ impl Type {
         "LedgerHeader",
         "LedgerHeaderExt",
         "LedgerUpgradeType",
+        "ConfigUpgradeSetKey",
         "LedgerUpgrade",
+        "ConfigUpgradeSet",
         "BucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
@@ -33259,15 +44113,25 @@ impl Type {
         "OperationMeta",
         "TransactionMetaV1",
         "TransactionMetaV2",
+        "ContractEventType",
+        "ContractEvent",
+        "ContractEventBody",
+        "ContractEventV0",
+        "DiagnosticEvent",
+        "SorobanTransactionMeta",
+        "TransactionMetaV3",
+        "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaV1",
+        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
         "SendMore",
+        "SendMoreExtended",
         "AuthCert",
         "Hello",
         "Auth",
@@ -33277,6 +44141,7 @@ impl Type {
         "MessageType",
         "DontHave",
         "SurveyMessageCommandType",
+        "SurveyMessageResponseType",
         "SurveyRequestMessage",
         "SignedSurveyRequestMessage",
         "EncryptedBody",
@@ -33284,7 +44149,8 @@ impl Type {
         "SignedSurveyResponseMessage",
         "PeerStats",
         "PeerStatList",
-        "TopologyResponseBody",
+        "TopologyResponseBodyV0",
+        "TopologyResponseBodyV1",
         "SurveyResponseBody",
         "TxAdvertVector",
         "FloodAdvert",
@@ -33322,11 +44188,30 @@ impl Type {
         "SetTrustLineFlagsOp",
         "LiquidityPoolDepositOp",
         "LiquidityPoolWithdrawOp",
+        "HostFunctionType",
+        "ContractIdPreimageType",
+        "ContractIdPreimage",
+        "ContractIdPreimageFromAddress",
+        "CreateContractArgs",
+        "InvokeContractArgs",
+        "HostFunction",
+        "SorobanAuthorizedFunctionType",
+        "SorobanAuthorizedFunction",
+        "SorobanAuthorizedInvocation",
+        "SorobanAddressCredentials",
+        "SorobanCredentialsType",
+        "SorobanCredentials",
+        "SorobanAuthorizationEntry",
+        "InvokeHostFunctionOp",
+        "BumpFootprintExpirationOp",
+        "RestoreFootprintOp",
         "Operation",
         "OperationBody",
         "HashIdPreimage",
         "HashIdPreimageOperationId",
         "HashIdPreimageRevokeId",
+        "HashIdPreimageContractId",
+        "HashIdPreimageSorobanAuthorization",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -33334,6 +44219,9 @@ impl Type {
         "PreconditionsV2",
         "PreconditionType",
         "Preconditions",
+        "LedgerFootprint",
+        "SorobanResources",
+        "SorobanTransactionData",
         "TransactionV0",
         "TransactionV0Ext",
         "TransactionV0Envelope",
@@ -33405,6 +44293,12 @@ impl Type {
         "LiquidityPoolDepositResult",
         "LiquidityPoolWithdrawResultCode",
         "LiquidityPoolWithdrawResult",
+        "InvokeHostFunctionResultCode",
+        "InvokeHostFunctionResult",
+        "BumpFootprintExpirationResultCode",
+        "BumpFootprintExpirationResult",
+        "RestoreFootprintResultCode",
+        "RestoreFootprintResult",
         "OperationResultCode",
         "OperationResult",
         "OperationResultTr",
@@ -33422,6 +44316,8 @@ impl Type {
         "Int32",
         "Uint64",
         "Int64",
+        "TimePoint",
+        "Duration",
         "ExtensionPoint",
         "CryptoKeyType",
         "PublicKeyType",
@@ -33432,6 +44328,7 @@ impl Type {
         "Signature",
         "SignatureHint",
         "NodeId",
+        "AccountId",
         "Curve25519Secret",
         "Curve25519Public",
         "HmacSha256Key",
@@ -33485,6 +44382,263 @@ impl Type {
             TypeVariant::ScpQuorumSet => r.with_limited_depth(|r| {
                 Ok(Self::ScpQuorumSet(Box::new(ScpQuorumSet::read_xdr(r)?)))
             }),
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingContractExecutionLanesV0(Box::new(
+                    ConfigSettingContractExecutionLanesV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ConfigSettingContractComputeV0 => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingContractComputeV0(Box::new(
+                    ConfigSettingContractComputeV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingContractLedgerCostV0(Box::new(
+                    ConfigSettingContractLedgerCostV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingContractHistoricalDataV0(Box::new(
+                    ConfigSettingContractHistoricalDataV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ConfigSettingContractEventsV0 => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingContractEventsV0(Box::new(
+                    ConfigSettingContractEventsV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ConfigSettingContractBandwidthV0 => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingContractBandwidthV0(Box::new(
+                    ConfigSettingContractBandwidthV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractCostType => r.with_limited_depth(|r| {
+                Ok(Self::ContractCostType(Box::new(
+                    ContractCostType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractCostParamEntry => r.with_limited_depth(|r| {
+                Ok(Self::ContractCostParamEntry(Box::new(
+                    ContractCostParamEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::StateExpirationSettings => r.with_limited_depth(|r| {
+                Ok(Self::StateExpirationSettings(Box::new(
+                    StateExpirationSettings::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::EvictionIterator => r.with_limited_depth(|r| {
+                Ok(Self::EvictionIterator(Box::new(
+                    EvictionIterator::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractCostParams => r.with_limited_depth(|r| {
+                Ok(Self::ContractCostParams(Box::new(
+                    ContractCostParams::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ConfigSettingId => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingId(Box::new(ConfigSettingId::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::ConfigSettingEntry => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingEntry(Box::new(
+                    ConfigSettingEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScEnvMetaKind => r.with_limited_depth(|r| {
+                Ok(Self::ScEnvMetaKind(Box::new(ScEnvMetaKind::read_xdr(r)?)))
+            }),
+            TypeVariant::ScEnvMetaEntry => r.with_limited_depth(|r| {
+                Ok(Self::ScEnvMetaEntry(Box::new(ScEnvMetaEntry::read_xdr(r)?)))
+            }),
+            TypeVariant::ScMetaV0 => {
+                r.with_limited_depth(|r| Ok(Self::ScMetaV0(Box::new(ScMetaV0::read_xdr(r)?))))
+            }
+            TypeVariant::ScMetaKind => {
+                r.with_limited_depth(|r| Ok(Self::ScMetaKind(Box::new(ScMetaKind::read_xdr(r)?))))
+            }
+            TypeVariant::ScMetaEntry => {
+                r.with_limited_depth(|r| Ok(Self::ScMetaEntry(Box::new(ScMetaEntry::read_xdr(r)?))))
+            }
+            TypeVariant::ScSpecType => {
+                r.with_limited_depth(|r| Ok(Self::ScSpecType(Box::new(ScSpecType::read_xdr(r)?))))
+            }
+            TypeVariant::ScSpecTypeOption => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecTypeOption(Box::new(
+                    ScSpecTypeOption::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecTypeResult => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecTypeResult(Box::new(
+                    ScSpecTypeResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecTypeVec => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecTypeVec(Box::new(ScSpecTypeVec::read_xdr(r)?)))
+            }),
+            TypeVariant::ScSpecTypeMap => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecTypeMap(Box::new(ScSpecTypeMap::read_xdr(r)?)))
+            }),
+            TypeVariant::ScSpecTypeTuple => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecTypeTuple(Box::new(ScSpecTypeTuple::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::ScSpecTypeBytesN => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecTypeBytesN(Box::new(
+                    ScSpecTypeBytesN::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecTypeUdt => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecTypeUdt(Box::new(ScSpecTypeUdt::read_xdr(r)?)))
+            }),
+            TypeVariant::ScSpecTypeDef => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecTypeDef(Box::new(ScSpecTypeDef::read_xdr(r)?)))
+            }),
+            TypeVariant::ScSpecUdtStructFieldV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecUdtStructFieldV0(Box::new(
+                    ScSpecUdtStructFieldV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecUdtStructV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecUdtStructV0(Box::new(
+                    ScSpecUdtStructV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecUdtUnionCaseVoidV0(Box::new(
+                    ScSpecUdtUnionCaseVoidV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecUdtUnionCaseTupleV0(Box::new(
+                    ScSpecUdtUnionCaseTupleV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecUdtUnionCaseV0Kind(Box::new(
+                    ScSpecUdtUnionCaseV0Kind::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecUdtUnionCaseV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecUdtUnionCaseV0(Box::new(
+                    ScSpecUdtUnionCaseV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecUdtUnionV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecUdtUnionV0(Box::new(
+                    ScSpecUdtUnionV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecUdtEnumCaseV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecUdtEnumCaseV0(Box::new(
+                    ScSpecUdtEnumCaseV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecUdtEnumV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecUdtEnumV0(Box::new(ScSpecUdtEnumV0::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecUdtErrorEnumCaseV0(Box::new(
+                    ScSpecUdtErrorEnumCaseV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecUdtErrorEnumV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecUdtErrorEnumV0(Box::new(
+                    ScSpecUdtErrorEnumV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecFunctionInputV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecFunctionInputV0(Box::new(
+                    ScSpecFunctionInputV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecFunctionV0 => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecFunctionV0(Box::new(
+                    ScSpecFunctionV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScSpecEntryKind => r.with_limited_depth(|r| {
+                Ok(Self::ScSpecEntryKind(Box::new(ScSpecEntryKind::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::ScSpecEntry => {
+                r.with_limited_depth(|r| Ok(Self::ScSpecEntry(Box::new(ScSpecEntry::read_xdr(r)?))))
+            }
+            TypeVariant::ScValType => {
+                r.with_limited_depth(|r| Ok(Self::ScValType(Box::new(ScValType::read_xdr(r)?))))
+            }
+            TypeVariant::ScErrorType => {
+                r.with_limited_depth(|r| Ok(Self::ScErrorType(Box::new(ScErrorType::read_xdr(r)?))))
+            }
+            TypeVariant::ScErrorCode => {
+                r.with_limited_depth(|r| Ok(Self::ScErrorCode(Box::new(ScErrorCode::read_xdr(r)?))))
+            }
+            TypeVariant::ScError => {
+                r.with_limited_depth(|r| Ok(Self::ScError(Box::new(ScError::read_xdr(r)?))))
+            }
+            TypeVariant::UInt128Parts => r.with_limited_depth(|r| {
+                Ok(Self::UInt128Parts(Box::new(UInt128Parts::read_xdr(r)?)))
+            }),
+            TypeVariant::Int128Parts => {
+                r.with_limited_depth(|r| Ok(Self::Int128Parts(Box::new(Int128Parts::read_xdr(r)?))))
+            }
+            TypeVariant::UInt256Parts => r.with_limited_depth(|r| {
+                Ok(Self::UInt256Parts(Box::new(UInt256Parts::read_xdr(r)?)))
+            }),
+            TypeVariant::Int256Parts => {
+                r.with_limited_depth(|r| Ok(Self::Int256Parts(Box::new(Int256Parts::read_xdr(r)?))))
+            }
+            TypeVariant::ContractExecutableType => r.with_limited_depth(|r| {
+                Ok(Self::ContractExecutableType(Box::new(
+                    ContractExecutableType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractExecutable => r.with_limited_depth(|r| {
+                Ok(Self::ContractExecutable(Box::new(
+                    ContractExecutable::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScAddressType => r.with_limited_depth(|r| {
+                Ok(Self::ScAddressType(Box::new(ScAddressType::read_xdr(r)?)))
+            }),
+            TypeVariant::ScAddress => {
+                r.with_limited_depth(|r| Ok(Self::ScAddress(Box::new(ScAddress::read_xdr(r)?))))
+            }
+            TypeVariant::ScVec => {
+                r.with_limited_depth(|r| Ok(Self::ScVec(Box::new(ScVec::read_xdr(r)?))))
+            }
+            TypeVariant::ScMap => {
+                r.with_limited_depth(|r| Ok(Self::ScMap(Box::new(ScMap::read_xdr(r)?))))
+            }
+            TypeVariant::ScBytes => {
+                r.with_limited_depth(|r| Ok(Self::ScBytes(Box::new(ScBytes::read_xdr(r)?))))
+            }
+            TypeVariant::ScString => {
+                r.with_limited_depth(|r| Ok(Self::ScString(Box::new(ScString::read_xdr(r)?))))
+            }
+            TypeVariant::ScSymbol => {
+                r.with_limited_depth(|r| Ok(Self::ScSymbol(Box::new(ScSymbol::read_xdr(r)?))))
+            }
+            TypeVariant::ScNonceKey => {
+                r.with_limited_depth(|r| Ok(Self::ScNonceKey(Box::new(ScNonceKey::read_xdr(r)?))))
+            }
+            TypeVariant::ScContractInstance => r.with_limited_depth(|r| {
+                Ok(Self::ScContractInstance(Box::new(
+                    ScContractInstance::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ScVal => {
+                r.with_limited_depth(|r| Ok(Self::ScVal(Box::new(ScVal::read_xdr(r)?))))
+            }
+            TypeVariant::ScMapEntry => {
+                r.with_limited_depth(|r| Ok(Self::ScMapEntry(Box::new(ScMapEntry::read_xdr(r)?))))
+            }
             TypeVariant::StoredTransactionSet => r.with_limited_depth(|r| {
                 Ok(Self::StoredTransactionSet(Box::new(
                     StoredTransactionSet::read_xdr(r)?,
@@ -33505,9 +44659,6 @@ impl Type {
                     PersistedScpState::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::AccountId => {
-                r.with_limited_depth(|r| Ok(Self::AccountId(Box::new(AccountId::read_xdr(r)?))))
-            }
             TypeVariant::Thresholds => {
                 r.with_limited_depth(|r| Ok(Self::Thresholds(Box::new(Thresholds::read_xdr(r)?))))
             }
@@ -33520,12 +44671,6 @@ impl Type {
             TypeVariant::SequenceNumber => r.with_limited_depth(|r| {
                 Ok(Self::SequenceNumber(Box::new(SequenceNumber::read_xdr(r)?)))
             }),
-            TypeVariant::TimePoint => {
-                r.with_limited_depth(|r| Ok(Self::TimePoint(Box::new(TimePoint::read_xdr(r)?))))
-            }
-            TypeVariant::Duration => {
-                r.with_limited_depth(|r| Ok(Self::Duration(Box::new(Duration::read_xdr(r)?))))
-            }
             TypeVariant::DataValue => {
                 r.with_limited_depth(|r| Ok(Self::DataValue(Box::new(DataValue::read_xdr(r)?))))
             }
@@ -33741,6 +44886,26 @@ impl Type {
                     LiquidityPoolEntryConstantProduct::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::ContractDataDurability => r.with_limited_depth(|r| {
+                Ok(Self::ContractDataDurability(Box::new(
+                    ContractDataDurability::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractDataEntry => r.with_limited_depth(|r| {
+                Ok(Self::ContractDataEntry(Box::new(
+                    ContractDataEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractCodeEntry => r.with_limited_depth(|r| {
+                Ok(Self::ContractCodeEntry(Box::new(
+                    ContractCodeEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ExpirationEntry => r.with_limited_depth(|r| {
+                Ok(Self::ExpirationEntry(Box::new(ExpirationEntry::read_xdr(
+                    r,
+                )?)))
+            }),
             TypeVariant::LedgerEntryExtensionV1 => r.with_limited_depth(|r| {
                 Ok(Self::LedgerEntryExtensionV1(Box::new(
                     LedgerEntryExtensionV1::read_xdr(r)?,
@@ -33789,6 +44954,26 @@ impl Type {
             TypeVariant::LedgerKeyLiquidityPool => r.with_limited_depth(|r| {
                 Ok(Self::LedgerKeyLiquidityPool(Box::new(
                     LedgerKeyLiquidityPool::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerKeyContractData => r.with_limited_depth(|r| {
+                Ok(Self::LedgerKeyContractData(Box::new(
+                    LedgerKeyContractData::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerKeyContractCode => r.with_limited_depth(|r| {
+                Ok(Self::LedgerKeyContractCode(Box::new(
+                    LedgerKeyContractCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerKeyConfigSetting => r.with_limited_depth(|r| {
+                Ok(Self::LedgerKeyConfigSetting(Box::new(
+                    LedgerKeyConfigSetting::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::LedgerKeyExpiration => r.with_limited_depth(|r| {
+                Ok(Self::LedgerKeyExpiration(Box::new(
+                    LedgerKeyExpiration::read_xdr(r)?,
                 )))
             }),
             TypeVariant::EnvelopeType => r.with_limited_depth(|r| {
@@ -33843,8 +45028,18 @@ impl Type {
                     LedgerUpgradeType::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::ConfigUpgradeSetKey => r.with_limited_depth(|r| {
+                Ok(Self::ConfigUpgradeSetKey(Box::new(
+                    ConfigUpgradeSetKey::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::LedgerUpgrade => r.with_limited_depth(|r| {
                 Ok(Self::LedgerUpgrade(Box::new(LedgerUpgrade::read_xdr(r)?)))
+            }),
+            TypeVariant::ConfigUpgradeSet => r.with_limited_depth(|r| {
+                Ok(Self::ConfigUpgradeSet(Box::new(
+                    ConfigUpgradeSet::read_xdr(r)?,
+                )))
             }),
             TypeVariant::BucketEntryType => r.with_limited_depth(|r| {
                 Ok(Self::BucketEntryType(Box::new(BucketEntryType::read_xdr(
@@ -33976,6 +45171,44 @@ impl Type {
                     TransactionMetaV2::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::ContractEventType => r.with_limited_depth(|r| {
+                Ok(Self::ContractEventType(Box::new(
+                    ContractEventType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractEvent => r.with_limited_depth(|r| {
+                Ok(Self::ContractEvent(Box::new(ContractEvent::read_xdr(r)?)))
+            }),
+            TypeVariant::ContractEventBody => r.with_limited_depth(|r| {
+                Ok(Self::ContractEventBody(Box::new(
+                    ContractEventBody::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractEventV0 => r.with_limited_depth(|r| {
+                Ok(Self::ContractEventV0(Box::new(ContractEventV0::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::DiagnosticEvent => r.with_limited_depth(|r| {
+                Ok(Self::DiagnosticEvent(Box::new(DiagnosticEvent::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::SorobanTransactionMeta => r.with_limited_depth(|r| {
+                Ok(Self::SorobanTransactionMeta(Box::new(
+                    SorobanTransactionMeta::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionMetaV3 => r.with_limited_depth(|r| {
+                Ok(Self::TransactionMetaV3(Box::new(
+                    TransactionMetaV3::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => r.with_limited_depth(|r| {
+                Ok(Self::InvokeHostFunctionSuccessPreImage(Box::new(
+                    InvokeHostFunctionSuccessPreImage::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::TransactionMeta => r.with_limited_depth(|r| {
                 Ok(Self::TransactionMeta(Box::new(TransactionMeta::read_xdr(
                     r,
@@ -34001,6 +45234,11 @@ impl Type {
                     LedgerCloseMetaV1::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::LedgerCloseMetaV2 => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaV2(Box::new(
+                    LedgerCloseMetaV2::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::LedgerCloseMeta => r.with_limited_depth(|r| {
                 Ok(Self::LedgerCloseMeta(Box::new(LedgerCloseMeta::read_xdr(
                     r,
@@ -34015,6 +45253,11 @@ impl Type {
             TypeVariant::SendMore => {
                 r.with_limited_depth(|r| Ok(Self::SendMore(Box::new(SendMore::read_xdr(r)?))))
             }
+            TypeVariant::SendMoreExtended => r.with_limited_depth(|r| {
+                Ok(Self::SendMoreExtended(Box::new(
+                    SendMoreExtended::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::AuthCert => {
                 r.with_limited_depth(|r| Ok(Self::AuthCert(Box::new(AuthCert::read_xdr(r)?))))
             }
@@ -34042,6 +45285,11 @@ impl Type {
             TypeVariant::SurveyMessageCommandType => r.with_limited_depth(|r| {
                 Ok(Self::SurveyMessageCommandType(Box::new(
                     SurveyMessageCommandType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SurveyMessageResponseType => r.with_limited_depth(|r| {
+                Ok(Self::SurveyMessageResponseType(Box::new(
+                    SurveyMessageResponseType::read_xdr(r)?,
                 )))
             }),
             TypeVariant::SurveyRequestMessage => r.with_limited_depth(|r| {
@@ -34073,9 +45321,14 @@ impl Type {
             TypeVariant::PeerStatList => r.with_limited_depth(|r| {
                 Ok(Self::PeerStatList(Box::new(PeerStatList::read_xdr(r)?)))
             }),
-            TypeVariant::TopologyResponseBody => r.with_limited_depth(|r| {
-                Ok(Self::TopologyResponseBody(Box::new(
-                    TopologyResponseBody::read_xdr(r)?,
+            TypeVariant::TopologyResponseBodyV0 => r.with_limited_depth(|r| {
+                Ok(Self::TopologyResponseBodyV0(Box::new(
+                    TopologyResponseBodyV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TopologyResponseBodyV1 => r.with_limited_depth(|r| {
+                Ok(Self::TopologyResponseBodyV1(Box::new(
+                    TopologyResponseBodyV1::read_xdr(r)?,
                 )))
             }),
             TypeVariant::SurveyResponseBody => r.with_limited_depth(|r| {
@@ -34235,6 +45488,89 @@ impl Type {
                     LiquidityPoolWithdrawOp::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::HostFunctionType => r.with_limited_depth(|r| {
+                Ok(Self::HostFunctionType(Box::new(
+                    HostFunctionType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractIdPreimageType => r.with_limited_depth(|r| {
+                Ok(Self::ContractIdPreimageType(Box::new(
+                    ContractIdPreimageType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractIdPreimage => r.with_limited_depth(|r| {
+                Ok(Self::ContractIdPreimage(Box::new(
+                    ContractIdPreimage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractIdPreimageFromAddress => r.with_limited_depth(|r| {
+                Ok(Self::ContractIdPreimageFromAddress(Box::new(
+                    ContractIdPreimageFromAddress::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::CreateContractArgs => r.with_limited_depth(|r| {
+                Ok(Self::CreateContractArgs(Box::new(
+                    CreateContractArgs::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::InvokeContractArgs => r.with_limited_depth(|r| {
+                Ok(Self::InvokeContractArgs(Box::new(
+                    InvokeContractArgs::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::HostFunction => r.with_limited_depth(|r| {
+                Ok(Self::HostFunction(Box::new(HostFunction::read_xdr(r)?)))
+            }),
+            TypeVariant::SorobanAuthorizedFunctionType => r.with_limited_depth(|r| {
+                Ok(Self::SorobanAuthorizedFunctionType(Box::new(
+                    SorobanAuthorizedFunctionType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SorobanAuthorizedFunction => r.with_limited_depth(|r| {
+                Ok(Self::SorobanAuthorizedFunction(Box::new(
+                    SorobanAuthorizedFunction::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SorobanAuthorizedInvocation => r.with_limited_depth(|r| {
+                Ok(Self::SorobanAuthorizedInvocation(Box::new(
+                    SorobanAuthorizedInvocation::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SorobanAddressCredentials => r.with_limited_depth(|r| {
+                Ok(Self::SorobanAddressCredentials(Box::new(
+                    SorobanAddressCredentials::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SorobanCredentialsType => r.with_limited_depth(|r| {
+                Ok(Self::SorobanCredentialsType(Box::new(
+                    SorobanCredentialsType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SorobanCredentials => r.with_limited_depth(|r| {
+                Ok(Self::SorobanCredentials(Box::new(
+                    SorobanCredentials::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SorobanAuthorizationEntry => r.with_limited_depth(|r| {
+                Ok(Self::SorobanAuthorizationEntry(Box::new(
+                    SorobanAuthorizationEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::InvokeHostFunctionOp => r.with_limited_depth(|r| {
+                Ok(Self::InvokeHostFunctionOp(Box::new(
+                    InvokeHostFunctionOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::BumpFootprintExpirationOp => r.with_limited_depth(|r| {
+                Ok(Self::BumpFootprintExpirationOp(Box::new(
+                    BumpFootprintExpirationOp::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::RestoreFootprintOp => r.with_limited_depth(|r| {
+                Ok(Self::RestoreFootprintOp(Box::new(
+                    RestoreFootprintOp::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::Operation => {
                 r.with_limited_depth(|r| Ok(Self::Operation(Box::new(Operation::read_xdr(r)?))))
             }
@@ -34252,6 +45588,16 @@ impl Type {
             TypeVariant::HashIdPreimageRevokeId => r.with_limited_depth(|r| {
                 Ok(Self::HashIdPreimageRevokeId(Box::new(
                     HashIdPreimageRevokeId::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::HashIdPreimageContractId => r.with_limited_depth(|r| {
+                Ok(Self::HashIdPreimageContractId(Box::new(
+                    HashIdPreimageContractId::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::HashIdPreimageSorobanAuthorization => r.with_limited_depth(|r| {
+                Ok(Self::HashIdPreimageSorobanAuthorization(Box::new(
+                    HashIdPreimageSorobanAuthorization::read_xdr(r)?,
                 )))
             }),
             TypeVariant::MemoType => {
@@ -34278,6 +45624,21 @@ impl Type {
             }),
             TypeVariant::Preconditions => r.with_limited_depth(|r| {
                 Ok(Self::Preconditions(Box::new(Preconditions::read_xdr(r)?)))
+            }),
+            TypeVariant::LedgerFootprint => r.with_limited_depth(|r| {
+                Ok(Self::LedgerFootprint(Box::new(LedgerFootprint::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::SorobanResources => r.with_limited_depth(|r| {
+                Ok(Self::SorobanResources(Box::new(
+                    SorobanResources::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SorobanTransactionData => r.with_limited_depth(|r| {
+                Ok(Self::SorobanTransactionData(Box::new(
+                    SorobanTransactionData::read_xdr(r)?,
+                )))
             }),
             TypeVariant::TransactionV0 => r.with_limited_depth(|r| {
                 Ok(Self::TransactionV0(Box::new(TransactionV0::read_xdr(r)?)))
@@ -34620,6 +45981,36 @@ impl Type {
                     LiquidityPoolWithdrawResult::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::InvokeHostFunctionResultCode => r.with_limited_depth(|r| {
+                Ok(Self::InvokeHostFunctionResultCode(Box::new(
+                    InvokeHostFunctionResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::InvokeHostFunctionResult => r.with_limited_depth(|r| {
+                Ok(Self::InvokeHostFunctionResult(Box::new(
+                    InvokeHostFunctionResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::BumpFootprintExpirationResultCode => r.with_limited_depth(|r| {
+                Ok(Self::BumpFootprintExpirationResultCode(Box::new(
+                    BumpFootprintExpirationResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::BumpFootprintExpirationResult => r.with_limited_depth(|r| {
+                Ok(Self::BumpFootprintExpirationResult(Box::new(
+                    BumpFootprintExpirationResult::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::RestoreFootprintResultCode => r.with_limited_depth(|r| {
+                Ok(Self::RestoreFootprintResultCode(Box::new(
+                    RestoreFootprintResultCode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::RestoreFootprintResult => r.with_limited_depth(|r| {
+                Ok(Self::RestoreFootprintResult(Box::new(
+                    RestoreFootprintResult::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::OperationResultCode => r.with_limited_depth(|r| {
                 Ok(Self::OperationResultCode(Box::new(
                     OperationResultCode::read_xdr(r)?,
@@ -34693,6 +46084,12 @@ impl Type {
             TypeVariant::Int64 => {
                 r.with_limited_depth(|r| Ok(Self::Int64(Box::new(Int64::read_xdr(r)?))))
             }
+            TypeVariant::TimePoint => {
+                r.with_limited_depth(|r| Ok(Self::TimePoint(Box::new(TimePoint::read_xdr(r)?))))
+            }
+            TypeVariant::Duration => {
+                r.with_limited_depth(|r| Ok(Self::Duration(Box::new(Duration::read_xdr(r)?))))
+            }
             TypeVariant::ExtensionPoint => r.with_limited_depth(|r| {
                 Ok(Self::ExtensionPoint(Box::new(ExtensionPoint::read_xdr(r)?)))
             }),
@@ -34724,6 +46121,9 @@ impl Type {
             }),
             TypeVariant::NodeId => {
                 r.with_limited_depth(|r| Ok(Self::NodeId(Box::new(NodeId::read_xdr(r)?))))
+            }
+            TypeVariant::AccountId => {
+                r.with_limited_depth(|r| Ok(Self::AccountId(Box::new(AccountId::read_xdr(r)?))))
             }
             TypeVariant::Curve25519Secret => r.with_limited_depth(|r| {
                 Ok(Self::Curve25519Secret(Box::new(
@@ -34830,6 +46230,276 @@ impl Type {
                 ReadXdrIter::<_, ScpQuorumSet>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractExecutionLanesV0>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractEventsV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractEventsV0>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractEventsV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostType => Box::new(
+                ReadXdrIter::<_, ContractCostType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractCostType(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostParamEntry => Box::new(
+                ReadXdrIter::<_, ContractCostParamEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t)))),
+            ),
+            TypeVariant::StateExpirationSettings => Box::new(
+                ReadXdrIter::<_, StateExpirationSettings>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::StateExpirationSettings(Box::new(t)))),
+            ),
+            TypeVariant::EvictionIterator => Box::new(
+                ReadXdrIter::<_, EvictionIterator>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostParams => Box::new(
+                ReadXdrIter::<_, ContractCostParams>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingId => Box::new(
+                ReadXdrIter::<_, ConfigSettingId>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingEntry => Box::new(
+                ReadXdrIter::<_, ConfigSettingEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScEnvMetaKind => Box::new(
+                ReadXdrIter::<_, ScEnvMetaKind>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t)))),
+            ),
+            TypeVariant::ScEnvMetaEntry => Box::new(
+                ReadXdrIter::<_, ScEnvMetaEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScMetaV0 => Box::new(
+                ReadXdrIter::<_, ScMetaV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMetaV0(Box::new(t)))),
+            ),
+            TypeVariant::ScMetaKind => Box::new(
+                ReadXdrIter::<_, ScMetaKind>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMetaKind(Box::new(t)))),
+            ),
+            TypeVariant::ScMetaEntry => Box::new(
+                ReadXdrIter::<_, ScMetaEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMetaEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecType => Box::new(
+                ReadXdrIter::<_, ScSpecType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecType(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeOption => Box::new(
+                ReadXdrIter::<_, ScSpecTypeOption>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeOption(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeResult => Box::new(
+                ReadXdrIter::<_, ScSpecTypeResult>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeResult(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeVec => Box::new(
+                ReadXdrIter::<_, ScSpecTypeVec>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeVec(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeMap => Box::new(
+                ReadXdrIter::<_, ScSpecTypeMap>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeTuple => Box::new(
+                ReadXdrIter::<_, ScSpecTypeTuple>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeTuple(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeBytesN => Box::new(
+                ReadXdrIter::<_, ScSpecTypeBytesN>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeBytesN(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeUdt => Box::new(
+                ReadXdrIter::<_, ScSpecTypeUdt>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeDef => Box::new(
+                ReadXdrIter::<_, ScSpecTypeDef>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeDef(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtStructFieldV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtStructFieldV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtStructFieldV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtStructV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtStructV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseVoidV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseVoidV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseTupleV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseTupleV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0Kind>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0Kind(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtEnumCaseV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtEnumV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtEnumV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtErrorEnumCaseV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtErrorEnumV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecFunctionInputV0 => Box::new(
+                ReadXdrIter::<_, ScSpecFunctionInputV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecFunctionV0 => Box::new(
+                ReadXdrIter::<_, ScSpecFunctionV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEntryKind => Box::new(
+                ReadXdrIter::<_, ScSpecEntryKind>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEntry => Box::new(
+                ReadXdrIter::<_, ScSpecEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScValType => Box::new(
+                ReadXdrIter::<_, ScValType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
+            ),
+            TypeVariant::ScErrorType => Box::new(
+                ReadXdrIter::<_, ScErrorType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScErrorType(Box::new(t)))),
+            ),
+            TypeVariant::ScErrorCode => Box::new(
+                ReadXdrIter::<_, ScErrorCode>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScError => Box::new(
+                ReadXdrIter::<_, ScError>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScError(Box::new(t)))),
+            ),
+            TypeVariant::UInt128Parts => Box::new(
+                ReadXdrIter::<_, UInt128Parts>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t)))),
+            ),
+            TypeVariant::Int128Parts => Box::new(
+                ReadXdrIter::<_, Int128Parts>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
+            ),
+            TypeVariant::UInt256Parts => Box::new(
+                ReadXdrIter::<_, UInt256Parts>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t)))),
+            ),
+            TypeVariant::Int256Parts => Box::new(
+                ReadXdrIter::<_, Int256Parts>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Int256Parts(Box::new(t)))),
+            ),
+            TypeVariant::ContractExecutableType => Box::new(
+                ReadXdrIter::<_, ContractExecutableType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
+            ),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, ContractExecutable>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
+            ),
+            TypeVariant::ScAddressType => Box::new(
+                ReadXdrIter::<_, ScAddressType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
+            ),
+            TypeVariant::ScAddress => Box::new(
+                ReadXdrIter::<_, ScAddress>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
+            ),
+            TypeVariant::ScVec => Box::new(
+                ReadXdrIter::<_, ScVec>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
+            ),
+            TypeVariant::ScMap => Box::new(
+                ReadXdrIter::<_, ScMap>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
+            ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, ScBytes>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, ScString>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, ScSymbol>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
+            ),
+            TypeVariant::ScNonceKey => Box::new(
+                ReadXdrIter::<_, ScNonceKey>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t)))),
+            ),
+            TypeVariant::ScContractInstance => Box::new(
+                ReadXdrIter::<_, ScContractInstance>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScContractInstance(Box::new(t)))),
+            ),
+            TypeVariant::ScVal => Box::new(
+                ReadXdrIter::<_, ScVal>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
+            ),
+            TypeVariant::ScMapEntry => Box::new(
+                ReadXdrIter::<_, ScMapEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
+            ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
@@ -34846,10 +46516,6 @@ impl Type {
                 ReadXdrIter::<_, PersistedScpState>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t)))),
             ),
-            TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, AccountId>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
-            ),
             TypeVariant::Thresholds => Box::new(
                 ReadXdrIter::<_, Thresholds>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Thresholds(Box::new(t)))),
@@ -34865,14 +46531,6 @@ impl Type {
             TypeVariant::SequenceNumber => Box::new(
                 ReadXdrIter::<_, SequenceNumber>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t)))),
-            ),
-            TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, TimePoint>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
-            ),
-            TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Duration>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
             TypeVariant::DataValue => Box::new(
                 ReadXdrIter::<_, DataValue>::new(&mut r.inner, r.depth_remaining)
@@ -35101,6 +46759,22 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
+            TypeVariant::ContractDataDurability => Box::new(
+                ReadXdrIter::<_, ContractDataDurability>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractDataDurability(Box::new(t)))),
+            ),
+            TypeVariant::ContractDataEntry => Box::new(
+                ReadXdrIter::<_, ContractDataEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t)))),
+            ),
+            TypeVariant::ContractCodeEntry => Box::new(
+                ReadXdrIter::<_, ContractCodeEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
+            ),
+            TypeVariant::ExpirationEntry => Box::new(
+                ReadXdrIter::<_, ExpirationEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExpirationEntry(Box::new(t)))),
+            ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))),
@@ -35148,6 +46822,22 @@ impl Type {
             TypeVariant::LedgerKeyLiquidityPool => Box::new(
                 ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyContractData => Box::new(
+                ReadXdrIter::<_, LedgerKeyContractData>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyContractData(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyContractCode => Box::new(
+                ReadXdrIter::<_, LedgerKeyContractCode>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyContractCode(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyConfigSetting => Box::new(
+                ReadXdrIter::<_, LedgerKeyConfigSetting>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyExpiration => Box::new(
+                ReadXdrIter::<_, LedgerKeyExpiration>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyExpiration(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, EnvelopeType>::new(&mut r.inner, r.depth_remaining)
@@ -35197,9 +46887,17 @@ impl Type {
                 ReadXdrIter::<_, LedgerUpgradeType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
             ),
+            TypeVariant::ConfigUpgradeSetKey => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSetKey>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t)))),
+            ),
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, LedgerUpgrade>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
+            ),
+            TypeVariant::ConfigUpgradeSet => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSet>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, BucketEntryType>::new(&mut r.inner, r.depth_remaining)
@@ -35322,6 +47020,41 @@ impl Type {
                 ReadXdrIter::<_, TransactionMetaV2>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t)))),
             ),
+            TypeVariant::ContractEventType => Box::new(
+                ReadXdrIter::<_, ContractEventType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEventType(Box::new(t)))),
+            ),
+            TypeVariant::ContractEvent => Box::new(
+                ReadXdrIter::<_, ContractEvent>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEvent(Box::new(t)))),
+            ),
+            TypeVariant::ContractEventBody => Box::new(
+                ReadXdrIter::<_, ContractEventBody>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEventBody(Box::new(t)))),
+            ),
+            TypeVariant::ContractEventV0 => Box::new(
+                ReadXdrIter::<_, ContractEventV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t)))),
+            ),
+            TypeVariant::DiagnosticEvent => Box::new(
+                ReadXdrIter::<_, DiagnosticEvent>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionMeta => Box::new(
+                ReadXdrIter::<_, SorobanTransactionMeta>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanTransactionMeta(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMetaV3 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV3>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionSuccessPreImage>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t)))),
+            ),
             TypeVariant::TransactionMeta => Box::new(
                 ReadXdrIter::<_, TransactionMeta>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t)))),
@@ -35342,6 +47075,10 @@ impl Type {
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
             ),
+            TypeVariant::LedgerCloseMetaV2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaV2>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
+            ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t)))),
@@ -35357,6 +47094,10 @@ impl Type {
             TypeVariant::SendMore => Box::new(
                 ReadXdrIter::<_, SendMore>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SendMore(Box::new(t)))),
+            ),
+            TypeVariant::SendMoreExtended => Box::new(
+                ReadXdrIter::<_, SendMoreExtended>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SendMoreExtended(Box::new(t)))),
             ),
             TypeVariant::AuthCert => Box::new(
                 ReadXdrIter::<_, AuthCert>::new(&mut r.inner, r.depth_remaining)
@@ -35394,6 +47135,10 @@ impl Type {
                 ReadXdrIter::<_, SurveyMessageCommandType>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t)))),
             ),
+            TypeVariant::SurveyMessageResponseType => Box::new(
+                ReadXdrIter::<_, SurveyMessageResponseType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t)))),
+            ),
             TypeVariant::SurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, SurveyRequestMessage>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
@@ -35422,9 +47167,13 @@ impl Type {
                 ReadXdrIter::<_, PeerStatList>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
-            TypeVariant::TopologyResponseBody => Box::new(
-                ReadXdrIter::<_, TopologyResponseBody>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t)))),
+            TypeVariant::TopologyResponseBodyV0 => Box::new(
+                ReadXdrIter::<_, TopologyResponseBodyV0>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t)))),
+            ),
+            TypeVariant::TopologyResponseBodyV1 => Box::new(
+                ReadXdrIter::<_, TopologyResponseBodyV1>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
                 ReadXdrIter::<_, SurveyResponseBody>::new(&mut r.inner, r.depth_remaining)
@@ -35577,6 +47326,80 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))),
             ),
+            TypeVariant::HostFunctionType => Box::new(
+                ReadXdrIter::<_, HostFunctionType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdPreimageType => Box::new(
+                ReadXdrIter::<_, ContractIdPreimageType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractIdPreimageType(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdPreimage => Box::new(
+                ReadXdrIter::<_, ContractIdPreimage>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractIdPreimage(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdPreimageFromAddress => Box::new(
+                ReadXdrIter::<_, ContractIdPreimageFromAddress>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ContractIdPreimageFromAddress(Box::new(t)))),
+            ),
+            TypeVariant::CreateContractArgs => Box::new(
+                ReadXdrIter::<_, CreateContractArgs>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
+            ),
+            TypeVariant::InvokeContractArgs => Box::new(
+                ReadXdrIter::<_, InvokeContractArgs>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeContractArgs(Box::new(t)))),
+            ),
+            TypeVariant::HostFunction => Box::new(
+                ReadXdrIter::<_, HostFunction>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunctionType => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedFunctionType>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunction => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedFunction>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedFunction(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedInvocation => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedInvocation>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedInvocation(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAddressCredentials => Box::new(
+                ReadXdrIter::<_, SorobanAddressCredentials>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
+            ),
+            TypeVariant::SorobanCredentialsType => Box::new(
+                ReadXdrIter::<_, SorobanCredentialsType>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
+            ),
+            TypeVariant::SorobanCredentials => Box::new(
+                ReadXdrIter::<_, SorobanCredentials>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanCredentials(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizationEntry => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizationEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionOp => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionOp>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
+            ),
+            TypeVariant::BumpFootprintExpirationOp => Box::new(
+                ReadXdrIter::<_, BumpFootprintExpirationOp>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::BumpFootprintExpirationOp(Box::new(t)))),
+            ),
+            TypeVariant::RestoreFootprintOp => Box::new(
+                ReadXdrIter::<_, RestoreFootprintOp>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::RestoreFootprintOp(Box::new(t)))),
+            ),
             TypeVariant::Operation => Box::new(
                 ReadXdrIter::<_, Operation>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Operation(Box::new(t)))),
@@ -35596,6 +47419,17 @@ impl Type {
             TypeVariant::HashIdPreimageRevokeId => Box::new(
                 ReadXdrIter::<_, HashIdPreimageRevokeId>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageContractId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageContractId>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageSorobanAuthorization => Box::new(
+                ReadXdrIter::<_, HashIdPreimageSorobanAuthorization>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(&mut r.inner, r.depth_remaining)
@@ -35624,6 +47458,18 @@ impl Type {
             TypeVariant::Preconditions => Box::new(
                 ReadXdrIter::<_, Preconditions>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Preconditions(Box::new(t)))),
+            ),
+            TypeVariant::LedgerFootprint => Box::new(
+                ReadXdrIter::<_, LedgerFootprint>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
+            ),
+            TypeVariant::SorobanResources => Box::new(
+                ReadXdrIter::<_, SorobanResources>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanResources(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionData => Box::new(
+                ReadXdrIter::<_, SorobanTransactionData>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
                 ReadXdrIter::<_, TransactionV0>::new(&mut r.inner, r.depth_remaining)
@@ -35965,6 +47811,39 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))),
             ),
+            TypeVariant::InvokeHostFunctionResultCode => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionResultCode>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::InvokeHostFunctionResultCode(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionResult => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionResult>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t)))),
+            ),
+            TypeVariant::BumpFootprintExpirationResultCode => Box::new(
+                ReadXdrIter::<_, BumpFootprintExpirationResultCode>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BumpFootprintExpirationResultCode(Box::new(t)))),
+            ),
+            TypeVariant::BumpFootprintExpirationResult => Box::new(
+                ReadXdrIter::<_, BumpFootprintExpirationResult>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BumpFootprintExpirationResult(Box::new(t)))),
+            ),
+            TypeVariant::RestoreFootprintResultCode => Box::new(
+                ReadXdrIter::<_, RestoreFootprintResultCode>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::RestoreFootprintResultCode(Box::new(t)))),
+            ),
+            TypeVariant::RestoreFootprintResult => Box::new(
+                ReadXdrIter::<_, RestoreFootprintResult>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::RestoreFootprintResult(Box::new(t)))),
+            ),
             TypeVariant::OperationResultCode => Box::new(
                 ReadXdrIter::<_, OperationResultCode>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t)))),
@@ -36036,6 +47915,14 @@ impl Type {
                 ReadXdrIter::<_, Int64>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Int64(Box::new(t)))),
             ),
+            TypeVariant::TimePoint => Box::new(
+                ReadXdrIter::<_, TimePoint>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
+            ),
+            TypeVariant::Duration => Box::new(
+                ReadXdrIter::<_, Duration>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, ExtensionPoint>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
@@ -36078,6 +47965,10 @@ impl Type {
             TypeVariant::NodeId => Box::new(
                 ReadXdrIter::<_, NodeId>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
+            ),
+            TypeVariant::AccountId => Box::new(
+                ReadXdrIter::<_, AccountId>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
             ),
             TypeVariant::Curve25519Secret => Box::new(
                 ReadXdrIter::<_, Curve25519Secret>::new(&mut r.inner, r.depth_remaining)
@@ -36152,6 +48043,303 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScpQuorumSet>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t.0)))),
             ),
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractExecutionLanesV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractComputeV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractLedgerCostV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractHistoricalDataV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractEventsV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractEventsV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractEventsV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractBandwidthV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractCostType => Box::new(
+                ReadXdrIter::<_, Frame<ContractCostType>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractCostType(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractCostParamEntry => Box::new(
+                ReadXdrIter::<_, Frame<ContractCostParamEntry>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::StateExpirationSettings => Box::new(
+                ReadXdrIter::<_, Frame<StateExpirationSettings>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::StateExpirationSettings(Box::new(t.0)))),
+            ),
+            TypeVariant::EvictionIterator => Box::new(
+                ReadXdrIter::<_, Frame<EvictionIterator>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractCostParams => Box::new(
+                ReadXdrIter::<_, Frame<ContractCostParams>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingId => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingId>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingEntry => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingEntry>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ScEnvMetaKind => Box::new(
+                ReadXdrIter::<_, Frame<ScEnvMetaKind>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t.0)))),
+            ),
+            TypeVariant::ScEnvMetaEntry => Box::new(
+                ReadXdrIter::<_, Frame<ScEnvMetaEntry>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMetaV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScMetaV0>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMetaV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMetaKind => Box::new(
+                ReadXdrIter::<_, Frame<ScMetaKind>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMetaKind(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMetaEntry => Box::new(
+                ReadXdrIter::<_, Frame<ScMetaEntry>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMetaEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecType => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecType>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeOption => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeOption>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeOption(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeResult => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeResult>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeResult(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeVec => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeVec>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeVec(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeMap => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeMap>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeTuple => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeTuple>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeTuple(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeBytesN => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeBytesN>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeBytesN(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeUdt => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeUdt>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecTypeDef => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecTypeDef>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeDef(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtStructFieldV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtStructFieldV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ScSpecUdtStructFieldV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtStructV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtStructV0>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseVoidV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseVoidV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseTupleV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseTupleV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseV0Kind>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0Kind(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseV0>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtUnionV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionV0>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtEnumCaseV0>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumCaseV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtEnumV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtEnumV0>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtErrorEnumCaseV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumCaseV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecUdtErrorEnumV0>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecFunctionInputV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecFunctionInputV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecFunctionV0 => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecFunctionV0>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEntryKind => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEntryKind>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSpecEntry => Box::new(
+                ReadXdrIter::<_, Frame<ScSpecEntry>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ScValType => Box::new(
+                ReadXdrIter::<_, Frame<ScValType>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScValType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScErrorType => Box::new(
+                ReadXdrIter::<_, Frame<ScErrorType>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScErrorType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScErrorCode => Box::new(
+                ReadXdrIter::<_, Frame<ScErrorCode>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScErrorCode(Box::new(t.0)))),
+            ),
+            TypeVariant::ScError => Box::new(
+                ReadXdrIter::<_, Frame<ScError>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScError(Box::new(t.0)))),
+            ),
+            TypeVariant::UInt128Parts => Box::new(
+                ReadXdrIter::<_, Frame<UInt128Parts>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t.0)))),
+            ),
+            TypeVariant::Int128Parts => Box::new(
+                ReadXdrIter::<_, Frame<Int128Parts>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Int128Parts(Box::new(t.0)))),
+            ),
+            TypeVariant::UInt256Parts => Box::new(
+                ReadXdrIter::<_, Frame<UInt256Parts>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t.0)))),
+            ),
+            TypeVariant::Int256Parts => Box::new(
+                ReadXdrIter::<_, Frame<Int256Parts>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Int256Parts(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractExecutableType => Box::new(
+                ReadXdrIter::<_, Frame<ContractExecutableType>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, Frame<ContractExecutable>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t.0)))),
+            ),
+            TypeVariant::ScAddressType => Box::new(
+                ReadXdrIter::<_, Frame<ScAddressType>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScAddressType(Box::new(t.0)))),
+            ),
+            TypeVariant::ScAddress => Box::new(
+                ReadXdrIter::<_, Frame<ScAddress>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScAddress(Box::new(t.0)))),
+            ),
+            TypeVariant::ScVec => Box::new(
+                ReadXdrIter::<_, Frame<ScVec>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScVec(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMap => Box::new(
+                ReadXdrIter::<_, Frame<ScMap>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMap(Box::new(t.0)))),
+            ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, Frame<ScBytes>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t.0)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, Frame<ScString>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScString(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, Frame<ScSymbol>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t.0)))),
+            ),
+            TypeVariant::ScNonceKey => Box::new(
+                ReadXdrIter::<_, Frame<ScNonceKey>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t.0)))),
+            ),
+            TypeVariant::ScContractInstance => Box::new(
+                ReadXdrIter::<_, Frame<ScContractInstance>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScContractInstance(Box::new(t.0)))),
+            ),
+            TypeVariant::ScVal => Box::new(
+                ReadXdrIter::<_, Frame<ScVal>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScVal(Box::new(t.0)))),
+            ),
+            TypeVariant::ScMapEntry => Box::new(
+                ReadXdrIter::<_, Frame<ScMapEntry>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t.0)))),
+            ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t.0)))),
@@ -36168,10 +48356,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<PersistedScpState>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t.0)))),
             ),
-            TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, Frame<AccountId>>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::AccountId(Box::new(t.0)))),
-            ),
             TypeVariant::Thresholds => Box::new(
                 ReadXdrIter::<_, Frame<Thresholds>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Thresholds(Box::new(t.0)))),
@@ -36187,14 +48371,6 @@ impl Type {
             TypeVariant::SequenceNumber => Box::new(
                 ReadXdrIter::<_, Frame<SequenceNumber>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t.0)))),
-            ),
-            TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, Frame<TimePoint>>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t.0)))),
-            ),
-            TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Frame<Duration>>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::Duration(Box::new(t.0)))),
             ),
             TypeVariant::DataValue => Box::new(
                 ReadXdrIter::<_, Frame<DataValue>>::new(&mut r.inner, r.depth_remaining)
@@ -36459,6 +48635,25 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t.0)))),
             ),
+            TypeVariant::ContractDataDurability => Box::new(
+                ReadXdrIter::<_, Frame<ContractDataDurability>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ContractDataDurability(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractDataEntry => Box::new(
+                ReadXdrIter::<_, Frame<ContractDataEntry>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractCodeEntry => Box::new(
+                ReadXdrIter::<_, Frame<ContractCodeEntry>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ExpirationEntry => Box::new(
+                ReadXdrIter::<_, Frame<ExpirationEntry>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExpirationEntry(Box::new(t.0)))),
+            ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerEntryExtensionV1>>::new(
                     &mut r.inner,
@@ -36519,6 +48714,31 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t.0)))),
             ),
+            TypeVariant::LedgerKeyContractData => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyContractData>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerKeyContractData(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyContractCode => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyContractCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerKeyContractCode(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyConfigSetting => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyConfigSetting>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerKeyExpiration => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyExpiration>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyExpiration(Box::new(t.0)))),
+            ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, Frame<EnvelopeType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::EnvelopeType(Box::new(t.0)))),
@@ -36576,9 +48796,17 @@ impl Type {
                 ReadXdrIter::<_, Frame<LedgerUpgradeType>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t.0)))),
             ),
+            TypeVariant::ConfigUpgradeSetKey => Box::new(
+                ReadXdrIter::<_, Frame<ConfigUpgradeSetKey>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t.0)))),
+            ),
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, Frame<LedgerUpgrade>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigUpgradeSet => Box::new(
+                ReadXdrIter::<_, Frame<ConfigUpgradeSet>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t.0)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, Frame<BucketEntryType>>::new(&mut r.inner, r.depth_remaining)
@@ -36722,6 +48950,44 @@ impl Type {
                 ReadXdrIter::<_, Frame<TransactionMetaV2>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t.0)))),
             ),
+            TypeVariant::ContractEventType => Box::new(
+                ReadXdrIter::<_, Frame<ContractEventType>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEventType(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractEvent => Box::new(
+                ReadXdrIter::<_, Frame<ContractEvent>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEvent(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractEventBody => Box::new(
+                ReadXdrIter::<_, Frame<ContractEventBody>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEventBody(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractEventV0 => Box::new(
+                ReadXdrIter::<_, Frame<ContractEventV0>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t.0)))),
+            ),
+            TypeVariant::DiagnosticEvent => Box::new(
+                ReadXdrIter::<_, Frame<DiagnosticEvent>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanTransactionMeta => Box::new(
+                ReadXdrIter::<_, Frame<SorobanTransactionMeta>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SorobanTransactionMeta(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionMetaV3 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionMetaV3>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t.0)))),
+            ),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
+                ReadXdrIter::<_, Frame<InvokeHostFunctionSuccessPreImage>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t.0)))),
+            ),
             TypeVariant::TransactionMeta => Box::new(
                 ReadXdrIter::<_, Frame<TransactionMeta>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t.0)))),
@@ -36745,6 +49011,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<LedgerCloseMetaV1>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t.0)))),
             ),
+            TypeVariant::LedgerCloseMetaV2 => Box::new(
+                ReadXdrIter::<_, Frame<LedgerCloseMetaV2>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t.0)))),
+            ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMeta>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t.0)))),
@@ -36760,6 +49030,10 @@ impl Type {
             TypeVariant::SendMore => Box::new(
                 ReadXdrIter::<_, Frame<SendMore>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SendMore(Box::new(t.0)))),
+            ),
+            TypeVariant::SendMoreExtended => Box::new(
+                ReadXdrIter::<_, Frame<SendMoreExtended>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SendMoreExtended(Box::new(t.0)))),
             ),
             TypeVariant::AuthCert => Box::new(
                 ReadXdrIter::<_, Frame<AuthCert>>::new(&mut r.inner, r.depth_remaining)
@@ -36800,6 +49074,13 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t.0)))),
             ),
+            TypeVariant::SurveyMessageResponseType => Box::new(
+                ReadXdrIter::<_, Frame<SurveyMessageResponseType>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t.0)))),
+            ),
             TypeVariant::SurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, Frame<SurveyRequestMessage>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t.0)))),
@@ -36837,9 +49118,19 @@ impl Type {
                 ReadXdrIter::<_, Frame<PeerStatList>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t.0)))),
             ),
-            TypeVariant::TopologyResponseBody => Box::new(
-                ReadXdrIter::<_, Frame<TopologyResponseBody>>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t.0)))),
+            TypeVariant::TopologyResponseBodyV0 => Box::new(
+                ReadXdrIter::<_, Frame<TopologyResponseBodyV0>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t.0)))),
+            ),
+            TypeVariant::TopologyResponseBodyV1 => Box::new(
+                ReadXdrIter::<_, Frame<TopologyResponseBodyV1>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t.0)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
                 ReadXdrIter::<_, Frame<SurveyResponseBody>>::new(&mut r.inner, r.depth_remaining)
@@ -37028,6 +49319,101 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t.0)))),
             ),
+            TypeVariant::HostFunctionType => Box::new(
+                ReadXdrIter::<_, Frame<HostFunctionType>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractIdPreimageType => Box::new(
+                ReadXdrIter::<_, Frame<ContractIdPreimageType>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ContractIdPreimageType(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractIdPreimage => Box::new(
+                ReadXdrIter::<_, Frame<ContractIdPreimage>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractIdPreimage(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractIdPreimageFromAddress => Box::new(
+                ReadXdrIter::<_, Frame<ContractIdPreimageFromAddress>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ContractIdPreimageFromAddress(Box::new(t.0)))),
+            ),
+            TypeVariant::CreateContractArgs => Box::new(
+                ReadXdrIter::<_, Frame<CreateContractArgs>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t.0)))),
+            ),
+            TypeVariant::InvokeContractArgs => Box::new(
+                ReadXdrIter::<_, Frame<InvokeContractArgs>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeContractArgs(Box::new(t.0)))),
+            ),
+            TypeVariant::HostFunction => Box::new(
+                ReadXdrIter::<_, Frame<HostFunction>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::HostFunction(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunctionType => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAuthorizedFunctionType>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunction => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAuthorizedFunction>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SorobanAuthorizedFunction(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAuthorizedInvocation => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAuthorizedInvocation>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SorobanAuthorizedInvocation(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAddressCredentials => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAddressCredentials>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanCredentialsType => Box::new(
+                ReadXdrIter::<_, Frame<SorobanCredentialsType>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanCredentials => Box::new(
+                ReadXdrIter::<_, Frame<SorobanCredentials>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanCredentials(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanAuthorizationEntry => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAuthorizationEntry>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::InvokeHostFunctionOp => Box::new(
+                ReadXdrIter::<_, Frame<InvokeHostFunctionOp>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t.0)))),
+            ),
+            TypeVariant::BumpFootprintExpirationOp => Box::new(
+                ReadXdrIter::<_, Frame<BumpFootprintExpirationOp>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BumpFootprintExpirationOp(Box::new(t.0)))),
+            ),
+            TypeVariant::RestoreFootprintOp => Box::new(
+                ReadXdrIter::<_, Frame<RestoreFootprintOp>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::RestoreFootprintOp(Box::new(t.0)))),
+            ),
             TypeVariant::Operation => Box::new(
                 ReadXdrIter::<_, Frame<Operation>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Operation(Box::new(t.0)))),
@@ -37053,6 +49439,20 @@ impl Type {
                     r.depth_remaining,
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimageContractId => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageContractId>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimageSorobanAuthorization => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageSorobanAuthorization>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t.0)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, Frame<MemoType>>::new(&mut r.inner, r.depth_remaining)
@@ -37081,6 +49481,21 @@ impl Type {
             TypeVariant::Preconditions => Box::new(
                 ReadXdrIter::<_, Frame<Preconditions>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Preconditions(Box::new(t.0)))),
+            ),
+            TypeVariant::LedgerFootprint => Box::new(
+                ReadXdrIter::<_, Frame<LedgerFootprint>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanResources => Box::new(
+                ReadXdrIter::<_, Frame<SorobanResources>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanResources(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanTransactionData => Box::new(
+                ReadXdrIter::<_, Frame<SorobanTransactionData>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t.0)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
                 ReadXdrIter::<_, Frame<TransactionV0>>::new(&mut r.inner, r.depth_remaining)
@@ -37488,6 +49903,48 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t.0)))),
             ),
+            TypeVariant::InvokeHostFunctionResultCode => Box::new(
+                ReadXdrIter::<_, Frame<InvokeHostFunctionResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::InvokeHostFunctionResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::InvokeHostFunctionResult => Box::new(
+                ReadXdrIter::<_, Frame<InvokeHostFunctionResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t.0)))),
+            ),
+            TypeVariant::BumpFootprintExpirationResultCode => Box::new(
+                ReadXdrIter::<_, Frame<BumpFootprintExpirationResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BumpFootprintExpirationResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::BumpFootprintExpirationResult => Box::new(
+                ReadXdrIter::<_, Frame<BumpFootprintExpirationResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::BumpFootprintExpirationResult(Box::new(t.0)))),
+            ),
+            TypeVariant::RestoreFootprintResultCode => Box::new(
+                ReadXdrIter::<_, Frame<RestoreFootprintResultCode>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::RestoreFootprintResultCode(Box::new(t.0)))),
+            ),
+            TypeVariant::RestoreFootprintResult => Box::new(
+                ReadXdrIter::<_, Frame<RestoreFootprintResult>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::RestoreFootprintResult(Box::new(t.0)))),
+            ),
             TypeVariant::OperationResultCode => Box::new(
                 ReadXdrIter::<_, Frame<OperationResultCode>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t.0)))),
@@ -37574,6 +50031,14 @@ impl Type {
                 ReadXdrIter::<_, Frame<Int64>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Int64(Box::new(t.0)))),
             ),
+            TypeVariant::TimePoint => Box::new(
+                ReadXdrIter::<_, Frame<TimePoint>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t.0)))),
+            ),
+            TypeVariant::Duration => Box::new(
+                ReadXdrIter::<_, Frame<Duration>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Duration(Box::new(t.0)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, Frame<ExtensionPoint>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t.0)))),
@@ -37616,6 +50081,10 @@ impl Type {
             TypeVariant::NodeId => Box::new(
                 ReadXdrIter::<_, Frame<NodeId>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::NodeId(Box::new(t.0)))),
+            ),
+            TypeVariant::AccountId => Box::new(
+                ReadXdrIter::<_, Frame<AccountId>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::AccountId(Box::new(t.0)))),
             ),
             TypeVariant::Curve25519Secret => Box::new(
                 ReadXdrIter::<_, Frame<Curve25519Secret>>::new(&mut r.inner, r.depth_remaining)
@@ -37688,6 +50157,264 @@ impl Type {
                 ReadXdrIter::<_, ScpQuorumSet>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractExecutionLanesV0>::new(
+                    dec,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractComputeV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(
+                    dec,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractEventsV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractEventsV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractEventsV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostType => Box::new(
+                ReadXdrIter::<_, ContractCostType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractCostType(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostParamEntry => Box::new(
+                ReadXdrIter::<_, ContractCostParamEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t)))),
+            ),
+            TypeVariant::StateExpirationSettings => Box::new(
+                ReadXdrIter::<_, StateExpirationSettings>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::StateExpirationSettings(Box::new(t)))),
+            ),
+            TypeVariant::EvictionIterator => Box::new(
+                ReadXdrIter::<_, EvictionIterator>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
+            ),
+            TypeVariant::ContractCostParams => Box::new(
+                ReadXdrIter::<_, ContractCostParams>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingId => Box::new(
+                ReadXdrIter::<_, ConfigSettingId>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingEntry => Box::new(
+                ReadXdrIter::<_, ConfigSettingEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScEnvMetaKind => Box::new(
+                ReadXdrIter::<_, ScEnvMetaKind>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t)))),
+            ),
+            TypeVariant::ScEnvMetaEntry => Box::new(
+                ReadXdrIter::<_, ScEnvMetaEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScMetaV0 => Box::new(
+                ReadXdrIter::<_, ScMetaV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMetaV0(Box::new(t)))),
+            ),
+            TypeVariant::ScMetaKind => Box::new(
+                ReadXdrIter::<_, ScMetaKind>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMetaKind(Box::new(t)))),
+            ),
+            TypeVariant::ScMetaEntry => Box::new(
+                ReadXdrIter::<_, ScMetaEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMetaEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecType => Box::new(
+                ReadXdrIter::<_, ScSpecType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecType(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeOption => Box::new(
+                ReadXdrIter::<_, ScSpecTypeOption>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeOption(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeResult => Box::new(
+                ReadXdrIter::<_, ScSpecTypeResult>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeResult(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeVec => Box::new(
+                ReadXdrIter::<_, ScSpecTypeVec>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeVec(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeMap => Box::new(
+                ReadXdrIter::<_, ScSpecTypeMap>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeTuple => Box::new(
+                ReadXdrIter::<_, ScSpecTypeTuple>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeTuple(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeBytesN => Box::new(
+                ReadXdrIter::<_, ScSpecTypeBytesN>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeBytesN(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeUdt => Box::new(
+                ReadXdrIter::<_, ScSpecTypeUdt>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecTypeDef => Box::new(
+                ReadXdrIter::<_, ScSpecTypeDef>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecTypeDef(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtStructFieldV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtStructFieldV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtStructFieldV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtStructV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtStructV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseVoidV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseVoidV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseTupleV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseTupleV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0Kind>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0Kind(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtUnionV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtUnionV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtUnionV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtEnumCaseV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtEnumV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtEnumV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtEnumV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtErrorEnumCaseV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumCaseV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecUdtErrorEnumV0 => Box::new(
+                ReadXdrIter::<_, ScSpecUdtErrorEnumV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecFunctionInputV0 => Box::new(
+                ReadXdrIter::<_, ScSpecFunctionInputV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecFunctionV0 => Box::new(
+                ReadXdrIter::<_, ScSpecFunctionV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEntryKind => Box::new(
+                ReadXdrIter::<_, ScSpecEntryKind>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
+            ),
+            TypeVariant::ScSpecEntry => Box::new(
+                ReadXdrIter::<_, ScSpecEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
+            ),
+            TypeVariant::ScValType => Box::new(
+                ReadXdrIter::<_, ScValType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
+            ),
+            TypeVariant::ScErrorType => Box::new(
+                ReadXdrIter::<_, ScErrorType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScErrorType(Box::new(t)))),
+            ),
+            TypeVariant::ScErrorCode => Box::new(
+                ReadXdrIter::<_, ScErrorCode>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScErrorCode(Box::new(t)))),
+            ),
+            TypeVariant::ScError => Box::new(
+                ReadXdrIter::<_, ScError>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScError(Box::new(t)))),
+            ),
+            TypeVariant::UInt128Parts => Box::new(
+                ReadXdrIter::<_, UInt128Parts>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t)))),
+            ),
+            TypeVariant::Int128Parts => Box::new(
+                ReadXdrIter::<_, Int128Parts>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
+            ),
+            TypeVariant::UInt256Parts => Box::new(
+                ReadXdrIter::<_, UInt256Parts>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t)))),
+            ),
+            TypeVariant::Int256Parts => Box::new(
+                ReadXdrIter::<_, Int256Parts>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Int256Parts(Box::new(t)))),
+            ),
+            TypeVariant::ContractExecutableType => Box::new(
+                ReadXdrIter::<_, ContractExecutableType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
+            ),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, ContractExecutable>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
+            ),
+            TypeVariant::ScAddressType => Box::new(
+                ReadXdrIter::<_, ScAddressType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
+            ),
+            TypeVariant::ScAddress => Box::new(
+                ReadXdrIter::<_, ScAddress>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
+            ),
+            TypeVariant::ScVec => Box::new(
+                ReadXdrIter::<_, ScVec>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
+            ),
+            TypeVariant::ScMap => Box::new(
+                ReadXdrIter::<_, ScMap>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
+            ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, ScBytes>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, ScString>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, ScSymbol>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
+            ),
+            TypeVariant::ScNonceKey => Box::new(
+                ReadXdrIter::<_, ScNonceKey>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t)))),
+            ),
+            TypeVariant::ScContractInstance => Box::new(
+                ReadXdrIter::<_, ScContractInstance>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScContractInstance(Box::new(t)))),
+            ),
+            TypeVariant::ScVal => Box::new(
+                ReadXdrIter::<_, ScVal>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
+            ),
+            TypeVariant::ScMapEntry => Box::new(
+                ReadXdrIter::<_, ScMapEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
+            ),
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, StoredTransactionSet>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
@@ -37704,10 +50431,6 @@ impl Type {
                 ReadXdrIter::<_, PersistedScpState>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t)))),
             ),
-            TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, AccountId>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
-            ),
             TypeVariant::Thresholds => Box::new(
                 ReadXdrIter::<_, Thresholds>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Thresholds(Box::new(t)))),
@@ -37723,14 +50446,6 @@ impl Type {
             TypeVariant::SequenceNumber => Box::new(
                 ReadXdrIter::<_, SequenceNumber>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t)))),
-            ),
-            TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, TimePoint>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
-            ),
-            TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Duration>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
             TypeVariant::DataValue => Box::new(
                 ReadXdrIter::<_, DataValue>::new(dec, r.depth_remaining)
@@ -37947,6 +50662,22 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
+            TypeVariant::ContractDataDurability => Box::new(
+                ReadXdrIter::<_, ContractDataDurability>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractDataDurability(Box::new(t)))),
+            ),
+            TypeVariant::ContractDataEntry => Box::new(
+                ReadXdrIter::<_, ContractDataEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t)))),
+            ),
+            TypeVariant::ContractCodeEntry => Box::new(
+                ReadXdrIter::<_, ContractCodeEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
+            ),
+            TypeVariant::ExpirationEntry => Box::new(
+                ReadXdrIter::<_, ExpirationEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExpirationEntry(Box::new(t)))),
+            ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))),
@@ -37994,6 +50725,22 @@ impl Type {
             TypeVariant::LedgerKeyLiquidityPool => Box::new(
                 ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyContractData => Box::new(
+                ReadXdrIter::<_, LedgerKeyContractData>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyContractData(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyContractCode => Box::new(
+                ReadXdrIter::<_, LedgerKeyContractCode>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyContractCode(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyConfigSetting => Box::new(
+                ReadXdrIter::<_, LedgerKeyConfigSetting>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))),
+            ),
+            TypeVariant::LedgerKeyExpiration => Box::new(
+                ReadXdrIter::<_, LedgerKeyExpiration>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyExpiration(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, EnvelopeType>::new(dec, r.depth_remaining)
@@ -38043,9 +50790,17 @@ impl Type {
                 ReadXdrIter::<_, LedgerUpgradeType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
             ),
+            TypeVariant::ConfigUpgradeSetKey => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSetKey>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t)))),
+            ),
             TypeVariant::LedgerUpgrade => Box::new(
                 ReadXdrIter::<_, LedgerUpgrade>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
+            ),
+            TypeVariant::ConfigUpgradeSet => Box::new(
+                ReadXdrIter::<_, ConfigUpgradeSet>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, BucketEntryType>::new(dec, r.depth_remaining)
@@ -38159,6 +50914,38 @@ impl Type {
                 ReadXdrIter::<_, TransactionMetaV2>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t)))),
             ),
+            TypeVariant::ContractEventType => Box::new(
+                ReadXdrIter::<_, ContractEventType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEventType(Box::new(t)))),
+            ),
+            TypeVariant::ContractEvent => Box::new(
+                ReadXdrIter::<_, ContractEvent>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEvent(Box::new(t)))),
+            ),
+            TypeVariant::ContractEventBody => Box::new(
+                ReadXdrIter::<_, ContractEventBody>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEventBody(Box::new(t)))),
+            ),
+            TypeVariant::ContractEventV0 => Box::new(
+                ReadXdrIter::<_, ContractEventV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t)))),
+            ),
+            TypeVariant::DiagnosticEvent => Box::new(
+                ReadXdrIter::<_, DiagnosticEvent>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionMeta => Box::new(
+                ReadXdrIter::<_, SorobanTransactionMeta>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanTransactionMeta(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMetaV3 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV3>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionSuccessPreImage>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t)))),
+            ),
             TypeVariant::TransactionMeta => Box::new(
                 ReadXdrIter::<_, TransactionMeta>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t)))),
@@ -38179,6 +50966,10 @@ impl Type {
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
             ),
+            TypeVariant::LedgerCloseMetaV2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaV2>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
+            ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t)))),
@@ -38194,6 +50985,10 @@ impl Type {
             TypeVariant::SendMore => Box::new(
                 ReadXdrIter::<_, SendMore>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SendMore(Box::new(t)))),
+            ),
+            TypeVariant::SendMoreExtended => Box::new(
+                ReadXdrIter::<_, SendMoreExtended>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SendMoreExtended(Box::new(t)))),
             ),
             TypeVariant::AuthCert => Box::new(
                 ReadXdrIter::<_, AuthCert>::new(dec, r.depth_remaining)
@@ -38231,6 +51026,10 @@ impl Type {
                 ReadXdrIter::<_, SurveyMessageCommandType>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t)))),
             ),
+            TypeVariant::SurveyMessageResponseType => Box::new(
+                ReadXdrIter::<_, SurveyMessageResponseType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t)))),
+            ),
             TypeVariant::SurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, SurveyRequestMessage>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
@@ -38259,9 +51058,13 @@ impl Type {
                 ReadXdrIter::<_, PeerStatList>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
-            TypeVariant::TopologyResponseBody => Box::new(
-                ReadXdrIter::<_, TopologyResponseBody>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::TopologyResponseBody(Box::new(t)))),
+            TypeVariant::TopologyResponseBodyV0 => Box::new(
+                ReadXdrIter::<_, TopologyResponseBodyV0>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t)))),
+            ),
+            TypeVariant::TopologyResponseBodyV1 => Box::new(
+                ReadXdrIter::<_, TopologyResponseBodyV1>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
                 ReadXdrIter::<_, SurveyResponseBody>::new(dec, r.depth_remaining)
@@ -38411,6 +51214,74 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))),
             ),
+            TypeVariant::HostFunctionType => Box::new(
+                ReadXdrIter::<_, HostFunctionType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdPreimageType => Box::new(
+                ReadXdrIter::<_, ContractIdPreimageType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractIdPreimageType(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdPreimage => Box::new(
+                ReadXdrIter::<_, ContractIdPreimage>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractIdPreimage(Box::new(t)))),
+            ),
+            TypeVariant::ContractIdPreimageFromAddress => Box::new(
+                ReadXdrIter::<_, ContractIdPreimageFromAddress>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ContractIdPreimageFromAddress(Box::new(t)))),
+            ),
+            TypeVariant::CreateContractArgs => Box::new(
+                ReadXdrIter::<_, CreateContractArgs>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
+            ),
+            TypeVariant::InvokeContractArgs => Box::new(
+                ReadXdrIter::<_, InvokeContractArgs>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeContractArgs(Box::new(t)))),
+            ),
+            TypeVariant::HostFunction => Box::new(
+                ReadXdrIter::<_, HostFunction>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunctionType => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedFunctionType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedFunction => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedFunction>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedFunction(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizedInvocation => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizedInvocation>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizedInvocation(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAddressCredentials => Box::new(
+                ReadXdrIter::<_, SorobanAddressCredentials>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
+            ),
+            TypeVariant::SorobanCredentialsType => Box::new(
+                ReadXdrIter::<_, SorobanCredentialsType>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
+            ),
+            TypeVariant::SorobanCredentials => Box::new(
+                ReadXdrIter::<_, SorobanCredentials>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanCredentials(Box::new(t)))),
+            ),
+            TypeVariant::SorobanAuthorizationEntry => Box::new(
+                ReadXdrIter::<_, SorobanAuthorizationEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionOp => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionOp>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
+            ),
+            TypeVariant::BumpFootprintExpirationOp => Box::new(
+                ReadXdrIter::<_, BumpFootprintExpirationOp>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::BumpFootprintExpirationOp(Box::new(t)))),
+            ),
+            TypeVariant::RestoreFootprintOp => Box::new(
+                ReadXdrIter::<_, RestoreFootprintOp>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::RestoreFootprintOp(Box::new(t)))),
+            ),
             TypeVariant::Operation => Box::new(
                 ReadXdrIter::<_, Operation>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Operation(Box::new(t)))),
@@ -38430,6 +51301,14 @@ impl Type {
             TypeVariant::HashIdPreimageRevokeId => Box::new(
                 ReadXdrIter::<_, HashIdPreimageRevokeId>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageContractId => Box::new(
+                ReadXdrIter::<_, HashIdPreimageContractId>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageSorobanAuthorization => Box::new(
+                ReadXdrIter::<_, HashIdPreimageSorobanAuthorization>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(dec, r.depth_remaining)
@@ -38458,6 +51337,18 @@ impl Type {
             TypeVariant::Preconditions => Box::new(
                 ReadXdrIter::<_, Preconditions>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Preconditions(Box::new(t)))),
+            ),
+            TypeVariant::LedgerFootprint => Box::new(
+                ReadXdrIter::<_, LedgerFootprint>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
+            ),
+            TypeVariant::SorobanResources => Box::new(
+                ReadXdrIter::<_, SorobanResources>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanResources(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionData => Box::new(
+                ReadXdrIter::<_, SorobanTransactionData>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
                 ReadXdrIter::<_, TransactionV0>::new(dec, r.depth_remaining)
@@ -38757,6 +51648,30 @@ impl Type {
                 ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))),
             ),
+            TypeVariant::InvokeHostFunctionResultCode => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionResultCode>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionResultCode(Box::new(t)))),
+            ),
+            TypeVariant::InvokeHostFunctionResult => Box::new(
+                ReadXdrIter::<_, InvokeHostFunctionResult>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t)))),
+            ),
+            TypeVariant::BumpFootprintExpirationResultCode => Box::new(
+                ReadXdrIter::<_, BumpFootprintExpirationResultCode>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::BumpFootprintExpirationResultCode(Box::new(t)))),
+            ),
+            TypeVariant::BumpFootprintExpirationResult => Box::new(
+                ReadXdrIter::<_, BumpFootprintExpirationResult>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::BumpFootprintExpirationResult(Box::new(t)))),
+            ),
+            TypeVariant::RestoreFootprintResultCode => Box::new(
+                ReadXdrIter::<_, RestoreFootprintResultCode>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::RestoreFootprintResultCode(Box::new(t)))),
+            ),
+            TypeVariant::RestoreFootprintResult => Box::new(
+                ReadXdrIter::<_, RestoreFootprintResult>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::RestoreFootprintResult(Box::new(t)))),
+            ),
             TypeVariant::OperationResultCode => Box::new(
                 ReadXdrIter::<_, OperationResultCode>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t)))),
@@ -38825,6 +51740,14 @@ impl Type {
                 ReadXdrIter::<_, Int64>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::Int64(Box::new(t)))),
             ),
+            TypeVariant::TimePoint => Box::new(
+                ReadXdrIter::<_, TimePoint>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
+            ),
+            TypeVariant::Duration => Box::new(
+                ReadXdrIter::<_, Duration>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, ExtensionPoint>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
@@ -38864,6 +51787,10 @@ impl Type {
             TypeVariant::NodeId => Box::new(
                 ReadXdrIter::<_, NodeId>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
+            ),
+            TypeVariant::AccountId => Box::new(
+                ReadXdrIter::<_, AccountId>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
             ),
             TypeVariant::Curve25519Secret => Box::new(
                 ReadXdrIter::<_, Curve25519Secret>::new(dec, r.depth_remaining)
@@ -38920,17 +51847,77 @@ impl Type {
             Self::ScpStatementExternalize(ref v) => v.as_ref(),
             Self::ScpEnvelope(ref v) => v.as_ref(),
             Self::ScpQuorumSet(ref v) => v.as_ref(),
+            Self::ConfigSettingContractExecutionLanesV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractComputeV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractLedgerCostV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractHistoricalDataV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractEventsV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractBandwidthV0(ref v) => v.as_ref(),
+            Self::ContractCostType(ref v) => v.as_ref(),
+            Self::ContractCostParamEntry(ref v) => v.as_ref(),
+            Self::StateExpirationSettings(ref v) => v.as_ref(),
+            Self::EvictionIterator(ref v) => v.as_ref(),
+            Self::ContractCostParams(ref v) => v.as_ref(),
+            Self::ConfigSettingId(ref v) => v.as_ref(),
+            Self::ConfigSettingEntry(ref v) => v.as_ref(),
+            Self::ScEnvMetaKind(ref v) => v.as_ref(),
+            Self::ScEnvMetaEntry(ref v) => v.as_ref(),
+            Self::ScMetaV0(ref v) => v.as_ref(),
+            Self::ScMetaKind(ref v) => v.as_ref(),
+            Self::ScMetaEntry(ref v) => v.as_ref(),
+            Self::ScSpecType(ref v) => v.as_ref(),
+            Self::ScSpecTypeOption(ref v) => v.as_ref(),
+            Self::ScSpecTypeResult(ref v) => v.as_ref(),
+            Self::ScSpecTypeVec(ref v) => v.as_ref(),
+            Self::ScSpecTypeMap(ref v) => v.as_ref(),
+            Self::ScSpecTypeTuple(ref v) => v.as_ref(),
+            Self::ScSpecTypeBytesN(ref v) => v.as_ref(),
+            Self::ScSpecTypeUdt(ref v) => v.as_ref(),
+            Self::ScSpecTypeDef(ref v) => v.as_ref(),
+            Self::ScSpecUdtStructFieldV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtStructV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtUnionCaseVoidV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtUnionCaseTupleV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtUnionCaseV0Kind(ref v) => v.as_ref(),
+            Self::ScSpecUdtUnionCaseV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtUnionV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtEnumCaseV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtEnumV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtErrorEnumCaseV0(ref v) => v.as_ref(),
+            Self::ScSpecUdtErrorEnumV0(ref v) => v.as_ref(),
+            Self::ScSpecFunctionInputV0(ref v) => v.as_ref(),
+            Self::ScSpecFunctionV0(ref v) => v.as_ref(),
+            Self::ScSpecEntryKind(ref v) => v.as_ref(),
+            Self::ScSpecEntry(ref v) => v.as_ref(),
+            Self::ScValType(ref v) => v.as_ref(),
+            Self::ScErrorType(ref v) => v.as_ref(),
+            Self::ScErrorCode(ref v) => v.as_ref(),
+            Self::ScError(ref v) => v.as_ref(),
+            Self::UInt128Parts(ref v) => v.as_ref(),
+            Self::Int128Parts(ref v) => v.as_ref(),
+            Self::UInt256Parts(ref v) => v.as_ref(),
+            Self::Int256Parts(ref v) => v.as_ref(),
+            Self::ContractExecutableType(ref v) => v.as_ref(),
+            Self::ContractExecutable(ref v) => v.as_ref(),
+            Self::ScAddressType(ref v) => v.as_ref(),
+            Self::ScAddress(ref v) => v.as_ref(),
+            Self::ScVec(ref v) => v.as_ref(),
+            Self::ScMap(ref v) => v.as_ref(),
+            Self::ScBytes(ref v) => v.as_ref(),
+            Self::ScString(ref v) => v.as_ref(),
+            Self::ScSymbol(ref v) => v.as_ref(),
+            Self::ScNonceKey(ref v) => v.as_ref(),
+            Self::ScContractInstance(ref v) => v.as_ref(),
+            Self::ScVal(ref v) => v.as_ref(),
+            Self::ScMapEntry(ref v) => v.as_ref(),
             Self::StoredTransactionSet(ref v) => v.as_ref(),
             Self::PersistedScpStateV0(ref v) => v.as_ref(),
             Self::PersistedScpStateV1(ref v) => v.as_ref(),
             Self::PersistedScpState(ref v) => v.as_ref(),
-            Self::AccountId(ref v) => v.as_ref(),
             Self::Thresholds(ref v) => v.as_ref(),
             Self::String32(ref v) => v.as_ref(),
             Self::String64(ref v) => v.as_ref(),
             Self::SequenceNumber(ref v) => v.as_ref(),
-            Self::TimePoint(ref v) => v.as_ref(),
-            Self::Duration(ref v) => v.as_ref(),
             Self::DataValue(ref v) => v.as_ref(),
             Self::PoolId(ref v) => v.as_ref(),
             Self::AssetCode4(ref v) => v.as_ref(),
@@ -38984,6 +51971,10 @@ impl Type {
             Self::LiquidityPoolEntry(ref v) => v.as_ref(),
             Self::LiquidityPoolEntryBody(ref v) => v.as_ref(),
             Self::LiquidityPoolEntryConstantProduct(ref v) => v.as_ref(),
+            Self::ContractDataDurability(ref v) => v.as_ref(),
+            Self::ContractDataEntry(ref v) => v.as_ref(),
+            Self::ContractCodeEntry(ref v) => v.as_ref(),
+            Self::ExpirationEntry(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1Ext(ref v) => v.as_ref(),
             Self::LedgerEntry(ref v) => v.as_ref(),
@@ -38996,6 +51987,10 @@ impl Type {
             Self::LedgerKeyData(ref v) => v.as_ref(),
             Self::LedgerKeyClaimableBalance(ref v) => v.as_ref(),
             Self::LedgerKeyLiquidityPool(ref v) => v.as_ref(),
+            Self::LedgerKeyContractData(ref v) => v.as_ref(),
+            Self::LedgerKeyContractCode(ref v) => v.as_ref(),
+            Self::LedgerKeyConfigSetting(ref v) => v.as_ref(),
+            Self::LedgerKeyExpiration(ref v) => v.as_ref(),
             Self::EnvelopeType(ref v) => v.as_ref(),
             Self::UpgradeType(ref v) => v.as_ref(),
             Self::StellarValueType(ref v) => v.as_ref(),
@@ -39008,7 +52003,9 @@ impl Type {
             Self::LedgerHeader(ref v) => v.as_ref(),
             Self::LedgerHeaderExt(ref v) => v.as_ref(),
             Self::LedgerUpgradeType(ref v) => v.as_ref(),
+            Self::ConfigUpgradeSetKey(ref v) => v.as_ref(),
             Self::LedgerUpgrade(ref v) => v.as_ref(),
+            Self::ConfigUpgradeSet(ref v) => v.as_ref(),
             Self::BucketEntryType(ref v) => v.as_ref(),
             Self::BucketMetadata(ref v) => v.as_ref(),
             Self::BucketMetadataExt(ref v) => v.as_ref(),
@@ -39037,15 +52034,25 @@ impl Type {
             Self::OperationMeta(ref v) => v.as_ref(),
             Self::TransactionMetaV1(ref v) => v.as_ref(),
             Self::TransactionMetaV2(ref v) => v.as_ref(),
+            Self::ContractEventType(ref v) => v.as_ref(),
+            Self::ContractEvent(ref v) => v.as_ref(),
+            Self::ContractEventBody(ref v) => v.as_ref(),
+            Self::ContractEventV0(ref v) => v.as_ref(),
+            Self::DiagnosticEvent(ref v) => v.as_ref(),
+            Self::SorobanTransactionMeta(ref v) => v.as_ref(),
+            Self::TransactionMetaV3(ref v) => v.as_ref(),
+            Self::InvokeHostFunctionSuccessPreImage(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
             Self::TransactionResultMeta(ref v) => v.as_ref(),
             Self::UpgradeEntryMeta(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV0(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV1(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaV2(ref v) => v.as_ref(),
             Self::LedgerCloseMeta(ref v) => v.as_ref(),
             Self::ErrorCode(ref v) => v.as_ref(),
             Self::SError(ref v) => v.as_ref(),
             Self::SendMore(ref v) => v.as_ref(),
+            Self::SendMoreExtended(ref v) => v.as_ref(),
             Self::AuthCert(ref v) => v.as_ref(),
             Self::Hello(ref v) => v.as_ref(),
             Self::Auth(ref v) => v.as_ref(),
@@ -39055,6 +52062,7 @@ impl Type {
             Self::MessageType(ref v) => v.as_ref(),
             Self::DontHave(ref v) => v.as_ref(),
             Self::SurveyMessageCommandType(ref v) => v.as_ref(),
+            Self::SurveyMessageResponseType(ref v) => v.as_ref(),
             Self::SurveyRequestMessage(ref v) => v.as_ref(),
             Self::SignedSurveyRequestMessage(ref v) => v.as_ref(),
             Self::EncryptedBody(ref v) => v.as_ref(),
@@ -39062,7 +52070,8 @@ impl Type {
             Self::SignedSurveyResponseMessage(ref v) => v.as_ref(),
             Self::PeerStats(ref v) => v.as_ref(),
             Self::PeerStatList(ref v) => v.as_ref(),
-            Self::TopologyResponseBody(ref v) => v.as_ref(),
+            Self::TopologyResponseBodyV0(ref v) => v.as_ref(),
+            Self::TopologyResponseBodyV1(ref v) => v.as_ref(),
             Self::SurveyResponseBody(ref v) => v.as_ref(),
             Self::TxAdvertVector(ref v) => v.as_ref(),
             Self::FloodAdvert(ref v) => v.as_ref(),
@@ -39100,11 +52109,30 @@ impl Type {
             Self::SetTrustLineFlagsOp(ref v) => v.as_ref(),
             Self::LiquidityPoolDepositOp(ref v) => v.as_ref(),
             Self::LiquidityPoolWithdrawOp(ref v) => v.as_ref(),
+            Self::HostFunctionType(ref v) => v.as_ref(),
+            Self::ContractIdPreimageType(ref v) => v.as_ref(),
+            Self::ContractIdPreimage(ref v) => v.as_ref(),
+            Self::ContractIdPreimageFromAddress(ref v) => v.as_ref(),
+            Self::CreateContractArgs(ref v) => v.as_ref(),
+            Self::InvokeContractArgs(ref v) => v.as_ref(),
+            Self::HostFunction(ref v) => v.as_ref(),
+            Self::SorobanAuthorizedFunctionType(ref v) => v.as_ref(),
+            Self::SorobanAuthorizedFunction(ref v) => v.as_ref(),
+            Self::SorobanAuthorizedInvocation(ref v) => v.as_ref(),
+            Self::SorobanAddressCredentials(ref v) => v.as_ref(),
+            Self::SorobanCredentialsType(ref v) => v.as_ref(),
+            Self::SorobanCredentials(ref v) => v.as_ref(),
+            Self::SorobanAuthorizationEntry(ref v) => v.as_ref(),
+            Self::InvokeHostFunctionOp(ref v) => v.as_ref(),
+            Self::BumpFootprintExpirationOp(ref v) => v.as_ref(),
+            Self::RestoreFootprintOp(ref v) => v.as_ref(),
             Self::Operation(ref v) => v.as_ref(),
             Self::OperationBody(ref v) => v.as_ref(),
             Self::HashIdPreimage(ref v) => v.as_ref(),
             Self::HashIdPreimageOperationId(ref v) => v.as_ref(),
             Self::HashIdPreimageRevokeId(ref v) => v.as_ref(),
+            Self::HashIdPreimageContractId(ref v) => v.as_ref(),
+            Self::HashIdPreimageSorobanAuthorization(ref v) => v.as_ref(),
             Self::MemoType(ref v) => v.as_ref(),
             Self::Memo(ref v) => v.as_ref(),
             Self::TimeBounds(ref v) => v.as_ref(),
@@ -39112,6 +52140,9 @@ impl Type {
             Self::PreconditionsV2(ref v) => v.as_ref(),
             Self::PreconditionType(ref v) => v.as_ref(),
             Self::Preconditions(ref v) => v.as_ref(),
+            Self::LedgerFootprint(ref v) => v.as_ref(),
+            Self::SorobanResources(ref v) => v.as_ref(),
+            Self::SorobanTransactionData(ref v) => v.as_ref(),
             Self::TransactionV0(ref v) => v.as_ref(),
             Self::TransactionV0Ext(ref v) => v.as_ref(),
             Self::TransactionV0Envelope(ref v) => v.as_ref(),
@@ -39183,6 +52214,12 @@ impl Type {
             Self::LiquidityPoolDepositResult(ref v) => v.as_ref(),
             Self::LiquidityPoolWithdrawResultCode(ref v) => v.as_ref(),
             Self::LiquidityPoolWithdrawResult(ref v) => v.as_ref(),
+            Self::InvokeHostFunctionResultCode(ref v) => v.as_ref(),
+            Self::InvokeHostFunctionResult(ref v) => v.as_ref(),
+            Self::BumpFootprintExpirationResultCode(ref v) => v.as_ref(),
+            Self::BumpFootprintExpirationResult(ref v) => v.as_ref(),
+            Self::RestoreFootprintResultCode(ref v) => v.as_ref(),
+            Self::RestoreFootprintResult(ref v) => v.as_ref(),
             Self::OperationResultCode(ref v) => v.as_ref(),
             Self::OperationResult(ref v) => v.as_ref(),
             Self::OperationResultTr(ref v) => v.as_ref(),
@@ -39200,6 +52237,8 @@ impl Type {
             Self::Int32(ref v) => v.as_ref(),
             Self::Uint64(ref v) => v.as_ref(),
             Self::Int64(ref v) => v.as_ref(),
+            Self::TimePoint(ref v) => v.as_ref(),
+            Self::Duration(ref v) => v.as_ref(),
             Self::ExtensionPoint(ref v) => v.as_ref(),
             Self::CryptoKeyType(ref v) => v.as_ref(),
             Self::PublicKeyType(ref v) => v.as_ref(),
@@ -39210,6 +52249,7 @@ impl Type {
             Self::Signature(ref v) => v.as_ref(),
             Self::SignatureHint(ref v) => v.as_ref(),
             Self::NodeId(ref v) => v.as_ref(),
+            Self::AccountId(ref v) => v.as_ref(),
             Self::Curve25519Secret(ref v) => v.as_ref(),
             Self::Curve25519Public(ref v) => v.as_ref(),
             Self::HmacSha256Key(ref v) => v.as_ref(),
@@ -39232,17 +52272,81 @@ impl Type {
             Self::ScpStatementExternalize(_) => "ScpStatementExternalize",
             Self::ScpEnvelope(_) => "ScpEnvelope",
             Self::ScpQuorumSet(_) => "ScpQuorumSet",
+            Self::ConfigSettingContractExecutionLanesV0(_) => {
+                "ConfigSettingContractExecutionLanesV0"
+            }
+            Self::ConfigSettingContractComputeV0(_) => "ConfigSettingContractComputeV0",
+            Self::ConfigSettingContractLedgerCostV0(_) => "ConfigSettingContractLedgerCostV0",
+            Self::ConfigSettingContractHistoricalDataV0(_) => {
+                "ConfigSettingContractHistoricalDataV0"
+            }
+            Self::ConfigSettingContractEventsV0(_) => "ConfigSettingContractEventsV0",
+            Self::ConfigSettingContractBandwidthV0(_) => "ConfigSettingContractBandwidthV0",
+            Self::ContractCostType(_) => "ContractCostType",
+            Self::ContractCostParamEntry(_) => "ContractCostParamEntry",
+            Self::StateExpirationSettings(_) => "StateExpirationSettings",
+            Self::EvictionIterator(_) => "EvictionIterator",
+            Self::ContractCostParams(_) => "ContractCostParams",
+            Self::ConfigSettingId(_) => "ConfigSettingId",
+            Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
+            Self::ScEnvMetaKind(_) => "ScEnvMetaKind",
+            Self::ScEnvMetaEntry(_) => "ScEnvMetaEntry",
+            Self::ScMetaV0(_) => "ScMetaV0",
+            Self::ScMetaKind(_) => "ScMetaKind",
+            Self::ScMetaEntry(_) => "ScMetaEntry",
+            Self::ScSpecType(_) => "ScSpecType",
+            Self::ScSpecTypeOption(_) => "ScSpecTypeOption",
+            Self::ScSpecTypeResult(_) => "ScSpecTypeResult",
+            Self::ScSpecTypeVec(_) => "ScSpecTypeVec",
+            Self::ScSpecTypeMap(_) => "ScSpecTypeMap",
+            Self::ScSpecTypeTuple(_) => "ScSpecTypeTuple",
+            Self::ScSpecTypeBytesN(_) => "ScSpecTypeBytesN",
+            Self::ScSpecTypeUdt(_) => "ScSpecTypeUdt",
+            Self::ScSpecTypeDef(_) => "ScSpecTypeDef",
+            Self::ScSpecUdtStructFieldV0(_) => "ScSpecUdtStructFieldV0",
+            Self::ScSpecUdtStructV0(_) => "ScSpecUdtStructV0",
+            Self::ScSpecUdtUnionCaseVoidV0(_) => "ScSpecUdtUnionCaseVoidV0",
+            Self::ScSpecUdtUnionCaseTupleV0(_) => "ScSpecUdtUnionCaseTupleV0",
+            Self::ScSpecUdtUnionCaseV0Kind(_) => "ScSpecUdtUnionCaseV0Kind",
+            Self::ScSpecUdtUnionCaseV0(_) => "ScSpecUdtUnionCaseV0",
+            Self::ScSpecUdtUnionV0(_) => "ScSpecUdtUnionV0",
+            Self::ScSpecUdtEnumCaseV0(_) => "ScSpecUdtEnumCaseV0",
+            Self::ScSpecUdtEnumV0(_) => "ScSpecUdtEnumV0",
+            Self::ScSpecUdtErrorEnumCaseV0(_) => "ScSpecUdtErrorEnumCaseV0",
+            Self::ScSpecUdtErrorEnumV0(_) => "ScSpecUdtErrorEnumV0",
+            Self::ScSpecFunctionInputV0(_) => "ScSpecFunctionInputV0",
+            Self::ScSpecFunctionV0(_) => "ScSpecFunctionV0",
+            Self::ScSpecEntryKind(_) => "ScSpecEntryKind",
+            Self::ScSpecEntry(_) => "ScSpecEntry",
+            Self::ScValType(_) => "ScValType",
+            Self::ScErrorType(_) => "ScErrorType",
+            Self::ScErrorCode(_) => "ScErrorCode",
+            Self::ScError(_) => "ScError",
+            Self::UInt128Parts(_) => "UInt128Parts",
+            Self::Int128Parts(_) => "Int128Parts",
+            Self::UInt256Parts(_) => "UInt256Parts",
+            Self::Int256Parts(_) => "Int256Parts",
+            Self::ContractExecutableType(_) => "ContractExecutableType",
+            Self::ContractExecutable(_) => "ContractExecutable",
+            Self::ScAddressType(_) => "ScAddressType",
+            Self::ScAddress(_) => "ScAddress",
+            Self::ScVec(_) => "ScVec",
+            Self::ScMap(_) => "ScMap",
+            Self::ScBytes(_) => "ScBytes",
+            Self::ScString(_) => "ScString",
+            Self::ScSymbol(_) => "ScSymbol",
+            Self::ScNonceKey(_) => "ScNonceKey",
+            Self::ScContractInstance(_) => "ScContractInstance",
+            Self::ScVal(_) => "ScVal",
+            Self::ScMapEntry(_) => "ScMapEntry",
             Self::StoredTransactionSet(_) => "StoredTransactionSet",
             Self::PersistedScpStateV0(_) => "PersistedScpStateV0",
             Self::PersistedScpStateV1(_) => "PersistedScpStateV1",
             Self::PersistedScpState(_) => "PersistedScpState",
-            Self::AccountId(_) => "AccountId",
             Self::Thresholds(_) => "Thresholds",
             Self::String32(_) => "String32",
             Self::String64(_) => "String64",
             Self::SequenceNumber(_) => "SequenceNumber",
-            Self::TimePoint(_) => "TimePoint",
-            Self::Duration(_) => "Duration",
             Self::DataValue(_) => "DataValue",
             Self::PoolId(_) => "PoolId",
             Self::AssetCode4(_) => "AssetCode4",
@@ -39298,6 +52402,10 @@ impl Type {
             Self::LiquidityPoolEntry(_) => "LiquidityPoolEntry",
             Self::LiquidityPoolEntryBody(_) => "LiquidityPoolEntryBody",
             Self::LiquidityPoolEntryConstantProduct(_) => "LiquidityPoolEntryConstantProduct",
+            Self::ContractDataDurability(_) => "ContractDataDurability",
+            Self::ContractDataEntry(_) => "ContractDataEntry",
+            Self::ContractCodeEntry(_) => "ContractCodeEntry",
+            Self::ExpirationEntry(_) => "ExpirationEntry",
             Self::LedgerEntryExtensionV1(_) => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext(_) => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry(_) => "LedgerEntry",
@@ -39310,6 +52418,10 @@ impl Type {
             Self::LedgerKeyData(_) => "LedgerKeyData",
             Self::LedgerKeyClaimableBalance(_) => "LedgerKeyClaimableBalance",
             Self::LedgerKeyLiquidityPool(_) => "LedgerKeyLiquidityPool",
+            Self::LedgerKeyContractData(_) => "LedgerKeyContractData",
+            Self::LedgerKeyContractCode(_) => "LedgerKeyContractCode",
+            Self::LedgerKeyConfigSetting(_) => "LedgerKeyConfigSetting",
+            Self::LedgerKeyExpiration(_) => "LedgerKeyExpiration",
             Self::EnvelopeType(_) => "EnvelopeType",
             Self::UpgradeType(_) => "UpgradeType",
             Self::StellarValueType(_) => "StellarValueType",
@@ -39322,7 +52434,9 @@ impl Type {
             Self::LedgerHeader(_) => "LedgerHeader",
             Self::LedgerHeaderExt(_) => "LedgerHeaderExt",
             Self::LedgerUpgradeType(_) => "LedgerUpgradeType",
+            Self::ConfigUpgradeSetKey(_) => "ConfigUpgradeSetKey",
             Self::LedgerUpgrade(_) => "LedgerUpgrade",
+            Self::ConfigUpgradeSet(_) => "ConfigUpgradeSet",
             Self::BucketEntryType(_) => "BucketEntryType",
             Self::BucketMetadata(_) => "BucketMetadata",
             Self::BucketMetadataExt(_) => "BucketMetadataExt",
@@ -39351,15 +52465,25 @@ impl Type {
             Self::OperationMeta(_) => "OperationMeta",
             Self::TransactionMetaV1(_) => "TransactionMetaV1",
             Self::TransactionMetaV2(_) => "TransactionMetaV2",
+            Self::ContractEventType(_) => "ContractEventType",
+            Self::ContractEvent(_) => "ContractEvent",
+            Self::ContractEventBody(_) => "ContractEventBody",
+            Self::ContractEventV0(_) => "ContractEventV0",
+            Self::DiagnosticEvent(_) => "DiagnosticEvent",
+            Self::SorobanTransactionMeta(_) => "SorobanTransactionMeta",
+            Self::TransactionMetaV3(_) => "TransactionMetaV3",
+            Self::InvokeHostFunctionSuccessPreImage(_) => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta(_) => "TransactionMeta",
             Self::TransactionResultMeta(_) => "TransactionResultMeta",
             Self::UpgradeEntryMeta(_) => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0(_) => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaV1(_) => "LedgerCloseMetaV1",
+            Self::LedgerCloseMetaV2(_) => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta(_) => "LedgerCloseMeta",
             Self::ErrorCode(_) => "ErrorCode",
             Self::SError(_) => "SError",
             Self::SendMore(_) => "SendMore",
+            Self::SendMoreExtended(_) => "SendMoreExtended",
             Self::AuthCert(_) => "AuthCert",
             Self::Hello(_) => "Hello",
             Self::Auth(_) => "Auth",
@@ -39369,6 +52493,7 @@ impl Type {
             Self::MessageType(_) => "MessageType",
             Self::DontHave(_) => "DontHave",
             Self::SurveyMessageCommandType(_) => "SurveyMessageCommandType",
+            Self::SurveyMessageResponseType(_) => "SurveyMessageResponseType",
             Self::SurveyRequestMessage(_) => "SurveyRequestMessage",
             Self::SignedSurveyRequestMessage(_) => "SignedSurveyRequestMessage",
             Self::EncryptedBody(_) => "EncryptedBody",
@@ -39376,7 +52501,8 @@ impl Type {
             Self::SignedSurveyResponseMessage(_) => "SignedSurveyResponseMessage",
             Self::PeerStats(_) => "PeerStats",
             Self::PeerStatList(_) => "PeerStatList",
-            Self::TopologyResponseBody(_) => "TopologyResponseBody",
+            Self::TopologyResponseBodyV0(_) => "TopologyResponseBodyV0",
+            Self::TopologyResponseBodyV1(_) => "TopologyResponseBodyV1",
             Self::SurveyResponseBody(_) => "SurveyResponseBody",
             Self::TxAdvertVector(_) => "TxAdvertVector",
             Self::FloodAdvert(_) => "FloodAdvert",
@@ -39414,11 +52540,30 @@ impl Type {
             Self::SetTrustLineFlagsOp(_) => "SetTrustLineFlagsOp",
             Self::LiquidityPoolDepositOp(_) => "LiquidityPoolDepositOp",
             Self::LiquidityPoolWithdrawOp(_) => "LiquidityPoolWithdrawOp",
+            Self::HostFunctionType(_) => "HostFunctionType",
+            Self::ContractIdPreimageType(_) => "ContractIdPreimageType",
+            Self::ContractIdPreimage(_) => "ContractIdPreimage",
+            Self::ContractIdPreimageFromAddress(_) => "ContractIdPreimageFromAddress",
+            Self::CreateContractArgs(_) => "CreateContractArgs",
+            Self::InvokeContractArgs(_) => "InvokeContractArgs",
+            Self::HostFunction(_) => "HostFunction",
+            Self::SorobanAuthorizedFunctionType(_) => "SorobanAuthorizedFunctionType",
+            Self::SorobanAuthorizedFunction(_) => "SorobanAuthorizedFunction",
+            Self::SorobanAuthorizedInvocation(_) => "SorobanAuthorizedInvocation",
+            Self::SorobanAddressCredentials(_) => "SorobanAddressCredentials",
+            Self::SorobanCredentialsType(_) => "SorobanCredentialsType",
+            Self::SorobanCredentials(_) => "SorobanCredentials",
+            Self::SorobanAuthorizationEntry(_) => "SorobanAuthorizationEntry",
+            Self::InvokeHostFunctionOp(_) => "InvokeHostFunctionOp",
+            Self::BumpFootprintExpirationOp(_) => "BumpFootprintExpirationOp",
+            Self::RestoreFootprintOp(_) => "RestoreFootprintOp",
             Self::Operation(_) => "Operation",
             Self::OperationBody(_) => "OperationBody",
             Self::HashIdPreimage(_) => "HashIdPreimage",
             Self::HashIdPreimageOperationId(_) => "HashIdPreimageOperationId",
             Self::HashIdPreimageRevokeId(_) => "HashIdPreimageRevokeId",
+            Self::HashIdPreimageContractId(_) => "HashIdPreimageContractId",
+            Self::HashIdPreimageSorobanAuthorization(_) => "HashIdPreimageSorobanAuthorization",
             Self::MemoType(_) => "MemoType",
             Self::Memo(_) => "Memo",
             Self::TimeBounds(_) => "TimeBounds",
@@ -39426,6 +52571,9 @@ impl Type {
             Self::PreconditionsV2(_) => "PreconditionsV2",
             Self::PreconditionType(_) => "PreconditionType",
             Self::Preconditions(_) => "Preconditions",
+            Self::LedgerFootprint(_) => "LedgerFootprint",
+            Self::SorobanResources(_) => "SorobanResources",
+            Self::SorobanTransactionData(_) => "SorobanTransactionData",
             Self::TransactionV0(_) => "TransactionV0",
             Self::TransactionV0Ext(_) => "TransactionV0Ext",
             Self::TransactionV0Envelope(_) => "TransactionV0Envelope",
@@ -39505,6 +52653,12 @@ impl Type {
             Self::LiquidityPoolDepositResult(_) => "LiquidityPoolDepositResult",
             Self::LiquidityPoolWithdrawResultCode(_) => "LiquidityPoolWithdrawResultCode",
             Self::LiquidityPoolWithdrawResult(_) => "LiquidityPoolWithdrawResult",
+            Self::InvokeHostFunctionResultCode(_) => "InvokeHostFunctionResultCode",
+            Self::InvokeHostFunctionResult(_) => "InvokeHostFunctionResult",
+            Self::BumpFootprintExpirationResultCode(_) => "BumpFootprintExpirationResultCode",
+            Self::BumpFootprintExpirationResult(_) => "BumpFootprintExpirationResult",
+            Self::RestoreFootprintResultCode(_) => "RestoreFootprintResultCode",
+            Self::RestoreFootprintResult(_) => "RestoreFootprintResult",
             Self::OperationResultCode(_) => "OperationResultCode",
             Self::OperationResult(_) => "OperationResult",
             Self::OperationResultTr(_) => "OperationResultTr",
@@ -39522,6 +52676,8 @@ impl Type {
             Self::Int32(_) => "Int32",
             Self::Uint64(_) => "Uint64",
             Self::Int64(_) => "Int64",
+            Self::TimePoint(_) => "TimePoint",
+            Self::Duration(_) => "Duration",
             Self::ExtensionPoint(_) => "ExtensionPoint",
             Self::CryptoKeyType(_) => "CryptoKeyType",
             Self::PublicKeyType(_) => "PublicKeyType",
@@ -39532,6 +52688,7 @@ impl Type {
             Self::Signature(_) => "Signature",
             Self::SignatureHint(_) => "SignatureHint",
             Self::NodeId(_) => "NodeId",
+            Self::AccountId(_) => "AccountId",
             Self::Curve25519Secret(_) => "Curve25519Secret",
             Self::Curve25519Public(_) => "Curve25519Public",
             Self::HmacSha256Key(_) => "HmacSha256Key",
@@ -39541,7 +52698,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 305] {
+    pub const fn variants() -> [TypeVariant; 418] {
         Self::VARIANTS
     }
 
@@ -39560,17 +52717,85 @@ impl Type {
             Self::ScpStatementExternalize(_) => TypeVariant::ScpStatementExternalize,
             Self::ScpEnvelope(_) => TypeVariant::ScpEnvelope,
             Self::ScpQuorumSet(_) => TypeVariant::ScpQuorumSet,
+            Self::ConfigSettingContractExecutionLanesV0(_) => {
+                TypeVariant::ConfigSettingContractExecutionLanesV0
+            }
+            Self::ConfigSettingContractComputeV0(_) => TypeVariant::ConfigSettingContractComputeV0,
+            Self::ConfigSettingContractLedgerCostV0(_) => {
+                TypeVariant::ConfigSettingContractLedgerCostV0
+            }
+            Self::ConfigSettingContractHistoricalDataV0(_) => {
+                TypeVariant::ConfigSettingContractHistoricalDataV0
+            }
+            Self::ConfigSettingContractEventsV0(_) => TypeVariant::ConfigSettingContractEventsV0,
+            Self::ConfigSettingContractBandwidthV0(_) => {
+                TypeVariant::ConfigSettingContractBandwidthV0
+            }
+            Self::ContractCostType(_) => TypeVariant::ContractCostType,
+            Self::ContractCostParamEntry(_) => TypeVariant::ContractCostParamEntry,
+            Self::StateExpirationSettings(_) => TypeVariant::StateExpirationSettings,
+            Self::EvictionIterator(_) => TypeVariant::EvictionIterator,
+            Self::ContractCostParams(_) => TypeVariant::ContractCostParams,
+            Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
+            Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
+            Self::ScEnvMetaKind(_) => TypeVariant::ScEnvMetaKind,
+            Self::ScEnvMetaEntry(_) => TypeVariant::ScEnvMetaEntry,
+            Self::ScMetaV0(_) => TypeVariant::ScMetaV0,
+            Self::ScMetaKind(_) => TypeVariant::ScMetaKind,
+            Self::ScMetaEntry(_) => TypeVariant::ScMetaEntry,
+            Self::ScSpecType(_) => TypeVariant::ScSpecType,
+            Self::ScSpecTypeOption(_) => TypeVariant::ScSpecTypeOption,
+            Self::ScSpecTypeResult(_) => TypeVariant::ScSpecTypeResult,
+            Self::ScSpecTypeVec(_) => TypeVariant::ScSpecTypeVec,
+            Self::ScSpecTypeMap(_) => TypeVariant::ScSpecTypeMap,
+            Self::ScSpecTypeTuple(_) => TypeVariant::ScSpecTypeTuple,
+            Self::ScSpecTypeBytesN(_) => TypeVariant::ScSpecTypeBytesN,
+            Self::ScSpecTypeUdt(_) => TypeVariant::ScSpecTypeUdt,
+            Self::ScSpecTypeDef(_) => TypeVariant::ScSpecTypeDef,
+            Self::ScSpecUdtStructFieldV0(_) => TypeVariant::ScSpecUdtStructFieldV0,
+            Self::ScSpecUdtStructV0(_) => TypeVariant::ScSpecUdtStructV0,
+            Self::ScSpecUdtUnionCaseVoidV0(_) => TypeVariant::ScSpecUdtUnionCaseVoidV0,
+            Self::ScSpecUdtUnionCaseTupleV0(_) => TypeVariant::ScSpecUdtUnionCaseTupleV0,
+            Self::ScSpecUdtUnionCaseV0Kind(_) => TypeVariant::ScSpecUdtUnionCaseV0Kind,
+            Self::ScSpecUdtUnionCaseV0(_) => TypeVariant::ScSpecUdtUnionCaseV0,
+            Self::ScSpecUdtUnionV0(_) => TypeVariant::ScSpecUdtUnionV0,
+            Self::ScSpecUdtEnumCaseV0(_) => TypeVariant::ScSpecUdtEnumCaseV0,
+            Self::ScSpecUdtEnumV0(_) => TypeVariant::ScSpecUdtEnumV0,
+            Self::ScSpecUdtErrorEnumCaseV0(_) => TypeVariant::ScSpecUdtErrorEnumCaseV0,
+            Self::ScSpecUdtErrorEnumV0(_) => TypeVariant::ScSpecUdtErrorEnumV0,
+            Self::ScSpecFunctionInputV0(_) => TypeVariant::ScSpecFunctionInputV0,
+            Self::ScSpecFunctionV0(_) => TypeVariant::ScSpecFunctionV0,
+            Self::ScSpecEntryKind(_) => TypeVariant::ScSpecEntryKind,
+            Self::ScSpecEntry(_) => TypeVariant::ScSpecEntry,
+            Self::ScValType(_) => TypeVariant::ScValType,
+            Self::ScErrorType(_) => TypeVariant::ScErrorType,
+            Self::ScErrorCode(_) => TypeVariant::ScErrorCode,
+            Self::ScError(_) => TypeVariant::ScError,
+            Self::UInt128Parts(_) => TypeVariant::UInt128Parts,
+            Self::Int128Parts(_) => TypeVariant::Int128Parts,
+            Self::UInt256Parts(_) => TypeVariant::UInt256Parts,
+            Self::Int256Parts(_) => TypeVariant::Int256Parts,
+            Self::ContractExecutableType(_) => TypeVariant::ContractExecutableType,
+            Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
+            Self::ScAddressType(_) => TypeVariant::ScAddressType,
+            Self::ScAddress(_) => TypeVariant::ScAddress,
+            Self::ScVec(_) => TypeVariant::ScVec,
+            Self::ScMap(_) => TypeVariant::ScMap,
+            Self::ScBytes(_) => TypeVariant::ScBytes,
+            Self::ScString(_) => TypeVariant::ScString,
+            Self::ScSymbol(_) => TypeVariant::ScSymbol,
+            Self::ScNonceKey(_) => TypeVariant::ScNonceKey,
+            Self::ScContractInstance(_) => TypeVariant::ScContractInstance,
+            Self::ScVal(_) => TypeVariant::ScVal,
+            Self::ScMapEntry(_) => TypeVariant::ScMapEntry,
             Self::StoredTransactionSet(_) => TypeVariant::StoredTransactionSet,
             Self::PersistedScpStateV0(_) => TypeVariant::PersistedScpStateV0,
             Self::PersistedScpStateV1(_) => TypeVariant::PersistedScpStateV1,
             Self::PersistedScpState(_) => TypeVariant::PersistedScpState,
-            Self::AccountId(_) => TypeVariant::AccountId,
             Self::Thresholds(_) => TypeVariant::Thresholds,
             Self::String32(_) => TypeVariant::String32,
             Self::String64(_) => TypeVariant::String64,
             Self::SequenceNumber(_) => TypeVariant::SequenceNumber,
-            Self::TimePoint(_) => TypeVariant::TimePoint,
-            Self::Duration(_) => TypeVariant::Duration,
             Self::DataValue(_) => TypeVariant::DataValue,
             Self::PoolId(_) => TypeVariant::PoolId,
             Self::AssetCode4(_) => TypeVariant::AssetCode4,
@@ -39632,6 +52857,10 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(_) => {
                 TypeVariant::LiquidityPoolEntryConstantProduct
             }
+            Self::ContractDataDurability(_) => TypeVariant::ContractDataDurability,
+            Self::ContractDataEntry(_) => TypeVariant::ContractDataEntry,
+            Self::ContractCodeEntry(_) => TypeVariant::ContractCodeEntry,
+            Self::ExpirationEntry(_) => TypeVariant::ExpirationEntry,
             Self::LedgerEntryExtensionV1(_) => TypeVariant::LedgerEntryExtensionV1,
             Self::LedgerEntryExtensionV1Ext(_) => TypeVariant::LedgerEntryExtensionV1Ext,
             Self::LedgerEntry(_) => TypeVariant::LedgerEntry,
@@ -39644,6 +52873,10 @@ impl Type {
             Self::LedgerKeyData(_) => TypeVariant::LedgerKeyData,
             Self::LedgerKeyClaimableBalance(_) => TypeVariant::LedgerKeyClaimableBalance,
             Self::LedgerKeyLiquidityPool(_) => TypeVariant::LedgerKeyLiquidityPool,
+            Self::LedgerKeyContractData(_) => TypeVariant::LedgerKeyContractData,
+            Self::LedgerKeyContractCode(_) => TypeVariant::LedgerKeyContractCode,
+            Self::LedgerKeyConfigSetting(_) => TypeVariant::LedgerKeyConfigSetting,
+            Self::LedgerKeyExpiration(_) => TypeVariant::LedgerKeyExpiration,
             Self::EnvelopeType(_) => TypeVariant::EnvelopeType,
             Self::UpgradeType(_) => TypeVariant::UpgradeType,
             Self::StellarValueType(_) => TypeVariant::StellarValueType,
@@ -39656,7 +52889,9 @@ impl Type {
             Self::LedgerHeader(_) => TypeVariant::LedgerHeader,
             Self::LedgerHeaderExt(_) => TypeVariant::LedgerHeaderExt,
             Self::LedgerUpgradeType(_) => TypeVariant::LedgerUpgradeType,
+            Self::ConfigUpgradeSetKey(_) => TypeVariant::ConfigUpgradeSetKey,
             Self::LedgerUpgrade(_) => TypeVariant::LedgerUpgrade,
+            Self::ConfigUpgradeSet(_) => TypeVariant::ConfigUpgradeSet,
             Self::BucketEntryType(_) => TypeVariant::BucketEntryType,
             Self::BucketMetadata(_) => TypeVariant::BucketMetadata,
             Self::BucketMetadataExt(_) => TypeVariant::BucketMetadataExt,
@@ -39689,15 +52924,27 @@ impl Type {
             Self::OperationMeta(_) => TypeVariant::OperationMeta,
             Self::TransactionMetaV1(_) => TypeVariant::TransactionMetaV1,
             Self::TransactionMetaV2(_) => TypeVariant::TransactionMetaV2,
+            Self::ContractEventType(_) => TypeVariant::ContractEventType,
+            Self::ContractEvent(_) => TypeVariant::ContractEvent,
+            Self::ContractEventBody(_) => TypeVariant::ContractEventBody,
+            Self::ContractEventV0(_) => TypeVariant::ContractEventV0,
+            Self::DiagnosticEvent(_) => TypeVariant::DiagnosticEvent,
+            Self::SorobanTransactionMeta(_) => TypeVariant::SorobanTransactionMeta,
+            Self::TransactionMetaV3(_) => TypeVariant::TransactionMetaV3,
+            Self::InvokeHostFunctionSuccessPreImage(_) => {
+                TypeVariant::InvokeHostFunctionSuccessPreImage
+            }
             Self::TransactionMeta(_) => TypeVariant::TransactionMeta,
             Self::TransactionResultMeta(_) => TypeVariant::TransactionResultMeta,
             Self::UpgradeEntryMeta(_) => TypeVariant::UpgradeEntryMeta,
             Self::LedgerCloseMetaV0(_) => TypeVariant::LedgerCloseMetaV0,
             Self::LedgerCloseMetaV1(_) => TypeVariant::LedgerCloseMetaV1,
+            Self::LedgerCloseMetaV2(_) => TypeVariant::LedgerCloseMetaV2,
             Self::LedgerCloseMeta(_) => TypeVariant::LedgerCloseMeta,
             Self::ErrorCode(_) => TypeVariant::ErrorCode,
             Self::SError(_) => TypeVariant::SError,
             Self::SendMore(_) => TypeVariant::SendMore,
+            Self::SendMoreExtended(_) => TypeVariant::SendMoreExtended,
             Self::AuthCert(_) => TypeVariant::AuthCert,
             Self::Hello(_) => TypeVariant::Hello,
             Self::Auth(_) => TypeVariant::Auth,
@@ -39707,6 +52954,7 @@ impl Type {
             Self::MessageType(_) => TypeVariant::MessageType,
             Self::DontHave(_) => TypeVariant::DontHave,
             Self::SurveyMessageCommandType(_) => TypeVariant::SurveyMessageCommandType,
+            Self::SurveyMessageResponseType(_) => TypeVariant::SurveyMessageResponseType,
             Self::SurveyRequestMessage(_) => TypeVariant::SurveyRequestMessage,
             Self::SignedSurveyRequestMessage(_) => TypeVariant::SignedSurveyRequestMessage,
             Self::EncryptedBody(_) => TypeVariant::EncryptedBody,
@@ -39714,7 +52962,8 @@ impl Type {
             Self::SignedSurveyResponseMessage(_) => TypeVariant::SignedSurveyResponseMessage,
             Self::PeerStats(_) => TypeVariant::PeerStats,
             Self::PeerStatList(_) => TypeVariant::PeerStatList,
-            Self::TopologyResponseBody(_) => TypeVariant::TopologyResponseBody,
+            Self::TopologyResponseBodyV0(_) => TypeVariant::TopologyResponseBodyV0,
+            Self::TopologyResponseBodyV1(_) => TypeVariant::TopologyResponseBodyV1,
             Self::SurveyResponseBody(_) => TypeVariant::SurveyResponseBody,
             Self::TxAdvertVector(_) => TypeVariant::TxAdvertVector,
             Self::FloodAdvert(_) => TypeVariant::FloodAdvert,
@@ -39754,11 +53003,32 @@ impl Type {
             Self::SetTrustLineFlagsOp(_) => TypeVariant::SetTrustLineFlagsOp,
             Self::LiquidityPoolDepositOp(_) => TypeVariant::LiquidityPoolDepositOp,
             Self::LiquidityPoolWithdrawOp(_) => TypeVariant::LiquidityPoolWithdrawOp,
+            Self::HostFunctionType(_) => TypeVariant::HostFunctionType,
+            Self::ContractIdPreimageType(_) => TypeVariant::ContractIdPreimageType,
+            Self::ContractIdPreimage(_) => TypeVariant::ContractIdPreimage,
+            Self::ContractIdPreimageFromAddress(_) => TypeVariant::ContractIdPreimageFromAddress,
+            Self::CreateContractArgs(_) => TypeVariant::CreateContractArgs,
+            Self::InvokeContractArgs(_) => TypeVariant::InvokeContractArgs,
+            Self::HostFunction(_) => TypeVariant::HostFunction,
+            Self::SorobanAuthorizedFunctionType(_) => TypeVariant::SorobanAuthorizedFunctionType,
+            Self::SorobanAuthorizedFunction(_) => TypeVariant::SorobanAuthorizedFunction,
+            Self::SorobanAuthorizedInvocation(_) => TypeVariant::SorobanAuthorizedInvocation,
+            Self::SorobanAddressCredentials(_) => TypeVariant::SorobanAddressCredentials,
+            Self::SorobanCredentialsType(_) => TypeVariant::SorobanCredentialsType,
+            Self::SorobanCredentials(_) => TypeVariant::SorobanCredentials,
+            Self::SorobanAuthorizationEntry(_) => TypeVariant::SorobanAuthorizationEntry,
+            Self::InvokeHostFunctionOp(_) => TypeVariant::InvokeHostFunctionOp,
+            Self::BumpFootprintExpirationOp(_) => TypeVariant::BumpFootprintExpirationOp,
+            Self::RestoreFootprintOp(_) => TypeVariant::RestoreFootprintOp,
             Self::Operation(_) => TypeVariant::Operation,
             Self::OperationBody(_) => TypeVariant::OperationBody,
             Self::HashIdPreimage(_) => TypeVariant::HashIdPreimage,
             Self::HashIdPreimageOperationId(_) => TypeVariant::HashIdPreimageOperationId,
             Self::HashIdPreimageRevokeId(_) => TypeVariant::HashIdPreimageRevokeId,
+            Self::HashIdPreimageContractId(_) => TypeVariant::HashIdPreimageContractId,
+            Self::HashIdPreimageSorobanAuthorization(_) => {
+                TypeVariant::HashIdPreimageSorobanAuthorization
+            }
             Self::MemoType(_) => TypeVariant::MemoType,
             Self::Memo(_) => TypeVariant::Memo,
             Self::TimeBounds(_) => TypeVariant::TimeBounds,
@@ -39766,6 +53036,9 @@ impl Type {
             Self::PreconditionsV2(_) => TypeVariant::PreconditionsV2,
             Self::PreconditionType(_) => TypeVariant::PreconditionType,
             Self::Preconditions(_) => TypeVariant::Preconditions,
+            Self::LedgerFootprint(_) => TypeVariant::LedgerFootprint,
+            Self::SorobanResources(_) => TypeVariant::SorobanResources,
+            Self::SorobanTransactionData(_) => TypeVariant::SorobanTransactionData,
             Self::TransactionV0(_) => TypeVariant::TransactionV0,
             Self::TransactionV0Ext(_) => TypeVariant::TransactionV0Ext,
             Self::TransactionV0Envelope(_) => TypeVariant::TransactionV0Envelope,
@@ -39863,6 +53136,14 @@ impl Type {
                 TypeVariant::LiquidityPoolWithdrawResultCode
             }
             Self::LiquidityPoolWithdrawResult(_) => TypeVariant::LiquidityPoolWithdrawResult,
+            Self::InvokeHostFunctionResultCode(_) => TypeVariant::InvokeHostFunctionResultCode,
+            Self::InvokeHostFunctionResult(_) => TypeVariant::InvokeHostFunctionResult,
+            Self::BumpFootprintExpirationResultCode(_) => {
+                TypeVariant::BumpFootprintExpirationResultCode
+            }
+            Self::BumpFootprintExpirationResult(_) => TypeVariant::BumpFootprintExpirationResult,
+            Self::RestoreFootprintResultCode(_) => TypeVariant::RestoreFootprintResultCode,
+            Self::RestoreFootprintResult(_) => TypeVariant::RestoreFootprintResult,
             Self::OperationResultCode(_) => TypeVariant::OperationResultCode,
             Self::OperationResult(_) => TypeVariant::OperationResult,
             Self::OperationResultTr(_) => TypeVariant::OperationResultTr,
@@ -39880,6 +53161,8 @@ impl Type {
             Self::Int32(_) => TypeVariant::Int32,
             Self::Uint64(_) => TypeVariant::Uint64,
             Self::Int64(_) => TypeVariant::Int64,
+            Self::TimePoint(_) => TypeVariant::TimePoint,
+            Self::Duration(_) => TypeVariant::Duration,
             Self::ExtensionPoint(_) => TypeVariant::ExtensionPoint,
             Self::CryptoKeyType(_) => TypeVariant::CryptoKeyType,
             Self::PublicKeyType(_) => TypeVariant::PublicKeyType,
@@ -39890,6 +53173,7 @@ impl Type {
             Self::Signature(_) => TypeVariant::Signature,
             Self::SignatureHint(_) => TypeVariant::SignatureHint,
             Self::NodeId(_) => TypeVariant::NodeId,
+            Self::AccountId(_) => TypeVariant::AccountId,
             Self::Curve25519Secret(_) => TypeVariant::Curve25519Secret,
             Self::Curve25519Public(_) => TypeVariant::Curve25519Public,
             Self::HmacSha256Key(_) => TypeVariant::HmacSha256Key,

@@ -46,11 +46,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "32408e1b76a9b9901b7623635dbb470d4d1e471bc3709e74d47eee5682f52d98",
+        "73b467bce654c5b19d0fba24008c9ccae77b439320a4c9eef9128e1818fdd76d",
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "f9dcc0d632cc7d8f921e5d991c77a18838c68f4234e90f2abf90d297716968e3",
+        "247d1b486d546f5c37f3d8a719b195e3331106302bcdc54cd1f52a6f94a9a7ed",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -17145,7 +17145,7 @@ impl WriteXdr for ConfigUpgradeSetKey {
 //    case LEDGER_UPGRADE_FLAGS:
 //        uint32 newFlags; // update flags
 //    case LEDGER_UPGRADE_CONFIG:
-//        // Update arbitray `ConfigSetting` entries identified by the key.
+//        // Update arbitrary `ConfigSetting` entries identified by the key.
 //        ConfigUpgradeSetKey newConfig;
 //    case LEDGER_UPGRADE_MAX_SOROBAN_TX_SET_SIZE:
 //        // Update ConfigSettingContractExecutionLanesV0.ledgerMaxTxCount without

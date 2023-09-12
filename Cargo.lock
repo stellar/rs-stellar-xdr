@@ -470,7 +470,7 @@ dependencies = [
 
 [[package]]
 name = "stellar-xdr"
-version = "0.0.17"
+version = "20.0.0-rc1"
 dependencies = [
  "arbitrary",
  "base64 0.13.0",

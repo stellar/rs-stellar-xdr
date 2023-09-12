@@ -4,6 +4,11 @@
 ))]
 #![cfg(all(feature = "std", feature = "base64"))]
 
+#[cfg(feature = "curr")]
+use stellar_xdr::curr as stellar_xdr;
+#[cfg(feature = "next")]
+use stellar_xdr::next as stellar_xdr;
+
 use std::io::{self, Cursor};
 use stellar_xdr::Error;
 use stellar_xdr::{DepthLimitedRead, ReadXdr, WriteXdr, DEFAULT_XDR_RW_DEPTH_LIMIT};

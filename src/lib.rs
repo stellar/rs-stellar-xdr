@@ -120,10 +120,6 @@ pub const VERSION: Version = Version {
 
 #[cfg(feature = "curr")]
 pub mod curr;
-#[cfg(all(feature = "curr", not(feature = "next")))]
-pub use curr::*;
 
 #[cfg(feature = "next")]
 pub mod next;
-#[cfg(all(not(feature = "curr"), feature = "next"))]
-pub use next::*;

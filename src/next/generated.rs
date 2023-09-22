@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "fd8709d1bcc36a90a1f7b1fd8cb4407f7733bec5ca06494cac9b6a99b942ef99",
+        "bfd3483c20c6feb53560ab868c9c0d754fbdabbb3d3420ffea997e2f4d5da8dc",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -42,7 +42,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-internal.x",
-        "368706dd6e2efafd16a8f63daf3374845b791d097b15c502aa7653a412b68b68",
+        "227835866c1b2122d1eaf28839ba85ea7289d1cb681dda4ca619c2da3d71fe00",
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
@@ -3530,7 +3530,9 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 //        // Cost of int256 power (`exp`) operation
 //        Int256Pow = 26,
 //        // Cost of int256 shift (`shl`, `shr`) operation
-//        Int256Shift = 27
+//        Int256Shift = 27,
+//        // Cost of drawing random bytes using a ChaCha20 PRNG
+//        ChaCha20DrawBytes = 28
 //    };
 //
 // enum
@@ -3571,10 +3573,11 @@ pub enum ContractCostType {
     Int256Div = 25,
     Int256Pow = 26,
     Int256Shift = 27,
+    ChaCha20DrawBytes = 28,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 28] = [
+    pub const VARIANTS: [ContractCostType; 29] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::WasmMemAlloc,
         ContractCostType::HostMemAlloc,
@@ -3603,8 +3606,9 @@ impl ContractCostType {
         ContractCostType::Int256Div,
         ContractCostType::Int256Pow,
         ContractCostType::Int256Shift,
+        ContractCostType::ChaCha20DrawBytes,
     ];
-    pub const VARIANTS_STR: [&'static str; 28] = [
+    pub const VARIANTS_STR: [&'static str; 29] = [
         "WasmInsnExec",
         "WasmMemAlloc",
         "HostMemAlloc",
@@ -3633,6 +3637,7 @@ impl ContractCostType {
         "Int256Div",
         "Int256Pow",
         "Int256Shift",
+        "ChaCha20DrawBytes",
     ];
 
     #[must_use]
@@ -3666,11 +3671,12 @@ impl ContractCostType {
             Self::Int256Div => "Int256Div",
             Self::Int256Pow => "Int256Pow",
             Self::Int256Shift => "Int256Shift",
+            Self::ChaCha20DrawBytes => "ChaCha20DrawBytes",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 28] {
+    pub const fn variants() -> [ContractCostType; 29] {
         Self::VARIANTS
     }
 }
@@ -3729,6 +3735,7 @@ impl TryFrom<i32> for ContractCostType {
             25 => ContractCostType::Int256Div,
             26 => ContractCostType::Int256Pow,
             27 => ContractCostType::Int256Shift,
+            28 => ContractCostType::ChaCha20DrawBytes,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -9155,6 +9162,53 @@ impl WriteXdr for StoredTransactionSet {
                 Self::V0(v) => v.write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
             };
+            Ok(())
+        })
+    }
+}
+
+// StoredDebugTransactionSet is an XDR Struct defines as:
+//
+//   struct StoredDebugTransactionSet
+//    {
+//    	StoredTransactionSet txSet;
+//    	uint32 ledgerSeq;
+//    	StellarValue scpValue;
+//    };
+//
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct StoredDebugTransactionSet {
+    pub tx_set: StoredTransactionSet,
+    pub ledger_seq: u32,
+    pub scp_value: StellarValue,
+}
+
+impl ReadXdr for StoredDebugTransactionSet {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx_set: StoredTransactionSet::read_xdr(r)?,
+                ledger_seq: u32::read_xdr(r)?,
+                scp_value: StellarValue::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for StoredDebugTransactionSet {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.tx_set.write_xdr(w)?;
+            self.ledger_seq.write_xdr(w)?;
+            self.scp_value.write_xdr(w)?;
             Ok(())
         })
     }
@@ -40985,6 +41039,7 @@ pub enum TypeVariant {
     ScVal,
     ScMapEntry,
     StoredTransactionSet,
+    StoredDebugTransactionSet,
     PersistedScpStateV0,
     PersistedScpStateV1,
     PersistedScpState,
@@ -41331,7 +41386,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 418] = [
+    pub const VARIANTS: [TypeVariant; 419] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -41407,6 +41462,7 @@ impl TypeVariant {
         TypeVariant::ScVal,
         TypeVariant::ScMapEntry,
         TypeVariant::StoredTransactionSet,
+        TypeVariant::StoredDebugTransactionSet,
         TypeVariant::PersistedScpStateV0,
         TypeVariant::PersistedScpStateV1,
         TypeVariant::PersistedScpState,
@@ -41751,7 +41807,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 418] = [
+    pub const VARIANTS_STR: [&'static str; 419] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -41827,6 +41883,7 @@ impl TypeVariant {
         "ScVal",
         "ScMapEntry",
         "StoredTransactionSet",
+        "StoredDebugTransactionSet",
         "PersistedScpStateV0",
         "PersistedScpStateV1",
         "PersistedScpState",
@@ -42251,6 +42308,7 @@ impl TypeVariant {
             Self::ScVal => "ScVal",
             Self::ScMapEntry => "ScMapEntry",
             Self::StoredTransactionSet => "StoredTransactionSet",
+            Self::StoredDebugTransactionSet => "StoredDebugTransactionSet",
             Self::PersistedScpStateV0 => "PersistedScpStateV0",
             Self::PersistedScpStateV1 => "PersistedScpStateV1",
             Self::PersistedScpState => "PersistedScpState",
@@ -42605,7 +42663,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 418] {
+    pub const fn variants() -> [TypeVariant; 419] {
         Self::VARIANTS
     }
 }
@@ -42707,6 +42765,7 @@ impl core::str::FromStr for TypeVariant {
             "ScVal" => Ok(Self::ScVal),
             "ScMapEntry" => Ok(Self::ScMapEntry),
             "StoredTransactionSet" => Ok(Self::StoredTransactionSet),
+            "StoredDebugTransactionSet" => Ok(Self::StoredDebugTransactionSet),
             "PersistedScpStateV0" => Ok(Self::PersistedScpStateV0),
             "PersistedScpStateV1" => Ok(Self::PersistedScpStateV1),
             "PersistedScpState" => Ok(Self::PersistedScpState),
@@ -43148,6 +43207,7 @@ pub enum Type {
     ScVal(Box<ScVal>),
     ScMapEntry(Box<ScMapEntry>),
     StoredTransactionSet(Box<StoredTransactionSet>),
+    StoredDebugTransactionSet(Box<StoredDebugTransactionSet>),
     PersistedScpStateV0(Box<PersistedScpStateV0>),
     PersistedScpStateV1(Box<PersistedScpStateV1>),
     PersistedScpState(Box<PersistedScpState>),
@@ -43494,7 +43554,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 418] = [
+    pub const VARIANTS: [TypeVariant; 419] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -43570,6 +43630,7 @@ impl Type {
         TypeVariant::ScVal,
         TypeVariant::ScMapEntry,
         TypeVariant::StoredTransactionSet,
+        TypeVariant::StoredDebugTransactionSet,
         TypeVariant::PersistedScpStateV0,
         TypeVariant::PersistedScpStateV1,
         TypeVariant::PersistedScpState,
@@ -43914,7 +43975,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 418] = [
+    pub const VARIANTS_STR: [&'static str; 419] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -43990,6 +44051,7 @@ impl Type {
         "ScVal",
         "ScMapEntry",
         "StoredTransactionSet",
+        "StoredDebugTransactionSet",
         "PersistedScpStateV0",
         "PersistedScpStateV1",
         "PersistedScpState",
@@ -44642,6 +44704,11 @@ impl Type {
             TypeVariant::StoredTransactionSet => r.with_limited_depth(|r| {
                 Ok(Self::StoredTransactionSet(Box::new(
                     StoredTransactionSet::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::StoredDebugTransactionSet => r.with_limited_depth(|r| {
+                Ok(Self::StoredDebugTransactionSet(Box::new(
+                    StoredDebugTransactionSet::read_xdr(r)?,
                 )))
             }),
             TypeVariant::PersistedScpStateV0 => r.with_limited_depth(|r| {
@@ -46504,6 +46571,10 @@ impl Type {
                 ReadXdrIter::<_, StoredTransactionSet>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
             ),
+            TypeVariant::StoredDebugTransactionSet => Box::new(
+                ReadXdrIter::<_, StoredDebugTransactionSet>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::StoredDebugTransactionSet(Box::new(t)))),
+            ),
             TypeVariant::PersistedScpStateV0 => Box::new(
                 ReadXdrIter::<_, PersistedScpStateV0>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpStateV0(Box::new(t)))),
@@ -48343,6 +48414,13 @@ impl Type {
             TypeVariant::StoredTransactionSet => Box::new(
                 ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t.0)))),
+            ),
+            TypeVariant::StoredDebugTransactionSet => Box::new(
+                ReadXdrIter::<_, Frame<StoredDebugTransactionSet>>::new(
+                    &mut r.inner,
+                    r.depth_remaining,
+                )
+                .map(|r| r.map(|t| Self::StoredDebugTransactionSet(Box::new(t.0)))),
             ),
             TypeVariant::PersistedScpStateV0 => Box::new(
                 ReadXdrIter::<_, Frame<PersistedScpStateV0>>::new(&mut r.inner, r.depth_remaining)
@@ -50419,6 +50497,10 @@ impl Type {
                 ReadXdrIter::<_, StoredTransactionSet>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
             ),
+            TypeVariant::StoredDebugTransactionSet => Box::new(
+                ReadXdrIter::<_, StoredDebugTransactionSet>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::StoredDebugTransactionSet(Box::new(t)))),
+            ),
             TypeVariant::PersistedScpStateV0 => Box::new(
                 ReadXdrIter::<_, PersistedScpStateV0>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::PersistedScpStateV0(Box::new(t)))),
@@ -51911,6 +51993,7 @@ impl Type {
             Self::ScVal(ref v) => v.as_ref(),
             Self::ScMapEntry(ref v) => v.as_ref(),
             Self::StoredTransactionSet(ref v) => v.as_ref(),
+            Self::StoredDebugTransactionSet(ref v) => v.as_ref(),
             Self::PersistedScpStateV0(ref v) => v.as_ref(),
             Self::PersistedScpStateV1(ref v) => v.as_ref(),
             Self::PersistedScpState(ref v) => v.as_ref(),
@@ -52340,6 +52423,7 @@ impl Type {
             Self::ScVal(_) => "ScVal",
             Self::ScMapEntry(_) => "ScMapEntry",
             Self::StoredTransactionSet(_) => "StoredTransactionSet",
+            Self::StoredDebugTransactionSet(_) => "StoredDebugTransactionSet",
             Self::PersistedScpStateV0(_) => "PersistedScpStateV0",
             Self::PersistedScpStateV1(_) => "PersistedScpStateV1",
             Self::PersistedScpState(_) => "PersistedScpState",
@@ -52698,7 +52782,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 418] {
+    pub const fn variants() -> [TypeVariant; 419] {
         Self::VARIANTS
     }
 
@@ -52789,6 +52873,7 @@ impl Type {
             Self::ScVal(_) => TypeVariant::ScVal,
             Self::ScMapEntry(_) => TypeVariant::ScMapEntry,
             Self::StoredTransactionSet(_) => TypeVariant::StoredTransactionSet,
+            Self::StoredDebugTransactionSet(_) => TypeVariant::StoredDebugTransactionSet,
             Self::PersistedScpStateV0(_) => TypeVariant::PersistedScpStateV0,
             Self::PersistedScpStateV1(_) => TypeVariant::PersistedScpStateV1,
             Self::PersistedScpState(_) => TypeVariant::PersistedScpState,

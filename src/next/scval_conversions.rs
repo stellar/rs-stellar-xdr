@@ -344,7 +344,7 @@ impl TryFrom<&str> for ScVal {
 impl TryFrom<&'static str> for ScVal {
     type Error = ();
     fn try_from(v: &'static str) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
     }
 }
 

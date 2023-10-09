@@ -18,51 +18,51 @@
 pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     (
         "xdr/curr/Stellar-SCP.x",
-        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+        "2b855c7f79b8e50cf15ca1e1aa89fb16bbb38117de0b1c969c80e675ae1ca4bb",
     ),
     (
         "xdr/curr/Stellar-contract-config-setting.x",
-        "bfd3483c20c6feb53560ab868c9c0d754fbdabbb3d3420ffea997e2f4d5da8dc",
+        "f36f853ef11f10bd6947e34f4752393168c404ad3a5e90c037721bfb40b44fd0",
     ),
     (
         "xdr/curr/Stellar-contract-env-meta.x",
-        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
+        "8d30dbf039e41e149725b34f2c809fc034c0879adac9d85fc49b8371f9a0444f",
     ),
     (
         "xdr/curr/Stellar-contract-meta.x",
-        "f01532c11ca044e19d9f9f16fe373e9af64835da473be556b9a807ee3319ae0d",
+        "6a7d15d520858ec034ed717358d947b496924d1642d29eac5f3423a315693d7b",
     ),
     (
         "xdr/curr/Stellar-contract-spec.x",
-        "c7ffa21d2e91afb8e666b33524d307955426ff553a486d670c29217ed9888d49",
+        "eadc972843d0150d5cc56c8b433e465d42e1b103203f2060ac90a660317c802f",
     ),
     (
         "xdr/curr/Stellar-contract.x",
-        "234d2adf0c9bdf7c42ea64a2650884d8e36ed31cd1cbe13fb8d12b335fb4e5c3",
+        "929e338ef20cc0516445f084015cce480816934030cfc8929b1c44ce383dc83b",
     ),
     (
         "xdr/curr/Stellar-internal.x",
-        "227835866c1b2122d1eaf28839ba85ea7289d1cb681dda4ca619c2da3d71fe00",
+        "ed408eac6de64a552c2b0197bebdb9a22cc85efadb304d6ef4672cdb2c8379d2",
     ),
     (
         "xdr/curr/Stellar-ledger-entries.x",
-        "73b467bce654c5b19d0fba24008c9ccae77b439320a4c9eef9128e1818fdd76d",
+        "b3cecd3ea88d7954e24b91c79caa7eeaad5f45338428ca0ced75952dbba9062b",
     ),
     (
         "xdr/curr/Stellar-ledger.x",
-        "247d1b486d546f5c37f3d8a719b195e3331106302bcdc54cd1f52a6f94a9a7ed",
+        "0fec7018775f0942446b547abbf0cf9d21c494ae0998a88dedfb8ba2a979c12c",
     ),
     (
         "xdr/curr/Stellar-overlay.x",
-        "de3957c58b96ae07968b3d3aebea84f83603e95322d1fa336360e13e3aba737a",
+        "ceec386c9d3e2db7f5f9ee4b10d7f7149f3aaa49b32bf734b86ffc3db323cab7",
     ),
     (
         "xdr/curr/Stellar-transaction.x",
-        "ce8194511afb4cbb165921c720d057381bcd4829999027d42753c11d5dcaa7f8",
+        "a573ef0fd0b3964cdd2b4cf6bc24e3c1f25962f178a863dd10ed2f3c6ce8df1e",
     ),
     (
         "xdr/curr/Stellar-types.x",
-        "6e3b13f0d3e360b09fa5e2b0e55d43f4d974a769df66afb34e8aecbb329d3f15",
+        "af94781a7058a2a780206ebc22da63281013d34662a47f4473a227e701a41f27",
     ),
 ];
 
@@ -7703,7 +7703,7 @@ impl WriteXdr for Int256Parts {
 //   enum ContractExecutableType
 //    {
 //        CONTRACT_EXECUTABLE_WASM = 0,
-//        CONTRACT_EXECUTABLE_TOKEN = 1
+//        CONTRACT_EXECUTABLE_STELLAR_ASSET = 1
 //    };
 //
 // enum
@@ -7717,19 +7717,21 @@ impl WriteXdr for Int256Parts {
 #[repr(i32)]
 pub enum ContractExecutableType {
     Wasm = 0,
-    Token = 1,
+    StellarAsset = 1,
 }
 
 impl ContractExecutableType {
-    pub const VARIANTS: [ContractExecutableType; 2] =
-        [ContractExecutableType::Wasm, ContractExecutableType::Token];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "Token"];
+    pub const VARIANTS: [ContractExecutableType; 2] = [
+        ContractExecutableType::Wasm,
+        ContractExecutableType::StellarAsset,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "StellarAsset"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Wasm => "Wasm",
-            Self::Token => "Token",
+            Self::StellarAsset => "StellarAsset",
         }
     }
 
@@ -7766,7 +7768,7 @@ impl TryFrom<i32> for ContractExecutableType {
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
             0 => ContractExecutableType::Wasm,
-            1 => ContractExecutableType::Token,
+            1 => ContractExecutableType::StellarAsset,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -7808,7 +7810,7 @@ impl WriteXdr for ContractExecutableType {
 //    {
 //    case CONTRACT_EXECUTABLE_WASM:
 //        Hash wasm_hash;
-//    case CONTRACT_EXECUTABLE_TOKEN:
+//    case CONTRACT_EXECUTABLE_STELLAR_ASSET:
 //        void;
 //    };
 //
@@ -7823,19 +7825,21 @@ impl WriteXdr for ContractExecutableType {
 #[allow(clippy::large_enum_variant)]
 pub enum ContractExecutable {
     Wasm(Hash),
-    Token,
+    StellarAsset,
 }
 
 impl ContractExecutable {
-    pub const VARIANTS: [ContractExecutableType; 2] =
-        [ContractExecutableType::Wasm, ContractExecutableType::Token];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "Token"];
+    pub const VARIANTS: [ContractExecutableType; 2] = [
+        ContractExecutableType::Wasm,
+        ContractExecutableType::StellarAsset,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Wasm", "StellarAsset"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Wasm(_) => "Wasm",
-            Self::Token => "Token",
+            Self::StellarAsset => "StellarAsset",
         }
     }
 
@@ -7844,7 +7848,7 @@ impl ContractExecutable {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::Wasm(_) => ContractExecutableType::Wasm,
-            Self::Token => ContractExecutableType::Token,
+            Self::StellarAsset => ContractExecutableType::StellarAsset,
         }
     }
 
@@ -7884,7 +7888,7 @@ impl ReadXdr for ContractExecutable {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 ContractExecutableType::Wasm => Self::Wasm(Hash::read_xdr(r)?),
-                ContractExecutableType::Token => Self::Token,
+                ContractExecutableType::StellarAsset => Self::StellarAsset,
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -7901,7 +7905,7 @@ impl WriteXdr for ContractExecutable {
             #[allow(clippy::match_same_arms)]
             match self {
                 Self::Wasm(v) => v.write_xdr(w)?,
-                Self::Token => ().write_xdr(w)?,
+                Self::StellarAsset => ().write_xdr(w)?,
             };
             Ok(())
         })
@@ -20316,72 +20320,8 @@ impl WriteXdr for LedgerCloseMetaV0 {
 //
 //   struct LedgerCloseMetaV1
 //    {
-//        LedgerHeaderHistoryEntry ledgerHeader;
-//
-//        GeneralizedTransactionSet txSet;
-//
-//        // NB: transactions are sorted in apply order here
-//        // fees for all transactions are processed first
-//        // followed by applying transactions
-//        TransactionResultMeta txProcessing<>;
-//
-//        // upgrades are applied last
-//        UpgradeEntryMeta upgradesProcessing<>;
-//
-//        // other misc information attached to the ledger close
-//        SCPHistoryEntry scpInfo<>;
-//    };
-//
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct LedgerCloseMetaV1 {
-    pub ledger_header: LedgerHeaderHistoryEntry,
-    pub tx_set: GeneralizedTransactionSet,
-    pub tx_processing: VecM<TransactionResultMeta>,
-    pub upgrades_processing: VecM<UpgradeEntryMeta>,
-    pub scp_info: VecM<ScpHistoryEntry>,
-}
-
-impl ReadXdr for LedgerCloseMetaV1 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
-                tx_set: GeneralizedTransactionSet::read_xdr(r)?,
-                tx_processing: VecM::<TransactionResultMeta>::read_xdr(r)?,
-                upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
-                scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for LedgerCloseMetaV1 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.ledger_header.write_xdr(w)?;
-            self.tx_set.write_xdr(w)?;
-            self.tx_processing.write_xdr(w)?;
-            self.upgrades_processing.write_xdr(w)?;
-            self.scp_info.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-// LedgerCloseMetaV2 is an XDR Struct defines as:
-//
-//   struct LedgerCloseMetaV2
-//    {
-//        // We forgot to add an ExtensionPoint in v1 but at least
-//        // we can add one now in v2.
+//        // We forgot to add an ExtensionPoint in v0 but at least
+//        // we can add one now in v1.
 //        ExtensionPoint ext;
 //
 //        LedgerHeaderHistoryEntry ledgerHeader;
@@ -20418,7 +20358,7 @@ impl WriteXdr for LedgerCloseMetaV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct LedgerCloseMetaV2 {
+pub struct LedgerCloseMetaV1 {
     pub ext: ExtensionPoint,
     pub ledger_header: LedgerHeaderHistoryEntry,
     pub tx_set: GeneralizedTransactionSet,
@@ -20430,7 +20370,7 @@ pub struct LedgerCloseMetaV2 {
     pub evicted_persistent_ledger_entries: VecM<LedgerEntry>,
 }
 
-impl ReadXdr for LedgerCloseMetaV2 {
+impl ReadXdr for LedgerCloseMetaV1 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
@@ -20449,7 +20389,7 @@ impl ReadXdr for LedgerCloseMetaV2 {
     }
 }
 
-impl WriteXdr for LedgerCloseMetaV2 {
+impl WriteXdr for LedgerCloseMetaV1 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -20475,8 +20415,6 @@ impl WriteXdr for LedgerCloseMetaV2 {
 //        LedgerCloseMetaV0 v0;
 //    case 1:
 //        LedgerCloseMetaV1 v1;
-//    case 2:
-//        LedgerCloseMetaV2 v2;
 //    };
 //
 // union with discriminant i32
@@ -20491,19 +20429,17 @@ impl WriteXdr for LedgerCloseMetaV2 {
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
     V1(LedgerCloseMetaV1),
-    V2(LedgerCloseMetaV2),
 }
 
 impl LedgerCloseMeta {
-    pub const VARIANTS: [i32; 3] = [0, 1, 2];
-    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
-            Self::V2(_) => "V2",
         }
     }
 
@@ -20513,12 +20449,11 @@ impl LedgerCloseMeta {
         match self {
             Self::V0(_) => 0,
             Self::V1(_) => 1,
-            Self::V2(_) => 2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 3] {
+    pub const fn variants() -> [i32; 2] {
         Self::VARIANTS
     }
 }
@@ -20554,7 +20489,6 @@ impl ReadXdr for LedgerCloseMeta {
             let v = match dv {
                 0 => Self::V0(LedgerCloseMetaV0::read_xdr(r)?),
                 1 => Self::V1(LedgerCloseMetaV1::read_xdr(r)?),
-                2 => Self::V2(LedgerCloseMetaV2::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -20572,7 +20506,6 @@ impl WriteXdr for LedgerCloseMeta {
             match self {
                 Self::V0(v) => v.write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
-                Self::V2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -28008,8 +27941,16 @@ impl WriteXdr for SorobanResources {
 //    {
 //        ExtensionPoint ext;
 //        SorobanResources resources;
-//        // Portion of transaction `fee` allocated to refundable fees.
-//        int64 refundableFee;
+//        // Amount of the transaction `fee` allocated to the Soroban resource fees.
+//        // The fraction of `resourceFee` corresponding to `resources` specified
+//        // above is *not* refundable (i.e. fees for instructions, ledger I/O), as
+//        // well as fees for the transaction size.
+//        // The remaining part of the fee is refundable and the charged value is
+//        // based on the actual consumption of refundable resources (events, ledger
+//        // rent bumps).
+//        // The `inclusionFee` used for prioritization of the transaction is defined
+//        // as `tx.fee - resourceFee`.
+//        int64 resourceFee;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -28022,7 +27963,7 @@ impl WriteXdr for SorobanResources {
 pub struct SorobanTransactionData {
     pub ext: ExtensionPoint,
     pub resources: SorobanResources,
-    pub refundable_fee: i64,
+    pub resource_fee: i64,
 }
 
 impl ReadXdr for SorobanTransactionData {
@@ -28032,7 +27973,7 @@ impl ReadXdr for SorobanTransactionData {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
                 resources: SorobanResources::read_xdr(r)?,
-                refundable_fee: i64::read_xdr(r)?,
+                resource_fee: i64::read_xdr(r)?,
             })
         })
     }
@@ -28044,7 +27985,7 @@ impl WriteXdr for SorobanTransactionData {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.resources.write_xdr(w)?;
-            self.refundable_fee.write_xdr(w)?;
+            self.resource_fee.write_xdr(w)?;
             Ok(())
         })
     }
@@ -41176,7 +41117,6 @@ pub enum TypeVariant {
     UpgradeEntryMeta,
     LedgerCloseMetaV0,
     LedgerCloseMetaV1,
-    LedgerCloseMetaV2,
     LedgerCloseMeta,
     ErrorCode,
     SError,
@@ -41386,7 +41326,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 419] = [
+    pub const VARIANTS: [TypeVariant; 418] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -41599,7 +41539,6 @@ impl TypeVariant {
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaV1,
-        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
@@ -41807,7 +41746,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 419] = [
+    pub const VARIANTS_STR: [&'static str; 418] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -42020,7 +41959,6 @@ impl TypeVariant {
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaV1",
-        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
@@ -42447,7 +42385,6 @@ impl TypeVariant {
             Self::UpgradeEntryMeta => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0 => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaV1 => "LedgerCloseMetaV1",
-            Self::LedgerCloseMetaV2 => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta => "LedgerCloseMeta",
             Self::ErrorCode => "ErrorCode",
             Self::SError => "SError",
@@ -42663,7 +42600,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 419] {
+    pub const fn variants() -> [TypeVariant; 418] {
         Self::VARIANTS
     }
 }
@@ -42904,7 +42841,6 @@ impl core::str::FromStr for TypeVariant {
             "UpgradeEntryMeta" => Ok(Self::UpgradeEntryMeta),
             "LedgerCloseMetaV0" => Ok(Self::LedgerCloseMetaV0),
             "LedgerCloseMetaV1" => Ok(Self::LedgerCloseMetaV1),
-            "LedgerCloseMetaV2" => Ok(Self::LedgerCloseMetaV2),
             "LedgerCloseMeta" => Ok(Self::LedgerCloseMeta),
             "ErrorCode" => Ok(Self::ErrorCode),
             "SError" => Ok(Self::SError),
@@ -43344,7 +43280,6 @@ pub enum Type {
     UpgradeEntryMeta(Box<UpgradeEntryMeta>),
     LedgerCloseMetaV0(Box<LedgerCloseMetaV0>),
     LedgerCloseMetaV1(Box<LedgerCloseMetaV1>),
-    LedgerCloseMetaV2(Box<LedgerCloseMetaV2>),
     LedgerCloseMeta(Box<LedgerCloseMeta>),
     ErrorCode(Box<ErrorCode>),
     SError(Box<SError>),
@@ -43554,7 +43489,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 419] = [
+    pub const VARIANTS: [TypeVariant; 418] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -43767,7 +43702,6 @@ impl Type {
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaV1,
-        TypeVariant::LedgerCloseMetaV2,
         TypeVariant::LedgerCloseMeta,
         TypeVariant::ErrorCode,
         TypeVariant::SError,
@@ -43975,7 +43909,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 419] = [
+    pub const VARIANTS_STR: [&'static str; 418] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -44188,7 +44122,6 @@ impl Type {
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaV1",
-        "LedgerCloseMetaV2",
         "LedgerCloseMeta",
         "ErrorCode",
         "SError",
@@ -45299,11 +45232,6 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => r.with_limited_depth(|r| {
                 Ok(Self::LedgerCloseMetaV1(Box::new(
                     LedgerCloseMetaV1::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::LedgerCloseMetaV2 => r.with_limited_depth(|r| {
-                Ok(Self::LedgerCloseMetaV2(Box::new(
-                    LedgerCloseMetaV2::read_xdr(r)?,
                 )))
             }),
             TypeVariant::LedgerCloseMeta => r.with_limited_depth(|r| {
@@ -47145,10 +47073,6 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
-            ),
-            TypeVariant::LedgerCloseMetaV2 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV2>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(&mut r.inner, r.depth_remaining)
@@ -49088,10 +49012,6 @@ impl Type {
             TypeVariant::LedgerCloseMetaV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMetaV1>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t.0)))),
-            ),
-            TypeVariant::LedgerCloseMetaV2 => Box::new(
-                ReadXdrIter::<_, Frame<LedgerCloseMetaV2>>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMeta>>::new(&mut r.inner, r.depth_remaining)
@@ -51048,10 +50968,6 @@ impl Type {
                 ReadXdrIter::<_, LedgerCloseMetaV1>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
             ),
-            TypeVariant::LedgerCloseMetaV2 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV2>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::LedgerCloseMetaV2(Box::new(t)))),
-            ),
             TypeVariant::LedgerCloseMeta => Box::new(
                 ReadXdrIter::<_, LedgerCloseMeta>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t)))),
@@ -52130,7 +52046,6 @@ impl Type {
             Self::UpgradeEntryMeta(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV0(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV1(ref v) => v.as_ref(),
-            Self::LedgerCloseMetaV2(ref v) => v.as_ref(),
             Self::LedgerCloseMeta(ref v) => v.as_ref(),
             Self::ErrorCode(ref v) => v.as_ref(),
             Self::SError(ref v) => v.as_ref(),
@@ -52562,7 +52477,6 @@ impl Type {
             Self::UpgradeEntryMeta(_) => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0(_) => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaV1(_) => "LedgerCloseMetaV1",
-            Self::LedgerCloseMetaV2(_) => "LedgerCloseMetaV2",
             Self::LedgerCloseMeta(_) => "LedgerCloseMeta",
             Self::ErrorCode(_) => "ErrorCode",
             Self::SError(_) => "SError",
@@ -52782,7 +52696,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 419] {
+    pub const fn variants() -> [TypeVariant; 418] {
         Self::VARIANTS
     }
 
@@ -53024,7 +52938,6 @@ impl Type {
             Self::UpgradeEntryMeta(_) => TypeVariant::UpgradeEntryMeta,
             Self::LedgerCloseMetaV0(_) => TypeVariant::LedgerCloseMetaV0,
             Self::LedgerCloseMetaV1(_) => TypeVariant::LedgerCloseMetaV1,
-            Self::LedgerCloseMetaV2(_) => TypeVariant::LedgerCloseMetaV2,
             Self::LedgerCloseMeta(_) => TypeVariant::LedgerCloseMeta,
             Self::ErrorCode(_) => TypeVariant::ErrorCode,
             Self::SError(_) => TypeVariant::SError,

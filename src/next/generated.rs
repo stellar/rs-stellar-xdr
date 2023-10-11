@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "bfd3483c20c6feb53560ab868c9c0d754fbdabbb3d3420ffea997e2f4d5da8dc",
+        "dd39f17c5d4513202cf222fe0704dd79fafdeb02d17c672f0d7a381dabc224b2",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -46,11 +46,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "73b467bce654c5b19d0fba24008c9ccae77b439320a4c9eef9128e1818fdd76d",
+        "4f8f2324f567a40065f54f696ea1428740f043ea4154f5986d9f499ad00ac333",
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "de4e3aa5bb4f85d60c4786945980dd3895fb10ed687c39be74abc1e43b243c22",
+        "2c842f3fe6e269498af5467f849cf6818554e90babc845f34c87cda471298d0f",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "584c60da3ded2209edbac9d33bedf98d584ba9388864132dd892d10c8bdd997a",
+        "da2c6af5761f7aa9754964955ccfd1bf74d1f4cf3ab903cf913492e445fb01c6",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -3819,19 +3819,19 @@ impl WriteXdr for ContractCostParamEntry {
     }
 }
 
-// StateExpirationSettings is an XDR Struct defines as:
+// StateArchivalSettings is an XDR Struct defines as:
 //
-//   struct StateExpirationSettings {
-//        uint32 maxEntryExpiration;
-//        uint32 minTempEntryExpiration;
-//        uint32 minPersistentEntryExpiration;
+//   struct StateArchivalSettings {
+//        uint32 maxEntryTTL;
+//        uint32 minTemporaryTTL;
+//        uint32 minPersistentTTL;
 //
 //        // rent_fee = wfee_rate_average / rent_rate_denominator_for_type
 //        int64 persistentRentRateDenominator;
 //        int64 tempRentRateDenominator;
 //
-//        // max number of entries that emit expiration meta in a single ledger
-//        uint32 maxEntriesToExpire;
+//        // max number of entries that emit archival meta in a single ledger
+//        uint32 maxEntriesToArchive;
 //
 //        // Number of snapshots to use when calculating average BucketList size
 //        uint32 bucketListSizeWindowSampleSize;
@@ -3850,29 +3850,29 @@ impl WriteXdr for ContractCostParamEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct StateExpirationSettings {
-    pub max_entry_expiration: u32,
-    pub min_temp_entry_expiration: u32,
-    pub min_persistent_entry_expiration: u32,
+pub struct StateArchivalSettings {
+    pub max_entry_ttl: u32,
+    pub min_temporary_ttl: u32,
+    pub min_persistent_ttl: u32,
     pub persistent_rent_rate_denominator: i64,
     pub temp_rent_rate_denominator: i64,
-    pub max_entries_to_expire: u32,
+    pub max_entries_to_archive: u32,
     pub bucket_list_size_window_sample_size: u32,
     pub eviction_scan_size: u64,
     pub starting_eviction_scan_level: u32,
 }
 
-impl ReadXdr for StateExpirationSettings {
+impl ReadXdr for StateArchivalSettings {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                max_entry_expiration: u32::read_xdr(r)?,
-                min_temp_entry_expiration: u32::read_xdr(r)?,
-                min_persistent_entry_expiration: u32::read_xdr(r)?,
+                max_entry_ttl: u32::read_xdr(r)?,
+                min_temporary_ttl: u32::read_xdr(r)?,
+                min_persistent_ttl: u32::read_xdr(r)?,
                 persistent_rent_rate_denominator: i64::read_xdr(r)?,
                 temp_rent_rate_denominator: i64::read_xdr(r)?,
-                max_entries_to_expire: u32::read_xdr(r)?,
+                max_entries_to_archive: u32::read_xdr(r)?,
                 bucket_list_size_window_sample_size: u32::read_xdr(r)?,
                 eviction_scan_size: u64::read_xdr(r)?,
                 starting_eviction_scan_level: u32::read_xdr(r)?,
@@ -3881,16 +3881,16 @@ impl ReadXdr for StateExpirationSettings {
     }
 }
 
-impl WriteXdr for StateExpirationSettings {
+impl WriteXdr for StateArchivalSettings {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
-            self.max_entry_expiration.write_xdr(w)?;
-            self.min_temp_entry_expiration.write_xdr(w)?;
-            self.min_persistent_entry_expiration.write_xdr(w)?;
+            self.max_entry_ttl.write_xdr(w)?;
+            self.min_temporary_ttl.write_xdr(w)?;
+            self.min_persistent_ttl.write_xdr(w)?;
             self.persistent_rent_rate_denominator.write_xdr(w)?;
             self.temp_rent_rate_denominator.write_xdr(w)?;
-            self.max_entries_to_expire.write_xdr(w)?;
+            self.max_entries_to_archive.write_xdr(w)?;
             self.bucket_list_size_window_sample_size.write_xdr(w)?;
             self.eviction_scan_size.write_xdr(w)?;
             self.starting_eviction_scan_level.write_xdr(w)?;
@@ -4067,7 +4067,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 //        CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7,
 //        CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8,
 //        CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9,
-//        CONFIG_SETTING_STATE_EXPIRATION = 10,
+//        CONFIG_SETTING_STATE_ARCHIVAL = 10,
 //        CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11,
 //        CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12,
 //        CONFIG_SETTING_EVICTION_ITERATOR = 13
@@ -4093,7 +4093,7 @@ pub enum ConfigSettingId {
     ContractCostParamsMemoryBytes = 7,
     ContractDataKeySizeBytes = 8,
     ContractDataEntrySizeBytes = 9,
-    StateExpiration = 10,
+    StateArchival = 10,
     ContractExecutionLanes = 11,
     BucketlistSizeWindow = 12,
     EvictionIterator = 13,
@@ -4111,7 +4111,7 @@ impl ConfigSettingId {
         ConfigSettingId::ContractCostParamsMemoryBytes,
         ConfigSettingId::ContractDataKeySizeBytes,
         ConfigSettingId::ContractDataEntrySizeBytes,
-        ConfigSettingId::StateExpiration,
+        ConfigSettingId::StateArchival,
         ConfigSettingId::ContractExecutionLanes,
         ConfigSettingId::BucketlistSizeWindow,
         ConfigSettingId::EvictionIterator,
@@ -4127,7 +4127,7 @@ impl ConfigSettingId {
         "ContractCostParamsMemoryBytes",
         "ContractDataKeySizeBytes",
         "ContractDataEntrySizeBytes",
-        "StateExpiration",
+        "StateArchival",
         "ContractExecutionLanes",
         "BucketlistSizeWindow",
         "EvictionIterator",
@@ -4146,7 +4146,7 @@ impl ConfigSettingId {
             Self::ContractCostParamsMemoryBytes => "ContractCostParamsMemoryBytes",
             Self::ContractDataKeySizeBytes => "ContractDataKeySizeBytes",
             Self::ContractDataEntrySizeBytes => "ContractDataEntrySizeBytes",
-            Self::StateExpiration => "StateExpiration",
+            Self::StateArchival => "StateArchival",
             Self::ContractExecutionLanes => "ContractExecutionLanes",
             Self::BucketlistSizeWindow => "BucketlistSizeWindow",
             Self::EvictionIterator => "EvictionIterator",
@@ -4195,7 +4195,7 @@ impl TryFrom<i32> for ConfigSettingId {
             7 => ConfigSettingId::ContractCostParamsMemoryBytes,
             8 => ConfigSettingId::ContractDataKeySizeBytes,
             9 => ConfigSettingId::ContractDataEntrySizeBytes,
-            10 => ConfigSettingId::StateExpiration,
+            10 => ConfigSettingId::StateArchival,
             11 => ConfigSettingId::ContractExecutionLanes,
             12 => ConfigSettingId::BucketlistSizeWindow,
             13 => ConfigSettingId::EvictionIterator,
@@ -4258,8 +4258,8 @@ impl WriteXdr for ConfigSettingId {
 //        uint32 contractDataKeySizeBytes;
 //    case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES:
 //        uint32 contractDataEntrySizeBytes;
-//    case CONFIG_SETTING_STATE_EXPIRATION:
-//        StateExpirationSettings stateExpirationSettings;
+//    case CONFIG_SETTING_STATE_ARCHIVAL:
+//        StateArchivalSettings stateArchivalSettings;
 //    case CONFIG_SETTING_CONTRACT_EXECUTION_LANES:
 //        ConfigSettingContractExecutionLanesV0 contractExecutionLanes;
 //    case CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW:
@@ -4288,7 +4288,7 @@ pub enum ConfigSettingEntry {
     ContractCostParamsMemoryBytes(ContractCostParams),
     ContractDataKeySizeBytes(u32),
     ContractDataEntrySizeBytes(u32),
-    StateExpiration(StateExpirationSettings),
+    StateArchival(StateArchivalSettings),
     ContractExecutionLanes(ConfigSettingContractExecutionLanesV0),
     BucketlistSizeWindow(VecM<u64>),
     EvictionIterator(EvictionIterator),
@@ -4306,7 +4306,7 @@ impl ConfigSettingEntry {
         ConfigSettingId::ContractCostParamsMemoryBytes,
         ConfigSettingId::ContractDataKeySizeBytes,
         ConfigSettingId::ContractDataEntrySizeBytes,
-        ConfigSettingId::StateExpiration,
+        ConfigSettingId::StateArchival,
         ConfigSettingId::ContractExecutionLanes,
         ConfigSettingId::BucketlistSizeWindow,
         ConfigSettingId::EvictionIterator,
@@ -4322,7 +4322,7 @@ impl ConfigSettingEntry {
         "ContractCostParamsMemoryBytes",
         "ContractDataKeySizeBytes",
         "ContractDataEntrySizeBytes",
-        "StateExpiration",
+        "StateArchival",
         "ContractExecutionLanes",
         "BucketlistSizeWindow",
         "EvictionIterator",
@@ -4341,7 +4341,7 @@ impl ConfigSettingEntry {
             Self::ContractCostParamsMemoryBytes(_) => "ContractCostParamsMemoryBytes",
             Self::ContractDataKeySizeBytes(_) => "ContractDataKeySizeBytes",
             Self::ContractDataEntrySizeBytes(_) => "ContractDataEntrySizeBytes",
-            Self::StateExpiration(_) => "StateExpiration",
+            Self::StateArchival(_) => "StateArchival",
             Self::ContractExecutionLanes(_) => "ContractExecutionLanes",
             Self::BucketlistSizeWindow(_) => "BucketlistSizeWindow",
             Self::EvictionIterator(_) => "EvictionIterator",
@@ -4366,7 +4366,7 @@ impl ConfigSettingEntry {
             }
             Self::ContractDataKeySizeBytes(_) => ConfigSettingId::ContractDataKeySizeBytes,
             Self::ContractDataEntrySizeBytes(_) => ConfigSettingId::ContractDataEntrySizeBytes,
-            Self::StateExpiration(_) => ConfigSettingId::StateExpiration,
+            Self::StateArchival(_) => ConfigSettingId::StateArchival,
             Self::ContractExecutionLanes(_) => ConfigSettingId::ContractExecutionLanes,
             Self::BucketlistSizeWindow(_) => ConfigSettingId::BucketlistSizeWindow,
             Self::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
@@ -4438,8 +4438,8 @@ impl ReadXdr for ConfigSettingEntry {
                 ConfigSettingId::ContractDataEntrySizeBytes => {
                     Self::ContractDataEntrySizeBytes(u32::read_xdr(r)?)
                 }
-                ConfigSettingId::StateExpiration => {
-                    Self::StateExpiration(StateExpirationSettings::read_xdr(r)?)
+                ConfigSettingId::StateArchival => {
+                    Self::StateArchival(StateArchivalSettings::read_xdr(r)?)
                 }
                 ConfigSettingId::ContractExecutionLanes => Self::ContractExecutionLanes(
                     ConfigSettingContractExecutionLanesV0::read_xdr(r)?,
@@ -4475,7 +4475,7 @@ impl WriteXdr for ConfigSettingEntry {
                 Self::ContractCostParamsMemoryBytes(v) => v.write_xdr(w)?,
                 Self::ContractDataKeySizeBytes(v) => v.write_xdr(w)?,
                 Self::ContractDataEntrySizeBytes(v) => v.write_xdr(w)?,
-                Self::StateExpiration(v) => v.write_xdr(w)?,
+                Self::StateArchival(v) => v.write_xdr(w)?,
                 Self::ContractExecutionLanes(v) => v.write_xdr(w)?,
                 Self::BucketlistSizeWindow(v) => v.write_xdr(w)?,
                 Self::EvictionIterator(v) => v.write_xdr(w)?,
@@ -10823,7 +10823,7 @@ impl WriteXdr for ThresholdIndexes {
 //        CONTRACT_DATA = 6,
 //        CONTRACT_CODE = 7,
 //        CONFIG_SETTING = 8,
-//        EXPIRATION = 9
+//        TTL = 9
 //    };
 //
 // enum
@@ -10845,7 +10845,7 @@ pub enum LedgerEntryType {
     ContractData = 6,
     ContractCode = 7,
     ConfigSetting = 8,
-    Expiration = 9,
+    Ttl = 9,
 }
 
 impl LedgerEntryType {
@@ -10859,7 +10859,7 @@ impl LedgerEntryType {
         LedgerEntryType::ContractData,
         LedgerEntryType::ContractCode,
         LedgerEntryType::ConfigSetting,
-        LedgerEntryType::Expiration,
+        LedgerEntryType::Ttl,
     ];
     pub const VARIANTS_STR: [&'static str; 10] = [
         "Account",
@@ -10871,7 +10871,7 @@ impl LedgerEntryType {
         "ContractData",
         "ContractCode",
         "ConfigSetting",
-        "Expiration",
+        "Ttl",
     ];
 
     #[must_use]
@@ -10886,7 +10886,7 @@ impl LedgerEntryType {
             Self::ContractData => "ContractData",
             Self::ContractCode => "ContractCode",
             Self::ConfigSetting => "ConfigSetting",
-            Self::Expiration => "Expiration",
+            Self::Ttl => "Ttl",
         }
     }
 
@@ -10931,7 +10931,7 @@ impl TryFrom<i32> for LedgerEntryType {
             6 => LedgerEntryType::ContractData,
             7 => LedgerEntryType::ContractCode,
             8 => LedgerEntryType::ConfigSetting,
-            9 => LedgerEntryType::Expiration,
+            9 => LedgerEntryType::Ttl,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -14733,12 +14733,12 @@ impl WriteXdr for ContractCodeEntry {
     }
 }
 
-// ExpirationEntry is an XDR Struct defines as:
+// TtlEntry is an XDR Struct defines as:
 //
-//   struct ExpirationEntry {
-//        // Hash of the LedgerKey that is associated with this ExpirationEntry
+//   struct TTLEntry {
+//        // Hash of the LedgerKey that is associated with this TTLEntry
 //        Hash keyHash;
-//        uint32 expirationLedgerSeq;
+//        uint32 liveUntilLedgerSeq;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -14748,29 +14748,29 @@ impl WriteXdr for ContractCodeEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct ExpirationEntry {
+pub struct TtlEntry {
     pub key_hash: Hash,
-    pub expiration_ledger_seq: u32,
+    pub live_until_ledger_seq: u32,
 }
 
-impl ReadXdr for ExpirationEntry {
+impl ReadXdr for TtlEntry {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key_hash: Hash::read_xdr(r)?,
-                expiration_ledger_seq: u32::read_xdr(r)?,
+                live_until_ledger_seq: u32::read_xdr(r)?,
             })
         })
     }
 }
 
-impl WriteXdr for ExpirationEntry {
+impl WriteXdr for TtlEntry {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key_hash.write_xdr(w)?;
-            self.expiration_ledger_seq.write_xdr(w)?;
+            self.live_until_ledger_seq.write_xdr(w)?;
             Ok(())
         })
     }
@@ -14945,8 +14945,8 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 //            ContractCodeEntry contractCode;
 //        case CONFIG_SETTING:
 //            ConfigSettingEntry configSetting;
-//        case EXPIRATION:
-//            ExpirationEntry expiration;
+//        case TTL:
+//            TTLEntry ttl;
 //        }
 //
 // union with discriminant LedgerEntryType
@@ -14968,7 +14968,7 @@ pub enum LedgerEntryData {
     ContractData(ContractDataEntry),
     ContractCode(ContractCodeEntry),
     ConfigSetting(ConfigSettingEntry),
-    Expiration(ExpirationEntry),
+    Ttl(TtlEntry),
 }
 
 impl LedgerEntryData {
@@ -14982,7 +14982,7 @@ impl LedgerEntryData {
         LedgerEntryType::ContractData,
         LedgerEntryType::ContractCode,
         LedgerEntryType::ConfigSetting,
-        LedgerEntryType::Expiration,
+        LedgerEntryType::Ttl,
     ];
     pub const VARIANTS_STR: [&'static str; 10] = [
         "Account",
@@ -14994,7 +14994,7 @@ impl LedgerEntryData {
         "ContractData",
         "ContractCode",
         "ConfigSetting",
-        "Expiration",
+        "Ttl",
     ];
 
     #[must_use]
@@ -15009,7 +15009,7 @@ impl LedgerEntryData {
             Self::ContractData(_) => "ContractData",
             Self::ContractCode(_) => "ContractCode",
             Self::ConfigSetting(_) => "ConfigSetting",
-            Self::Expiration(_) => "Expiration",
+            Self::Ttl(_) => "Ttl",
         }
     }
 
@@ -15026,7 +15026,7 @@ impl LedgerEntryData {
             Self::ContractData(_) => LedgerEntryType::ContractData,
             Self::ContractCode(_) => LedgerEntryType::ContractCode,
             Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
-            Self::Expiration(_) => LedgerEntryType::Expiration,
+            Self::Ttl(_) => LedgerEntryType::Ttl,
         }
     }
 
@@ -15084,7 +15084,7 @@ impl ReadXdr for LedgerEntryData {
                 LedgerEntryType::ConfigSetting => {
                     Self::ConfigSetting(ConfigSettingEntry::read_xdr(r)?)
                 }
-                LedgerEntryType::Expiration => Self::Expiration(ExpirationEntry::read_xdr(r)?),
+                LedgerEntryType::Ttl => Self::Ttl(TtlEntry::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -15109,7 +15109,7 @@ impl WriteXdr for LedgerEntryData {
                 Self::ContractData(v) => v.write_xdr(w)?,
                 Self::ContractCode(v) => v.write_xdr(w)?,
                 Self::ConfigSetting(v) => v.write_xdr(w)?,
-                Self::Expiration(v) => v.write_xdr(w)?,
+                Self::Ttl(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -15247,8 +15247,8 @@ impl WriteXdr for LedgerEntryExt {
 //            ContractCodeEntry contractCode;
 //        case CONFIG_SETTING:
 //            ConfigSettingEntry configSetting;
-//        case EXPIRATION:
-//            ExpirationEntry expiration;
+//        case TTL:
+//            TTLEntry ttl;
 //        }
 //        data;
 //
@@ -15672,11 +15672,11 @@ impl WriteXdr for LedgerKeyConfigSetting {
     }
 }
 
-// LedgerKeyExpiration is an XDR NestedStruct defines as:
+// LedgerKeyTtl is an XDR NestedStruct defines as:
 //
 //   struct
 //        {
-//            // Hash of the LedgerKey that is associated with this ExpirationEntry
+//            // Hash of the LedgerKey that is associated with this TTLEntry
 //            Hash keyHash;
 //        }
 //
@@ -15687,11 +15687,11 @@ impl WriteXdr for LedgerKeyConfigSetting {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct LedgerKeyExpiration {
+pub struct LedgerKeyTtl {
     pub key_hash: Hash,
 }
 
-impl ReadXdr for LedgerKeyExpiration {
+impl ReadXdr for LedgerKeyTtl {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
@@ -15702,7 +15702,7 @@ impl ReadXdr for LedgerKeyExpiration {
     }
 }
 
-impl WriteXdr for LedgerKeyExpiration {
+impl WriteXdr for LedgerKeyTtl {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -15771,12 +15771,12 @@ impl WriteXdr for LedgerKeyExpiration {
 //        {
 //            ConfigSettingID configSettingID;
 //        } configSetting;
-//    case EXPIRATION:
+//    case TTL:
 //        struct
 //        {
-//            // Hash of the LedgerKey that is associated with this ExpirationEntry
+//            // Hash of the LedgerKey that is associated with this TTLEntry
 //            Hash keyHash;
-//        } expiration;
+//        } ttl;
 //    };
 //
 // union with discriminant LedgerEntryType
@@ -15798,7 +15798,7 @@ pub enum LedgerKey {
     ContractData(LedgerKeyContractData),
     ContractCode(LedgerKeyContractCode),
     ConfigSetting(LedgerKeyConfigSetting),
-    Expiration(LedgerKeyExpiration),
+    Ttl(LedgerKeyTtl),
 }
 
 impl LedgerKey {
@@ -15812,7 +15812,7 @@ impl LedgerKey {
         LedgerEntryType::ContractData,
         LedgerEntryType::ContractCode,
         LedgerEntryType::ConfigSetting,
-        LedgerEntryType::Expiration,
+        LedgerEntryType::Ttl,
     ];
     pub const VARIANTS_STR: [&'static str; 10] = [
         "Account",
@@ -15824,7 +15824,7 @@ impl LedgerKey {
         "ContractData",
         "ContractCode",
         "ConfigSetting",
-        "Expiration",
+        "Ttl",
     ];
 
     #[must_use]
@@ -15839,7 +15839,7 @@ impl LedgerKey {
             Self::ContractData(_) => "ContractData",
             Self::ContractCode(_) => "ContractCode",
             Self::ConfigSetting(_) => "ConfigSetting",
-            Self::Expiration(_) => "Expiration",
+            Self::Ttl(_) => "Ttl",
         }
     }
 
@@ -15856,7 +15856,7 @@ impl LedgerKey {
             Self::ContractData(_) => LedgerEntryType::ContractData,
             Self::ContractCode(_) => LedgerEntryType::ContractCode,
             Self::ConfigSetting(_) => LedgerEntryType::ConfigSetting,
-            Self::Expiration(_) => LedgerEntryType::Expiration,
+            Self::Ttl(_) => LedgerEntryType::Ttl,
         }
     }
 
@@ -15914,7 +15914,7 @@ impl ReadXdr for LedgerKey {
                 LedgerEntryType::ConfigSetting => {
                     Self::ConfigSetting(LedgerKeyConfigSetting::read_xdr(r)?)
                 }
-                LedgerEntryType::Expiration => Self::Expiration(LedgerKeyExpiration::read_xdr(r)?),
+                LedgerEntryType::Ttl => Self::Ttl(LedgerKeyTtl::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -15939,7 +15939,7 @@ impl WriteXdr for LedgerKey {
                 Self::ContractData(v) => v.write_xdr(w)?,
                 Self::ContractCode(v) => v.write_xdr(w)?,
                 Self::ConfigSetting(v) => v.write_xdr(w)?,
-                Self::Expiration(v) => v.write_xdr(w)?,
+                Self::Ttl(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -20343,10 +20343,10 @@ impl WriteXdr for LedgerCloseMetaV0 {
 //        // systems calculating storage fees correctly.
 //        uint64 totalByteSizeOfBucketList;
 //
-//        // Expired temp keys that are being evicted at this ledger.
+//        // Temp keys that are being evicted at this ledger.
 //        LedgerKey evictedTemporaryLedgerKeys<>;
 //
-//        // Expired restorable ledger entries that are being
+//        // Archived restorable ledger entries that are being
 //        // evicted at this ledger.
 //        LedgerEntry evictedPersistentLedgerEntries<>;
 //    };
@@ -23441,7 +23441,7 @@ impl WriteXdr for DecoratedSignature {
 //        LIQUIDITY_POOL_DEPOSIT = 22,
 //        LIQUIDITY_POOL_WITHDRAW = 23,
 //        INVOKE_HOST_FUNCTION = 24,
-//        BUMP_FOOTPRINT_EXPIRATION = 25,
+//        EXTEND_FOOTPRINT_TTL = 25,
 //        RESTORE_FOOTPRINT = 26
 //    };
 //
@@ -23480,7 +23480,7 @@ pub enum OperationType {
     LiquidityPoolDeposit = 22,
     LiquidityPoolWithdraw = 23,
     InvokeHostFunction = 24,
-    BumpFootprintExpiration = 25,
+    ExtendFootprintTtl = 25,
     RestoreFootprint = 26,
 }
 
@@ -23511,7 +23511,7 @@ impl OperationType {
         OperationType::LiquidityPoolDeposit,
         OperationType::LiquidityPoolWithdraw,
         OperationType::InvokeHostFunction,
-        OperationType::BumpFootprintExpiration,
+        OperationType::ExtendFootprintTtl,
         OperationType::RestoreFootprint,
     ];
     pub const VARIANTS_STR: [&'static str; 27] = [
@@ -23540,7 +23540,7 @@ impl OperationType {
         "LiquidityPoolDeposit",
         "LiquidityPoolWithdraw",
         "InvokeHostFunction",
-        "BumpFootprintExpiration",
+        "ExtendFootprintTtl",
         "RestoreFootprint",
     ];
 
@@ -23572,7 +23572,7 @@ impl OperationType {
             Self::LiquidityPoolDeposit => "LiquidityPoolDeposit",
             Self::LiquidityPoolWithdraw => "LiquidityPoolWithdraw",
             Self::InvokeHostFunction => "InvokeHostFunction",
-            Self::BumpFootprintExpiration => "BumpFootprintExpiration",
+            Self::ExtendFootprintTtl => "ExtendFootprintTtl",
             Self::RestoreFootprint => "RestoreFootprint",
         }
     }
@@ -23634,7 +23634,7 @@ impl TryFrom<i32> for OperationType {
             22 => OperationType::LiquidityPoolDeposit,
             23 => OperationType::LiquidityPoolWithdraw,
             24 => OperationType::InvokeHostFunction,
-            25 => OperationType::BumpFootprintExpiration,
+            25 => OperationType::ExtendFootprintTtl,
             26 => OperationType::RestoreFootprint,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -26279,12 +26279,12 @@ impl WriteXdr for InvokeHostFunctionOp {
     }
 }
 
-// BumpFootprintExpirationOp is an XDR Struct defines as:
+// ExtendFootprintTtlOp is an XDR Struct defines as:
 //
-//   struct BumpFootprintExpirationOp
+//   struct ExtendFootprintTTLOp
 //    {
 //        ExtensionPoint ext;
-//        uint32 ledgersToExpire;
+//        uint32 extendTo;
 //    };
 //
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -26294,29 +26294,29 @@ impl WriteXdr for InvokeHostFunctionOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
-pub struct BumpFootprintExpirationOp {
+pub struct ExtendFootprintTtlOp {
     pub ext: ExtensionPoint,
-    pub ledgers_to_expire: u32,
+    pub extend_to: u32,
 }
 
-impl ReadXdr for BumpFootprintExpirationOp {
+impl ReadXdr for ExtendFootprintTtlOp {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
-                ledgers_to_expire: u32::read_xdr(r)?,
+                extend_to: u32::read_xdr(r)?,
             })
         })
     }
 }
 
-impl WriteXdr for BumpFootprintExpirationOp {
+impl WriteXdr for ExtendFootprintTtlOp {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
-            self.ledgers_to_expire.write_xdr(w)?;
+            self.extend_to.write_xdr(w)?;
             Ok(())
         })
     }
@@ -26415,8 +26415,8 @@ impl WriteXdr for RestoreFootprintOp {
 //            LiquidityPoolWithdrawOp liquidityPoolWithdrawOp;
 //        case INVOKE_HOST_FUNCTION:
 //            InvokeHostFunctionOp invokeHostFunctionOp;
-//        case BUMP_FOOTPRINT_EXPIRATION:
-//            BumpFootprintExpirationOp bumpFootprintExpirationOp;
+//        case EXTEND_FOOTPRINT_TTL:
+//            ExtendFootprintTTLOp extendFootprintTTLOp;
 //        case RESTORE_FOOTPRINT:
 //            RestoreFootprintOp restoreFootprintOp;
 //        }
@@ -26456,7 +26456,7 @@ pub enum OperationBody {
     LiquidityPoolDeposit(LiquidityPoolDepositOp),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawOp),
     InvokeHostFunction(InvokeHostFunctionOp),
-    BumpFootprintExpiration(BumpFootprintExpirationOp),
+    ExtendFootprintTtl(ExtendFootprintTtlOp),
     RestoreFootprint(RestoreFootprintOp),
 }
 
@@ -26487,7 +26487,7 @@ impl OperationBody {
         OperationType::LiquidityPoolDeposit,
         OperationType::LiquidityPoolWithdraw,
         OperationType::InvokeHostFunction,
-        OperationType::BumpFootprintExpiration,
+        OperationType::ExtendFootprintTtl,
         OperationType::RestoreFootprint,
     ];
     pub const VARIANTS_STR: [&'static str; 27] = [
@@ -26516,7 +26516,7 @@ impl OperationBody {
         "LiquidityPoolDeposit",
         "LiquidityPoolWithdraw",
         "InvokeHostFunction",
-        "BumpFootprintExpiration",
+        "ExtendFootprintTtl",
         "RestoreFootprint",
     ];
 
@@ -26548,7 +26548,7 @@ impl OperationBody {
             Self::LiquidityPoolDeposit(_) => "LiquidityPoolDeposit",
             Self::LiquidityPoolWithdraw(_) => "LiquidityPoolWithdraw",
             Self::InvokeHostFunction(_) => "InvokeHostFunction",
-            Self::BumpFootprintExpiration(_) => "BumpFootprintExpiration",
+            Self::ExtendFootprintTtl(_) => "ExtendFootprintTtl",
             Self::RestoreFootprint(_) => "RestoreFootprint",
         }
     }
@@ -26582,7 +26582,7 @@ impl OperationBody {
             Self::LiquidityPoolDeposit(_) => OperationType::LiquidityPoolDeposit,
             Self::LiquidityPoolWithdraw(_) => OperationType::LiquidityPoolWithdraw,
             Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
-            Self::BumpFootprintExpiration(_) => OperationType::BumpFootprintExpiration,
+            Self::ExtendFootprintTtl(_) => OperationType::ExtendFootprintTtl,
             Self::RestoreFootprint(_) => OperationType::RestoreFootprint,
         }
     }
@@ -26677,8 +26677,8 @@ impl ReadXdr for OperationBody {
                 OperationType::InvokeHostFunction => {
                     Self::InvokeHostFunction(InvokeHostFunctionOp::read_xdr(r)?)
                 }
-                OperationType::BumpFootprintExpiration => {
-                    Self::BumpFootprintExpiration(BumpFootprintExpirationOp::read_xdr(r)?)
+                OperationType::ExtendFootprintTtl => {
+                    Self::ExtendFootprintTtl(ExtendFootprintTtlOp::read_xdr(r)?)
                 }
                 OperationType::RestoreFootprint => {
                     Self::RestoreFootprint(RestoreFootprintOp::read_xdr(r)?)
@@ -26723,7 +26723,7 @@ impl WriteXdr for OperationBody {
                 Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
                 Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
                 Self::InvokeHostFunction(v) => v.write_xdr(w)?,
-                Self::BumpFootprintExpiration(v) => v.write_xdr(w)?,
+                Self::ExtendFootprintTtl(v) => v.write_xdr(w)?,
                 Self::RestoreFootprint(v) => v.write_xdr(w)?,
             };
             Ok(())
@@ -26792,8 +26792,8 @@ impl WriteXdr for OperationBody {
 //            LiquidityPoolWithdrawOp liquidityPoolWithdrawOp;
 //        case INVOKE_HOST_FUNCTION:
 //            InvokeHostFunctionOp invokeHostFunctionOp;
-//        case BUMP_FOOTPRINT_EXPIRATION:
-//            BumpFootprintExpirationOp bumpFootprintExpirationOp;
+//        case EXTEND_FOOTPRINT_TTL:
+//            ExtendFootprintTTLOp extendFootprintTTLOp;
 //        case RESTORE_FOOTPRINT:
 //            RestoreFootprintOp restoreFootprintOp;
 //        }
@@ -36712,7 +36712,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 //        INVOKE_HOST_FUNCTION_MALFORMED = -1,
 //        INVOKE_HOST_FUNCTION_TRAPPED = -2,
 //        INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3,
-//        INVOKE_HOST_FUNCTION_ENTRY_EXPIRED = -4,
+//        INVOKE_HOST_FUNCTION_ENTRY_ARCHIVED = -4,
 //        INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE = -5
 //    };
 //
@@ -36730,7 +36730,7 @@ pub enum InvokeHostFunctionResultCode {
     Malformed = -1,
     Trapped = -2,
     ResourceLimitExceeded = -3,
-    EntryExpired = -4,
+    EntryArchived = -4,
     InsufficientRefundableFee = -5,
 }
 
@@ -36740,7 +36740,7 @@ impl InvokeHostFunctionResultCode {
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
         InvokeHostFunctionResultCode::ResourceLimitExceeded,
-        InvokeHostFunctionResultCode::EntryExpired,
+        InvokeHostFunctionResultCode::EntryArchived,
         InvokeHostFunctionResultCode::InsufficientRefundableFee,
     ];
     pub const VARIANTS_STR: [&'static str; 6] = [
@@ -36748,7 +36748,7 @@ impl InvokeHostFunctionResultCode {
         "Malformed",
         "Trapped",
         "ResourceLimitExceeded",
-        "EntryExpired",
+        "EntryArchived",
         "InsufficientRefundableFee",
     ];
 
@@ -36759,7 +36759,7 @@ impl InvokeHostFunctionResultCode {
             Self::Malformed => "Malformed",
             Self::Trapped => "Trapped",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
-            Self::EntryExpired => "EntryExpired",
+            Self::EntryArchived => "EntryArchived",
             Self::InsufficientRefundableFee => "InsufficientRefundableFee",
         }
     }
@@ -36800,7 +36800,7 @@ impl TryFrom<i32> for InvokeHostFunctionResultCode {
             -1 => InvokeHostFunctionResultCode::Malformed,
             -2 => InvokeHostFunctionResultCode::Trapped,
             -3 => InvokeHostFunctionResultCode::ResourceLimitExceeded,
-            -4 => InvokeHostFunctionResultCode::EntryExpired,
+            -4 => InvokeHostFunctionResultCode::EntryArchived,
             -5 => InvokeHostFunctionResultCode::InsufficientRefundableFee,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -36846,7 +36846,7 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 //    case INVOKE_HOST_FUNCTION_MALFORMED:
 //    case INVOKE_HOST_FUNCTION_TRAPPED:
 //    case INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED:
-//    case INVOKE_HOST_FUNCTION_ENTRY_EXPIRED:
+//    case INVOKE_HOST_FUNCTION_ENTRY_ARCHIVED:
 //    case INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE:
 //        void;
 //    };
@@ -36865,7 +36865,7 @@ pub enum InvokeHostFunctionResult {
     Malformed,
     Trapped,
     ResourceLimitExceeded,
-    EntryExpired,
+    EntryArchived,
     InsufficientRefundableFee,
 }
 
@@ -36875,7 +36875,7 @@ impl InvokeHostFunctionResult {
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
         InvokeHostFunctionResultCode::ResourceLimitExceeded,
-        InvokeHostFunctionResultCode::EntryExpired,
+        InvokeHostFunctionResultCode::EntryArchived,
         InvokeHostFunctionResultCode::InsufficientRefundableFee,
     ];
     pub const VARIANTS_STR: [&'static str; 6] = [
@@ -36883,7 +36883,7 @@ impl InvokeHostFunctionResult {
         "Malformed",
         "Trapped",
         "ResourceLimitExceeded",
-        "EntryExpired",
+        "EntryArchived",
         "InsufficientRefundableFee",
     ];
 
@@ -36894,7 +36894,7 @@ impl InvokeHostFunctionResult {
             Self::Malformed => "Malformed",
             Self::Trapped => "Trapped",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
-            Self::EntryExpired => "EntryExpired",
+            Self::EntryArchived => "EntryArchived",
             Self::InsufficientRefundableFee => "InsufficientRefundableFee",
         }
     }
@@ -36907,7 +36907,7 @@ impl InvokeHostFunctionResult {
             Self::Malformed => InvokeHostFunctionResultCode::Malformed,
             Self::Trapped => InvokeHostFunctionResultCode::Trapped,
             Self::ResourceLimitExceeded => InvokeHostFunctionResultCode::ResourceLimitExceeded,
-            Self::EntryExpired => InvokeHostFunctionResultCode::EntryExpired,
+            Self::EntryArchived => InvokeHostFunctionResultCode::EntryArchived,
             Self::InsufficientRefundableFee => {
                 InvokeHostFunctionResultCode::InsufficientRefundableFee
             }
@@ -36954,7 +36954,7 @@ impl ReadXdr for InvokeHostFunctionResult {
                 InvokeHostFunctionResultCode::Malformed => Self::Malformed,
                 InvokeHostFunctionResultCode::Trapped => Self::Trapped,
                 InvokeHostFunctionResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
-                InvokeHostFunctionResultCode::EntryExpired => Self::EntryExpired,
+                InvokeHostFunctionResultCode::EntryArchived => Self::EntryArchived,
                 InvokeHostFunctionResultCode::InsufficientRefundableFee => {
                     Self::InsufficientRefundableFee
                 }
@@ -36977,7 +36977,7 @@ impl WriteXdr for InvokeHostFunctionResult {
                 Self::Malformed => ().write_xdr(w)?,
                 Self::Trapped => ().write_xdr(w)?,
                 Self::ResourceLimitExceeded => ().write_xdr(w)?,
-                Self::EntryExpired => ().write_xdr(w)?,
+                Self::EntryArchived => ().write_xdr(w)?,
                 Self::InsufficientRefundableFee => ().write_xdr(w)?,
             };
             Ok(())
@@ -36985,17 +36985,17 @@ impl WriteXdr for InvokeHostFunctionResult {
     }
 }
 
-// BumpFootprintExpirationResultCode is an XDR Enum defines as:
+// ExtendFootprintTtlResultCode is an XDR Enum defines as:
 //
-//   enum BumpFootprintExpirationResultCode
+//   enum ExtendFootprintTTLResultCode
 //    {
 //        // codes considered as "success" for the operation
-//        BUMP_FOOTPRINT_EXPIRATION_SUCCESS = 0,
+//        EXTEND_FOOTPRINT_TTL_SUCCESS = 0,
 //
 //        // codes considered as "failure" for the operation
-//        BUMP_FOOTPRINT_EXPIRATION_MALFORMED = -1,
-//        BUMP_FOOTPRINT_EXPIRATION_RESOURCE_LIMIT_EXCEEDED = -2,
-//        BUMP_FOOTPRINT_EXPIRATION_INSUFFICIENT_REFUNDABLE_FEE = -3
+//        EXTEND_FOOTPRINT_TTL_MALFORMED = -1,
+//        EXTEND_FOOTPRINT_TTL_RESOURCE_LIMIT_EXCEEDED = -2,
+//        EXTEND_FOOTPRINT_TTL_INSUFFICIENT_REFUNDABLE_FEE = -3
 //    };
 //
 // enum
@@ -37007,19 +37007,19 @@ impl WriteXdr for InvokeHostFunctionResult {
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
-pub enum BumpFootprintExpirationResultCode {
+pub enum ExtendFootprintTtlResultCode {
     Success = 0,
     Malformed = -1,
     ResourceLimitExceeded = -2,
     InsufficientRefundableFee = -3,
 }
 
-impl BumpFootprintExpirationResultCode {
-    pub const VARIANTS: [BumpFootprintExpirationResultCode; 4] = [
-        BumpFootprintExpirationResultCode::Success,
-        BumpFootprintExpirationResultCode::Malformed,
-        BumpFootprintExpirationResultCode::ResourceLimitExceeded,
-        BumpFootprintExpirationResultCode::InsufficientRefundableFee,
+impl ExtendFootprintTtlResultCode {
+    pub const VARIANTS: [ExtendFootprintTtlResultCode; 4] = [
+        ExtendFootprintTtlResultCode::Success,
+        ExtendFootprintTtlResultCode::Malformed,
+        ExtendFootprintTtlResultCode::ResourceLimitExceeded,
+        ExtendFootprintTtlResultCode::InsufficientRefundableFee,
     ];
     pub const VARIANTS_STR: [&'static str; 4] = [
         "Success",
@@ -37039,41 +37039,41 @@ impl BumpFootprintExpirationResultCode {
     }
 
     #[must_use]
-    pub const fn variants() -> [BumpFootprintExpirationResultCode; 4] {
+    pub const fn variants() -> [ExtendFootprintTtlResultCode; 4] {
         Self::VARIANTS
     }
 }
 
-impl Name for BumpFootprintExpirationResultCode {
+impl Name for ExtendFootprintTtlResultCode {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Variants<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResultCode {
-    fn variants() -> slice::Iter<'static, BumpFootprintExpirationResultCode> {
+impl Variants<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResultCode {
+    fn variants() -> slice::Iter<'static, ExtendFootprintTtlResultCode> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Enum for BumpFootprintExpirationResultCode {}
+impl Enum for ExtendFootprintTtlResultCode {}
 
-impl fmt::Display for BumpFootprintExpirationResultCode {
+impl fmt::Display for ExtendFootprintTtlResultCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
 
-impl TryFrom<i32> for BumpFootprintExpirationResultCode {
+impl TryFrom<i32> for ExtendFootprintTtlResultCode {
     type Error = Error;
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => BumpFootprintExpirationResultCode::Success,
-            -1 => BumpFootprintExpirationResultCode::Malformed,
-            -2 => BumpFootprintExpirationResultCode::ResourceLimitExceeded,
-            -3 => BumpFootprintExpirationResultCode::InsufficientRefundableFee,
+            0 => ExtendFootprintTtlResultCode::Success,
+            -1 => ExtendFootprintTtlResultCode::Malformed,
+            -2 => ExtendFootprintTtlResultCode::ResourceLimitExceeded,
+            -3 => ExtendFootprintTtlResultCode::InsufficientRefundableFee,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -37081,14 +37081,14 @@ impl TryFrom<i32> for BumpFootprintExpirationResultCode {
     }
 }
 
-impl From<BumpFootprintExpirationResultCode> for i32 {
+impl From<ExtendFootprintTtlResultCode> for i32 {
     #[must_use]
-    fn from(e: BumpFootprintExpirationResultCode) -> Self {
+    fn from(e: ExtendFootprintTtlResultCode) -> Self {
         e as Self
     }
 }
 
-impl ReadXdr for BumpFootprintExpirationResultCode {
+impl ReadXdr for ExtendFootprintTtlResultCode {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
@@ -37099,7 +37099,7 @@ impl ReadXdr for BumpFootprintExpirationResultCode {
     }
 }
 
-impl WriteXdr for BumpFootprintExpirationResultCode {
+impl WriteXdr for ExtendFootprintTtlResultCode {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -37109,19 +37109,19 @@ impl WriteXdr for BumpFootprintExpirationResultCode {
     }
 }
 
-// BumpFootprintExpirationResult is an XDR Union defines as:
+// ExtendFootprintTtlResult is an XDR Union defines as:
 //
-//   union BumpFootprintExpirationResult switch (BumpFootprintExpirationResultCode code)
+//   union ExtendFootprintTTLResult switch (ExtendFootprintTTLResultCode code)
 //    {
-//    case BUMP_FOOTPRINT_EXPIRATION_SUCCESS:
+//    case EXTEND_FOOTPRINT_TTL_SUCCESS:
 //        void;
-//    case BUMP_FOOTPRINT_EXPIRATION_MALFORMED:
-//    case BUMP_FOOTPRINT_EXPIRATION_RESOURCE_LIMIT_EXCEEDED:
-//    case BUMP_FOOTPRINT_EXPIRATION_INSUFFICIENT_REFUNDABLE_FEE:
+//    case EXTEND_FOOTPRINT_TTL_MALFORMED:
+//    case EXTEND_FOOTPRINT_TTL_RESOURCE_LIMIT_EXCEEDED:
+//    case EXTEND_FOOTPRINT_TTL_INSUFFICIENT_REFUNDABLE_FEE:
 //        void;
 //    };
 //
-// union with discriminant BumpFootprintExpirationResultCode
+// union with discriminant ExtendFootprintTtlResultCode
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
@@ -37130,19 +37130,19 @@ impl WriteXdr for BumpFootprintExpirationResultCode {
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
-pub enum BumpFootprintExpirationResult {
+pub enum ExtendFootprintTtlResult {
     Success,
     Malformed,
     ResourceLimitExceeded,
     InsufficientRefundableFee,
 }
 
-impl BumpFootprintExpirationResult {
-    pub const VARIANTS: [BumpFootprintExpirationResultCode; 4] = [
-        BumpFootprintExpirationResultCode::Success,
-        BumpFootprintExpirationResultCode::Malformed,
-        BumpFootprintExpirationResultCode::ResourceLimitExceeded,
-        BumpFootprintExpirationResultCode::InsufficientRefundableFee,
+impl ExtendFootprintTtlResult {
+    pub const VARIANTS: [ExtendFootprintTtlResultCode; 4] = [
+        ExtendFootprintTtlResultCode::Success,
+        ExtendFootprintTtlResultCode::Malformed,
+        ExtendFootprintTtlResultCode::ResourceLimitExceeded,
+        ExtendFootprintTtlResultCode::InsufficientRefundableFee,
     ];
     pub const VARIANTS_STR: [&'static str; 4] = [
         "Success",
@@ -37162,60 +37162,58 @@ impl BumpFootprintExpirationResult {
     }
 
     #[must_use]
-    pub const fn discriminant(&self) -> BumpFootprintExpirationResultCode {
+    pub const fn discriminant(&self) -> ExtendFootprintTtlResultCode {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Success => BumpFootprintExpirationResultCode::Success,
-            Self::Malformed => BumpFootprintExpirationResultCode::Malformed,
-            Self::ResourceLimitExceeded => BumpFootprintExpirationResultCode::ResourceLimitExceeded,
+            Self::Success => ExtendFootprintTtlResultCode::Success,
+            Self::Malformed => ExtendFootprintTtlResultCode::Malformed,
+            Self::ResourceLimitExceeded => ExtendFootprintTtlResultCode::ResourceLimitExceeded,
             Self::InsufficientRefundableFee => {
-                BumpFootprintExpirationResultCode::InsufficientRefundableFee
+                ExtendFootprintTtlResultCode::InsufficientRefundableFee
             }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [BumpFootprintExpirationResultCode; 4] {
+    pub const fn variants() -> [ExtendFootprintTtlResultCode; 4] {
         Self::VARIANTS
     }
 }
 
-impl Name for BumpFootprintExpirationResult {
+impl Name for ExtendFootprintTtlResult {
     #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
-impl Discriminant<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResult {
+impl Discriminant<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResult {
     #[must_use]
-    fn discriminant(&self) -> BumpFootprintExpirationResultCode {
+    fn discriminant(&self) -> ExtendFootprintTtlResultCode {
         Self::discriminant(self)
     }
 }
 
-impl Variants<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResult {
-    fn variants() -> slice::Iter<'static, BumpFootprintExpirationResultCode> {
+impl Variants<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResult {
+    fn variants() -> slice::Iter<'static, ExtendFootprintTtlResultCode> {
         Self::VARIANTS.iter()
     }
 }
 
-impl Union<BumpFootprintExpirationResultCode> for BumpFootprintExpirationResult {}
+impl Union<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResult {}
 
-impl ReadXdr for BumpFootprintExpirationResult {
+impl ReadXdr for ExtendFootprintTtlResult {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
-            let dv: BumpFootprintExpirationResultCode =
-                <BumpFootprintExpirationResultCode as ReadXdr>::read_xdr(r)?;
+            let dv: ExtendFootprintTtlResultCode =
+                <ExtendFootprintTtlResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                BumpFootprintExpirationResultCode::Success => Self::Success,
-                BumpFootprintExpirationResultCode::Malformed => Self::Malformed,
-                BumpFootprintExpirationResultCode::ResourceLimitExceeded => {
-                    Self::ResourceLimitExceeded
-                }
-                BumpFootprintExpirationResultCode::InsufficientRefundableFee => {
+                ExtendFootprintTtlResultCode::Success => Self::Success,
+                ExtendFootprintTtlResultCode::Malformed => Self::Malformed,
+                ExtendFootprintTtlResultCode::ResourceLimitExceeded => Self::ResourceLimitExceeded,
+                ExtendFootprintTtlResultCode::InsufficientRefundableFee => {
                     Self::InsufficientRefundableFee
                 }
                 #[allow(unreachable_patterns)]
@@ -37226,7 +37224,7 @@ impl ReadXdr for BumpFootprintExpirationResult {
     }
 }
 
-impl WriteXdr for BumpFootprintExpirationResult {
+impl WriteXdr for ExtendFootprintTtlResult {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -37693,8 +37691,8 @@ impl WriteXdr for OperationResultCode {
 //            LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
 //        case INVOKE_HOST_FUNCTION:
 //            InvokeHostFunctionResult invokeHostFunctionResult;
-//        case BUMP_FOOTPRINT_EXPIRATION:
-//            BumpFootprintExpirationResult bumpFootprintExpirationResult;
+//        case EXTEND_FOOTPRINT_TTL:
+//            ExtendFootprintTTLResult ExtendFootprintTTLResult;
 //        case RESTORE_FOOTPRINT:
 //            RestoreFootprintResult restoreFootprintResult;
 //        }
@@ -37734,7 +37732,7 @@ pub enum OperationResultTr {
     LiquidityPoolDeposit(LiquidityPoolDepositResult),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawResult),
     InvokeHostFunction(InvokeHostFunctionResult),
-    BumpFootprintExpiration(BumpFootprintExpirationResult),
+    ExtendFootprintTtl(ExtendFootprintTtlResult),
     RestoreFootprint(RestoreFootprintResult),
 }
 
@@ -37765,7 +37763,7 @@ impl OperationResultTr {
         OperationType::LiquidityPoolDeposit,
         OperationType::LiquidityPoolWithdraw,
         OperationType::InvokeHostFunction,
-        OperationType::BumpFootprintExpiration,
+        OperationType::ExtendFootprintTtl,
         OperationType::RestoreFootprint,
     ];
     pub const VARIANTS_STR: [&'static str; 27] = [
@@ -37794,7 +37792,7 @@ impl OperationResultTr {
         "LiquidityPoolDeposit",
         "LiquidityPoolWithdraw",
         "InvokeHostFunction",
-        "BumpFootprintExpiration",
+        "ExtendFootprintTtl",
         "RestoreFootprint",
     ];
 
@@ -37826,7 +37824,7 @@ impl OperationResultTr {
             Self::LiquidityPoolDeposit(_) => "LiquidityPoolDeposit",
             Self::LiquidityPoolWithdraw(_) => "LiquidityPoolWithdraw",
             Self::InvokeHostFunction(_) => "InvokeHostFunction",
-            Self::BumpFootprintExpiration(_) => "BumpFootprintExpiration",
+            Self::ExtendFootprintTtl(_) => "ExtendFootprintTtl",
             Self::RestoreFootprint(_) => "RestoreFootprint",
         }
     }
@@ -37860,7 +37858,7 @@ impl OperationResultTr {
             Self::LiquidityPoolDeposit(_) => OperationType::LiquidityPoolDeposit,
             Self::LiquidityPoolWithdraw(_) => OperationType::LiquidityPoolWithdraw,
             Self::InvokeHostFunction(_) => OperationType::InvokeHostFunction,
-            Self::BumpFootprintExpiration(_) => OperationType::BumpFootprintExpiration,
+            Self::ExtendFootprintTtl(_) => OperationType::ExtendFootprintTtl,
             Self::RestoreFootprint(_) => OperationType::RestoreFootprint,
         }
     }
@@ -37959,8 +37957,8 @@ impl ReadXdr for OperationResultTr {
                 OperationType::InvokeHostFunction => {
                     Self::InvokeHostFunction(InvokeHostFunctionResult::read_xdr(r)?)
                 }
-                OperationType::BumpFootprintExpiration => {
-                    Self::BumpFootprintExpiration(BumpFootprintExpirationResult::read_xdr(r)?)
+                OperationType::ExtendFootprintTtl => {
+                    Self::ExtendFootprintTtl(ExtendFootprintTtlResult::read_xdr(r)?)
                 }
                 OperationType::RestoreFootprint => {
                     Self::RestoreFootprint(RestoreFootprintResult::read_xdr(r)?)
@@ -38005,7 +38003,7 @@ impl WriteXdr for OperationResultTr {
                 Self::LiquidityPoolDeposit(v) => v.write_xdr(w)?,
                 Self::LiquidityPoolWithdraw(v) => v.write_xdr(w)?,
                 Self::InvokeHostFunction(v) => v.write_xdr(w)?,
-                Self::BumpFootprintExpiration(v) => v.write_xdr(w)?,
+                Self::ExtendFootprintTtl(v) => v.write_xdr(w)?,
                 Self::RestoreFootprint(v) => v.write_xdr(w)?,
             };
             Ok(())
@@ -38070,8 +38068,8 @@ impl WriteXdr for OperationResultTr {
 //            LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
 //        case INVOKE_HOST_FUNCTION:
 //            InvokeHostFunctionResult invokeHostFunctionResult;
-//        case BUMP_FOOTPRINT_EXPIRATION:
-//            BumpFootprintExpirationResult bumpFootprintExpirationResult;
+//        case EXTEND_FOOTPRINT_TTL:
+//            ExtendFootprintTTLResult ExtendFootprintTTLResult;
 //        case RESTORE_FOOTPRINT:
 //            RestoreFootprintResult restoreFootprintResult;
 //        }
@@ -40924,7 +40922,7 @@ pub enum TypeVariant {
     ConfigSettingContractBandwidthV0,
     ContractCostType,
     ContractCostParamEntry,
-    StateExpirationSettings,
+    StateArchivalSettings,
     EvictionIterator,
     ContractCostParams,
     ConfigSettingId,
@@ -41044,7 +41042,7 @@ pub enum TypeVariant {
     ContractDataDurability,
     ContractDataEntry,
     ContractCodeEntry,
-    ExpirationEntry,
+    TtlEntry,
     LedgerEntryExtensionV1,
     LedgerEntryExtensionV1Ext,
     LedgerEntry,
@@ -41060,7 +41058,7 @@ pub enum TypeVariant {
     LedgerKeyContractData,
     LedgerKeyContractCode,
     LedgerKeyConfigSetting,
-    LedgerKeyExpiration,
+    LedgerKeyTtl,
     EnvelopeType,
     UpgradeType,
     StellarValueType,
@@ -41193,7 +41191,7 @@ pub enum TypeVariant {
     SorobanCredentials,
     SorobanAuthorizationEntry,
     InvokeHostFunctionOp,
-    BumpFootprintExpirationOp,
+    ExtendFootprintTtlOp,
     RestoreFootprintOp,
     Operation,
     OperationBody,
@@ -41285,8 +41283,8 @@ pub enum TypeVariant {
     LiquidityPoolWithdrawResult,
     InvokeHostFunctionResultCode,
     InvokeHostFunctionResult,
-    BumpFootprintExpirationResultCode,
-    BumpFootprintExpirationResult,
+    ExtendFootprintTtlResultCode,
+    ExtendFootprintTtlResult,
     RestoreFootprintResultCode,
     RestoreFootprintResult,
     OperationResultCode,
@@ -41346,7 +41344,7 @@ impl TypeVariant {
         TypeVariant::ConfigSettingContractBandwidthV0,
         TypeVariant::ContractCostType,
         TypeVariant::ContractCostParamEntry,
-        TypeVariant::StateExpirationSettings,
+        TypeVariant::StateArchivalSettings,
         TypeVariant::EvictionIterator,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
@@ -41466,7 +41464,7 @@ impl TypeVariant {
         TypeVariant::ContractDataDurability,
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractCodeEntry,
-        TypeVariant::ExpirationEntry,
+        TypeVariant::TtlEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -41482,7 +41480,7 @@ impl TypeVariant {
         TypeVariant::LedgerKeyContractData,
         TypeVariant::LedgerKeyContractCode,
         TypeVariant::LedgerKeyConfigSetting,
-        TypeVariant::LedgerKeyExpiration,
+        TypeVariant::LedgerKeyTtl,
         TypeVariant::EnvelopeType,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
@@ -41615,7 +41613,7 @@ impl TypeVariant {
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
         TypeVariant::InvokeHostFunctionOp,
-        TypeVariant::BumpFootprintExpirationOp,
+        TypeVariant::ExtendFootprintTtlOp,
         TypeVariant::RestoreFootprintOp,
         TypeVariant::Operation,
         TypeVariant::OperationBody,
@@ -41707,8 +41705,8 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolWithdrawResult,
         TypeVariant::InvokeHostFunctionResultCode,
         TypeVariant::InvokeHostFunctionResult,
-        TypeVariant::BumpFootprintExpirationResultCode,
-        TypeVariant::BumpFootprintExpirationResult,
+        TypeVariant::ExtendFootprintTtlResultCode,
+        TypeVariant::ExtendFootprintTtlResult,
         TypeVariant::RestoreFootprintResultCode,
         TypeVariant::RestoreFootprintResult,
         TypeVariant::OperationResultCode,
@@ -41766,7 +41764,7 @@ impl TypeVariant {
         "ConfigSettingContractBandwidthV0",
         "ContractCostType",
         "ContractCostParamEntry",
-        "StateExpirationSettings",
+        "StateArchivalSettings",
         "EvictionIterator",
         "ContractCostParams",
         "ConfigSettingId",
@@ -41886,7 +41884,7 @@ impl TypeVariant {
         "ContractDataDurability",
         "ContractDataEntry",
         "ContractCodeEntry",
-        "ExpirationEntry",
+        "TtlEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -41902,7 +41900,7 @@ impl TypeVariant {
         "LedgerKeyContractData",
         "LedgerKeyContractCode",
         "LedgerKeyConfigSetting",
-        "LedgerKeyExpiration",
+        "LedgerKeyTtl",
         "EnvelopeType",
         "UpgradeType",
         "StellarValueType",
@@ -42035,7 +42033,7 @@ impl TypeVariant {
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
         "InvokeHostFunctionOp",
-        "BumpFootprintExpirationOp",
+        "ExtendFootprintTtlOp",
         "RestoreFootprintOp",
         "Operation",
         "OperationBody",
@@ -42127,8 +42125,8 @@ impl TypeVariant {
         "LiquidityPoolWithdrawResult",
         "InvokeHostFunctionResultCode",
         "InvokeHostFunctionResult",
-        "BumpFootprintExpirationResultCode",
-        "BumpFootprintExpirationResult",
+        "ExtendFootprintTtlResultCode",
+        "ExtendFootprintTtlResult",
         "RestoreFootprintResultCode",
         "RestoreFootprintResult",
         "OperationResultCode",
@@ -42190,7 +42188,7 @@ impl TypeVariant {
             Self::ConfigSettingContractBandwidthV0 => "ConfigSettingContractBandwidthV0",
             Self::ContractCostType => "ContractCostType",
             Self::ContractCostParamEntry => "ContractCostParamEntry",
-            Self::StateExpirationSettings => "StateExpirationSettings",
+            Self::StateArchivalSettings => "StateArchivalSettings",
             Self::EvictionIterator => "EvictionIterator",
             Self::ContractCostParams => "ContractCostParams",
             Self::ConfigSettingId => "ConfigSettingId",
@@ -42312,7 +42310,7 @@ impl TypeVariant {
             Self::ContractDataDurability => "ContractDataDurability",
             Self::ContractDataEntry => "ContractDataEntry",
             Self::ContractCodeEntry => "ContractCodeEntry",
-            Self::ExpirationEntry => "ExpirationEntry",
+            Self::TtlEntry => "TtlEntry",
             Self::LedgerEntryExtensionV1 => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry => "LedgerEntry",
@@ -42328,7 +42326,7 @@ impl TypeVariant {
             Self::LedgerKeyContractData => "LedgerKeyContractData",
             Self::LedgerKeyContractCode => "LedgerKeyContractCode",
             Self::LedgerKeyConfigSetting => "LedgerKeyConfigSetting",
-            Self::LedgerKeyExpiration => "LedgerKeyExpiration",
+            Self::LedgerKeyTtl => "LedgerKeyTtl",
             Self::EnvelopeType => "EnvelopeType",
             Self::UpgradeType => "UpgradeType",
             Self::StellarValueType => "StellarValueType",
@@ -42461,7 +42459,7 @@ impl TypeVariant {
             Self::SorobanCredentials => "SorobanCredentials",
             Self::SorobanAuthorizationEntry => "SorobanAuthorizationEntry",
             Self::InvokeHostFunctionOp => "InvokeHostFunctionOp",
-            Self::BumpFootprintExpirationOp => "BumpFootprintExpirationOp",
+            Self::ExtendFootprintTtlOp => "ExtendFootprintTtlOp",
             Self::RestoreFootprintOp => "RestoreFootprintOp",
             Self::Operation => "Operation",
             Self::OperationBody => "OperationBody",
@@ -42557,8 +42555,8 @@ impl TypeVariant {
             Self::LiquidityPoolWithdrawResult => "LiquidityPoolWithdrawResult",
             Self::InvokeHostFunctionResultCode => "InvokeHostFunctionResultCode",
             Self::InvokeHostFunctionResult => "InvokeHostFunctionResult",
-            Self::BumpFootprintExpirationResultCode => "BumpFootprintExpirationResultCode",
-            Self::BumpFootprintExpirationResult => "BumpFootprintExpirationResult",
+            Self::ExtendFootprintTtlResultCode => "ExtendFootprintTtlResultCode",
+            Self::ExtendFootprintTtlResult => "ExtendFootprintTtlResult",
             Self::RestoreFootprintResultCode => "RestoreFootprintResultCode",
             Self::RestoreFootprintResult => "RestoreFootprintResult",
             Self::OperationResultCode => "OperationResultCode",
@@ -42646,7 +42644,7 @@ impl core::str::FromStr for TypeVariant {
             "ConfigSettingContractBandwidthV0" => Ok(Self::ConfigSettingContractBandwidthV0),
             "ContractCostType" => Ok(Self::ContractCostType),
             "ContractCostParamEntry" => Ok(Self::ContractCostParamEntry),
-            "StateExpirationSettings" => Ok(Self::StateExpirationSettings),
+            "StateArchivalSettings" => Ok(Self::StateArchivalSettings),
             "EvictionIterator" => Ok(Self::EvictionIterator),
             "ContractCostParams" => Ok(Self::ContractCostParams),
             "ConfigSettingId" => Ok(Self::ConfigSettingId),
@@ -42768,7 +42766,7 @@ impl core::str::FromStr for TypeVariant {
             "ContractDataDurability" => Ok(Self::ContractDataDurability),
             "ContractDataEntry" => Ok(Self::ContractDataEntry),
             "ContractCodeEntry" => Ok(Self::ContractCodeEntry),
-            "ExpirationEntry" => Ok(Self::ExpirationEntry),
+            "TtlEntry" => Ok(Self::TtlEntry),
             "LedgerEntryExtensionV1" => Ok(Self::LedgerEntryExtensionV1),
             "LedgerEntryExtensionV1Ext" => Ok(Self::LedgerEntryExtensionV1Ext),
             "LedgerEntry" => Ok(Self::LedgerEntry),
@@ -42784,7 +42782,7 @@ impl core::str::FromStr for TypeVariant {
             "LedgerKeyContractData" => Ok(Self::LedgerKeyContractData),
             "LedgerKeyContractCode" => Ok(Self::LedgerKeyContractCode),
             "LedgerKeyConfigSetting" => Ok(Self::LedgerKeyConfigSetting),
-            "LedgerKeyExpiration" => Ok(Self::LedgerKeyExpiration),
+            "LedgerKeyTtl" => Ok(Self::LedgerKeyTtl),
             "EnvelopeType" => Ok(Self::EnvelopeType),
             "UpgradeType" => Ok(Self::UpgradeType),
             "StellarValueType" => Ok(Self::StellarValueType),
@@ -42917,7 +42915,7 @@ impl core::str::FromStr for TypeVariant {
             "SorobanCredentials" => Ok(Self::SorobanCredentials),
             "SorobanAuthorizationEntry" => Ok(Self::SorobanAuthorizationEntry),
             "InvokeHostFunctionOp" => Ok(Self::InvokeHostFunctionOp),
-            "BumpFootprintExpirationOp" => Ok(Self::BumpFootprintExpirationOp),
+            "ExtendFootprintTtlOp" => Ok(Self::ExtendFootprintTtlOp),
             "RestoreFootprintOp" => Ok(Self::RestoreFootprintOp),
             "Operation" => Ok(Self::Operation),
             "OperationBody" => Ok(Self::OperationBody),
@@ -43017,8 +43015,8 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolWithdrawResult" => Ok(Self::LiquidityPoolWithdrawResult),
             "InvokeHostFunctionResultCode" => Ok(Self::InvokeHostFunctionResultCode),
             "InvokeHostFunctionResult" => Ok(Self::InvokeHostFunctionResult),
-            "BumpFootprintExpirationResultCode" => Ok(Self::BumpFootprintExpirationResultCode),
-            "BumpFootprintExpirationResult" => Ok(Self::BumpFootprintExpirationResult),
+            "ExtendFootprintTtlResultCode" => Ok(Self::ExtendFootprintTtlResultCode),
+            "ExtendFootprintTtlResult" => Ok(Self::ExtendFootprintTtlResult),
             "RestoreFootprintResultCode" => Ok(Self::RestoreFootprintResultCode),
             "RestoreFootprintResult" => Ok(Self::RestoreFootprintResult),
             "OperationResultCode" => Ok(Self::OperationResultCode),
@@ -43087,7 +43085,7 @@ pub enum Type {
     ConfigSettingContractBandwidthV0(Box<ConfigSettingContractBandwidthV0>),
     ContractCostType(Box<ContractCostType>),
     ContractCostParamEntry(Box<ContractCostParamEntry>),
-    StateExpirationSettings(Box<StateExpirationSettings>),
+    StateArchivalSettings(Box<StateArchivalSettings>),
     EvictionIterator(Box<EvictionIterator>),
     ContractCostParams(Box<ContractCostParams>),
     ConfigSettingId(Box<ConfigSettingId>),
@@ -43207,7 +43205,7 @@ pub enum Type {
     ContractDataDurability(Box<ContractDataDurability>),
     ContractDataEntry(Box<ContractDataEntry>),
     ContractCodeEntry(Box<ContractCodeEntry>),
-    ExpirationEntry(Box<ExpirationEntry>),
+    TtlEntry(Box<TtlEntry>),
     LedgerEntryExtensionV1(Box<LedgerEntryExtensionV1>),
     LedgerEntryExtensionV1Ext(Box<LedgerEntryExtensionV1Ext>),
     LedgerEntry(Box<LedgerEntry>),
@@ -43223,7 +43221,7 @@ pub enum Type {
     LedgerKeyContractData(Box<LedgerKeyContractData>),
     LedgerKeyContractCode(Box<LedgerKeyContractCode>),
     LedgerKeyConfigSetting(Box<LedgerKeyConfigSetting>),
-    LedgerKeyExpiration(Box<LedgerKeyExpiration>),
+    LedgerKeyTtl(Box<LedgerKeyTtl>),
     EnvelopeType(Box<EnvelopeType>),
     UpgradeType(Box<UpgradeType>),
     StellarValueType(Box<StellarValueType>),
@@ -43356,7 +43354,7 @@ pub enum Type {
     SorobanCredentials(Box<SorobanCredentials>),
     SorobanAuthorizationEntry(Box<SorobanAuthorizationEntry>),
     InvokeHostFunctionOp(Box<InvokeHostFunctionOp>),
-    BumpFootprintExpirationOp(Box<BumpFootprintExpirationOp>),
+    ExtendFootprintTtlOp(Box<ExtendFootprintTtlOp>),
     RestoreFootprintOp(Box<RestoreFootprintOp>),
     Operation(Box<Operation>),
     OperationBody(Box<OperationBody>),
@@ -43448,8 +43446,8 @@ pub enum Type {
     LiquidityPoolWithdrawResult(Box<LiquidityPoolWithdrawResult>),
     InvokeHostFunctionResultCode(Box<InvokeHostFunctionResultCode>),
     InvokeHostFunctionResult(Box<InvokeHostFunctionResult>),
-    BumpFootprintExpirationResultCode(Box<BumpFootprintExpirationResultCode>),
-    BumpFootprintExpirationResult(Box<BumpFootprintExpirationResult>),
+    ExtendFootprintTtlResultCode(Box<ExtendFootprintTtlResultCode>),
+    ExtendFootprintTtlResult(Box<ExtendFootprintTtlResult>),
     RestoreFootprintResultCode(Box<RestoreFootprintResultCode>),
     RestoreFootprintResult(Box<RestoreFootprintResult>),
     OperationResultCode(Box<OperationResultCode>),
@@ -43509,7 +43507,7 @@ impl Type {
         TypeVariant::ConfigSettingContractBandwidthV0,
         TypeVariant::ContractCostType,
         TypeVariant::ContractCostParamEntry,
-        TypeVariant::StateExpirationSettings,
+        TypeVariant::StateArchivalSettings,
         TypeVariant::EvictionIterator,
         TypeVariant::ContractCostParams,
         TypeVariant::ConfigSettingId,
@@ -43629,7 +43627,7 @@ impl Type {
         TypeVariant::ContractDataDurability,
         TypeVariant::ContractDataEntry,
         TypeVariant::ContractCodeEntry,
-        TypeVariant::ExpirationEntry,
+        TypeVariant::TtlEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
         TypeVariant::LedgerEntry,
@@ -43645,7 +43643,7 @@ impl Type {
         TypeVariant::LedgerKeyContractData,
         TypeVariant::LedgerKeyContractCode,
         TypeVariant::LedgerKeyConfigSetting,
-        TypeVariant::LedgerKeyExpiration,
+        TypeVariant::LedgerKeyTtl,
         TypeVariant::EnvelopeType,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
@@ -43778,7 +43776,7 @@ impl Type {
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
         TypeVariant::InvokeHostFunctionOp,
-        TypeVariant::BumpFootprintExpirationOp,
+        TypeVariant::ExtendFootprintTtlOp,
         TypeVariant::RestoreFootprintOp,
         TypeVariant::Operation,
         TypeVariant::OperationBody,
@@ -43870,8 +43868,8 @@ impl Type {
         TypeVariant::LiquidityPoolWithdrawResult,
         TypeVariant::InvokeHostFunctionResultCode,
         TypeVariant::InvokeHostFunctionResult,
-        TypeVariant::BumpFootprintExpirationResultCode,
-        TypeVariant::BumpFootprintExpirationResult,
+        TypeVariant::ExtendFootprintTtlResultCode,
+        TypeVariant::ExtendFootprintTtlResult,
         TypeVariant::RestoreFootprintResultCode,
         TypeVariant::RestoreFootprintResult,
         TypeVariant::OperationResultCode,
@@ -43929,7 +43927,7 @@ impl Type {
         "ConfigSettingContractBandwidthV0",
         "ContractCostType",
         "ContractCostParamEntry",
-        "StateExpirationSettings",
+        "StateArchivalSettings",
         "EvictionIterator",
         "ContractCostParams",
         "ConfigSettingId",
@@ -44049,7 +44047,7 @@ impl Type {
         "ContractDataDurability",
         "ContractDataEntry",
         "ContractCodeEntry",
-        "ExpirationEntry",
+        "TtlEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
         "LedgerEntry",
@@ -44065,7 +44063,7 @@ impl Type {
         "LedgerKeyContractData",
         "LedgerKeyContractCode",
         "LedgerKeyConfigSetting",
-        "LedgerKeyExpiration",
+        "LedgerKeyTtl",
         "EnvelopeType",
         "UpgradeType",
         "StellarValueType",
@@ -44198,7 +44196,7 @@ impl Type {
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
         "InvokeHostFunctionOp",
-        "BumpFootprintExpirationOp",
+        "ExtendFootprintTtlOp",
         "RestoreFootprintOp",
         "Operation",
         "OperationBody",
@@ -44290,8 +44288,8 @@ impl Type {
         "LiquidityPoolWithdrawResult",
         "InvokeHostFunctionResultCode",
         "InvokeHostFunctionResult",
-        "BumpFootprintExpirationResultCode",
-        "BumpFootprintExpirationResult",
+        "ExtendFootprintTtlResultCode",
+        "ExtendFootprintTtlResult",
         "RestoreFootprintResultCode",
         "RestoreFootprintResult",
         "OperationResultCode",
@@ -44417,9 +44415,9 @@ impl Type {
                     ContractCostParamEntry::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::StateExpirationSettings => r.with_limited_depth(|r| {
-                Ok(Self::StateExpirationSettings(Box::new(
-                    StateExpirationSettings::read_xdr(r)?,
+            TypeVariant::StateArchivalSettings => r.with_limited_depth(|r| {
+                Ok(Self::StateArchivalSettings(Box::new(
+                    StateArchivalSettings::read_xdr(r)?,
                 )))
             }),
             TypeVariant::EvictionIterator => r.with_limited_depth(|r| {
@@ -44901,11 +44899,9 @@ impl Type {
                     ContractCodeEntry::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ExpirationEntry => r.with_limited_depth(|r| {
-                Ok(Self::ExpirationEntry(Box::new(ExpirationEntry::read_xdr(
-                    r,
-                )?)))
-            }),
+            TypeVariant::TtlEntry => {
+                r.with_limited_depth(|r| Ok(Self::TtlEntry(Box::new(TtlEntry::read_xdr(r)?))))
+            }
             TypeVariant::LedgerEntryExtensionV1 => r.with_limited_depth(|r| {
                 Ok(Self::LedgerEntryExtensionV1(Box::new(
                     LedgerEntryExtensionV1::read_xdr(r)?,
@@ -44971,10 +44967,8 @@ impl Type {
                     LedgerKeyConfigSetting::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::LedgerKeyExpiration => r.with_limited_depth(|r| {
-                Ok(Self::LedgerKeyExpiration(Box::new(
-                    LedgerKeyExpiration::read_xdr(r)?,
-                )))
+            TypeVariant::LedgerKeyTtl => r.with_limited_depth(|r| {
+                Ok(Self::LedgerKeyTtl(Box::new(LedgerKeyTtl::read_xdr(r)?)))
             }),
             TypeVariant::EnvelopeType => r.with_limited_depth(|r| {
                 Ok(Self::EnvelopeType(Box::new(EnvelopeType::read_xdr(r)?)))
@@ -45556,9 +45550,9 @@ impl Type {
                     InvokeHostFunctionOp::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::BumpFootprintExpirationOp => r.with_limited_depth(|r| {
-                Ok(Self::BumpFootprintExpirationOp(Box::new(
-                    BumpFootprintExpirationOp::read_xdr(r)?,
+            TypeVariant::ExtendFootprintTtlOp => r.with_limited_depth(|r| {
+                Ok(Self::ExtendFootprintTtlOp(Box::new(
+                    ExtendFootprintTtlOp::read_xdr(r)?,
                 )))
             }),
             TypeVariant::RestoreFootprintOp => r.with_limited_depth(|r| {
@@ -45986,14 +45980,14 @@ impl Type {
                     InvokeHostFunctionResult::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::BumpFootprintExpirationResultCode => r.with_limited_depth(|r| {
-                Ok(Self::BumpFootprintExpirationResultCode(Box::new(
-                    BumpFootprintExpirationResultCode::read_xdr(r)?,
+            TypeVariant::ExtendFootprintTtlResultCode => r.with_limited_depth(|r| {
+                Ok(Self::ExtendFootprintTtlResultCode(Box::new(
+                    ExtendFootprintTtlResultCode::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::BumpFootprintExpirationResult => r.with_limited_depth(|r| {
-                Ok(Self::BumpFootprintExpirationResult(Box::new(
-                    BumpFootprintExpirationResult::read_xdr(r)?,
+            TypeVariant::ExtendFootprintTtlResult => r.with_limited_depth(|r| {
+                Ok(Self::ExtendFootprintTtlResult(Box::new(
+                    ExtendFootprintTtlResult::read_xdr(r)?,
                 )))
             }),
             TypeVariant::RestoreFootprintResultCode => r.with_limited_depth(|r| {
@@ -46275,9 +46269,9 @@ impl Type {
                 ReadXdrIter::<_, ContractCostParamEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t)))),
             ),
-            TypeVariant::StateExpirationSettings => Box::new(
-                ReadXdrIter::<_, StateExpirationSettings>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::StateExpirationSettings(Box::new(t)))),
+            TypeVariant::StateArchivalSettings => Box::new(
+                ReadXdrIter::<_, StateArchivalSettings>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::StateArchivalSettings(Box::new(t)))),
             ),
             TypeVariant::EvictionIterator => Box::new(
                 ReadXdrIter::<_, EvictionIterator>::new(&mut r.inner, r.depth_remaining)
@@ -46770,9 +46764,9 @@ impl Type {
                 ReadXdrIter::<_, ContractCodeEntry>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
             ),
-            TypeVariant::ExpirationEntry => Box::new(
-                ReadXdrIter::<_, ExpirationEntry>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ExpirationEntry(Box::new(t)))),
+            TypeVariant::TtlEntry => Box::new(
+                ReadXdrIter::<_, TtlEntry>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TtlEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(&mut r.inner, r.depth_remaining)
@@ -46834,9 +46828,9 @@ impl Type {
                 ReadXdrIter::<_, LedgerKeyConfigSetting>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))),
             ),
-            TypeVariant::LedgerKeyExpiration => Box::new(
-                ReadXdrIter::<_, LedgerKeyExpiration>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::LedgerKeyExpiration(Box::new(t)))),
+            TypeVariant::LedgerKeyTtl => Box::new(
+                ReadXdrIter::<_, LedgerKeyTtl>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyTtl(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, EnvelopeType>::new(&mut r.inner, r.depth_remaining)
@@ -47387,9 +47381,9 @@ impl Type {
                 ReadXdrIter::<_, InvokeHostFunctionOp>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
             ),
-            TypeVariant::BumpFootprintExpirationOp => Box::new(
-                ReadXdrIter::<_, BumpFootprintExpirationOp>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::BumpFootprintExpirationOp(Box::new(t)))),
+            TypeVariant::ExtendFootprintTtlOp => Box::new(
+                ReadXdrIter::<_, ExtendFootprintTtlOp>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExtendFootprintTtlOp(Box::new(t)))),
             ),
             TypeVariant::RestoreFootprintOp => Box::new(
                 ReadXdrIter::<_, RestoreFootprintOp>::new(&mut r.inner, r.depth_remaining)
@@ -47817,19 +47811,16 @@ impl Type {
                 ReadXdrIter::<_, InvokeHostFunctionResult>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t)))),
             ),
-            TypeVariant::BumpFootprintExpirationResultCode => Box::new(
-                ReadXdrIter::<_, BumpFootprintExpirationResultCode>::new(
+            TypeVariant::ExtendFootprintTtlResultCode => Box::new(
+                ReadXdrIter::<_, ExtendFootprintTtlResultCode>::new(
                     &mut r.inner,
                     r.depth_remaining,
                 )
-                .map(|r| r.map(|t| Self::BumpFootprintExpirationResultCode(Box::new(t)))),
+                .map(|r| r.map(|t| Self::ExtendFootprintTtlResultCode(Box::new(t)))),
             ),
-            TypeVariant::BumpFootprintExpirationResult => Box::new(
-                ReadXdrIter::<_, BumpFootprintExpirationResult>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::BumpFootprintExpirationResult(Box::new(t)))),
+            TypeVariant::ExtendFootprintTtlResult => Box::new(
+                ReadXdrIter::<_, ExtendFootprintTtlResult>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExtendFootprintTtlResult(Box::new(t)))),
             ),
             TypeVariant::RestoreFootprintResultCode => Box::new(
                 ReadXdrIter::<_, RestoreFootprintResultCode>::new(&mut r.inner, r.depth_remaining)
@@ -48091,12 +48082,12 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t.0)))),
             ),
-            TypeVariant::StateExpirationSettings => Box::new(
-                ReadXdrIter::<_, Frame<StateExpirationSettings>>::new(
+            TypeVariant::StateArchivalSettings => Box::new(
+                ReadXdrIter::<_, Frame<StateArchivalSettings>>::new(
                     &mut r.inner,
                     r.depth_remaining,
                 )
-                .map(|r| r.map(|t| Self::StateExpirationSettings(Box::new(t.0)))),
+                .map(|r| r.map(|t| Self::StateArchivalSettings(Box::new(t.0)))),
             ),
             TypeVariant::EvictionIterator => Box::new(
                 ReadXdrIter::<_, Frame<EvictionIterator>>::new(&mut r.inner, r.depth_remaining)
@@ -48652,9 +48643,9 @@ impl Type {
                 ReadXdrIter::<_, Frame<ContractCodeEntry>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t.0)))),
             ),
-            TypeVariant::ExpirationEntry => Box::new(
-                ReadXdrIter::<_, Frame<ExpirationEntry>>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ExpirationEntry(Box::new(t.0)))),
+            TypeVariant::TtlEntry => Box::new(
+                ReadXdrIter::<_, Frame<TtlEntry>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TtlEntry(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerEntryExtensionV1>>::new(
@@ -48737,9 +48728,9 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t.0)))),
             ),
-            TypeVariant::LedgerKeyExpiration => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyExpiration>>::new(&mut r.inner, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::LedgerKeyExpiration(Box::new(t.0)))),
+            TypeVariant::LedgerKeyTtl => Box::new(
+                ReadXdrIter::<_, Frame<LedgerKeyTtl>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyTtl(Box::new(t.0)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, Frame<EnvelopeType>>::new(&mut r.inner, r.depth_remaining)
@@ -49401,12 +49392,9 @@ impl Type {
                 ReadXdrIter::<_, Frame<InvokeHostFunctionOp>>::new(&mut r.inner, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t.0)))),
             ),
-            TypeVariant::BumpFootprintExpirationOp => Box::new(
-                ReadXdrIter::<_, Frame<BumpFootprintExpirationOp>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::BumpFootprintExpirationOp(Box::new(t.0)))),
+            TypeVariant::ExtendFootprintTtlOp => Box::new(
+                ReadXdrIter::<_, Frame<ExtendFootprintTtlOp>>::new(&mut r.inner, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExtendFootprintTtlOp(Box::new(t.0)))),
             ),
             TypeVariant::RestoreFootprintOp => Box::new(
                 ReadXdrIter::<_, Frame<RestoreFootprintOp>>::new(&mut r.inner, r.depth_remaining)
@@ -49915,19 +49903,19 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t.0)))),
             ),
-            TypeVariant::BumpFootprintExpirationResultCode => Box::new(
-                ReadXdrIter::<_, Frame<BumpFootprintExpirationResultCode>>::new(
+            TypeVariant::ExtendFootprintTtlResultCode => Box::new(
+                ReadXdrIter::<_, Frame<ExtendFootprintTtlResultCode>>::new(
                     &mut r.inner,
                     r.depth_remaining,
                 )
-                .map(|r| r.map(|t| Self::BumpFootprintExpirationResultCode(Box::new(t.0)))),
+                .map(|r| r.map(|t| Self::ExtendFootprintTtlResultCode(Box::new(t.0)))),
             ),
-            TypeVariant::BumpFootprintExpirationResult => Box::new(
-                ReadXdrIter::<_, Frame<BumpFootprintExpirationResult>>::new(
+            TypeVariant::ExtendFootprintTtlResult => Box::new(
+                ReadXdrIter::<_, Frame<ExtendFootprintTtlResult>>::new(
                     &mut r.inner,
                     r.depth_remaining,
                 )
-                .map(|r| r.map(|t| Self::BumpFootprintExpirationResult(Box::new(t.0)))),
+                .map(|r| r.map(|t| Self::ExtendFootprintTtlResult(Box::new(t.0)))),
             ),
             TypeVariant::RestoreFootprintResultCode => Box::new(
                 ReadXdrIter::<_, Frame<RestoreFootprintResultCode>>::new(
@@ -50193,9 +50181,9 @@ impl Type {
                 ReadXdrIter::<_, ContractCostParamEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t)))),
             ),
-            TypeVariant::StateExpirationSettings => Box::new(
-                ReadXdrIter::<_, StateExpirationSettings>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::StateExpirationSettings(Box::new(t)))),
+            TypeVariant::StateArchivalSettings => Box::new(
+                ReadXdrIter::<_, StateArchivalSettings>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::StateArchivalSettings(Box::new(t)))),
             ),
             TypeVariant::EvictionIterator => Box::new(
                 ReadXdrIter::<_, EvictionIterator>::new(dec, r.depth_remaining)
@@ -50676,9 +50664,9 @@ impl Type {
                 ReadXdrIter::<_, ContractCodeEntry>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
             ),
-            TypeVariant::ExpirationEntry => Box::new(
-                ReadXdrIter::<_, ExpirationEntry>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::ExpirationEntry(Box::new(t)))),
+            TypeVariant::TtlEntry => Box::new(
+                ReadXdrIter::<_, TtlEntry>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::TtlEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec, r.depth_remaining)
@@ -50740,9 +50728,9 @@ impl Type {
                 ReadXdrIter::<_, LedgerKeyConfigSetting>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))),
             ),
-            TypeVariant::LedgerKeyExpiration => Box::new(
-                ReadXdrIter::<_, LedgerKeyExpiration>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::LedgerKeyExpiration(Box::new(t)))),
+            TypeVariant::LedgerKeyTtl => Box::new(
+                ReadXdrIter::<_, LedgerKeyTtl>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::LedgerKeyTtl(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
                 ReadXdrIter::<_, EnvelopeType>::new(dec, r.depth_remaining)
@@ -51272,9 +51260,9 @@ impl Type {
                 ReadXdrIter::<_, InvokeHostFunctionOp>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
             ),
-            TypeVariant::BumpFootprintExpirationOp => Box::new(
-                ReadXdrIter::<_, BumpFootprintExpirationOp>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::BumpFootprintExpirationOp(Box::new(t)))),
+            TypeVariant::ExtendFootprintTtlOp => Box::new(
+                ReadXdrIter::<_, ExtendFootprintTtlOp>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExtendFootprintTtlOp(Box::new(t)))),
             ),
             TypeVariant::RestoreFootprintOp => Box::new(
                 ReadXdrIter::<_, RestoreFootprintOp>::new(dec, r.depth_remaining)
@@ -51654,13 +51642,13 @@ impl Type {
                 ReadXdrIter::<_, InvokeHostFunctionResult>::new(dec, r.depth_remaining)
                     .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t)))),
             ),
-            TypeVariant::BumpFootprintExpirationResultCode => Box::new(
-                ReadXdrIter::<_, BumpFootprintExpirationResultCode>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::BumpFootprintExpirationResultCode(Box::new(t)))),
+            TypeVariant::ExtendFootprintTtlResultCode => Box::new(
+                ReadXdrIter::<_, ExtendFootprintTtlResultCode>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExtendFootprintTtlResultCode(Box::new(t)))),
             ),
-            TypeVariant::BumpFootprintExpirationResult => Box::new(
-                ReadXdrIter::<_, BumpFootprintExpirationResult>::new(dec, r.depth_remaining)
-                    .map(|r| r.map(|t| Self::BumpFootprintExpirationResult(Box::new(t)))),
+            TypeVariant::ExtendFootprintTtlResult => Box::new(
+                ReadXdrIter::<_, ExtendFootprintTtlResult>::new(dec, r.depth_remaining)
+                    .map(|r| r.map(|t| Self::ExtendFootprintTtlResult(Box::new(t)))),
             ),
             TypeVariant::RestoreFootprintResultCode => Box::new(
                 ReadXdrIter::<_, RestoreFootprintResultCode>::new(dec, r.depth_remaining)
@@ -51853,7 +51841,7 @@ impl Type {
             Self::ConfigSettingContractBandwidthV0(ref v) => v.as_ref(),
             Self::ContractCostType(ref v) => v.as_ref(),
             Self::ContractCostParamEntry(ref v) => v.as_ref(),
-            Self::StateExpirationSettings(ref v) => v.as_ref(),
+            Self::StateArchivalSettings(ref v) => v.as_ref(),
             Self::EvictionIterator(ref v) => v.as_ref(),
             Self::ContractCostParams(ref v) => v.as_ref(),
             Self::ConfigSettingId(ref v) => v.as_ref(),
@@ -51973,7 +51961,7 @@ impl Type {
             Self::ContractDataDurability(ref v) => v.as_ref(),
             Self::ContractDataEntry(ref v) => v.as_ref(),
             Self::ContractCodeEntry(ref v) => v.as_ref(),
-            Self::ExpirationEntry(ref v) => v.as_ref(),
+            Self::TtlEntry(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1Ext(ref v) => v.as_ref(),
             Self::LedgerEntry(ref v) => v.as_ref(),
@@ -51989,7 +51977,7 @@ impl Type {
             Self::LedgerKeyContractData(ref v) => v.as_ref(),
             Self::LedgerKeyContractCode(ref v) => v.as_ref(),
             Self::LedgerKeyConfigSetting(ref v) => v.as_ref(),
-            Self::LedgerKeyExpiration(ref v) => v.as_ref(),
+            Self::LedgerKeyTtl(ref v) => v.as_ref(),
             Self::EnvelopeType(ref v) => v.as_ref(),
             Self::UpgradeType(ref v) => v.as_ref(),
             Self::StellarValueType(ref v) => v.as_ref(),
@@ -52122,7 +52110,7 @@ impl Type {
             Self::SorobanCredentials(ref v) => v.as_ref(),
             Self::SorobanAuthorizationEntry(ref v) => v.as_ref(),
             Self::InvokeHostFunctionOp(ref v) => v.as_ref(),
-            Self::BumpFootprintExpirationOp(ref v) => v.as_ref(),
+            Self::ExtendFootprintTtlOp(ref v) => v.as_ref(),
             Self::RestoreFootprintOp(ref v) => v.as_ref(),
             Self::Operation(ref v) => v.as_ref(),
             Self::OperationBody(ref v) => v.as_ref(),
@@ -52214,8 +52202,8 @@ impl Type {
             Self::LiquidityPoolWithdrawResult(ref v) => v.as_ref(),
             Self::InvokeHostFunctionResultCode(ref v) => v.as_ref(),
             Self::InvokeHostFunctionResult(ref v) => v.as_ref(),
-            Self::BumpFootprintExpirationResultCode(ref v) => v.as_ref(),
-            Self::BumpFootprintExpirationResult(ref v) => v.as_ref(),
+            Self::ExtendFootprintTtlResultCode(ref v) => v.as_ref(),
+            Self::ExtendFootprintTtlResult(ref v) => v.as_ref(),
             Self::RestoreFootprintResultCode(ref v) => v.as_ref(),
             Self::RestoreFootprintResult(ref v) => v.as_ref(),
             Self::OperationResultCode(ref v) => v.as_ref(),
@@ -52282,7 +52270,7 @@ impl Type {
             Self::ConfigSettingContractBandwidthV0(_) => "ConfigSettingContractBandwidthV0",
             Self::ContractCostType(_) => "ContractCostType",
             Self::ContractCostParamEntry(_) => "ContractCostParamEntry",
-            Self::StateExpirationSettings(_) => "StateExpirationSettings",
+            Self::StateArchivalSettings(_) => "StateArchivalSettings",
             Self::EvictionIterator(_) => "EvictionIterator",
             Self::ContractCostParams(_) => "ContractCostParams",
             Self::ConfigSettingId(_) => "ConfigSettingId",
@@ -52404,7 +52392,7 @@ impl Type {
             Self::ContractDataDurability(_) => "ContractDataDurability",
             Self::ContractDataEntry(_) => "ContractDataEntry",
             Self::ContractCodeEntry(_) => "ContractCodeEntry",
-            Self::ExpirationEntry(_) => "ExpirationEntry",
+            Self::TtlEntry(_) => "TtlEntry",
             Self::LedgerEntryExtensionV1(_) => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext(_) => "LedgerEntryExtensionV1Ext",
             Self::LedgerEntry(_) => "LedgerEntry",
@@ -52420,7 +52408,7 @@ impl Type {
             Self::LedgerKeyContractData(_) => "LedgerKeyContractData",
             Self::LedgerKeyContractCode(_) => "LedgerKeyContractCode",
             Self::LedgerKeyConfigSetting(_) => "LedgerKeyConfigSetting",
-            Self::LedgerKeyExpiration(_) => "LedgerKeyExpiration",
+            Self::LedgerKeyTtl(_) => "LedgerKeyTtl",
             Self::EnvelopeType(_) => "EnvelopeType",
             Self::UpgradeType(_) => "UpgradeType",
             Self::StellarValueType(_) => "StellarValueType",
@@ -52553,7 +52541,7 @@ impl Type {
             Self::SorobanCredentials(_) => "SorobanCredentials",
             Self::SorobanAuthorizationEntry(_) => "SorobanAuthorizationEntry",
             Self::InvokeHostFunctionOp(_) => "InvokeHostFunctionOp",
-            Self::BumpFootprintExpirationOp(_) => "BumpFootprintExpirationOp",
+            Self::ExtendFootprintTtlOp(_) => "ExtendFootprintTtlOp",
             Self::RestoreFootprintOp(_) => "RestoreFootprintOp",
             Self::Operation(_) => "Operation",
             Self::OperationBody(_) => "OperationBody",
@@ -52653,8 +52641,8 @@ impl Type {
             Self::LiquidityPoolWithdrawResult(_) => "LiquidityPoolWithdrawResult",
             Self::InvokeHostFunctionResultCode(_) => "InvokeHostFunctionResultCode",
             Self::InvokeHostFunctionResult(_) => "InvokeHostFunctionResult",
-            Self::BumpFootprintExpirationResultCode(_) => "BumpFootprintExpirationResultCode",
-            Self::BumpFootprintExpirationResult(_) => "BumpFootprintExpirationResult",
+            Self::ExtendFootprintTtlResultCode(_) => "ExtendFootprintTtlResultCode",
+            Self::ExtendFootprintTtlResult(_) => "ExtendFootprintTtlResult",
             Self::RestoreFootprintResultCode(_) => "RestoreFootprintResultCode",
             Self::RestoreFootprintResult(_) => "RestoreFootprintResult",
             Self::OperationResultCode(_) => "OperationResultCode",
@@ -52731,7 +52719,7 @@ impl Type {
             }
             Self::ContractCostType(_) => TypeVariant::ContractCostType,
             Self::ContractCostParamEntry(_) => TypeVariant::ContractCostParamEntry,
-            Self::StateExpirationSettings(_) => TypeVariant::StateExpirationSettings,
+            Self::StateArchivalSettings(_) => TypeVariant::StateArchivalSettings,
             Self::EvictionIterator(_) => TypeVariant::EvictionIterator,
             Self::ContractCostParams(_) => TypeVariant::ContractCostParams,
             Self::ConfigSettingId(_) => TypeVariant::ConfigSettingId,
@@ -52859,7 +52847,7 @@ impl Type {
             Self::ContractDataDurability(_) => TypeVariant::ContractDataDurability,
             Self::ContractDataEntry(_) => TypeVariant::ContractDataEntry,
             Self::ContractCodeEntry(_) => TypeVariant::ContractCodeEntry,
-            Self::ExpirationEntry(_) => TypeVariant::ExpirationEntry,
+            Self::TtlEntry(_) => TypeVariant::TtlEntry,
             Self::LedgerEntryExtensionV1(_) => TypeVariant::LedgerEntryExtensionV1,
             Self::LedgerEntryExtensionV1Ext(_) => TypeVariant::LedgerEntryExtensionV1Ext,
             Self::LedgerEntry(_) => TypeVariant::LedgerEntry,
@@ -52875,7 +52863,7 @@ impl Type {
             Self::LedgerKeyContractData(_) => TypeVariant::LedgerKeyContractData,
             Self::LedgerKeyContractCode(_) => TypeVariant::LedgerKeyContractCode,
             Self::LedgerKeyConfigSetting(_) => TypeVariant::LedgerKeyConfigSetting,
-            Self::LedgerKeyExpiration(_) => TypeVariant::LedgerKeyExpiration,
+            Self::LedgerKeyTtl(_) => TypeVariant::LedgerKeyTtl,
             Self::EnvelopeType(_) => TypeVariant::EnvelopeType,
             Self::UpgradeType(_) => TypeVariant::UpgradeType,
             Self::StellarValueType(_) => TypeVariant::StellarValueType,
@@ -53016,7 +53004,7 @@ impl Type {
             Self::SorobanCredentials(_) => TypeVariant::SorobanCredentials,
             Self::SorobanAuthorizationEntry(_) => TypeVariant::SorobanAuthorizationEntry,
             Self::InvokeHostFunctionOp(_) => TypeVariant::InvokeHostFunctionOp,
-            Self::BumpFootprintExpirationOp(_) => TypeVariant::BumpFootprintExpirationOp,
+            Self::ExtendFootprintTtlOp(_) => TypeVariant::ExtendFootprintTtlOp,
             Self::RestoreFootprintOp(_) => TypeVariant::RestoreFootprintOp,
             Self::Operation(_) => TypeVariant::Operation,
             Self::OperationBody(_) => TypeVariant::OperationBody,
@@ -53136,10 +53124,8 @@ impl Type {
             Self::LiquidityPoolWithdrawResult(_) => TypeVariant::LiquidityPoolWithdrawResult,
             Self::InvokeHostFunctionResultCode(_) => TypeVariant::InvokeHostFunctionResultCode,
             Self::InvokeHostFunctionResult(_) => TypeVariant::InvokeHostFunctionResult,
-            Self::BumpFootprintExpirationResultCode(_) => {
-                TypeVariant::BumpFootprintExpirationResultCode
-            }
-            Self::BumpFootprintExpirationResult(_) => TypeVariant::BumpFootprintExpirationResult,
+            Self::ExtendFootprintTtlResultCode(_) => TypeVariant::ExtendFootprintTtlResultCode,
+            Self::ExtendFootprintTtlResult(_) => TypeVariant::ExtendFootprintTtlResult,
             Self::RestoreFootprintResultCode(_) => TypeVariant::RestoreFootprintResultCode,
             Self::RestoreFootprintResult(_) => TypeVariant::RestoreFootprintResult,
             Self::OperationResultCode(_) => TypeVariant::OperationResultCode,

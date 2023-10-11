@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "dd39f17c5d4513202cf222fe0704dd79fafdeb02d17c672f0d7a381dabc224b2",
+        "e466c4dfae1d5d181afbd990b91f26c5d8ed84a7fa987875f8d643cf97e34a77",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "da2c6af5761f7aa9754964955ccfd1bf74d1f4cf3ab903cf913492e445fb01c6",
+        "c5dd8507bc84e10b67bf3bc74c8f716a660b425814b015025c6f6b6f20cb70e7",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -3473,66 +3473,54 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 //   enum ContractCostType {
 //        // Cost of running 1 wasm instruction
 //        WasmInsnExec = 0,
-//        // Cost of growing wasm linear memory by 1 page
-//        WasmMemAlloc = 1,
-//        // Cost of allocating a chuck of host memory (in bytes)
-//        HostMemAlloc = 2,
-//        // Cost of copying a chuck of bytes into a pre-allocated host memory
-//        HostMemCpy = 3,
-//        // Cost of comparing two slices of host memory
-//        HostMemCmp = 4,
+//        // Cost of allocating a slice of memory (in bytes)
+//        MemAlloc = 1,
+//        // Cost of copying a slice of bytes into a pre-allocated memory
+//        MemCpy = 2,
+//        // Cost of comparing two slices of memory
+//        MemCmp = 3,
 //        // Cost of a host function dispatch, not including the actual work done by
 //        // the function nor the cost of VM invocation machinary
-//        DispatchHostFunction = 5,
+//        DispatchHostFunction = 4,
 //        // Cost of visiting a host object from the host object storage. Exists to
 //        // make sure some baseline cost coverage, i.e. repeatly visiting objects
 //        // by the guest will always incur some charges.
-//        VisitObject = 6,
+//        VisitObject = 5,
 //        // Cost of serializing an xdr object to bytes
-//        ValSer = 7,
+//        ValSer = 6,
 //        // Cost of deserializing an xdr object from bytes
-//        ValDeser = 8,
+//        ValDeser = 7,
 //        // Cost of computing the sha256 hash from bytes
-//        ComputeSha256Hash = 9,
+//        ComputeSha256Hash = 8,
 //        // Cost of computing the ed25519 pubkey from bytes
-//        ComputeEd25519PubKey = 10,
-//        // Cost of accessing an entry in a Map.
-//        MapEntry = 11,
-//        // Cost of accessing an entry in a Vec
-//        VecEntry = 12,
+//        ComputeEd25519PubKey = 9,
 //        // Cost of verifying ed25519 signature of a payload.
-//        VerifyEd25519Sig = 13,
-//        // Cost of reading a slice of vm linear memory
-//        VmMemRead = 14,
-//        // Cost of writing to a slice of vm linear memory
-//        VmMemWrite = 15,
+//        VerifyEd25519Sig = 10,
 //        // Cost of instantiation a VM from wasm bytes code.
-//        VmInstantiation = 16,
+//        VmInstantiation = 11,
 //        // Cost of instantiation a VM from a cached state.
-//        VmCachedInstantiation = 17,
+//        VmCachedInstantiation = 12,
 //        // Cost of invoking a function on the VM. If the function is a host function,
 //        // additional cost will be covered by `DispatchHostFunction`.
-//        InvokeVmFunction = 18,
+//        InvokeVmFunction = 13,
 //        // Cost of computing a keccak256 hash from bytes.
-//        ComputeKeccak256Hash = 19,
-//        // Cost of computing an ECDSA secp256k1 pubkey from bytes.
-//        ComputeEcdsaSecp256k1Key = 20,
+//        ComputeKeccak256Hash = 14,
 //        // Cost of computing an ECDSA secp256k1 signature from bytes.
-//        ComputeEcdsaSecp256k1Sig = 21,
+//        ComputeEcdsaSecp256k1Sig = 15,
 //        // Cost of recovering an ECDSA secp256k1 key from a signature.
-//        RecoverEcdsaSecp256k1Key = 22,
+//        RecoverEcdsaSecp256k1Key = 16,
 //        // Cost of int256 addition (`+`) and subtraction (`-`) operations
-//        Int256AddSub = 23,
+//        Int256AddSub = 17,
 //        // Cost of int256 multiplication (`*`) operation
-//        Int256Mul = 24,
+//        Int256Mul = 18,
 //        // Cost of int256 division (`/`) operation
-//        Int256Div = 25,
+//        Int256Div = 19,
 //        // Cost of int256 power (`exp`) operation
-//        Int256Pow = 26,
+//        Int256Pow = 20,
 //        // Cost of int256 shift (`shl`, `shr`) operation
-//        Int256Shift = 27,
+//        Int256Shift = 21,
 //        // Cost of drawing random bytes using a ChaCha20 PRNG
-//        ChaCha20DrawBytes = 28
+//        ChaCha20DrawBytes = 22
 //    };
 //
 // enum
@@ -3546,59 +3534,47 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 #[repr(i32)]
 pub enum ContractCostType {
     WasmInsnExec = 0,
-    WasmMemAlloc = 1,
-    HostMemAlloc = 2,
-    HostMemCpy = 3,
-    HostMemCmp = 4,
-    DispatchHostFunction = 5,
-    VisitObject = 6,
-    ValSer = 7,
-    ValDeser = 8,
-    ComputeSha256Hash = 9,
-    ComputeEd25519PubKey = 10,
-    MapEntry = 11,
-    VecEntry = 12,
-    VerifyEd25519Sig = 13,
-    VmMemRead = 14,
-    VmMemWrite = 15,
-    VmInstantiation = 16,
-    VmCachedInstantiation = 17,
-    InvokeVmFunction = 18,
-    ComputeKeccak256Hash = 19,
-    ComputeEcdsaSecp256k1Key = 20,
-    ComputeEcdsaSecp256k1Sig = 21,
-    RecoverEcdsaSecp256k1Key = 22,
-    Int256AddSub = 23,
-    Int256Mul = 24,
-    Int256Div = 25,
-    Int256Pow = 26,
-    Int256Shift = 27,
-    ChaCha20DrawBytes = 28,
+    MemAlloc = 1,
+    MemCpy = 2,
+    MemCmp = 3,
+    DispatchHostFunction = 4,
+    VisitObject = 5,
+    ValSer = 6,
+    ValDeser = 7,
+    ComputeSha256Hash = 8,
+    ComputeEd25519PubKey = 9,
+    VerifyEd25519Sig = 10,
+    VmInstantiation = 11,
+    VmCachedInstantiation = 12,
+    InvokeVmFunction = 13,
+    ComputeKeccak256Hash = 14,
+    ComputeEcdsaSecp256k1Sig = 15,
+    RecoverEcdsaSecp256k1Key = 16,
+    Int256AddSub = 17,
+    Int256Mul = 18,
+    Int256Div = 19,
+    Int256Pow = 20,
+    Int256Shift = 21,
+    ChaCha20DrawBytes = 22,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 29] = [
+    pub const VARIANTS: [ContractCostType; 23] = [
         ContractCostType::WasmInsnExec,
-        ContractCostType::WasmMemAlloc,
-        ContractCostType::HostMemAlloc,
-        ContractCostType::HostMemCpy,
-        ContractCostType::HostMemCmp,
+        ContractCostType::MemAlloc,
+        ContractCostType::MemCpy,
+        ContractCostType::MemCmp,
         ContractCostType::DispatchHostFunction,
         ContractCostType::VisitObject,
         ContractCostType::ValSer,
         ContractCostType::ValDeser,
         ContractCostType::ComputeSha256Hash,
         ContractCostType::ComputeEd25519PubKey,
-        ContractCostType::MapEntry,
-        ContractCostType::VecEntry,
         ContractCostType::VerifyEd25519Sig,
-        ContractCostType::VmMemRead,
-        ContractCostType::VmMemWrite,
         ContractCostType::VmInstantiation,
         ContractCostType::VmCachedInstantiation,
         ContractCostType::InvokeVmFunction,
         ContractCostType::ComputeKeccak256Hash,
-        ContractCostType::ComputeEcdsaSecp256k1Key,
         ContractCostType::ComputeEcdsaSecp256k1Sig,
         ContractCostType::RecoverEcdsaSecp256k1Key,
         ContractCostType::Int256AddSub,
@@ -3608,28 +3584,22 @@ impl ContractCostType {
         ContractCostType::Int256Shift,
         ContractCostType::ChaCha20DrawBytes,
     ];
-    pub const VARIANTS_STR: [&'static str; 29] = [
+    pub const VARIANTS_STR: [&'static str; 23] = [
         "WasmInsnExec",
-        "WasmMemAlloc",
-        "HostMemAlloc",
-        "HostMemCpy",
-        "HostMemCmp",
+        "MemAlloc",
+        "MemCpy",
+        "MemCmp",
         "DispatchHostFunction",
         "VisitObject",
         "ValSer",
         "ValDeser",
         "ComputeSha256Hash",
         "ComputeEd25519PubKey",
-        "MapEntry",
-        "VecEntry",
         "VerifyEd25519Sig",
-        "VmMemRead",
-        "VmMemWrite",
         "VmInstantiation",
         "VmCachedInstantiation",
         "InvokeVmFunction",
         "ComputeKeccak256Hash",
-        "ComputeEcdsaSecp256k1Key",
         "ComputeEcdsaSecp256k1Sig",
         "RecoverEcdsaSecp256k1Key",
         "Int256AddSub",
@@ -3644,26 +3614,20 @@ impl ContractCostType {
     pub const fn name(&self) -> &'static str {
         match self {
             Self::WasmInsnExec => "WasmInsnExec",
-            Self::WasmMemAlloc => "WasmMemAlloc",
-            Self::HostMemAlloc => "HostMemAlloc",
-            Self::HostMemCpy => "HostMemCpy",
-            Self::HostMemCmp => "HostMemCmp",
+            Self::MemAlloc => "MemAlloc",
+            Self::MemCpy => "MemCpy",
+            Self::MemCmp => "MemCmp",
             Self::DispatchHostFunction => "DispatchHostFunction",
             Self::VisitObject => "VisitObject",
             Self::ValSer => "ValSer",
             Self::ValDeser => "ValDeser",
             Self::ComputeSha256Hash => "ComputeSha256Hash",
             Self::ComputeEd25519PubKey => "ComputeEd25519PubKey",
-            Self::MapEntry => "MapEntry",
-            Self::VecEntry => "VecEntry",
             Self::VerifyEd25519Sig => "VerifyEd25519Sig",
-            Self::VmMemRead => "VmMemRead",
-            Self::VmMemWrite => "VmMemWrite",
             Self::VmInstantiation => "VmInstantiation",
             Self::VmCachedInstantiation => "VmCachedInstantiation",
             Self::InvokeVmFunction => "InvokeVmFunction",
             Self::ComputeKeccak256Hash => "ComputeKeccak256Hash",
-            Self::ComputeEcdsaSecp256k1Key => "ComputeEcdsaSecp256k1Key",
             Self::ComputeEcdsaSecp256k1Sig => "ComputeEcdsaSecp256k1Sig",
             Self::RecoverEcdsaSecp256k1Key => "RecoverEcdsaSecp256k1Key",
             Self::Int256AddSub => "Int256AddSub",
@@ -3676,7 +3640,7 @@ impl ContractCostType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 29] {
+    pub const fn variants() -> [ContractCostType; 23] {
         Self::VARIANTS
     }
 }
@@ -3708,34 +3672,28 @@ impl TryFrom<i32> for ContractCostType {
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
             0 => ContractCostType::WasmInsnExec,
-            1 => ContractCostType::WasmMemAlloc,
-            2 => ContractCostType::HostMemAlloc,
-            3 => ContractCostType::HostMemCpy,
-            4 => ContractCostType::HostMemCmp,
-            5 => ContractCostType::DispatchHostFunction,
-            6 => ContractCostType::VisitObject,
-            7 => ContractCostType::ValSer,
-            8 => ContractCostType::ValDeser,
-            9 => ContractCostType::ComputeSha256Hash,
-            10 => ContractCostType::ComputeEd25519PubKey,
-            11 => ContractCostType::MapEntry,
-            12 => ContractCostType::VecEntry,
-            13 => ContractCostType::VerifyEd25519Sig,
-            14 => ContractCostType::VmMemRead,
-            15 => ContractCostType::VmMemWrite,
-            16 => ContractCostType::VmInstantiation,
-            17 => ContractCostType::VmCachedInstantiation,
-            18 => ContractCostType::InvokeVmFunction,
-            19 => ContractCostType::ComputeKeccak256Hash,
-            20 => ContractCostType::ComputeEcdsaSecp256k1Key,
-            21 => ContractCostType::ComputeEcdsaSecp256k1Sig,
-            22 => ContractCostType::RecoverEcdsaSecp256k1Key,
-            23 => ContractCostType::Int256AddSub,
-            24 => ContractCostType::Int256Mul,
-            25 => ContractCostType::Int256Div,
-            26 => ContractCostType::Int256Pow,
-            27 => ContractCostType::Int256Shift,
-            28 => ContractCostType::ChaCha20DrawBytes,
+            1 => ContractCostType::MemAlloc,
+            2 => ContractCostType::MemCpy,
+            3 => ContractCostType::MemCmp,
+            4 => ContractCostType::DispatchHostFunction,
+            5 => ContractCostType::VisitObject,
+            6 => ContractCostType::ValSer,
+            7 => ContractCostType::ValDeser,
+            8 => ContractCostType::ComputeSha256Hash,
+            9 => ContractCostType::ComputeEd25519PubKey,
+            10 => ContractCostType::VerifyEd25519Sig,
+            11 => ContractCostType::VmInstantiation,
+            12 => ContractCostType::VmCachedInstantiation,
+            13 => ContractCostType::InvokeVmFunction,
+            14 => ContractCostType::ComputeKeccak256Hash,
+            15 => ContractCostType::ComputeEcdsaSecp256k1Sig,
+            16 => ContractCostType::RecoverEcdsaSecp256k1Key,
+            17 => ContractCostType::Int256AddSub,
+            18 => ContractCostType::Int256Mul,
+            19 => ContractCostType::Int256Div,
+            20 => ContractCostType::Int256Pow,
+            21 => ContractCostType::Int256Shift,
+            22 => ContractCostType::ChaCha20DrawBytes,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -37692,7 +37650,7 @@ impl WriteXdr for OperationResultCode {
 //        case INVOKE_HOST_FUNCTION:
 //            InvokeHostFunctionResult invokeHostFunctionResult;
 //        case EXTEND_FOOTPRINT_TTL:
-//            ExtendFootprintTTLResult ExtendFootprintTTLResult;
+//            ExtendFootprintTTLResult extendFootprintTTLResult;
 //        case RESTORE_FOOTPRINT:
 //            RestoreFootprintResult restoreFootprintResult;
 //        }
@@ -38069,7 +38027,7 @@ impl WriteXdr for OperationResultTr {
 //        case INVOKE_HOST_FUNCTION:
 //            InvokeHostFunctionResult invokeHostFunctionResult;
 //        case EXTEND_FOOTPRINT_TTL:
-//            ExtendFootprintTTLResult ExtendFootprintTTLResult;
+//            ExtendFootprintTTLResult extendFootprintTTLResult;
 //        case RESTORE_FOOTPRINT:
 //            RestoreFootprintResult restoreFootprintResult;
 //        }

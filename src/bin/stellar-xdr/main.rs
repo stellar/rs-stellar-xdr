@@ -1,4 +1,5 @@
 mod decode;
+mod encode;
 mod guess;
 mod types;
 mod version;
@@ -47,6 +48,8 @@ enum Cmd {
     Guess(guess::Cmd),
     /// Decode XDR
     Decode(decode::Cmd),
+    /// Encode XDR
+    Encode(encode::Cmd),
     /// Print version information
     Version,
 }
@@ -57,6 +60,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         Cmd::Types(c) => c.run(&root.channel)?,
         Cmd::Guess(c) => c.run(&root.channel)?,
         Cmd::Decode(c) => c.run(&root.channel)?,
+        Cmd::Encode(c) => c.run(&root.channel)?,
         Cmd::Version => version::Cmd::run(),
     }
     Ok(())

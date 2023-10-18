@@ -27,11 +27,17 @@ impl Validate for ScVal {
             | ScVal::I256(_)
             | ScVal::Bytes(_)
             | ScVal::String(_)
-            | ScVal::Vec(Some(_))
             | ScVal::Address(_)
             | ScVal::LedgerKeyContractInstance
             | ScVal::LedgerKeyNonce(_)
             | ScVal::ContractInstance(_) => Ok(()),
+
+            ScVal::Vec(Some(v)) => {
+                for e in v.iter() {
+                    e.validate()?;
+                }
+                Ok(())
+            }
 
             ScVal::Symbol(s) => {
                 // Symbol is defined as valid per https://github.com/stellar/rs-stellar-contract-env/blob/94c1717516c8fad4ad65caa148183b9fcbc408db/stellar-contract-env-common/src/symbol.rs#L107-L111.
@@ -53,6 +59,11 @@ impl Validate for ScMap {
     type Error = Error;
 
     fn validate(&self) -> Result<(), Self::Error> {
+        // Check every element for validity itself.
+        for pair in self.iter() {
+            pair.key.validate()?;
+            pair.val.validate()?;
+        }
         // Check the map is sorted by key, and there are no keys that are
         // duplicates.
         if self.windows(2).all(|w| w[0].key < w[1].key) {

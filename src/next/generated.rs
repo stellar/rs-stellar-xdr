@@ -133,6 +133,8 @@ pub enum Error {
     #[cfg(feature = "std")]
     Io(io::Error),
     DepthLimitExceeded,
+    #[cfg(feature = "serde_json")]
+    Json(serde_json::Error),
 }
 
 impl PartialEq for Error {
@@ -158,6 +160,8 @@ impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             Self::Io(e) => Some(e),
+            #[cfg(feature = "serde_json")]
+            Self::Json(e) => Some(e),
             _ => None,
         }
     }
@@ -177,6 +181,8 @@ impl fmt::Display for Error {
             #[cfg(feature = "std")]
             Error::Io(e) => write!(f, "{e}"),
             Error::DepthLimitExceeded => write!(f, "depth limit exceeded"),
+            #[cfg(feature = "serde_json")]
+            Error::Json(e) => write!(f, "{e}"),
         }
     }
 }
@@ -207,6 +213,14 @@ impl From<io::Error> for Error {
     #[must_use]
     fn from(e: io::Error) -> Self {
         Error::Io(e)
+    }
+}
+
+#[cfg(feature = "serde_json")]
+impl From<serde_json::Error> for Error {
+    #[must_use]
+    fn from(e: serde_json::Error) -> Self {
+        Error::Json(e)
     }
 }
 
@@ -51774,6 +51788,1143 @@ impl Type {
         Ok(t)
     }
 
+    #[cfg(all(feature = "std", feature = "serde_json"))]
+    #[allow(clippy::too_many_lines)]
+    pub fn read_json(v: TypeVariant, r: impl Read) -> Result<Self> {
+        match v {
+            TypeVariant::Value => Ok(Self::Value(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScpBallot => Ok(Self::ScpBallot(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScpStatementType => Ok(Self::ScpStatementType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScpNomination => {
+                Ok(Self::ScpNomination(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScpStatement => {
+                Ok(Self::ScpStatement(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScpStatementPledges => Ok(Self::ScpStatementPledges(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScpStatementPrepare => Ok(Self::ScpStatementPrepare(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScpStatementConfirm => Ok(Self::ScpStatementConfirm(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScpStatementExternalize => Ok(Self::ScpStatementExternalize(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScpEnvelope => {
+                Ok(Self::ScpEnvelope(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScpQuorumSet => {
+                Ok(Self::ScpQuorumSet(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => Ok(
+                Self::ConfigSettingContractExecutionLanesV0(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ConfigSettingContractComputeV0 => Ok(
+                Self::ConfigSettingContractComputeV0(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostV0 => Ok(
+                Self::ConfigSettingContractLedgerCostV0(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => Ok(
+                Self::ConfigSettingContractHistoricalDataV0(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ConfigSettingContractEventsV0 => Ok(Self::ConfigSettingContractEventsV0(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::ConfigSettingContractBandwidthV0 => Ok(
+                Self::ConfigSettingContractBandwidthV0(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ContractCostType => Ok(Self::ContractCostType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractCostParamEntry => Ok(Self::ContractCostParamEntry(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::StateArchivalSettings => Ok(Self::StateArchivalSettings(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::EvictionIterator => Ok(Self::EvictionIterator(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractCostParams => Ok(Self::ContractCostParams(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ConfigSettingId => {
+                Ok(Self::ConfigSettingId(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ConfigSettingEntry => Ok(Self::ConfigSettingEntry(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScEnvMetaKind => {
+                Ok(Self::ScEnvMetaKind(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScEnvMetaEntry => {
+                Ok(Self::ScEnvMetaEntry(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScMetaV0 => Ok(Self::ScMetaV0(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScMetaKind => Ok(Self::ScMetaKind(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScMetaEntry => {
+                Ok(Self::ScMetaEntry(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScSpecType => Ok(Self::ScSpecType(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScSpecTypeOption => Ok(Self::ScSpecTypeOption(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecTypeResult => Ok(Self::ScSpecTypeResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecTypeVec => {
+                Ok(Self::ScSpecTypeVec(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScSpecTypeMap => {
+                Ok(Self::ScSpecTypeMap(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScSpecTypeTuple => {
+                Ok(Self::ScSpecTypeTuple(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScSpecTypeBytesN => Ok(Self::ScSpecTypeBytesN(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecTypeUdt => {
+                Ok(Self::ScSpecTypeUdt(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScSpecTypeDef => {
+                Ok(Self::ScSpecTypeDef(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScSpecUdtStructFieldV0 => Ok(Self::ScSpecUdtStructFieldV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecUdtStructV0 => Ok(Self::ScSpecUdtStructV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => Ok(Self::ScSpecUdtUnionCaseVoidV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => Ok(Self::ScSpecUdtUnionCaseTupleV0(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => Ok(Self::ScSpecUdtUnionCaseV0Kind(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionCaseV0 => Ok(Self::ScSpecUdtUnionCaseV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecUdtUnionV0 => Ok(Self::ScSpecUdtUnionV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecUdtEnumCaseV0 => Ok(Self::ScSpecUdtEnumCaseV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecUdtEnumV0 => {
+                Ok(Self::ScSpecUdtEnumV0(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => Ok(Self::ScSpecUdtErrorEnumCaseV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecUdtErrorEnumV0 => Ok(Self::ScSpecUdtErrorEnumV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecFunctionInputV0 => Ok(Self::ScSpecFunctionInputV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecFunctionV0 => Ok(Self::ScSpecFunctionV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScSpecEntryKind => {
+                Ok(Self::ScSpecEntryKind(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScSpecEntry => {
+                Ok(Self::ScSpecEntry(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScValType => Ok(Self::ScValType(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScErrorType => {
+                Ok(Self::ScErrorType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScErrorCode => {
+                Ok(Self::ScErrorCode(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScError => Ok(Self::ScError(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::UInt128Parts => {
+                Ok(Self::UInt128Parts(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::Int128Parts => {
+                Ok(Self::Int128Parts(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::UInt256Parts => {
+                Ok(Self::UInt256Parts(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::Int256Parts => {
+                Ok(Self::Int256Parts(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScAddressType => {
+                Ok(Self::ScAddressType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScVec => Ok(Self::ScVec(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScMap => Ok(Self::ScMap(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScString => Ok(Self::ScString(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScNonceKey => Ok(Self::ScNonceKey(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScContractInstance => Ok(Self::ScContractInstance(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScVal => Ok(Self::ScVal(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScMapEntry => Ok(Self::ScMapEntry(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::StoredTransactionSet => Ok(Self::StoredTransactionSet(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::StoredDebugTransactionSet => Ok(Self::StoredDebugTransactionSet(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::PersistedScpStateV0 => Ok(Self::PersistedScpStateV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::PersistedScpStateV1 => Ok(Self::PersistedScpStateV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::PersistedScpState => Ok(Self::PersistedScpState(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::Thresholds => Ok(Self::Thresholds(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::String32 => Ok(Self::String32(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::String64 => Ok(Self::String64(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::SequenceNumber => {
+                Ok(Self::SequenceNumber(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::DataValue => Ok(Self::DataValue(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::PoolId => Ok(Self::PoolId(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::AssetCode4 => Ok(Self::AssetCode4(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::AssetCode12 => {
+                Ok(Self::AssetCode12(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::AssetType => Ok(Self::AssetType(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::AssetCode => Ok(Self::AssetCode(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::AlphaNum4 => Ok(Self::AlphaNum4(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::AlphaNum12 => Ok(Self::AlphaNum12(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Asset => Ok(Self::Asset(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Price => Ok(Self::Price(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Liabilities => {
+                Ok(Self::Liabilities(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ThresholdIndexes => Ok(Self::ThresholdIndexes(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerEntryType => {
+                Ok(Self::LedgerEntryType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::Signer => Ok(Self::Signer(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::AccountFlags => {
+                Ok(Self::AccountFlags(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::SponsorshipDescriptor => Ok(Self::SponsorshipDescriptor(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV3 => Ok(Self::AccountEntryExtensionV3(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV2 => Ok(Self::AccountEntryExtensionV2(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV2Ext => Ok(Self::AccountEntryExtensionV2Ext(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::AccountEntryExtensionV1 => Ok(Self::AccountEntryExtensionV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::AccountEntryExtensionV1Ext => Ok(Self::AccountEntryExtensionV1Ext(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::AccountEntry => {
+                Ok(Self::AccountEntry(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::AccountEntryExt => {
+                Ok(Self::AccountEntryExt(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TrustLineFlags => {
+                Ok(Self::TrustLineFlags(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::LiquidityPoolType => Ok(Self::LiquidityPoolType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TrustLineAsset => {
+                Ok(Self::TrustLineAsset(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TrustLineEntryExtensionV2 => Ok(Self::TrustLineEntryExtensionV2(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::TrustLineEntryExtensionV2Ext => Ok(Self::TrustLineEntryExtensionV2Ext(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::TrustLineEntry => {
+                Ok(Self::TrustLineEntry(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TrustLineEntryExt => Ok(Self::TrustLineEntryExt(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TrustLineEntryV1 => Ok(Self::TrustLineEntryV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TrustLineEntryV1Ext => Ok(Self::TrustLineEntryV1Ext(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::OfferEntryFlags => {
+                Ok(Self::OfferEntryFlags(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::OfferEntry => Ok(Self::OfferEntry(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::OfferEntryExt => {
+                Ok(Self::OfferEntryExt(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::DataEntry => Ok(Self::DataEntry(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::DataEntryExt => {
+                Ok(Self::DataEntryExt(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ClaimPredicateType => Ok(Self::ClaimPredicateType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ClaimPredicate => {
+                Ok(Self::ClaimPredicate(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ClaimantType => {
+                Ok(Self::ClaimantType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::Claimant => Ok(Self::Claimant(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ClaimantV0 => Ok(Self::ClaimantV0(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ClaimableBalanceIdType => Ok(Self::ClaimableBalanceIdType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ClaimableBalanceFlags => Ok(Self::ClaimableBalanceFlags(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ClaimableBalanceEntryExtensionV1 => Ok(
+                Self::ClaimableBalanceEntryExtensionV1(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ClaimableBalanceEntryExtensionV1Ext => Ok(
+                Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ClaimableBalanceEntry => Ok(Self::ClaimableBalanceEntry(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ClaimableBalanceEntryExt => Ok(Self::ClaimableBalanceEntryExt(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LiquidityPoolConstantProductParameters => Ok(
+                Self::LiquidityPoolConstantProductParameters(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::LiquidityPoolEntry => Ok(Self::LiquidityPoolEntry(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LiquidityPoolEntryBody => Ok(Self::LiquidityPoolEntryBody(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LiquidityPoolEntryConstantProduct => Ok(
+                Self::LiquidityPoolEntryConstantProduct(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ContractDataDurability => Ok(Self::ContractDataDurability(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractDataEntry => Ok(Self::ContractDataEntry(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractCodeEntry => Ok(Self::ContractCodeEntry(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TtlEntry => Ok(Self::TtlEntry(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::LedgerEntryExtensionV1 => Ok(Self::LedgerEntryExtensionV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerEntryExtensionV1Ext => Ok(Self::LedgerEntryExtensionV1Ext(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::LedgerEntry => {
+                Ok(Self::LedgerEntry(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::LedgerEntryData => {
+                Ok(Self::LedgerEntryData(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::LedgerEntryExt => {
+                Ok(Self::LedgerEntryExt(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::LedgerKey => Ok(Self::LedgerKey(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::LedgerKeyAccount => Ok(Self::LedgerKeyAccount(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerKeyTrustLine => Ok(Self::LedgerKeyTrustLine(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerKeyOffer => {
+                Ok(Self::LedgerKeyOffer(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::LedgerKeyData => {
+                Ok(Self::LedgerKeyData(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::LedgerKeyClaimableBalance => Ok(Self::LedgerKeyClaimableBalance(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::LedgerKeyLiquidityPool => Ok(Self::LedgerKeyLiquidityPool(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerKeyContractData => Ok(Self::LedgerKeyContractData(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerKeyContractCode => Ok(Self::LedgerKeyContractCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerKeyConfigSetting => Ok(Self::LedgerKeyConfigSetting(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerKeyTtl => {
+                Ok(Self::LedgerKeyTtl(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::EnvelopeType => {
+                Ok(Self::EnvelopeType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::UpgradeType => {
+                Ok(Self::UpgradeType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::StellarValueType => Ok(Self::StellarValueType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerCloseValueSignature => Ok(Self::LedgerCloseValueSignature(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::StellarValue => {
+                Ok(Self::StellarValue(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::StellarValueExt => {
+                Ok(Self::StellarValueExt(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerHeaderExtensionV1 => Ok(Self::LedgerHeaderExtensionV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerHeaderExtensionV1Ext => Ok(Self::LedgerHeaderExtensionV1Ext(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::LedgerHeader => {
+                Ok(Self::LedgerHeader(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::LedgerHeaderExt => {
+                Ok(Self::LedgerHeaderExt(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::LedgerUpgradeType => Ok(Self::LedgerUpgradeType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ConfigUpgradeSetKey => Ok(Self::ConfigUpgradeSetKey(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerUpgrade => {
+                Ok(Self::LedgerUpgrade(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ConfigUpgradeSet => Ok(Self::ConfigUpgradeSet(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::BucketEntryType => {
+                Ok(Self::BucketEntryType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::BucketMetadata => {
+                Ok(Self::BucketMetadata(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::BucketMetadataExt => Ok(Self::BucketMetadataExt(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::BucketEntry => {
+                Ok(Self::BucketEntry(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TxSetComponentType => Ok(Self::TxSetComponentType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TxSetComponent => {
+                Ok(Self::TxSetComponent(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TxSetComponentTxsMaybeDiscountedFee => Ok(
+                Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::TransactionPhase => Ok(Self::TransactionPhase(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionSet => {
+                Ok(Self::TransactionSet(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TransactionSetV1 => Ok(Self::TransactionSetV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::GeneralizedTransactionSet => Ok(Self::GeneralizedTransactionSet(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::TransactionResultPair => Ok(Self::TransactionResultPair(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionResultSet => Ok(Self::TransactionResultSet(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionHistoryEntry => Ok(Self::TransactionHistoryEntry(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionHistoryEntryExt => Ok(Self::TransactionHistoryEntryExt(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::TransactionHistoryResultEntry => Ok(Self::TransactionHistoryResultEntry(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::TransactionHistoryResultEntryExt => Ok(
+                Self::TransactionHistoryResultEntryExt(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::LedgerHeaderHistoryEntry => Ok(Self::LedgerHeaderHistoryEntry(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerHeaderHistoryEntryExt => Ok(Self::LedgerHeaderHistoryEntryExt(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::LedgerScpMessages => Ok(Self::LedgerScpMessages(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScpHistoryEntryV0 => Ok(Self::ScpHistoryEntryV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ScpHistoryEntry => {
+                Ok(Self::ScpHistoryEntry(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::LedgerEntryChangeType => Ok(Self::LedgerEntryChangeType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerEntryChange => Ok(Self::LedgerEntryChange(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerEntryChanges => Ok(Self::LedgerEntryChanges(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::OperationMeta => {
+                Ok(Self::OperationMeta(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TransactionMetaV1 => Ok(Self::TransactionMetaV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionMetaV2 => Ok(Self::TransactionMetaV2(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractEventType => Ok(Self::ContractEventType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractEvent => {
+                Ok(Self::ContractEvent(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ContractEventBody => Ok(Self::ContractEventBody(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractEventV0 => {
+                Ok(Self::ContractEventV0(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::DiagnosticEvent => {
+                Ok(Self::DiagnosticEvent(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::SorobanTransactionMeta => Ok(Self::SorobanTransactionMeta(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionMetaV3 => Ok(Self::TransactionMetaV3(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => Ok(
+                Self::InvokeHostFunctionSuccessPreImage(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::TransactionMeta => {
+                Ok(Self::TransactionMeta(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TransactionResultMeta => Ok(Self::TransactionResultMeta(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::UpgradeEntryMeta => Ok(Self::UpgradeEntryMeta(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerCloseMetaV0 => Ok(Self::LedgerCloseMetaV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerCloseMetaV1 => Ok(Self::LedgerCloseMetaV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LedgerCloseMeta => {
+                Ok(Self::LedgerCloseMeta(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ErrorCode => Ok(Self::ErrorCode(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::SError => Ok(Self::SError(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::SendMore => Ok(Self::SendMore(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::SendMoreExtended => Ok(Self::SendMoreExtended(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::AuthCert => Ok(Self::AuthCert(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Hello => Ok(Self::Hello(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Auth => Ok(Self::Auth(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::IpAddrType => Ok(Self::IpAddrType(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::PeerAddress => {
+                Ok(Self::PeerAddress(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::PeerAddressIp => {
+                Ok(Self::PeerAddressIp(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::MessageType => {
+                Ok(Self::MessageType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::DontHave => Ok(Self::DontHave(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::SurveyMessageCommandType => Ok(Self::SurveyMessageCommandType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SurveyMessageResponseType => Ok(Self::SurveyMessageResponseType(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::SurveyRequestMessage => Ok(Self::SurveyRequestMessage(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SignedSurveyRequestMessage => Ok(Self::SignedSurveyRequestMessage(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::EncryptedBody => {
+                Ok(Self::EncryptedBody(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::SurveyResponseMessage => Ok(Self::SurveyResponseMessage(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SignedSurveyResponseMessage => Ok(Self::SignedSurveyResponseMessage(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::PeerStats => Ok(Self::PeerStats(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::PeerStatList => {
+                Ok(Self::PeerStatList(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TopologyResponseBodyV0 => Ok(Self::TopologyResponseBodyV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TopologyResponseBodyV1 => Ok(Self::TopologyResponseBodyV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SurveyResponseBody => Ok(Self::SurveyResponseBody(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TxAdvertVector => {
+                Ok(Self::TxAdvertVector(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::FloodAdvert => {
+                Ok(Self::FloodAdvert(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TxDemandVector => {
+                Ok(Self::TxDemandVector(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::FloodDemand => {
+                Ok(Self::FloodDemand(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::StellarMessage => {
+                Ok(Self::StellarMessage(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::AuthenticatedMessage => Ok(Self::AuthenticatedMessage(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::AuthenticatedMessageV0 => Ok(Self::AuthenticatedMessageV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LiquidityPoolParameters => Ok(Self::LiquidityPoolParameters(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::MuxedAccount => {
+                Ok(Self::MuxedAccount(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::MuxedAccountMed25519 => Ok(Self::MuxedAccountMed25519(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::DecoratedSignature => Ok(Self::DecoratedSignature(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::OperationType => {
+                Ok(Self::OperationType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::CreateAccountOp => {
+                Ok(Self::CreateAccountOp(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::PaymentOp => Ok(Self::PaymentOp(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::PathPaymentStrictReceiveOp => Ok(Self::PathPaymentStrictReceiveOp(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::PathPaymentStrictSendOp => Ok(Self::PathPaymentStrictSendOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ManageSellOfferOp => Ok(Self::ManageSellOfferOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ManageBuyOfferOp => Ok(Self::ManageBuyOfferOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::CreatePassiveSellOfferOp => Ok(Self::CreatePassiveSellOfferOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SetOptionsOp => {
+                Ok(Self::SetOptionsOp(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ChangeTrustAsset => Ok(Self::ChangeTrustAsset(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ChangeTrustOp => {
+                Ok(Self::ChangeTrustOp(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::AllowTrustOp => {
+                Ok(Self::AllowTrustOp(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ManageDataOp => {
+                Ok(Self::ManageDataOp(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::BumpSequenceOp => {
+                Ok(Self::BumpSequenceOp(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::CreateClaimableBalanceOp => Ok(Self::CreateClaimableBalanceOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ClaimClaimableBalanceOp => Ok(Self::ClaimClaimableBalanceOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::BeginSponsoringFutureReservesOp => Ok(
+                Self::BeginSponsoringFutureReservesOp(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::RevokeSponsorshipType => Ok(Self::RevokeSponsorshipType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::RevokeSponsorshipOp => Ok(Self::RevokeSponsorshipOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::RevokeSponsorshipOpSigner => Ok(Self::RevokeSponsorshipOpSigner(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::ClawbackOp => Ok(Self::ClawbackOp(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ClawbackClaimableBalanceOp => Ok(Self::ClawbackClaimableBalanceOp(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::SetTrustLineFlagsOp => Ok(Self::SetTrustLineFlagsOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LiquidityPoolDepositOp => Ok(Self::LiquidityPoolDepositOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LiquidityPoolWithdrawOp => Ok(Self::LiquidityPoolWithdrawOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::HostFunctionType => Ok(Self::HostFunctionType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractIdPreimageType => Ok(Self::ContractIdPreimageType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractIdPreimage => Ok(Self::ContractIdPreimage(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractIdPreimageFromAddress => Ok(Self::ContractIdPreimageFromAddress(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::CreateContractArgs => Ok(Self::CreateContractArgs(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::InvokeContractArgs => Ok(Self::InvokeContractArgs(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::HostFunction => {
+                Ok(Self::HostFunction(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::SorobanAuthorizedFunctionType => Ok(Self::SorobanAuthorizedFunctionType(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::SorobanAuthorizedFunction => Ok(Self::SorobanAuthorizedFunction(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::SorobanAuthorizedInvocation => Ok(Self::SorobanAuthorizedInvocation(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::SorobanAddressCredentials => Ok(Self::SorobanAddressCredentials(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::SorobanCredentialsType => Ok(Self::SorobanCredentialsType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SorobanCredentials => Ok(Self::SorobanCredentials(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SorobanAuthorizationEntry => Ok(Self::SorobanAuthorizationEntry(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::InvokeHostFunctionOp => Ok(Self::InvokeHostFunctionOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ExtendFootprintTtlOp => Ok(Self::ExtendFootprintTtlOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::RestoreFootprintOp => Ok(Self::RestoreFootprintOp(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::Operation => Ok(Self::Operation(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::OperationBody => {
+                Ok(Self::OperationBody(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::HashIdPreimage => {
+                Ok(Self::HashIdPreimage(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::HashIdPreimageOperationId => Ok(Self::HashIdPreimageOperationId(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::HashIdPreimageRevokeId => Ok(Self::HashIdPreimageRevokeId(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::HashIdPreimageContractId => Ok(Self::HashIdPreimageContractId(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::HashIdPreimageSorobanAuthorization => Ok(
+                Self::HashIdPreimageSorobanAuthorization(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::MemoType => Ok(Self::MemoType(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Memo => Ok(Self::Memo(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::TimeBounds => Ok(Self::TimeBounds(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::LedgerBounds => {
+                Ok(Self::LedgerBounds(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::PreconditionsV2 => {
+                Ok(Self::PreconditionsV2(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::PreconditionType => Ok(Self::PreconditionType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::Preconditions => {
+                Ok(Self::Preconditions(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::LedgerFootprint => {
+                Ok(Self::LedgerFootprint(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SorobanTransactionData => Ok(Self::SorobanTransactionData(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionV0 => {
+                Ok(Self::TransactionV0(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TransactionV0Ext => Ok(Self::TransactionV0Ext(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionV0Envelope => Ok(Self::TransactionV0Envelope(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::Transaction => {
+                Ok(Self::Transaction(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TransactionExt => {
+                Ok(Self::TransactionExt(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::TransactionV1Envelope => Ok(Self::TransactionV1Envelope(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::FeeBumpTransaction => Ok(Self::FeeBumpTransaction(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::FeeBumpTransactionInnerTx => Ok(Self::FeeBumpTransactionInnerTx(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::FeeBumpTransactionExt => Ok(Self::FeeBumpTransactionExt(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::FeeBumpTransactionEnvelope => Ok(Self::FeeBumpTransactionEnvelope(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::TransactionEnvelope => Ok(Self::TransactionEnvelope(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionSignaturePayload => Ok(Self::TransactionSignaturePayload(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::TransactionSignaturePayloadTaggedTransaction => {
+                Ok(Self::TransactionSignaturePayloadTaggedTransaction(
+                    Box::new(serde_json::from_reader(r)?),
+                ))
+            }
+            TypeVariant::ClaimAtomType => {
+                Ok(Self::ClaimAtomType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ClaimOfferAtomV0 => Ok(Self::ClaimOfferAtomV0(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ClaimOfferAtom => {
+                Ok(Self::ClaimOfferAtom(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ClaimLiquidityAtom => Ok(Self::ClaimLiquidityAtom(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ClaimAtom => Ok(Self::ClaimAtom(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::CreateAccountResultCode => Ok(Self::CreateAccountResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::CreateAccountResult => Ok(Self::CreateAccountResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::PaymentResultCode => Ok(Self::PaymentResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::PaymentResult => {
+                Ok(Self::PaymentResult(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::PathPaymentStrictReceiveResultCode => Ok(
+                Self::PathPaymentStrictReceiveResultCode(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::SimplePaymentResult => Ok(Self::SimplePaymentResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::PathPaymentStrictReceiveResult => Ok(
+                Self::PathPaymentStrictReceiveResult(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::PathPaymentStrictReceiveResultSuccess => Ok(
+                Self::PathPaymentStrictReceiveResultSuccess(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::PathPaymentStrictSendResultCode => Ok(
+                Self::PathPaymentStrictSendResultCode(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::PathPaymentStrictSendResult => Ok(Self::PathPaymentStrictSendResult(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::PathPaymentStrictSendResultSuccess => Ok(
+                Self::PathPaymentStrictSendResultSuccess(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ManageSellOfferResultCode => Ok(Self::ManageSellOfferResultCode(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::ManageOfferEffect => Ok(Self::ManageOfferEffect(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ManageOfferSuccessResult => Ok(Self::ManageOfferSuccessResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ManageOfferSuccessResultOffer => Ok(Self::ManageOfferSuccessResultOffer(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::ManageSellOfferResult => Ok(Self::ManageSellOfferResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ManageBuyOfferResultCode => Ok(Self::ManageBuyOfferResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ManageBuyOfferResult => Ok(Self::ManageBuyOfferResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SetOptionsResultCode => Ok(Self::SetOptionsResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SetOptionsResult => Ok(Self::SetOptionsResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ChangeTrustResultCode => Ok(Self::ChangeTrustResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ChangeTrustResult => Ok(Self::ChangeTrustResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::AllowTrustResultCode => Ok(Self::AllowTrustResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::AllowTrustResult => Ok(Self::AllowTrustResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::AccountMergeResultCode => Ok(Self::AccountMergeResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::AccountMergeResult => Ok(Self::AccountMergeResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::InflationResultCode => Ok(Self::InflationResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::InflationPayout => {
+                Ok(Self::InflationPayout(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::InflationResult => {
+                Ok(Self::InflationResult(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ManageDataResultCode => Ok(Self::ManageDataResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ManageDataResult => Ok(Self::ManageDataResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::BumpSequenceResultCode => Ok(Self::BumpSequenceResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::BumpSequenceResult => Ok(Self::BumpSequenceResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::CreateClaimableBalanceResultCode => Ok(
+                Self::CreateClaimableBalanceResultCode(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::CreateClaimableBalanceResult => Ok(Self::CreateClaimableBalanceResult(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::ClaimClaimableBalanceResultCode => Ok(
+                Self::ClaimClaimableBalanceResultCode(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ClaimClaimableBalanceResult => Ok(Self::ClaimClaimableBalanceResult(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::BeginSponsoringFutureReservesResultCode => {
+                Ok(Self::BeginSponsoringFutureReservesResultCode(Box::new(
+                    serde_json::from_reader(r)?,
+                )))
+            }
+            TypeVariant::BeginSponsoringFutureReservesResult => Ok(
+                Self::BeginSponsoringFutureReservesResult(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::EndSponsoringFutureReservesResultCode => Ok(
+                Self::EndSponsoringFutureReservesResultCode(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::EndSponsoringFutureReservesResult => Ok(
+                Self::EndSponsoringFutureReservesResult(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::RevokeSponsorshipResultCode => Ok(Self::RevokeSponsorshipResultCode(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::RevokeSponsorshipResult => Ok(Self::RevokeSponsorshipResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ClawbackResultCode => Ok(Self::ClawbackResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ClawbackResult => {
+                Ok(Self::ClawbackResult(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ClawbackClaimableBalanceResultCode => Ok(
+                Self::ClawbackClaimableBalanceResultCode(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ClawbackClaimableBalanceResult => Ok(
+                Self::ClawbackClaimableBalanceResult(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::SetTrustLineFlagsResultCode => Ok(Self::SetTrustLineFlagsResultCode(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::SetTrustLineFlagsResult => Ok(Self::SetTrustLineFlagsResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::LiquidityPoolDepositResultCode => Ok(
+                Self::LiquidityPoolDepositResultCode(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::LiquidityPoolDepositResult => Ok(Self::LiquidityPoolDepositResult(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::LiquidityPoolWithdrawResultCode => Ok(
+                Self::LiquidityPoolWithdrawResultCode(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::LiquidityPoolWithdrawResult => Ok(Self::LiquidityPoolWithdrawResult(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::InvokeHostFunctionResultCode => Ok(Self::InvokeHostFunctionResultCode(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::InvokeHostFunctionResult => Ok(Self::InvokeHostFunctionResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ExtendFootprintTtlResultCode => Ok(Self::ExtendFootprintTtlResultCode(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::ExtendFootprintTtlResult => Ok(Self::ExtendFootprintTtlResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::RestoreFootprintResultCode => Ok(Self::RestoreFootprintResultCode(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::RestoreFootprintResult => Ok(Self::RestoreFootprintResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::OperationResultCode => Ok(Self::OperationResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::OperationResult => {
+                Ok(Self::OperationResult(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::OperationResultTr => Ok(Self::OperationResultTr(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionResultCode => Ok(Self::TransactionResultCode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::InnerTransactionResult => Ok(Self::InnerTransactionResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::InnerTransactionResultResult => Ok(Self::InnerTransactionResultResult(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::InnerTransactionResultExt => Ok(Self::InnerTransactionResultExt(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::InnerTransactionResultPair => Ok(Self::InnerTransactionResultPair(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::TransactionResult => Ok(Self::TransactionResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionResultResult => Ok(Self::TransactionResultResult(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionResultExt => Ok(Self::TransactionResultExt(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::Hash => Ok(Self::Hash(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Uint256 => Ok(Self::Uint256(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Uint32 => Ok(Self::Uint32(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Int32 => Ok(Self::Int32(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Uint64 => Ok(Self::Uint64(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Int64 => Ok(Self::Int64(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Duration => Ok(Self::Duration(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ExtensionPoint => {
+                Ok(Self::ExtensionPoint(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::CryptoKeyType => {
+                Ok(Self::CryptoKeyType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::PublicKeyType => {
+                Ok(Self::PublicKeyType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::SignerKeyType => {
+                Ok(Self::SignerKeyType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::PublicKey => Ok(Self::PublicKey(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::SignerKey => Ok(Self::SignerKey(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::SignerKeyEd25519SignedPayload => Ok(Self::SignerKeyEd25519SignedPayload(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::Signature => Ok(Self::Signature(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::SignatureHint => {
+                Ok(Self::SignatureHint(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::NodeId => Ok(Self::NodeId(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::AccountId => Ok(Self::AccountId(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::Curve25519Secret => Ok(Self::Curve25519Secret(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::Curve25519Public => Ok(Self::Curve25519Public(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::HmacSha256Key => {
+                Ok(Self::HmacSha256Key(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::HmacSha256Mac => {
+                Ok(Self::HmacSha256Mac(Box::new(serde_json::from_reader(r)?)))
+            }
+        }
+    }
+
     #[cfg(feature = "alloc")]
     #[must_use]
     #[allow(clippy::too_many_lines)]
@@ -53134,5 +54285,432 @@ impl Name for Type {
 impl Variants<TypeVariant> for Type {
     fn variants() -> slice::Iter<'static, TypeVariant> {
         Self::VARIANTS.iter()
+    }
+}
+
+impl WriteXdr for Type {
+    #[cfg(feature = "std")]
+    #[allow(clippy::too_many_lines)]
+    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+        match self {
+            Self::Value(v) => v.write_xdr(w),
+            Self::ScpBallot(v) => v.write_xdr(w),
+            Self::ScpStatementType(v) => v.write_xdr(w),
+            Self::ScpNomination(v) => v.write_xdr(w),
+            Self::ScpStatement(v) => v.write_xdr(w),
+            Self::ScpStatementPledges(v) => v.write_xdr(w),
+            Self::ScpStatementPrepare(v) => v.write_xdr(w),
+            Self::ScpStatementConfirm(v) => v.write_xdr(w),
+            Self::ScpStatementExternalize(v) => v.write_xdr(w),
+            Self::ScpEnvelope(v) => v.write_xdr(w),
+            Self::ScpQuorumSet(v) => v.write_xdr(w),
+            Self::ConfigSettingContractExecutionLanesV0(v) => v.write_xdr(w),
+            Self::ConfigSettingContractComputeV0(v) => v.write_xdr(w),
+            Self::ConfigSettingContractLedgerCostV0(v) => v.write_xdr(w),
+            Self::ConfigSettingContractHistoricalDataV0(v) => v.write_xdr(w),
+            Self::ConfigSettingContractEventsV0(v) => v.write_xdr(w),
+            Self::ConfigSettingContractBandwidthV0(v) => v.write_xdr(w),
+            Self::ContractCostType(v) => v.write_xdr(w),
+            Self::ContractCostParamEntry(v) => v.write_xdr(w),
+            Self::StateArchivalSettings(v) => v.write_xdr(w),
+            Self::EvictionIterator(v) => v.write_xdr(w),
+            Self::ContractCostParams(v) => v.write_xdr(w),
+            Self::ConfigSettingId(v) => v.write_xdr(w),
+            Self::ConfigSettingEntry(v) => v.write_xdr(w),
+            Self::ScEnvMetaKind(v) => v.write_xdr(w),
+            Self::ScEnvMetaEntry(v) => v.write_xdr(w),
+            Self::ScMetaV0(v) => v.write_xdr(w),
+            Self::ScMetaKind(v) => v.write_xdr(w),
+            Self::ScMetaEntry(v) => v.write_xdr(w),
+            Self::ScSpecType(v) => v.write_xdr(w),
+            Self::ScSpecTypeOption(v) => v.write_xdr(w),
+            Self::ScSpecTypeResult(v) => v.write_xdr(w),
+            Self::ScSpecTypeVec(v) => v.write_xdr(w),
+            Self::ScSpecTypeMap(v) => v.write_xdr(w),
+            Self::ScSpecTypeTuple(v) => v.write_xdr(w),
+            Self::ScSpecTypeBytesN(v) => v.write_xdr(w),
+            Self::ScSpecTypeUdt(v) => v.write_xdr(w),
+            Self::ScSpecTypeDef(v) => v.write_xdr(w),
+            Self::ScSpecUdtStructFieldV0(v) => v.write_xdr(w),
+            Self::ScSpecUdtStructV0(v) => v.write_xdr(w),
+            Self::ScSpecUdtUnionCaseVoidV0(v) => v.write_xdr(w),
+            Self::ScSpecUdtUnionCaseTupleV0(v) => v.write_xdr(w),
+            Self::ScSpecUdtUnionCaseV0Kind(v) => v.write_xdr(w),
+            Self::ScSpecUdtUnionCaseV0(v) => v.write_xdr(w),
+            Self::ScSpecUdtUnionV0(v) => v.write_xdr(w),
+            Self::ScSpecUdtEnumCaseV0(v) => v.write_xdr(w),
+            Self::ScSpecUdtEnumV0(v) => v.write_xdr(w),
+            Self::ScSpecUdtErrorEnumCaseV0(v) => v.write_xdr(w),
+            Self::ScSpecUdtErrorEnumV0(v) => v.write_xdr(w),
+            Self::ScSpecFunctionInputV0(v) => v.write_xdr(w),
+            Self::ScSpecFunctionV0(v) => v.write_xdr(w),
+            Self::ScSpecEntryKind(v) => v.write_xdr(w),
+            Self::ScSpecEntry(v) => v.write_xdr(w),
+            Self::ScValType(v) => v.write_xdr(w),
+            Self::ScErrorType(v) => v.write_xdr(w),
+            Self::ScErrorCode(v) => v.write_xdr(w),
+            Self::ScError(v) => v.write_xdr(w),
+            Self::UInt128Parts(v) => v.write_xdr(w),
+            Self::Int128Parts(v) => v.write_xdr(w),
+            Self::UInt256Parts(v) => v.write_xdr(w),
+            Self::Int256Parts(v) => v.write_xdr(w),
+            Self::ContractExecutableType(v) => v.write_xdr(w),
+            Self::ContractExecutable(v) => v.write_xdr(w),
+            Self::ScAddressType(v) => v.write_xdr(w),
+            Self::ScAddress(v) => v.write_xdr(w),
+            Self::ScVec(v) => v.write_xdr(w),
+            Self::ScMap(v) => v.write_xdr(w),
+            Self::ScBytes(v) => v.write_xdr(w),
+            Self::ScString(v) => v.write_xdr(w),
+            Self::ScSymbol(v) => v.write_xdr(w),
+            Self::ScNonceKey(v) => v.write_xdr(w),
+            Self::ScContractInstance(v) => v.write_xdr(w),
+            Self::ScVal(v) => v.write_xdr(w),
+            Self::ScMapEntry(v) => v.write_xdr(w),
+            Self::StoredTransactionSet(v) => v.write_xdr(w),
+            Self::StoredDebugTransactionSet(v) => v.write_xdr(w),
+            Self::PersistedScpStateV0(v) => v.write_xdr(w),
+            Self::PersistedScpStateV1(v) => v.write_xdr(w),
+            Self::PersistedScpState(v) => v.write_xdr(w),
+            Self::Thresholds(v) => v.write_xdr(w),
+            Self::String32(v) => v.write_xdr(w),
+            Self::String64(v) => v.write_xdr(w),
+            Self::SequenceNumber(v) => v.write_xdr(w),
+            Self::DataValue(v) => v.write_xdr(w),
+            Self::PoolId(v) => v.write_xdr(w),
+            Self::AssetCode4(v) => v.write_xdr(w),
+            Self::AssetCode12(v) => v.write_xdr(w),
+            Self::AssetType(v) => v.write_xdr(w),
+            Self::AssetCode(v) => v.write_xdr(w),
+            Self::AlphaNum4(v) => v.write_xdr(w),
+            Self::AlphaNum12(v) => v.write_xdr(w),
+            Self::Asset(v) => v.write_xdr(w),
+            Self::Price(v) => v.write_xdr(w),
+            Self::Liabilities(v) => v.write_xdr(w),
+            Self::ThresholdIndexes(v) => v.write_xdr(w),
+            Self::LedgerEntryType(v) => v.write_xdr(w),
+            Self::Signer(v) => v.write_xdr(w),
+            Self::AccountFlags(v) => v.write_xdr(w),
+            Self::SponsorshipDescriptor(v) => v.write_xdr(w),
+            Self::AccountEntryExtensionV3(v) => v.write_xdr(w),
+            Self::AccountEntryExtensionV2(v) => v.write_xdr(w),
+            Self::AccountEntryExtensionV2Ext(v) => v.write_xdr(w),
+            Self::AccountEntryExtensionV1(v) => v.write_xdr(w),
+            Self::AccountEntryExtensionV1Ext(v) => v.write_xdr(w),
+            Self::AccountEntry(v) => v.write_xdr(w),
+            Self::AccountEntryExt(v) => v.write_xdr(w),
+            Self::TrustLineFlags(v) => v.write_xdr(w),
+            Self::LiquidityPoolType(v) => v.write_xdr(w),
+            Self::TrustLineAsset(v) => v.write_xdr(w),
+            Self::TrustLineEntryExtensionV2(v) => v.write_xdr(w),
+            Self::TrustLineEntryExtensionV2Ext(v) => v.write_xdr(w),
+            Self::TrustLineEntry(v) => v.write_xdr(w),
+            Self::TrustLineEntryExt(v) => v.write_xdr(w),
+            Self::TrustLineEntryV1(v) => v.write_xdr(w),
+            Self::TrustLineEntryV1Ext(v) => v.write_xdr(w),
+            Self::OfferEntryFlags(v) => v.write_xdr(w),
+            Self::OfferEntry(v) => v.write_xdr(w),
+            Self::OfferEntryExt(v) => v.write_xdr(w),
+            Self::DataEntry(v) => v.write_xdr(w),
+            Self::DataEntryExt(v) => v.write_xdr(w),
+            Self::ClaimPredicateType(v) => v.write_xdr(w),
+            Self::ClaimPredicate(v) => v.write_xdr(w),
+            Self::ClaimantType(v) => v.write_xdr(w),
+            Self::Claimant(v) => v.write_xdr(w),
+            Self::ClaimantV0(v) => v.write_xdr(w),
+            Self::ClaimableBalanceIdType(v) => v.write_xdr(w),
+            Self::ClaimableBalanceId(v) => v.write_xdr(w),
+            Self::ClaimableBalanceFlags(v) => v.write_xdr(w),
+            Self::ClaimableBalanceEntryExtensionV1(v) => v.write_xdr(w),
+            Self::ClaimableBalanceEntryExtensionV1Ext(v) => v.write_xdr(w),
+            Self::ClaimableBalanceEntry(v) => v.write_xdr(w),
+            Self::ClaimableBalanceEntryExt(v) => v.write_xdr(w),
+            Self::LiquidityPoolConstantProductParameters(v) => v.write_xdr(w),
+            Self::LiquidityPoolEntry(v) => v.write_xdr(w),
+            Self::LiquidityPoolEntryBody(v) => v.write_xdr(w),
+            Self::LiquidityPoolEntryConstantProduct(v) => v.write_xdr(w),
+            Self::ContractDataDurability(v) => v.write_xdr(w),
+            Self::ContractDataEntry(v) => v.write_xdr(w),
+            Self::ContractCodeEntry(v) => v.write_xdr(w),
+            Self::TtlEntry(v) => v.write_xdr(w),
+            Self::LedgerEntryExtensionV1(v) => v.write_xdr(w),
+            Self::LedgerEntryExtensionV1Ext(v) => v.write_xdr(w),
+            Self::LedgerEntry(v) => v.write_xdr(w),
+            Self::LedgerEntryData(v) => v.write_xdr(w),
+            Self::LedgerEntryExt(v) => v.write_xdr(w),
+            Self::LedgerKey(v) => v.write_xdr(w),
+            Self::LedgerKeyAccount(v) => v.write_xdr(w),
+            Self::LedgerKeyTrustLine(v) => v.write_xdr(w),
+            Self::LedgerKeyOffer(v) => v.write_xdr(w),
+            Self::LedgerKeyData(v) => v.write_xdr(w),
+            Self::LedgerKeyClaimableBalance(v) => v.write_xdr(w),
+            Self::LedgerKeyLiquidityPool(v) => v.write_xdr(w),
+            Self::LedgerKeyContractData(v) => v.write_xdr(w),
+            Self::LedgerKeyContractCode(v) => v.write_xdr(w),
+            Self::LedgerKeyConfigSetting(v) => v.write_xdr(w),
+            Self::LedgerKeyTtl(v) => v.write_xdr(w),
+            Self::EnvelopeType(v) => v.write_xdr(w),
+            Self::UpgradeType(v) => v.write_xdr(w),
+            Self::StellarValueType(v) => v.write_xdr(w),
+            Self::LedgerCloseValueSignature(v) => v.write_xdr(w),
+            Self::StellarValue(v) => v.write_xdr(w),
+            Self::StellarValueExt(v) => v.write_xdr(w),
+            Self::LedgerHeaderFlags(v) => v.write_xdr(w),
+            Self::LedgerHeaderExtensionV1(v) => v.write_xdr(w),
+            Self::LedgerHeaderExtensionV1Ext(v) => v.write_xdr(w),
+            Self::LedgerHeader(v) => v.write_xdr(w),
+            Self::LedgerHeaderExt(v) => v.write_xdr(w),
+            Self::LedgerUpgradeType(v) => v.write_xdr(w),
+            Self::ConfigUpgradeSetKey(v) => v.write_xdr(w),
+            Self::LedgerUpgrade(v) => v.write_xdr(w),
+            Self::ConfigUpgradeSet(v) => v.write_xdr(w),
+            Self::BucketEntryType(v) => v.write_xdr(w),
+            Self::BucketMetadata(v) => v.write_xdr(w),
+            Self::BucketMetadataExt(v) => v.write_xdr(w),
+            Self::BucketEntry(v) => v.write_xdr(w),
+            Self::TxSetComponentType(v) => v.write_xdr(w),
+            Self::TxSetComponent(v) => v.write_xdr(w),
+            Self::TxSetComponentTxsMaybeDiscountedFee(v) => v.write_xdr(w),
+            Self::TransactionPhase(v) => v.write_xdr(w),
+            Self::TransactionSet(v) => v.write_xdr(w),
+            Self::TransactionSetV1(v) => v.write_xdr(w),
+            Self::GeneralizedTransactionSet(v) => v.write_xdr(w),
+            Self::TransactionResultPair(v) => v.write_xdr(w),
+            Self::TransactionResultSet(v) => v.write_xdr(w),
+            Self::TransactionHistoryEntry(v) => v.write_xdr(w),
+            Self::TransactionHistoryEntryExt(v) => v.write_xdr(w),
+            Self::TransactionHistoryResultEntry(v) => v.write_xdr(w),
+            Self::TransactionHistoryResultEntryExt(v) => v.write_xdr(w),
+            Self::LedgerHeaderHistoryEntry(v) => v.write_xdr(w),
+            Self::LedgerHeaderHistoryEntryExt(v) => v.write_xdr(w),
+            Self::LedgerScpMessages(v) => v.write_xdr(w),
+            Self::ScpHistoryEntryV0(v) => v.write_xdr(w),
+            Self::ScpHistoryEntry(v) => v.write_xdr(w),
+            Self::LedgerEntryChangeType(v) => v.write_xdr(w),
+            Self::LedgerEntryChange(v) => v.write_xdr(w),
+            Self::LedgerEntryChanges(v) => v.write_xdr(w),
+            Self::OperationMeta(v) => v.write_xdr(w),
+            Self::TransactionMetaV1(v) => v.write_xdr(w),
+            Self::TransactionMetaV2(v) => v.write_xdr(w),
+            Self::ContractEventType(v) => v.write_xdr(w),
+            Self::ContractEvent(v) => v.write_xdr(w),
+            Self::ContractEventBody(v) => v.write_xdr(w),
+            Self::ContractEventV0(v) => v.write_xdr(w),
+            Self::DiagnosticEvent(v) => v.write_xdr(w),
+            Self::SorobanTransactionMeta(v) => v.write_xdr(w),
+            Self::TransactionMetaV3(v) => v.write_xdr(w),
+            Self::InvokeHostFunctionSuccessPreImage(v) => v.write_xdr(w),
+            Self::TransactionMeta(v) => v.write_xdr(w),
+            Self::TransactionResultMeta(v) => v.write_xdr(w),
+            Self::UpgradeEntryMeta(v) => v.write_xdr(w),
+            Self::LedgerCloseMetaV0(v) => v.write_xdr(w),
+            Self::LedgerCloseMetaV1(v) => v.write_xdr(w),
+            Self::LedgerCloseMeta(v) => v.write_xdr(w),
+            Self::ErrorCode(v) => v.write_xdr(w),
+            Self::SError(v) => v.write_xdr(w),
+            Self::SendMore(v) => v.write_xdr(w),
+            Self::SendMoreExtended(v) => v.write_xdr(w),
+            Self::AuthCert(v) => v.write_xdr(w),
+            Self::Hello(v) => v.write_xdr(w),
+            Self::Auth(v) => v.write_xdr(w),
+            Self::IpAddrType(v) => v.write_xdr(w),
+            Self::PeerAddress(v) => v.write_xdr(w),
+            Self::PeerAddressIp(v) => v.write_xdr(w),
+            Self::MessageType(v) => v.write_xdr(w),
+            Self::DontHave(v) => v.write_xdr(w),
+            Self::SurveyMessageCommandType(v) => v.write_xdr(w),
+            Self::SurveyMessageResponseType(v) => v.write_xdr(w),
+            Self::SurveyRequestMessage(v) => v.write_xdr(w),
+            Self::SignedSurveyRequestMessage(v) => v.write_xdr(w),
+            Self::EncryptedBody(v) => v.write_xdr(w),
+            Self::SurveyResponseMessage(v) => v.write_xdr(w),
+            Self::SignedSurveyResponseMessage(v) => v.write_xdr(w),
+            Self::PeerStats(v) => v.write_xdr(w),
+            Self::PeerStatList(v) => v.write_xdr(w),
+            Self::TopologyResponseBodyV0(v) => v.write_xdr(w),
+            Self::TopologyResponseBodyV1(v) => v.write_xdr(w),
+            Self::SurveyResponseBody(v) => v.write_xdr(w),
+            Self::TxAdvertVector(v) => v.write_xdr(w),
+            Self::FloodAdvert(v) => v.write_xdr(w),
+            Self::TxDemandVector(v) => v.write_xdr(w),
+            Self::FloodDemand(v) => v.write_xdr(w),
+            Self::StellarMessage(v) => v.write_xdr(w),
+            Self::AuthenticatedMessage(v) => v.write_xdr(w),
+            Self::AuthenticatedMessageV0(v) => v.write_xdr(w),
+            Self::LiquidityPoolParameters(v) => v.write_xdr(w),
+            Self::MuxedAccount(v) => v.write_xdr(w),
+            Self::MuxedAccountMed25519(v) => v.write_xdr(w),
+            Self::DecoratedSignature(v) => v.write_xdr(w),
+            Self::OperationType(v) => v.write_xdr(w),
+            Self::CreateAccountOp(v) => v.write_xdr(w),
+            Self::PaymentOp(v) => v.write_xdr(w),
+            Self::PathPaymentStrictReceiveOp(v) => v.write_xdr(w),
+            Self::PathPaymentStrictSendOp(v) => v.write_xdr(w),
+            Self::ManageSellOfferOp(v) => v.write_xdr(w),
+            Self::ManageBuyOfferOp(v) => v.write_xdr(w),
+            Self::CreatePassiveSellOfferOp(v) => v.write_xdr(w),
+            Self::SetOptionsOp(v) => v.write_xdr(w),
+            Self::ChangeTrustAsset(v) => v.write_xdr(w),
+            Self::ChangeTrustOp(v) => v.write_xdr(w),
+            Self::AllowTrustOp(v) => v.write_xdr(w),
+            Self::ManageDataOp(v) => v.write_xdr(w),
+            Self::BumpSequenceOp(v) => v.write_xdr(w),
+            Self::CreateClaimableBalanceOp(v) => v.write_xdr(w),
+            Self::ClaimClaimableBalanceOp(v) => v.write_xdr(w),
+            Self::BeginSponsoringFutureReservesOp(v) => v.write_xdr(w),
+            Self::RevokeSponsorshipType(v) => v.write_xdr(w),
+            Self::RevokeSponsorshipOp(v) => v.write_xdr(w),
+            Self::RevokeSponsorshipOpSigner(v) => v.write_xdr(w),
+            Self::ClawbackOp(v) => v.write_xdr(w),
+            Self::ClawbackClaimableBalanceOp(v) => v.write_xdr(w),
+            Self::SetTrustLineFlagsOp(v) => v.write_xdr(w),
+            Self::LiquidityPoolDepositOp(v) => v.write_xdr(w),
+            Self::LiquidityPoolWithdrawOp(v) => v.write_xdr(w),
+            Self::HostFunctionType(v) => v.write_xdr(w),
+            Self::ContractIdPreimageType(v) => v.write_xdr(w),
+            Self::ContractIdPreimage(v) => v.write_xdr(w),
+            Self::ContractIdPreimageFromAddress(v) => v.write_xdr(w),
+            Self::CreateContractArgs(v) => v.write_xdr(w),
+            Self::InvokeContractArgs(v) => v.write_xdr(w),
+            Self::HostFunction(v) => v.write_xdr(w),
+            Self::SorobanAuthorizedFunctionType(v) => v.write_xdr(w),
+            Self::SorobanAuthorizedFunction(v) => v.write_xdr(w),
+            Self::SorobanAuthorizedInvocation(v) => v.write_xdr(w),
+            Self::SorobanAddressCredentials(v) => v.write_xdr(w),
+            Self::SorobanCredentialsType(v) => v.write_xdr(w),
+            Self::SorobanCredentials(v) => v.write_xdr(w),
+            Self::SorobanAuthorizationEntry(v) => v.write_xdr(w),
+            Self::InvokeHostFunctionOp(v) => v.write_xdr(w),
+            Self::ExtendFootprintTtlOp(v) => v.write_xdr(w),
+            Self::RestoreFootprintOp(v) => v.write_xdr(w),
+            Self::Operation(v) => v.write_xdr(w),
+            Self::OperationBody(v) => v.write_xdr(w),
+            Self::HashIdPreimage(v) => v.write_xdr(w),
+            Self::HashIdPreimageOperationId(v) => v.write_xdr(w),
+            Self::HashIdPreimageRevokeId(v) => v.write_xdr(w),
+            Self::HashIdPreimageContractId(v) => v.write_xdr(w),
+            Self::HashIdPreimageSorobanAuthorization(v) => v.write_xdr(w),
+            Self::MemoType(v) => v.write_xdr(w),
+            Self::Memo(v) => v.write_xdr(w),
+            Self::TimeBounds(v) => v.write_xdr(w),
+            Self::LedgerBounds(v) => v.write_xdr(w),
+            Self::PreconditionsV2(v) => v.write_xdr(w),
+            Self::PreconditionType(v) => v.write_xdr(w),
+            Self::Preconditions(v) => v.write_xdr(w),
+            Self::LedgerFootprint(v) => v.write_xdr(w),
+            Self::SorobanResources(v) => v.write_xdr(w),
+            Self::SorobanTransactionData(v) => v.write_xdr(w),
+            Self::TransactionV0(v) => v.write_xdr(w),
+            Self::TransactionV0Ext(v) => v.write_xdr(w),
+            Self::TransactionV0Envelope(v) => v.write_xdr(w),
+            Self::Transaction(v) => v.write_xdr(w),
+            Self::TransactionExt(v) => v.write_xdr(w),
+            Self::TransactionV1Envelope(v) => v.write_xdr(w),
+            Self::FeeBumpTransaction(v) => v.write_xdr(w),
+            Self::FeeBumpTransactionInnerTx(v) => v.write_xdr(w),
+            Self::FeeBumpTransactionExt(v) => v.write_xdr(w),
+            Self::FeeBumpTransactionEnvelope(v) => v.write_xdr(w),
+            Self::TransactionEnvelope(v) => v.write_xdr(w),
+            Self::TransactionSignaturePayload(v) => v.write_xdr(w),
+            Self::TransactionSignaturePayloadTaggedTransaction(v) => v.write_xdr(w),
+            Self::ClaimAtomType(v) => v.write_xdr(w),
+            Self::ClaimOfferAtomV0(v) => v.write_xdr(w),
+            Self::ClaimOfferAtom(v) => v.write_xdr(w),
+            Self::ClaimLiquidityAtom(v) => v.write_xdr(w),
+            Self::ClaimAtom(v) => v.write_xdr(w),
+            Self::CreateAccountResultCode(v) => v.write_xdr(w),
+            Self::CreateAccountResult(v) => v.write_xdr(w),
+            Self::PaymentResultCode(v) => v.write_xdr(w),
+            Self::PaymentResult(v) => v.write_xdr(w),
+            Self::PathPaymentStrictReceiveResultCode(v) => v.write_xdr(w),
+            Self::SimplePaymentResult(v) => v.write_xdr(w),
+            Self::PathPaymentStrictReceiveResult(v) => v.write_xdr(w),
+            Self::PathPaymentStrictReceiveResultSuccess(v) => v.write_xdr(w),
+            Self::PathPaymentStrictSendResultCode(v) => v.write_xdr(w),
+            Self::PathPaymentStrictSendResult(v) => v.write_xdr(w),
+            Self::PathPaymentStrictSendResultSuccess(v) => v.write_xdr(w),
+            Self::ManageSellOfferResultCode(v) => v.write_xdr(w),
+            Self::ManageOfferEffect(v) => v.write_xdr(w),
+            Self::ManageOfferSuccessResult(v) => v.write_xdr(w),
+            Self::ManageOfferSuccessResultOffer(v) => v.write_xdr(w),
+            Self::ManageSellOfferResult(v) => v.write_xdr(w),
+            Self::ManageBuyOfferResultCode(v) => v.write_xdr(w),
+            Self::ManageBuyOfferResult(v) => v.write_xdr(w),
+            Self::SetOptionsResultCode(v) => v.write_xdr(w),
+            Self::SetOptionsResult(v) => v.write_xdr(w),
+            Self::ChangeTrustResultCode(v) => v.write_xdr(w),
+            Self::ChangeTrustResult(v) => v.write_xdr(w),
+            Self::AllowTrustResultCode(v) => v.write_xdr(w),
+            Self::AllowTrustResult(v) => v.write_xdr(w),
+            Self::AccountMergeResultCode(v) => v.write_xdr(w),
+            Self::AccountMergeResult(v) => v.write_xdr(w),
+            Self::InflationResultCode(v) => v.write_xdr(w),
+            Self::InflationPayout(v) => v.write_xdr(w),
+            Self::InflationResult(v) => v.write_xdr(w),
+            Self::ManageDataResultCode(v) => v.write_xdr(w),
+            Self::ManageDataResult(v) => v.write_xdr(w),
+            Self::BumpSequenceResultCode(v) => v.write_xdr(w),
+            Self::BumpSequenceResult(v) => v.write_xdr(w),
+            Self::CreateClaimableBalanceResultCode(v) => v.write_xdr(w),
+            Self::CreateClaimableBalanceResult(v) => v.write_xdr(w),
+            Self::ClaimClaimableBalanceResultCode(v) => v.write_xdr(w),
+            Self::ClaimClaimableBalanceResult(v) => v.write_xdr(w),
+            Self::BeginSponsoringFutureReservesResultCode(v) => v.write_xdr(w),
+            Self::BeginSponsoringFutureReservesResult(v) => v.write_xdr(w),
+            Self::EndSponsoringFutureReservesResultCode(v) => v.write_xdr(w),
+            Self::EndSponsoringFutureReservesResult(v) => v.write_xdr(w),
+            Self::RevokeSponsorshipResultCode(v) => v.write_xdr(w),
+            Self::RevokeSponsorshipResult(v) => v.write_xdr(w),
+            Self::ClawbackResultCode(v) => v.write_xdr(w),
+            Self::ClawbackResult(v) => v.write_xdr(w),
+            Self::ClawbackClaimableBalanceResultCode(v) => v.write_xdr(w),
+            Self::ClawbackClaimableBalanceResult(v) => v.write_xdr(w),
+            Self::SetTrustLineFlagsResultCode(v) => v.write_xdr(w),
+            Self::SetTrustLineFlagsResult(v) => v.write_xdr(w),
+            Self::LiquidityPoolDepositResultCode(v) => v.write_xdr(w),
+            Self::LiquidityPoolDepositResult(v) => v.write_xdr(w),
+            Self::LiquidityPoolWithdrawResultCode(v) => v.write_xdr(w),
+            Self::LiquidityPoolWithdrawResult(v) => v.write_xdr(w),
+            Self::InvokeHostFunctionResultCode(v) => v.write_xdr(w),
+            Self::InvokeHostFunctionResult(v) => v.write_xdr(w),
+            Self::ExtendFootprintTtlResultCode(v) => v.write_xdr(w),
+            Self::ExtendFootprintTtlResult(v) => v.write_xdr(w),
+            Self::RestoreFootprintResultCode(v) => v.write_xdr(w),
+            Self::RestoreFootprintResult(v) => v.write_xdr(w),
+            Self::OperationResultCode(v) => v.write_xdr(w),
+            Self::OperationResult(v) => v.write_xdr(w),
+            Self::OperationResultTr(v) => v.write_xdr(w),
+            Self::TransactionResultCode(v) => v.write_xdr(w),
+            Self::InnerTransactionResult(v) => v.write_xdr(w),
+            Self::InnerTransactionResultResult(v) => v.write_xdr(w),
+            Self::InnerTransactionResultExt(v) => v.write_xdr(w),
+            Self::InnerTransactionResultPair(v) => v.write_xdr(w),
+            Self::TransactionResult(v) => v.write_xdr(w),
+            Self::TransactionResultResult(v) => v.write_xdr(w),
+            Self::TransactionResultExt(v) => v.write_xdr(w),
+            Self::Hash(v) => v.write_xdr(w),
+            Self::Uint256(v) => v.write_xdr(w),
+            Self::Uint32(v) => v.write_xdr(w),
+            Self::Int32(v) => v.write_xdr(w),
+            Self::Uint64(v) => v.write_xdr(w),
+            Self::Int64(v) => v.write_xdr(w),
+            Self::TimePoint(v) => v.write_xdr(w),
+            Self::Duration(v) => v.write_xdr(w),
+            Self::ExtensionPoint(v) => v.write_xdr(w),
+            Self::CryptoKeyType(v) => v.write_xdr(w),
+            Self::PublicKeyType(v) => v.write_xdr(w),
+            Self::SignerKeyType(v) => v.write_xdr(w),
+            Self::PublicKey(v) => v.write_xdr(w),
+            Self::SignerKey(v) => v.write_xdr(w),
+            Self::SignerKeyEd25519SignedPayload(v) => v.write_xdr(w),
+            Self::Signature(v) => v.write_xdr(w),
+            Self::SignatureHint(v) => v.write_xdr(w),
+            Self::NodeId(v) => v.write_xdr(w),
+            Self::AccountId(v) => v.write_xdr(w),
+            Self::Curve25519Secret(v) => v.write_xdr(w),
+            Self::Curve25519Public(v) => v.write_xdr(w),
+            Self::HmacSha256Key(v) => v.write_xdr(w),
+            Self::HmacSha256Mac(v) => v.write_xdr(w),
+        }
     }
 }

@@ -41,11 +41,12 @@ next = []
 # Features dependent on optional dependencies.
 base64 = ["std", "dep:base64"]
 serde = ["alloc", "dep:serde", "dep:serde_with", "hex/serde"]
+serde_json = ["serde", "dep:serde_json"]
 arbitrary = ["std", "dep:arbitrary"]
 hex = []
 
 # Features for the CLI.
-cli = ["std", "curr", "next", "base64", "serde", "dep:clap", "dep:serde_json", "dep:thiserror"]
+cli = ["std", "curr", "next", "base64", "serde", "serde_json", "dep:clap", "dep:thiserror"]
 
 [package.metadata.docs.rs]
 all-features = true

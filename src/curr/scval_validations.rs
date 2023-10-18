@@ -34,7 +34,7 @@ impl Validate for ScVal {
 
             ScVal::Vec(Some(v)) => {
                 for e in v.iter() {
-                    e.validate()?
+                    e.validate()?;
                 }
                 Ok(())
             }

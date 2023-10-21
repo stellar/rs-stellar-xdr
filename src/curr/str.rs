@@ -1,26 +1,25 @@
+//# Custom string representations of the following types, also used for JSON
+//# formatting.
+//#
+//# ## Strkey Types
+//# - PublicKey
+//# - PublicKey
+//# - MuxedAccount
+//# - MuxedAccountMed25519
+//# - SignerKey
+//# - SignerKeyEd25519SignedPayload
+//# - NodeId
+//#
+//# ## Asset Types
+//# - Asset
+//# - AlphaNum4
+//# - AlphaNum12
+//#
+//# ## ASCII Types
+//# - AssetCode
+//# - AssetCode4
+//# - AssetCode12
 #![cfg(feature = "std")]
-
-/// Custom string representations of the following types, also used for JSON
-/// formatting.
-///
-/// ## Strkey Types
-/// - PublicKey
-/// - PublicKey
-/// - MuxedAccount
-/// - MuxedAccountMed25519
-/// - SignerKey
-/// - SignerKeyEd25519SignedPayload
-/// - NodeId
-///
-/// ## Asset Types
-/// - Asset
-/// - AlphaNum4
-/// - AlphaNum12
-///
-/// ## ASCII Types
-/// - AssetCode
-/// - AssetCode4
-/// - AssetCode12
 use super::{Error, PublicKey, Uint256};
 
 impl From<stellar_strkey::DecodeError> for Error {

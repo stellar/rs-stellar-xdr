@@ -3,7 +3,7 @@
 //#
 //# ## Strkey Types
 //# - PublicKey
-//# - PublicKey
+//# - AccountId
 //# - MuxedAccount
 //# - MuxedAccountMed25519
 //# - SignerKey
@@ -20,7 +20,7 @@
 //# - AssetCode4
 //# - AssetCode12
 #![cfg(feature = "std")]
-use super::{Error, PublicKey, Uint256};
+use super::{AccountId, Error, PublicKey, Uint256};
 
 impl From<stellar_strkey::DecodeError> for Error {
     fn from(_: stellar_strkey::DecodeError) -> Self {
@@ -49,5 +49,18 @@ impl core::str::FromStr for PublicKey {
         let stellar_strkey::ed25519::PublicKey(k) =
             stellar_strkey::ed25519::PublicKey::from_str(s)?;
         Ok(PublicKey::PublicKeyTypeEd25519(Uint256(k)))
+    }
+}
+
+impl core::fmt::Display for AccountId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl core::str::FromStr for AccountId {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        Ok(AccountId(PublicKey::from_str(s)?))
     }
 }

@@ -43,7 +43,6 @@ impl core::fmt::Display for PublicKey {
     }
 }
 
-#[cfg(feature = "alloc")]
 impl core::str::FromStr for PublicKey {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {

@@ -9,16 +9,6 @@
 //# - SignerKey
 //# - SignerKeyEd25519SignedPayload
 //# - NodeId
-//#
-//# ## Asset Types (SEP-11)
-//# - Asset
-//# - AlphaNum4
-//# - AlphaNum12
-//#
-//# ## ASCII Types
-//# - AssetCode
-//# - AssetCode4
-//# - AssetCode12
 #![cfg(feature = "std")]
 
 use super::{

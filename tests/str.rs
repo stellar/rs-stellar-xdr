@@ -1,17 +1,14 @@
 #![cfg(feature = "curr")]
 #![cfg(feature = "std")]
 
-use std::str::FromStr;
-
-#[cfg(feature = "curr")]
 use stellar_xdr::curr as stellar_xdr;
-#[cfg(feature = "next")]
-use stellar_xdr::next as stellar_xdr;
 
 use stellar_xdr::{
     AccountId, MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey, SignerKey,
     SignerKeyEd25519SignedPayload, Uint256,
 };
+
+use std::str::FromStr;
 
 #[test]
 fn public_key_from_str() {

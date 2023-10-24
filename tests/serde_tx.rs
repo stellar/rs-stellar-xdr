@@ -1,14 +1,12 @@
 #![cfg(feature = "curr")]
 #![cfg(all(feature = "std", feature = "serde"))]
 
-use std::str::FromStr;
-
 use stellar_xdr::curr as stellar_xdr;
 
 use stellar_xdr::{
-    AccountId, AlphaNum4, AssetCode4, BytesM, ChangeTrustAsset, ChangeTrustOp, Hash, Memo,
-    MuxedAccount, Operation, OperationBody, Preconditions, SequenceNumber, StringM, Transaction,
-    TransactionEnvelope, TransactionExt, TransactionV1Envelope, Uint256, VecM,
+    AccountId, AlphaNum4, AssetCode4, ChangeTrustAsset, ChangeTrustOp, Memo, MuxedAccount,
+    Operation, OperationBody, Preconditions, SequenceNumber, Transaction, TransactionEnvelope,
+    TransactionExt, TransactionV1Envelope, Uint256,
 };
 
 #[cfg(feature = "curr")]

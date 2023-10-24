@@ -1,7 +1,7 @@
 //# Custom string representations of the following types, also used for JSON
 //# formatting.
 //#
-//# ## Strkey Types
+//# ## Strkey Types (SEP-23)
 //# - PublicKey
 //# - AccountId
 //# - MuxedAccount
@@ -10,7 +10,7 @@
 //# - SignerKeyEd25519SignedPayload
 //# - NodeId
 //#
-//# ## Asset Types
+//# ## Asset Types (SEP-11)
 //# - Asset
 //# - AlphaNum4
 //# - AlphaNum12

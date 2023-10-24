@@ -42,7 +42,7 @@ next = []
 # Features dependent on optional dependencies.
 base64 = ["std", "dep:base64"]
 serde = ["alloc", "dep:serde", "dep:serde_with", "hex/serde"]
-serde_json = ["serde", "dep:serde_json"]
+serde_json = ["std", "serde", "dep:serde_json"]
 arbitrary = ["std", "dep:arbitrary"]
 hex = []
 

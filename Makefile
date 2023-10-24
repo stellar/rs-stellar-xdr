@@ -2,9 +2,10 @@ export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
 CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex
 
-XDRGEN_VERSION=73284492
-XDRGEN_TYPES_CUSTOM_STR_IMPL=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId
 CARGO_DOC_ARGS?=--open
+
+XDRGEN_VERSION=64612a24
+XDRGEN_TYPES_CUSTOM_STR_IMPL=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId
 
 all: build test
 

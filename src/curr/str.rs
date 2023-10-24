@@ -114,7 +114,7 @@ impl core::fmt::Display for MuxedAccount {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             MuxedAccount::Ed25519(Uint256(k)) => {
-                let k = stellar_strkey::ed25519::PublicKey(k.clone());
+                let k = stellar_strkey::ed25519::PublicKey(*k);
                 let s = k.to_string();
                 f.write_str(&s)?;
             }
@@ -198,17 +198,17 @@ impl core::fmt::Display for SignerKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             SignerKey::Ed25519(Uint256(k)) => {
-                let k = stellar_strkey::ed25519::PublicKey(k.clone());
+                let k = stellar_strkey::ed25519::PublicKey(*k);
                 let s = k.to_string();
                 f.write_str(&s)?;
             }
             SignerKey::PreAuthTx(Uint256(h)) => {
-                let k = stellar_strkey::PreAuthTx(h.clone());
+                let k = stellar_strkey::PreAuthTx(*h);
                 let s = k.to_string();
                 f.write_str(&s)?;
             }
             SignerKey::HashX(Uint256(h)) => {
-                let k = stellar_strkey::HashX(h.clone());
+                let k = stellar_strkey::HashX(*h);
                 let s = k.to_string();
                 f.write_str(&s)?;
             }

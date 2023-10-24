@@ -2,8 +2,10 @@ export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
 CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex
 
-XDRGEN_VERSION=b405294c
 CARGO_DOC_ARGS?=--open
+
+XDRGEN_VERSION=64612a24
+XDRGEN_TYPES_CUSTOM_STR_IMPL=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId
 
 all: build test
 
@@ -35,12 +37,12 @@ ifeq ($(LOCAL_XDRGEN),)
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.8 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
-		xdrgen --language rust --namespace generated --output src/curr $^ \
+		xdrgen --language rust --namespace generated --output src/curr --rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL) $^ \
 		'
 else
 	docker run -i --rm -v $$PWD/../xdrgen:/xdrgen -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		pushd /xdrgen && bundle install --deployment && rake install && popd && \
-		xdrgen --language rust --namespace generated --output src/curr $^ \
+		xdrgen --language rust --namespace generated --output src/curr --rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL) $^ \
 		'
 endif
 	rustfmt $@

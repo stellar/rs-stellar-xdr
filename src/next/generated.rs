@@ -2360,12 +2360,13 @@ mod test {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct Value(pub BytesM);
 
 impl From<Value> for BytesM {
@@ -3929,12 +3930,13 @@ pub const CONTRACT_COST_COUNT_LIMIT: u64 = 1024;
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct ContractCostParams(pub VecM<ContractCostParamEntry, 1024>);
 
 impl From<ContractCostParams> for VecM<ContractCostParamEntry, 1024> {
@@ -8104,12 +8106,13 @@ pub const SCSYMBOL_LIMIT: u64 = 32;
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct ScVec(pub VecM<ScVal>);
 
 impl From<ScVec> for VecM<ScVal> {
@@ -8206,12 +8209,13 @@ impl AsRef<[ScVal]> for ScVec {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct ScMap(pub VecM<ScMapEntry>);
 
 impl From<ScMap> for VecM<ScMapEntry> {
@@ -8308,12 +8312,13 @@ impl AsRef<[ScMapEntry]> for ScMap {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct ScBytes(pub BytesM);
 
 impl From<ScBytes> for BytesM {
@@ -8410,12 +8415,13 @@ impl AsRef<[u8]> for ScBytes {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct ScString(pub StringM);
 
 impl From<ScString> for StringM {
@@ -8512,12 +8518,13 @@ impl AsRef<[u8]> for ScString {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct ScSymbol(pub StringM<32>);
 
 impl From<ScSymbol> for StringM<32> {
@@ -9398,16 +9405,6 @@ impl WriteXdr for PersistedScpState {
 )]
 pub struct Thresholds(pub [u8; 4]);
 
-impl core::fmt::Display for Thresholds {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = &self.0;
-        for b in v {
-            write!(f, "{b:02x}")?;
-        }
-        Ok(())
-    }
-}
-
 impl core::fmt::Debug for Thresholds {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let v = &self.0;
@@ -9416,6 +9413,15 @@ impl core::fmt::Debug for Thresholds {
             write!(f, "{b:02x}")?;
         }
         write!(f, ")")?;
+        Ok(())
+    }
+}
+impl core::fmt::Display for Thresholds {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
         Ok(())
     }
 }
@@ -9509,12 +9515,13 @@ impl AsRef<[u8]> for Thresholds {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct String32(pub StringM<32>);
 
 impl From<String32> for StringM<32> {
@@ -9611,12 +9618,13 @@ impl AsRef<[u8]> for String32 {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct String64(pub StringM<64>);
 
 impl From<String64> for StringM<64> {
@@ -9713,12 +9721,12 @@ impl AsRef<[u8]> for String64 {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct SequenceNumber(pub i64);
 
 impl From<SequenceNumber> for i64 {
@@ -9766,12 +9774,13 @@ impl WriteXdr for SequenceNumber {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct DataValue(pub BytesM<64>);
 
 impl From<DataValue> for BytesM<64> {
@@ -9868,12 +9877,12 @@ impl AsRef<[u8]> for DataValue {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct PoolId(pub Hash);
 
 impl From<PoolId> for Hash {
@@ -9927,16 +9936,6 @@ impl WriteXdr for PoolId {
 )]
 pub struct AssetCode4(pub [u8; 4]);
 
-impl core::fmt::Display for AssetCode4 {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = &self.0;
-        for b in v {
-            write!(f, "{b:02x}")?;
-        }
-        Ok(())
-    }
-}
-
 impl core::fmt::Debug for AssetCode4 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let v = &self.0;
@@ -9945,6 +9944,15 @@ impl core::fmt::Debug for AssetCode4 {
             write!(f, "{b:02x}")?;
         }
         write!(f, ")")?;
+        Ok(())
+    }
+}
+impl core::fmt::Display for AssetCode4 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
         Ok(())
     }
 }
@@ -10044,16 +10052,6 @@ impl AsRef<[u8]> for AssetCode4 {
 )]
 pub struct AssetCode12(pub [u8; 12]);
 
-impl core::fmt::Display for AssetCode12 {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = &self.0;
-        for b in v {
-            write!(f, "{b:02x}")?;
-        }
-        Ok(())
-    }
-}
-
 impl core::fmt::Debug for AssetCode12 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let v = &self.0;
@@ -10062,6 +10060,15 @@ impl core::fmt::Debug for AssetCode12 {
             write!(f, "{b:02x}")?;
         }
         write!(f, ")")?;
+        Ok(())
+    }
+}
+impl core::fmt::Display for AssetCode12 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
         Ok(())
     }
 }
@@ -11137,12 +11144,12 @@ pub const MAX_SIGNERS: u64 = 20;
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct SponsorshipDescriptor(pub Option<AccountId>);
 
 impl From<SponsorshipDescriptor> for Option<AccountId> {
@@ -16081,12 +16088,13 @@ impl WriteXdr for EnvelopeType {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct UpgradeType(pub BytesM<128>);
 
 impl From<UpgradeType> for BytesM<128> {
@@ -19266,12 +19274,13 @@ impl WriteXdr for LedgerEntryChange {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct LedgerEntryChanges(pub VecM<LedgerEntryChange>);
 
 impl From<LedgerEntryChanges> for VecM<LedgerEntryChange> {
@@ -21732,12 +21741,13 @@ impl WriteXdr for SignedSurveyRequestMessage {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct EncryptedBody(pub BytesM<64000>);
 
 impl From<EncryptedBody> for BytesM<64000> {
@@ -22029,12 +22039,13 @@ impl WriteXdr for PeerStats {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct PeerStatList(pub VecM<PeerStats, 25>);
 
 impl From<PeerStatList> for VecM<PeerStats, 25> {
@@ -22357,12 +22368,13 @@ pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct TxAdvertVector(pub VecM<Hash, 1000>);
 
 impl From<TxAdvertVector> for VecM<Hash, 1000> {
@@ -22504,12 +22516,13 @@ pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct TxDemandVector(pub VecM<Hash, 1000>);
 
 impl From<TxDemandVector> for VecM<Hash, 1000> {
@@ -39312,16 +39325,6 @@ impl WriteXdr for TransactionResult {
 )]
 pub struct Hash(pub [u8; 32]);
 
-impl core::fmt::Display for Hash {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = &self.0;
-        for b in v {
-            write!(f, "{b:02x}")?;
-        }
-        Ok(())
-    }
-}
-
 impl core::fmt::Debug for Hash {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let v = &self.0;
@@ -39330,6 +39333,15 @@ impl core::fmt::Debug for Hash {
             write!(f, "{b:02x}")?;
         }
         write!(f, ")")?;
+        Ok(())
+    }
+}
+impl core::fmt::Display for Hash {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
         Ok(())
     }
 }
@@ -39429,16 +39441,6 @@ impl AsRef<[u8]> for Hash {
 )]
 pub struct Uint256(pub [u8; 32]);
 
-impl core::fmt::Display for Uint256 {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = &self.0;
-        for b in v {
-            write!(f, "{b:02x}")?;
-        }
-        Ok(())
-    }
-}
-
 impl core::fmt::Debug for Uint256 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let v = &self.0;
@@ -39447,6 +39449,15 @@ impl core::fmt::Debug for Uint256 {
             write!(f, "{b:02x}")?;
         }
         write!(f, ")")?;
+        Ok(())
+    }
+}
+impl core::fmt::Display for Uint256 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
         Ok(())
     }
 }
@@ -39564,12 +39575,12 @@ pub type Int64 = i64;
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct TimePoint(pub u64);
 
 impl From<TimePoint> for u64 {
@@ -39617,12 +39628,12 @@ impl WriteXdr for TimePoint {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct Duration(pub u64);
 
 impl From<Duration> for u64 {
@@ -40393,12 +40404,13 @@ impl WriteXdr for SignerKey {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default, Debug)]
+#[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct Signature(pub BytesM<64>);
 
 impl From<Signature> for BytesM<64> {
@@ -40501,16 +40513,6 @@ impl AsRef<[u8]> for Signature {
 )]
 pub struct SignatureHint(pub [u8; 4]);
 
-impl core::fmt::Display for SignatureHint {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = &self.0;
-        for b in v {
-            write!(f, "{b:02x}")?;
-        }
-        Ok(())
-    }
-}
-
 impl core::fmt::Debug for SignatureHint {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let v = &self.0;
@@ -40519,6 +40521,15 @@ impl core::fmt::Debug for SignatureHint {
             write!(f, "{b:02x}")?;
         }
         write!(f, ")")?;
+        Ok(())
+    }
+}
+impl core::fmt::Display for SignatureHint {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let v = &self.0;
+        for b in v {
+            write!(f, "{b:02x}")?;
+        }
         Ok(())
     }
 }
@@ -40612,12 +40623,12 @@ impl AsRef<[u8]> for SignatureHint {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct NodeId(pub PublicKey);
 
 impl From<NodeId> for PublicKey {
@@ -40665,12 +40676,12 @@ impl WriteXdr for NodeId {
 //
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Debug)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[derive(Debug)]
 pub struct AccountId(pub PublicKey);
 
 impl From<AccountId> for PublicKey {

@@ -22,7 +22,6 @@ use super::{
 
 impl From<stellar_strkey::DecodeError> for Error {
     fn from(_: stellar_strkey::DecodeError) -> Self {
-        // TODO: Add error type for strkeys.
         Error::Invalid
     }
 }

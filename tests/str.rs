@@ -1,7 +1,4 @@
-#![cfg(all(
-    any(feature = "curr", feature = "next"),
-    not(all(feature = "curr", feature = "next"))
-))]
+#![cfg(feature = "curr")]
 #![cfg(feature = "std")]
 
 use std::str::FromStr;

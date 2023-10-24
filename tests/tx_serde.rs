@@ -37,6 +37,7 @@ fn test_serde_ser() -> Result<(), Box<dyn std::error::Error>> {
         )?)?,
         "\"3031323334353637383930313233343536373839303133343536373839303132\""
     );
+    #[cfg(feature = "curr")]
     assert_eq!(
         serde_json::to_string(&AccountId::from_str(
             "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF"
@@ -76,6 +77,7 @@ fn test_serde_der() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+#[cfg(feature = "curr")]
 #[test]
 fn test_serde_tx() -> Result<(), Box<dyn std::error::Error>> {
     let te = TransactionEnvelope::Tx(TransactionV1Envelope {

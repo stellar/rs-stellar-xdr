@@ -1,6 +1,10 @@
 //# Custom string representations of the following types, also used for JSON
 //# formatting.
 //#
+//# The types that has impls in this file are given to the xdrgen
+//# --rust-types-custom-str-impl cli option, so that xdrgen does not generate
+//# FromStr and Display impls for them.
+//#
 //# ## Strkey Types (SEP-23)
 //# - PublicKey
 //# - AccountId

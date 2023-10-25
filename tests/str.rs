@@ -4,8 +4,8 @@
 use stellar_xdr::curr as stellar_xdr;
 
 use stellar_xdr::{
-    AccountId, MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey, SignerKey,
-    SignerKeyEd25519SignedPayload, Uint256,
+    AccountId, Error, Hash, MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey, ScAddress,
+    SignerKey, SignerKeyEd25519SignedPayload, Uint256,
 };
 
 use std::str::FromStr;
@@ -333,4 +333,68 @@ fn signer_key_from_str_with_signed_payload_ed25519() {
             }
         )),
     );
+}
+
+#[test]
+fn sc_address_to_string_with_account() {
+    let s = ScAddress::Account(AccountId(PublicKey::PublicKeyTypeEd25519(Uint256([
+        0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x05,
+        0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03, 0xfc, 0x7f,
+        0xe8, 0x9a,
+    ]))))
+    .to_string();
+    assert_eq!(
+        s,
+        "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+    );
+}
+
+#[test]
+fn sc_address_from_str_with_account() {
+    let v = ScAddress::from_str("GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ");
+    assert_eq!(
+        v,
+        Ok(ScAddress::Account(AccountId(
+            PublicKey::PublicKeyTypeEd25519(Uint256([
+                0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7,
+                0x05, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03,
+                0xfc, 0x7f, 0xe8, 0x9a,
+            ]))
+        ))),
+    );
+}
+
+#[test]
+fn sc_address_to_string_with_contract() {
+    let s = ScAddress::Contract(Hash([
+        0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x05,
+        0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03, 0xfc, 0x7f,
+        0xe8, 0x9a,
+    ]))
+    .to_string();
+    assert_eq!(
+        s,
+        "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
+    );
+}
+
+#[test]
+fn sc_address_from_str_with_contract() {
+    let v = ScAddress::from_str("CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA");
+    assert_eq!(
+        v,
+        Ok(ScAddress::Contract(Hash([
+            0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7,
+            0x05, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03,
+            0xfc, 0x7f, 0xe8, 0x9a,
+        ]))),
+    );
+}
+
+#[test]
+fn sc_address_from_str_with_invalid() {
+    let v = ScAddress::from_str(
+        "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAJLK",
+    );
+    assert_eq!(v, Err(Error::Invalid));
 }

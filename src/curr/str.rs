@@ -16,8 +16,8 @@
 #![cfg(feature = "std")]
 
 use super::{
-    AccountId, Error, MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey, SignerKey,
-    SignerKeyEd25519SignedPayload, Uint256,
+    AccountId, Error, Hash, MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey, ScAddress,
+    SignerKey, SignerKeyEd25519SignedPayload, Uint256,
 };
 
 impl From<stellar_strkey::DecodeError> for Error {
@@ -216,6 +216,40 @@ impl core::fmt::Display for SignerKey {
                 f.write_str(&s)?;
             }
             SignerKey::Ed25519SignedPayload(p) => p.fmt(f)?,
+        }
+        Ok(())
+    }
+}
+
+impl core::str::FromStr for ScAddress {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let strkey = stellar_strkey::Strkey::from_str(s)?;
+        match strkey {
+            stellar_strkey::Strkey::PublicKeyEd25519(stellar_strkey::ed25519::PublicKey(k)) => Ok(
+                ScAddress::Account(AccountId(PublicKey::PublicKeyTypeEd25519(Uint256(k)))),
+            ),
+            stellar_strkey::Strkey::Contract(stellar_strkey::Contract(h)) => {
+                Ok(ScAddress::Contract(Hash(h)))
+            }
+            stellar_strkey::Strkey::MuxedAccountEd25519(_)
+            | stellar_strkey::Strkey::PrivateKeyEd25519(_)
+            | stellar_strkey::Strkey::PreAuthTx(_)
+            | stellar_strkey::Strkey::HashX(_)
+            | stellar_strkey::Strkey::SignedPayloadEd25519(_) => Err(Error::Invalid),
+        }
+    }
+}
+
+impl core::fmt::Display for ScAddress {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            ScAddress::Account(a) => a.fmt(f)?,
+            ScAddress::Contract(Hash(h)) => {
+                let k = stellar_strkey::Contract(*h);
+                let s = k.to_string();
+                f.write_str(&s)?;
+            }
         }
         Ok(())
     }

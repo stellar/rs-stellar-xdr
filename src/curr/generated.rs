@@ -71,6 +71,9 @@ use core::{array::TryFromSliceError, fmt, fmt::Debug, marker::Sized, ops::Deref,
 #[cfg(feature = "std")]
 use core::marker::PhantomData;
 
+#[cfg(feature = "std")]
+const MAX_PREALLOCATED_BYTES_READ: usize = 1024; // 1KB
+
 // When feature alloc is turned off use static lifetime Box and Vec types.
 #[cfg(not(feature = "alloc"))]
 mod noalloc {
@@ -1287,8 +1290,15 @@ impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
                 return Err(Error::LengthExceedsMax);
             }
 
-            let mut vec = vec![0u8; len as usize];
-            r.read_exact(&mut vec)?;
+            let mut vec = vec![0u8; 0];
+            let mut len_remaining = len as usize;
+            while len_remaining > 0 {
+                let len_read = core::cmp::min(len_remaining, MAX_PREALLOCATED_BYTES_READ);
+                let offset = vec.len();
+                vec.resize(vec.len() + len_read, 0);
+                r.read_exact(&mut vec[offset..])?;
+                len_remaining -= len_read;
+            }
 
             let pad = &mut [0u8; 3][..pad_len(len as usize)];
             r.read_exact(pad)?;
@@ -1685,8 +1695,15 @@ impl<const MAX: u32> ReadXdr for BytesM<MAX> {
                 return Err(Error::LengthExceedsMax);
             }
 
-            let mut vec = vec![0u8; len as usize];
-            r.read_exact(&mut vec)?;
+            let mut vec = vec![0u8; 0];
+            let mut len_remaining = len as usize;
+            while len_remaining > 0 {
+                let len_read = core::cmp::min(len_remaining, MAX_PREALLOCATED_BYTES_READ);
+                let offset = vec.len();
+                vec.resize(vec.len() + len_read, 0);
+                r.read_exact(&mut vec[offset..])?;
+                len_remaining -= len_read;
+            }
 
             let pad = &mut [0u8; 3][..pad_len(len as usize)];
             r.read_exact(pad)?;
@@ -2068,8 +2085,15 @@ impl<const MAX: u32> ReadXdr for StringM<MAX> {
                 return Err(Error::LengthExceedsMax);
             }
 
-            let mut vec = vec![0u8; len as usize];
-            r.read_exact(&mut vec)?;
+            let mut vec = vec![0u8; 0];
+            let mut len_remaining = len as usize;
+            while len_remaining > 0 {
+                let len_read = core::cmp::min(len_remaining, MAX_PREALLOCATED_BYTES_READ);
+                let offset = vec.len();
+                vec.resize(vec.len() + len_read, 0);
+                r.read_exact(&mut vec[offset..])?;
+                len_remaining -= len_read;
+            }
 
             let pad = &mut [0u8; 3][..pad_len(len as usize)];
             r.read_exact(pad)?;

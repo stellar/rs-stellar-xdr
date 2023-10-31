@@ -69,9 +69,9 @@ impl Default for OutputFormat {
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let mut f = stellar_xdr::$m::DepthLimitedRead::new(
+            let mut f = stellar_xdr::$m::Limited::new(
                 ResetRead::new(self.file()?),
-                stellar_xdr::$m::DEFAULT_XDR_RW_DEPTH_LIMIT,
+                stellar_xdr::$m::Limits::default(),
             );
             'variants: for v in stellar_xdr::$m::TypeVariant::VARIANTS {
                 f.inner.reset();

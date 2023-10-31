@@ -82,9 +82,9 @@ macro_rules! run_x {
                 )
             })?;
             for f in &mut files {
-                let mut f = stellar_xdr::$m::DepthLimitedRead::new(
+                let mut f = stellar_xdr::$m::Limited::new(
                     f,
-                    stellar_xdr::$m::DEFAULT_XDR_RW_DEPTH_LIMIT,
+                    stellar_xdr::$m::Limits::default(),
                 );
                 match self.input {
                     InputFormat::Single => {

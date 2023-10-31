@@ -11,19 +11,20 @@ use stellar_xdr::next as stellar_xdr;
 
 use std::io::{self, Cursor};
 use stellar_xdr::Error;
-use stellar_xdr::{DepthLimitedRead, ReadXdr, WriteXdr, DEFAULT_XDR_RW_DEPTH_LIMIT};
+use stellar_xdr::{Limited, Limits, ReadXdr, WriteXdr};
 
 #[test]
 fn test_read_interrupts_and_residuals() -> Result<(), Error> {
-    let v_bytes = [1u32.to_xdr()?, 2u32.to_xdr()?].concat();
+    let v_bytes = [
+        1u32.to_xdr(Limits::default())?,
+        2u32.to_xdr(Limits::default())?,
+    ]
+    .concat();
 
     // read_xdr should support not consuming the buffer on the read, being able
     // to do subsequent reads, and continuing on interrupts.
     {
-        let mut cursor = DepthLimitedRead::new(
-            Interrupted::new(Cursor::new(&v_bytes)),
-            DEFAULT_XDR_RW_DEPTH_LIMIT,
-        );
+        let mut cursor = Limited::new(Interrupted::new(Cursor::new(&v_bytes)), Limits::default());
         assert_eq!(u32::read_xdr(&mut cursor), Ok(1u32));
         assert_eq!(u32::read_xdr(&mut cursor), Ok(2u32));
     }
@@ -32,16 +33,16 @@ fn test_read_interrupts_and_residuals() -> Result<(), Error> {
     // type being read, and continue on interrupts.
     {
         assert_eq!(
-            u32::read_xdr_to_end(&mut DepthLimitedRead::new(
+            u32::read_xdr_to_end(&mut Limited::new(
                 Interrupted::new(Cursor::new(&v_bytes)),
-                DEFAULT_XDR_RW_DEPTH_LIMIT,
+                Limits::default(),
             )),
             Err(Error::Invalid)
         );
         assert_eq!(
-            u64::read_xdr_to_end(&mut DepthLimitedRead::new(
+            u64::read_xdr_to_end(&mut Limited::new(
                 Interrupted::new(Cursor::new(&v_bytes)),
-                DEFAULT_XDR_RW_DEPTH_LIMIT,
+                Limits::default(),
             )),
             Ok(1u64 << 32 | 2u64)
         );
@@ -50,16 +51,28 @@ fn test_read_interrupts_and_residuals() -> Result<(), Error> {
     // from_xdr should require that the buffer completely fill into the type
     // being read.
     {
-        assert_eq!(u32::from_xdr(&v_bytes), Err(Error::Invalid));
-        assert_eq!(u64::from_xdr(&v_bytes), Ok(1u64 << 32 | 2u64));
+        assert_eq!(
+            u32::from_xdr(&v_bytes, Limits::default()),
+            Err(Error::Invalid)
+        );
+        assert_eq!(
+            u64::from_xdr(&v_bytes, Limits::default()),
+            Ok(1u64 << 32 | 2u64)
+        );
     }
 
     // from_xdr_base64 should require that the buffer completely fill into the type
     // being read.
     {
         let v_base64 = base64::encode(v_bytes);
-        assert_eq!(u32::from_xdr_base64(&v_base64), Err(Error::Invalid));
-        assert_eq!(u64::from_xdr_base64(&v_base64), Ok(1u64 << 32 | 2u64));
+        assert_eq!(
+            u32::from_xdr_base64(&v_base64, Limits::default()),
+            Err(Error::Invalid)
+        );
+        assert_eq!(
+            u64::from_xdr_base64(&v_base64, Limits::default()),
+            Ok(1u64 << 32 | 2u64)
+        );
     }
 
     Ok(())

@@ -71,9 +71,6 @@ use core::{array::TryFromSliceError, fmt, fmt::Debug, marker::Sized, ops::Deref,
 #[cfg(feature = "std")]
 use core::marker::PhantomData;
 
-#[cfg(feature = "std")]
-const MAX_PREALLOCATED_BYTES_READ: usize = 1024; // 1KB
-
 // When feature alloc is turned off use static lifetime Box and Vec types.
 #[cfg(not(feature = "alloc"))]
 mod noalloc {
@@ -112,14 +109,6 @@ use std::{
     io::{BufRead, BufReader, Cursor, Read, Write},
 };
 
-/// Defines the maximum depth for recursive calls in `Read/WriteXdr` to prevent stack overflow.
-///
-/// The depth limit is akin to limiting stack depth. Its purpose is to prevent the program from
-/// hitting the maximum stack size allowed by Rust, which would result in an unrecoverable `SIGABRT`.
-/// For more information about Rust's stack size limit, refer to the
-/// [Rust documentation](https://doc.rust-lang.org/std/thread/#stack-size).
-pub const DEFAULT_XDR_RW_DEPTH_LIMIT: u32 = 500;
-
 /// Error contains all errors returned by functions in this crate. It can be
 /// compared via `PartialEq`, however any contained IO errors will only be
 /// compared on their `ErrorKind`.
@@ -138,6 +127,7 @@ pub enum Error {
     DepthLimitExceeded,
     #[cfg(feature = "serde_json")]
     Json(serde_json::Error),
+    LengthLimitExceeded,
 }
 
 impl PartialEq for Error {
@@ -186,6 +176,7 @@ impl fmt::Display for Error {
             Error::DepthLimitExceeded => write!(f, "depth limit exceeded"),
             #[cfg(feature = "serde_json")]
             Error::Json(e) => write!(f, "{e}"),
+            Error::LengthLimitExceeded => write!(f, "length limit exceeded"),
         }
     }
 }
@@ -265,148 +256,113 @@ where
 {
 }
 
-/// `DepthLimiter` is a trait designed for managing the depth of recursive operations.
-/// It provides a mechanism to limit recursion depth, and defines the behavior upon
-/// entering and leaving a recursion level.
-pub trait DepthLimiter {
-    /// A general error type for any type implementing, or an operation under the guard of
-    /// `DepthLimiter`. It must at least include the error case where the depth limit is exceeded
-    /// which is returned from `enter`.
-    type DepthLimiterError;
-
-    /// Defines the behavior for entering a new recursion level.
-    /// A `DepthLimiterError` is returned if the new level exceeds the depth limit.
-    fn enter(&mut self) -> core::result::Result<(), Self::DepthLimiterError>;
-
-    /// Defines the behavior for leaving a recursion level.
-    /// A `DepthLimiterError` is returned if an error occurs.
-    fn leave(&mut self) -> core::result::Result<(), Self::DepthLimiterError>;
-
-    /// Wraps a given function `f` with depth limiting guards.
-    /// It triggers an `enter` before, and a `leave` after the execution of `f`.
-    ///
-    /// # Parameters
-    ///
-    /// - `f`: The function to be executed under depth limit constraints.
-    ///
-    /// # Returns
-    ///
-    /// - `Err` if 1. the depth limit has been exceeded upon `enter` 2. `f` executes
-    ///         with an error 3. if error occurs on `leave`.
-    ///   `Ok` otherwise.
-    fn with_limited_depth<T, F>(&mut self, f: F) -> core::result::Result<T, Self::DepthLimiterError>
-    where
-        F: FnOnce(&mut Self) -> core::result::Result<T, Self::DepthLimiterError>,
-    {
-        self.enter()?;
-        let res = f(self);
-        self.leave()?;
-        res
-    }
-}
-
-/// `DepthLimitedRead` wraps a `Read` object and enforces a depth limit to
-/// recursive read operations. It maintains a `depth_remaining` state tracking
-/// remaining allowed recursion depth.
+/// `Limits` contains the limits that a limited reader or writer will be
+/// constrained to.
 #[cfg(feature = "std")]
-pub struct DepthLimitedRead<R: Read> {
-    pub inner: R,
-    pub(crate) depth_remaining: u32,
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Limits {
+    /// Defines the maximum depth for recursive calls in `Read/WriteXdr` to
+    /// prevent stack overflow.
+    ///
+    /// The depth limit is akin to limiting stack depth. Its purpose is to
+    /// prevent the program from hitting the maximum stack size allowed by Rust,
+    /// which would result in an unrecoverable `SIGABRT`.  For more information
+    /// about Rust's stack size limit, refer to the [Rust
+    /// documentation](https://doc.rust-lang.org/std/thread/#stack-size).
+    pub depth: u32,
+
+    /// Defines the maximum number of bytes that will be read or written.
+    pub len: usize,
 }
 
 #[cfg(feature = "std")]
-impl<R: Read> DepthLimitedRead<R> {
-    /// Constructs a new `DepthLimitedRead`.
-    ///
-    /// - `inner`: The object implementing the `Read` trait.
-    /// - `depth_limit`: The maximum allowed recursion depth.
-    pub fn new(inner: R, depth_limit: u32) -> Self {
-        DepthLimitedRead {
-            inner,
-            depth_remaining: depth_limit,
+impl Default for Limits {
+    fn default() -> Self {
+        Self {
+            depth: 500,
+            len: usize::MAX,
         }
     }
 }
 
+/// `Limited` wraps an object and provides functions for enforcing limits.
+///
+/// Intended for use with readers and writers and limiting their reads and
+/// writes.
 #[cfg(feature = "std")]
-impl<R: Read> DepthLimiter for DepthLimitedRead<R> {
-    type DepthLimiterError = Error;
+pub struct Limited<L> {
+    pub inner: L,
+    pub(crate) limits: Limits,
+}
 
-    /// Decrements the `depth_remaining`. If the `depth_remaining` is already zero, an error is
-    /// returned indicating that the maximum depth limit has been exceeded.
-    fn enter(&mut self) -> core::result::Result<(), Error> {
-        if let Some(depth) = self.depth_remaining.checked_sub(1) {
-            self.depth_remaining = depth;
+#[cfg(feature = "std")]
+impl<L> Limited<L> {
+    /// Constructs a new `Limited`.
+    ///
+    /// - `inner`: The value being limited.
+    /// - `limits`: The limits to enforce.
+    pub fn new(inner: L, limits: Limits) -> Self {
+        Limited { inner, limits }
+    }
+
+    /// Consume the given length from the internal remaining length limit.
+    ///
+    /// ### Errors
+    ///
+    /// If the length would consume more length than the remaining length limit
+    /// allows.
+    pub(crate) fn consume_len(&mut self, len: usize) -> Result<()> {
+        if let Some(len) = self.limits.len.checked_sub(len) {
+            self.limits.len = len;
+            Ok(())
         } else {
-            return Err(Error::DepthLimitExceeded);
+            Err(Error::LengthLimitExceeded)
         }
-        Ok(())
     }
 
-    /// Increments the depth. `leave` should be called in tandem with `enter` such that the depth
-    /// doesn't exceed the initial depth limit.
-    fn leave(&mut self) -> core::result::Result<(), Error> {
-        self.depth_remaining = self.depth_remaining.saturating_add(1);
-        Ok(())
+    /// Consumes a single depth for the duration of the given function.
+    ///
+    /// ### Errors
+    ///
+    /// If the depth limit is already exhausted.
+    pub(crate) fn with_limited_depth<T, F>(&mut self, f: F) -> Result<T>
+    where
+        F: FnOnce(&mut Self) -> Result<T>,
+    {
+        if let Some(depth) = self.limits.depth.checked_sub(1) {
+            self.limits.depth = depth;
+            let res = f(self);
+            self.limits.depth = self.limits.depth.saturating_add(1);
+            res
+        } else {
+            Err(Error::DepthLimitExceeded)
+        }
     }
 }
 
 #[cfg(feature = "std")]
-impl<R: Read> Read for DepthLimitedRead<R> {
+impl<R: Read> Read for Limited<R> {
     /// Forwards the read operation to the wrapped object.
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         self.inner.read(buf)
     }
 }
 
-/// `DepthLimitedWrite` wraps a `Write` object and enforces a depth limit to
-/// recursive write operations. It maintains a `depth_remaining` state tracking
-/// remaining allowed recursion depth.
 #[cfg(feature = "std")]
-pub struct DepthLimitedWrite<W: Write> {
-    pub inner: W,
-    pub(crate) depth_remaining: u32,
-}
+impl<R: BufRead> BufRead for Limited<R> {
+    /// Forwards the read operation to the wrapped object.
+    fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
+        self.inner.fill_buf()
+    }
 
-#[cfg(feature = "std")]
-impl<W: Write> DepthLimitedWrite<W> {
-    /// Constructs a new `DepthLimitedWrite`.
-    ///
-    /// - `inner`: The object implementing the `Write` trait.
-    /// - `depth_limit`: The maximum allowed recursion depth.
-    pub fn new(inner: W, depth_limit: u32) -> Self {
-        DepthLimitedWrite {
-            inner,
-            depth_remaining: depth_limit,
-        }
+    /// Forwards the read operation to the wrapped object.
+    fn consume(&mut self, amt: usize) {
+        self.inner.consume(amt);
     }
 }
 
 #[cfg(feature = "std")]
-impl<W: Write> DepthLimiter for DepthLimitedWrite<W> {
-    type DepthLimiterError = Error;
-
-    /// Decrements the `depth_remaining`. If the depth is already zero, an error is
-    /// returned indicating that the maximum depth limit has been exceeded.
-    fn enter(&mut self) -> Result<()> {
-        if let Some(depth) = self.depth_remaining.checked_sub(1) {
-            self.depth_remaining = depth;
-        } else {
-            return Err(Error::DepthLimitExceeded);
-        }
-        Ok(())
-    }
-
-    /// Increments the depth. `leave` should be called in tandem with `enter` such that the depth
-    /// doesn't exceed the initial depth limit.
-    fn leave(&mut self) -> core::result::Result<(), Error> {
-        self.depth_remaining = self.depth_remaining.saturating_add(1);
-        Ok(())
-    }
-}
-
-#[cfg(feature = "std")]
-impl<W: Write> Write for DepthLimitedWrite<W> {
+impl<W: Write> Write for Limited<W> {
     /// Forwards the write operation to the wrapped object.
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         self.inner.write(buf)
@@ -420,17 +376,17 @@ impl<W: Write> Write for DepthLimitedWrite<W> {
 
 #[cfg(feature = "std")]
 pub struct ReadXdrIter<R: Read, S: ReadXdr> {
-    reader: DepthLimitedRead<BufReader<R>>,
+    reader: Limited<BufReader<R>>,
     _s: PhantomData<S>,
 }
 
 #[cfg(feature = "std")]
 impl<R: Read, S: ReadXdr> ReadXdrIter<R, S> {
-    fn new(r: R, depth_limit: u32) -> Self {
+    fn new(r: R, limits: Limits) -> Self {
         Self {
-            reader: DepthLimitedRead {
+            reader: Limited {
                 inner: BufReader::new(r),
-                depth_remaining: depth_limit,
+                limits,
             },
             _s: PhantomData,
         }
@@ -455,7 +411,7 @@ impl<R: Read, S: ReadXdr> Iterator for ReadXdrIter<R, S> {
         // xdr types in this crate heavily use the `std::io::Read::read_exact`
         // method that doesn't distinguish between an EOF at the beginning of a
         // read and an EOF after a partial fill of a read_exact.
-        match self.reader.inner.fill_buf() {
+        match self.reader.fill_buf() {
             // If the reader has no more data and is unable to fill any new data
             // into its internal buf, then the EOF has been reached.
             Ok([]) => return None,
@@ -492,17 +448,17 @@ where
     /// Use [`ReadXdR: Read_xdr_to_end`] when the intent is for all bytes in the
     /// read implementation to be consumed by the read.
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self>;
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self>;
 
     /// Construct the type from the XDR bytes base64 encoded.
     ///
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "base64")]
-    fn read_xdr_base64<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        let mut dec = DepthLimitedRead::new(
+    fn read_xdr_base64<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        let mut dec = Limited::new(
             base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD),
-            r.depth_remaining,
+            r.limits.clone(),
         );
         let t = Self::read_xdr(&mut dec)?;
         Ok(t)
@@ -527,7 +483,7 @@ where
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
     #[cfg(feature = "std")]
-    fn read_xdr_to_end<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr_to_end<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let s = Self::read_xdr(r)?;
         // Check that any further reads, such as this read of one byte, read no
         // data, indicating EOF. If a byte is read the data is invalid.
@@ -543,10 +499,10 @@ where
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "base64")]
-    fn read_xdr_base64_to_end<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        let mut dec = DepthLimitedRead::new(
+    fn read_xdr_base64_to_end<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        let mut dec = Limited::new(
             base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD),
-            r.depth_remaining,
+            r.limits.clone(),
         );
         let t = Self::read_xdr_to_end(&mut dec)?;
         Ok(t)
@@ -567,7 +523,7 @@ where
     /// Use [`ReadXdR: Read_xdr_into_to_end`] when the intent is for all bytes
     /// in the read implementation to be consumed by the read.
     #[cfg(feature = "std")]
-    fn read_xdr_into<R: Read>(&mut self, r: &mut DepthLimitedRead<R>) -> Result<()> {
+    fn read_xdr_into<R: Read>(&mut self, r: &mut Limited<R>) -> Result<()> {
         *self = Self::read_xdr(r)?;
         Ok(())
     }
@@ -591,7 +547,7 @@ where
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
     #[cfg(feature = "std")]
-    fn read_xdr_into_to_end<R: Read>(&mut self, r: &mut DepthLimitedRead<R>) -> Result<()> {
+    fn read_xdr_into_to_end<R: Read>(&mut self, r: &mut Limited<R>) -> Result<()> {
         Self::read_xdr_into(self, r)?;
         // Check that any further reads, such as this read of one byte, read no
         // data, indicating EOF. If a byte is read the data is invalid.
@@ -621,96 +577,68 @@ where
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
     #[cfg(feature = "std")]
-    fn read_xdr_iter<R: Read>(r: &mut DepthLimitedRead<R>) -> ReadXdrIter<&mut R, Self> {
-        ReadXdrIter::new(&mut r.inner, r.depth_remaining)
+    fn read_xdr_iter<R: Read>(r: &mut Limited<R>) -> ReadXdrIter<&mut R, Self> {
+        ReadXdrIter::new(&mut r.inner, r.limits.clone())
     }
 
     /// Create an iterator that reads the read implementation as a stream of
     /// values that are read into the implementing type.
     #[cfg(feature = "base64")]
     fn read_xdr_base64_iter<R: Read>(
-        r: &mut DepthLimitedRead<R>,
+        r: &mut Limited<R>,
     ) -> ReadXdrIter<base64::read::DecoderReader<R>, Self> {
         let dec = base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD);
-        ReadXdrIter::new(dec, r.depth_remaining)
+        ReadXdrIter::new(dec, r.limits.clone())
     }
 
-    /// Construct the type from the XDR bytes, specifying a depth limit.
+    /// Construct the type from the XDR bytes.
     ///
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "std")]
-    fn from_xdr_with_depth_limit(bytes: impl AsRef<[u8]>, depth_limit: u32) -> Result<Self> {
-        let mut cursor = DepthLimitedRead::new(Cursor::new(bytes.as_ref()), depth_limit);
+    fn from_xdr(bytes: impl AsRef<[u8]>, limits: Limits) -> Result<Self> {
+        let mut cursor = Limited::new(Cursor::new(bytes.as_ref()), limits);
         let t = Self::read_xdr_to_end(&mut cursor)?;
         Ok(t)
     }
 
-    /// Construct the type from the XDR bytes, using the default depth limit.
-    ///
-    /// An error is returned if the bytes are not completely consumed by the
-    /// deserialization.
-    #[cfg(feature = "std")]
-    fn from_xdr(bytes: impl AsRef<[u8]>) -> Result<Self> {
-        ReadXdr::from_xdr_with_depth_limit(bytes, DEFAULT_XDR_RW_DEPTH_LIMIT)
-    }
-
-    /// Construct the type from the XDR bytes base64 encoded, specifying a depth limit.
+    /// Construct the type from the XDR bytes base64 encoded.
     ///
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
     #[cfg(feature = "base64")]
-    fn from_xdr_base64_with_depth_limit(b64: impl AsRef<[u8]>, depth_limit: u32) -> Result<Self> {
+    fn from_xdr_base64(b64: impl AsRef<[u8]>, limits: Limits) -> Result<Self> {
         let mut b64_reader = Cursor::new(b64);
-        let mut dec = DepthLimitedRead::new(
+        let mut dec = Limited::new(
             base64::read::DecoderReader::new(&mut b64_reader, base64::STANDARD),
-            depth_limit,
+            limits,
         );
         let t = Self::read_xdr_to_end(&mut dec)?;
         Ok(t)
-    }
-
-    /// Construct the type from the XDR bytes base64 encoded, using the default depth limit.
-    ///
-    /// An error is returned if the bytes are not completely consumed by the
-    /// deserialization.
-    #[cfg(feature = "base64")]
-    fn from_xdr_base64(b64: impl AsRef<[u8]>) -> Result<Self> {
-        ReadXdr::from_xdr_base64_with_depth_limit(b64, DEFAULT_XDR_RW_DEPTH_LIMIT)
     }
 }
 
 pub trait WriteXdr {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()>;
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()>;
 
     #[cfg(feature = "std")]
-    fn to_xdr_with_depth_limit(&self, depth_limit: u32) -> Result<Vec<u8>> {
-        let mut cursor = DepthLimitedWrite::new(Cursor::new(vec![]), depth_limit);
+    fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>> {
+        let mut cursor = Limited::new(Cursor::new(vec![]), limits);
         self.write_xdr(&mut cursor)?;
         let bytes = cursor.inner.into_inner();
         Ok(bytes)
     }
 
-    #[cfg(feature = "std")]
-    fn to_xdr(&self) -> Result<Vec<u8>> {
-        self.to_xdr_with_depth_limit(DEFAULT_XDR_RW_DEPTH_LIMIT)
-    }
-
     #[cfg(feature = "base64")]
-    fn to_xdr_base64_with_depth_limit(&self, depth_limit: u32) -> Result<String> {
-        let mut enc = DepthLimitedWrite::new(
+    fn to_xdr_base64(&self, limits: Limits) -> Result<String> {
+        let mut enc = Limited::new(
             base64::write::EncoderStringWriter::new(base64::STANDARD),
-            depth_limit,
+            limits,
         );
         self.write_xdr(&mut enc)?;
         let b64 = enc.inner.into_inner();
         Ok(b64)
-    }
-
-    #[cfg(feature = "base64")]
-    fn to_xdr_base64(&self) -> Result<String> {
-        self.to_xdr_base64_with_depth_limit(DEFAULT_XDR_RW_DEPTH_LIMIT)
     }
 }
 
@@ -721,40 +649,12 @@ fn pad_len(len: usize) -> usize {
     (4 - (len % 4)) % 4
 }
 
-/// Read exactly the specified length of bytes from the read into a new Vec that
-/// is returned in batches. The function will preallocate only the memory
-/// required for each batch as it goes while reading so that no large
-/// preallocation occurs without the message data being available.
-#[cfg(feature = "std")]
-fn read_exact_in_batches<R: Read>(r: R, len: usize, batch_size: usize) -> Vec<u8> {
-    let mut vec = vec![0u8; 0];
-    let mut len_remaining = len as usize;
-
-    // Read one batch at a time.
-    while len_remaining > 0 {
-        let len_read = core::cmp::min(len_remaining, batch_size);
-        let offset = vec.len();
-        let len_new = vec.len() + len_read;
-
-        // Reserve exactly the new space required. Reserving exact prevents vec
-        // from increasing the allocated memory 2x which could result with large
-        // unnecessary allocations.
-        vec.reserve_exact(len_new);
-
-        // Resize the vec so that the read can read into the next batch of space.
-        vec.resize(len_new, 0);
-
-        r.read_exact(&mut vec[offset..])?;
-        len_remaining -= len_read;
-    }
-    vec
-}
-
 impl ReadXdr for i32 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 4];
         r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
             r.read_exact(&mut b)?;
             Ok(i32::from_be_bytes(b))
         })
@@ -763,17 +663,21 @@ impl ReadXdr for i32 {
 
 impl WriteXdr for i32 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 4] = self.to_be_bytes();
-        w.with_limited_depth(|w| Ok(w.write_all(&b)?))
+        w.with_limited_depth(|w| {
+            w.consume_len(b.len())?;
+            Ok(w.write_all(&b)?)
+        })
     }
 }
 
 impl ReadXdr for u32 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 4];
         r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
             r.read_exact(&mut b)?;
             Ok(u32::from_be_bytes(b))
         })
@@ -782,17 +686,21 @@ impl ReadXdr for u32 {
 
 impl WriteXdr for u32 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 4] = self.to_be_bytes();
-        w.with_limited_depth(|w| Ok(w.write_all(&b)?))
+        w.with_limited_depth(|w| {
+            w.consume_len(b.len())?;
+            Ok(w.write_all(&b)?)
+        })
     }
 }
 
 impl ReadXdr for i64 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 8];
         r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
             r.read_exact(&mut b)?;
             Ok(i64::from_be_bytes(b))
         })
@@ -801,17 +709,21 @@ impl ReadXdr for i64 {
 
 impl WriteXdr for i64 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 8] = self.to_be_bytes();
-        w.with_limited_depth(|w| Ok(w.write_all(&b)?))
+        w.with_limited_depth(|w| {
+            w.consume_len(b.len())?;
+            Ok(w.write_all(&b)?)
+        })
     }
 }
 
 impl ReadXdr for u64 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 8];
         r.with_limited_depth(|r| {
+            r.consume_len(b.len())?;
             r.read_exact(&mut b)?;
             Ok(u64::from_be_bytes(b))
         })
@@ -820,44 +732,48 @@ impl ReadXdr for u64 {
 
 impl WriteXdr for u64 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 8] = self.to_be_bytes();
-        w.with_limited_depth(|w| Ok(w.write_all(&b)?))
+        w.with_limited_depth(|w| {
+            w.consume_len(b.len())?;
+            Ok(w.write_all(&b)?)
+        })
     }
 }
 
 impl ReadXdr for f32 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(_r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
         todo!()
     }
 }
 
 impl WriteXdr for f32 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, _w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
         todo!()
     }
 }
 
 impl ReadXdr for f64 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(_r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
         todo!()
     }
 }
 
 impl WriteXdr for f64 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, _w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
         todo!()
     }
 }
 
 impl ReadXdr for bool {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
+            r.consume_len(core::mem::size_of::<u32>())?;
             let i = u32::read_xdr(r)?;
             let b = i == 1;
             Ok(b)
@@ -867,8 +783,9 @@ impl ReadXdr for bool {
 
 impl WriteXdr for bool {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
+            w.consume_len(core::mem::size_of::<u32>())?;
             let i = u32::from(*self); // true = 1, false = 0
             i.write_xdr(w)
         })
@@ -877,8 +794,9 @@ impl WriteXdr for bool {
 
 impl<T: ReadXdr> ReadXdr for Option<T> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
+            r.consume_len(core::mem::size_of::<u32>())?;
             let i = u32::read_xdr(r)?;
             match i {
                 0 => Ok(None),
@@ -894,8 +812,9 @@ impl<T: ReadXdr> ReadXdr for Option<T> {
 
 impl<T: WriteXdr> WriteXdr for Option<T> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
+            w.consume_len(core::mem::size_of::<u32>())?;
             if let Some(t) = self {
                 1u32.write_xdr(w)?;
                 t.write_xdr(w)?;
@@ -909,39 +828,42 @@ impl<T: WriteXdr> WriteXdr for Option<T> {
 
 impl<T: ReadXdr> ReadXdr for Box<T> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| Ok(Box::new(T::read_xdr(r)?)))
     }
 }
 
 impl<T: WriteXdr> WriteXdr for Box<T> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| T::write_xdr(self, w))
     }
 }
 
 impl ReadXdr for () {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(_r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
         Ok(())
     }
 }
 
 impl WriteXdr for () {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, _w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
         Ok(())
     }
 }
 
 impl<const N: usize> ReadXdr for [u8; N] {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
+            r.consume_len(N)?;
+            let padding = pad_len(N);
+            r.consume_len(padding)?;
             let mut arr = [0u8; N];
             r.read_exact(&mut arr)?;
-            let pad = &mut [0u8; 3][..pad_len(N)];
+            let pad = &mut [0u8; 3][..padding];
             r.read_exact(pad)?;
             if pad.iter().any(|b| *b != 0) {
                 return Err(Error::NonZeroPadding);
@@ -953,10 +875,13 @@ impl<const N: usize> ReadXdr for [u8; N] {
 
 impl<const N: usize> WriteXdr for [u8; N] {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
+            w.consume_len(N)?;
+            let padding = pad_len(N);
+            w.consume_len(padding)?;
             w.write_all(self)?;
-            w.write_all(&[0u8; 3][..pad_len(N)])?;
+            w.write_all(&[0u8; 3][..padding])?;
             Ok(())
         })
     }
@@ -964,7 +889,7 @@ impl<const N: usize> WriteXdr for [u8; N] {
 
 impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let mut vec = Vec::with_capacity(N);
             for _ in 0..N {
@@ -979,7 +904,7 @@ impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
 
 impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             for t in self {
                 t.write_xdr(w)?;
@@ -1312,16 +1237,22 @@ impl<'a, const MAX: u32> TryFrom<&'a VecM<u8, MAX>> for &'a str {
 
 impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
+            r.consume_len(core::mem::size_of::<u32>())?;
             let len: u32 = u32::read_xdr(r)?;
             if len > MAX {
                 return Err(Error::LengthExceedsMax);
             }
 
-            let mut vec = read_exact_in_batches(r, len as usize, MAX_PREALLOCATED_BYTES_READ);
+            r.consume_len(len as usize)?;
+            let padding = pad_len(len as usize);
+            r.consume_len(padding)?;
 
-            let pad = &mut [0u8; 3][..pad_len(len as usize)];
+            let mut vec = vec![0u8; len as usize];
+            r.read_exact(&mut vec)?;
+
+            let pad = &mut [0u8; 3][..padding];
             r.read_exact(pad)?;
             if pad.iter().any(|b| *b != 0) {
                 return Err(Error::NonZeroPadding);
@@ -1334,14 +1265,19 @@ impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
 
 impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
+            w.consume_len(core::mem::size_of::<u32>())?;
+            w.consume_len(self.len())?;
+            let padding = pad_len(self.len());
+            w.consume_len(padding)?;
+
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
             len.write_xdr(w)?;
 
             w.write_all(&self.0)?;
 
-            w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
+            w.write_all(&[0u8; 3][..padding])?;
 
             Ok(())
         })
@@ -1350,8 +1286,9 @@ impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
 
 impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
+            r.consume_len(core::mem::size_of::<u32>())?;
             let len = u32::read_xdr(r)?;
             if len > MAX {
                 return Err(Error::LengthExceedsMax);
@@ -1370,8 +1307,9 @@ impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
 
 impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
+            w.consume_len(core::mem::size_of::<u32>())?;
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
             len.write_xdr(w)?;
 
@@ -1709,16 +1647,22 @@ impl<'a, const MAX: u32> TryFrom<&'a BytesM<MAX>> for &'a str {
 
 impl<const MAX: u32> ReadXdr for BytesM<MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
+            r.consume_len(core::mem::size_of::<u32>())?;
             let len: u32 = u32::read_xdr(r)?;
             if len > MAX {
                 return Err(Error::LengthExceedsMax);
             }
 
-            let mut vec = read_exact_in_batches(r, len as usize, MAX_PREALLOCATED_BYTES_READ);
+            r.consume_len(len as usize)?;
+            let padding = pad_len(len as usize);
+            r.consume_len(padding)?;
 
-            let pad = &mut [0u8; 3][..pad_len(len as usize)];
+            let mut vec = vec![0u8; len as usize];
+            r.read_exact(&mut vec)?;
+
+            let pad = &mut [0u8; 3][..padding];
             r.read_exact(pad)?;
             if pad.iter().any(|b| *b != 0) {
                 return Err(Error::NonZeroPadding);
@@ -1731,8 +1675,13 @@ impl<const MAX: u32> ReadXdr for BytesM<MAX> {
 
 impl<const MAX: u32> WriteXdr for BytesM<MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
+            w.consume_len(core::mem::size_of::<u32>())?;
+            w.consume_len(self.len())?;
+            let padding = pad_len(self.len());
+            w.consume_len(padding)?;
+
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
             len.write_xdr(w)?;
 
@@ -2091,16 +2040,23 @@ impl<'a, const MAX: u32> TryFrom<&'a StringM<MAX>> for &'a str {
 
 impl<const MAX: u32> ReadXdr for StringM<MAX> {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
+            r.consume_len(core::mem::size_of::<u32>())?;
+
             let len: u32 = u32::read_xdr(r)?;
             if len > MAX {
                 return Err(Error::LengthExceedsMax);
             }
 
-            let mut vec = read_exact_in_batches(r, len as usize, MAX_PREALLOCATED_BYTES_READ);
+            r.consume_len(len as usize)?;
+            let padding = pad_len(len as usize);
+            r.consume_len(padding)?;
 
-            let pad = &mut [0u8; 3][..pad_len(len as usize)];
+            let mut vec = vec![0u8; len as usize];
+            r.read_exact(&mut vec)?;
+
+            let pad = &mut [0u8; 3][..padding];
             r.read_exact(pad)?;
             if pad.iter().any(|b| *b != 0) {
                 return Err(Error::NonZeroPadding);
@@ -2113,14 +2069,19 @@ impl<const MAX: u32> ReadXdr for StringM<MAX> {
 
 impl<const MAX: u32> WriteXdr for StringM<MAX> {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
+            w.consume_len(core::mem::size_of::<u32>())?;
+            w.consume_len(self.len())?;
+            let padding = pad_len(self.len());
+            w.consume_len(padding)?;
+
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
             len.write_xdr(w)?;
 
             w.write_all(&self.0)?;
 
-            w.write_all(&[0u8; 3][..pad_len(len as usize)])?;
+            w.write_all(&[0u8; 3][..padding])?;
 
             Ok(())
         })
@@ -2144,11 +2105,12 @@ where
     T: ReadXdr,
 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         // Read the frame header value that contains 1 flag-bit and a 33-bit length.
         //  - The 1 flag bit is 0 when there are more frames for the same record.
         //  - The 31-bit length is the length of the bytes within the frame that
         //  follow the frame header.
+        r.consume_len(core::mem::size_of::<u32>())?;
         let header = u32::read_xdr(r)?;
         // TODO: Use the length and cap the length we'll read from `r`.
         let last_record = header >> 31 == 1;
@@ -2167,34 +2129,26 @@ where
 mod tests {
     use std::io::Cursor;
 
-    use super::{
-        DepthLimitedRead, DepthLimitedWrite, Error, ReadXdr, VecM, WriteXdr,
-        DEFAULT_XDR_RW_DEPTH_LIMIT,
-    };
+    use super::*;
 
     #[test]
     pub fn vec_u8_read_without_padding() {
         let buf = Cursor::new(vec![0, 0, 0, 4, 2, 2, 2, 2]);
-        let v =
-            VecM::<u8, 8>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT))
-                .unwrap();
+        let v = VecM::<u8, 8>::read_xdr(&mut Limited::new(buf, Limits::default())).unwrap();
         assert_eq!(v.to_vec(), vec![2, 2, 2, 2]);
     }
 
     #[test]
     pub fn vec_u8_read_with_padding() {
         let buf = Cursor::new(vec![0, 0, 0, 1, 2, 0, 0, 0]);
-        let v =
-            VecM::<u8, 8>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT))
-                .unwrap();
+        let v = VecM::<u8, 8>::read_xdr(&mut Limited::new(buf, Limits::default())).unwrap();
         assert_eq!(v.to_vec(), vec![2]);
     }
 
     #[test]
     pub fn vec_u8_read_with_insufficient_padding() {
         let buf = Cursor::new(vec![0, 0, 0, 1, 2, 0, 0]);
-        let res =
-            VecM::<u8, 8>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT));
+        let res = VecM::<u8, 8>::read_xdr(&mut Limited::new(buf, Limits::default()));
         match res {
             Err(Error::Io(_)) => (),
             _ => panic!("expected IO error got {res:?}"),
@@ -2204,8 +2158,7 @@ mod tests {
     #[test]
     pub fn vec_u8_read_with_non_zero_padding() {
         let buf = Cursor::new(vec![0, 0, 0, 1, 2, 3, 0, 0]);
-        let res =
-            VecM::<u8, 8>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT));
+        let res = VecM::<u8, 8>::read_xdr(&mut Limited::new(buf, Limits::default()));
         match res {
             Err(Error::NonZeroPadding) => (),
             _ => panic!("expected NonZeroPadding got {res:?}"),
@@ -2217,11 +2170,8 @@ mod tests {
         let mut buf = vec![];
         let v: VecM<u8, 8> = vec![2, 2, 2, 2].try_into().unwrap();
 
-        v.write_xdr(&mut DepthLimitedWrite::new(
-            Cursor::new(&mut buf),
-            DEFAULT_XDR_RW_DEPTH_LIMIT,
-        ))
-        .unwrap();
+        v.write_xdr(&mut Limited::new(Cursor::new(&mut buf), Limits::default()))
+            .unwrap();
         assert_eq!(buf, vec![0, 0, 0, 4, 2, 2, 2, 2]);
     }
 
@@ -2229,34 +2179,29 @@ mod tests {
     pub fn vec_u8_write_with_padding() {
         let mut buf = vec![];
         let v: VecM<u8, 8> = vec![2].try_into().unwrap();
-        v.write_xdr(&mut DepthLimitedWrite::new(
-            Cursor::new(&mut buf),
-            DEFAULT_XDR_RW_DEPTH_LIMIT,
-        ))
-        .unwrap();
+        v.write_xdr(&mut Limited::new(Cursor::new(&mut buf), Limits::default()))
+            .unwrap();
         assert_eq!(buf, vec![0, 0, 0, 1, 2, 0, 0, 0]);
     }
 
     #[test]
     pub fn arr_u8_read_without_padding() {
         let buf = Cursor::new(vec![2, 2, 2, 2]);
-        let v = <[u8; 4]>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT))
-            .unwrap();
+        let v = <[u8; 4]>::read_xdr(&mut Limited::new(buf, Limits::default())).unwrap();
         assert_eq!(v, [2, 2, 2, 2]);
     }
 
     #[test]
     pub fn arr_u8_read_with_padding() {
         let buf = Cursor::new(vec![2, 0, 0, 0]);
-        let v = <[u8; 1]>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT))
-            .unwrap();
+        let v = <[u8; 1]>::read_xdr(&mut Limited::new(buf, Limits::default())).unwrap();
         assert_eq!(v, [2]);
     }
 
     #[test]
     pub fn arr_u8_read_with_insufficient_padding() {
         let buf = Cursor::new(vec![2, 0, 0]);
-        let res = <[u8; 1]>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT));
+        let res = <[u8; 1]>::read_xdr(&mut Limited::new(buf, Limits::default()));
         match res {
             Err(Error::Io(_)) => (),
             _ => panic!("expected IO error got {res:?}"),
@@ -2266,7 +2211,7 @@ mod tests {
     #[test]
     pub fn arr_u8_read_with_non_zero_padding() {
         let buf = Cursor::new(vec![2, 3, 0, 0]);
-        let res = <[u8; 1]>::read_xdr(&mut DepthLimitedRead::new(buf, DEFAULT_XDR_RW_DEPTH_LIMIT));
+        let res = <[u8; 1]>::read_xdr(&mut Limited::new(buf, Limits::default()));
         match res {
             Err(Error::NonZeroPadding) => (),
             _ => panic!("expected NonZeroPadding got {res:?}"),
@@ -2277,10 +2222,7 @@ mod tests {
     pub fn arr_u8_write_without_padding() {
         let mut buf = vec![];
         [2u8, 2, 2, 2]
-            .write_xdr(&mut DepthLimitedWrite::new(
-                Cursor::new(&mut buf),
-                DEFAULT_XDR_RW_DEPTH_LIMIT,
-            ))
+            .write_xdr(&mut Limited::new(Cursor::new(&mut buf), Limits::default()))
             .unwrap();
         assert_eq!(buf, vec![2, 2, 2, 2]);
     }
@@ -2289,10 +2231,7 @@ mod tests {
     pub fn arr_u8_write_with_padding() {
         let mut buf = vec![];
         [2u8]
-            .write_xdr(&mut DepthLimitedWrite::new(
-                Cursor::new(&mut buf),
-                DEFAULT_XDR_RW_DEPTH_LIMIT,
-            ))
+            .write_xdr(&mut Limited::new(Cursor::new(&mut buf), Limits::default()))
             .unwrap();
         assert_eq!(buf, vec![2, 0, 0, 0]);
     }
@@ -2329,19 +2268,36 @@ mod test {
     #[test]
     fn depth_limited_read_write_under_the_limit_success() {
         let a: Option<Option<Option<u32>>> = Some(Some(Some(5)));
-        let mut buf = DepthLimitedWrite::new(Vec::new(), 4);
+        let mut buf = Limited::new(
+            Vec::new(),
+            Limits {
+                depth: 4,
+                ..Limits::default()
+            },
+        );
         a.write_xdr(&mut buf).unwrap();
 
-        let mut dlr = DepthLimitedRead::new(Cursor::new(buf.inner.as_slice()), 4);
+        let mut dlr = Limited::new(
+            Cursor::new(buf.inner.as_slice()),
+            Limits {
+                depth: 4,
+                ..Limits::default()
+            },
+        );
         let a_back: Option<Option<Option<u32>>> = ReadXdr::read_xdr(&mut dlr).unwrap();
         assert_eq!(a, a_back);
     }
 
     #[test]
     fn write_over_depth_limit_fail() {
-        let depth_limit = 3;
         let a: Option<Option<Option<u32>>> = Some(Some(Some(5)));
-        let mut buf = DepthLimitedWrite::new(Vec::new(), depth_limit);
+        let mut buf = Limited::new(
+            Vec::new(),
+            Limits {
+                depth: 3,
+                len: usize::MAX,
+            },
+        );
         let res = a.write_xdr(&mut buf);
         match res {
             Err(Error::DepthLimitExceeded) => (),
@@ -2351,13 +2307,19 @@ mod test {
 
     #[test]
     fn read_over_depth_limit_fail() {
-        let read_depth_limit = 3;
-        let write_depth_limit = 5;
+        let read_limits = Limits {
+            depth: 3,
+            ..Limits::default()
+        };
+        let write_limits = Limits {
+            depth: 5,
+            ..Limits::default()
+        };
         let a: Option<Option<Option<u32>>> = Some(Some(Some(5)));
-        let mut buf = DepthLimitedWrite::new(Vec::new(), write_depth_limit);
+        let mut buf = Limited::new(Vec::new(), read_limits);
         a.write_xdr(&mut buf).unwrap();
 
-        let mut dlr = DepthLimitedRead::new(Cursor::new(buf.inner.as_slice()), read_depth_limit);
+        let mut dlr = Limited::new(Cursor::new(buf.inner.as_slice()), write_limits);
         let res: Result<Option<Option<Option<u32>>>> = ReadXdr::read_xdr(&mut dlr);
         match res {
             Err(Error::DepthLimitExceeded) => (),
@@ -2421,7 +2383,7 @@ impl AsRef<BytesM> for Value {
 
 impl ReadXdr for Value {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::read_xdr(r)?;
             let v = Value(i);
@@ -2432,7 +2394,7 @@ impl ReadXdr for Value {
 
 impl WriteXdr for Value {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -2508,7 +2470,7 @@ pub struct ScpBallot {
 
 impl ReadXdr for ScpBallot {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 counter: u32::read_xdr(r)?,
@@ -2520,7 +2482,7 @@ impl ReadXdr for ScpBallot {
 
 impl WriteXdr for ScpBallot {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.counter.write_xdr(w)?;
             self.value.write_xdr(w)?;
@@ -2626,7 +2588,7 @@ impl From<ScpStatementType> for i32 {
 
 impl ReadXdr for ScpStatementType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -2637,7 +2599,7 @@ impl ReadXdr for ScpStatementType {
 
 impl WriteXdr for ScpStatementType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -2669,7 +2631,7 @@ pub struct ScpNomination {
 
 impl ReadXdr for ScpNomination {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 quorum_set_hash: Hash::read_xdr(r)?,
@@ -2682,7 +2644,7 @@ impl ReadXdr for ScpNomination {
 
 impl WriteXdr for ScpNomination {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.quorum_set_hash.write_xdr(w)?;
             self.votes.write_xdr(w)?;
@@ -2722,7 +2684,7 @@ pub struct ScpStatementPrepare {
 
 impl ReadXdr for ScpStatementPrepare {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 quorum_set_hash: Hash::read_xdr(r)?,
@@ -2738,7 +2700,7 @@ impl ReadXdr for ScpStatementPrepare {
 
 impl WriteXdr for ScpStatementPrepare {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.quorum_set_hash.write_xdr(w)?;
             self.ballot.write_xdr(w)?;
@@ -2779,7 +2741,7 @@ pub struct ScpStatementConfirm {
 
 impl ReadXdr for ScpStatementConfirm {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ballot: ScpBallot::read_xdr(r)?,
@@ -2794,7 +2756,7 @@ impl ReadXdr for ScpStatementConfirm {
 
 impl WriteXdr for ScpStatementConfirm {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ballot.write_xdr(w)?;
             self.n_prepared.write_xdr(w)?;
@@ -2830,7 +2792,7 @@ pub struct ScpStatementExternalize {
 
 impl ReadXdr for ScpStatementExternalize {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 commit: ScpBallot::read_xdr(r)?,
@@ -2843,7 +2805,7 @@ impl ReadXdr for ScpStatementExternalize {
 
 impl WriteXdr for ScpStatementExternalize {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.commit.write_xdr(w)?;
             self.n_h.write_xdr(w)?;
@@ -2963,7 +2925,7 @@ impl Union<ScpStatementType> for ScpStatementPledges {}
 
 impl ReadXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScpStatementType = <ScpStatementType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -2984,7 +2946,7 @@ impl ReadXdr for ScpStatementPledges {
 
 impl WriteXdr for ScpStatementPledges {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -3055,7 +3017,7 @@ pub struct ScpStatement {
 
 impl ReadXdr for ScpStatement {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 node_id: NodeId::read_xdr(r)?,
@@ -3068,7 +3030,7 @@ impl ReadXdr for ScpStatement {
 
 impl WriteXdr for ScpStatement {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.node_id.write_xdr(w)?;
             self.slot_index.write_xdr(w)?;
@@ -3100,7 +3062,7 @@ pub struct ScpEnvelope {
 
 impl ReadXdr for ScpEnvelope {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 statement: ScpStatement::read_xdr(r)?,
@@ -3112,7 +3074,7 @@ impl ReadXdr for ScpEnvelope {
 
 impl WriteXdr for ScpEnvelope {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.statement.write_xdr(w)?;
             self.signature.write_xdr(w)?;
@@ -3145,7 +3107,7 @@ pub struct ScpQuorumSet {
 
 impl ReadXdr for ScpQuorumSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 threshold: u32::read_xdr(r)?,
@@ -3158,7 +3120,7 @@ impl ReadXdr for ScpQuorumSet {
 
 impl WriteXdr for ScpQuorumSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.threshold.write_xdr(w)?;
             self.validators.write_xdr(w)?;
@@ -3189,7 +3151,7 @@ pub struct ConfigSettingContractExecutionLanesV0 {
 
 impl ReadXdr for ConfigSettingContractExecutionLanesV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_max_tx_count: u32::read_xdr(r)?,
@@ -3200,7 +3162,7 @@ impl ReadXdr for ConfigSettingContractExecutionLanesV0 {
 
 impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_max_tx_count.write_xdr(w)?;
             Ok(())
@@ -3240,7 +3202,7 @@ pub struct ConfigSettingContractComputeV0 {
 
 impl ReadXdr for ConfigSettingContractComputeV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_max_instructions: i64::read_xdr(r)?,
@@ -3254,7 +3216,7 @@ impl ReadXdr for ConfigSettingContractComputeV0 {
 
 impl WriteXdr for ConfigSettingContractComputeV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_max_instructions.write_xdr(w)?;
             self.tx_max_instructions.write_xdr(w)?;
@@ -3330,7 +3292,7 @@ pub struct ConfigSettingContractLedgerCostV0 {
 
 impl ReadXdr for ConfigSettingContractLedgerCostV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_max_read_ledger_entries: u32::read_xdr(r)?,
@@ -3355,7 +3317,7 @@ impl ReadXdr for ConfigSettingContractLedgerCostV0 {
 
 impl WriteXdr for ConfigSettingContractLedgerCostV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_max_read_ledger_entries.write_xdr(w)?;
             self.ledger_max_read_bytes.write_xdr(w)?;
@@ -3397,7 +3359,7 @@ pub struct ConfigSettingContractHistoricalDataV0 {
 
 impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 fee_historical1_kb: i64::read_xdr(r)?,
@@ -3408,7 +3370,7 @@ impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
 
 impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.fee_historical1_kb.write_xdr(w)?;
             Ok(())
@@ -3440,7 +3402,7 @@ pub struct ConfigSettingContractEventsV0 {
 
 impl ReadXdr for ConfigSettingContractEventsV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_max_contract_events_size_bytes: u32::read_xdr(r)?,
@@ -3452,7 +3414,7 @@ impl ReadXdr for ConfigSettingContractEventsV0 {
 
 impl WriteXdr for ConfigSettingContractEventsV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_max_contract_events_size_bytes.write_xdr(w)?;
             self.fee_contract_events1_kb.write_xdr(w)?;
@@ -3489,7 +3451,7 @@ pub struct ConfigSettingContractBandwidthV0 {
 
 impl ReadXdr for ConfigSettingContractBandwidthV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_max_txs_size_bytes: u32::read_xdr(r)?,
@@ -3502,7 +3464,7 @@ impl ReadXdr for ConfigSettingContractBandwidthV0 {
 
 impl WriteXdr for ConfigSettingContractBandwidthV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_max_txs_size_bytes.write_xdr(w)?;
             self.tx_max_size_bytes.write_xdr(w)?;
@@ -3754,7 +3716,7 @@ impl From<ContractCostType> for i32 {
 
 impl ReadXdr for ContractCostType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -3765,7 +3727,7 @@ impl ReadXdr for ContractCostType {
 
 impl WriteXdr for ContractCostType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -3798,7 +3760,7 @@ pub struct ContractCostParamEntry {
 
 impl ReadXdr for ContractCostParamEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -3811,7 +3773,7 @@ impl ReadXdr for ContractCostParamEntry {
 
 impl WriteXdr for ContractCostParamEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.const_term.write_xdr(w)?;
@@ -3866,7 +3828,7 @@ pub struct StateArchivalSettings {
 
 impl ReadXdr for StateArchivalSettings {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 max_entry_ttl: u32::read_xdr(r)?,
@@ -3885,7 +3847,7 @@ impl ReadXdr for StateArchivalSettings {
 
 impl WriteXdr for StateArchivalSettings {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.max_entry_ttl.write_xdr(w)?;
             self.min_temporary_ttl.write_xdr(w)?;
@@ -3924,7 +3886,7 @@ pub struct EvictionIterator {
 
 impl ReadXdr for EvictionIterator {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 bucket_list_level: u32::read_xdr(r)?,
@@ -3937,7 +3899,7 @@ impl ReadXdr for EvictionIterator {
 
 impl WriteXdr for EvictionIterator {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.bucket_list_level.write_xdr(w)?;
             self.is_curr_bucket.write_xdr(w)?;
@@ -3991,7 +3953,7 @@ impl AsRef<VecM<ContractCostParamEntry, 1024>> for ContractCostParams {
 
 impl ReadXdr for ContractCostParams {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<ContractCostParamEntry, 1024>::read_xdr(r)?;
             let v = ContractCostParams(i);
@@ -4002,7 +3964,7 @@ impl ReadXdr for ContractCostParams {
 
 impl WriteXdr for ContractCostParams {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -4218,7 +4180,7 @@ impl From<ConfigSettingId> for i32 {
 
 impl ReadXdr for ConfigSettingId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -4229,7 +4191,7 @@ impl ReadXdr for ConfigSettingId {
 
 impl WriteXdr for ConfigSettingId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -4406,7 +4368,7 @@ impl Union<ConfigSettingId> for ConfigSettingEntry {}
 
 impl ReadXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -4463,7 +4425,7 @@ impl ReadXdr for ConfigSettingEntry {
 
 impl WriteXdr for ConfigSettingEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -4568,7 +4530,7 @@ impl From<ScEnvMetaKind> for i32 {
 
 impl ReadXdr for ScEnvMetaKind {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -4579,7 +4541,7 @@ impl ReadXdr for ScEnvMetaKind {
 
 impl WriteXdr for ScEnvMetaKind {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -4657,7 +4619,7 @@ impl Union<ScEnvMetaKind> for ScEnvMetaEntry {}
 
 impl ReadXdr for ScEnvMetaEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScEnvMetaKind = <ScEnvMetaKind as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -4675,7 +4637,7 @@ impl ReadXdr for ScEnvMetaEntry {
 
 impl WriteXdr for ScEnvMetaEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -4709,7 +4671,7 @@ pub struct ScMetaV0 {
 
 impl ReadXdr for ScMetaV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: StringM::read_xdr(r)?,
@@ -4721,7 +4683,7 @@ impl ReadXdr for ScMetaV0 {
 
 impl WriteXdr for ScMetaV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             self.val.write_xdr(w)?;
@@ -4810,7 +4772,7 @@ impl From<ScMetaKind> for i32 {
 
 impl ReadXdr for ScMetaKind {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -4821,7 +4783,7 @@ impl ReadXdr for ScMetaKind {
 
 impl WriteXdr for ScMetaKind {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -4899,7 +4861,7 @@ impl Union<ScMetaKind> for ScMetaEntry {}
 
 impl ReadXdr for ScMetaEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScMetaKind = <ScMetaKind as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -4915,7 +4877,7 @@ impl ReadXdr for ScMetaEntry {
 
 impl WriteXdr for ScMetaEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -5167,7 +5129,7 @@ impl From<ScSpecType> for i32 {
 
 impl ReadXdr for ScSpecType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -5178,7 +5140,7 @@ impl ReadXdr for ScSpecType {
 
 impl WriteXdr for ScSpecType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -5206,7 +5168,7 @@ pub struct ScSpecTypeOption {
 
 impl ReadXdr for ScSpecTypeOption {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 value_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
@@ -5217,7 +5179,7 @@ impl ReadXdr for ScSpecTypeOption {
 
 impl WriteXdr for ScSpecTypeOption {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.value_type.write_xdr(w)?;
             Ok(())
@@ -5247,7 +5209,7 @@ pub struct ScSpecTypeResult {
 
 impl ReadXdr for ScSpecTypeResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ok_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
@@ -5259,7 +5221,7 @@ impl ReadXdr for ScSpecTypeResult {
 
 impl WriteXdr for ScSpecTypeResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ok_type.write_xdr(w)?;
             self.error_type.write_xdr(w)?;
@@ -5288,7 +5250,7 @@ pub struct ScSpecTypeVec {
 
 impl ReadXdr for ScSpecTypeVec {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 element_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
@@ -5299,7 +5261,7 @@ impl ReadXdr for ScSpecTypeVec {
 
 impl WriteXdr for ScSpecTypeVec {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.element_type.write_xdr(w)?;
             Ok(())
@@ -5329,7 +5291,7 @@ pub struct ScSpecTypeMap {
 
 impl ReadXdr for ScSpecTypeMap {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key_type: Box::<ScSpecTypeDef>::read_xdr(r)?,
@@ -5341,7 +5303,7 @@ impl ReadXdr for ScSpecTypeMap {
 
 impl WriteXdr for ScSpecTypeMap {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key_type.write_xdr(w)?;
             self.value_type.write_xdr(w)?;
@@ -5370,7 +5332,7 @@ pub struct ScSpecTypeTuple {
 
 impl ReadXdr for ScSpecTypeTuple {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 value_types: VecM::<ScSpecTypeDef, 12>::read_xdr(r)?,
@@ -5381,7 +5343,7 @@ impl ReadXdr for ScSpecTypeTuple {
 
 impl WriteXdr for ScSpecTypeTuple {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.value_types.write_xdr(w)?;
             Ok(())
@@ -5409,7 +5371,7 @@ pub struct ScSpecTypeBytesN {
 
 impl ReadXdr for ScSpecTypeBytesN {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 n: u32::read_xdr(r)?,
@@ -5420,7 +5382,7 @@ impl ReadXdr for ScSpecTypeBytesN {
 
 impl WriteXdr for ScSpecTypeBytesN {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.n.write_xdr(w)?;
             Ok(())
@@ -5448,7 +5410,7 @@ pub struct ScSpecTypeUdt {
 
 impl ReadXdr for ScSpecTypeUdt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 name: StringM::<60>::read_xdr(r)?,
@@ -5459,7 +5421,7 @@ impl ReadXdr for ScSpecTypeUdt {
 
 impl WriteXdr for ScSpecTypeUdt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.name.write_xdr(w)?;
             Ok(())
@@ -5692,7 +5654,7 @@ impl Union<ScSpecType> for ScSpecTypeDef {}
 
 impl ReadXdr for ScSpecTypeDef {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScSpecType = <ScSpecType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -5732,7 +5694,7 @@ impl ReadXdr for ScSpecTypeDef {
 
 impl WriteXdr for ScSpecTypeDef {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -5792,7 +5754,7 @@ pub struct ScSpecUdtStructFieldV0 {
 
 impl ReadXdr for ScSpecUdtStructFieldV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -5805,7 +5767,7 @@ impl ReadXdr for ScSpecUdtStructFieldV0 {
 
 impl WriteXdr for ScSpecUdtStructFieldV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -5841,7 +5803,7 @@ pub struct ScSpecUdtStructV0 {
 
 impl ReadXdr for ScSpecUdtStructV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -5855,7 +5817,7 @@ impl ReadXdr for ScSpecUdtStructV0 {
 
 impl WriteXdr for ScSpecUdtStructV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
@@ -5888,7 +5850,7 @@ pub struct ScSpecUdtUnionCaseVoidV0 {
 
 impl ReadXdr for ScSpecUdtUnionCaseVoidV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -5900,7 +5862,7 @@ impl ReadXdr for ScSpecUdtUnionCaseVoidV0 {
 
 impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -5933,7 +5895,7 @@ pub struct ScSpecUdtUnionCaseTupleV0 {
 
 impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -5946,7 +5908,7 @@ impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
 
 impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -6043,7 +6005,7 @@ impl From<ScSpecUdtUnionCaseV0Kind> for i32 {
 
 impl ReadXdr for ScSpecUdtUnionCaseV0Kind {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -6054,7 +6016,7 @@ impl ReadXdr for ScSpecUdtUnionCaseV0Kind {
 
 impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -6140,7 +6102,7 @@ impl Union<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {}
 
 impl ReadXdr for ScSpecUdtUnionCaseV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScSpecUdtUnionCaseV0Kind = <ScSpecUdtUnionCaseV0Kind as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -6161,7 +6123,7 @@ impl ReadXdr for ScSpecUdtUnionCaseV0 {
 
 impl WriteXdr for ScSpecUdtUnionCaseV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -6200,7 +6162,7 @@ pub struct ScSpecUdtUnionV0 {
 
 impl ReadXdr for ScSpecUdtUnionV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -6214,7 +6176,7 @@ impl ReadXdr for ScSpecUdtUnionV0 {
 
 impl WriteXdr for ScSpecUdtUnionV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
@@ -6249,7 +6211,7 @@ pub struct ScSpecUdtEnumCaseV0 {
 
 impl ReadXdr for ScSpecUdtEnumCaseV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -6262,7 +6224,7 @@ impl ReadXdr for ScSpecUdtEnumCaseV0 {
 
 impl WriteXdr for ScSpecUdtEnumCaseV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -6298,7 +6260,7 @@ pub struct ScSpecUdtEnumV0 {
 
 impl ReadXdr for ScSpecUdtEnumV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -6312,7 +6274,7 @@ impl ReadXdr for ScSpecUdtEnumV0 {
 
 impl WriteXdr for ScSpecUdtEnumV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
@@ -6347,7 +6309,7 @@ pub struct ScSpecUdtErrorEnumCaseV0 {
 
 impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -6360,7 +6322,7 @@ impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
 
 impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -6396,7 +6358,7 @@ pub struct ScSpecUdtErrorEnumV0 {
 
 impl ReadXdr for ScSpecUdtErrorEnumV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -6410,7 +6372,7 @@ impl ReadXdr for ScSpecUdtErrorEnumV0 {
 
 impl WriteXdr for ScSpecUdtErrorEnumV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.lib.write_xdr(w)?;
@@ -6445,7 +6407,7 @@ pub struct ScSpecFunctionInputV0 {
 
 impl ReadXdr for ScSpecFunctionInputV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -6458,7 +6420,7 @@ impl ReadXdr for ScSpecFunctionInputV0 {
 
 impl WriteXdr for ScSpecFunctionInputV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -6494,7 +6456,7 @@ pub struct ScSpecFunctionV0 {
 
 impl ReadXdr for ScSpecFunctionV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 doc: StringM::<1024>::read_xdr(r)?,
@@ -6508,7 +6470,7 @@ impl ReadXdr for ScSpecFunctionV0 {
 
 impl WriteXdr for ScSpecFunctionV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
             self.name.write_xdr(w)?;
@@ -6627,7 +6589,7 @@ impl From<ScSpecEntryKind> for i32 {
 
 impl ReadXdr for ScSpecEntryKind {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -6638,7 +6600,7 @@ impl ReadXdr for ScSpecEntryKind {
 
 impl WriteXdr for ScSpecEntryKind {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -6748,7 +6710,7 @@ impl Union<ScSpecEntryKind> for ScSpecEntry {}
 
 impl ReadXdr for ScSpecEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScSpecEntryKind = <ScSpecEntryKind as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -6770,7 +6732,7 @@ impl ReadXdr for ScSpecEntry {
 
 impl WriteXdr for ScSpecEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -7025,7 +6987,7 @@ impl From<ScValType> for i32 {
 
 impl ReadXdr for ScValType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -7036,7 +6998,7 @@ impl ReadXdr for ScValType {
 
 impl WriteXdr for ScValType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -7174,7 +7136,7 @@ impl From<ScErrorType> for i32 {
 
 impl ReadXdr for ScErrorType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -7185,7 +7147,7 @@ impl ReadXdr for ScErrorType {
 
 impl WriteXdr for ScErrorType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -7331,7 +7293,7 @@ impl From<ScErrorCode> for i32 {
 
 impl ReadXdr for ScErrorCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -7342,7 +7304,7 @@ impl ReadXdr for ScErrorCode {
 
 impl WriteXdr for ScErrorCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -7471,7 +7433,7 @@ impl Union<ScErrorType> for ScError {}
 
 impl ReadXdr for ScError {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScErrorType = <ScErrorType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -7496,7 +7458,7 @@ impl ReadXdr for ScError {
 
 impl WriteXdr for ScError {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -7538,7 +7500,7 @@ pub struct UInt128Parts {
 
 impl ReadXdr for UInt128Parts {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hi: u64::read_xdr(r)?,
@@ -7550,7 +7512,7 @@ impl ReadXdr for UInt128Parts {
 
 impl WriteXdr for UInt128Parts {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hi.write_xdr(w)?;
             self.lo.write_xdr(w)?;
@@ -7580,7 +7542,7 @@ pub struct Int128Parts {
 
 impl ReadXdr for Int128Parts {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hi: i64::read_xdr(r)?,
@@ -7592,7 +7554,7 @@ impl ReadXdr for Int128Parts {
 
 impl WriteXdr for Int128Parts {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hi.write_xdr(w)?;
             self.lo.write_xdr(w)?;
@@ -7626,7 +7588,7 @@ pub struct UInt256Parts {
 
 impl ReadXdr for UInt256Parts {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hi_hi: u64::read_xdr(r)?,
@@ -7640,7 +7602,7 @@ impl ReadXdr for UInt256Parts {
 
 impl WriteXdr for UInt256Parts {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hi_hi.write_xdr(w)?;
             self.hi_lo.write_xdr(w)?;
@@ -7676,7 +7638,7 @@ pub struct Int256Parts {
 
 impl ReadXdr for Int256Parts {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hi_hi: i64::read_xdr(r)?,
@@ -7690,7 +7652,7 @@ impl ReadXdr for Int256Parts {
 
 impl WriteXdr for Int256Parts {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hi_hi.write_xdr(w)?;
             self.hi_lo.write_xdr(w)?;
@@ -7788,7 +7750,7 @@ impl From<ContractExecutableType> for i32 {
 
 impl ReadXdr for ContractExecutableType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -7799,7 +7761,7 @@ impl ReadXdr for ContractExecutableType {
 
 impl WriteXdr for ContractExecutableType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -7885,7 +7847,7 @@ impl Union<ContractExecutableType> for ContractExecutable {}
 
 impl ReadXdr for ContractExecutable {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ContractExecutableType = <ContractExecutableType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -7902,7 +7864,7 @@ impl ReadXdr for ContractExecutable {
 
 impl WriteXdr for ContractExecutable {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -7999,7 +7961,7 @@ impl From<ScAddressType> for i32 {
 
 impl ReadXdr for ScAddressType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -8010,7 +7972,7 @@ impl ReadXdr for ScAddressType {
 
 impl WriteXdr for ScAddressType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -8092,7 +8054,7 @@ impl Union<ScAddressType> for ScAddress {}
 
 impl ReadXdr for ScAddress {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScAddressType = <ScAddressType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -8109,7 +8071,7 @@ impl ReadXdr for ScAddress {
 
 impl WriteXdr for ScAddress {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -8166,7 +8128,7 @@ impl AsRef<VecM<ScVal>> for ScVec {
 
 impl ReadXdr for ScVec {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<ScVal>::read_xdr(r)?;
             let v = ScVec(i);
@@ -8177,7 +8139,7 @@ impl ReadXdr for ScVec {
 
 impl WriteXdr for ScVec {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -8269,7 +8231,7 @@ impl AsRef<VecM<ScMapEntry>> for ScMap {
 
 impl ReadXdr for ScMap {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<ScMapEntry>::read_xdr(r)?;
             let v = ScMap(i);
@@ -8280,7 +8242,7 @@ impl ReadXdr for ScMap {
 
 impl WriteXdr for ScMap {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -8372,7 +8334,7 @@ impl AsRef<BytesM> for ScBytes {
 
 impl ReadXdr for ScBytes {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::read_xdr(r)?;
             let v = ScBytes(i);
@@ -8383,7 +8345,7 @@ impl ReadXdr for ScBytes {
 
 impl WriteXdr for ScBytes {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -8475,7 +8437,7 @@ impl AsRef<StringM> for ScString {
 
 impl ReadXdr for ScString {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = StringM::read_xdr(r)?;
             let v = ScString(i);
@@ -8486,7 +8448,7 @@ impl ReadXdr for ScString {
 
 impl WriteXdr for ScString {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -8578,7 +8540,7 @@ impl AsRef<StringM<32>> for ScSymbol {
 
 impl ReadXdr for ScSymbol {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = StringM::<32>::read_xdr(r)?;
             let v = ScSymbol(i);
@@ -8589,7 +8551,7 @@ impl ReadXdr for ScSymbol {
 
 impl WriteXdr for ScSymbol {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -8662,7 +8624,7 @@ pub struct ScNonceKey {
 
 impl ReadXdr for ScNonceKey {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 nonce: i64::read_xdr(r)?,
@@ -8673,7 +8635,7 @@ impl ReadXdr for ScNonceKey {
 
 impl WriteXdr for ScNonceKey {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.nonce.write_xdr(w)?;
             Ok(())
@@ -8702,7 +8664,7 @@ pub struct ScContractInstance {
 
 impl ReadXdr for ScContractInstance {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 executable: ContractExecutable::read_xdr(r)?,
@@ -8714,7 +8676,7 @@ impl ReadXdr for ScContractInstance {
 
 impl WriteXdr for ScContractInstance {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.executable.write_xdr(w)?;
             self.storage.write_xdr(w)?;
@@ -8958,7 +8920,7 @@ impl Union<ScValType> for ScVal {}
 
 impl ReadXdr for ScVal {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -8997,7 +8959,7 @@ impl ReadXdr for ScVal {
 
 impl WriteXdr for ScVal {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -9052,7 +9014,7 @@ pub struct ScMapEntry {
 
 impl ReadXdr for ScMapEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: ScVal::read_xdr(r)?,
@@ -9064,7 +9026,7 @@ impl ReadXdr for ScMapEntry {
 
 impl WriteXdr for ScMapEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             self.val.write_xdr(w)?;
@@ -9148,7 +9110,7 @@ impl Union<i32> for StoredTransactionSet {}
 
 impl ReadXdr for StoredTransactionSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -9165,7 +9127,7 @@ impl ReadXdr for StoredTransactionSet {
 
 impl WriteXdr for StoredTransactionSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -9202,7 +9164,7 @@ pub struct StoredDebugTransactionSet {
 
 impl ReadXdr for StoredDebugTransactionSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_set: StoredTransactionSet::read_xdr(r)?,
@@ -9215,7 +9177,7 @@ impl ReadXdr for StoredDebugTransactionSet {
 
 impl WriteXdr for StoredDebugTransactionSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_set.write_xdr(w)?;
             self.ledger_seq.write_xdr(w)?;
@@ -9249,7 +9211,7 @@ pub struct PersistedScpStateV0 {
 
 impl ReadXdr for PersistedScpStateV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 scp_envelopes: VecM::<ScpEnvelope>::read_xdr(r)?,
@@ -9262,7 +9224,7 @@ impl ReadXdr for PersistedScpStateV0 {
 
 impl WriteXdr for PersistedScpStateV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.scp_envelopes.write_xdr(w)?;
             self.quorum_sets.write_xdr(w)?;
@@ -9295,7 +9257,7 @@ pub struct PersistedScpStateV1 {
 
 impl ReadXdr for PersistedScpStateV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 scp_envelopes: VecM::<ScpEnvelope>::read_xdr(r)?,
@@ -9307,7 +9269,7 @@ impl ReadXdr for PersistedScpStateV1 {
 
 impl WriteXdr for PersistedScpStateV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.scp_envelopes.write_xdr(w)?;
             self.quorum_sets.write_xdr(w)?;
@@ -9391,7 +9353,7 @@ impl Union<i32> for PersistedScpState {}
 
 impl ReadXdr for PersistedScpState {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -9408,7 +9370,7 @@ impl ReadXdr for PersistedScpState {
 
 impl WriteXdr for PersistedScpState {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -9484,7 +9446,7 @@ impl AsRef<[u8; 4]> for Thresholds {
 
 impl ReadXdr for Thresholds {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 4]>::read_xdr(r)?;
             let v = Thresholds(i);
@@ -9495,7 +9457,7 @@ impl ReadXdr for Thresholds {
 
 impl WriteXdr for Thresholds {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -9575,7 +9537,7 @@ impl AsRef<StringM<32>> for String32 {
 
 impl ReadXdr for String32 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = StringM::<32>::read_xdr(r)?;
             let v = String32(i);
@@ -9586,7 +9548,7 @@ impl ReadXdr for String32 {
 
 impl WriteXdr for String32 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -9678,7 +9640,7 @@ impl AsRef<StringM<64>> for String64 {
 
 impl ReadXdr for String64 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = StringM::<64>::read_xdr(r)?;
             let v = String64(i);
@@ -9689,7 +9651,7 @@ impl ReadXdr for String64 {
 
 impl WriteXdr for String64 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -9780,7 +9742,7 @@ impl AsRef<i64> for SequenceNumber {
 
 impl ReadXdr for SequenceNumber {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = i64::read_xdr(r)?;
             let v = SequenceNumber(i);
@@ -9791,7 +9753,7 @@ impl ReadXdr for SequenceNumber {
 
 impl WriteXdr for SequenceNumber {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -9834,7 +9796,7 @@ impl AsRef<BytesM<64>> for DataValue {
 
 impl ReadXdr for DataValue {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::<64>::read_xdr(r)?;
             let v = DataValue(i);
@@ -9845,7 +9807,7 @@ impl ReadXdr for DataValue {
 
 impl WriteXdr for DataValue {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -9936,7 +9898,7 @@ impl AsRef<Hash> for PoolId {
 
 impl ReadXdr for PoolId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = Hash::read_xdr(r)?;
             let v = PoolId(i);
@@ -9947,7 +9909,7 @@ impl ReadXdr for PoolId {
 
 impl WriteXdr for PoolId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -10015,7 +9977,7 @@ impl AsRef<[u8; 4]> for AssetCode4 {
 
 impl ReadXdr for AssetCode4 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 4]>::read_xdr(r)?;
             let v = AssetCode4(i);
@@ -10026,7 +9988,7 @@ impl ReadXdr for AssetCode4 {
 
 impl WriteXdr for AssetCode4 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -10131,7 +10093,7 @@ impl AsRef<[u8; 12]> for AssetCode12 {
 
 impl ReadXdr for AssetCode12 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 12]>::read_xdr(r)?;
             let v = AssetCode12(i);
@@ -10142,7 +10104,7 @@ impl ReadXdr for AssetCode12 {
 
 impl WriteXdr for AssetCode12 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -10282,7 +10244,7 @@ impl From<AssetType> for i32 {
 
 impl ReadXdr for AssetType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -10293,7 +10255,7 @@ impl ReadXdr for AssetType {
 
 impl WriteXdr for AssetType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -10379,7 +10341,7 @@ impl Union<AssetType> for AssetCode {}
 
 impl ReadXdr for AssetCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -10396,7 +10358,7 @@ impl ReadXdr for AssetCode {
 
 impl WriteXdr for AssetCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -10431,7 +10393,7 @@ pub struct AlphaNum4 {
 
 impl ReadXdr for AlphaNum4 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 asset_code: AssetCode4::read_xdr(r)?,
@@ -10443,7 +10405,7 @@ impl ReadXdr for AlphaNum4 {
 
 impl WriteXdr for AlphaNum4 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.asset_code.write_xdr(w)?;
             self.issuer.write_xdr(w)?;
@@ -10474,7 +10436,7 @@ pub struct AlphaNum12 {
 
 impl ReadXdr for AlphaNum12 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 asset_code: AssetCode12::read_xdr(r)?,
@@ -10486,7 +10448,7 @@ impl ReadXdr for AlphaNum12 {
 
 impl WriteXdr for AlphaNum12 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.asset_code.write_xdr(w)?;
             self.issuer.write_xdr(w)?;
@@ -10583,7 +10545,7 @@ impl Union<AssetType> for Asset {}
 
 impl ReadXdr for Asset {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -10601,7 +10563,7 @@ impl ReadXdr for Asset {
 
 impl WriteXdr for Asset {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -10637,7 +10599,7 @@ pub struct Price {
 
 impl ReadXdr for Price {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 n: i32::read_xdr(r)?,
@@ -10649,7 +10611,7 @@ impl ReadXdr for Price {
 
 impl WriteXdr for Price {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.n.write_xdr(w)?;
             self.d.write_xdr(w)?;
@@ -10680,7 +10642,7 @@ pub struct Liabilities {
 
 impl ReadXdr for Liabilities {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 buying: i64::read_xdr(r)?,
@@ -10692,7 +10654,7 @@ impl ReadXdr for Liabilities {
 
 impl WriteXdr for Liabilities {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.buying.write_xdr(w)?;
             self.selling.write_xdr(w)?;
@@ -10798,7 +10760,7 @@ impl From<ThresholdIndexes> for i32 {
 
 impl ReadXdr for ThresholdIndexes {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -10809,7 +10771,7 @@ impl ReadXdr for ThresholdIndexes {
 
 impl WriteXdr for ThresholdIndexes {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -10955,7 +10917,7 @@ impl From<LedgerEntryType> for i32 {
 
 impl ReadXdr for LedgerEntryType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -10966,7 +10928,7 @@ impl ReadXdr for LedgerEntryType {
 
 impl WriteXdr for LedgerEntryType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -10996,7 +10958,7 @@ pub struct Signer {
 
 impl ReadXdr for Signer {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: SignerKey::read_xdr(r)?,
@@ -11008,7 +10970,7 @@ impl ReadXdr for Signer {
 
 impl WriteXdr for Signer {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             self.weight.write_xdr(w)?;
@@ -11129,7 +11091,7 @@ impl From<AccountFlags> for i32 {
 
 impl ReadXdr for AccountFlags {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -11140,7 +11102,7 @@ impl ReadXdr for AccountFlags {
 
 impl WriteXdr for AccountFlags {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -11203,7 +11165,7 @@ impl AsRef<Option<AccountId>> for SponsorshipDescriptor {
 
 impl ReadXdr for SponsorshipDescriptor {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = Option::<AccountId>::read_xdr(r)?;
             let v = SponsorshipDescriptor(i);
@@ -11214,7 +11176,7 @@ impl ReadXdr for SponsorshipDescriptor {
 
 impl WriteXdr for SponsorshipDescriptor {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -11249,7 +11211,7 @@ pub struct AccountEntryExtensionV3 {
 
 impl ReadXdr for AccountEntryExtensionV3 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -11262,7 +11224,7 @@ impl ReadXdr for AccountEntryExtensionV3 {
 
 impl WriteXdr for AccountEntryExtensionV3 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.seq_ledger.write_xdr(w)?;
@@ -11347,7 +11309,7 @@ impl Union<i32> for AccountEntryExtensionV2Ext {}
 
 impl ReadXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -11364,7 +11326,7 @@ impl ReadXdr for AccountEntryExtensionV2Ext {
 
 impl WriteXdr for AccountEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -11411,7 +11373,7 @@ pub struct AccountEntryExtensionV2 {
 
 impl ReadXdr for AccountEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 num_sponsored: u32::read_xdr(r)?,
@@ -11425,7 +11387,7 @@ impl ReadXdr for AccountEntryExtensionV2 {
 
 impl WriteXdr for AccountEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.num_sponsored.write_xdr(w)?;
             self.num_sponsoring.write_xdr(w)?;
@@ -11511,7 +11473,7 @@ impl Union<i32> for AccountEntryExtensionV1Ext {}
 
 impl ReadXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -11528,7 +11490,7 @@ impl ReadXdr for AccountEntryExtensionV1Ext {
 
 impl WriteXdr for AccountEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -11571,7 +11533,7 @@ pub struct AccountEntryExtensionV1 {
 
 impl ReadXdr for AccountEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liabilities: Liabilities::read_xdr(r)?,
@@ -11583,7 +11545,7 @@ impl ReadXdr for AccountEntryExtensionV1 {
 
 impl WriteXdr for AccountEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liabilities.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -11667,7 +11629,7 @@ impl Union<i32> for AccountEntryExt {}
 
 impl ReadXdr for AccountEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -11684,7 +11646,7 @@ impl ReadXdr for AccountEntryExt {
 
 impl WriteXdr for AccountEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -11750,7 +11712,7 @@ pub struct AccountEntry {
 
 impl ReadXdr for AccountEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -11770,7 +11732,7 @@ impl ReadXdr for AccountEntry {
 
 impl WriteXdr for AccountEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.balance.write_xdr(w)?;
@@ -11888,7 +11850,7 @@ impl From<TrustLineFlags> for i32 {
 
 impl ReadXdr for TrustLineFlags {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -11899,7 +11861,7 @@ impl ReadXdr for TrustLineFlags {
 
 impl WriteXdr for TrustLineFlags {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -12005,7 +11967,7 @@ impl From<LiquidityPoolType> for i32 {
 
 impl ReadXdr for LiquidityPoolType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -12016,7 +11978,7 @@ impl ReadXdr for LiquidityPoolType {
 
 impl WriteXdr for LiquidityPoolType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -12120,7 +12082,7 @@ impl Union<AssetType> for TrustLineAsset {}
 
 impl ReadXdr for TrustLineAsset {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -12139,7 +12101,7 @@ impl ReadXdr for TrustLineAsset {
 
 impl WriteXdr for TrustLineAsset {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -12224,7 +12186,7 @@ impl Union<i32> for TrustLineEntryExtensionV2Ext {}
 
 impl ReadXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -12240,7 +12202,7 @@ impl ReadXdr for TrustLineEntryExtensionV2Ext {
 
 impl WriteXdr for TrustLineEntryExtensionV2Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -12280,7 +12242,7 @@ pub struct TrustLineEntryExtensionV2 {
 
 impl ReadXdr for TrustLineEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_use_count: i32::read_xdr(r)?,
@@ -12292,7 +12254,7 @@ impl ReadXdr for TrustLineEntryExtensionV2 {
 
 impl WriteXdr for TrustLineEntryExtensionV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_use_count.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -12376,7 +12338,7 @@ impl Union<i32> for TrustLineEntryV1Ext {}
 
 impl ReadXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -12393,7 +12355,7 @@ impl ReadXdr for TrustLineEntryV1Ext {
 
 impl WriteXdr for TrustLineEntryV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -12436,7 +12398,7 @@ pub struct TrustLineEntryV1 {
 
 impl ReadXdr for TrustLineEntryV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liabilities: Liabilities::read_xdr(r)?,
@@ -12448,7 +12410,7 @@ impl ReadXdr for TrustLineEntryV1 {
 
 impl WriteXdr for TrustLineEntryV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liabilities.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -12544,7 +12506,7 @@ impl Union<i32> for TrustLineEntryExt {}
 
 impl ReadXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -12561,7 +12523,7 @@ impl ReadXdr for TrustLineEntryExt {
 
 impl WriteXdr for TrustLineEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -12627,7 +12589,7 @@ pub struct TrustLineEntry {
 
 impl ReadXdr for TrustLineEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -12643,7 +12605,7 @@ impl ReadXdr for TrustLineEntry {
 
 impl WriteXdr for TrustLineEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -12738,7 +12700,7 @@ impl From<OfferEntryFlags> for i32 {
 
 impl ReadXdr for OfferEntryFlags {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -12749,7 +12711,7 @@ impl ReadXdr for OfferEntryFlags {
 
 impl WriteXdr for OfferEntryFlags {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -12833,7 +12795,7 @@ impl Union<i32> for OfferEntryExt {}
 
 impl ReadXdr for OfferEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -12849,7 +12811,7 @@ impl ReadXdr for OfferEntryExt {
 
 impl WriteXdr for OfferEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -12908,7 +12870,7 @@ pub struct OfferEntry {
 
 impl ReadXdr for OfferEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 seller_id: AccountId::read_xdr(r)?,
@@ -12926,7 +12888,7 @@ impl ReadXdr for OfferEntry {
 
 impl WriteXdr for OfferEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.seller_id.write_xdr(w)?;
             self.offer_id.write_xdr(w)?;
@@ -13011,7 +12973,7 @@ impl Union<i32> for DataEntryExt {}
 
 impl ReadXdr for DataEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -13027,7 +12989,7 @@ impl ReadXdr for DataEntryExt {
 
 impl WriteXdr for DataEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -13072,7 +13034,7 @@ pub struct DataEntry {
 
 impl ReadXdr for DataEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -13086,7 +13048,7 @@ impl ReadXdr for DataEntry {
 
 impl WriteXdr for DataEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.data_name.write_xdr(w)?;
@@ -13211,7 +13173,7 @@ impl From<ClaimPredicateType> for i32 {
 
 impl ReadXdr for ClaimPredicateType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -13222,7 +13184,7 @@ impl ReadXdr for ClaimPredicateType {
 
 impl WriteXdr for ClaimPredicateType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -13340,7 +13302,7 @@ impl Union<ClaimPredicateType> for ClaimPredicate {}
 
 impl ReadXdr for ClaimPredicate {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClaimPredicateType = <ClaimPredicateType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -13365,7 +13327,7 @@ impl ReadXdr for ClaimPredicate {
 
 impl WriteXdr for ClaimPredicate {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -13462,7 +13424,7 @@ impl From<ClaimantType> for i32 {
 
 impl ReadXdr for ClaimantType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -13473,7 +13435,7 @@ impl ReadXdr for ClaimantType {
 
 impl WriteXdr for ClaimantType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -13503,7 +13465,7 @@ pub struct ClaimantV0 {
 
 impl ReadXdr for ClaimantV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 destination: AccountId::read_xdr(r)?,
@@ -13515,7 +13477,7 @@ impl ReadXdr for ClaimantV0 {
 
 impl WriteXdr for ClaimantV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.predicate.write_xdr(w)?;
@@ -13598,7 +13560,7 @@ impl Union<ClaimantType> for Claimant {}
 
 impl ReadXdr for Claimant {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClaimantType = <ClaimantType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -13614,7 +13576,7 @@ impl ReadXdr for Claimant {
 
 impl WriteXdr for Claimant {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -13707,7 +13669,7 @@ impl From<ClaimableBalanceIdType> for i32 {
 
 impl ReadXdr for ClaimableBalanceIdType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -13718,7 +13680,7 @@ impl ReadXdr for ClaimableBalanceIdType {
 
 impl WriteXdr for ClaimableBalanceIdType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -13797,7 +13759,7 @@ impl Union<ClaimableBalanceIdType> for ClaimableBalanceId {}
 
 impl ReadXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -13815,7 +13777,7 @@ impl ReadXdr for ClaimableBalanceId {
 
 impl WriteXdr for ClaimableBalanceId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -13910,7 +13872,7 @@ impl From<ClaimableBalanceFlags> for i32 {
 
 impl ReadXdr for ClaimableBalanceFlags {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -13921,7 +13883,7 @@ impl ReadXdr for ClaimableBalanceFlags {
 
 impl WriteXdr for ClaimableBalanceFlags {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -14005,7 +13967,7 @@ impl Union<i32> for ClaimableBalanceEntryExtensionV1Ext {}
 
 impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -14021,7 +13983,7 @@ impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
 
 impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -14061,7 +14023,7 @@ pub struct ClaimableBalanceEntryExtensionV1 {
 
 impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ClaimableBalanceEntryExtensionV1Ext::read_xdr(r)?,
@@ -14073,7 +14035,7 @@ impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
 
 impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.flags.write_xdr(w)?;
@@ -14157,7 +14119,7 @@ impl Union<i32> for ClaimableBalanceEntryExt {}
 
 impl ReadXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -14174,7 +14136,7 @@ impl ReadXdr for ClaimableBalanceEntryExt {
 
 impl WriteXdr for ClaimableBalanceEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -14231,7 +14193,7 @@ pub struct ClaimableBalanceEntry {
 
 impl ReadXdr for ClaimableBalanceEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 balance_id: ClaimableBalanceId::read_xdr(r)?,
@@ -14246,7 +14208,7 @@ impl ReadXdr for ClaimableBalanceEntry {
 
 impl WriteXdr for ClaimableBalanceEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
             self.claimants.write_xdr(w)?;
@@ -14282,7 +14244,7 @@ pub struct LiquidityPoolConstantProductParameters {
 
 impl ReadXdr for LiquidityPoolConstantProductParameters {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 asset_a: Asset::read_xdr(r)?,
@@ -14295,7 +14257,7 @@ impl ReadXdr for LiquidityPoolConstantProductParameters {
 
 impl WriteXdr for LiquidityPoolConstantProductParameters {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.asset_a.write_xdr(w)?;
             self.asset_b.write_xdr(w)?;
@@ -14335,7 +14297,7 @@ pub struct LiquidityPoolEntryConstantProduct {
 
 impl ReadXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 params: LiquidityPoolConstantProductParameters::read_xdr(r)?,
@@ -14350,7 +14312,7 @@ impl ReadXdr for LiquidityPoolEntryConstantProduct {
 
 impl WriteXdr for LiquidityPoolEntryConstantProduct {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.params.write_xdr(w)?;
             self.reserve_a.write_xdr(w)?;
@@ -14443,7 +14405,7 @@ impl Union<LiquidityPoolType> for LiquidityPoolEntryBody {}
 
 impl ReadXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -14463,7 +14425,7 @@ impl ReadXdr for LiquidityPoolEntryBody {
 
 impl WriteXdr for LiquidityPoolEntryBody {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -14512,7 +14474,7 @@ pub struct LiquidityPoolEntry {
 
 impl ReadXdr for LiquidityPoolEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_id: PoolId::read_xdr(r)?,
@@ -14524,7 +14486,7 @@ impl ReadXdr for LiquidityPoolEntry {
 
 impl WriteXdr for LiquidityPoolEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
             self.body.write_xdr(w)?;
@@ -14619,7 +14581,7 @@ impl From<ContractDataDurability> for i32 {
 
 impl ReadXdr for ContractDataDurability {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -14630,7 +14592,7 @@ impl ReadXdr for ContractDataDurability {
 
 impl WriteXdr for ContractDataDurability {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -14666,7 +14628,7 @@ pub struct ContractDataEntry {
 
 impl ReadXdr for ContractDataEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -14681,7 +14643,7 @@ impl ReadXdr for ContractDataEntry {
 
 impl WriteXdr for ContractDataEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.contract.write_xdr(w)?;
@@ -14717,7 +14679,7 @@ pub struct ContractCodeEntry {
 
 impl ReadXdr for ContractCodeEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -14730,7 +14692,7 @@ impl ReadXdr for ContractCodeEntry {
 
 impl WriteXdr for ContractCodeEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.hash.write_xdr(w)?;
@@ -14762,7 +14724,7 @@ pub struct TtlEntry {
 
 impl ReadXdr for TtlEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key_hash: Hash::read_xdr(r)?,
@@ -14774,7 +14736,7 @@ impl ReadXdr for TtlEntry {
 
 impl WriteXdr for TtlEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key_hash.write_xdr(w)?;
             self.live_until_ledger_seq.write_xdr(w)?;
@@ -14853,7 +14815,7 @@ impl Union<i32> for LedgerEntryExtensionV1Ext {}
 
 impl ReadXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -14869,7 +14831,7 @@ impl ReadXdr for LedgerEntryExtensionV1Ext {
 
 impl WriteXdr for LedgerEntryExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -14909,7 +14871,7 @@ pub struct LedgerEntryExtensionV1 {
 
 impl ReadXdr for LedgerEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 sponsoring_id: SponsorshipDescriptor::read_xdr(r)?,
@@ -14921,7 +14883,7 @@ impl ReadXdr for LedgerEntryExtensionV1 {
 
 impl WriteXdr for LedgerEntryExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.sponsoring_id.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -15067,7 +15029,7 @@ impl Union<LedgerEntryType> for LedgerEntryData {}
 
 impl ReadXdr for LedgerEntryData {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -15102,7 +15064,7 @@ impl ReadXdr for LedgerEntryData {
 
 impl WriteXdr for LedgerEntryData {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -15198,7 +15160,7 @@ impl Union<i32> for LedgerEntryExt {}
 
 impl ReadXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -15215,7 +15177,7 @@ impl ReadXdr for LedgerEntryExt {
 
 impl WriteXdr for LedgerEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -15285,7 +15247,7 @@ pub struct LedgerEntry {
 
 impl ReadXdr for LedgerEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 last_modified_ledger_seq: u32::read_xdr(r)?,
@@ -15298,7 +15260,7 @@ impl ReadXdr for LedgerEntry {
 
 impl WriteXdr for LedgerEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.last_modified_ledger_seq.write_xdr(w)?;
             self.data.write_xdr(w)?;
@@ -15328,7 +15290,7 @@ pub struct LedgerKeyAccount {
 
 impl ReadXdr for LedgerKeyAccount {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -15339,7 +15301,7 @@ impl ReadXdr for LedgerKeyAccount {
 
 impl WriteXdr for LedgerKeyAccount {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             Ok(())
@@ -15369,7 +15331,7 @@ pub struct LedgerKeyTrustLine {
 
 impl ReadXdr for LedgerKeyTrustLine {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -15381,7 +15343,7 @@ impl ReadXdr for LedgerKeyTrustLine {
 
 impl WriteXdr for LedgerKeyTrustLine {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -15412,7 +15374,7 @@ pub struct LedgerKeyOffer {
 
 impl ReadXdr for LedgerKeyOffer {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 seller_id: AccountId::read_xdr(r)?,
@@ -15424,7 +15386,7 @@ impl ReadXdr for LedgerKeyOffer {
 
 impl WriteXdr for LedgerKeyOffer {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.seller_id.write_xdr(w)?;
             self.offer_id.write_xdr(w)?;
@@ -15455,7 +15417,7 @@ pub struct LedgerKeyData {
 
 impl ReadXdr for LedgerKeyData {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -15467,7 +15429,7 @@ impl ReadXdr for LedgerKeyData {
 
 impl WriteXdr for LedgerKeyData {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.data_name.write_xdr(w)?;
@@ -15496,7 +15458,7 @@ pub struct LedgerKeyClaimableBalance {
 
 impl ReadXdr for LedgerKeyClaimableBalance {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 balance_id: ClaimableBalanceId::read_xdr(r)?,
@@ -15507,7 +15469,7 @@ impl ReadXdr for LedgerKeyClaimableBalance {
 
 impl WriteXdr for LedgerKeyClaimableBalance {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
             Ok(())
@@ -15535,7 +15497,7 @@ pub struct LedgerKeyLiquidityPool {
 
 impl ReadXdr for LedgerKeyLiquidityPool {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_id: PoolId::read_xdr(r)?,
@@ -15546,7 +15508,7 @@ impl ReadXdr for LedgerKeyLiquidityPool {
 
 impl WriteXdr for LedgerKeyLiquidityPool {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
             Ok(())
@@ -15578,7 +15540,7 @@ pub struct LedgerKeyContractData {
 
 impl ReadXdr for LedgerKeyContractData {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 contract: ScAddress::read_xdr(r)?,
@@ -15591,7 +15553,7 @@ impl ReadXdr for LedgerKeyContractData {
 
 impl WriteXdr for LedgerKeyContractData {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.contract.write_xdr(w)?;
             self.key.write_xdr(w)?;
@@ -15621,7 +15583,7 @@ pub struct LedgerKeyContractCode {
 
 impl ReadXdr for LedgerKeyContractCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hash: Hash::read_xdr(r)?,
@@ -15632,7 +15594,7 @@ impl ReadXdr for LedgerKeyContractCode {
 
 impl WriteXdr for LedgerKeyContractCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hash.write_xdr(w)?;
             Ok(())
@@ -15660,7 +15622,7 @@ pub struct LedgerKeyConfigSetting {
 
 impl ReadXdr for LedgerKeyConfigSetting {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 config_setting_id: ConfigSettingId::read_xdr(r)?,
@@ -15671,7 +15633,7 @@ impl ReadXdr for LedgerKeyConfigSetting {
 
 impl WriteXdr for LedgerKeyConfigSetting {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.config_setting_id.write_xdr(w)?;
             Ok(())
@@ -15700,7 +15662,7 @@ pub struct LedgerKeyTtl {
 
 impl ReadXdr for LedgerKeyTtl {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key_hash: Hash::read_xdr(r)?,
@@ -15711,7 +15673,7 @@ impl ReadXdr for LedgerKeyTtl {
 
 impl WriteXdr for LedgerKeyTtl {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key_hash.write_xdr(w)?;
             Ok(())
@@ -15897,7 +15859,7 @@ impl Union<LedgerEntryType> for LedgerKey {}
 
 impl ReadXdr for LedgerKey {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -15932,7 +15894,7 @@ impl ReadXdr for LedgerKey {
 
 impl WriteXdr for LedgerKey {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -16091,7 +16053,7 @@ impl From<EnvelopeType> for i32 {
 
 impl ReadXdr for EnvelopeType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -16102,7 +16064,7 @@ impl ReadXdr for EnvelopeType {
 
 impl WriteXdr for EnvelopeType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -16148,7 +16110,7 @@ impl AsRef<BytesM<128>> for UpgradeType {
 
 impl ReadXdr for UpgradeType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::<128>::read_xdr(r)?;
             let v = UpgradeType(i);
@@ -16159,7 +16121,7 @@ impl ReadXdr for UpgradeType {
 
 impl WriteXdr for UpgradeType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -16297,7 +16259,7 @@ impl From<StellarValueType> for i32 {
 
 impl ReadXdr for StellarValueType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -16308,7 +16270,7 @@ impl ReadXdr for StellarValueType {
 
 impl WriteXdr for StellarValueType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -16338,7 +16300,7 @@ pub struct LedgerCloseValueSignature {
 
 impl ReadXdr for LedgerCloseValueSignature {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 node_id: NodeId::read_xdr(r)?,
@@ -16350,7 +16312,7 @@ impl ReadXdr for LedgerCloseValueSignature {
 
 impl WriteXdr for LedgerCloseValueSignature {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.node_id.write_xdr(w)?;
             self.signature.write_xdr(w)?;
@@ -16434,7 +16396,7 @@ impl Union<StellarValueType> for StellarValueExt {}
 
 impl ReadXdr for StellarValueExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: StellarValueType = <StellarValueType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -16451,7 +16413,7 @@ impl ReadXdr for StellarValueExt {
 
 impl WriteXdr for StellarValueExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -16505,7 +16467,7 @@ pub struct StellarValue {
 
 impl ReadXdr for StellarValue {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_set_hash: Hash::read_xdr(r)?,
@@ -16519,7 +16481,7 @@ impl ReadXdr for StellarValue {
 
 impl WriteXdr for StellarValue {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_set_hash.write_xdr(w)?;
             self.close_time.write_xdr(w)?;
@@ -16628,7 +16590,7 @@ impl From<LedgerHeaderFlags> for i32 {
 
 impl ReadXdr for LedgerHeaderFlags {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -16639,7 +16601,7 @@ impl ReadXdr for LedgerHeaderFlags {
 
 impl WriteXdr for LedgerHeaderFlags {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -16717,7 +16679,7 @@ impl Union<i32> for LedgerHeaderExtensionV1Ext {}
 
 impl ReadXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -16733,7 +16695,7 @@ impl ReadXdr for LedgerHeaderExtensionV1Ext {
 
 impl WriteXdr for LedgerHeaderExtensionV1Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -16773,7 +16735,7 @@ pub struct LedgerHeaderExtensionV1 {
 
 impl ReadXdr for LedgerHeaderExtensionV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 flags: u32::read_xdr(r)?,
@@ -16785,7 +16747,7 @@ impl ReadXdr for LedgerHeaderExtensionV1 {
 
 impl WriteXdr for LedgerHeaderExtensionV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.flags.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -16869,7 +16831,7 @@ impl Union<i32> for LedgerHeaderExt {}
 
 impl ReadXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -16886,7 +16848,7 @@ impl ReadXdr for LedgerHeaderExt {
 
 impl WriteXdr for LedgerHeaderExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -16968,7 +16930,7 @@ pub struct LedgerHeader {
 
 impl ReadXdr for LedgerHeader {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_version: u32::read_xdr(r)?,
@@ -16993,7 +16955,7 @@ impl ReadXdr for LedgerHeader {
 
 impl WriteXdr for LedgerHeader {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_version.write_xdr(w)?;
             self.previous_ledger_hash.write_xdr(w)?;
@@ -17135,7 +17097,7 @@ impl From<LedgerUpgradeType> for i32 {
 
 impl ReadXdr for LedgerUpgradeType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -17146,7 +17108,7 @@ impl ReadXdr for LedgerUpgradeType {
 
 impl WriteXdr for LedgerUpgradeType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -17175,7 +17137,7 @@ pub struct ConfigUpgradeSetKey {
 
 impl ReadXdr for ConfigUpgradeSetKey {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 contract_id: Hash::read_xdr(r)?,
@@ -17187,7 +17149,7 @@ impl ReadXdr for ConfigUpgradeSetKey {
 
 impl WriteXdr for ConfigUpgradeSetKey {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.contract_id.write_xdr(w)?;
             self.content_hash.write_xdr(w)?;
@@ -17315,7 +17277,7 @@ impl Union<LedgerUpgradeType> for LedgerUpgrade {}
 
 impl ReadXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -17339,7 +17301,7 @@ impl ReadXdr for LedgerUpgrade {
 
 impl WriteXdr for LedgerUpgrade {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -17376,7 +17338,7 @@ pub struct ConfigUpgradeSet {
 
 impl ReadXdr for ConfigUpgradeSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 updated_entry: VecM::<ConfigSettingEntry>::read_xdr(r)?,
@@ -17387,7 +17349,7 @@ impl ReadXdr for ConfigUpgradeSet {
 
 impl WriteXdr for ConfigUpgradeSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.updated_entry.write_xdr(w)?;
             Ok(())
@@ -17495,7 +17457,7 @@ impl From<BucketEntryType> for i32 {
 
 impl ReadXdr for BucketEntryType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -17506,7 +17468,7 @@ impl ReadXdr for BucketEntryType {
 
 impl WriteXdr for BucketEntryType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -17584,7 +17546,7 @@ impl Union<i32> for BucketMetadataExt {}
 
 impl ReadXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -17600,7 +17562,7 @@ impl ReadXdr for BucketMetadataExt {
 
 impl WriteXdr for BucketMetadataExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -17642,7 +17604,7 @@ pub struct BucketMetadata {
 
 impl ReadXdr for BucketMetadata {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_version: u32::read_xdr(r)?,
@@ -17654,7 +17616,7 @@ impl ReadXdr for BucketMetadata {
 
 impl WriteXdr for BucketMetadata {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_version.write_xdr(w)?;
             self.ext.write_xdr(w)?;
@@ -17754,7 +17716,7 @@ impl Union<BucketEntryType> for BucketEntry {}
 
 impl ReadXdr for BucketEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: BucketEntryType = <BucketEntryType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -17773,7 +17735,7 @@ impl ReadXdr for BucketEntry {
 
 impl WriteXdr for BucketEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -17871,7 +17833,7 @@ impl From<TxSetComponentType> for i32 {
 
 impl ReadXdr for TxSetComponentType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -17882,7 +17844,7 @@ impl ReadXdr for TxSetComponentType {
 
 impl WriteXdr for TxSetComponentType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -17912,7 +17874,7 @@ pub struct TxSetComponentTxsMaybeDiscountedFee {
 
 impl ReadXdr for TxSetComponentTxsMaybeDiscountedFee {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 base_fee: Option::<i64>::read_xdr(r)?,
@@ -17924,7 +17886,7 @@ impl ReadXdr for TxSetComponentTxsMaybeDiscountedFee {
 
 impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.base_fee.write_xdr(w)?;
             self.txs.write_xdr(w)?;
@@ -18010,7 +17972,7 @@ impl Union<TxSetComponentType> for TxSetComponent {}
 
 impl ReadXdr for TxSetComponent {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: TxSetComponentType = <TxSetComponentType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -18030,7 +17992,7 @@ impl ReadXdr for TxSetComponent {
 
 impl WriteXdr for TxSetComponent {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -18112,7 +18074,7 @@ impl Union<i32> for TransactionPhase {}
 
 impl ReadXdr for TransactionPhase {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -18128,7 +18090,7 @@ impl ReadXdr for TransactionPhase {
 
 impl WriteXdr for TransactionPhase {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -18162,7 +18124,7 @@ pub struct TransactionSet {
 
 impl ReadXdr for TransactionSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 previous_ledger_hash: Hash::read_xdr(r)?,
@@ -18174,7 +18136,7 @@ impl ReadXdr for TransactionSet {
 
 impl WriteXdr for TransactionSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.previous_ledger_hash.write_xdr(w)?;
             self.txs.write_xdr(w)?;
@@ -18205,7 +18167,7 @@ pub struct TransactionSetV1 {
 
 impl ReadXdr for TransactionSetV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 previous_ledger_hash: Hash::read_xdr(r)?,
@@ -18217,7 +18179,7 @@ impl ReadXdr for TransactionSetV1 {
 
 impl WriteXdr for TransactionSetV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.previous_ledger_hash.write_xdr(w)?;
             self.phases.write_xdr(w)?;
@@ -18297,7 +18259,7 @@ impl Union<i32> for GeneralizedTransactionSet {}
 
 impl ReadXdr for GeneralizedTransactionSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -18313,7 +18275,7 @@ impl ReadXdr for GeneralizedTransactionSet {
 
 impl WriteXdr for GeneralizedTransactionSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -18347,7 +18309,7 @@ pub struct TransactionResultPair {
 
 impl ReadXdr for TransactionResultPair {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 transaction_hash: Hash::read_xdr(r)?,
@@ -18359,7 +18321,7 @@ impl ReadXdr for TransactionResultPair {
 
 impl WriteXdr for TransactionResultPair {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.transaction_hash.write_xdr(w)?;
             self.result.write_xdr(w)?;
@@ -18388,7 +18350,7 @@ pub struct TransactionResultSet {
 
 impl ReadXdr for TransactionResultSet {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 results: VecM::<TransactionResultPair>::read_xdr(r)?,
@@ -18399,7 +18361,7 @@ impl ReadXdr for TransactionResultSet {
 
 impl WriteXdr for TransactionResultSet {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.results.write_xdr(w)?;
             Ok(())
@@ -18482,7 +18444,7 @@ impl Union<i32> for TransactionHistoryEntryExt {}
 
 impl ReadXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -18499,7 +18461,7 @@ impl ReadXdr for TransactionHistoryEntryExt {
 
 impl WriteXdr for TransactionHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -18545,7 +18507,7 @@ pub struct TransactionHistoryEntry {
 
 impl ReadXdr for TransactionHistoryEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_seq: u32::read_xdr(r)?,
@@ -18558,7 +18520,7 @@ impl ReadXdr for TransactionHistoryEntry {
 
 impl WriteXdr for TransactionHistoryEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_seq.write_xdr(w)?;
             self.tx_set.write_xdr(w)?;
@@ -18638,7 +18600,7 @@ impl Union<i32> for TransactionHistoryResultEntryExt {}
 
 impl ReadXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -18654,7 +18616,7 @@ impl ReadXdr for TransactionHistoryResultEntryExt {
 
 impl WriteXdr for TransactionHistoryResultEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -18697,7 +18659,7 @@ pub struct TransactionHistoryResultEntry {
 
 impl ReadXdr for TransactionHistoryResultEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_seq: u32::read_xdr(r)?,
@@ -18710,7 +18672,7 @@ impl ReadXdr for TransactionHistoryResultEntry {
 
 impl WriteXdr for TransactionHistoryResultEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_seq.write_xdr(w)?;
             self.tx_result_set.write_xdr(w)?;
@@ -18790,7 +18752,7 @@ impl Union<i32> for LedgerHeaderHistoryEntryExt {}
 
 impl ReadXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -18806,7 +18768,7 @@ impl ReadXdr for LedgerHeaderHistoryEntryExt {
 
 impl WriteXdr for LedgerHeaderHistoryEntryExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -18849,7 +18811,7 @@ pub struct LedgerHeaderHistoryEntry {
 
 impl ReadXdr for LedgerHeaderHistoryEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hash: Hash::read_xdr(r)?,
@@ -18862,7 +18824,7 @@ impl ReadXdr for LedgerHeaderHistoryEntry {
 
 impl WriteXdr for LedgerHeaderHistoryEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hash.write_xdr(w)?;
             self.header.write_xdr(w)?;
@@ -18894,7 +18856,7 @@ pub struct LedgerScpMessages {
 
 impl ReadXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_seq: u32::read_xdr(r)?,
@@ -18906,7 +18868,7 @@ impl ReadXdr for LedgerScpMessages {
 
 impl WriteXdr for LedgerScpMessages {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_seq.write_xdr(w)?;
             self.messages.write_xdr(w)?;
@@ -18937,7 +18899,7 @@ pub struct ScpHistoryEntryV0 {
 
 impl ReadXdr for ScpHistoryEntryV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 quorum_sets: VecM::<ScpQuorumSet>::read_xdr(r)?,
@@ -18949,7 +18911,7 @@ impl ReadXdr for ScpHistoryEntryV0 {
 
 impl WriteXdr for ScpHistoryEntryV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.quorum_sets.write_xdr(w)?;
             self.ledger_messages.write_xdr(w)?;
@@ -19028,7 +18990,7 @@ impl Union<i32> for ScpHistoryEntry {}
 
 impl ReadXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -19044,7 +19006,7 @@ impl ReadXdr for ScpHistoryEntry {
 
 impl WriteXdr for ScpHistoryEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -19153,7 +19115,7 @@ impl From<LedgerEntryChangeType> for i32 {
 
 impl ReadXdr for LedgerEntryChangeType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -19164,7 +19126,7 @@ impl ReadXdr for LedgerEntryChangeType {
 
 impl WriteXdr for LedgerEntryChangeType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -19262,7 +19224,7 @@ impl Union<LedgerEntryChangeType> for LedgerEntryChange {}
 
 impl ReadXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -19281,7 +19243,7 @@ impl ReadXdr for LedgerEntryChange {
 
 impl WriteXdr for LedgerEntryChange {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -19334,7 +19296,7 @@ impl AsRef<VecM<LedgerEntryChange>> for LedgerEntryChanges {
 
 impl ReadXdr for LedgerEntryChanges {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<LedgerEntryChange>::read_xdr(r)?;
             let v = LedgerEntryChanges(i);
@@ -19345,7 +19307,7 @@ impl ReadXdr for LedgerEntryChanges {
 
 impl WriteXdr for LedgerEntryChanges {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -19419,7 +19381,7 @@ pub struct OperationMeta {
 
 impl ReadXdr for OperationMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 changes: LedgerEntryChanges::read_xdr(r)?,
@@ -19430,7 +19392,7 @@ impl ReadXdr for OperationMeta {
 
 impl WriteXdr for OperationMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.changes.write_xdr(w)?;
             Ok(())
@@ -19460,7 +19422,7 @@ pub struct TransactionMetaV1 {
 
 impl ReadXdr for TransactionMetaV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_changes: LedgerEntryChanges::read_xdr(r)?,
@@ -19472,7 +19434,7 @@ impl ReadXdr for TransactionMetaV1 {
 
 impl WriteXdr for TransactionMetaV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_changes.write_xdr(w)?;
             self.operations.write_xdr(w)?;
@@ -19507,7 +19469,7 @@ pub struct TransactionMetaV2 {
 
 impl ReadXdr for TransactionMetaV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
@@ -19520,7 +19482,7 @@ impl ReadXdr for TransactionMetaV2 {
 
 impl WriteXdr for TransactionMetaV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_changes_before.write_xdr(w)?;
             self.operations.write_xdr(w)?;
@@ -19622,7 +19584,7 @@ impl From<ContractEventType> for i32 {
 
 impl ReadXdr for ContractEventType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -19633,7 +19595,7 @@ impl ReadXdr for ContractEventType {
 
 impl WriteXdr for ContractEventType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -19663,7 +19625,7 @@ pub struct ContractEventV0 {
 
 impl ReadXdr for ContractEventV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 topics: VecM::<ScVal>::read_xdr(r)?,
@@ -19675,7 +19637,7 @@ impl ReadXdr for ContractEventV0 {
 
 impl WriteXdr for ContractEventV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.topics.write_xdr(w)?;
             self.data.write_xdr(w)?;
@@ -19758,7 +19720,7 @@ impl Union<i32> for ContractEventBody {}
 
 impl ReadXdr for ContractEventBody {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -19774,7 +19736,7 @@ impl ReadXdr for ContractEventBody {
 
 impl WriteXdr for ContractEventBody {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -19825,7 +19787,7 @@ pub struct ContractEvent {
 
 impl ReadXdr for ContractEvent {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -19839,7 +19801,7 @@ impl ReadXdr for ContractEvent {
 
 impl WriteXdr for ContractEvent {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.contract_id.write_xdr(w)?;
@@ -19872,7 +19834,7 @@ pub struct DiagnosticEvent {
 
 impl ReadXdr for DiagnosticEvent {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 in_successful_contract_call: bool::read_xdr(r)?,
@@ -19884,7 +19846,7 @@ impl ReadXdr for DiagnosticEvent {
 
 impl WriteXdr for DiagnosticEvent {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.in_successful_contract_call.write_xdr(w)?;
             self.event.write_xdr(w)?;
@@ -19925,7 +19887,7 @@ pub struct SorobanTransactionMeta {
 
 impl ReadXdr for SorobanTransactionMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -19939,7 +19901,7 @@ impl ReadXdr for SorobanTransactionMeta {
 
 impl WriteXdr for SorobanTransactionMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.events.write_xdr(w)?;
@@ -19982,7 +19944,7 @@ pub struct TransactionMetaV3 {
 
 impl ReadXdr for TransactionMetaV3 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -19997,7 +19959,7 @@ impl ReadXdr for TransactionMetaV3 {
 
 impl WriteXdr for TransactionMetaV3 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.tx_changes_before.write_xdr(w)?;
@@ -20031,7 +19993,7 @@ pub struct InvokeHostFunctionSuccessPreImage {
 
 impl ReadXdr for InvokeHostFunctionSuccessPreImage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 return_value: ScVal::read_xdr(r)?,
@@ -20043,7 +20005,7 @@ impl ReadXdr for InvokeHostFunctionSuccessPreImage {
 
 impl WriteXdr for InvokeHostFunctionSuccessPreImage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.return_value.write_xdr(w)?;
             self.events.write_xdr(w)?;
@@ -20137,7 +20099,7 @@ impl Union<i32> for TransactionMeta {}
 
 impl ReadXdr for TransactionMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -20156,7 +20118,7 @@ impl ReadXdr for TransactionMeta {
 
 impl WriteXdr for TransactionMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -20195,7 +20157,7 @@ pub struct TransactionResultMeta {
 
 impl ReadXdr for TransactionResultMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 result: TransactionResultPair::read_xdr(r)?,
@@ -20208,7 +20170,7 @@ impl ReadXdr for TransactionResultMeta {
 
 impl WriteXdr for TransactionResultMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.result.write_xdr(w)?;
             self.fee_processing.write_xdr(w)?;
@@ -20240,7 +20202,7 @@ pub struct UpgradeEntryMeta {
 
 impl ReadXdr for UpgradeEntryMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 upgrade: LedgerUpgrade::read_xdr(r)?,
@@ -20252,7 +20214,7 @@ impl ReadXdr for UpgradeEntryMeta {
 
 impl WriteXdr for UpgradeEntryMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.upgrade.write_xdr(w)?;
             self.changes.write_xdr(w)?;
@@ -20298,7 +20260,7 @@ pub struct LedgerCloseMetaV0 {
 
 impl ReadXdr for LedgerCloseMetaV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_header: LedgerHeaderHistoryEntry::read_xdr(r)?,
@@ -20313,7 +20275,7 @@ impl ReadXdr for LedgerCloseMetaV0 {
 
 impl WriteXdr for LedgerCloseMetaV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_header.write_xdr(w)?;
             self.tx_set.write_xdr(w)?;
@@ -20381,7 +20343,7 @@ pub struct LedgerCloseMetaV1 {
 
 impl ReadXdr for LedgerCloseMetaV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -20400,7 +20362,7 @@ impl ReadXdr for LedgerCloseMetaV1 {
 
 impl WriteXdr for LedgerCloseMetaV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.ledger_header.write_xdr(w)?;
@@ -20491,7 +20453,7 @@ impl Union<i32> for LedgerCloseMeta {}
 
 impl ReadXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -20508,7 +20470,7 @@ impl ReadXdr for LedgerCloseMeta {
 
 impl WriteXdr for LedgerCloseMeta {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -20623,7 +20585,7 @@ impl From<ErrorCode> for i32 {
 
 impl ReadXdr for ErrorCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -20634,7 +20596,7 @@ impl ReadXdr for ErrorCode {
 
 impl WriteXdr for ErrorCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -20664,7 +20626,7 @@ pub struct SError {
 
 impl ReadXdr for SError {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 code: ErrorCode::read_xdr(r)?,
@@ -20676,7 +20638,7 @@ impl ReadXdr for SError {
 
 impl WriteXdr for SError {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.code.write_xdr(w)?;
             self.msg.write_xdr(w)?;
@@ -20705,7 +20667,7 @@ pub struct SendMore {
 
 impl ReadXdr for SendMore {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 num_messages: u32::read_xdr(r)?,
@@ -20716,7 +20678,7 @@ impl ReadXdr for SendMore {
 
 impl WriteXdr for SendMore {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.num_messages.write_xdr(w)?;
             Ok(())
@@ -20746,7 +20708,7 @@ pub struct SendMoreExtended {
 
 impl ReadXdr for SendMoreExtended {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 num_messages: u32::read_xdr(r)?,
@@ -20758,7 +20720,7 @@ impl ReadXdr for SendMoreExtended {
 
 impl WriteXdr for SendMoreExtended {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.num_messages.write_xdr(w)?;
             self.num_bytes.write_xdr(w)?;
@@ -20791,7 +20753,7 @@ pub struct AuthCert {
 
 impl ReadXdr for AuthCert {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 pubkey: Curve25519Public::read_xdr(r)?,
@@ -20804,7 +20766,7 @@ impl ReadXdr for AuthCert {
 
 impl WriteXdr for AuthCert {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.pubkey.write_xdr(w)?;
             self.expiration.write_xdr(w)?;
@@ -20850,7 +20812,7 @@ pub struct Hello {
 
 impl ReadXdr for Hello {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ledger_version: u32::read_xdr(r)?,
@@ -20869,7 +20831,7 @@ impl ReadXdr for Hello {
 
 impl WriteXdr for Hello {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_version.write_xdr(w)?;
             self.overlay_version.write_xdr(w)?;
@@ -20911,7 +20873,7 @@ pub struct Auth {
 
 impl ReadXdr for Auth {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 flags: i32::read_xdr(r)?,
@@ -20922,7 +20884,7 @@ impl ReadXdr for Auth {
 
 impl WriteXdr for Auth {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.flags.write_xdr(w)?;
             Ok(())
@@ -21014,7 +20976,7 @@ impl From<IpAddrType> for i32 {
 
 impl ReadXdr for IpAddrType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -21025,7 +20987,7 @@ impl ReadXdr for IpAddrType {
 
 impl WriteXdr for IpAddrType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -21108,7 +21070,7 @@ impl Union<IpAddrType> for PeerAddressIp {}
 
 impl ReadXdr for PeerAddressIp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: IpAddrType = <IpAddrType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -21125,7 +21087,7 @@ impl ReadXdr for PeerAddressIp {
 
 impl WriteXdr for PeerAddressIp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -21169,7 +21131,7 @@ pub struct PeerAddress {
 
 impl ReadXdr for PeerAddress {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ip: PeerAddressIp::read_xdr(r)?,
@@ -21182,7 +21144,7 @@ impl ReadXdr for PeerAddress {
 
 impl WriteXdr for PeerAddress {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ip.write_xdr(w)?;
             self.port.write_xdr(w)?;
@@ -21400,7 +21362,7 @@ impl From<MessageType> for i32 {
 
 impl ReadXdr for MessageType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -21411,7 +21373,7 @@ impl ReadXdr for MessageType {
 
 impl WriteXdr for MessageType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -21441,7 +21403,7 @@ pub struct DontHave {
 
 impl ReadXdr for DontHave {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 type_: MessageType::read_xdr(r)?,
@@ -21453,7 +21415,7 @@ impl ReadXdr for DontHave {
 
 impl WriteXdr for DontHave {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.type_.write_xdr(w)?;
             self.req_hash.write_xdr(w)?;
@@ -21542,7 +21504,7 @@ impl From<SurveyMessageCommandType> for i32 {
 
 impl ReadXdr for SurveyMessageCommandType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -21553,7 +21515,7 @@ impl ReadXdr for SurveyMessageCommandType {
 
 impl WriteXdr for SurveyMessageCommandType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -21646,7 +21608,7 @@ impl From<SurveyMessageResponseType> for i32 {
 
 impl ReadXdr for SurveyMessageResponseType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -21657,7 +21619,7 @@ impl ReadXdr for SurveyMessageResponseType {
 
 impl WriteXdr for SurveyMessageResponseType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -21693,7 +21655,7 @@ pub struct SurveyRequestMessage {
 
 impl ReadXdr for SurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 surveyor_peer_id: NodeId::read_xdr(r)?,
@@ -21708,7 +21670,7 @@ impl ReadXdr for SurveyRequestMessage {
 
 impl WriteXdr for SurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.surveyor_peer_id.write_xdr(w)?;
             self.surveyed_peer_id.write_xdr(w)?;
@@ -21742,7 +21704,7 @@ pub struct SignedSurveyRequestMessage {
 
 impl ReadXdr for SignedSurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 request_signature: Signature::read_xdr(r)?,
@@ -21754,7 +21716,7 @@ impl ReadXdr for SignedSurveyRequestMessage {
 
 impl WriteXdr for SignedSurveyRequestMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.request_signature.write_xdr(w)?;
             self.request.write_xdr(w)?;
@@ -21801,7 +21763,7 @@ impl AsRef<BytesM<64000>> for EncryptedBody {
 
 impl ReadXdr for EncryptedBody {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::<64000>::read_xdr(r)?;
             let v = EncryptedBody(i);
@@ -21812,7 +21774,7 @@ impl ReadXdr for EncryptedBody {
 
 impl WriteXdr for EncryptedBody {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -21894,7 +21856,7 @@ pub struct SurveyResponseMessage {
 
 impl ReadXdr for SurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 surveyor_peer_id: NodeId::read_xdr(r)?,
@@ -21909,7 +21871,7 @@ impl ReadXdr for SurveyResponseMessage {
 
 impl WriteXdr for SurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.surveyor_peer_id.write_xdr(w)?;
             self.surveyed_peer_id.write_xdr(w)?;
@@ -21943,7 +21905,7 @@ pub struct SignedSurveyResponseMessage {
 
 impl ReadXdr for SignedSurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 response_signature: Signature::read_xdr(r)?,
@@ -21955,7 +21917,7 @@ impl ReadXdr for SignedSurveyResponseMessage {
 
 impl WriteXdr for SignedSurveyResponseMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.response_signature.write_xdr(w)?;
             self.response.write_xdr(w)?;
@@ -22014,7 +21976,7 @@ pub struct PeerStats {
 
 impl ReadXdr for PeerStats {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 id: NodeId::read_xdr(r)?,
@@ -22039,7 +22001,7 @@ impl ReadXdr for PeerStats {
 
 impl WriteXdr for PeerStats {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.id.write_xdr(w)?;
             self.version_str.write_xdr(w)?;
@@ -22099,7 +22061,7 @@ impl AsRef<VecM<PeerStats, 25>> for PeerStatList {
 
 impl ReadXdr for PeerStatList {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<PeerStats, 25>::read_xdr(r)?;
             let v = PeerStatList(i);
@@ -22110,7 +22072,7 @@ impl ReadXdr for PeerStatList {
 
 impl WriteXdr for PeerStatList {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -22191,7 +22153,7 @@ pub struct TopologyResponseBodyV0 {
 
 impl ReadXdr for TopologyResponseBodyV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 inbound_peers: PeerStatList::read_xdr(r)?,
@@ -22205,7 +22167,7 @@ impl ReadXdr for TopologyResponseBodyV0 {
 
 impl WriteXdr for TopologyResponseBodyV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.inbound_peers.write_xdr(w)?;
             self.outbound_peers.write_xdr(w)?;
@@ -22248,7 +22210,7 @@ pub struct TopologyResponseBodyV1 {
 
 impl ReadXdr for TopologyResponseBodyV1 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 inbound_peers: PeerStatList::read_xdr(r)?,
@@ -22264,7 +22226,7 @@ impl ReadXdr for TopologyResponseBodyV1 {
 
 impl WriteXdr for TopologyResponseBodyV1 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.inbound_peers.write_xdr(w)?;
             self.outbound_peers.write_xdr(w)?;
@@ -22353,7 +22315,7 @@ impl Union<SurveyMessageResponseType> for SurveyResponseBody {}
 
 impl ReadXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SurveyMessageResponseType =
                 <SurveyMessageResponseType as ReadXdr>::read_xdr(r)?;
@@ -22371,7 +22333,7 @@ impl ReadXdr for SurveyResponseBody {
 
 impl WriteXdr for SurveyResponseBody {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -22428,7 +22390,7 @@ impl AsRef<VecM<Hash, 1000>> for TxAdvertVector {
 
 impl ReadXdr for TxAdvertVector {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<Hash, 1000>::read_xdr(r)?;
             let v = TxAdvertVector(i);
@@ -22439,7 +22401,7 @@ impl ReadXdr for TxAdvertVector {
 
 impl WriteXdr for TxAdvertVector {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -22513,7 +22475,7 @@ pub struct FloodAdvert {
 
 impl ReadXdr for FloodAdvert {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_hashes: TxAdvertVector::read_xdr(r)?,
@@ -22524,7 +22486,7 @@ impl ReadXdr for FloodAdvert {
 
 impl WriteXdr for FloodAdvert {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_hashes.write_xdr(w)?;
             Ok(())
@@ -22576,7 +22538,7 @@ impl AsRef<VecM<Hash, 1000>> for TxDemandVector {
 
 impl ReadXdr for TxDemandVector {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<Hash, 1000>::read_xdr(r)?;
             let v = TxDemandVector(i);
@@ -22587,7 +22549,7 @@ impl ReadXdr for TxDemandVector {
 
 impl WriteXdr for TxDemandVector {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -22661,7 +22623,7 @@ pub struct FloodDemand {
 
 impl ReadXdr for FloodDemand {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_hashes: TxDemandVector::read_xdr(r)?,
@@ -22672,7 +22634,7 @@ impl ReadXdr for FloodDemand {
 
 impl WriteXdr for FloodDemand {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_hashes.write_xdr(w)?;
             Ok(())
@@ -22894,7 +22856,7 @@ impl Union<MessageType> for StellarMessage {}
 
 impl ReadXdr for StellarMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: MessageType = <MessageType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -22937,7 +22899,7 @@ impl ReadXdr for StellarMessage {
 
 impl WriteXdr for StellarMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -22992,7 +22954,7 @@ pub struct AuthenticatedMessageV0 {
 
 impl ReadXdr for AuthenticatedMessageV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 sequence: u64::read_xdr(r)?,
@@ -23005,7 +22967,7 @@ impl ReadXdr for AuthenticatedMessageV0 {
 
 impl WriteXdr for AuthenticatedMessageV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.sequence.write_xdr(w)?;
             self.message.write_xdr(w)?;
@@ -23090,7 +23052,7 @@ impl Union<u32> for AuthenticatedMessage {}
 
 impl ReadXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: u32 = <u32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -23106,7 +23068,7 @@ impl ReadXdr for AuthenticatedMessage {
 
 impl WriteXdr for AuthenticatedMessage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -23196,7 +23158,7 @@ impl Union<LiquidityPoolType> for LiquidityPoolParameters {}
 
 impl ReadXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -23216,7 +23178,7 @@ impl ReadXdr for LiquidityPoolParameters {
 
 impl WriteXdr for LiquidityPoolParameters {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -23249,7 +23211,7 @@ pub struct MuxedAccountMed25519 {
 
 impl ReadXdr for MuxedAccountMed25519 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 id: u64::read_xdr(r)?,
@@ -23261,7 +23223,7 @@ impl ReadXdr for MuxedAccountMed25519 {
 
 impl WriteXdr for MuxedAccountMed25519 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.id.write_xdr(w)?;
             self.ed25519.write_xdr(w)?;
@@ -23348,7 +23310,7 @@ impl Union<CryptoKeyType> for MuxedAccount {}
 
 impl ReadXdr for MuxedAccount {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: CryptoKeyType = <CryptoKeyType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -23367,7 +23329,7 @@ impl ReadXdr for MuxedAccount {
 
 impl WriteXdr for MuxedAccount {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -23402,7 +23364,7 @@ pub struct DecoratedSignature {
 
 impl ReadXdr for DecoratedSignature {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 hint: SignatureHint::read_xdr(r)?,
@@ -23414,7 +23376,7 @@ impl ReadXdr for DecoratedSignature {
 
 impl WriteXdr for DecoratedSignature {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hint.write_xdr(w)?;
             self.signature.write_xdr(w)?;
@@ -23663,7 +23625,7 @@ impl From<OperationType> for i32 {
 
 impl ReadXdr for OperationType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -23674,7 +23636,7 @@ impl ReadXdr for OperationType {
 
 impl WriteXdr for OperationType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -23704,7 +23666,7 @@ pub struct CreateAccountOp {
 
 impl ReadXdr for CreateAccountOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 destination: AccountId::read_xdr(r)?,
@@ -23716,7 +23678,7 @@ impl ReadXdr for CreateAccountOp {
 
 impl WriteXdr for CreateAccountOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.starting_balance.write_xdr(w)?;
@@ -23749,7 +23711,7 @@ pub struct PaymentOp {
 
 impl ReadXdr for PaymentOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 destination: MuxedAccount::read_xdr(r)?,
@@ -23762,7 +23724,7 @@ impl ReadXdr for PaymentOp {
 
 impl WriteXdr for PaymentOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -23806,7 +23768,7 @@ pub struct PathPaymentStrictReceiveOp {
 
 impl ReadXdr for PathPaymentStrictReceiveOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 send_asset: Asset::read_xdr(r)?,
@@ -23822,7 +23784,7 @@ impl ReadXdr for PathPaymentStrictReceiveOp {
 
 impl WriteXdr for PathPaymentStrictReceiveOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.send_asset.write_xdr(w)?;
             self.send_max.write_xdr(w)?;
@@ -23869,7 +23831,7 @@ pub struct PathPaymentStrictSendOp {
 
 impl ReadXdr for PathPaymentStrictSendOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 send_asset: Asset::read_xdr(r)?,
@@ -23885,7 +23847,7 @@ impl ReadXdr for PathPaymentStrictSendOp {
 
 impl WriteXdr for PathPaymentStrictSendOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.send_asset.write_xdr(w)?;
             self.send_amount.write_xdr(w)?;
@@ -23928,7 +23890,7 @@ pub struct ManageSellOfferOp {
 
 impl ReadXdr for ManageSellOfferOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 selling: Asset::read_xdr(r)?,
@@ -23943,7 +23905,7 @@ impl ReadXdr for ManageSellOfferOp {
 
 impl WriteXdr for ManageSellOfferOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.selling.write_xdr(w)?;
             self.buying.write_xdr(w)?;
@@ -23986,7 +23948,7 @@ pub struct ManageBuyOfferOp {
 
 impl ReadXdr for ManageBuyOfferOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 selling: Asset::read_xdr(r)?,
@@ -24001,7 +23963,7 @@ impl ReadXdr for ManageBuyOfferOp {
 
 impl WriteXdr for ManageBuyOfferOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.selling.write_xdr(w)?;
             self.buying.write_xdr(w)?;
@@ -24039,7 +24001,7 @@ pub struct CreatePassiveSellOfferOp {
 
 impl ReadXdr for CreatePassiveSellOfferOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 selling: Asset::read_xdr(r)?,
@@ -24053,7 +24015,7 @@ impl ReadXdr for CreatePassiveSellOfferOp {
 
 impl WriteXdr for CreatePassiveSellOfferOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.selling.write_xdr(w)?;
             self.buying.write_xdr(w)?;
@@ -24107,7 +24069,7 @@ pub struct SetOptionsOp {
 
 impl ReadXdr for SetOptionsOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 inflation_dest: Option::<AccountId>::read_xdr(r)?,
@@ -24126,7 +24088,7 @@ impl ReadXdr for SetOptionsOp {
 
 impl WriteXdr for SetOptionsOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.inflation_dest.write_xdr(w)?;
             self.clear_flags.write_xdr(w)?;
@@ -24238,7 +24200,7 @@ impl Union<AssetType> for ChangeTrustAsset {}
 
 impl ReadXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -24257,7 +24219,7 @@ impl ReadXdr for ChangeTrustAsset {
 
 impl WriteXdr for ChangeTrustAsset {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -24296,7 +24258,7 @@ pub struct ChangeTrustOp {
 
 impl ReadXdr for ChangeTrustOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 line: ChangeTrustAsset::read_xdr(r)?,
@@ -24308,7 +24270,7 @@ impl ReadXdr for ChangeTrustOp {
 
 impl WriteXdr for ChangeTrustOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.line.write_xdr(w)?;
             self.limit.write_xdr(w)?;
@@ -24343,7 +24305,7 @@ pub struct AllowTrustOp {
 
 impl ReadXdr for AllowTrustOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 trustor: AccountId::read_xdr(r)?,
@@ -24356,7 +24318,7 @@ impl ReadXdr for AllowTrustOp {
 
 impl WriteXdr for AllowTrustOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.trustor.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -24388,7 +24350,7 @@ pub struct ManageDataOp {
 
 impl ReadXdr for ManageDataOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 data_name: String64::read_xdr(r)?,
@@ -24400,7 +24362,7 @@ impl ReadXdr for ManageDataOp {
 
 impl WriteXdr for ManageDataOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.data_name.write_xdr(w)?;
             self.data_value.write_xdr(w)?;
@@ -24429,7 +24391,7 @@ pub struct BumpSequenceOp {
 
 impl ReadXdr for BumpSequenceOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 bump_to: SequenceNumber::read_xdr(r)?,
@@ -24440,7 +24402,7 @@ impl ReadXdr for BumpSequenceOp {
 
 impl WriteXdr for BumpSequenceOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.bump_to.write_xdr(w)?;
             Ok(())
@@ -24472,7 +24434,7 @@ pub struct CreateClaimableBalanceOp {
 
 impl ReadXdr for CreateClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 asset: Asset::read_xdr(r)?,
@@ -24485,7 +24447,7 @@ impl ReadXdr for CreateClaimableBalanceOp {
 
 impl WriteXdr for CreateClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.asset.write_xdr(w)?;
             self.amount.write_xdr(w)?;
@@ -24515,7 +24477,7 @@ pub struct ClaimClaimableBalanceOp {
 
 impl ReadXdr for ClaimClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 balance_id: ClaimableBalanceId::read_xdr(r)?,
@@ -24526,7 +24488,7 @@ impl ReadXdr for ClaimClaimableBalanceOp {
 
 impl WriteXdr for ClaimClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
             Ok(())
@@ -24554,7 +24516,7 @@ pub struct BeginSponsoringFutureReservesOp {
 
 impl ReadXdr for BeginSponsoringFutureReservesOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 sponsored_id: AccountId::read_xdr(r)?,
@@ -24565,7 +24527,7 @@ impl ReadXdr for BeginSponsoringFutureReservesOp {
 
 impl WriteXdr for BeginSponsoringFutureReservesOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.sponsored_id.write_xdr(w)?;
             Ok(())
@@ -24660,7 +24622,7 @@ impl From<RevokeSponsorshipType> for i32 {
 
 impl ReadXdr for RevokeSponsorshipType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -24671,7 +24633,7 @@ impl ReadXdr for RevokeSponsorshipType {
 
 impl WriteXdr for RevokeSponsorshipType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -24701,7 +24663,7 @@ pub struct RevokeSponsorshipOpSigner {
 
 impl ReadXdr for RevokeSponsorshipOpSigner {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 account_id: AccountId::read_xdr(r)?,
@@ -24713,7 +24675,7 @@ impl ReadXdr for RevokeSponsorshipOpSigner {
 
 impl WriteXdr for RevokeSponsorshipOpSigner {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
             self.signer_key.write_xdr(w)?;
@@ -24804,7 +24766,7 @@ impl Union<RevokeSponsorshipType> for RevokeSponsorshipOp {}
 
 impl ReadXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -24823,7 +24785,7 @@ impl ReadXdr for RevokeSponsorshipOp {
 
 impl WriteXdr for RevokeSponsorshipOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -24860,7 +24822,7 @@ pub struct ClawbackOp {
 
 impl ReadXdr for ClawbackOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 asset: Asset::read_xdr(r)?,
@@ -24873,7 +24835,7 @@ impl ReadXdr for ClawbackOp {
 
 impl WriteXdr for ClawbackOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.asset.write_xdr(w)?;
             self.from.write_xdr(w)?;
@@ -24903,7 +24865,7 @@ pub struct ClawbackClaimableBalanceOp {
 
 impl ReadXdr for ClawbackClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 balance_id: ClaimableBalanceId::read_xdr(r)?,
@@ -24914,7 +24876,7 @@ impl ReadXdr for ClawbackClaimableBalanceOp {
 
 impl WriteXdr for ClawbackClaimableBalanceOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
             Ok(())
@@ -24949,7 +24911,7 @@ pub struct SetTrustLineFlagsOp {
 
 impl ReadXdr for SetTrustLineFlagsOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 trustor: AccountId::read_xdr(r)?,
@@ -24963,7 +24925,7 @@ impl ReadXdr for SetTrustLineFlagsOp {
 
 impl WriteXdr for SetTrustLineFlagsOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.trustor.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -25008,7 +24970,7 @@ pub struct LiquidityPoolDepositOp {
 
 impl ReadXdr for LiquidityPoolDepositOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_id: PoolId::read_xdr(r)?,
@@ -25023,7 +24985,7 @@ impl ReadXdr for LiquidityPoolDepositOp {
 
 impl WriteXdr for LiquidityPoolDepositOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
             self.max_amount_a.write_xdr(w)?;
@@ -25061,7 +25023,7 @@ pub struct LiquidityPoolWithdrawOp {
 
 impl ReadXdr for LiquidityPoolWithdrawOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_id: PoolId::read_xdr(r)?,
@@ -25075,7 +25037,7 @@ impl ReadXdr for LiquidityPoolWithdrawOp {
 
 impl WriteXdr for LiquidityPoolWithdrawOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
             self.amount.write_xdr(w)?;
@@ -25179,7 +25141,7 @@ impl From<HostFunctionType> for i32 {
 
 impl ReadXdr for HostFunctionType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -25190,7 +25152,7 @@ impl ReadXdr for HostFunctionType {
 
 impl WriteXdr for HostFunctionType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -25285,7 +25247,7 @@ impl From<ContractIdPreimageType> for i32 {
 
 impl ReadXdr for ContractIdPreimageType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -25296,7 +25258,7 @@ impl ReadXdr for ContractIdPreimageType {
 
 impl WriteXdr for ContractIdPreimageType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -25326,7 +25288,7 @@ pub struct ContractIdPreimageFromAddress {
 
 impl ReadXdr for ContractIdPreimageFromAddress {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 address: ScAddress::read_xdr(r)?,
@@ -25338,7 +25300,7 @@ impl ReadXdr for ContractIdPreimageFromAddress {
 
 impl WriteXdr for ContractIdPreimageFromAddress {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.address.write_xdr(w)?;
             self.salt.write_xdr(w)?;
@@ -25429,7 +25391,7 @@ impl Union<ContractIdPreimageType> for ContractIdPreimage {}
 
 impl ReadXdr for ContractIdPreimage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ContractIdPreimageType = <ContractIdPreimageType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -25448,7 +25410,7 @@ impl ReadXdr for ContractIdPreimage {
 
 impl WriteXdr for ContractIdPreimage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -25483,7 +25445,7 @@ pub struct CreateContractArgs {
 
 impl ReadXdr for CreateContractArgs {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 contract_id_preimage: ContractIdPreimage::read_xdr(r)?,
@@ -25495,7 +25457,7 @@ impl ReadXdr for CreateContractArgs {
 
 impl WriteXdr for CreateContractArgs {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.contract_id_preimage.write_xdr(w)?;
             self.executable.write_xdr(w)?;
@@ -25527,7 +25489,7 @@ pub struct InvokeContractArgs {
 
 impl ReadXdr for InvokeContractArgs {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 contract_address: ScAddress::read_xdr(r)?,
@@ -25540,7 +25502,7 @@ impl ReadXdr for InvokeContractArgs {
 
 impl WriteXdr for InvokeContractArgs {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.contract_address.write_xdr(w)?;
             self.function_name.write_xdr(w)?;
@@ -25635,7 +25597,7 @@ impl Union<HostFunctionType> for HostFunction {}
 
 impl ReadXdr for HostFunction {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: HostFunctionType = <HostFunctionType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -25659,7 +25621,7 @@ impl ReadXdr for HostFunction {
 
 impl WriteXdr for HostFunction {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -25760,7 +25722,7 @@ impl From<SorobanAuthorizedFunctionType> for i32 {
 
 impl ReadXdr for SorobanAuthorizedFunctionType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -25771,7 +25733,7 @@ impl ReadXdr for SorobanAuthorizedFunctionType {
 
 impl WriteXdr for SorobanAuthorizedFunctionType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -25857,7 +25819,7 @@ impl Union<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {}
 
 impl ReadXdr for SorobanAuthorizedFunction {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SorobanAuthorizedFunctionType =
                 <SorobanAuthorizedFunctionType as ReadXdr>::read_xdr(r)?;
@@ -25879,7 +25841,7 @@ impl ReadXdr for SorobanAuthorizedFunction {
 
 impl WriteXdr for SorobanAuthorizedFunction {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -25914,7 +25876,7 @@ pub struct SorobanAuthorizedInvocation {
 
 impl ReadXdr for SorobanAuthorizedInvocation {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 function: SorobanAuthorizedFunction::read_xdr(r)?,
@@ -25926,7 +25888,7 @@ impl ReadXdr for SorobanAuthorizedInvocation {
 
 impl WriteXdr for SorobanAuthorizedInvocation {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.function.write_xdr(w)?;
             self.sub_invocations.write_xdr(w)?;
@@ -25961,7 +25923,7 @@ pub struct SorobanAddressCredentials {
 
 impl ReadXdr for SorobanAddressCredentials {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 address: ScAddress::read_xdr(r)?,
@@ -25975,7 +25937,7 @@ impl ReadXdr for SorobanAddressCredentials {
 
 impl WriteXdr for SorobanAddressCredentials {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.address.write_xdr(w)?;
             self.nonce.write_xdr(w)?;
@@ -26073,7 +26035,7 @@ impl From<SorobanCredentialsType> for i32 {
 
 impl ReadXdr for SorobanCredentialsType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -26084,7 +26046,7 @@ impl ReadXdr for SorobanCredentialsType {
 
 impl WriteXdr for SorobanCredentialsType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -26170,7 +26132,7 @@ impl Union<SorobanCredentialsType> for SorobanCredentials {}
 
 impl ReadXdr for SorobanCredentials {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SorobanCredentialsType = <SorobanCredentialsType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -26189,7 +26151,7 @@ impl ReadXdr for SorobanCredentials {
 
 impl WriteXdr for SorobanCredentials {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -26224,7 +26186,7 @@ pub struct SorobanAuthorizationEntry {
 
 impl ReadXdr for SorobanAuthorizationEntry {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 credentials: SorobanCredentials::read_xdr(r)?,
@@ -26236,7 +26198,7 @@ impl ReadXdr for SorobanAuthorizationEntry {
 
 impl WriteXdr for SorobanAuthorizationEntry {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.credentials.write_xdr(w)?;
             self.root_invocation.write_xdr(w)?;
@@ -26269,7 +26231,7 @@ pub struct InvokeHostFunctionOp {
 
 impl ReadXdr for InvokeHostFunctionOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 host_function: HostFunction::read_xdr(r)?,
@@ -26281,7 +26243,7 @@ impl ReadXdr for InvokeHostFunctionOp {
 
 impl WriteXdr for InvokeHostFunctionOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.host_function.write_xdr(w)?;
             self.auth.write_xdr(w)?;
@@ -26312,7 +26274,7 @@ pub struct ExtendFootprintTtlOp {
 
 impl ReadXdr for ExtendFootprintTtlOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -26324,7 +26286,7 @@ impl ReadXdr for ExtendFootprintTtlOp {
 
 impl WriteXdr for ExtendFootprintTtlOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.extend_to.write_xdr(w)?;
@@ -26353,7 +26315,7 @@ pub struct RestoreFootprintOp {
 
 impl ReadXdr for RestoreFootprintOp {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -26364,7 +26326,7 @@ impl ReadXdr for RestoreFootprintOp {
 
 impl WriteXdr for RestoreFootprintOp {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             Ok(())
@@ -26628,7 +26590,7 @@ impl Union<OperationType> for OperationBody {}
 
 impl ReadXdr for OperationBody {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -26704,7 +26666,7 @@ impl ReadXdr for OperationBody {
 
 impl WriteXdr for OperationBody {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -26825,7 +26787,7 @@ pub struct Operation {
 
 impl ReadXdr for Operation {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 source_account: Option::<MuxedAccount>::read_xdr(r)?,
@@ -26837,7 +26799,7 @@ impl ReadXdr for Operation {
 
 impl WriteXdr for Operation {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
             self.body.write_xdr(w)?;
@@ -26870,7 +26832,7 @@ pub struct HashIdPreimageOperationId {
 
 impl ReadXdr for HashIdPreimageOperationId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 source_account: AccountId::read_xdr(r)?,
@@ -26883,7 +26845,7 @@ impl ReadXdr for HashIdPreimageOperationId {
 
 impl WriteXdr for HashIdPreimageOperationId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
             self.seq_num.write_xdr(w)?;
@@ -26921,7 +26883,7 @@ pub struct HashIdPreimageRevokeId {
 
 impl ReadXdr for HashIdPreimageRevokeId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 source_account: AccountId::read_xdr(r)?,
@@ -26936,7 +26898,7 @@ impl ReadXdr for HashIdPreimageRevokeId {
 
 impl WriteXdr for HashIdPreimageRevokeId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
             self.seq_num.write_xdr(w)?;
@@ -26970,7 +26932,7 @@ pub struct HashIdPreimageContractId {
 
 impl ReadXdr for HashIdPreimageContractId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 network_id: Hash::read_xdr(r)?,
@@ -26982,7 +26944,7 @@ impl ReadXdr for HashIdPreimageContractId {
 
 impl WriteXdr for HashIdPreimageContractId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.network_id.write_xdr(w)?;
             self.contract_id_preimage.write_xdr(w)?;
@@ -27017,7 +26979,7 @@ pub struct HashIdPreimageSorobanAuthorization {
 
 impl ReadXdr for HashIdPreimageSorobanAuthorization {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 network_id: Hash::read_xdr(r)?,
@@ -27031,7 +26993,7 @@ impl ReadXdr for HashIdPreimageSorobanAuthorization {
 
 impl WriteXdr for HashIdPreimageSorobanAuthorization {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.network_id.write_xdr(w)?;
             self.nonce.write_xdr(w)?;
@@ -27159,7 +27121,7 @@ impl Union<EnvelopeType> for HashIdPreimage {}
 
 impl ReadXdr for HashIdPreimage {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -27184,7 +27146,7 @@ impl ReadXdr for HashIdPreimage {
 
 impl WriteXdr for HashIdPreimage {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -27301,7 +27263,7 @@ impl From<MemoType> for i32 {
 
 impl ReadXdr for MemoType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -27312,7 +27274,7 @@ impl ReadXdr for MemoType {
 
 impl WriteXdr for MemoType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -27416,7 +27378,7 @@ impl Union<MemoType> for Memo {}
 
 impl ReadXdr for Memo {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: MemoType = <MemoType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -27436,7 +27398,7 @@ impl ReadXdr for Memo {
 
 impl WriteXdr for Memo {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -27474,7 +27436,7 @@ pub struct TimeBounds {
 
 impl ReadXdr for TimeBounds {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 min_time: TimePoint::read_xdr(r)?,
@@ -27486,7 +27448,7 @@ impl ReadXdr for TimeBounds {
 
 impl WriteXdr for TimeBounds {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.min_time.write_xdr(w)?;
             self.max_time.write_xdr(w)?;
@@ -27517,7 +27479,7 @@ pub struct LedgerBounds {
 
 impl ReadXdr for LedgerBounds {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 min_ledger: u32::read_xdr(r)?,
@@ -27529,7 +27491,7 @@ impl ReadXdr for LedgerBounds {
 
 impl WriteXdr for LedgerBounds {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.min_ledger.write_xdr(w)?;
             self.max_ledger.write_xdr(w)?;
@@ -27591,7 +27553,7 @@ pub struct PreconditionsV2 {
 
 impl ReadXdr for PreconditionsV2 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 time_bounds: Option::<TimeBounds>::read_xdr(r)?,
@@ -27607,7 +27569,7 @@ impl ReadXdr for PreconditionsV2 {
 
 impl WriteXdr for PreconditionsV2 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.time_bounds.write_xdr(w)?;
             self.ledger_bounds.write_xdr(w)?;
@@ -27712,7 +27674,7 @@ impl From<PreconditionType> for i32 {
 
 impl ReadXdr for PreconditionType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -27723,7 +27685,7 @@ impl ReadXdr for PreconditionType {
 
 impl WriteXdr for PreconditionType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -27815,7 +27777,7 @@ impl Union<PreconditionType> for Preconditions {}
 
 impl ReadXdr for Preconditions {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: PreconditionType = <PreconditionType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -27833,7 +27795,7 @@ impl ReadXdr for Preconditions {
 
 impl WriteXdr for Preconditions {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -27869,7 +27831,7 @@ pub struct LedgerFootprint {
 
 impl ReadXdr for LedgerFootprint {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 read_only: VecM::<LedgerKey>::read_xdr(r)?,
@@ -27881,7 +27843,7 @@ impl ReadXdr for LedgerFootprint {
 
 impl WriteXdr for LedgerFootprint {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.read_only.write_xdr(w)?;
             self.read_write.write_xdr(w)?;
@@ -27921,7 +27883,7 @@ pub struct SorobanResources {
 
 impl ReadXdr for SorobanResources {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 footprint: LedgerFootprint::read_xdr(r)?,
@@ -27935,7 +27897,7 @@ impl ReadXdr for SorobanResources {
 
 impl WriteXdr for SorobanResources {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.footprint.write_xdr(w)?;
             self.instructions.write_xdr(w)?;
@@ -27979,7 +27941,7 @@ pub struct SorobanTransactionData {
 
 impl ReadXdr for SorobanTransactionData {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
@@ -27992,7 +27954,7 @@ impl ReadXdr for SorobanTransactionData {
 
 impl WriteXdr for SorobanTransactionData {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
             self.resources.write_xdr(w)?;
@@ -28072,7 +28034,7 @@ impl Union<i32> for TransactionV0Ext {}
 
 impl ReadXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -28088,7 +28050,7 @@ impl ReadXdr for TransactionV0Ext {
 
 impl WriteXdr for TransactionV0Ext {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -28137,7 +28099,7 @@ pub struct TransactionV0 {
 
 impl ReadXdr for TransactionV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 source_account_ed25519: Uint256::read_xdr(r)?,
@@ -28154,7 +28116,7 @@ impl ReadXdr for TransactionV0 {
 
 impl WriteXdr for TransactionV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.source_account_ed25519.write_xdr(w)?;
             self.fee.write_xdr(w)?;
@@ -28192,7 +28154,7 @@ pub struct TransactionV0Envelope {
 
 impl ReadXdr for TransactionV0Envelope {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx: TransactionV0::read_xdr(r)?,
@@ -28204,7 +28166,7 @@ impl ReadXdr for TransactionV0Envelope {
 
 impl WriteXdr for TransactionV0Envelope {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
             self.signatures.write_xdr(w)?;
@@ -28288,7 +28250,7 @@ impl Union<i32> for TransactionExt {}
 
 impl ReadXdr for TransactionExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -28305,7 +28267,7 @@ impl ReadXdr for TransactionExt {
 
 impl WriteXdr for TransactionExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -28368,7 +28330,7 @@ pub struct Transaction {
 
 impl ReadXdr for Transaction {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 source_account: MuxedAccount::read_xdr(r)?,
@@ -28385,7 +28347,7 @@ impl ReadXdr for Transaction {
 
 impl WriteXdr for Transaction {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
             self.fee.write_xdr(w)?;
@@ -28423,7 +28385,7 @@ pub struct TransactionV1Envelope {
 
 impl ReadXdr for TransactionV1Envelope {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx: Transaction::read_xdr(r)?,
@@ -28435,7 +28397,7 @@ impl ReadXdr for TransactionV1Envelope {
 
 impl WriteXdr for TransactionV1Envelope {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
             self.signatures.write_xdr(w)?;
@@ -28514,7 +28476,7 @@ impl Union<EnvelopeType> for FeeBumpTransactionInnerTx {}
 
 impl ReadXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -28530,7 +28492,7 @@ impl ReadXdr for FeeBumpTransactionInnerTx {
 
 impl WriteXdr for FeeBumpTransactionInnerTx {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -28612,7 +28574,7 @@ impl Union<i32> for FeeBumpTransactionExt {}
 
 impl ReadXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -28628,7 +28590,7 @@ impl ReadXdr for FeeBumpTransactionExt {
 
 impl WriteXdr for FeeBumpTransactionExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -28676,7 +28638,7 @@ pub struct FeeBumpTransaction {
 
 impl ReadXdr for FeeBumpTransaction {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 fee_source: MuxedAccount::read_xdr(r)?,
@@ -28690,7 +28652,7 @@ impl ReadXdr for FeeBumpTransaction {
 
 impl WriteXdr for FeeBumpTransaction {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.fee_source.write_xdr(w)?;
             self.fee.write_xdr(w)?;
@@ -28725,7 +28687,7 @@ pub struct FeeBumpTransactionEnvelope {
 
 impl ReadXdr for FeeBumpTransactionEnvelope {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx: FeeBumpTransaction::read_xdr(r)?,
@@ -28737,7 +28699,7 @@ impl ReadXdr for FeeBumpTransactionEnvelope {
 
 impl WriteXdr for FeeBumpTransactionEnvelope {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
             self.signatures.write_xdr(w)?;
@@ -28830,7 +28792,7 @@ impl Union<EnvelopeType> for TransactionEnvelope {}
 
 impl ReadXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -28850,7 +28812,7 @@ impl ReadXdr for TransactionEnvelope {
 
 impl WriteXdr for TransactionEnvelope {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -28940,7 +28902,7 @@ impl Union<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {}
 
 impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -28957,7 +28919,7 @@ impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
 
 impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -29000,7 +28962,7 @@ pub struct TransactionSignaturePayload {
 
 impl ReadXdr for TransactionSignaturePayload {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 network_id: Hash::read_xdr(r)?,
@@ -29012,7 +28974,7 @@ impl ReadXdr for TransactionSignaturePayload {
 
 impl WriteXdr for TransactionSignaturePayload {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.network_id.write_xdr(w)?;
             self.tagged_transaction.write_xdr(w)?;
@@ -29113,7 +29075,7 @@ impl From<ClaimAtomType> for i32 {
 
 impl ReadXdr for ClaimAtomType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -29124,7 +29086,7 @@ impl ReadXdr for ClaimAtomType {
 
 impl WriteXdr for ClaimAtomType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -29167,7 +29129,7 @@ pub struct ClaimOfferAtomV0 {
 
 impl ReadXdr for ClaimOfferAtomV0 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 seller_ed25519: Uint256::read_xdr(r)?,
@@ -29183,7 +29145,7 @@ impl ReadXdr for ClaimOfferAtomV0 {
 
 impl WriteXdr for ClaimOfferAtomV0 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.seller_ed25519.write_xdr(w)?;
             self.offer_id.write_xdr(w)?;
@@ -29231,7 +29193,7 @@ pub struct ClaimOfferAtom {
 
 impl ReadXdr for ClaimOfferAtom {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 seller_id: AccountId::read_xdr(r)?,
@@ -29247,7 +29209,7 @@ impl ReadXdr for ClaimOfferAtom {
 
 impl WriteXdr for ClaimOfferAtom {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.seller_id.write_xdr(w)?;
             self.offer_id.write_xdr(w)?;
@@ -29292,7 +29254,7 @@ pub struct ClaimLiquidityAtom {
 
 impl ReadXdr for ClaimLiquidityAtom {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 liquidity_pool_id: PoolId::read_xdr(r)?,
@@ -29307,7 +29269,7 @@ impl ReadXdr for ClaimLiquidityAtom {
 
 impl WriteXdr for ClaimLiquidityAtom {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
             self.asset_sold.write_xdr(w)?;
@@ -29403,7 +29365,7 @@ impl Union<ClaimAtomType> for ClaimAtom {}
 
 impl ReadXdr for ClaimAtom {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClaimAtomType = <ClaimAtomType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -29423,7 +29385,7 @@ impl ReadXdr for ClaimAtom {
 
 impl WriteXdr for ClaimAtom {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -29549,7 +29511,7 @@ impl From<CreateAccountResultCode> for i32 {
 
 impl ReadXdr for CreateAccountResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -29560,7 +29522,7 @@ impl ReadXdr for CreateAccountResultCode {
 
 impl WriteXdr for CreateAccountResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -29667,7 +29629,7 @@ impl Union<CreateAccountResultCode> for CreateAccountResult {}
 
 impl ReadXdr for CreateAccountResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -29687,7 +29649,7 @@ impl ReadXdr for CreateAccountResult {
 
 impl WriteXdr for CreateAccountResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -29844,7 +29806,7 @@ impl From<PaymentResultCode> for i32 {
 
 impl ReadXdr for PaymentResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -29855,7 +29817,7 @@ impl ReadXdr for PaymentResultCode {
 
 impl WriteXdr for PaymentResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -29992,7 +29954,7 @@ impl Union<PaymentResultCode> for PaymentResult {}
 
 impl ReadXdr for PaymentResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: PaymentResultCode = <PaymentResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -30017,7 +29979,7 @@ impl ReadXdr for PaymentResult {
 
 impl WriteXdr for PaymentResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -30206,7 +30168,7 @@ impl From<PathPaymentStrictReceiveResultCode> for i32 {
 
 impl ReadXdr for PathPaymentStrictReceiveResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -30217,7 +30179,7 @@ impl ReadXdr for PathPaymentStrictReceiveResultCode {
 
 impl WriteXdr for PathPaymentStrictReceiveResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -30249,7 +30211,7 @@ pub struct SimplePaymentResult {
 
 impl ReadXdr for SimplePaymentResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 destination: AccountId::read_xdr(r)?,
@@ -30262,7 +30224,7 @@ impl ReadXdr for SimplePaymentResult {
 
 impl WriteXdr for SimplePaymentResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.asset.write_xdr(w)?;
@@ -30294,7 +30256,7 @@ pub struct PathPaymentStrictReceiveResultSuccess {
 
 impl ReadXdr for PathPaymentStrictReceiveResultSuccess {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 offers: VecM::<ClaimAtom>::read_xdr(r)?,
@@ -30306,7 +30268,7 @@ impl ReadXdr for PathPaymentStrictReceiveResultSuccess {
 
 impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.offers.write_xdr(w)?;
             self.last.write_xdr(w)?;
@@ -30469,7 +30431,7 @@ impl Union<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResul
 
 impl ReadXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: PathPaymentStrictReceiveResultCode =
                 <PathPaymentStrictReceiveResultCode as ReadXdr>::read_xdr(r)?;
@@ -30500,7 +30462,7 @@ impl ReadXdr for PathPaymentStrictReceiveResult {
 
 impl WriteXdr for PathPaymentStrictReceiveResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -30691,7 +30653,7 @@ impl From<PathPaymentStrictSendResultCode> for i32 {
 
 impl ReadXdr for PathPaymentStrictSendResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -30702,7 +30664,7 @@ impl ReadXdr for PathPaymentStrictSendResultCode {
 
 impl WriteXdr for PathPaymentStrictSendResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -30732,7 +30694,7 @@ pub struct PathPaymentStrictSendResultSuccess {
 
 impl ReadXdr for PathPaymentStrictSendResultSuccess {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 offers: VecM::<ClaimAtom>::read_xdr(r)?,
@@ -30744,7 +30706,7 @@ impl ReadXdr for PathPaymentStrictSendResultSuccess {
 
 impl WriteXdr for PathPaymentStrictSendResultSuccess {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.offers.write_xdr(w)?;
             self.last.write_xdr(w)?;
@@ -30906,7 +30868,7 @@ impl Union<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {}
 
 impl ReadXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: PathPaymentStrictSendResultCode =
                 <PathPaymentStrictSendResultCode as ReadXdr>::read_xdr(r)?;
@@ -30937,7 +30899,7 @@ impl ReadXdr for PathPaymentStrictSendResult {
 
 impl WriteXdr for PathPaymentStrictSendResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -31127,7 +31089,7 @@ impl From<ManageSellOfferResultCode> for i32 {
 
 impl ReadXdr for ManageSellOfferResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -31138,7 +31100,7 @@ impl ReadXdr for ManageSellOfferResultCode {
 
 impl WriteXdr for ManageSellOfferResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -31238,7 +31200,7 @@ impl From<ManageOfferEffect> for i32 {
 
 impl ReadXdr for ManageOfferEffect {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -31249,7 +31211,7 @@ impl ReadXdr for ManageOfferEffect {
 
 impl WriteXdr for ManageOfferEffect {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -31340,7 +31302,7 @@ impl Union<ManageOfferEffect> for ManageOfferSuccessResultOffer {}
 
 impl ReadXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ManageOfferEffect = <ManageOfferEffect as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -31358,7 +31320,7 @@ impl ReadXdr for ManageOfferSuccessResultOffer {
 
 impl WriteXdr for ManageOfferSuccessResultOffer {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -31404,7 +31366,7 @@ pub struct ManageOfferSuccessResult {
 
 impl ReadXdr for ManageOfferSuccessResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 offers_claimed: VecM::<ClaimAtom>::read_xdr(r)?,
@@ -31416,7 +31378,7 @@ impl ReadXdr for ManageOfferSuccessResult {
 
 impl WriteXdr for ManageOfferSuccessResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.offers_claimed.write_xdr(w)?;
             self.offer.write_xdr(w)?;
@@ -31572,7 +31534,7 @@ impl Union<ManageSellOfferResultCode> for ManageSellOfferResult {}
 
 impl ReadXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ManageSellOfferResultCode =
                 <ManageSellOfferResultCode as ReadXdr>::read_xdr(r)?;
@@ -31603,7 +31565,7 @@ impl ReadXdr for ManageSellOfferResult {
 
 impl WriteXdr for ManageSellOfferResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -31790,7 +31752,7 @@ impl From<ManageBuyOfferResultCode> for i32 {
 
 impl ReadXdr for ManageBuyOfferResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -31801,7 +31763,7 @@ impl ReadXdr for ManageBuyOfferResultCode {
 
 impl WriteXdr for ManageBuyOfferResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -31956,7 +31918,7 @@ impl Union<ManageBuyOfferResultCode> for ManageBuyOfferResult {}
 
 impl ReadXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -31986,7 +31948,7 @@ impl ReadXdr for ManageBuyOfferResult {
 
 impl WriteXdr for ManageBuyOfferResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -32157,7 +32119,7 @@ impl From<SetOptionsResultCode> for i32 {
 
 impl ReadXdr for SetOptionsResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -32168,7 +32130,7 @@ impl ReadXdr for SetOptionsResultCode {
 
 impl WriteXdr for SetOptionsResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -32311,7 +32273,7 @@ impl Union<SetOptionsResultCode> for SetOptionsResult {}
 
 impl ReadXdr for SetOptionsResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -32337,7 +32299,7 @@ impl ReadXdr for SetOptionsResult {
 
 impl WriteXdr for SetOptionsResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -32497,7 +32459,7 @@ impl From<ChangeTrustResultCode> for i32 {
 
 impl ReadXdr for ChangeTrustResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -32508,7 +32470,7 @@ impl ReadXdr for ChangeTrustResultCode {
 
 impl WriteXdr for ChangeTrustResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -32639,7 +32601,7 @@ impl Union<ChangeTrustResultCode> for ChangeTrustResult {}
 
 impl ReadXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -32665,7 +32627,7 @@ impl ReadXdr for ChangeTrustResult {
 
 impl WriteXdr for ChangeTrustResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -32809,7 +32771,7 @@ impl From<AllowTrustResultCode> for i32 {
 
 impl ReadXdr for AllowTrustResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -32820,7 +32782,7 @@ impl ReadXdr for AllowTrustResultCode {
 
 impl WriteXdr for AllowTrustResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -32939,7 +32901,7 @@ impl Union<AllowTrustResultCode> for AllowTrustResult {}
 
 impl ReadXdr for AllowTrustResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -32961,7 +32923,7 @@ impl ReadXdr for AllowTrustResult {
 
 impl WriteXdr for AllowTrustResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -33108,7 +33070,7 @@ impl From<AccountMergeResultCode> for i32 {
 
 impl ReadXdr for AccountMergeResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -33119,7 +33081,7 @@ impl ReadXdr for AccountMergeResultCode {
 
 impl WriteXdr for AccountMergeResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -33244,7 +33206,7 @@ impl Union<AccountMergeResultCode> for AccountMergeResult {}
 
 impl ReadXdr for AccountMergeResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -33267,7 +33229,7 @@ impl ReadXdr for AccountMergeResult {
 
 impl WriteXdr for AccountMergeResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -33373,7 +33335,7 @@ impl From<InflationResultCode> for i32 {
 
 impl ReadXdr for InflationResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -33384,7 +33346,7 @@ impl ReadXdr for InflationResultCode {
 
 impl WriteXdr for InflationResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -33414,7 +33376,7 @@ pub struct InflationPayout {
 
 impl ReadXdr for InflationPayout {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 destination: AccountId::read_xdr(r)?,
@@ -33426,7 +33388,7 @@ impl ReadXdr for InflationPayout {
 
 impl WriteXdr for InflationPayout {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
             self.amount.write_xdr(w)?;
@@ -33511,7 +33473,7 @@ impl Union<InflationResultCode> for InflationResult {}
 
 impl ReadXdr for InflationResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: InflationResultCode = <InflationResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -33530,7 +33492,7 @@ impl ReadXdr for InflationResult {
 
 impl WriteXdr for InflationResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -33655,7 +33617,7 @@ impl From<ManageDataResultCode> for i32 {
 
 impl ReadXdr for ManageDataResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -33666,7 +33628,7 @@ impl ReadXdr for ManageDataResultCode {
 
 impl WriteXdr for ManageDataResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -33773,7 +33735,7 @@ impl Union<ManageDataResultCode> for ManageDataResult {}
 
 impl ReadXdr for ManageDataResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ManageDataResultCode = <ManageDataResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -33793,7 +33755,7 @@ impl ReadXdr for ManageDataResult {
 
 impl WriteXdr for ManageDataResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -33898,7 +33860,7 @@ impl From<BumpSequenceResultCode> for i32 {
 
 impl ReadXdr for BumpSequenceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -33909,7 +33871,7 @@ impl ReadXdr for BumpSequenceResultCode {
 
 impl WriteXdr for BumpSequenceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -33995,7 +33957,7 @@ impl Union<BumpSequenceResultCode> for BumpSequenceResult {}
 
 impl ReadXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -34012,7 +33974,7 @@ impl ReadXdr for BumpSequenceResult {
 
 impl WriteXdr for BumpSequenceResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -34139,7 +34101,7 @@ impl From<CreateClaimableBalanceResultCode> for i32 {
 
 impl ReadXdr for CreateClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -34150,7 +34112,7 @@ impl ReadXdr for CreateClaimableBalanceResultCode {
 
 impl WriteXdr for CreateClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -34264,7 +34226,7 @@ impl Union<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResult {}
 
 impl ReadXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: CreateClaimableBalanceResultCode =
                 <CreateClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
@@ -34288,7 +34250,7 @@ impl ReadXdr for CreateClaimableBalanceResult {
 
 impl WriteXdr for CreateClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -34419,7 +34381,7 @@ impl From<ClaimClaimableBalanceResultCode> for i32 {
 
 impl ReadXdr for ClaimClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -34430,7 +34392,7 @@ impl ReadXdr for ClaimClaimableBalanceResultCode {
 
 impl WriteXdr for ClaimClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -34543,7 +34505,7 @@ impl Union<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {}
 
 impl ReadXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClaimClaimableBalanceResultCode =
                 <ClaimClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
@@ -34565,7 +34527,7 @@ impl ReadXdr for ClaimClaimableBalanceResult {
 
 impl WriteXdr for ClaimClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -34683,7 +34645,7 @@ impl From<BeginSponsoringFutureReservesResultCode> for i32 {
 
 impl ReadXdr for BeginSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -34694,7 +34656,7 @@ impl ReadXdr for BeginSponsoringFutureReservesResultCode {
 
 impl WriteXdr for BeginSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -34792,7 +34754,7 @@ impl Union<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureRes
 
 impl ReadXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: BeginSponsoringFutureReservesResultCode =
                 <BeginSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
@@ -34812,7 +34774,7 @@ impl ReadXdr for BeginSponsoringFutureReservesResult {
 
 impl WriteXdr for BeginSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -34917,7 +34879,7 @@ impl From<EndSponsoringFutureReservesResultCode> for i32 {
 
 impl ReadXdr for EndSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -34928,7 +34890,7 @@ impl ReadXdr for EndSponsoringFutureReservesResultCode {
 
 impl WriteXdr for EndSponsoringFutureReservesResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -35015,7 +34977,7 @@ impl Union<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReserve
 
 impl ReadXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: EndSponsoringFutureReservesResultCode =
                 <EndSponsoringFutureReservesResultCode as ReadXdr>::read_xdr(r)?;
@@ -35033,7 +34995,7 @@ impl ReadXdr for EndSponsoringFutureReservesResult {
 
 impl WriteXdr for EndSponsoringFutureReservesResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -35163,7 +35125,7 @@ impl From<RevokeSponsorshipResultCode> for i32 {
 
 impl ReadXdr for RevokeSponsorshipResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -35174,7 +35136,7 @@ impl ReadXdr for RevokeSponsorshipResultCode {
 
 impl WriteXdr for RevokeSponsorshipResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -35287,7 +35249,7 @@ impl Union<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {}
 
 impl ReadXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: RevokeSponsorshipResultCode =
                 <RevokeSponsorshipResultCode as ReadXdr>::read_xdr(r)?;
@@ -35309,7 +35271,7 @@ impl ReadXdr for RevokeSponsorshipResult {
 
 impl WriteXdr for RevokeSponsorshipResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -35437,7 +35399,7 @@ impl From<ClawbackResultCode> for i32 {
 
 impl ReadXdr for ClawbackResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -35448,7 +35410,7 @@ impl ReadXdr for ClawbackResultCode {
 
 impl WriteXdr for ClawbackResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -35555,7 +35517,7 @@ impl Union<ClawbackResultCode> for ClawbackResult {}
 
 impl ReadXdr for ClawbackResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClawbackResultCode = <ClawbackResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -35575,7 +35537,7 @@ impl ReadXdr for ClawbackResult {
 
 impl WriteXdr for ClawbackResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -35692,7 +35654,7 @@ impl From<ClawbackClaimableBalanceResultCode> for i32 {
 
 impl ReadXdr for ClawbackClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -35703,7 +35665,7 @@ impl ReadXdr for ClawbackClaimableBalanceResultCode {
 
 impl WriteXdr for ClawbackClaimableBalanceResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -35801,7 +35763,7 @@ impl Union<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResul
 
 impl ReadXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClawbackClaimableBalanceResultCode =
                 <ClawbackClaimableBalanceResultCode as ReadXdr>::read_xdr(r)?;
@@ -35821,7 +35783,7 @@ impl ReadXdr for ClawbackClaimableBalanceResult {
 
 impl WriteXdr for ClawbackClaimableBalanceResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -35954,7 +35916,7 @@ impl From<SetTrustLineFlagsResultCode> for i32 {
 
 impl ReadXdr for SetTrustLineFlagsResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -35965,7 +35927,7 @@ impl ReadXdr for SetTrustLineFlagsResultCode {
 
 impl WriteXdr for SetTrustLineFlagsResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -36078,7 +36040,7 @@ impl Union<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {}
 
 impl ReadXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SetTrustLineFlagsResultCode =
                 <SetTrustLineFlagsResultCode as ReadXdr>::read_xdr(r)?;
@@ -36100,7 +36062,7 @@ impl ReadXdr for SetTrustLineFlagsResult {
 
 impl WriteXdr for SetTrustLineFlagsResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -36250,7 +36212,7 @@ impl From<LiquidityPoolDepositResultCode> for i32 {
 
 impl ReadXdr for LiquidityPoolDepositResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -36261,7 +36223,7 @@ impl ReadXdr for LiquidityPoolDepositResultCode {
 
 impl WriteXdr for LiquidityPoolDepositResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -36386,7 +36348,7 @@ impl Union<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {}
 
 impl ReadXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolDepositResultCode =
                 <LiquidityPoolDepositResultCode as ReadXdr>::read_xdr(r)?;
@@ -36410,7 +36372,7 @@ impl ReadXdr for LiquidityPoolDepositResult {
 
 impl WriteXdr for LiquidityPoolDepositResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -36549,7 +36511,7 @@ impl From<LiquidityPoolWithdrawResultCode> for i32 {
 
 impl ReadXdr for LiquidityPoolWithdrawResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -36560,7 +36522,7 @@ impl ReadXdr for LiquidityPoolWithdrawResultCode {
 
 impl WriteXdr for LiquidityPoolWithdrawResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -36673,7 +36635,7 @@ impl Union<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {}
 
 impl ReadXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolWithdrawResultCode =
                 <LiquidityPoolWithdrawResultCode as ReadXdr>::read_xdr(r)?;
@@ -36695,7 +36657,7 @@ impl ReadXdr for LiquidityPoolWithdrawResult {
 
 impl WriteXdr for LiquidityPoolWithdrawResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -36829,7 +36791,7 @@ impl From<InvokeHostFunctionResultCode> for i32 {
 
 impl ReadXdr for InvokeHostFunctionResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -36840,7 +36802,7 @@ impl ReadXdr for InvokeHostFunctionResultCode {
 
 impl WriteXdr for InvokeHostFunctionResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -36955,7 +36917,7 @@ impl Union<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {}
 
 impl ReadXdr for InvokeHostFunctionResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: InvokeHostFunctionResultCode =
                 <InvokeHostFunctionResultCode as ReadXdr>::read_xdr(r)?;
@@ -36979,7 +36941,7 @@ impl ReadXdr for InvokeHostFunctionResult {
 
 impl WriteXdr for InvokeHostFunctionResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -37101,7 +37063,7 @@ impl From<ExtendFootprintTtlResultCode> for i32 {
 
 impl ReadXdr for ExtendFootprintTtlResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -37112,7 +37074,7 @@ impl ReadXdr for ExtendFootprintTtlResultCode {
 
 impl WriteXdr for ExtendFootprintTtlResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -37215,7 +37177,7 @@ impl Union<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResult {}
 
 impl ReadXdr for ExtendFootprintTtlResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ExtendFootprintTtlResultCode =
                 <ExtendFootprintTtlResultCode as ReadXdr>::read_xdr(r)?;
@@ -37237,7 +37199,7 @@ impl ReadXdr for ExtendFootprintTtlResult {
 
 impl WriteXdr for ExtendFootprintTtlResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -37357,7 +37319,7 @@ impl From<RestoreFootprintResultCode> for i32 {
 
 impl ReadXdr for RestoreFootprintResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -37368,7 +37330,7 @@ impl ReadXdr for RestoreFootprintResultCode {
 
 impl WriteXdr for RestoreFootprintResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -37471,7 +37433,7 @@ impl Union<RestoreFootprintResultCode> for RestoreFootprintResult {}
 
 impl ReadXdr for RestoreFootprintResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: RestoreFootprintResultCode =
                 <RestoreFootprintResultCode as ReadXdr>::read_xdr(r)?;
@@ -37493,7 +37455,7 @@ impl ReadXdr for RestoreFootprintResult {
 
 impl WriteXdr for RestoreFootprintResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -37629,7 +37591,7 @@ impl From<OperationResultCode> for i32 {
 
 impl ReadXdr for OperationResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -37640,7 +37602,7 @@ impl ReadXdr for OperationResultCode {
 
 impl WriteXdr for OperationResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -37904,7 +37866,7 @@ impl Union<OperationType> for OperationResultTr {}
 
 impl ReadXdr for OperationResultTr {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -37984,7 +37946,7 @@ impl ReadXdr for OperationResultTr {
 
 impl WriteXdr for OperationResultTr {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -38190,7 +38152,7 @@ impl Union<OperationResultCode> for OperationResult {}
 
 impl ReadXdr for OperationResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: OperationResultCode = <OperationResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -38212,7 +38174,7 @@ impl ReadXdr for OperationResult {
 
 impl WriteXdr for OperationResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -38426,7 +38388,7 @@ impl From<TransactionResultCode> for i32 {
 
 impl ReadXdr for TransactionResultCode {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -38437,7 +38399,7 @@ impl ReadXdr for TransactionResultCode {
 
 impl WriteXdr for TransactionResultCode {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -38618,7 +38580,7 @@ impl Union<TransactionResultCode> for InnerTransactionResultResult {}
 
 impl ReadXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -38654,7 +38616,7 @@ impl ReadXdr for InnerTransactionResultResult {
 
 impl WriteXdr for InnerTransactionResultResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -38752,7 +38714,7 @@ impl Union<i32> for InnerTransactionResultExt {}
 
 impl ReadXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -38768,7 +38730,7 @@ impl ReadXdr for InnerTransactionResultExt {
 
 impl WriteXdr for InnerTransactionResultExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -38837,7 +38799,7 @@ pub struct InnerTransactionResult {
 
 impl ReadXdr for InnerTransactionResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 fee_charged: i64::read_xdr(r)?,
@@ -38850,7 +38812,7 @@ impl ReadXdr for InnerTransactionResult {
 
 impl WriteXdr for InnerTransactionResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.fee_charged.write_xdr(w)?;
             self.result.write_xdr(w)?;
@@ -38882,7 +38844,7 @@ pub struct InnerTransactionResultPair {
 
 impl ReadXdr for InnerTransactionResultPair {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 transaction_hash: Hash::read_xdr(r)?,
@@ -38894,7 +38856,7 @@ impl ReadXdr for InnerTransactionResultPair {
 
 impl WriteXdr for InnerTransactionResultPair {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.transaction_hash.write_xdr(w)?;
             self.result.write_xdr(w)?;
@@ -39088,7 +39050,7 @@ impl Union<TransactionResultCode> for TransactionResultResult {}
 
 impl ReadXdr for TransactionResultResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -39130,7 +39092,7 @@ impl ReadXdr for TransactionResultResult {
 
 impl WriteXdr for TransactionResultResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -39230,7 +39192,7 @@ impl Union<i32> for TransactionResultExt {}
 
 impl ReadXdr for TransactionResultExt {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -39246,7 +39208,7 @@ impl ReadXdr for TransactionResultExt {
 
 impl WriteXdr for TransactionResultExt {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -39316,7 +39278,7 @@ pub struct TransactionResult {
 
 impl ReadXdr for TransactionResult {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 fee_charged: i64::read_xdr(r)?,
@@ -39329,7 +39291,7 @@ impl ReadXdr for TransactionResult {
 
 impl WriteXdr for TransactionResult {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.fee_charged.write_xdr(w)?;
             self.result.write_xdr(w)?;
@@ -39402,7 +39364,7 @@ impl AsRef<[u8; 32]> for Hash {
 
 impl ReadXdr for Hash {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 32]>::read_xdr(r)?;
             let v = Hash(i);
@@ -39413,7 +39375,7 @@ impl ReadXdr for Hash {
 
 impl WriteXdr for Hash {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -39518,7 +39480,7 @@ impl AsRef<[u8; 32]> for Uint256 {
 
 impl ReadXdr for Uint256 {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 32]>::read_xdr(r)?;
             let v = Uint256(i);
@@ -39529,7 +39491,7 @@ impl ReadXdr for Uint256 {
 
 impl WriteXdr for Uint256 {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -39632,7 +39594,7 @@ impl AsRef<u64> for TimePoint {
 
 impl ReadXdr for TimePoint {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = u64::read_xdr(r)?;
             let v = TimePoint(i);
@@ -39643,7 +39605,7 @@ impl ReadXdr for TimePoint {
 
 impl WriteXdr for TimePoint {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -39685,7 +39647,7 @@ impl AsRef<u64> for Duration {
 
 impl ReadXdr for Duration {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = u64::read_xdr(r)?;
             let v = Duration(i);
@@ -39696,7 +39658,7 @@ impl ReadXdr for Duration {
 
 impl WriteXdr for Duration {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -39771,7 +39733,7 @@ impl Union<i32> for ExtensionPoint {}
 
 impl ReadXdr for ExtensionPoint {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -39787,7 +39749,7 @@ impl ReadXdr for ExtensionPoint {
 
 impl WriteXdr for ExtensionPoint {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -39909,7 +39871,7 @@ impl From<CryptoKeyType> for i32 {
 
 impl ReadXdr for CryptoKeyType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -39920,7 +39882,7 @@ impl ReadXdr for CryptoKeyType {
 
 impl WriteXdr for CryptoKeyType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -40008,7 +39970,7 @@ impl From<PublicKeyType> for i32 {
 
 impl ReadXdr for PublicKeyType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -40019,7 +39981,7 @@ impl ReadXdr for PublicKeyType {
 
 impl WriteXdr for PublicKeyType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -40125,7 +40087,7 @@ impl From<SignerKeyType> for i32 {
 
 impl ReadXdr for SignerKeyType {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
             let v: Self = e.try_into()?;
@@ -40136,7 +40098,7 @@ impl ReadXdr for SignerKeyType {
 
 impl WriteXdr for SignerKeyType {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
@@ -40213,7 +40175,7 @@ impl Union<PublicKeyType> for PublicKey {}
 
 impl ReadXdr for PublicKey {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: PublicKeyType = <PublicKeyType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -40231,7 +40193,7 @@ impl ReadXdr for PublicKey {
 
 impl WriteXdr for PublicKey {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -40266,7 +40228,7 @@ pub struct SignerKeyEd25519SignedPayload {
 
 impl ReadXdr for SignerKeyEd25519SignedPayload {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ed25519: Uint256::read_xdr(r)?,
@@ -40278,7 +40240,7 @@ impl ReadXdr for SignerKeyEd25519SignedPayload {
 
 impl WriteXdr for SignerKeyEd25519SignedPayload {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ed25519.write_xdr(w)?;
             self.payload.write_xdr(w)?;
@@ -40385,7 +40347,7 @@ impl Union<SignerKeyType> for SignerKey {}
 
 impl ReadXdr for SignerKey {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SignerKeyType = <SignerKeyType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
@@ -40406,7 +40368,7 @@ impl ReadXdr for SignerKey {
 
 impl WriteXdr for SignerKey {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
@@ -40459,7 +40421,7 @@ impl AsRef<BytesM<64>> for Signature {
 
 impl ReadXdr for Signature {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::<64>::read_xdr(r)?;
             let v = Signature(i);
@@ -40470,7 +40432,7 @@ impl ReadXdr for Signature {
 
 impl WriteXdr for Signature {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -40587,7 +40549,7 @@ impl AsRef<[u8; 4]> for SignatureHint {
 
 impl ReadXdr for SignatureHint {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 4]>::read_xdr(r)?;
             let v = SignatureHint(i);
@@ -40598,7 +40560,7 @@ impl ReadXdr for SignatureHint {
 
 impl WriteXdr for SignatureHint {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -40676,7 +40638,7 @@ impl AsRef<PublicKey> for NodeId {
 
 impl ReadXdr for NodeId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = PublicKey::read_xdr(r)?;
             let v = NodeId(i);
@@ -40687,7 +40649,7 @@ impl ReadXdr for NodeId {
 
 impl WriteXdr for NodeId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -40728,7 +40690,7 @@ impl AsRef<PublicKey> for AccountId {
 
 impl ReadXdr for AccountId {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = PublicKey::read_xdr(r)?;
             let v = AccountId(i);
@@ -40739,7 +40701,7 @@ impl ReadXdr for AccountId {
 
 impl WriteXdr for AccountId {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
@@ -40764,7 +40726,7 @@ pub struct Curve25519Secret {
 
 impl ReadXdr for Curve25519Secret {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: <[u8; 32]>::read_xdr(r)?,
@@ -40775,7 +40737,7 @@ impl ReadXdr for Curve25519Secret {
 
 impl WriteXdr for Curve25519Secret {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             Ok(())
@@ -40803,7 +40765,7 @@ pub struct Curve25519Public {
 
 impl ReadXdr for Curve25519Public {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: <[u8; 32]>::read_xdr(r)?,
@@ -40814,7 +40776,7 @@ impl ReadXdr for Curve25519Public {
 
 impl WriteXdr for Curve25519Public {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             Ok(())
@@ -40842,7 +40804,7 @@ pub struct HmacSha256Key {
 
 impl ReadXdr for HmacSha256Key {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 key: <[u8; 32]>::read_xdr(r)?,
@@ -40853,7 +40815,7 @@ impl ReadXdr for HmacSha256Key {
 
 impl WriteXdr for HmacSha256Key {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
             Ok(())
@@ -40881,7 +40843,7 @@ pub struct HmacSha256Mac {
 
 impl ReadXdr for HmacSha256Mac {
     #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
                 mac: <[u8; 32]>::read_xdr(r)?,
@@ -40892,7 +40854,7 @@ impl ReadXdr for HmacSha256Mac {
 
 impl WriteXdr for HmacSha256Mac {
     #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.mac.write_xdr(w)?;
             Ok(())
@@ -44334,7 +44296,7 @@ impl Type {
 
     #[cfg(feature = "std")]
     #[allow(clippy::too_many_lines)]
-    pub fn read_xdr<R: Read>(v: TypeVariant, r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    pub fn read_xdr<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
         match v {
             TypeVariant::Value => {
                 r.with_limited_depth(|r| Ok(Self::Value(Box::new(Value::read_xdr(r)?))))
@@ -46138,17 +46100,17 @@ impl Type {
     }
 
     #[cfg(feature = "base64")]
-    pub fn read_xdr_base64<R: Read>(v: TypeVariant, r: &mut DepthLimitedRead<R>) -> Result<Self> {
-        let mut dec = DepthLimitedRead::new(
+    pub fn read_xdr_base64<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
+        let mut dec = Limited::new(
             base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD),
-            r.depth_remaining,
+            r.limits.clone(),
         );
         let t = Self::read_xdr(v, &mut dec)?;
         Ok(t)
     }
 
     #[cfg(feature = "std")]
-    pub fn read_xdr_to_end<R: Read>(v: TypeVariant, r: &mut DepthLimitedRead<R>) -> Result<Self> {
+    pub fn read_xdr_to_end<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
         let s = Self::read_xdr(v, r)?;
         // Check that any further reads, such as this read of one byte, read no
         // data, indicating EOF. If a byte is read the data is invalid.
@@ -46160,13 +46122,10 @@ impl Type {
     }
 
     #[cfg(feature = "base64")]
-    pub fn read_xdr_base64_to_end<R: Read>(
-        v: TypeVariant,
-        r: &mut DepthLimitedRead<R>,
-    ) -> Result<Self> {
-        let mut dec = DepthLimitedRead::new(
+    pub fn read_xdr_base64_to_end<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
+        let mut dec = Limited::new(
             base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD),
-            r.depth_remaining,
+            r.limits.clone(),
         );
         let t = Self::read_xdr_to_end(v, &mut dec)?;
         Ok(t)
@@ -46176,1804 +46135,1789 @@ impl Type {
     #[allow(clippy::too_many_lines)]
     pub fn read_xdr_iter<R: Read>(
         v: TypeVariant,
-        r: &mut DepthLimitedRead<R>,
+        r: &mut Limited<R>,
     ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
         match v {
             TypeVariant::Value => Box::new(
-                ReadXdrIter::<_, Value>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Value>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Value(Box::new(t)))),
             ),
             TypeVariant::ScpBallot => Box::new(
-                ReadXdrIter::<_, ScpBallot>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpBallot>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpBallot(Box::new(t)))),
             ),
             TypeVariant::ScpStatementType => Box::new(
-                ReadXdrIter::<_, ScpStatementType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatementType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementType(Box::new(t)))),
             ),
             TypeVariant::ScpNomination => Box::new(
-                ReadXdrIter::<_, ScpNomination>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpNomination>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpNomination(Box::new(t)))),
             ),
             TypeVariant::ScpStatement => Box::new(
-                ReadXdrIter::<_, ScpStatement>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatement>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatement(Box::new(t)))),
             ),
             TypeVariant::ScpStatementPledges => Box::new(
-                ReadXdrIter::<_, ScpStatementPledges>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatementPledges>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementPledges(Box::new(t)))),
             ),
             TypeVariant::ScpStatementPrepare => Box::new(
-                ReadXdrIter::<_, ScpStatementPrepare>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatementPrepare>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementPrepare(Box::new(t)))),
             ),
             TypeVariant::ScpStatementConfirm => Box::new(
-                ReadXdrIter::<_, ScpStatementConfirm>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatementConfirm>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementConfirm(Box::new(t)))),
             ),
             TypeVariant::ScpStatementExternalize => Box::new(
-                ReadXdrIter::<_, ScpStatementExternalize>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatementExternalize>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementExternalize(Box::new(t)))),
             ),
             TypeVariant::ScpEnvelope => Box::new(
-                ReadXdrIter::<_, ScpEnvelope>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpEnvelope>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpEnvelope(Box::new(t)))),
             ),
             TypeVariant::ScpQuorumSet => Box::new(
-                ReadXdrIter::<_, ScpQuorumSet>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpQuorumSet>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractExecutionLanesV0>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractComputeV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractEventsV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractEventsV0>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractEventsV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))),
             ),
             TypeVariant::ContractCostType => Box::new(
-                ReadXdrIter::<_, ContractCostType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractCostType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostType(Box::new(t)))),
             ),
             TypeVariant::ContractCostParamEntry => Box::new(
-                ReadXdrIter::<_, ContractCostParamEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractCostParamEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t)))),
             ),
             TypeVariant::StateArchivalSettings => Box::new(
-                ReadXdrIter::<_, StateArchivalSettings>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, StateArchivalSettings>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StateArchivalSettings(Box::new(t)))),
             ),
             TypeVariant::EvictionIterator => Box::new(
-                ReadXdrIter::<_, EvictionIterator>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, EvictionIterator>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
             ),
             TypeVariant::ContractCostParams => Box::new(
-                ReadXdrIter::<_, ContractCostParams>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractCostParams>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingId => Box::new(
-                ReadXdrIter::<_, ConfigSettingId>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ConfigSettingId>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingEntry => Box::new(
-                ReadXdrIter::<_, ConfigSettingEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ConfigSettingEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
             ),
             TypeVariant::ScEnvMetaKind => Box::new(
-                ReadXdrIter::<_, ScEnvMetaKind>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScEnvMetaKind>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t)))),
             ),
             TypeVariant::ScEnvMetaEntry => Box::new(
-                ReadXdrIter::<_, ScEnvMetaEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScEnvMetaEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t)))),
             ),
             TypeVariant::ScMetaV0 => Box::new(
-                ReadXdrIter::<_, ScMetaV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScMetaV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMetaV0(Box::new(t)))),
             ),
             TypeVariant::ScMetaKind => Box::new(
-                ReadXdrIter::<_, ScMetaKind>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScMetaKind>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMetaKind(Box::new(t)))),
             ),
             TypeVariant::ScMetaEntry => Box::new(
-                ReadXdrIter::<_, ScMetaEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScMetaEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMetaEntry(Box::new(t)))),
             ),
             TypeVariant::ScSpecType => Box::new(
-                ReadXdrIter::<_, ScSpecType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecType(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeOption => Box::new(
-                ReadXdrIter::<_, ScSpecTypeOption>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeOption>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeOption(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeResult => Box::new(
-                ReadXdrIter::<_, ScSpecTypeResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeResult(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeVec => Box::new(
-                ReadXdrIter::<_, ScSpecTypeVec>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeVec>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeVec(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeMap => Box::new(
-                ReadXdrIter::<_, ScSpecTypeMap>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeMap>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeTuple => Box::new(
-                ReadXdrIter::<_, ScSpecTypeTuple>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeTuple>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeTuple(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeBytesN => Box::new(
-                ReadXdrIter::<_, ScSpecTypeBytesN>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeBytesN>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeBytesN(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeUdt => Box::new(
-                ReadXdrIter::<_, ScSpecTypeUdt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeUdt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeDef => Box::new(
-                ReadXdrIter::<_, ScSpecTypeDef>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeDef>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeDef(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtStructFieldV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtStructFieldV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtStructFieldV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtStructFieldV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtStructV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtStructV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtStructV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseVoidV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtUnionCaseVoidV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtUnionCaseVoidV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseVoidV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseTupleV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtUnionCaseTupleV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtUnionCaseTupleV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseTupleV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseV0Kind => Box::new(
-                ReadXdrIter::<_, ScSpecUdtUnionCaseV0Kind>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0Kind>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0Kind(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtUnionCaseV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtUnionV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtUnionV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtUnionV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtEnumCaseV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtEnumCaseV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtEnumCaseV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtEnumCaseV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtEnumV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtEnumV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtEnumV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtEnumV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtErrorEnumCaseV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtErrorEnumCaseV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtErrorEnumCaseV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumCaseV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtErrorEnumV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtErrorEnumV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtErrorEnumV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecFunctionInputV0 => Box::new(
-                ReadXdrIter::<_, ScSpecFunctionInputV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecFunctionInputV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecFunctionV0 => Box::new(
-                ReadXdrIter::<_, ScSpecFunctionV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecFunctionV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecEntryKind => Box::new(
-                ReadXdrIter::<_, ScSpecEntryKind>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecEntryKind>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
             ),
             TypeVariant::ScSpecEntry => Box::new(
-                ReadXdrIter::<_, ScSpecEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
             ),
             TypeVariant::ScValType => Box::new(
-                ReadXdrIter::<_, ScValType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScValType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
             ),
             TypeVariant::ScErrorType => Box::new(
-                ReadXdrIter::<_, ScErrorType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScErrorType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScErrorType(Box::new(t)))),
             ),
             TypeVariant::ScErrorCode => Box::new(
-                ReadXdrIter::<_, ScErrorCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScErrorCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScErrorCode(Box::new(t)))),
             ),
             TypeVariant::ScError => Box::new(
-                ReadXdrIter::<_, ScError>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScError>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScError(Box::new(t)))),
             ),
             TypeVariant::UInt128Parts => Box::new(
-                ReadXdrIter::<_, UInt128Parts>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, UInt128Parts>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t)))),
             ),
             TypeVariant::Int128Parts => Box::new(
-                ReadXdrIter::<_, Int128Parts>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Int128Parts>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
             ),
             TypeVariant::UInt256Parts => Box::new(
-                ReadXdrIter::<_, UInt256Parts>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, UInt256Parts>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t)))),
             ),
             TypeVariant::Int256Parts => Box::new(
-                ReadXdrIter::<_, Int256Parts>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Int256Parts>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int256Parts(Box::new(t)))),
             ),
             TypeVariant::ContractExecutableType => Box::new(
-                ReadXdrIter::<_, ContractExecutableType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractExecutableType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
             ),
             TypeVariant::ContractExecutable => Box::new(
-                ReadXdrIter::<_, ContractExecutable>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractExecutable>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
             ),
             TypeVariant::ScAddressType => Box::new(
-                ReadXdrIter::<_, ScAddressType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScAddressType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
             ),
             TypeVariant::ScAddress => Box::new(
-                ReadXdrIter::<_, ScAddress>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScAddress>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
             ),
             TypeVariant::ScVec => Box::new(
-                ReadXdrIter::<_, ScVec>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScVec>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
             ),
             TypeVariant::ScMap => Box::new(
-                ReadXdrIter::<_, ScMap>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScMap>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
             ),
             TypeVariant::ScBytes => Box::new(
-                ReadXdrIter::<_, ScBytes>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScBytes>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
             ),
             TypeVariant::ScString => Box::new(
-                ReadXdrIter::<_, ScString>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScString>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
             ),
             TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, ScSymbol>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScSymbol>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
             ),
             TypeVariant::ScNonceKey => Box::new(
-                ReadXdrIter::<_, ScNonceKey>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScNonceKey>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t)))),
             ),
             TypeVariant::ScContractInstance => Box::new(
-                ReadXdrIter::<_, ScContractInstance>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScContractInstance>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScContractInstance(Box::new(t)))),
             ),
             TypeVariant::ScVal => Box::new(
-                ReadXdrIter::<_, ScVal>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScVal>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
             ),
             TypeVariant::ScMapEntry => Box::new(
-                ReadXdrIter::<_, ScMapEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScMapEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
-                ReadXdrIter::<_, StoredTransactionSet>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, StoredTransactionSet>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
             ),
             TypeVariant::StoredDebugTransactionSet => Box::new(
-                ReadXdrIter::<_, StoredDebugTransactionSet>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, StoredDebugTransactionSet>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StoredDebugTransactionSet(Box::new(t)))),
             ),
             TypeVariant::PersistedScpStateV0 => Box::new(
-                ReadXdrIter::<_, PersistedScpStateV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PersistedScpStateV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PersistedScpStateV0(Box::new(t)))),
             ),
             TypeVariant::PersistedScpStateV1 => Box::new(
-                ReadXdrIter::<_, PersistedScpStateV1>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PersistedScpStateV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PersistedScpStateV1(Box::new(t)))),
             ),
             TypeVariant::PersistedScpState => Box::new(
-                ReadXdrIter::<_, PersistedScpState>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PersistedScpState>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t)))),
             ),
             TypeVariant::Thresholds => Box::new(
-                ReadXdrIter::<_, Thresholds>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Thresholds>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Thresholds(Box::new(t)))),
             ),
             TypeVariant::String32 => Box::new(
-                ReadXdrIter::<_, String32>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, String32>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::String32(Box::new(t)))),
             ),
             TypeVariant::String64 => Box::new(
-                ReadXdrIter::<_, String64>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, String64>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::String64(Box::new(t)))),
             ),
             TypeVariant::SequenceNumber => Box::new(
-                ReadXdrIter::<_, SequenceNumber>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SequenceNumber>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t)))),
             ),
             TypeVariant::DataValue => Box::new(
-                ReadXdrIter::<_, DataValue>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, DataValue>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataValue(Box::new(t)))),
             ),
             TypeVariant::PoolId => Box::new(
-                ReadXdrIter::<_, PoolId>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PoolId>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
             ),
             TypeVariant::AssetCode4 => Box::new(
-                ReadXdrIter::<_, AssetCode4>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AssetCode4>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetCode4(Box::new(t)))),
             ),
             TypeVariant::AssetCode12 => Box::new(
-                ReadXdrIter::<_, AssetCode12>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AssetCode12>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetCode12(Box::new(t)))),
             ),
             TypeVariant::AssetType => Box::new(
-                ReadXdrIter::<_, AssetType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AssetType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetType(Box::new(t)))),
             ),
             TypeVariant::AssetCode => Box::new(
-                ReadXdrIter::<_, AssetCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AssetCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetCode(Box::new(t)))),
             ),
             TypeVariant::AlphaNum4 => Box::new(
-                ReadXdrIter::<_, AlphaNum4>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AlphaNum4>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AlphaNum4(Box::new(t)))),
             ),
             TypeVariant::AlphaNum12 => Box::new(
-                ReadXdrIter::<_, AlphaNum12>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AlphaNum12>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AlphaNum12(Box::new(t)))),
             ),
             TypeVariant::Asset => Box::new(
-                ReadXdrIter::<_, Asset>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Asset>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Asset(Box::new(t)))),
             ),
             TypeVariant::Price => Box::new(
-                ReadXdrIter::<_, Price>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Price>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Price(Box::new(t)))),
             ),
             TypeVariant::Liabilities => Box::new(
-                ReadXdrIter::<_, Liabilities>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Liabilities>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Liabilities(Box::new(t)))),
             ),
             TypeVariant::ThresholdIndexes => Box::new(
-                ReadXdrIter::<_, ThresholdIndexes>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ThresholdIndexes>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ThresholdIndexes(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryType => Box::new(
-                ReadXdrIter::<_, LedgerEntryType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryType(Box::new(t)))),
             ),
             TypeVariant::Signer => Box::new(
-                ReadXdrIter::<_, Signer>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Signer>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Signer(Box::new(t)))),
             ),
             TypeVariant::AccountFlags => Box::new(
-                ReadXdrIter::<_, AccountFlags>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AccountFlags>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountFlags(Box::new(t)))),
             ),
             TypeVariant::SponsorshipDescriptor => Box::new(
-                ReadXdrIter::<_, SponsorshipDescriptor>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SponsorshipDescriptor>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SponsorshipDescriptor(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV3 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV3>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExtensionV3>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV3(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV2 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV2>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExtensionV2>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV2(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV2Ext => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV2Ext>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExtensionV2Ext>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV1>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExtensionV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV1Ext>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExtensionV1Ext>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::AccountEntry => Box::new(
-                ReadXdrIter::<_, AccountEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntry(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExt => Box::new(
-                ReadXdrIter::<_, AccountEntryExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExt(Box::new(t)))),
             ),
             TypeVariant::TrustLineFlags => Box::new(
-                ReadXdrIter::<_, TrustLineFlags>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineFlags>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineFlags(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolType => Box::new(
-                ReadXdrIter::<_, LiquidityPoolType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolType(Box::new(t)))),
             ),
             TypeVariant::TrustLineAsset => Box::new(
-                ReadXdrIter::<_, TrustLineAsset>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineAsset>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineAsset(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2 => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExtensionV2>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineEntryExtensionV2>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2Ext => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExtensionV2Ext>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t)))),
+                ReadXdrIter::<_, TrustLineEntryExtensionV2Ext>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntry => Box::new(
-                ReadXdrIter::<_, TrustLineEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntry(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExt => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineEntryExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryExt(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryV1 => Box::new(
-                ReadXdrIter::<_, TrustLineEntryV1>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineEntryV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryV1(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryV1Ext => Box::new(
-                ReadXdrIter::<_, TrustLineEntryV1Ext>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineEntryV1Ext>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryV1Ext(Box::new(t)))),
             ),
             TypeVariant::OfferEntryFlags => Box::new(
-                ReadXdrIter::<_, OfferEntryFlags>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, OfferEntryFlags>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OfferEntryFlags(Box::new(t)))),
             ),
             TypeVariant::OfferEntry => Box::new(
-                ReadXdrIter::<_, OfferEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, OfferEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OfferEntry(Box::new(t)))),
             ),
             TypeVariant::OfferEntryExt => Box::new(
-                ReadXdrIter::<_, OfferEntryExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, OfferEntryExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OfferEntryExt(Box::new(t)))),
             ),
             TypeVariant::DataEntry => Box::new(
-                ReadXdrIter::<_, DataEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, DataEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataEntry(Box::new(t)))),
             ),
             TypeVariant::DataEntryExt => Box::new(
-                ReadXdrIter::<_, DataEntryExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, DataEntryExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataEntryExt(Box::new(t)))),
             ),
             TypeVariant::ClaimPredicateType => Box::new(
-                ReadXdrIter::<_, ClaimPredicateType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimPredicateType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimPredicateType(Box::new(t)))),
             ),
             TypeVariant::ClaimPredicate => Box::new(
-                ReadXdrIter::<_, ClaimPredicate>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimPredicate>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimPredicate(Box::new(t)))),
             ),
             TypeVariant::ClaimantType => Box::new(
-                ReadXdrIter::<_, ClaimantType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimantType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimantType(Box::new(t)))),
             ),
             TypeVariant::Claimant => Box::new(
-                ReadXdrIter::<_, Claimant>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Claimant>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Claimant(Box::new(t)))),
             ),
             TypeVariant::ClaimantV0 => Box::new(
-                ReadXdrIter::<_, ClaimantV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimantV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceIdType => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceIdType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceIdType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceId => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceId>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceId>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceFlags => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceFlags>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceFlags>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceFlags(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1Ext => Box::new(
                 ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1Ext>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntry => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntry(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExt => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntryExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceEntryExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntryExt(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolConstantProductParameters => Box::new(
                 ReadXdrIter::<_, LiquidityPoolConstantProductParameters>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntry => Box::new(
-                ReadXdrIter::<_, LiquidityPoolEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolEntry(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntryBody => Box::new(
-                ReadXdrIter::<_, LiquidityPoolEntryBody>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolEntryBody>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryBody(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntryConstantProduct => Box::new(
                 ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
             TypeVariant::ContractDataDurability => Box::new(
-                ReadXdrIter::<_, ContractDataDurability>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractDataDurability>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractDataDurability(Box::new(t)))),
             ),
             TypeVariant::ContractDataEntry => Box::new(
-                ReadXdrIter::<_, ContractDataEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractDataEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t)))),
             ),
             TypeVariant::ContractCodeEntry => Box::new(
-                ReadXdrIter::<_, ContractCodeEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractCodeEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
             ),
             TypeVariant::TtlEntry => Box::new(
-                ReadXdrIter::<_, TtlEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TtlEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TtlEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, LedgerEntryExtensionV1>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryExtensionV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, LedgerEntryExtensionV1Ext>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryExtensionV1Ext>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::LedgerEntry => Box::new(
-                ReadXdrIter::<_, LedgerEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryData => Box::new(
-                ReadXdrIter::<_, LedgerEntryData>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryData>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryData(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExt => Box::new(
-                ReadXdrIter::<_, LedgerEntryExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerKey => Box::new(
-                ReadXdrIter::<_, LedgerKey>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKey>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKey(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyAccount => Box::new(
-                ReadXdrIter::<_, LedgerKeyAccount>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyAccount>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyAccount(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyTrustLine => Box::new(
-                ReadXdrIter::<_, LedgerKeyTrustLine>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyTrustLine>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyTrustLine(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyOffer => Box::new(
-                ReadXdrIter::<_, LedgerKeyOffer>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyOffer>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyOffer(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyData => Box::new(
-                ReadXdrIter::<_, LedgerKeyData>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyData>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyData(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyClaimableBalance => Box::new(
-                ReadXdrIter::<_, LedgerKeyClaimableBalance>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyClaimableBalance>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyClaimableBalance(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyLiquidityPool => Box::new(
-                ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyContractData => Box::new(
-                ReadXdrIter::<_, LedgerKeyContractData>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyContractData>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyContractData(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyContractCode => Box::new(
-                ReadXdrIter::<_, LedgerKeyContractCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyContractCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyContractCode(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyConfigSetting => Box::new(
-                ReadXdrIter::<_, LedgerKeyConfigSetting>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyConfigSetting>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyTtl => Box::new(
-                ReadXdrIter::<_, LedgerKeyTtl>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyTtl>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyTtl(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
-                ReadXdrIter::<_, EnvelopeType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, EnvelopeType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EnvelopeType(Box::new(t)))),
             ),
             TypeVariant::UpgradeType => Box::new(
-                ReadXdrIter::<_, UpgradeType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, UpgradeType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeType(Box::new(t)))),
             ),
             TypeVariant::StellarValueType => Box::new(
-                ReadXdrIter::<_, StellarValueType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, StellarValueType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueType(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseValueSignature => Box::new(
-                ReadXdrIter::<_, LedgerCloseValueSignature>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerCloseValueSignature>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseValueSignature(Box::new(t)))),
             ),
             TypeVariant::StellarValue => Box::new(
-                ReadXdrIter::<_, StellarValue>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, StellarValue>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValue(Box::new(t)))),
             ),
             TypeVariant::StellarValueExt => Box::new(
-                ReadXdrIter::<_, StellarValueExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, StellarValueExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
-                ReadXdrIter::<_, LedgerHeaderFlags>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderFlags>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderFlags(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1 => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExtensionV1>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderExtensionV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExtensionV1Ext>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderExtensionV1Ext>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::LedgerHeader => Box::new(
-                ReadXdrIter::<_, LedgerHeader>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeader>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeader(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExt => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderExt(Box::new(t)))),
             ),
             TypeVariant::LedgerUpgradeType => Box::new(
-                ReadXdrIter::<_, LedgerUpgradeType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerUpgradeType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
             ),
             TypeVariant::ConfigUpgradeSetKey => Box::new(
-                ReadXdrIter::<_, ConfigUpgradeSetKey>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ConfigUpgradeSetKey>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t)))),
             ),
             TypeVariant::LedgerUpgrade => Box::new(
-                ReadXdrIter::<_, LedgerUpgrade>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerUpgrade>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
             ),
             TypeVariant::ConfigUpgradeSet => Box::new(
-                ReadXdrIter::<_, ConfigUpgradeSet>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ConfigUpgradeSet>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
-                ReadXdrIter::<_, BucketEntryType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, BucketEntryType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t)))),
             ),
             TypeVariant::BucketMetadata => Box::new(
-                ReadXdrIter::<_, BucketMetadata>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, BucketMetadata>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t)))),
             ),
             TypeVariant::BucketMetadataExt => Box::new(
-                ReadXdrIter::<_, BucketMetadataExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, BucketMetadataExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadataExt(Box::new(t)))),
             ),
             TypeVariant::BucketEntry => Box::new(
-                ReadXdrIter::<_, BucketEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, BucketEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntry(Box::new(t)))),
             ),
             TypeVariant::TxSetComponentType => Box::new(
-                ReadXdrIter::<_, TxSetComponentType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TxSetComponentType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
-                ReadXdrIter::<_, TxSetComponent>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TxSetComponent>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponent(Box::new(t)))),
             ),
             TypeVariant::TxSetComponentTxsMaybeDiscountedFee => Box::new(
                 ReadXdrIter::<_, TxSetComponentTxsMaybeDiscountedFee>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t)))),
             ),
             TypeVariant::TransactionPhase => Box::new(
-                ReadXdrIter::<_, TransactionPhase>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionPhase>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionPhase(Box::new(t)))),
             ),
             TypeVariant::TransactionSet => Box::new(
-                ReadXdrIter::<_, TransactionSet>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionSet>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionSet(Box::new(t)))),
             ),
             TypeVariant::TransactionSetV1 => Box::new(
-                ReadXdrIter::<_, TransactionSetV1>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionSetV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionSetV1(Box::new(t)))),
             ),
             TypeVariant::GeneralizedTransactionSet => Box::new(
-                ReadXdrIter::<_, GeneralizedTransactionSet>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, GeneralizedTransactionSet>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::GeneralizedTransactionSet(Box::new(t)))),
             ),
             TypeVariant::TransactionResultPair => Box::new(
-                ReadXdrIter::<_, TransactionResultPair>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultPair>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultPair(Box::new(t)))),
             ),
             TypeVariant::TransactionResultSet => Box::new(
-                ReadXdrIter::<_, TransactionResultSet>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultSet>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultSet(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryEntry => Box::new(
-                ReadXdrIter::<_, TransactionHistoryEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionHistoryEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryEntryExt => Box::new(
-                ReadXdrIter::<_, TransactionHistoryEntryExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionHistoryEntryExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionHistoryEntryExt(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryResultEntry => Box::new(
                 ReadXdrIter::<_, TransactionHistoryResultEntry>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TransactionHistoryResultEntry(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryResultEntryExt => Box::new(
                 ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
-                ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntryExt => Box::new(
-                ReadXdrIter::<_, LedgerHeaderHistoryEntryExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderHistoryEntryExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerScpMessages => Box::new(
-                ReadXdrIter::<_, LedgerScpMessages>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerScpMessages>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerScpMessages(Box::new(t)))),
             ),
             TypeVariant::ScpHistoryEntryV0 => Box::new(
-                ReadXdrIter::<_, ScpHistoryEntryV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpHistoryEntryV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpHistoryEntryV0(Box::new(t)))),
             ),
             TypeVariant::ScpHistoryEntry => Box::new(
-                ReadXdrIter::<_, ScpHistoryEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ScpHistoryEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChangeType => Box::new(
-                ReadXdrIter::<_, LedgerEntryChangeType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryChangeType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryChangeType(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChange => Box::new(
-                ReadXdrIter::<_, LedgerEntryChange>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryChange>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryChange(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChanges => Box::new(
-                ReadXdrIter::<_, LedgerEntryChanges>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryChanges>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryChanges(Box::new(t)))),
             ),
             TypeVariant::OperationMeta => Box::new(
-                ReadXdrIter::<_, OperationMeta>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, OperationMeta>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV1 => Box::new(
-                ReadXdrIter::<_, TransactionMetaV1>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionMetaV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV1(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV2 => Box::new(
-                ReadXdrIter::<_, TransactionMetaV2>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionMetaV2>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t)))),
             ),
             TypeVariant::ContractEventType => Box::new(
-                ReadXdrIter::<_, ContractEventType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractEventType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEventType(Box::new(t)))),
             ),
             TypeVariant::ContractEvent => Box::new(
-                ReadXdrIter::<_, ContractEvent>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractEvent>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEvent(Box::new(t)))),
             ),
             TypeVariant::ContractEventBody => Box::new(
-                ReadXdrIter::<_, ContractEventBody>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractEventBody>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEventBody(Box::new(t)))),
             ),
             TypeVariant::ContractEventV0 => Box::new(
-                ReadXdrIter::<_, ContractEventV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractEventV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t)))),
             ),
             TypeVariant::DiagnosticEvent => Box::new(
-                ReadXdrIter::<_, DiagnosticEvent>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, DiagnosticEvent>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
             ),
             TypeVariant::SorobanTransactionMeta => Box::new(
-                ReadXdrIter::<_, SorobanTransactionMeta>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SorobanTransactionMeta>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV3 => Box::new(
-                ReadXdrIter::<_, TransactionMetaV3>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionMetaV3>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionSuccessPreImage>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t)))),
             ),
             TypeVariant::TransactionMeta => Box::new(
-                ReadXdrIter::<_, TransactionMeta>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionMeta>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionResultMeta => Box::new(
-                ReadXdrIter::<_, TransactionResultMeta>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultMeta>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
-                ReadXdrIter::<_, UpgradeEntryMeta>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, UpgradeEntryMeta>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMetaV0 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerCloseMetaV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV0(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMetaV1 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV1>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerCloseMetaV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
-                ReadXdrIter::<_, LedgerCloseMeta>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerCloseMeta>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t)))),
             ),
             TypeVariant::ErrorCode => Box::new(
-                ReadXdrIter::<_, ErrorCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ErrorCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ErrorCode(Box::new(t)))),
             ),
             TypeVariant::SError => Box::new(
-                ReadXdrIter::<_, SError>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SError>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SError(Box::new(t)))),
             ),
             TypeVariant::SendMore => Box::new(
-                ReadXdrIter::<_, SendMore>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SendMore>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SendMore(Box::new(t)))),
             ),
             TypeVariant::SendMoreExtended => Box::new(
-                ReadXdrIter::<_, SendMoreExtended>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SendMoreExtended>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SendMoreExtended(Box::new(t)))),
             ),
             TypeVariant::AuthCert => Box::new(
-                ReadXdrIter::<_, AuthCert>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AuthCert>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AuthCert(Box::new(t)))),
             ),
             TypeVariant::Hello => Box::new(
-                ReadXdrIter::<_, Hello>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Hello>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Hello(Box::new(t)))),
             ),
             TypeVariant::Auth => Box::new(
-                ReadXdrIter::<_, Auth>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Auth>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Auth(Box::new(t)))),
             ),
             TypeVariant::IpAddrType => Box::new(
-                ReadXdrIter::<_, IpAddrType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, IpAddrType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::IpAddrType(Box::new(t)))),
             ),
             TypeVariant::PeerAddress => Box::new(
-                ReadXdrIter::<_, PeerAddress>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PeerAddress>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerAddress(Box::new(t)))),
             ),
             TypeVariant::PeerAddressIp => Box::new(
-                ReadXdrIter::<_, PeerAddressIp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PeerAddressIp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerAddressIp(Box::new(t)))),
             ),
             TypeVariant::MessageType => Box::new(
-                ReadXdrIter::<_, MessageType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, MessageType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MessageType(Box::new(t)))),
             ),
             TypeVariant::DontHave => Box::new(
-                ReadXdrIter::<_, DontHave>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, DontHave>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DontHave(Box::new(t)))),
             ),
             TypeVariant::SurveyMessageCommandType => Box::new(
-                ReadXdrIter::<_, SurveyMessageCommandType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SurveyMessageCommandType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t)))),
             ),
             TypeVariant::SurveyMessageResponseType => Box::new(
-                ReadXdrIter::<_, SurveyMessageResponseType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SurveyMessageResponseType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t)))),
             ),
             TypeVariant::SurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, SurveyRequestMessage>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SurveyRequestMessage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
             ),
             TypeVariant::SignedSurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t)))),
             ),
             TypeVariant::EncryptedBody => Box::new(
-                ReadXdrIter::<_, EncryptedBody>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, EncryptedBody>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EncryptedBody(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, SurveyResponseMessage>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SurveyResponseMessage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t)))),
             ),
             TypeVariant::SignedSurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t)))),
             ),
             TypeVariant::PeerStats => Box::new(
-                ReadXdrIter::<_, PeerStats>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PeerStats>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStats(Box::new(t)))),
             ),
             TypeVariant::PeerStatList => Box::new(
-                ReadXdrIter::<_, PeerStatList>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PeerStatList>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
             TypeVariant::TopologyResponseBodyV0 => Box::new(
-                ReadXdrIter::<_, TopologyResponseBodyV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TopologyResponseBodyV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t)))),
             ),
             TypeVariant::TopologyResponseBodyV1 => Box::new(
-                ReadXdrIter::<_, TopologyResponseBodyV1>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TopologyResponseBodyV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
-                ReadXdrIter::<_, SurveyResponseBody>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SurveyResponseBody>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyResponseBody(Box::new(t)))),
             ),
             TypeVariant::TxAdvertVector => Box::new(
-                ReadXdrIter::<_, TxAdvertVector>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TxAdvertVector>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxAdvertVector(Box::new(t)))),
             ),
             TypeVariant::FloodAdvert => Box::new(
-                ReadXdrIter::<_, FloodAdvert>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, FloodAdvert>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::FloodAdvert(Box::new(t)))),
             ),
             TypeVariant::TxDemandVector => Box::new(
-                ReadXdrIter::<_, TxDemandVector>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TxDemandVector>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxDemandVector(Box::new(t)))),
             ),
             TypeVariant::FloodDemand => Box::new(
-                ReadXdrIter::<_, FloodDemand>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, FloodDemand>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::FloodDemand(Box::new(t)))),
             ),
             TypeVariant::StellarMessage => Box::new(
-                ReadXdrIter::<_, StellarMessage>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, StellarMessage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarMessage(Box::new(t)))),
             ),
             TypeVariant::AuthenticatedMessage => Box::new(
-                ReadXdrIter::<_, AuthenticatedMessage>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AuthenticatedMessage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AuthenticatedMessage(Box::new(t)))),
             ),
             TypeVariant::AuthenticatedMessageV0 => Box::new(
-                ReadXdrIter::<_, AuthenticatedMessageV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AuthenticatedMessageV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AuthenticatedMessageV0(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolParameters => Box::new(
-                ReadXdrIter::<_, LiquidityPoolParameters>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolParameters>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolParameters(Box::new(t)))),
             ),
             TypeVariant::MuxedAccount => Box::new(
-                ReadXdrIter::<_, MuxedAccount>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, MuxedAccount>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedAccount(Box::new(t)))),
             ),
             TypeVariant::MuxedAccountMed25519 => Box::new(
-                ReadXdrIter::<_, MuxedAccountMed25519>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, MuxedAccountMed25519>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedAccountMed25519(Box::new(t)))),
             ),
             TypeVariant::DecoratedSignature => Box::new(
-                ReadXdrIter::<_, DecoratedSignature>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, DecoratedSignature>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t)))),
             ),
             TypeVariant::OperationType => Box::new(
-                ReadXdrIter::<_, OperationType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, OperationType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationType(Box::new(t)))),
             ),
             TypeVariant::CreateAccountOp => Box::new(
-                ReadXdrIter::<_, CreateAccountOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, CreateAccountOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateAccountOp(Box::new(t)))),
             ),
             TypeVariant::PaymentOp => Box::new(
-                ReadXdrIter::<_, PaymentOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PaymentOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PaymentOp(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveOp => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PathPaymentStrictReceiveOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendOp => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PathPaymentStrictSendOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendOp(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferOp => Box::new(
-                ReadXdrIter::<_, ManageSellOfferOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ManageSellOfferOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageSellOfferOp(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferOp => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ManageBuyOfferOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageBuyOfferOp(Box::new(t)))),
             ),
             TypeVariant::CreatePassiveSellOfferOp => Box::new(
-                ReadXdrIter::<_, CreatePassiveSellOfferOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, CreatePassiveSellOfferOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreatePassiveSellOfferOp(Box::new(t)))),
             ),
             TypeVariant::SetOptionsOp => Box::new(
-                ReadXdrIter::<_, SetOptionsOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SetOptionsOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetOptionsOp(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustAsset => Box::new(
-                ReadXdrIter::<_, ChangeTrustAsset>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ChangeTrustAsset>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ChangeTrustAsset(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustOp => Box::new(
-                ReadXdrIter::<_, ChangeTrustOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ChangeTrustOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ChangeTrustOp(Box::new(t)))),
             ),
             TypeVariant::AllowTrustOp => Box::new(
-                ReadXdrIter::<_, AllowTrustOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AllowTrustOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AllowTrustOp(Box::new(t)))),
             ),
             TypeVariant::ManageDataOp => Box::new(
-                ReadXdrIter::<_, ManageDataOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ManageDataOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageDataOp(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceOp => Box::new(
-                ReadXdrIter::<_, BumpSequenceOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, BumpSequenceOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BumpSequenceOp(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, CreateClaimableBalanceOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, CreateClaimableBalanceOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, ClaimClaimableBalanceOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimClaimableBalanceOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesOp => Box::new(
                 ReadXdrIter::<_, BeginSponsoringFutureReservesOp>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipType => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, RevokeSponsorshipType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::RevokeSponsorshipType(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipOp => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, RevokeSponsorshipOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::RevokeSponsorshipOp(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipOpSigner => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipOpSigner>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, RevokeSponsorshipOpSigner>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t)))),
             ),
             TypeVariant::ClawbackOp => Box::new(
-                ReadXdrIter::<_, ClawbackOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClawbackOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackOp(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, ClawbackClaimableBalanceOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClawbackClaimableBalanceOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsOp => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SetTrustLineFlagsOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsOp(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositOp => Box::new(
-                ReadXdrIter::<_, LiquidityPoolDepositOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolDepositOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolDepositOp(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawOp => Box::new(
-                ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))),
             ),
             TypeVariant::HostFunctionType => Box::new(
-                ReadXdrIter::<_, HostFunctionType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, HostFunctionType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t)))),
             ),
             TypeVariant::ContractIdPreimageType => Box::new(
-                ReadXdrIter::<_, ContractIdPreimageType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractIdPreimageType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractIdPreimageType(Box::new(t)))),
             ),
             TypeVariant::ContractIdPreimage => Box::new(
-                ReadXdrIter::<_, ContractIdPreimage>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ContractIdPreimage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractIdPreimage(Box::new(t)))),
             ),
             TypeVariant::ContractIdPreimageFromAddress => Box::new(
                 ReadXdrIter::<_, ContractIdPreimageFromAddress>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ContractIdPreimageFromAddress(Box::new(t)))),
             ),
             TypeVariant::CreateContractArgs => Box::new(
-                ReadXdrIter::<_, CreateContractArgs>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, CreateContractArgs>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
             ),
             TypeVariant::InvokeContractArgs => Box::new(
-                ReadXdrIter::<_, InvokeContractArgs>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, InvokeContractArgs>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeContractArgs(Box::new(t)))),
             ),
             TypeVariant::HostFunction => Box::new(
-                ReadXdrIter::<_, HostFunction>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, HostFunction>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
             ),
             TypeVariant::SorobanAuthorizedFunctionType => Box::new(
                 ReadXdrIter::<_, SorobanAuthorizedFunctionType>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t)))),
             ),
             TypeVariant::SorobanAuthorizedFunction => Box::new(
-                ReadXdrIter::<_, SorobanAuthorizedFunction>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SorobanAuthorizedFunction>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAuthorizedFunction(Box::new(t)))),
             ),
             TypeVariant::SorobanAuthorizedInvocation => Box::new(
-                ReadXdrIter::<_, SorobanAuthorizedInvocation>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SorobanAuthorizedInvocation>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAuthorizedInvocation(Box::new(t)))),
             ),
             TypeVariant::SorobanAddressCredentials => Box::new(
-                ReadXdrIter::<_, SorobanAddressCredentials>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SorobanAddressCredentials>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
             ),
             TypeVariant::SorobanCredentialsType => Box::new(
-                ReadXdrIter::<_, SorobanCredentialsType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SorobanCredentialsType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
             ),
             TypeVariant::SorobanCredentials => Box::new(
-                ReadXdrIter::<_, SorobanCredentials>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SorobanCredentials>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanCredentials(Box::new(t)))),
             ),
             TypeVariant::SorobanAuthorizationEntry => Box::new(
-                ReadXdrIter::<_, SorobanAuthorizationEntry>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SorobanAuthorizationEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
-                ReadXdrIter::<_, InvokeHostFunctionOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, InvokeHostFunctionOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
             ),
             TypeVariant::ExtendFootprintTtlOp => Box::new(
-                ReadXdrIter::<_, ExtendFootprintTtlOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ExtendFootprintTtlOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtendFootprintTtlOp(Box::new(t)))),
             ),
             TypeVariant::RestoreFootprintOp => Box::new(
-                ReadXdrIter::<_, RestoreFootprintOp>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, RestoreFootprintOp>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::RestoreFootprintOp(Box::new(t)))),
             ),
             TypeVariant::Operation => Box::new(
-                ReadXdrIter::<_, Operation>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Operation>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Operation(Box::new(t)))),
             ),
             TypeVariant::OperationBody => Box::new(
-                ReadXdrIter::<_, OperationBody>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, OperationBody>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationBody(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimage => Box::new(
-                ReadXdrIter::<_, HashIdPreimage>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, HashIdPreimage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimage(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageOperationId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageOperationId>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, HashIdPreimageOperationId>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimageOperationId(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageRevokeId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageRevokeId>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, HashIdPreimageRevokeId>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageContractId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageContractId>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, HashIdPreimageContractId>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageSorobanAuthorization => Box::new(
                 ReadXdrIter::<_, HashIdPreimageSorobanAuthorization>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
-                ReadXdrIter::<_, MemoType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, MemoType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
             ),
             TypeVariant::Memo => Box::new(
-                ReadXdrIter::<_, Memo>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Memo>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Memo(Box::new(t)))),
             ),
             TypeVariant::TimeBounds => Box::new(
-                ReadXdrIter::<_, TimeBounds>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TimeBounds>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimeBounds(Box::new(t)))),
             ),
             TypeVariant::LedgerBounds => Box::new(
-                ReadXdrIter::<_, LedgerBounds>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerBounds>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerBounds(Box::new(t)))),
             ),
             TypeVariant::PreconditionsV2 => Box::new(
-                ReadXdrIter::<_, PreconditionsV2>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PreconditionsV2>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PreconditionsV2(Box::new(t)))),
             ),
             TypeVariant::PreconditionType => Box::new(
-                ReadXdrIter::<_, PreconditionType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PreconditionType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PreconditionType(Box::new(t)))),
             ),
             TypeVariant::Preconditions => Box::new(
-                ReadXdrIter::<_, Preconditions>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Preconditions>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Preconditions(Box::new(t)))),
             ),
             TypeVariant::LedgerFootprint => Box::new(
-                ReadXdrIter::<_, LedgerFootprint>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LedgerFootprint>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
             ),
             TypeVariant::SorobanResources => Box::new(
-                ReadXdrIter::<_, SorobanResources>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SorobanResources>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanResources(Box::new(t)))),
             ),
             TypeVariant::SorobanTransactionData => Box::new(
-                ReadXdrIter::<_, SorobanTransactionData>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SorobanTransactionData>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
-                ReadXdrIter::<_, TransactionV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionV0(Box::new(t)))),
             ),
             TypeVariant::TransactionV0Ext => Box::new(
-                ReadXdrIter::<_, TransactionV0Ext>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionV0Ext>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionV0Ext(Box::new(t)))),
             ),
             TypeVariant::TransactionV0Envelope => Box::new(
-                ReadXdrIter::<_, TransactionV0Envelope>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionV0Envelope>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionV0Envelope(Box::new(t)))),
             ),
             TypeVariant::Transaction => Box::new(
-                ReadXdrIter::<_, Transaction>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Transaction>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Transaction(Box::new(t)))),
             ),
             TypeVariant::TransactionExt => Box::new(
-                ReadXdrIter::<_, TransactionExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionExt(Box::new(t)))),
             ),
             TypeVariant::TransactionV1Envelope => Box::new(
-                ReadXdrIter::<_, TransactionV1Envelope>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionV1Envelope>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionV1Envelope(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransaction => Box::new(
-                ReadXdrIter::<_, FeeBumpTransaction>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, FeeBumpTransaction>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::FeeBumpTransaction(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionInnerTx => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionInnerTx>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, FeeBumpTransactionInnerTx>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionExt => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, FeeBumpTransactionExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::FeeBumpTransactionExt(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionEnvelope => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionEnvelope>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, FeeBumpTransactionEnvelope>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t)))),
             ),
             TypeVariant::TransactionEnvelope => Box::new(
-                ReadXdrIter::<_, TransactionEnvelope>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionEnvelope>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionEnvelope(Box::new(t)))),
             ),
             TypeVariant::TransactionSignaturePayload => Box::new(
-                ReadXdrIter::<_, TransactionSignaturePayload>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionSignaturePayload>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionSignaturePayload(Box::new(t)))),
             ),
             TypeVariant::TransactionSignaturePayloadTaggedTransaction => Box::new(
                 ReadXdrIter::<_, TransactionSignaturePayloadTaggedTransaction>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| {
                     r.map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t)))
                 }),
             ),
             TypeVariant::ClaimAtomType => Box::new(
-                ReadXdrIter::<_, ClaimAtomType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimAtomType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimAtomType(Box::new(t)))),
             ),
             TypeVariant::ClaimOfferAtomV0 => Box::new(
-                ReadXdrIter::<_, ClaimOfferAtomV0>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimOfferAtomV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimOfferAtomV0(Box::new(t)))),
             ),
             TypeVariant::ClaimOfferAtom => Box::new(
-                ReadXdrIter::<_, ClaimOfferAtom>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimOfferAtom>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimOfferAtom(Box::new(t)))),
             ),
             TypeVariant::ClaimLiquidityAtom => Box::new(
-                ReadXdrIter::<_, ClaimLiquidityAtom>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimLiquidityAtom>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimLiquidityAtom(Box::new(t)))),
             ),
             TypeVariant::ClaimAtom => Box::new(
-                ReadXdrIter::<_, ClaimAtom>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimAtom>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimAtom(Box::new(t)))),
             ),
             TypeVariant::CreateAccountResultCode => Box::new(
-                ReadXdrIter::<_, CreateAccountResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, CreateAccountResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateAccountResultCode(Box::new(t)))),
             ),
             TypeVariant::CreateAccountResult => Box::new(
-                ReadXdrIter::<_, CreateAccountResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, CreateAccountResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateAccountResult(Box::new(t)))),
             ),
             TypeVariant::PaymentResultCode => Box::new(
-                ReadXdrIter::<_, PaymentResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PaymentResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PaymentResultCode(Box::new(t)))),
             ),
             TypeVariant::PaymentResult => Box::new(
-                ReadXdrIter::<_, PaymentResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PaymentResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PaymentResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultCode => Box::new(
                 ReadXdrIter::<_, PathPaymentStrictReceiveResultCode>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t)))),
             ),
             TypeVariant::SimplePaymentResult => Box::new(
-                ReadXdrIter::<_, SimplePaymentResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SimplePaymentResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SimplePaymentResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResult => Box::new(
                 ReadXdrIter::<_, PathPaymentStrictReceiveResult>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultSuccess => Box::new(
                 ReadXdrIter::<_, PathPaymentStrictReceiveResultSuccess>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResultCode => Box::new(
                 ReadXdrIter::<_, PathPaymentStrictSendResultCode>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResult => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PathPaymentStrictSendResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResultSuccess => Box::new(
                 ReadXdrIter::<_, PathPaymentStrictSendResultSuccess>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferResultCode => Box::new(
-                ReadXdrIter::<_, ManageSellOfferResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ManageSellOfferResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageSellOfferResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageOfferEffect => Box::new(
-                ReadXdrIter::<_, ManageOfferEffect>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ManageOfferEffect>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageOfferEffect(Box::new(t)))),
             ),
             TypeVariant::ManageOfferSuccessResult => Box::new(
-                ReadXdrIter::<_, ManageOfferSuccessResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ManageOfferSuccessResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageOfferSuccessResult(Box::new(t)))),
             ),
             TypeVariant::ManageOfferSuccessResultOffer => Box::new(
                 ReadXdrIter::<_, ManageOfferSuccessResultOffer>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferResult => Box::new(
-                ReadXdrIter::<_, ManageSellOfferResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ManageSellOfferResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageSellOfferResult(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferResultCode => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ManageBuyOfferResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageBuyOfferResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferResult => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ManageBuyOfferResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageBuyOfferResult(Box::new(t)))),
             ),
             TypeVariant::SetOptionsResultCode => Box::new(
-                ReadXdrIter::<_, SetOptionsResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SetOptionsResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetOptionsResultCode(Box::new(t)))),
             ),
             TypeVariant::SetOptionsResult => Box::new(
-                ReadXdrIter::<_, SetOptionsResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SetOptionsResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetOptionsResult(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustResultCode => Box::new(
-                ReadXdrIter::<_, ChangeTrustResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ChangeTrustResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ChangeTrustResultCode(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustResult => Box::new(
-                ReadXdrIter::<_, ChangeTrustResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ChangeTrustResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ChangeTrustResult(Box::new(t)))),
             ),
             TypeVariant::AllowTrustResultCode => Box::new(
-                ReadXdrIter::<_, AllowTrustResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AllowTrustResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AllowTrustResultCode(Box::new(t)))),
             ),
             TypeVariant::AllowTrustResult => Box::new(
-                ReadXdrIter::<_, AllowTrustResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AllowTrustResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AllowTrustResult(Box::new(t)))),
             ),
             TypeVariant::AccountMergeResultCode => Box::new(
-                ReadXdrIter::<_, AccountMergeResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AccountMergeResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountMergeResultCode(Box::new(t)))),
             ),
             TypeVariant::AccountMergeResult => Box::new(
-                ReadXdrIter::<_, AccountMergeResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AccountMergeResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountMergeResult(Box::new(t)))),
             ),
             TypeVariant::InflationResultCode => Box::new(
-                ReadXdrIter::<_, InflationResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, InflationResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InflationResultCode(Box::new(t)))),
             ),
             TypeVariant::InflationPayout => Box::new(
-                ReadXdrIter::<_, InflationPayout>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, InflationPayout>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InflationPayout(Box::new(t)))),
             ),
             TypeVariant::InflationResult => Box::new(
-                ReadXdrIter::<_, InflationResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, InflationResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InflationResult(Box::new(t)))),
             ),
             TypeVariant::ManageDataResultCode => Box::new(
-                ReadXdrIter::<_, ManageDataResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ManageDataResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageDataResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageDataResult => Box::new(
-                ReadXdrIter::<_, ManageDataResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ManageDataResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageDataResult(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceResultCode => Box::new(
-                ReadXdrIter::<_, BumpSequenceResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, BumpSequenceResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BumpSequenceResultCode(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceResult => Box::new(
-                ReadXdrIter::<_, BumpSequenceResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, BumpSequenceResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BumpSequenceResult(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceResultCode => Box::new(
                 ReadXdrIter::<_, CreateClaimableBalanceResultCode>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, CreateClaimableBalanceResult>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t)))),
+                ReadXdrIter::<_, CreateClaimableBalanceResult>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceResultCode => Box::new(
                 ReadXdrIter::<_, ClaimClaimableBalanceResultCode>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, ClaimClaimableBalanceResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClaimClaimableBalanceResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResultCode => Box::new(
                 ReadXdrIter::<_, BeginSponsoringFutureReservesResultCode>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResult => Box::new(
                 ReadXdrIter::<_, BeginSponsoringFutureReservesResult>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResultCode => Box::new(
                 ReadXdrIter::<_, EndSponsoringFutureReservesResultCode>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResult => Box::new(
                 ReadXdrIter::<_, EndSponsoringFutureReservesResult>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipResultCode => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, RevokeSponsorshipResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::RevokeSponsorshipResultCode(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipResult => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, RevokeSponsorshipResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::RevokeSponsorshipResult(Box::new(t)))),
             ),
             TypeVariant::ClawbackResultCode => Box::new(
-                ReadXdrIter::<_, ClawbackResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClawbackResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackResultCode(Box::new(t)))),
             ),
             TypeVariant::ClawbackResult => Box::new(
-                ReadXdrIter::<_, ClawbackResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ClawbackResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackResult(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResultCode => Box::new(
                 ReadXdrIter::<_, ClawbackClaimableBalanceResultCode>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResult => Box::new(
                 ReadXdrIter::<_, ClawbackClaimableBalanceResult>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsResultCode => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SetTrustLineFlagsResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsResult => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SetTrustLineFlagsResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsResult(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositResultCode => Box::new(
                 ReadXdrIter::<_, LiquidityPoolDepositResultCode>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositResult => Box::new(
-                ReadXdrIter::<_, LiquidityPoolDepositResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolDepositResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolDepositResult(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResultCode => Box::new(
                 ReadXdrIter::<_, LiquidityPoolWithdrawResultCode>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResult => Box::new(
-                ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionResultCode => Box::new(
-                ReadXdrIter::<_, InvokeHostFunctionResultCode>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::InvokeHostFunctionResultCode(Box::new(t)))),
+                ReadXdrIter::<_, InvokeHostFunctionResultCode>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::InvokeHostFunctionResultCode(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionResult => Box::new(
-                ReadXdrIter::<_, InvokeHostFunctionResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, InvokeHostFunctionResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t)))),
             ),
             TypeVariant::ExtendFootprintTtlResultCode => Box::new(
-                ReadXdrIter::<_, ExtendFootprintTtlResultCode>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ExtendFootprintTtlResultCode(Box::new(t)))),
+                ReadXdrIter::<_, ExtendFootprintTtlResultCode>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ExtendFootprintTtlResultCode(Box::new(t)))),
             ),
             TypeVariant::ExtendFootprintTtlResult => Box::new(
-                ReadXdrIter::<_, ExtendFootprintTtlResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ExtendFootprintTtlResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtendFootprintTtlResult(Box::new(t)))),
             ),
             TypeVariant::RestoreFootprintResultCode => Box::new(
-                ReadXdrIter::<_, RestoreFootprintResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, RestoreFootprintResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::RestoreFootprintResultCode(Box::new(t)))),
             ),
             TypeVariant::RestoreFootprintResult => Box::new(
-                ReadXdrIter::<_, RestoreFootprintResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, RestoreFootprintResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::RestoreFootprintResult(Box::new(t)))),
             ),
             TypeVariant::OperationResultCode => Box::new(
-                ReadXdrIter::<_, OperationResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, OperationResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t)))),
             ),
             TypeVariant::OperationResult => Box::new(
-                ReadXdrIter::<_, OperationResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, OperationResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationResult(Box::new(t)))),
             ),
             TypeVariant::OperationResultTr => Box::new(
-                ReadXdrIter::<_, OperationResultTr>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, OperationResultTr>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationResultTr(Box::new(t)))),
             ),
             TypeVariant::TransactionResultCode => Box::new(
-                ReadXdrIter::<_, TransactionResultCode>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultCode>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultCode(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResult => Box::new(
-                ReadXdrIter::<_, InnerTransactionResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, InnerTransactionResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InnerTransactionResult(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultResult => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultResult>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t)))),
+                ReadXdrIter::<_, InnerTransactionResultResult>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultExt => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, InnerTransactionResultExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InnerTransactionResultExt(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultPair => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultPair>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, InnerTransactionResultPair>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InnerTransactionResultPair(Box::new(t)))),
             ),
             TypeVariant::TransactionResult => Box::new(
-                ReadXdrIter::<_, TransactionResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResult(Box::new(t)))),
             ),
             TypeVariant::TransactionResultResult => Box::new(
-                ReadXdrIter::<_, TransactionResultResult>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultResult>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultResult(Box::new(t)))),
             ),
             TypeVariant::TransactionResultExt => Box::new(
-                ReadXdrIter::<_, TransactionResultExt>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultExt(Box::new(t)))),
             ),
             TypeVariant::Hash => Box::new(
-                ReadXdrIter::<_, Hash>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Hash>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Hash(Box::new(t)))),
             ),
             TypeVariant::Uint256 => Box::new(
-                ReadXdrIter::<_, Uint256>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Uint256>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint256(Box::new(t)))),
             ),
             TypeVariant::Uint32 => Box::new(
-                ReadXdrIter::<_, Uint32>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Uint32>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint32(Box::new(t)))),
             ),
             TypeVariant::Int32 => Box::new(
-                ReadXdrIter::<_, Int32>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Int32>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int32(Box::new(t)))),
             ),
             TypeVariant::Uint64 => Box::new(
-                ReadXdrIter::<_, Uint64>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Uint64>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint64(Box::new(t)))),
             ),
             TypeVariant::Int64 => Box::new(
-                ReadXdrIter::<_, Int64>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Int64>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int64(Box::new(t)))),
             ),
             TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, TimePoint>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, TimePoint>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
             ),
             TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Duration>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Duration>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
             TypeVariant::ExtensionPoint => Box::new(
-                ReadXdrIter::<_, ExtensionPoint>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, ExtensionPoint>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
             ),
             TypeVariant::CryptoKeyType => Box::new(
-                ReadXdrIter::<_, CryptoKeyType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, CryptoKeyType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CryptoKeyType(Box::new(t)))),
             ),
             TypeVariant::PublicKeyType => Box::new(
-                ReadXdrIter::<_, PublicKeyType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PublicKeyType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PublicKeyType(Box::new(t)))),
             ),
             TypeVariant::SignerKeyType => Box::new(
-                ReadXdrIter::<_, SignerKeyType>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SignerKeyType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignerKeyType(Box::new(t)))),
             ),
             TypeVariant::PublicKey => Box::new(
-                ReadXdrIter::<_, PublicKey>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, PublicKey>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PublicKey(Box::new(t)))),
             ),
             TypeVariant::SignerKey => Box::new(
-                ReadXdrIter::<_, SignerKey>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SignerKey>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignerKey(Box::new(t)))),
             ),
             TypeVariant::SignerKeyEd25519SignedPayload => Box::new(
                 ReadXdrIter::<_, SignerKeyEd25519SignedPayload>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t)))),
             ),
             TypeVariant::Signature => Box::new(
-                ReadXdrIter::<_, Signature>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Signature>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Signature(Box::new(t)))),
             ),
             TypeVariant::SignatureHint => Box::new(
-                ReadXdrIter::<_, SignatureHint>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, SignatureHint>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignatureHint(Box::new(t)))),
             ),
             TypeVariant::NodeId => Box::new(
-                ReadXdrIter::<_, NodeId>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, NodeId>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
             ),
             TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, AccountId>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, AccountId>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
             ),
             TypeVariant::Curve25519Secret => Box::new(
-                ReadXdrIter::<_, Curve25519Secret>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Curve25519Secret>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t)))),
             ),
             TypeVariant::Curve25519Public => Box::new(
-                ReadXdrIter::<_, Curve25519Public>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Curve25519Public>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Curve25519Public(Box::new(t)))),
             ),
             TypeVariant::HmacSha256Key => Box::new(
-                ReadXdrIter::<_, HmacSha256Key>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, HmacSha256Key>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Key(Box::new(t)))),
             ),
             TypeVariant::HmacSha256Mac => Box::new(
-                ReadXdrIter::<_, HmacSha256Mac>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, HmacSha256Mac>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t)))),
             ),
         }
@@ -47983,2113 +47927,2059 @@ impl Type {
     #[allow(clippy::too_many_lines)]
     pub fn read_xdr_framed_iter<R: Read>(
         v: TypeVariant,
-        r: &mut DepthLimitedRead<R>,
+        r: &mut Limited<R>,
     ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
         match v {
             TypeVariant::Value => Box::new(
-                ReadXdrIter::<_, Frame<Value>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Value>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Value(Box::new(t.0)))),
             ),
             TypeVariant::ScpBallot => Box::new(
-                ReadXdrIter::<_, Frame<ScpBallot>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScpBallot>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpBallot(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatementType => Box::new(
-                ReadXdrIter::<_, Frame<ScpStatementType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScpStatementType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementType(Box::new(t.0)))),
             ),
             TypeVariant::ScpNomination => Box::new(
-                ReadXdrIter::<_, Frame<ScpNomination>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScpNomination>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpNomination(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatement => Box::new(
-                ReadXdrIter::<_, Frame<ScpStatement>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScpStatement>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatement(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatementPledges => Box::new(
-                ReadXdrIter::<_, Frame<ScpStatementPledges>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScpStatementPledges>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementPledges(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatementPrepare => Box::new(
-                ReadXdrIter::<_, Frame<ScpStatementPrepare>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScpStatementPrepare>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementPrepare(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatementConfirm => Box::new(
-                ReadXdrIter::<_, Frame<ScpStatementConfirm>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScpStatementConfirm>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementConfirm(Box::new(t.0)))),
             ),
             TypeVariant::ScpStatementExternalize => Box::new(
                 ReadXdrIter::<_, Frame<ScpStatementExternalize>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ScpStatementExternalize(Box::new(t.0)))),
             ),
             TypeVariant::ScpEnvelope => Box::new(
-                ReadXdrIter::<_, Frame<ScpEnvelope>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScpEnvelope>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpEnvelope(Box::new(t.0)))),
             ),
             TypeVariant::ScpQuorumSet => Box::new(
-                ReadXdrIter::<_, Frame<ScpQuorumSet>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScpQuorumSet>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractExecutionLanesV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingContractComputeV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractComputeV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractLedgerCostV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractHistoricalDataV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingContractEventsV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractEventsV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractEventsV0(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractBandwidthV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t.0)))),
             ),
             TypeVariant::ContractCostType => Box::new(
-                ReadXdrIter::<_, Frame<ContractCostType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ContractCostType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostType(Box::new(t.0)))),
             ),
             TypeVariant::ContractCostParamEntry => Box::new(
                 ReadXdrIter::<_, Frame<ContractCostParamEntry>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t.0)))),
             ),
             TypeVariant::StateArchivalSettings => Box::new(
-                ReadXdrIter::<_, Frame<StateArchivalSettings>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::StateArchivalSettings(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<StateArchivalSettings>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::StateArchivalSettings(Box::new(t.0)))),
             ),
             TypeVariant::EvictionIterator => Box::new(
-                ReadXdrIter::<_, Frame<EvictionIterator>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<EvictionIterator>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t.0)))),
             ),
             TypeVariant::ContractCostParams => Box::new(
-                ReadXdrIter::<_, Frame<ContractCostParams>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ContractCostParams>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingId => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingId>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ConfigSettingId>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingEntry => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ConfigSettingEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t.0)))),
             ),
             TypeVariant::ScEnvMetaKind => Box::new(
-                ReadXdrIter::<_, Frame<ScEnvMetaKind>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScEnvMetaKind>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t.0)))),
             ),
             TypeVariant::ScEnvMetaEntry => Box::new(
-                ReadXdrIter::<_, Frame<ScEnvMetaEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScEnvMetaEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t.0)))),
             ),
             TypeVariant::ScMetaV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScMetaV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScMetaV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMetaV0(Box::new(t.0)))),
             ),
             TypeVariant::ScMetaKind => Box::new(
-                ReadXdrIter::<_, Frame<ScMetaKind>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScMetaKind>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMetaKind(Box::new(t.0)))),
             ),
             TypeVariant::ScMetaEntry => Box::new(
-                ReadXdrIter::<_, Frame<ScMetaEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScMetaEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMetaEntry(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecType => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecType(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecTypeOption => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecTypeOption>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecTypeOption>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeOption(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecTypeResult => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecTypeResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecTypeResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeResult(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecTypeVec => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecTypeVec>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecTypeVec>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeVec(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecTypeMap => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecTypeMap>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecTypeMap>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecTypeTuple => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecTypeTuple>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecTypeTuple>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeTuple(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecTypeBytesN => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecTypeBytesN>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecTypeBytesN>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeBytesN(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecTypeUdt => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecTypeUdt>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecTypeUdt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecTypeDef => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecTypeDef>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecTypeDef>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeDef(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtStructFieldV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecUdtStructFieldV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ScSpecUdtStructFieldV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtStructV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecUdtStructV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecUdtStructV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseVoidV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseVoidV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseVoidV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseTupleV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseTupleV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseTupleV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseV0Kind => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseV0Kind>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0Kind(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionCaseV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtUnionV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecUdtUnionV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecUdtUnionV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtEnumCaseV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecUdtEnumCaseV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecUdtEnumCaseV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtEnumCaseV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtEnumV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecUdtEnumV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecUdtEnumV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtEnumV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtErrorEnumCaseV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScSpecUdtErrorEnumCaseV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumCaseV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecUdtErrorEnumV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecUdtErrorEnumV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecUdtErrorEnumV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecFunctionInputV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecFunctionInputV0>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ScSpecFunctionInputV0>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecFunctionV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecFunctionV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecFunctionV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecEntryKind => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecEntryKind>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecEntryKind>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t.0)))),
             ),
             TypeVariant::ScSpecEntry => Box::new(
-                ReadXdrIter::<_, Frame<ScSpecEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSpecEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t.0)))),
             ),
             TypeVariant::ScValType => Box::new(
-                ReadXdrIter::<_, Frame<ScValType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScValType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t.0)))),
             ),
             TypeVariant::ScErrorType => Box::new(
-                ReadXdrIter::<_, Frame<ScErrorType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScErrorType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScErrorType(Box::new(t.0)))),
             ),
             TypeVariant::ScErrorCode => Box::new(
-                ReadXdrIter::<_, Frame<ScErrorCode>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScErrorCode>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScErrorCode(Box::new(t.0)))),
             ),
             TypeVariant::ScError => Box::new(
-                ReadXdrIter::<_, Frame<ScError>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScError>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScError(Box::new(t.0)))),
             ),
             TypeVariant::UInt128Parts => Box::new(
-                ReadXdrIter::<_, Frame<UInt128Parts>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<UInt128Parts>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t.0)))),
             ),
             TypeVariant::Int128Parts => Box::new(
-                ReadXdrIter::<_, Frame<Int128Parts>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Int128Parts>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t.0)))),
             ),
             TypeVariant::UInt256Parts => Box::new(
-                ReadXdrIter::<_, Frame<UInt256Parts>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<UInt256Parts>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t.0)))),
             ),
             TypeVariant::Int256Parts => Box::new(
-                ReadXdrIter::<_, Frame<Int256Parts>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Int256Parts>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int256Parts(Box::new(t.0)))),
             ),
             TypeVariant::ContractExecutableType => Box::new(
                 ReadXdrIter::<_, Frame<ContractExecutableType>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t.0)))),
             ),
             TypeVariant::ContractExecutable => Box::new(
-                ReadXdrIter::<_, Frame<ContractExecutable>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ContractExecutable>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t.0)))),
             ),
             TypeVariant::ScAddressType => Box::new(
-                ReadXdrIter::<_, Frame<ScAddressType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScAddressType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t.0)))),
             ),
             TypeVariant::ScAddress => Box::new(
-                ReadXdrIter::<_, Frame<ScAddress>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScAddress>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t.0)))),
             ),
             TypeVariant::ScVec => Box::new(
-                ReadXdrIter::<_, Frame<ScVec>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScVec>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScVec(Box::new(t.0)))),
             ),
             TypeVariant::ScMap => Box::new(
-                ReadXdrIter::<_, Frame<ScMap>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScMap>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMap(Box::new(t.0)))),
             ),
             TypeVariant::ScBytes => Box::new(
-                ReadXdrIter::<_, Frame<ScBytes>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScBytes>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScBytes(Box::new(t.0)))),
             ),
             TypeVariant::ScString => Box::new(
-                ReadXdrIter::<_, Frame<ScString>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScString>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScString(Box::new(t.0)))),
             ),
             TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, Frame<ScSymbol>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScSymbol>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSymbol(Box::new(t.0)))),
             ),
             TypeVariant::ScNonceKey => Box::new(
-                ReadXdrIter::<_, Frame<ScNonceKey>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScNonceKey>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t.0)))),
             ),
             TypeVariant::ScContractInstance => Box::new(
-                ReadXdrIter::<_, Frame<ScContractInstance>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScContractInstance>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScContractInstance(Box::new(t.0)))),
             ),
             TypeVariant::ScVal => Box::new(
-                ReadXdrIter::<_, Frame<ScVal>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScVal>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScVal(Box::new(t.0)))),
             ),
             TypeVariant::ScMapEntry => Box::new(
-                ReadXdrIter::<_, Frame<ScMapEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScMapEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t.0)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
-                ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<StoredTransactionSet>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t.0)))),
             ),
             TypeVariant::StoredDebugTransactionSet => Box::new(
                 ReadXdrIter::<_, Frame<StoredDebugTransactionSet>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::StoredDebugTransactionSet(Box::new(t.0)))),
             ),
             TypeVariant::PersistedScpStateV0 => Box::new(
-                ReadXdrIter::<_, Frame<PersistedScpStateV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PersistedScpStateV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PersistedScpStateV0(Box::new(t.0)))),
             ),
             TypeVariant::PersistedScpStateV1 => Box::new(
-                ReadXdrIter::<_, Frame<PersistedScpStateV1>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PersistedScpStateV1>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PersistedScpStateV1(Box::new(t.0)))),
             ),
             TypeVariant::PersistedScpState => Box::new(
-                ReadXdrIter::<_, Frame<PersistedScpState>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PersistedScpState>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t.0)))),
             ),
             TypeVariant::Thresholds => Box::new(
-                ReadXdrIter::<_, Frame<Thresholds>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Thresholds>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Thresholds(Box::new(t.0)))),
             ),
             TypeVariant::String32 => Box::new(
-                ReadXdrIter::<_, Frame<String32>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<String32>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::String32(Box::new(t.0)))),
             ),
             TypeVariant::String64 => Box::new(
-                ReadXdrIter::<_, Frame<String64>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<String64>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::String64(Box::new(t.0)))),
             ),
             TypeVariant::SequenceNumber => Box::new(
-                ReadXdrIter::<_, Frame<SequenceNumber>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SequenceNumber>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t.0)))),
             ),
             TypeVariant::DataValue => Box::new(
-                ReadXdrIter::<_, Frame<DataValue>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<DataValue>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataValue(Box::new(t.0)))),
             ),
             TypeVariant::PoolId => Box::new(
-                ReadXdrIter::<_, Frame<PoolId>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PoolId>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PoolId(Box::new(t.0)))),
             ),
             TypeVariant::AssetCode4 => Box::new(
-                ReadXdrIter::<_, Frame<AssetCode4>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AssetCode4>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetCode4(Box::new(t.0)))),
             ),
             TypeVariant::AssetCode12 => Box::new(
-                ReadXdrIter::<_, Frame<AssetCode12>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AssetCode12>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetCode12(Box::new(t.0)))),
             ),
             TypeVariant::AssetType => Box::new(
-                ReadXdrIter::<_, Frame<AssetType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AssetType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetType(Box::new(t.0)))),
             ),
             TypeVariant::AssetCode => Box::new(
-                ReadXdrIter::<_, Frame<AssetCode>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AssetCode>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetCode(Box::new(t.0)))),
             ),
             TypeVariant::AlphaNum4 => Box::new(
-                ReadXdrIter::<_, Frame<AlphaNum4>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AlphaNum4>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AlphaNum4(Box::new(t.0)))),
             ),
             TypeVariant::AlphaNum12 => Box::new(
-                ReadXdrIter::<_, Frame<AlphaNum12>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AlphaNum12>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AlphaNum12(Box::new(t.0)))),
             ),
             TypeVariant::Asset => Box::new(
-                ReadXdrIter::<_, Frame<Asset>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Asset>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Asset(Box::new(t.0)))),
             ),
             TypeVariant::Price => Box::new(
-                ReadXdrIter::<_, Frame<Price>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Price>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Price(Box::new(t.0)))),
             ),
             TypeVariant::Liabilities => Box::new(
-                ReadXdrIter::<_, Frame<Liabilities>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Liabilities>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Liabilities(Box::new(t.0)))),
             ),
             TypeVariant::ThresholdIndexes => Box::new(
-                ReadXdrIter::<_, Frame<ThresholdIndexes>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ThresholdIndexes>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ThresholdIndexes(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryType => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerEntryType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryType(Box::new(t.0)))),
             ),
             TypeVariant::Signer => Box::new(
-                ReadXdrIter::<_, Frame<Signer>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Signer>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Signer(Box::new(t.0)))),
             ),
             TypeVariant::AccountFlags => Box::new(
-                ReadXdrIter::<_, Frame<AccountFlags>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AccountFlags>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountFlags(Box::new(t.0)))),
             ),
             TypeVariant::SponsorshipDescriptor => Box::new(
-                ReadXdrIter::<_, Frame<SponsorshipDescriptor>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::SponsorshipDescriptor(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<SponsorshipDescriptor>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SponsorshipDescriptor(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExtensionV3 => Box::new(
                 ReadXdrIter::<_, Frame<AccountEntryExtensionV3>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::AccountEntryExtensionV3(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExtensionV2 => Box::new(
                 ReadXdrIter::<_, Frame<AccountEntryExtensionV2>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::AccountEntryExtensionV2(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExtensionV2Ext => Box::new(
                 ReadXdrIter::<_, Frame<AccountEntryExtensionV2Ext>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, Frame<AccountEntryExtensionV1>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::AccountEntryExtensionV1(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExtensionV1Ext => Box::new(
                 ReadXdrIter::<_, Frame<AccountEntryExtensionV1Ext>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntry => Box::new(
-                ReadXdrIter::<_, Frame<AccountEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AccountEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntry(Box::new(t.0)))),
             ),
             TypeVariant::AccountEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<AccountEntryExt>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AccountEntryExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineFlags => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineFlags>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TrustLineFlags>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineFlags(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolType => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LiquidityPoolType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolType(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineAsset => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineAsset>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TrustLineAsset>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineAsset(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2 => Box::new(
                 ReadXdrIter::<_, Frame<TrustLineEntryExtensionV2>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2Ext => Box::new(
                 ReadXdrIter::<_, Frame<TrustLineEntryExtensionV2Ext>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntry => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TrustLineEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntry(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineEntryExt>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TrustLineEntryExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntryV1 => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineEntryV1>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TrustLineEntryV1>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryV1(Box::new(t.0)))),
             ),
             TypeVariant::TrustLineEntryV1Ext => Box::new(
-                ReadXdrIter::<_, Frame<TrustLineEntryV1Ext>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TrustLineEntryV1Ext>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryV1Ext(Box::new(t.0)))),
             ),
             TypeVariant::OfferEntryFlags => Box::new(
-                ReadXdrIter::<_, Frame<OfferEntryFlags>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<OfferEntryFlags>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OfferEntryFlags(Box::new(t.0)))),
             ),
             TypeVariant::OfferEntry => Box::new(
-                ReadXdrIter::<_, Frame<OfferEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<OfferEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OfferEntry(Box::new(t.0)))),
             ),
             TypeVariant::OfferEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<OfferEntryExt>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<OfferEntryExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OfferEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::DataEntry => Box::new(
-                ReadXdrIter::<_, Frame<DataEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<DataEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataEntry(Box::new(t.0)))),
             ),
             TypeVariant::DataEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<DataEntryExt>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<DataEntryExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::ClaimPredicateType => Box::new(
-                ReadXdrIter::<_, Frame<ClaimPredicateType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClaimPredicateType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimPredicateType(Box::new(t.0)))),
             ),
             TypeVariant::ClaimPredicate => Box::new(
-                ReadXdrIter::<_, Frame<ClaimPredicate>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClaimPredicate>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimPredicate(Box::new(t.0)))),
             ),
             TypeVariant::ClaimantType => Box::new(
-                ReadXdrIter::<_, Frame<ClaimantType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClaimantType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimantType(Box::new(t.0)))),
             ),
             TypeVariant::Claimant => Box::new(
-                ReadXdrIter::<_, Frame<Claimant>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Claimant>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Claimant(Box::new(t.0)))),
             ),
             TypeVariant::ClaimantV0 => Box::new(
-                ReadXdrIter::<_, Frame<ClaimantV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClaimantV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceIdType => Box::new(
                 ReadXdrIter::<_, Frame<ClaimableBalanceIdType>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceId => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceId>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClaimableBalanceId>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceFlags => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceFlags>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ClaimableBalanceFlags(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClaimableBalanceFlags>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ClaimableBalanceFlags(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, Frame<ClaimableBalanceEntryExtensionV1>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1Ext => Box::new(
                 ReadXdrIter::<_, Frame<ClaimableBalanceEntryExtensionV1Ext>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceEntry => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceEntry>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ClaimableBalanceEntry(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ClaimableBalanceEntry>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ClaimableBalanceEntry(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceEntryExt => Box::new(
                 ReadXdrIter::<_, Frame<ClaimableBalanceEntryExt>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClaimableBalanceEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolConstantProductParameters => Box::new(
                 ReadXdrIter::<_, Frame<LiquidityPoolConstantProductParameters>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolEntry => Box::new(
-                ReadXdrIter::<_, Frame<LiquidityPoolEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LiquidityPoolEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolEntry(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolEntryBody => Box::new(
                 ReadXdrIter::<_, Frame<LiquidityPoolEntryBody>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolEntryBody(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolEntryConstantProduct => Box::new(
                 ReadXdrIter::<_, Frame<LiquidityPoolEntryConstantProduct>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t.0)))),
             ),
             TypeVariant::ContractDataDurability => Box::new(
                 ReadXdrIter::<_, Frame<ContractDataDurability>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ContractDataDurability(Box::new(t.0)))),
             ),
             TypeVariant::ContractDataEntry => Box::new(
-                ReadXdrIter::<_, Frame<ContractDataEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ContractDataEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t.0)))),
             ),
             TypeVariant::ContractCodeEntry => Box::new(
-                ReadXdrIter::<_, Frame<ContractCodeEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ContractCodeEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t.0)))),
             ),
             TypeVariant::TtlEntry => Box::new(
-                ReadXdrIter::<_, Frame<TtlEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TtlEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TtlEntry(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerEntryExtensionV1>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryExtensionV1Ext => Box::new(
                 ReadXdrIter::<_, Frame<LedgerEntryExtensionV1Ext>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntry => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntry(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryData => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryData>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerEntryData>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryData(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryExt => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryExt>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerEntryExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKey => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKey>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerKey>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKey(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyAccount => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyAccount>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerKeyAccount>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyAccount(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyTrustLine => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyTrustLine>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerKeyTrustLine>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyTrustLine(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyOffer => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyOffer>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerKeyOffer>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyOffer(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyData => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyData>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerKeyData>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyData(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyClaimableBalance => Box::new(
                 ReadXdrIter::<_, Frame<LedgerKeyClaimableBalance>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LedgerKeyClaimableBalance(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyLiquidityPool => Box::new(
                 ReadXdrIter::<_, Frame<LedgerKeyLiquidityPool>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyContractData => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyContractData>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::LedgerKeyContractData(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerKeyContractData>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerKeyContractData(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyContractCode => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyContractCode>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::LedgerKeyContractCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerKeyContractCode>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerKeyContractCode(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyConfigSetting => Box::new(
                 ReadXdrIter::<_, Frame<LedgerKeyConfigSetting>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t.0)))),
             ),
             TypeVariant::LedgerKeyTtl => Box::new(
-                ReadXdrIter::<_, Frame<LedgerKeyTtl>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerKeyTtl>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyTtl(Box::new(t.0)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
-                ReadXdrIter::<_, Frame<EnvelopeType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<EnvelopeType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EnvelopeType(Box::new(t.0)))),
             ),
             TypeVariant::UpgradeType => Box::new(
-                ReadXdrIter::<_, Frame<UpgradeType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<UpgradeType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeType(Box::new(t.0)))),
             ),
             TypeVariant::StellarValueType => Box::new(
-                ReadXdrIter::<_, Frame<StellarValueType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<StellarValueType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueType(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseValueSignature => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseValueSignature>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LedgerCloseValueSignature(Box::new(t.0)))),
             ),
             TypeVariant::StellarValue => Box::new(
-                ReadXdrIter::<_, Frame<StellarValue>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<StellarValue>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValue(Box::new(t.0)))),
             ),
             TypeVariant::StellarValueExt => Box::new(
-                ReadXdrIter::<_, Frame<StellarValueExt>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<StellarValueExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
-                ReadXdrIter::<_, Frame<LedgerHeaderFlags>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerHeaderFlags>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderFlags(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1 => Box::new(
                 ReadXdrIter::<_, Frame<LedgerHeaderExtensionV1>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1Ext => Box::new(
                 ReadXdrIter::<_, Frame<LedgerHeaderExtensionV1Ext>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeader => Box::new(
-                ReadXdrIter::<_, Frame<LedgerHeader>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerHeader>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeader(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderExt => Box::new(
-                ReadXdrIter::<_, Frame<LedgerHeaderExt>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerHeaderExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerUpgradeType => Box::new(
-                ReadXdrIter::<_, Frame<LedgerUpgradeType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerUpgradeType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t.0)))),
             ),
             TypeVariant::ConfigUpgradeSetKey => Box::new(
-                ReadXdrIter::<_, Frame<ConfigUpgradeSetKey>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ConfigUpgradeSetKey>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t.0)))),
             ),
             TypeVariant::LedgerUpgrade => Box::new(
-                ReadXdrIter::<_, Frame<LedgerUpgrade>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerUpgrade>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t.0)))),
             ),
             TypeVariant::ConfigUpgradeSet => Box::new(
-                ReadXdrIter::<_, Frame<ConfigUpgradeSet>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ConfigUpgradeSet>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t.0)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
-                ReadXdrIter::<_, Frame<BucketEntryType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<BucketEntryType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t.0)))),
             ),
             TypeVariant::BucketMetadata => Box::new(
-                ReadXdrIter::<_, Frame<BucketMetadata>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<BucketMetadata>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t.0)))),
             ),
             TypeVariant::BucketMetadataExt => Box::new(
-                ReadXdrIter::<_, Frame<BucketMetadataExt>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<BucketMetadataExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadataExt(Box::new(t.0)))),
             ),
             TypeVariant::BucketEntry => Box::new(
-                ReadXdrIter::<_, Frame<BucketEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<BucketEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntry(Box::new(t.0)))),
             ),
             TypeVariant::TxSetComponentType => Box::new(
-                ReadXdrIter::<_, Frame<TxSetComponentType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TxSetComponentType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t.0)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
-                ReadXdrIter::<_, Frame<TxSetComponent>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TxSetComponent>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponent(Box::new(t.0)))),
             ),
             TypeVariant::TxSetComponentTxsMaybeDiscountedFee => Box::new(
                 ReadXdrIter::<_, Frame<TxSetComponentTxsMaybeDiscountedFee>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t.0)))),
             ),
             TypeVariant::TransactionPhase => Box::new(
-                ReadXdrIter::<_, Frame<TransactionPhase>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionPhase>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionPhase(Box::new(t.0)))),
             ),
             TypeVariant::TransactionSet => Box::new(
-                ReadXdrIter::<_, Frame<TransactionSet>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionSet>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionSet(Box::new(t.0)))),
             ),
             TypeVariant::TransactionSetV1 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionSetV1>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionSetV1>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionSetV1(Box::new(t.0)))),
             ),
             TypeVariant::GeneralizedTransactionSet => Box::new(
                 ReadXdrIter::<_, Frame<GeneralizedTransactionSet>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::GeneralizedTransactionSet(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultPair => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultPair>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::TransactionResultPair(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionResultPair>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionResultPair(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultSet => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultSet>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionResultSet>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultSet(Box::new(t.0)))),
             ),
             TypeVariant::TransactionHistoryEntry => Box::new(
                 ReadXdrIter::<_, Frame<TransactionHistoryEntry>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TransactionHistoryEntry(Box::new(t.0)))),
             ),
             TypeVariant::TransactionHistoryEntryExt => Box::new(
                 ReadXdrIter::<_, Frame<TransactionHistoryEntryExt>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TransactionHistoryEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::TransactionHistoryResultEntry => Box::new(
                 ReadXdrIter::<_, Frame<TransactionHistoryResultEntry>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TransactionHistoryResultEntry(Box::new(t.0)))),
             ),
             TypeVariant::TransactionHistoryResultEntryExt => Box::new(
                 ReadXdrIter::<_, Frame<TransactionHistoryResultEntryExt>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
                 ReadXdrIter::<_, Frame<LedgerHeaderHistoryEntry>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntryExt => Box::new(
                 ReadXdrIter::<_, Frame<LedgerHeaderHistoryEntryExt>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t.0)))),
             ),
             TypeVariant::LedgerScpMessages => Box::new(
-                ReadXdrIter::<_, Frame<LedgerScpMessages>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerScpMessages>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerScpMessages(Box::new(t.0)))),
             ),
             TypeVariant::ScpHistoryEntryV0 => Box::new(
-                ReadXdrIter::<_, Frame<ScpHistoryEntryV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScpHistoryEntryV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpHistoryEntryV0(Box::new(t.0)))),
             ),
             TypeVariant::ScpHistoryEntry => Box::new(
-                ReadXdrIter::<_, Frame<ScpHistoryEntry>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ScpHistoryEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpHistoryEntry(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryChangeType => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryChangeType>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::LedgerEntryChangeType(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<LedgerEntryChangeType>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerEntryChangeType(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryChange => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryChange>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerEntryChange>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryChange(Box::new(t.0)))),
             ),
             TypeVariant::LedgerEntryChanges => Box::new(
-                ReadXdrIter::<_, Frame<LedgerEntryChanges>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerEntryChanges>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryChanges(Box::new(t.0)))),
             ),
             TypeVariant::OperationMeta => Box::new(
-                ReadXdrIter::<_, Frame<OperationMeta>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<OperationMeta>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationMeta(Box::new(t.0)))),
             ),
             TypeVariant::TransactionMetaV1 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionMetaV1>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionMetaV1>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV1(Box::new(t.0)))),
             ),
             TypeVariant::TransactionMetaV2 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionMetaV2>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionMetaV2>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t.0)))),
             ),
             TypeVariant::ContractEventType => Box::new(
-                ReadXdrIter::<_, Frame<ContractEventType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ContractEventType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEventType(Box::new(t.0)))),
             ),
             TypeVariant::ContractEvent => Box::new(
-                ReadXdrIter::<_, Frame<ContractEvent>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ContractEvent>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEvent(Box::new(t.0)))),
             ),
             TypeVariant::ContractEventBody => Box::new(
-                ReadXdrIter::<_, Frame<ContractEventBody>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ContractEventBody>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEventBody(Box::new(t.0)))),
             ),
             TypeVariant::ContractEventV0 => Box::new(
-                ReadXdrIter::<_, Frame<ContractEventV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ContractEventV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t.0)))),
             ),
             TypeVariant::DiagnosticEvent => Box::new(
-                ReadXdrIter::<_, Frame<DiagnosticEvent>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<DiagnosticEvent>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t.0)))),
             ),
             TypeVariant::SorobanTransactionMeta => Box::new(
                 ReadXdrIter::<_, Frame<SorobanTransactionMeta>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanTransactionMeta(Box::new(t.0)))),
             ),
             TypeVariant::TransactionMetaV3 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionMetaV3>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionMetaV3>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t.0)))),
             ),
             TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
                 ReadXdrIter::<_, Frame<InvokeHostFunctionSuccessPreImage>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t.0)))),
             ),
             TypeVariant::TransactionMeta => Box::new(
-                ReadXdrIter::<_, Frame<TransactionMeta>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionMeta>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultMeta => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultMeta>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionResultMeta>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t.0)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
-                ReadXdrIter::<_, Frame<UpgradeEntryMeta>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<UpgradeEntryMeta>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseMetaV0 => Box::new(
-                ReadXdrIter::<_, Frame<LedgerCloseMetaV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerCloseMetaV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV0(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseMetaV1 => Box::new(
-                ReadXdrIter::<_, Frame<LedgerCloseMetaV1>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerCloseMetaV1>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t.0)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
-                ReadXdrIter::<_, Frame<LedgerCloseMeta>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerCloseMeta>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t.0)))),
             ),
             TypeVariant::ErrorCode => Box::new(
-                ReadXdrIter::<_, Frame<ErrorCode>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ErrorCode>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ErrorCode(Box::new(t.0)))),
             ),
             TypeVariant::SError => Box::new(
-                ReadXdrIter::<_, Frame<SError>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SError>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SError(Box::new(t.0)))),
             ),
             TypeVariant::SendMore => Box::new(
-                ReadXdrIter::<_, Frame<SendMore>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SendMore>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SendMore(Box::new(t.0)))),
             ),
             TypeVariant::SendMoreExtended => Box::new(
-                ReadXdrIter::<_, Frame<SendMoreExtended>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SendMoreExtended>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SendMoreExtended(Box::new(t.0)))),
             ),
             TypeVariant::AuthCert => Box::new(
-                ReadXdrIter::<_, Frame<AuthCert>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AuthCert>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AuthCert(Box::new(t.0)))),
             ),
             TypeVariant::Hello => Box::new(
-                ReadXdrIter::<_, Frame<Hello>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Hello>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Hello(Box::new(t.0)))),
             ),
             TypeVariant::Auth => Box::new(
-                ReadXdrIter::<_, Frame<Auth>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Auth>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Auth(Box::new(t.0)))),
             ),
             TypeVariant::IpAddrType => Box::new(
-                ReadXdrIter::<_, Frame<IpAddrType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<IpAddrType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::IpAddrType(Box::new(t.0)))),
             ),
             TypeVariant::PeerAddress => Box::new(
-                ReadXdrIter::<_, Frame<PeerAddress>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PeerAddress>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerAddress(Box::new(t.0)))),
             ),
             TypeVariant::PeerAddressIp => Box::new(
-                ReadXdrIter::<_, Frame<PeerAddressIp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PeerAddressIp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerAddressIp(Box::new(t.0)))),
             ),
             TypeVariant::MessageType => Box::new(
-                ReadXdrIter::<_, Frame<MessageType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<MessageType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MessageType(Box::new(t.0)))),
             ),
             TypeVariant::DontHave => Box::new(
-                ReadXdrIter::<_, Frame<DontHave>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<DontHave>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DontHave(Box::new(t.0)))),
             ),
             TypeVariant::SurveyMessageCommandType => Box::new(
                 ReadXdrIter::<_, Frame<SurveyMessageCommandType>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t.0)))),
             ),
             TypeVariant::SurveyMessageResponseType => Box::new(
                 ReadXdrIter::<_, Frame<SurveyMessageResponseType>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t.0)))),
             ),
             TypeVariant::SurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, Frame<SurveyRequestMessage>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SurveyRequestMessage>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t.0)))),
             ),
             TypeVariant::SignedSurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, Frame<SignedSurveyRequestMessage>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t.0)))),
             ),
             TypeVariant::EncryptedBody => Box::new(
-                ReadXdrIter::<_, Frame<EncryptedBody>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<EncryptedBody>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::EncryptedBody(Box::new(t.0)))),
             ),
             TypeVariant::SurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, Frame<SurveyResponseMessage>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<SurveyResponseMessage>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t.0)))),
             ),
             TypeVariant::SignedSurveyResponseMessage => Box::new(
                 ReadXdrIter::<_, Frame<SignedSurveyResponseMessage>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t.0)))),
             ),
             TypeVariant::PeerStats => Box::new(
-                ReadXdrIter::<_, Frame<PeerStats>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PeerStats>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStats(Box::new(t.0)))),
             ),
             TypeVariant::PeerStatList => Box::new(
-                ReadXdrIter::<_, Frame<PeerStatList>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PeerStatList>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t.0)))),
             ),
             TypeVariant::TopologyResponseBodyV0 => Box::new(
                 ReadXdrIter::<_, Frame<TopologyResponseBodyV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t.0)))),
             ),
             TypeVariant::TopologyResponseBodyV1 => Box::new(
                 ReadXdrIter::<_, Frame<TopologyResponseBodyV1>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t.0)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
-                ReadXdrIter::<_, Frame<SurveyResponseBody>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SurveyResponseBody>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyResponseBody(Box::new(t.0)))),
             ),
             TypeVariant::TxAdvertVector => Box::new(
-                ReadXdrIter::<_, Frame<TxAdvertVector>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TxAdvertVector>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxAdvertVector(Box::new(t.0)))),
             ),
             TypeVariant::FloodAdvert => Box::new(
-                ReadXdrIter::<_, Frame<FloodAdvert>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<FloodAdvert>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::FloodAdvert(Box::new(t.0)))),
             ),
             TypeVariant::TxDemandVector => Box::new(
-                ReadXdrIter::<_, Frame<TxDemandVector>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TxDemandVector>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxDemandVector(Box::new(t.0)))),
             ),
             TypeVariant::FloodDemand => Box::new(
-                ReadXdrIter::<_, Frame<FloodDemand>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<FloodDemand>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::FloodDemand(Box::new(t.0)))),
             ),
             TypeVariant::StellarMessage => Box::new(
-                ReadXdrIter::<_, Frame<StellarMessage>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<StellarMessage>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarMessage(Box::new(t.0)))),
             ),
             TypeVariant::AuthenticatedMessage => Box::new(
-                ReadXdrIter::<_, Frame<AuthenticatedMessage>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AuthenticatedMessage>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AuthenticatedMessage(Box::new(t.0)))),
             ),
             TypeVariant::AuthenticatedMessageV0 => Box::new(
                 ReadXdrIter::<_, Frame<AuthenticatedMessageV0>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::AuthenticatedMessageV0(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolParameters => Box::new(
                 ReadXdrIter::<_, Frame<LiquidityPoolParameters>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolParameters(Box::new(t.0)))),
             ),
             TypeVariant::MuxedAccount => Box::new(
-                ReadXdrIter::<_, Frame<MuxedAccount>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<MuxedAccount>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedAccount(Box::new(t.0)))),
             ),
             TypeVariant::MuxedAccountMed25519 => Box::new(
-                ReadXdrIter::<_, Frame<MuxedAccountMed25519>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<MuxedAccountMed25519>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedAccountMed25519(Box::new(t.0)))),
             ),
             TypeVariant::DecoratedSignature => Box::new(
-                ReadXdrIter::<_, Frame<DecoratedSignature>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<DecoratedSignature>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t.0)))),
             ),
             TypeVariant::OperationType => Box::new(
-                ReadXdrIter::<_, Frame<OperationType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<OperationType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationType(Box::new(t.0)))),
             ),
             TypeVariant::CreateAccountOp => Box::new(
-                ReadXdrIter::<_, Frame<CreateAccountOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<CreateAccountOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateAccountOp(Box::new(t.0)))),
             ),
             TypeVariant::PaymentOp => Box::new(
-                ReadXdrIter::<_, Frame<PaymentOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PaymentOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PaymentOp(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictReceiveOp => Box::new(
                 ReadXdrIter::<_, Frame<PathPaymentStrictReceiveOp>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictSendOp => Box::new(
                 ReadXdrIter::<_, Frame<PathPaymentStrictSendOp>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictSendOp(Box::new(t.0)))),
             ),
             TypeVariant::ManageSellOfferOp => Box::new(
-                ReadXdrIter::<_, Frame<ManageSellOfferOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ManageSellOfferOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageSellOfferOp(Box::new(t.0)))),
             ),
             TypeVariant::ManageBuyOfferOp => Box::new(
-                ReadXdrIter::<_, Frame<ManageBuyOfferOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ManageBuyOfferOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageBuyOfferOp(Box::new(t.0)))),
             ),
             TypeVariant::CreatePassiveSellOfferOp => Box::new(
                 ReadXdrIter::<_, Frame<CreatePassiveSellOfferOp>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::CreatePassiveSellOfferOp(Box::new(t.0)))),
             ),
             TypeVariant::SetOptionsOp => Box::new(
-                ReadXdrIter::<_, Frame<SetOptionsOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SetOptionsOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetOptionsOp(Box::new(t.0)))),
             ),
             TypeVariant::ChangeTrustAsset => Box::new(
-                ReadXdrIter::<_, Frame<ChangeTrustAsset>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ChangeTrustAsset>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ChangeTrustAsset(Box::new(t.0)))),
             ),
             TypeVariant::ChangeTrustOp => Box::new(
-                ReadXdrIter::<_, Frame<ChangeTrustOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ChangeTrustOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ChangeTrustOp(Box::new(t.0)))),
             ),
             TypeVariant::AllowTrustOp => Box::new(
-                ReadXdrIter::<_, Frame<AllowTrustOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AllowTrustOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AllowTrustOp(Box::new(t.0)))),
             ),
             TypeVariant::ManageDataOp => Box::new(
-                ReadXdrIter::<_, Frame<ManageDataOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ManageDataOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageDataOp(Box::new(t.0)))),
             ),
             TypeVariant::BumpSequenceOp => Box::new(
-                ReadXdrIter::<_, Frame<BumpSequenceOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<BumpSequenceOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BumpSequenceOp(Box::new(t.0)))),
             ),
             TypeVariant::CreateClaimableBalanceOp => Box::new(
                 ReadXdrIter::<_, Frame<CreateClaimableBalanceOp>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::CreateClaimableBalanceOp(Box::new(t.0)))),
             ),
             TypeVariant::ClaimClaimableBalanceOp => Box::new(
                 ReadXdrIter::<_, Frame<ClaimClaimableBalanceOp>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClaimClaimableBalanceOp(Box::new(t.0)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesOp => Box::new(
                 ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesOp>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t.0)))),
             ),
             TypeVariant::RevokeSponsorshipType => Box::new(
-                ReadXdrIter::<_, Frame<RevokeSponsorshipType>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::RevokeSponsorshipType(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<RevokeSponsorshipType>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::RevokeSponsorshipType(Box::new(t.0)))),
             ),
             TypeVariant::RevokeSponsorshipOp => Box::new(
-                ReadXdrIter::<_, Frame<RevokeSponsorshipOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<RevokeSponsorshipOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::RevokeSponsorshipOp(Box::new(t.0)))),
             ),
             TypeVariant::RevokeSponsorshipOpSigner => Box::new(
                 ReadXdrIter::<_, Frame<RevokeSponsorshipOpSigner>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackOp => Box::new(
-                ReadXdrIter::<_, Frame<ClawbackOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClawbackOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackOp(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackClaimableBalanceOp => Box::new(
                 ReadXdrIter::<_, Frame<ClawbackClaimableBalanceOp>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t.0)))),
             ),
             TypeVariant::SetTrustLineFlagsOp => Box::new(
-                ReadXdrIter::<_, Frame<SetTrustLineFlagsOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SetTrustLineFlagsOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsOp(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolDepositOp => Box::new(
                 ReadXdrIter::<_, Frame<LiquidityPoolDepositOp>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolDepositOp(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolWithdrawOp => Box::new(
                 ReadXdrIter::<_, Frame<LiquidityPoolWithdrawOp>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t.0)))),
             ),
             TypeVariant::HostFunctionType => Box::new(
-                ReadXdrIter::<_, Frame<HostFunctionType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<HostFunctionType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t.0)))),
             ),
             TypeVariant::ContractIdPreimageType => Box::new(
                 ReadXdrIter::<_, Frame<ContractIdPreimageType>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ContractIdPreimageType(Box::new(t.0)))),
             ),
             TypeVariant::ContractIdPreimage => Box::new(
-                ReadXdrIter::<_, Frame<ContractIdPreimage>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ContractIdPreimage>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractIdPreimage(Box::new(t.0)))),
             ),
             TypeVariant::ContractIdPreimageFromAddress => Box::new(
                 ReadXdrIter::<_, Frame<ContractIdPreimageFromAddress>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ContractIdPreimageFromAddress(Box::new(t.0)))),
             ),
             TypeVariant::CreateContractArgs => Box::new(
-                ReadXdrIter::<_, Frame<CreateContractArgs>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<CreateContractArgs>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t.0)))),
             ),
             TypeVariant::InvokeContractArgs => Box::new(
-                ReadXdrIter::<_, Frame<InvokeContractArgs>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<InvokeContractArgs>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeContractArgs(Box::new(t.0)))),
             ),
             TypeVariant::HostFunction => Box::new(
-                ReadXdrIter::<_, Frame<HostFunction>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<HostFunction>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t.0)))),
             ),
             TypeVariant::SorobanAuthorizedFunctionType => Box::new(
                 ReadXdrIter::<_, Frame<SorobanAuthorizedFunctionType>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t.0)))),
             ),
             TypeVariant::SorobanAuthorizedFunction => Box::new(
                 ReadXdrIter::<_, Frame<SorobanAuthorizedFunction>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanAuthorizedFunction(Box::new(t.0)))),
             ),
             TypeVariant::SorobanAuthorizedInvocation => Box::new(
                 ReadXdrIter::<_, Frame<SorobanAuthorizedInvocation>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanAuthorizedInvocation(Box::new(t.0)))),
             ),
             TypeVariant::SorobanAddressCredentials => Box::new(
                 ReadXdrIter::<_, Frame<SorobanAddressCredentials>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t.0)))),
             ),
             TypeVariant::SorobanCredentialsType => Box::new(
                 ReadXdrIter::<_, Frame<SorobanCredentialsType>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t.0)))),
             ),
             TypeVariant::SorobanCredentials => Box::new(
-                ReadXdrIter::<_, Frame<SorobanCredentials>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SorobanCredentials>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanCredentials(Box::new(t.0)))),
             ),
             TypeVariant::SorobanAuthorizationEntry => Box::new(
                 ReadXdrIter::<_, Frame<SorobanAuthorizationEntry>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t.0)))),
             ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
-                ReadXdrIter::<_, Frame<InvokeHostFunctionOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<InvokeHostFunctionOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t.0)))),
             ),
             TypeVariant::ExtendFootprintTtlOp => Box::new(
-                ReadXdrIter::<_, Frame<ExtendFootprintTtlOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ExtendFootprintTtlOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtendFootprintTtlOp(Box::new(t.0)))),
             ),
             TypeVariant::RestoreFootprintOp => Box::new(
-                ReadXdrIter::<_, Frame<RestoreFootprintOp>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<RestoreFootprintOp>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::RestoreFootprintOp(Box::new(t.0)))),
             ),
             TypeVariant::Operation => Box::new(
-                ReadXdrIter::<_, Frame<Operation>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Operation>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Operation(Box::new(t.0)))),
             ),
             TypeVariant::OperationBody => Box::new(
-                ReadXdrIter::<_, Frame<OperationBody>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<OperationBody>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationBody(Box::new(t.0)))),
             ),
             TypeVariant::HashIdPreimage => Box::new(
-                ReadXdrIter::<_, Frame<HashIdPreimage>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<HashIdPreimage>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimage(Box::new(t.0)))),
             ),
             TypeVariant::HashIdPreimageOperationId => Box::new(
                 ReadXdrIter::<_, Frame<HashIdPreimageOperationId>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageOperationId(Box::new(t.0)))),
             ),
             TypeVariant::HashIdPreimageRevokeId => Box::new(
                 ReadXdrIter::<_, Frame<HashIdPreimageRevokeId>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t.0)))),
             ),
             TypeVariant::HashIdPreimageContractId => Box::new(
                 ReadXdrIter::<_, Frame<HashIdPreimageContractId>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t.0)))),
             ),
             TypeVariant::HashIdPreimageSorobanAuthorization => Box::new(
                 ReadXdrIter::<_, Frame<HashIdPreimageSorobanAuthorization>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t.0)))),
             ),
             TypeVariant::MemoType => Box::new(
-                ReadXdrIter::<_, Frame<MemoType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<MemoType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MemoType(Box::new(t.0)))),
             ),
             TypeVariant::Memo => Box::new(
-                ReadXdrIter::<_, Frame<Memo>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Memo>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Memo(Box::new(t.0)))),
             ),
             TypeVariant::TimeBounds => Box::new(
-                ReadXdrIter::<_, Frame<TimeBounds>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TimeBounds>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimeBounds(Box::new(t.0)))),
             ),
             TypeVariant::LedgerBounds => Box::new(
-                ReadXdrIter::<_, Frame<LedgerBounds>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerBounds>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerBounds(Box::new(t.0)))),
             ),
             TypeVariant::PreconditionsV2 => Box::new(
-                ReadXdrIter::<_, Frame<PreconditionsV2>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PreconditionsV2>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PreconditionsV2(Box::new(t.0)))),
             ),
             TypeVariant::PreconditionType => Box::new(
-                ReadXdrIter::<_, Frame<PreconditionType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PreconditionType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PreconditionType(Box::new(t.0)))),
             ),
             TypeVariant::Preconditions => Box::new(
-                ReadXdrIter::<_, Frame<Preconditions>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Preconditions>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Preconditions(Box::new(t.0)))),
             ),
             TypeVariant::LedgerFootprint => Box::new(
-                ReadXdrIter::<_, Frame<LedgerFootprint>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<LedgerFootprint>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t.0)))),
             ),
             TypeVariant::SorobanResources => Box::new(
-                ReadXdrIter::<_, Frame<SorobanResources>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SorobanResources>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanResources(Box::new(t.0)))),
             ),
             TypeVariant::SorobanTransactionData => Box::new(
                 ReadXdrIter::<_, Frame<SorobanTransactionData>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t.0)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
-                ReadXdrIter::<_, Frame<TransactionV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionV0(Box::new(t.0)))),
             ),
             TypeVariant::TransactionV0Ext => Box::new(
-                ReadXdrIter::<_, Frame<TransactionV0Ext>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionV0Ext>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionV0Ext(Box::new(t.0)))),
             ),
             TypeVariant::TransactionV0Envelope => Box::new(
-                ReadXdrIter::<_, Frame<TransactionV0Envelope>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::TransactionV0Envelope(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionV0Envelope>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionV0Envelope(Box::new(t.0)))),
             ),
             TypeVariant::Transaction => Box::new(
-                ReadXdrIter::<_, Frame<Transaction>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Transaction>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Transaction(Box::new(t.0)))),
             ),
             TypeVariant::TransactionExt => Box::new(
-                ReadXdrIter::<_, Frame<TransactionExt>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionExt(Box::new(t.0)))),
             ),
             TypeVariant::TransactionV1Envelope => Box::new(
-                ReadXdrIter::<_, Frame<TransactionV1Envelope>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::TransactionV1Envelope(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionV1Envelope>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionV1Envelope(Box::new(t.0)))),
             ),
             TypeVariant::FeeBumpTransaction => Box::new(
-                ReadXdrIter::<_, Frame<FeeBumpTransaction>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<FeeBumpTransaction>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::FeeBumpTransaction(Box::new(t.0)))),
             ),
             TypeVariant::FeeBumpTransactionInnerTx => Box::new(
                 ReadXdrIter::<_, Frame<FeeBumpTransactionInnerTx>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t.0)))),
             ),
             TypeVariant::FeeBumpTransactionExt => Box::new(
-                ReadXdrIter::<_, Frame<FeeBumpTransactionExt>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::FeeBumpTransactionExt(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<FeeBumpTransactionExt>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::FeeBumpTransactionExt(Box::new(t.0)))),
             ),
             TypeVariant::FeeBumpTransactionEnvelope => Box::new(
                 ReadXdrIter::<_, Frame<FeeBumpTransactionEnvelope>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t.0)))),
             ),
             TypeVariant::TransactionEnvelope => Box::new(
-                ReadXdrIter::<_, Frame<TransactionEnvelope>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionEnvelope>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionEnvelope(Box::new(t.0)))),
             ),
             TypeVariant::TransactionSignaturePayload => Box::new(
                 ReadXdrIter::<_, Frame<TransactionSignaturePayload>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TransactionSignaturePayload(Box::new(t.0)))),
             ),
             TypeVariant::TransactionSignaturePayloadTaggedTransaction => Box::new(
                 ReadXdrIter::<_, Frame<TransactionSignaturePayloadTaggedTransaction>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| {
                     r.map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t.0)))
                 }),
             ),
             TypeVariant::ClaimAtomType => Box::new(
-                ReadXdrIter::<_, Frame<ClaimAtomType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClaimAtomType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimAtomType(Box::new(t.0)))),
             ),
             TypeVariant::ClaimOfferAtomV0 => Box::new(
-                ReadXdrIter::<_, Frame<ClaimOfferAtomV0>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClaimOfferAtomV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimOfferAtomV0(Box::new(t.0)))),
             ),
             TypeVariant::ClaimOfferAtom => Box::new(
-                ReadXdrIter::<_, Frame<ClaimOfferAtom>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClaimOfferAtom>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimOfferAtom(Box::new(t.0)))),
             ),
             TypeVariant::ClaimLiquidityAtom => Box::new(
-                ReadXdrIter::<_, Frame<ClaimLiquidityAtom>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClaimLiquidityAtom>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimLiquidityAtom(Box::new(t.0)))),
             ),
             TypeVariant::ClaimAtom => Box::new(
-                ReadXdrIter::<_, Frame<ClaimAtom>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClaimAtom>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimAtom(Box::new(t.0)))),
             ),
             TypeVariant::CreateAccountResultCode => Box::new(
                 ReadXdrIter::<_, Frame<CreateAccountResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::CreateAccountResultCode(Box::new(t.0)))),
             ),
             TypeVariant::CreateAccountResult => Box::new(
-                ReadXdrIter::<_, Frame<CreateAccountResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<CreateAccountResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateAccountResult(Box::new(t.0)))),
             ),
             TypeVariant::PaymentResultCode => Box::new(
-                ReadXdrIter::<_, Frame<PaymentResultCode>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PaymentResultCode>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PaymentResultCode(Box::new(t.0)))),
             ),
             TypeVariant::PaymentResult => Box::new(
-                ReadXdrIter::<_, Frame<PaymentResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PaymentResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PaymentResult(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultCode => Box::new(
                 ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t.0)))),
             ),
             TypeVariant::SimplePaymentResult => Box::new(
-                ReadXdrIter::<_, Frame<SimplePaymentResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SimplePaymentResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SimplePaymentResult(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResult => Box::new(
                 ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultSuccess => Box::new(
                 ReadXdrIter::<_, Frame<PathPaymentStrictReceiveResultSuccess>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictSendResultCode => Box::new(
                 ReadXdrIter::<_, Frame<PathPaymentStrictSendResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictSendResult => Box::new(
                 ReadXdrIter::<_, Frame<PathPaymentStrictSendResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictSendResult(Box::new(t.0)))),
             ),
             TypeVariant::PathPaymentStrictSendResultSuccess => Box::new(
                 ReadXdrIter::<_, Frame<PathPaymentStrictSendResultSuccess>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t.0)))),
             ),
             TypeVariant::ManageSellOfferResultCode => Box::new(
                 ReadXdrIter::<_, Frame<ManageSellOfferResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ManageSellOfferResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ManageOfferEffect => Box::new(
-                ReadXdrIter::<_, Frame<ManageOfferEffect>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ManageOfferEffect>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageOfferEffect(Box::new(t.0)))),
             ),
             TypeVariant::ManageOfferSuccessResult => Box::new(
                 ReadXdrIter::<_, Frame<ManageOfferSuccessResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ManageOfferSuccessResult(Box::new(t.0)))),
             ),
             TypeVariant::ManageOfferSuccessResultOffer => Box::new(
                 ReadXdrIter::<_, Frame<ManageOfferSuccessResultOffer>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t.0)))),
             ),
             TypeVariant::ManageSellOfferResult => Box::new(
-                ReadXdrIter::<_, Frame<ManageSellOfferResult>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ManageSellOfferResult(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ManageSellOfferResult>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ManageSellOfferResult(Box::new(t.0)))),
             ),
             TypeVariant::ManageBuyOfferResultCode => Box::new(
                 ReadXdrIter::<_, Frame<ManageBuyOfferResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ManageBuyOfferResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ManageBuyOfferResult => Box::new(
-                ReadXdrIter::<_, Frame<ManageBuyOfferResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ManageBuyOfferResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageBuyOfferResult(Box::new(t.0)))),
             ),
             TypeVariant::SetOptionsResultCode => Box::new(
-                ReadXdrIter::<_, Frame<SetOptionsResultCode>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SetOptionsResultCode>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetOptionsResultCode(Box::new(t.0)))),
             ),
             TypeVariant::SetOptionsResult => Box::new(
-                ReadXdrIter::<_, Frame<SetOptionsResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SetOptionsResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetOptionsResult(Box::new(t.0)))),
             ),
             TypeVariant::ChangeTrustResultCode => Box::new(
-                ReadXdrIter::<_, Frame<ChangeTrustResultCode>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ChangeTrustResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<ChangeTrustResultCode>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ChangeTrustResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ChangeTrustResult => Box::new(
-                ReadXdrIter::<_, Frame<ChangeTrustResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ChangeTrustResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ChangeTrustResult(Box::new(t.0)))),
             ),
             TypeVariant::AllowTrustResultCode => Box::new(
-                ReadXdrIter::<_, Frame<AllowTrustResultCode>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AllowTrustResultCode>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AllowTrustResultCode(Box::new(t.0)))),
             ),
             TypeVariant::AllowTrustResult => Box::new(
-                ReadXdrIter::<_, Frame<AllowTrustResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AllowTrustResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AllowTrustResult(Box::new(t.0)))),
             ),
             TypeVariant::AccountMergeResultCode => Box::new(
                 ReadXdrIter::<_, Frame<AccountMergeResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::AccountMergeResultCode(Box::new(t.0)))),
             ),
             TypeVariant::AccountMergeResult => Box::new(
-                ReadXdrIter::<_, Frame<AccountMergeResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AccountMergeResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountMergeResult(Box::new(t.0)))),
             ),
             TypeVariant::InflationResultCode => Box::new(
-                ReadXdrIter::<_, Frame<InflationResultCode>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<InflationResultCode>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InflationResultCode(Box::new(t.0)))),
             ),
             TypeVariant::InflationPayout => Box::new(
-                ReadXdrIter::<_, Frame<InflationPayout>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<InflationPayout>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InflationPayout(Box::new(t.0)))),
             ),
             TypeVariant::InflationResult => Box::new(
-                ReadXdrIter::<_, Frame<InflationResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<InflationResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InflationResult(Box::new(t.0)))),
             ),
             TypeVariant::ManageDataResultCode => Box::new(
-                ReadXdrIter::<_, Frame<ManageDataResultCode>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ManageDataResultCode>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageDataResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ManageDataResult => Box::new(
-                ReadXdrIter::<_, Frame<ManageDataResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ManageDataResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageDataResult(Box::new(t.0)))),
             ),
             TypeVariant::BumpSequenceResultCode => Box::new(
                 ReadXdrIter::<_, Frame<BumpSequenceResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::BumpSequenceResultCode(Box::new(t.0)))),
             ),
             TypeVariant::BumpSequenceResult => Box::new(
-                ReadXdrIter::<_, Frame<BumpSequenceResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<BumpSequenceResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BumpSequenceResult(Box::new(t.0)))),
             ),
             TypeVariant::CreateClaimableBalanceResultCode => Box::new(
                 ReadXdrIter::<_, Frame<CreateClaimableBalanceResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t.0)))),
             ),
             TypeVariant::CreateClaimableBalanceResult => Box::new(
                 ReadXdrIter::<_, Frame<CreateClaimableBalanceResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t.0)))),
             ),
             TypeVariant::ClaimClaimableBalanceResultCode => Box::new(
                 ReadXdrIter::<_, Frame<ClaimClaimableBalanceResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ClaimClaimableBalanceResult => Box::new(
                 ReadXdrIter::<_, Frame<ClaimClaimableBalanceResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClaimClaimableBalanceResult(Box::new(t.0)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResultCode => Box::new(
                 ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t.0)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResult => Box::new(
                 ReadXdrIter::<_, Frame<BeginSponsoringFutureReservesResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t.0)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResultCode => Box::new(
                 ReadXdrIter::<_, Frame<EndSponsoringFutureReservesResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t.0)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResult => Box::new(
                 ReadXdrIter::<_, Frame<EndSponsoringFutureReservesResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t.0)))),
             ),
             TypeVariant::RevokeSponsorshipResultCode => Box::new(
                 ReadXdrIter::<_, Frame<RevokeSponsorshipResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::RevokeSponsorshipResultCode(Box::new(t.0)))),
             ),
             TypeVariant::RevokeSponsorshipResult => Box::new(
                 ReadXdrIter::<_, Frame<RevokeSponsorshipResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::RevokeSponsorshipResult(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackResultCode => Box::new(
-                ReadXdrIter::<_, Frame<ClawbackResultCode>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClawbackResultCode>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackResult => Box::new(
-                ReadXdrIter::<_, Frame<ClawbackResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ClawbackResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackResult(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResultCode => Box::new(
                 ReadXdrIter::<_, Frame<ClawbackClaimableBalanceResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResult => Box::new(
                 ReadXdrIter::<_, Frame<ClawbackClaimableBalanceResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t.0)))),
             ),
             TypeVariant::SetTrustLineFlagsResultCode => Box::new(
                 ReadXdrIter::<_, Frame<SetTrustLineFlagsResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t.0)))),
             ),
             TypeVariant::SetTrustLineFlagsResult => Box::new(
                 ReadXdrIter::<_, Frame<SetTrustLineFlagsResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SetTrustLineFlagsResult(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolDepositResultCode => Box::new(
                 ReadXdrIter::<_, Frame<LiquidityPoolDepositResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolDepositResult => Box::new(
                 ReadXdrIter::<_, Frame<LiquidityPoolDepositResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolDepositResult(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResultCode => Box::new(
                 ReadXdrIter::<_, Frame<LiquidityPoolWithdrawResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t.0)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResult => Box::new(
                 ReadXdrIter::<_, Frame<LiquidityPoolWithdrawResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t.0)))),
             ),
             TypeVariant::InvokeHostFunctionResultCode => Box::new(
                 ReadXdrIter::<_, Frame<InvokeHostFunctionResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::InvokeHostFunctionResultCode(Box::new(t.0)))),
             ),
             TypeVariant::InvokeHostFunctionResult => Box::new(
                 ReadXdrIter::<_, Frame<InvokeHostFunctionResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t.0)))),
             ),
             TypeVariant::ExtendFootprintTtlResultCode => Box::new(
                 ReadXdrIter::<_, Frame<ExtendFootprintTtlResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ExtendFootprintTtlResultCode(Box::new(t.0)))),
             ),
             TypeVariant::ExtendFootprintTtlResult => Box::new(
                 ReadXdrIter::<_, Frame<ExtendFootprintTtlResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ExtendFootprintTtlResult(Box::new(t.0)))),
             ),
             TypeVariant::RestoreFootprintResultCode => Box::new(
                 ReadXdrIter::<_, Frame<RestoreFootprintResultCode>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::RestoreFootprintResultCode(Box::new(t.0)))),
             ),
             TypeVariant::RestoreFootprintResult => Box::new(
                 ReadXdrIter::<_, Frame<RestoreFootprintResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::RestoreFootprintResult(Box::new(t.0)))),
             ),
             TypeVariant::OperationResultCode => Box::new(
-                ReadXdrIter::<_, Frame<OperationResultCode>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<OperationResultCode>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t.0)))),
             ),
             TypeVariant::OperationResult => Box::new(
-                ReadXdrIter::<_, Frame<OperationResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<OperationResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationResult(Box::new(t.0)))),
             ),
             TypeVariant::OperationResultTr => Box::new(
-                ReadXdrIter::<_, Frame<OperationResultTr>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<OperationResultTr>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationResultTr(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultCode => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultCode>>::new(
-                    &mut r.inner,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::TransactionResultCode(Box::new(t.0)))),
+                ReadXdrIter::<_, Frame<TransactionResultCode>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionResultCode(Box::new(t.0)))),
             ),
             TypeVariant::InnerTransactionResult => Box::new(
                 ReadXdrIter::<_, Frame<InnerTransactionResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::InnerTransactionResult(Box::new(t.0)))),
             ),
             TypeVariant::InnerTransactionResultResult => Box::new(
                 ReadXdrIter::<_, Frame<InnerTransactionResultResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t.0)))),
             ),
             TypeVariant::InnerTransactionResultExt => Box::new(
                 ReadXdrIter::<_, Frame<InnerTransactionResultExt>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::InnerTransactionResultExt(Box::new(t.0)))),
             ),
             TypeVariant::InnerTransactionResultPair => Box::new(
                 ReadXdrIter::<_, Frame<InnerTransactionResultPair>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::InnerTransactionResultPair(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResult => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResult>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionResult>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResult(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultResult => Box::new(
                 ReadXdrIter::<_, Frame<TransactionResultResult>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TransactionResultResult(Box::new(t.0)))),
             ),
             TypeVariant::TransactionResultExt => Box::new(
-                ReadXdrIter::<_, Frame<TransactionResultExt>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TransactionResultExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultExt(Box::new(t.0)))),
             ),
             TypeVariant::Hash => Box::new(
-                ReadXdrIter::<_, Frame<Hash>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Hash>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Hash(Box::new(t.0)))),
             ),
             TypeVariant::Uint256 => Box::new(
-                ReadXdrIter::<_, Frame<Uint256>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Uint256>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint256(Box::new(t.0)))),
             ),
             TypeVariant::Uint32 => Box::new(
-                ReadXdrIter::<_, Frame<Uint32>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Uint32>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint32(Box::new(t.0)))),
             ),
             TypeVariant::Int32 => Box::new(
-                ReadXdrIter::<_, Frame<Int32>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Int32>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int32(Box::new(t.0)))),
             ),
             TypeVariant::Uint64 => Box::new(
-                ReadXdrIter::<_, Frame<Uint64>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Uint64>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint64(Box::new(t.0)))),
             ),
             TypeVariant::Int64 => Box::new(
-                ReadXdrIter::<_, Frame<Int64>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Int64>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int64(Box::new(t.0)))),
             ),
             TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, Frame<TimePoint>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<TimePoint>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimePoint(Box::new(t.0)))),
             ),
             TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Frame<Duration>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Duration>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Duration(Box::new(t.0)))),
             ),
             TypeVariant::ExtensionPoint => Box::new(
-                ReadXdrIter::<_, Frame<ExtensionPoint>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<ExtensionPoint>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t.0)))),
             ),
             TypeVariant::CryptoKeyType => Box::new(
-                ReadXdrIter::<_, Frame<CryptoKeyType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<CryptoKeyType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CryptoKeyType(Box::new(t.0)))),
             ),
             TypeVariant::PublicKeyType => Box::new(
-                ReadXdrIter::<_, Frame<PublicKeyType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PublicKeyType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PublicKeyType(Box::new(t.0)))),
             ),
             TypeVariant::SignerKeyType => Box::new(
-                ReadXdrIter::<_, Frame<SignerKeyType>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SignerKeyType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignerKeyType(Box::new(t.0)))),
             ),
             TypeVariant::PublicKey => Box::new(
-                ReadXdrIter::<_, Frame<PublicKey>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<PublicKey>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PublicKey(Box::new(t.0)))),
             ),
             TypeVariant::SignerKey => Box::new(
-                ReadXdrIter::<_, Frame<SignerKey>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SignerKey>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignerKey(Box::new(t.0)))),
             ),
             TypeVariant::SignerKeyEd25519SignedPayload => Box::new(
                 ReadXdrIter::<_, Frame<SignerKeyEd25519SignedPayload>>::new(
                     &mut r.inner,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t.0)))),
             ),
             TypeVariant::Signature => Box::new(
-                ReadXdrIter::<_, Frame<Signature>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Signature>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Signature(Box::new(t.0)))),
             ),
             TypeVariant::SignatureHint => Box::new(
-                ReadXdrIter::<_, Frame<SignatureHint>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<SignatureHint>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignatureHint(Box::new(t.0)))),
             ),
             TypeVariant::NodeId => Box::new(
-                ReadXdrIter::<_, Frame<NodeId>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<NodeId>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::NodeId(Box::new(t.0)))),
             ),
             TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, Frame<AccountId>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<AccountId>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountId(Box::new(t.0)))),
             ),
             TypeVariant::Curve25519Secret => Box::new(
-                ReadXdrIter::<_, Frame<Curve25519Secret>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Curve25519Secret>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t.0)))),
             ),
             TypeVariant::Curve25519Public => Box::new(
-                ReadXdrIter::<_, Frame<Curve25519Public>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<Curve25519Public>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Curve25519Public(Box::new(t.0)))),
             ),
             TypeVariant::HmacSha256Key => Box::new(
-                ReadXdrIter::<_, Frame<HmacSha256Key>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<HmacSha256Key>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Key(Box::new(t.0)))),
             ),
             TypeVariant::HmacSha256Mac => Box::new(
-                ReadXdrIter::<_, Frame<HmacSha256Mac>>::new(&mut r.inner, r.depth_remaining)
+                ReadXdrIter::<_, Frame<HmacSha256Mac>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t.0)))),
             ),
         }
@@ -50099,1722 +49989,1709 @@ impl Type {
     #[allow(clippy::too_many_lines)]
     pub fn read_xdr_base64_iter<R: Read>(
         v: TypeVariant,
-        r: &mut DepthLimitedRead<R>,
+        r: &mut Limited<R>,
     ) -> Box<dyn Iterator<Item = Result<Self>> + '_> {
         let dec = base64::read::DecoderReader::new(&mut r.inner, base64::STANDARD);
         match v {
             TypeVariant::Value => Box::new(
-                ReadXdrIter::<_, Value>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Value>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Value(Box::new(t)))),
             ),
             TypeVariant::ScpBallot => Box::new(
-                ReadXdrIter::<_, ScpBallot>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpBallot>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpBallot(Box::new(t)))),
             ),
             TypeVariant::ScpStatementType => Box::new(
-                ReadXdrIter::<_, ScpStatementType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatementType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementType(Box::new(t)))),
             ),
             TypeVariant::ScpNomination => Box::new(
-                ReadXdrIter::<_, ScpNomination>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpNomination>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpNomination(Box::new(t)))),
             ),
             TypeVariant::ScpStatement => Box::new(
-                ReadXdrIter::<_, ScpStatement>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatement>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatement(Box::new(t)))),
             ),
             TypeVariant::ScpStatementPledges => Box::new(
-                ReadXdrIter::<_, ScpStatementPledges>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatementPledges>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementPledges(Box::new(t)))),
             ),
             TypeVariant::ScpStatementPrepare => Box::new(
-                ReadXdrIter::<_, ScpStatementPrepare>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatementPrepare>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementPrepare(Box::new(t)))),
             ),
             TypeVariant::ScpStatementConfirm => Box::new(
-                ReadXdrIter::<_, ScpStatementConfirm>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatementConfirm>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementConfirm(Box::new(t)))),
             ),
             TypeVariant::ScpStatementExternalize => Box::new(
-                ReadXdrIter::<_, ScpStatementExternalize>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpStatementExternalize>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpStatementExternalize(Box::new(t)))),
             ),
             TypeVariant::ScpEnvelope => Box::new(
-                ReadXdrIter::<_, ScpEnvelope>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpEnvelope>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpEnvelope(Box::new(t)))),
             ),
             TypeVariant::ScpQuorumSet => Box::new(
-                ReadXdrIter::<_, ScpQuorumSet>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpQuorumSet>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpQuorumSet(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractExecutionLanesV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractExecutionLanesV0>::new(
-                    dec,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t)))),
+                ReadXdrIter::<_, ConfigSettingContractExecutionLanesV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractComputeV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(
-                    dec,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
+                ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractEventsV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractEventsV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ConfigSettingContractEventsV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingContractEventsV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractBandwidthV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ConfigSettingContractBandwidthV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))),
             ),
             TypeVariant::ContractCostType => Box::new(
-                ReadXdrIter::<_, ContractCostType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractCostType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostType(Box::new(t)))),
             ),
             TypeVariant::ContractCostParamEntry => Box::new(
-                ReadXdrIter::<_, ContractCostParamEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractCostParamEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostParamEntry(Box::new(t)))),
             ),
             TypeVariant::StateArchivalSettings => Box::new(
-                ReadXdrIter::<_, StateArchivalSettings>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, StateArchivalSettings>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StateArchivalSettings(Box::new(t)))),
             ),
             TypeVariant::EvictionIterator => Box::new(
-                ReadXdrIter::<_, EvictionIterator>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, EvictionIterator>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::EvictionIterator(Box::new(t)))),
             ),
             TypeVariant::ContractCostParams => Box::new(
-                ReadXdrIter::<_, ContractCostParams>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractCostParams>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCostParams(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingId => Box::new(
-                ReadXdrIter::<_, ConfigSettingId>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ConfigSettingId>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingId(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingEntry => Box::new(
-                ReadXdrIter::<_, ConfigSettingEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ConfigSettingEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingEntry(Box::new(t)))),
             ),
             TypeVariant::ScEnvMetaKind => Box::new(
-                ReadXdrIter::<_, ScEnvMetaKind>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScEnvMetaKind>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScEnvMetaKind(Box::new(t)))),
             ),
             TypeVariant::ScEnvMetaEntry => Box::new(
-                ReadXdrIter::<_, ScEnvMetaEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScEnvMetaEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t)))),
             ),
             TypeVariant::ScMetaV0 => Box::new(
-                ReadXdrIter::<_, ScMetaV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScMetaV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMetaV0(Box::new(t)))),
             ),
             TypeVariant::ScMetaKind => Box::new(
-                ReadXdrIter::<_, ScMetaKind>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScMetaKind>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMetaKind(Box::new(t)))),
             ),
             TypeVariant::ScMetaEntry => Box::new(
-                ReadXdrIter::<_, ScMetaEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScMetaEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMetaEntry(Box::new(t)))),
             ),
             TypeVariant::ScSpecType => Box::new(
-                ReadXdrIter::<_, ScSpecType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecType(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeOption => Box::new(
-                ReadXdrIter::<_, ScSpecTypeOption>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeOption>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeOption(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeResult => Box::new(
-                ReadXdrIter::<_, ScSpecTypeResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeResult(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeVec => Box::new(
-                ReadXdrIter::<_, ScSpecTypeVec>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeVec>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeVec(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeMap => Box::new(
-                ReadXdrIter::<_, ScSpecTypeMap>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeMap>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeMap(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeTuple => Box::new(
-                ReadXdrIter::<_, ScSpecTypeTuple>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeTuple>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeTuple(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeBytesN => Box::new(
-                ReadXdrIter::<_, ScSpecTypeBytesN>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeBytesN>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeBytesN(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeUdt => Box::new(
-                ReadXdrIter::<_, ScSpecTypeUdt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeUdt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeUdt(Box::new(t)))),
             ),
             TypeVariant::ScSpecTypeDef => Box::new(
-                ReadXdrIter::<_, ScSpecTypeDef>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecTypeDef>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecTypeDef(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtStructFieldV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtStructFieldV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtStructFieldV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtStructFieldV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtStructV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtStructV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtStructV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtStructV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseVoidV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtUnionCaseVoidV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtUnionCaseVoidV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseVoidV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseTupleV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtUnionCaseTupleV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtUnionCaseTupleV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseTupleV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseV0Kind => Box::new(
-                ReadXdrIter::<_, ScSpecUdtUnionCaseV0Kind>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0Kind>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0Kind(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtUnionCaseV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtUnionCaseV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtUnionCaseV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtUnionV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtUnionV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtUnionV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtUnionV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtEnumCaseV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtEnumCaseV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtEnumCaseV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtEnumCaseV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtEnumV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtEnumV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtEnumV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtEnumV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtErrorEnumCaseV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtErrorEnumCaseV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtErrorEnumCaseV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumCaseV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecUdtErrorEnumV0 => Box::new(
-                ReadXdrIter::<_, ScSpecUdtErrorEnumV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecUdtErrorEnumV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecUdtErrorEnumV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecFunctionInputV0 => Box::new(
-                ReadXdrIter::<_, ScSpecFunctionInputV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecFunctionInputV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionInputV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecFunctionV0 => Box::new(
-                ReadXdrIter::<_, ScSpecFunctionV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecFunctionV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecFunctionV0(Box::new(t)))),
             ),
             TypeVariant::ScSpecEntryKind => Box::new(
-                ReadXdrIter::<_, ScSpecEntryKind>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecEntryKind>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntryKind(Box::new(t)))),
             ),
             TypeVariant::ScSpecEntry => Box::new(
-                ReadXdrIter::<_, ScSpecEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSpecEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
             ),
             TypeVariant::ScValType => Box::new(
-                ReadXdrIter::<_, ScValType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScValType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
             ),
             TypeVariant::ScErrorType => Box::new(
-                ReadXdrIter::<_, ScErrorType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScErrorType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScErrorType(Box::new(t)))),
             ),
             TypeVariant::ScErrorCode => Box::new(
-                ReadXdrIter::<_, ScErrorCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScErrorCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScErrorCode(Box::new(t)))),
             ),
             TypeVariant::ScError => Box::new(
-                ReadXdrIter::<_, ScError>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScError>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScError(Box::new(t)))),
             ),
             TypeVariant::UInt128Parts => Box::new(
-                ReadXdrIter::<_, UInt128Parts>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, UInt128Parts>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::UInt128Parts(Box::new(t)))),
             ),
             TypeVariant::Int128Parts => Box::new(
-                ReadXdrIter::<_, Int128Parts>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Int128Parts>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int128Parts(Box::new(t)))),
             ),
             TypeVariant::UInt256Parts => Box::new(
-                ReadXdrIter::<_, UInt256Parts>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, UInt256Parts>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::UInt256Parts(Box::new(t)))),
             ),
             TypeVariant::Int256Parts => Box::new(
-                ReadXdrIter::<_, Int256Parts>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Int256Parts>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int256Parts(Box::new(t)))),
             ),
             TypeVariant::ContractExecutableType => Box::new(
-                ReadXdrIter::<_, ContractExecutableType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractExecutableType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
             ),
             TypeVariant::ContractExecutable => Box::new(
-                ReadXdrIter::<_, ContractExecutable>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractExecutable>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
             ),
             TypeVariant::ScAddressType => Box::new(
-                ReadXdrIter::<_, ScAddressType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScAddressType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
             ),
             TypeVariant::ScAddress => Box::new(
-                ReadXdrIter::<_, ScAddress>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScAddress>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
             ),
             TypeVariant::ScVec => Box::new(
-                ReadXdrIter::<_, ScVec>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScVec>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScVec(Box::new(t)))),
             ),
             TypeVariant::ScMap => Box::new(
-                ReadXdrIter::<_, ScMap>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScMap>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
             ),
             TypeVariant::ScBytes => Box::new(
-                ReadXdrIter::<_, ScBytes>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScBytes>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
             ),
             TypeVariant::ScString => Box::new(
-                ReadXdrIter::<_, ScString>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScString>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
             ),
             TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, ScSymbol>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScSymbol>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
             ),
             TypeVariant::ScNonceKey => Box::new(
-                ReadXdrIter::<_, ScNonceKey>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScNonceKey>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScNonceKey(Box::new(t)))),
             ),
             TypeVariant::ScContractInstance => Box::new(
-                ReadXdrIter::<_, ScContractInstance>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScContractInstance>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScContractInstance(Box::new(t)))),
             ),
             TypeVariant::ScVal => Box::new(
-                ReadXdrIter::<_, ScVal>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScVal>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScVal(Box::new(t)))),
             ),
             TypeVariant::ScMapEntry => Box::new(
-                ReadXdrIter::<_, ScMapEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScMapEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMapEntry(Box::new(t)))),
             ),
             TypeVariant::StoredTransactionSet => Box::new(
-                ReadXdrIter::<_, StoredTransactionSet>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, StoredTransactionSet>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StoredTransactionSet(Box::new(t)))),
             ),
             TypeVariant::StoredDebugTransactionSet => Box::new(
-                ReadXdrIter::<_, StoredDebugTransactionSet>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, StoredDebugTransactionSet>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StoredDebugTransactionSet(Box::new(t)))),
             ),
             TypeVariant::PersistedScpStateV0 => Box::new(
-                ReadXdrIter::<_, PersistedScpStateV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PersistedScpStateV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PersistedScpStateV0(Box::new(t)))),
             ),
             TypeVariant::PersistedScpStateV1 => Box::new(
-                ReadXdrIter::<_, PersistedScpStateV1>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PersistedScpStateV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PersistedScpStateV1(Box::new(t)))),
             ),
             TypeVariant::PersistedScpState => Box::new(
-                ReadXdrIter::<_, PersistedScpState>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PersistedScpState>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PersistedScpState(Box::new(t)))),
             ),
             TypeVariant::Thresholds => Box::new(
-                ReadXdrIter::<_, Thresholds>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Thresholds>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Thresholds(Box::new(t)))),
             ),
             TypeVariant::String32 => Box::new(
-                ReadXdrIter::<_, String32>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, String32>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::String32(Box::new(t)))),
             ),
             TypeVariant::String64 => Box::new(
-                ReadXdrIter::<_, String64>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, String64>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::String64(Box::new(t)))),
             ),
             TypeVariant::SequenceNumber => Box::new(
-                ReadXdrIter::<_, SequenceNumber>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SequenceNumber>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SequenceNumber(Box::new(t)))),
             ),
             TypeVariant::DataValue => Box::new(
-                ReadXdrIter::<_, DataValue>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, DataValue>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataValue(Box::new(t)))),
             ),
             TypeVariant::PoolId => Box::new(
-                ReadXdrIter::<_, PoolId>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PoolId>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
             ),
             TypeVariant::AssetCode4 => Box::new(
-                ReadXdrIter::<_, AssetCode4>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AssetCode4>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetCode4(Box::new(t)))),
             ),
             TypeVariant::AssetCode12 => Box::new(
-                ReadXdrIter::<_, AssetCode12>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AssetCode12>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetCode12(Box::new(t)))),
             ),
             TypeVariant::AssetType => Box::new(
-                ReadXdrIter::<_, AssetType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AssetType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetType(Box::new(t)))),
             ),
             TypeVariant::AssetCode => Box::new(
-                ReadXdrIter::<_, AssetCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AssetCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AssetCode(Box::new(t)))),
             ),
             TypeVariant::AlphaNum4 => Box::new(
-                ReadXdrIter::<_, AlphaNum4>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AlphaNum4>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AlphaNum4(Box::new(t)))),
             ),
             TypeVariant::AlphaNum12 => Box::new(
-                ReadXdrIter::<_, AlphaNum12>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AlphaNum12>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AlphaNum12(Box::new(t)))),
             ),
             TypeVariant::Asset => Box::new(
-                ReadXdrIter::<_, Asset>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Asset>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Asset(Box::new(t)))),
             ),
             TypeVariant::Price => Box::new(
-                ReadXdrIter::<_, Price>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Price>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Price(Box::new(t)))),
             ),
             TypeVariant::Liabilities => Box::new(
-                ReadXdrIter::<_, Liabilities>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Liabilities>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Liabilities(Box::new(t)))),
             ),
             TypeVariant::ThresholdIndexes => Box::new(
-                ReadXdrIter::<_, ThresholdIndexes>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ThresholdIndexes>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ThresholdIndexes(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryType => Box::new(
-                ReadXdrIter::<_, LedgerEntryType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryType(Box::new(t)))),
             ),
             TypeVariant::Signer => Box::new(
-                ReadXdrIter::<_, Signer>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Signer>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Signer(Box::new(t)))),
             ),
             TypeVariant::AccountFlags => Box::new(
-                ReadXdrIter::<_, AccountFlags>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AccountFlags>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountFlags(Box::new(t)))),
             ),
             TypeVariant::SponsorshipDescriptor => Box::new(
-                ReadXdrIter::<_, SponsorshipDescriptor>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SponsorshipDescriptor>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SponsorshipDescriptor(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV3 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV3>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExtensionV3>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV3(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV2 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV2>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExtensionV2>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV2(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV2Ext => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV2Ext>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExtensionV2Ext>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV1>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExtensionV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, AccountEntryExtensionV1Ext>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExtensionV1Ext>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::AccountEntry => Box::new(
-                ReadXdrIter::<_, AccountEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntry(Box::new(t)))),
             ),
             TypeVariant::AccountEntryExt => Box::new(
-                ReadXdrIter::<_, AccountEntryExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AccountEntryExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountEntryExt(Box::new(t)))),
             ),
             TypeVariant::TrustLineFlags => Box::new(
-                ReadXdrIter::<_, TrustLineFlags>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineFlags>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineFlags(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolType => Box::new(
-                ReadXdrIter::<_, LiquidityPoolType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolType(Box::new(t)))),
             ),
             TypeVariant::TrustLineAsset => Box::new(
-                ReadXdrIter::<_, TrustLineAsset>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineAsset>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineAsset(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2 => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExtensionV2>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineEntryExtensionV2>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExtensionV2Ext => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExtensionV2Ext>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineEntryExtensionV2Ext>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntry => Box::new(
-                ReadXdrIter::<_, TrustLineEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntry(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryExt => Box::new(
-                ReadXdrIter::<_, TrustLineEntryExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineEntryExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryExt(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryV1 => Box::new(
-                ReadXdrIter::<_, TrustLineEntryV1>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineEntryV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryV1(Box::new(t)))),
             ),
             TypeVariant::TrustLineEntryV1Ext => Box::new(
-                ReadXdrIter::<_, TrustLineEntryV1Ext>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TrustLineEntryV1Ext>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TrustLineEntryV1Ext(Box::new(t)))),
             ),
             TypeVariant::OfferEntryFlags => Box::new(
-                ReadXdrIter::<_, OfferEntryFlags>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, OfferEntryFlags>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::OfferEntryFlags(Box::new(t)))),
             ),
             TypeVariant::OfferEntry => Box::new(
-                ReadXdrIter::<_, OfferEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, OfferEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::OfferEntry(Box::new(t)))),
             ),
             TypeVariant::OfferEntryExt => Box::new(
-                ReadXdrIter::<_, OfferEntryExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, OfferEntryExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::OfferEntryExt(Box::new(t)))),
             ),
             TypeVariant::DataEntry => Box::new(
-                ReadXdrIter::<_, DataEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, DataEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataEntry(Box::new(t)))),
             ),
             TypeVariant::DataEntryExt => Box::new(
-                ReadXdrIter::<_, DataEntryExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, DataEntryExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataEntryExt(Box::new(t)))),
             ),
             TypeVariant::ClaimPredicateType => Box::new(
-                ReadXdrIter::<_, ClaimPredicateType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimPredicateType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimPredicateType(Box::new(t)))),
             ),
             TypeVariant::ClaimPredicate => Box::new(
-                ReadXdrIter::<_, ClaimPredicate>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimPredicate>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimPredicate(Box::new(t)))),
             ),
             TypeVariant::ClaimantType => Box::new(
-                ReadXdrIter::<_, ClaimantType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimantType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimantType(Box::new(t)))),
             ),
             TypeVariant::Claimant => Box::new(
-                ReadXdrIter::<_, Claimant>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Claimant>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Claimant(Box::new(t)))),
             ),
             TypeVariant::ClaimantV0 => Box::new(
-                ReadXdrIter::<_, ClaimantV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimantV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceIdType => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceIdType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceIdType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceId => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceId>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceId>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceFlags => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceFlags>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceFlags>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceFlags(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1Ext>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceEntryExtensionV1Ext>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntry => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntry(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceEntryExt => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceEntryExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimableBalanceEntryExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimableBalanceEntryExt(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolConstantProductParameters => Box::new(
                 ReadXdrIter::<_, LiquidityPoolConstantProductParameters>::new(
                     dec,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntry => Box::new(
-                ReadXdrIter::<_, LiquidityPoolEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolEntry(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntryBody => Box::new(
-                ReadXdrIter::<_, LiquidityPoolEntryBody>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolEntryBody>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryBody(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolEntryConstantProduct => Box::new(
-                ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolEntryConstantProduct>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))),
             ),
             TypeVariant::ContractDataDurability => Box::new(
-                ReadXdrIter::<_, ContractDataDurability>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractDataDurability>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractDataDurability(Box::new(t)))),
             ),
             TypeVariant::ContractDataEntry => Box::new(
-                ReadXdrIter::<_, ContractDataEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractDataEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t)))),
             ),
             TypeVariant::ContractCodeEntry => Box::new(
-                ReadXdrIter::<_, ContractCodeEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractCodeEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
             ),
             TypeVariant::TtlEntry => Box::new(
-                ReadXdrIter::<_, TtlEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TtlEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TtlEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1 => Box::new(
-                ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryExtensionV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, LedgerEntryExtensionV1Ext>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryExtensionV1Ext>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::LedgerEntry => Box::new(
-                ReadXdrIter::<_, LedgerEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryData => Box::new(
-                ReadXdrIter::<_, LedgerEntryData>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryData>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryData(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryExt => Box::new(
-                ReadXdrIter::<_, LedgerEntryExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerKey => Box::new(
-                ReadXdrIter::<_, LedgerKey>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKey>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKey(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyAccount => Box::new(
-                ReadXdrIter::<_, LedgerKeyAccount>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyAccount>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyAccount(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyTrustLine => Box::new(
-                ReadXdrIter::<_, LedgerKeyTrustLine>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyTrustLine>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyTrustLine(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyOffer => Box::new(
-                ReadXdrIter::<_, LedgerKeyOffer>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyOffer>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyOffer(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyData => Box::new(
-                ReadXdrIter::<_, LedgerKeyData>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyData>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyData(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyClaimableBalance => Box::new(
-                ReadXdrIter::<_, LedgerKeyClaimableBalance>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyClaimableBalance>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyClaimableBalance(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyLiquidityPool => Box::new(
-                ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyLiquidityPool>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyContractData => Box::new(
-                ReadXdrIter::<_, LedgerKeyContractData>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyContractData>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyContractData(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyContractCode => Box::new(
-                ReadXdrIter::<_, LedgerKeyContractCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyContractCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyContractCode(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyConfigSetting => Box::new(
-                ReadXdrIter::<_, LedgerKeyConfigSetting>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyConfigSetting>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))),
             ),
             TypeVariant::LedgerKeyTtl => Box::new(
-                ReadXdrIter::<_, LedgerKeyTtl>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerKeyTtl>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerKeyTtl(Box::new(t)))),
             ),
             TypeVariant::EnvelopeType => Box::new(
-                ReadXdrIter::<_, EnvelopeType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, EnvelopeType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::EnvelopeType(Box::new(t)))),
             ),
             TypeVariant::UpgradeType => Box::new(
-                ReadXdrIter::<_, UpgradeType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, UpgradeType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeType(Box::new(t)))),
             ),
             TypeVariant::StellarValueType => Box::new(
-                ReadXdrIter::<_, StellarValueType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, StellarValueType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueType(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseValueSignature => Box::new(
-                ReadXdrIter::<_, LedgerCloseValueSignature>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerCloseValueSignature>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseValueSignature(Box::new(t)))),
             ),
             TypeVariant::StellarValue => Box::new(
-                ReadXdrIter::<_, StellarValue>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, StellarValue>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValue(Box::new(t)))),
             ),
             TypeVariant::StellarValueExt => Box::new(
-                ReadXdrIter::<_, StellarValueExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, StellarValueExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
-                ReadXdrIter::<_, LedgerHeaderFlags>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderFlags>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderFlags(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1 => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExtensionV1>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderExtensionV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExtensionV1Ext => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExtensionV1Ext>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderExtensionV1Ext>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t)))),
             ),
             TypeVariant::LedgerHeader => Box::new(
-                ReadXdrIter::<_, LedgerHeader>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeader>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeader(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderExt => Box::new(
-                ReadXdrIter::<_, LedgerHeaderExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderExt(Box::new(t)))),
             ),
             TypeVariant::LedgerUpgradeType => Box::new(
-                ReadXdrIter::<_, LedgerUpgradeType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerUpgradeType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerUpgradeType(Box::new(t)))),
             ),
             TypeVariant::ConfigUpgradeSetKey => Box::new(
-                ReadXdrIter::<_, ConfigUpgradeSetKey>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ConfigUpgradeSetKey>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigUpgradeSetKey(Box::new(t)))),
             ),
             TypeVariant::LedgerUpgrade => Box::new(
-                ReadXdrIter::<_, LedgerUpgrade>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerUpgrade>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerUpgrade(Box::new(t)))),
             ),
             TypeVariant::ConfigUpgradeSet => Box::new(
-                ReadXdrIter::<_, ConfigUpgradeSet>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ConfigUpgradeSet>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t)))),
             ),
             TypeVariant::BucketEntryType => Box::new(
-                ReadXdrIter::<_, BucketEntryType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, BucketEntryType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t)))),
             ),
             TypeVariant::BucketMetadata => Box::new(
-                ReadXdrIter::<_, BucketMetadata>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, BucketMetadata>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t)))),
             ),
             TypeVariant::BucketMetadataExt => Box::new(
-                ReadXdrIter::<_, BucketMetadataExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, BucketMetadataExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadataExt(Box::new(t)))),
             ),
             TypeVariant::BucketEntry => Box::new(
-                ReadXdrIter::<_, BucketEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, BucketEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntry(Box::new(t)))),
             ),
             TypeVariant::TxSetComponentType => Box::new(
-                ReadXdrIter::<_, TxSetComponentType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TxSetComponentType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
-                ReadXdrIter::<_, TxSetComponent>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TxSetComponent>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponent(Box::new(t)))),
             ),
             TypeVariant::TxSetComponentTxsMaybeDiscountedFee => Box::new(
-                ReadXdrIter::<_, TxSetComponentTxsMaybeDiscountedFee>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TxSetComponentTxsMaybeDiscountedFee>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t)))),
             ),
             TypeVariant::TransactionPhase => Box::new(
-                ReadXdrIter::<_, TransactionPhase>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionPhase>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionPhase(Box::new(t)))),
             ),
             TypeVariant::TransactionSet => Box::new(
-                ReadXdrIter::<_, TransactionSet>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionSet>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionSet(Box::new(t)))),
             ),
             TypeVariant::TransactionSetV1 => Box::new(
-                ReadXdrIter::<_, TransactionSetV1>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionSetV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionSetV1(Box::new(t)))),
             ),
             TypeVariant::GeneralizedTransactionSet => Box::new(
-                ReadXdrIter::<_, GeneralizedTransactionSet>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, GeneralizedTransactionSet>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::GeneralizedTransactionSet(Box::new(t)))),
             ),
             TypeVariant::TransactionResultPair => Box::new(
-                ReadXdrIter::<_, TransactionResultPair>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultPair>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultPair(Box::new(t)))),
             ),
             TypeVariant::TransactionResultSet => Box::new(
-                ReadXdrIter::<_, TransactionResultSet>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultSet>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultSet(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryEntry => Box::new(
-                ReadXdrIter::<_, TransactionHistoryEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionHistoryEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryEntryExt => Box::new(
-                ReadXdrIter::<_, TransactionHistoryEntryExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionHistoryEntryExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionHistoryEntryExt(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryResultEntry => Box::new(
-                ReadXdrIter::<_, TransactionHistoryResultEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionHistoryResultEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionHistoryResultEntry(Box::new(t)))),
             ),
             TypeVariant::TransactionHistoryResultEntryExt => Box::new(
-                ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionHistoryResultEntryExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntry => Box::new(
-                ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderHistoryEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderHistoryEntryExt => Box::new(
-                ReadXdrIter::<_, LedgerHeaderHistoryEntryExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerHeaderHistoryEntryExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t)))),
             ),
             TypeVariant::LedgerScpMessages => Box::new(
-                ReadXdrIter::<_, LedgerScpMessages>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerScpMessages>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerScpMessages(Box::new(t)))),
             ),
             TypeVariant::ScpHistoryEntryV0 => Box::new(
-                ReadXdrIter::<_, ScpHistoryEntryV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpHistoryEntryV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpHistoryEntryV0(Box::new(t)))),
             ),
             TypeVariant::ScpHistoryEntry => Box::new(
-                ReadXdrIter::<_, ScpHistoryEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ScpHistoryEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScpHistoryEntry(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChangeType => Box::new(
-                ReadXdrIter::<_, LedgerEntryChangeType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryChangeType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryChangeType(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChange => Box::new(
-                ReadXdrIter::<_, LedgerEntryChange>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryChange>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryChange(Box::new(t)))),
             ),
             TypeVariant::LedgerEntryChanges => Box::new(
-                ReadXdrIter::<_, LedgerEntryChanges>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerEntryChanges>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerEntryChanges(Box::new(t)))),
             ),
             TypeVariant::OperationMeta => Box::new(
-                ReadXdrIter::<_, OperationMeta>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, OperationMeta>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV1 => Box::new(
-                ReadXdrIter::<_, TransactionMetaV1>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionMetaV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV1(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV2 => Box::new(
-                ReadXdrIter::<_, TransactionMetaV2>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionMetaV2>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV2(Box::new(t)))),
             ),
             TypeVariant::ContractEventType => Box::new(
-                ReadXdrIter::<_, ContractEventType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractEventType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEventType(Box::new(t)))),
             ),
             TypeVariant::ContractEvent => Box::new(
-                ReadXdrIter::<_, ContractEvent>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractEvent>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEvent(Box::new(t)))),
             ),
             TypeVariant::ContractEventBody => Box::new(
-                ReadXdrIter::<_, ContractEventBody>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractEventBody>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEventBody(Box::new(t)))),
             ),
             TypeVariant::ContractEventV0 => Box::new(
-                ReadXdrIter::<_, ContractEventV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractEventV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractEventV0(Box::new(t)))),
             ),
             TypeVariant::DiagnosticEvent => Box::new(
-                ReadXdrIter::<_, DiagnosticEvent>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, DiagnosticEvent>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
             ),
             TypeVariant::SorobanTransactionMeta => Box::new(
-                ReadXdrIter::<_, SorobanTransactionMeta>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SorobanTransactionMeta>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionMetaV3 => Box::new(
-                ReadXdrIter::<_, TransactionMetaV3>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionMetaV3>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
-                ReadXdrIter::<_, InvokeHostFunctionSuccessPreImage>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InvokeHostFunctionSuccessPreImage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t)))),
             ),
             TypeVariant::TransactionMeta => Box::new(
-                ReadXdrIter::<_, TransactionMeta>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionMeta>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMeta(Box::new(t)))),
             ),
             TypeVariant::TransactionResultMeta => Box::new(
-                ReadXdrIter::<_, TransactionResultMeta>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultMeta>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultMeta(Box::new(t)))),
             ),
             TypeVariant::UpgradeEntryMeta => Box::new(
-                ReadXdrIter::<_, UpgradeEntryMeta>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, UpgradeEntryMeta>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::UpgradeEntryMeta(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMetaV0 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerCloseMetaV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV0(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMetaV1 => Box::new(
-                ReadXdrIter::<_, LedgerCloseMetaV1>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerCloseMetaV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaV1(Box::new(t)))),
             ),
             TypeVariant::LedgerCloseMeta => Box::new(
-                ReadXdrIter::<_, LedgerCloseMeta>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerCloseMeta>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMeta(Box::new(t)))),
             ),
             TypeVariant::ErrorCode => Box::new(
-                ReadXdrIter::<_, ErrorCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ErrorCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ErrorCode(Box::new(t)))),
             ),
             TypeVariant::SError => Box::new(
-                ReadXdrIter::<_, SError>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SError>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SError(Box::new(t)))),
             ),
             TypeVariant::SendMore => Box::new(
-                ReadXdrIter::<_, SendMore>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SendMore>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SendMore(Box::new(t)))),
             ),
             TypeVariant::SendMoreExtended => Box::new(
-                ReadXdrIter::<_, SendMoreExtended>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SendMoreExtended>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SendMoreExtended(Box::new(t)))),
             ),
             TypeVariant::AuthCert => Box::new(
-                ReadXdrIter::<_, AuthCert>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AuthCert>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AuthCert(Box::new(t)))),
             ),
             TypeVariant::Hello => Box::new(
-                ReadXdrIter::<_, Hello>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Hello>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Hello(Box::new(t)))),
             ),
             TypeVariant::Auth => Box::new(
-                ReadXdrIter::<_, Auth>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Auth>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Auth(Box::new(t)))),
             ),
             TypeVariant::IpAddrType => Box::new(
-                ReadXdrIter::<_, IpAddrType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, IpAddrType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::IpAddrType(Box::new(t)))),
             ),
             TypeVariant::PeerAddress => Box::new(
-                ReadXdrIter::<_, PeerAddress>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PeerAddress>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerAddress(Box::new(t)))),
             ),
             TypeVariant::PeerAddressIp => Box::new(
-                ReadXdrIter::<_, PeerAddressIp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PeerAddressIp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerAddressIp(Box::new(t)))),
             ),
             TypeVariant::MessageType => Box::new(
-                ReadXdrIter::<_, MessageType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, MessageType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::MessageType(Box::new(t)))),
             ),
             TypeVariant::DontHave => Box::new(
-                ReadXdrIter::<_, DontHave>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, DontHave>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::DontHave(Box::new(t)))),
             ),
             TypeVariant::SurveyMessageCommandType => Box::new(
-                ReadXdrIter::<_, SurveyMessageCommandType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SurveyMessageCommandType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyMessageCommandType(Box::new(t)))),
             ),
             TypeVariant::SurveyMessageResponseType => Box::new(
-                ReadXdrIter::<_, SurveyMessageResponseType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SurveyMessageResponseType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t)))),
             ),
             TypeVariant::SurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, SurveyRequestMessage>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SurveyRequestMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
             ),
             TypeVariant::SignedSurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t)))),
             ),
             TypeVariant::EncryptedBody => Box::new(
-                ReadXdrIter::<_, EncryptedBody>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, EncryptedBody>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::EncryptedBody(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, SurveyResponseMessage>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SurveyResponseMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t)))),
             ),
             TypeVariant::SignedSurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t)))),
             ),
             TypeVariant::PeerStats => Box::new(
-                ReadXdrIter::<_, PeerStats>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PeerStats>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStats(Box::new(t)))),
             ),
             TypeVariant::PeerStatList => Box::new(
-                ReadXdrIter::<_, PeerStatList>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PeerStatList>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
             TypeVariant::TopologyResponseBodyV0 => Box::new(
-                ReadXdrIter::<_, TopologyResponseBodyV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TopologyResponseBodyV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t)))),
             ),
             TypeVariant::TopologyResponseBodyV1 => Box::new(
-                ReadXdrIter::<_, TopologyResponseBodyV1>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TopologyResponseBodyV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
-                ReadXdrIter::<_, SurveyResponseBody>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SurveyResponseBody>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyResponseBody(Box::new(t)))),
             ),
             TypeVariant::TxAdvertVector => Box::new(
-                ReadXdrIter::<_, TxAdvertVector>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TxAdvertVector>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxAdvertVector(Box::new(t)))),
             ),
             TypeVariant::FloodAdvert => Box::new(
-                ReadXdrIter::<_, FloodAdvert>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, FloodAdvert>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::FloodAdvert(Box::new(t)))),
             ),
             TypeVariant::TxDemandVector => Box::new(
-                ReadXdrIter::<_, TxDemandVector>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TxDemandVector>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxDemandVector(Box::new(t)))),
             ),
             TypeVariant::FloodDemand => Box::new(
-                ReadXdrIter::<_, FloodDemand>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, FloodDemand>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::FloodDemand(Box::new(t)))),
             ),
             TypeVariant::StellarMessage => Box::new(
-                ReadXdrIter::<_, StellarMessage>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, StellarMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarMessage(Box::new(t)))),
             ),
             TypeVariant::AuthenticatedMessage => Box::new(
-                ReadXdrIter::<_, AuthenticatedMessage>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AuthenticatedMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AuthenticatedMessage(Box::new(t)))),
             ),
             TypeVariant::AuthenticatedMessageV0 => Box::new(
-                ReadXdrIter::<_, AuthenticatedMessageV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AuthenticatedMessageV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AuthenticatedMessageV0(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolParameters => Box::new(
-                ReadXdrIter::<_, LiquidityPoolParameters>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolParameters>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolParameters(Box::new(t)))),
             ),
             TypeVariant::MuxedAccount => Box::new(
-                ReadXdrIter::<_, MuxedAccount>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, MuxedAccount>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedAccount(Box::new(t)))),
             ),
             TypeVariant::MuxedAccountMed25519 => Box::new(
-                ReadXdrIter::<_, MuxedAccountMed25519>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, MuxedAccountMed25519>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedAccountMed25519(Box::new(t)))),
             ),
             TypeVariant::DecoratedSignature => Box::new(
-                ReadXdrIter::<_, DecoratedSignature>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, DecoratedSignature>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::DecoratedSignature(Box::new(t)))),
             ),
             TypeVariant::OperationType => Box::new(
-                ReadXdrIter::<_, OperationType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, OperationType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationType(Box::new(t)))),
             ),
             TypeVariant::CreateAccountOp => Box::new(
-                ReadXdrIter::<_, CreateAccountOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, CreateAccountOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateAccountOp(Box::new(t)))),
             ),
             TypeVariant::PaymentOp => Box::new(
-                ReadXdrIter::<_, PaymentOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PaymentOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PaymentOp(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveOp => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PathPaymentStrictReceiveOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendOp => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PathPaymentStrictSendOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendOp(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferOp => Box::new(
-                ReadXdrIter::<_, ManageSellOfferOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageSellOfferOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageSellOfferOp(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferOp => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageBuyOfferOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageBuyOfferOp(Box::new(t)))),
             ),
             TypeVariant::CreatePassiveSellOfferOp => Box::new(
-                ReadXdrIter::<_, CreatePassiveSellOfferOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, CreatePassiveSellOfferOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreatePassiveSellOfferOp(Box::new(t)))),
             ),
             TypeVariant::SetOptionsOp => Box::new(
-                ReadXdrIter::<_, SetOptionsOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SetOptionsOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetOptionsOp(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustAsset => Box::new(
-                ReadXdrIter::<_, ChangeTrustAsset>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ChangeTrustAsset>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ChangeTrustAsset(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustOp => Box::new(
-                ReadXdrIter::<_, ChangeTrustOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ChangeTrustOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ChangeTrustOp(Box::new(t)))),
             ),
             TypeVariant::AllowTrustOp => Box::new(
-                ReadXdrIter::<_, AllowTrustOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AllowTrustOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AllowTrustOp(Box::new(t)))),
             ),
             TypeVariant::ManageDataOp => Box::new(
-                ReadXdrIter::<_, ManageDataOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageDataOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageDataOp(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceOp => Box::new(
-                ReadXdrIter::<_, BumpSequenceOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, BumpSequenceOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BumpSequenceOp(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, CreateClaimableBalanceOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, CreateClaimableBalanceOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, ClaimClaimableBalanceOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimClaimableBalanceOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesOp => Box::new(
-                ReadXdrIter::<_, BeginSponsoringFutureReservesOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, BeginSponsoringFutureReservesOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipType => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, RevokeSponsorshipType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::RevokeSponsorshipType(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipOp => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, RevokeSponsorshipOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::RevokeSponsorshipOp(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipOpSigner => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipOpSigner>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, RevokeSponsorshipOpSigner>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t)))),
             ),
             TypeVariant::ClawbackOp => Box::new(
-                ReadXdrIter::<_, ClawbackOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClawbackOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackOp(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceOp => Box::new(
-                ReadXdrIter::<_, ClawbackClaimableBalanceOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClawbackClaimableBalanceOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsOp => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SetTrustLineFlagsOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsOp(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositOp => Box::new(
-                ReadXdrIter::<_, LiquidityPoolDepositOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolDepositOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolDepositOp(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawOp => Box::new(
-                ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolWithdrawOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))),
             ),
             TypeVariant::HostFunctionType => Box::new(
-                ReadXdrIter::<_, HostFunctionType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, HostFunctionType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HostFunctionType(Box::new(t)))),
             ),
             TypeVariant::ContractIdPreimageType => Box::new(
-                ReadXdrIter::<_, ContractIdPreimageType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractIdPreimageType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractIdPreimageType(Box::new(t)))),
             ),
             TypeVariant::ContractIdPreimage => Box::new(
-                ReadXdrIter::<_, ContractIdPreimage>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractIdPreimage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractIdPreimage(Box::new(t)))),
             ),
             TypeVariant::ContractIdPreimageFromAddress => Box::new(
-                ReadXdrIter::<_, ContractIdPreimageFromAddress>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ContractIdPreimageFromAddress>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractIdPreimageFromAddress(Box::new(t)))),
             ),
             TypeVariant::CreateContractArgs => Box::new(
-                ReadXdrIter::<_, CreateContractArgs>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, CreateContractArgs>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
             ),
             TypeVariant::InvokeContractArgs => Box::new(
-                ReadXdrIter::<_, InvokeContractArgs>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InvokeContractArgs>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeContractArgs(Box::new(t)))),
             ),
             TypeVariant::HostFunction => Box::new(
-                ReadXdrIter::<_, HostFunction>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, HostFunction>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HostFunction(Box::new(t)))),
             ),
             TypeVariant::SorobanAuthorizedFunctionType => Box::new(
-                ReadXdrIter::<_, SorobanAuthorizedFunctionType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SorobanAuthorizedFunctionType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t)))),
             ),
             TypeVariant::SorobanAuthorizedFunction => Box::new(
-                ReadXdrIter::<_, SorobanAuthorizedFunction>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SorobanAuthorizedFunction>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAuthorizedFunction(Box::new(t)))),
             ),
             TypeVariant::SorobanAuthorizedInvocation => Box::new(
-                ReadXdrIter::<_, SorobanAuthorizedInvocation>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SorobanAuthorizedInvocation>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAuthorizedInvocation(Box::new(t)))),
             ),
             TypeVariant::SorobanAddressCredentials => Box::new(
-                ReadXdrIter::<_, SorobanAddressCredentials>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SorobanAddressCredentials>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
             ),
             TypeVariant::SorobanCredentialsType => Box::new(
-                ReadXdrIter::<_, SorobanCredentialsType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SorobanCredentialsType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
             ),
             TypeVariant::SorobanCredentials => Box::new(
-                ReadXdrIter::<_, SorobanCredentials>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SorobanCredentials>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanCredentials(Box::new(t)))),
             ),
             TypeVariant::SorobanAuthorizationEntry => Box::new(
-                ReadXdrIter::<_, SorobanAuthorizationEntry>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SorobanAuthorizationEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionOp => Box::new(
-                ReadXdrIter::<_, InvokeHostFunctionOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InvokeHostFunctionOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionOp(Box::new(t)))),
             ),
             TypeVariant::ExtendFootprintTtlOp => Box::new(
-                ReadXdrIter::<_, ExtendFootprintTtlOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ExtendFootprintTtlOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtendFootprintTtlOp(Box::new(t)))),
             ),
             TypeVariant::RestoreFootprintOp => Box::new(
-                ReadXdrIter::<_, RestoreFootprintOp>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, RestoreFootprintOp>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::RestoreFootprintOp(Box::new(t)))),
             ),
             TypeVariant::Operation => Box::new(
-                ReadXdrIter::<_, Operation>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Operation>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Operation(Box::new(t)))),
             ),
             TypeVariant::OperationBody => Box::new(
-                ReadXdrIter::<_, OperationBody>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, OperationBody>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationBody(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimage => Box::new(
-                ReadXdrIter::<_, HashIdPreimage>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, HashIdPreimage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimage(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageOperationId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageOperationId>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, HashIdPreimageOperationId>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimageOperationId(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageRevokeId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageRevokeId>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, HashIdPreimageRevokeId>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageContractId => Box::new(
-                ReadXdrIter::<_, HashIdPreimageContractId>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, HashIdPreimageContractId>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimageContractId(Box::new(t)))),
             ),
             TypeVariant::HashIdPreimageSorobanAuthorization => Box::new(
-                ReadXdrIter::<_, HashIdPreimageSorobanAuthorization>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, HashIdPreimageSorobanAuthorization>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
-                ReadXdrIter::<_, MemoType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, MemoType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
             ),
             TypeVariant::Memo => Box::new(
-                ReadXdrIter::<_, Memo>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Memo>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Memo(Box::new(t)))),
             ),
             TypeVariant::TimeBounds => Box::new(
-                ReadXdrIter::<_, TimeBounds>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TimeBounds>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimeBounds(Box::new(t)))),
             ),
             TypeVariant::LedgerBounds => Box::new(
-                ReadXdrIter::<_, LedgerBounds>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerBounds>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerBounds(Box::new(t)))),
             ),
             TypeVariant::PreconditionsV2 => Box::new(
-                ReadXdrIter::<_, PreconditionsV2>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PreconditionsV2>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PreconditionsV2(Box::new(t)))),
             ),
             TypeVariant::PreconditionType => Box::new(
-                ReadXdrIter::<_, PreconditionType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PreconditionType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PreconditionType(Box::new(t)))),
             ),
             TypeVariant::Preconditions => Box::new(
-                ReadXdrIter::<_, Preconditions>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Preconditions>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Preconditions(Box::new(t)))),
             ),
             TypeVariant::LedgerFootprint => Box::new(
-                ReadXdrIter::<_, LedgerFootprint>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LedgerFootprint>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
             ),
             TypeVariant::SorobanResources => Box::new(
-                ReadXdrIter::<_, SorobanResources>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SorobanResources>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanResources(Box::new(t)))),
             ),
             TypeVariant::SorobanTransactionData => Box::new(
-                ReadXdrIter::<_, SorobanTransactionData>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SorobanTransactionData>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
-                ReadXdrIter::<_, TransactionV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionV0(Box::new(t)))),
             ),
             TypeVariant::TransactionV0Ext => Box::new(
-                ReadXdrIter::<_, TransactionV0Ext>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionV0Ext>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionV0Ext(Box::new(t)))),
             ),
             TypeVariant::TransactionV0Envelope => Box::new(
-                ReadXdrIter::<_, TransactionV0Envelope>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionV0Envelope>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionV0Envelope(Box::new(t)))),
             ),
             TypeVariant::Transaction => Box::new(
-                ReadXdrIter::<_, Transaction>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Transaction>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Transaction(Box::new(t)))),
             ),
             TypeVariant::TransactionExt => Box::new(
-                ReadXdrIter::<_, TransactionExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionExt(Box::new(t)))),
             ),
             TypeVariant::TransactionV1Envelope => Box::new(
-                ReadXdrIter::<_, TransactionV1Envelope>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionV1Envelope>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionV1Envelope(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransaction => Box::new(
-                ReadXdrIter::<_, FeeBumpTransaction>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, FeeBumpTransaction>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::FeeBumpTransaction(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionInnerTx => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionInnerTx>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, FeeBumpTransactionInnerTx>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionExt => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, FeeBumpTransactionExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::FeeBumpTransactionExt(Box::new(t)))),
             ),
             TypeVariant::FeeBumpTransactionEnvelope => Box::new(
-                ReadXdrIter::<_, FeeBumpTransactionEnvelope>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, FeeBumpTransactionEnvelope>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t)))),
             ),
             TypeVariant::TransactionEnvelope => Box::new(
-                ReadXdrIter::<_, TransactionEnvelope>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionEnvelope>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionEnvelope(Box::new(t)))),
             ),
             TypeVariant::TransactionSignaturePayload => Box::new(
-                ReadXdrIter::<_, TransactionSignaturePayload>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionSignaturePayload>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionSignaturePayload(Box::new(t)))),
             ),
             TypeVariant::TransactionSignaturePayloadTaggedTransaction => Box::new(
                 ReadXdrIter::<_, TransactionSignaturePayloadTaggedTransaction>::new(
                     dec,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| {
                     r.map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t)))
                 }),
             ),
             TypeVariant::ClaimAtomType => Box::new(
-                ReadXdrIter::<_, ClaimAtomType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimAtomType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimAtomType(Box::new(t)))),
             ),
             TypeVariant::ClaimOfferAtomV0 => Box::new(
-                ReadXdrIter::<_, ClaimOfferAtomV0>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimOfferAtomV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimOfferAtomV0(Box::new(t)))),
             ),
             TypeVariant::ClaimOfferAtom => Box::new(
-                ReadXdrIter::<_, ClaimOfferAtom>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimOfferAtom>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimOfferAtom(Box::new(t)))),
             ),
             TypeVariant::ClaimLiquidityAtom => Box::new(
-                ReadXdrIter::<_, ClaimLiquidityAtom>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimLiquidityAtom>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimLiquidityAtom(Box::new(t)))),
             ),
             TypeVariant::ClaimAtom => Box::new(
-                ReadXdrIter::<_, ClaimAtom>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimAtom>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimAtom(Box::new(t)))),
             ),
             TypeVariant::CreateAccountResultCode => Box::new(
-                ReadXdrIter::<_, CreateAccountResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, CreateAccountResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateAccountResultCode(Box::new(t)))),
             ),
             TypeVariant::CreateAccountResult => Box::new(
-                ReadXdrIter::<_, CreateAccountResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, CreateAccountResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateAccountResult(Box::new(t)))),
             ),
             TypeVariant::PaymentResultCode => Box::new(
-                ReadXdrIter::<_, PaymentResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PaymentResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PaymentResultCode(Box::new(t)))),
             ),
             TypeVariant::PaymentResult => Box::new(
-                ReadXdrIter::<_, PaymentResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PaymentResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PaymentResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultCode => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PathPaymentStrictReceiveResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t)))),
             ),
             TypeVariant::SimplePaymentResult => Box::new(
-                ReadXdrIter::<_, SimplePaymentResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SimplePaymentResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SimplePaymentResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResult => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PathPaymentStrictReceiveResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictReceiveResultSuccess => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictReceiveResultSuccess>::new(
-                    dec,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t)))),
+                ReadXdrIter::<_, PathPaymentStrictReceiveResultSuccess>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResultCode => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PathPaymentStrictSendResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResult => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PathPaymentStrictSendResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendResult(Box::new(t)))),
             ),
             TypeVariant::PathPaymentStrictSendResultSuccess => Box::new(
-                ReadXdrIter::<_, PathPaymentStrictSendResultSuccess>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PathPaymentStrictSendResultSuccess>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferResultCode => Box::new(
-                ReadXdrIter::<_, ManageSellOfferResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageSellOfferResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageSellOfferResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageOfferEffect => Box::new(
-                ReadXdrIter::<_, ManageOfferEffect>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageOfferEffect>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageOfferEffect(Box::new(t)))),
             ),
             TypeVariant::ManageOfferSuccessResult => Box::new(
-                ReadXdrIter::<_, ManageOfferSuccessResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageOfferSuccessResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageOfferSuccessResult(Box::new(t)))),
             ),
             TypeVariant::ManageOfferSuccessResultOffer => Box::new(
-                ReadXdrIter::<_, ManageOfferSuccessResultOffer>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageOfferSuccessResultOffer>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t)))),
             ),
             TypeVariant::ManageSellOfferResult => Box::new(
-                ReadXdrIter::<_, ManageSellOfferResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageSellOfferResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageSellOfferResult(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferResultCode => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageBuyOfferResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageBuyOfferResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageBuyOfferResult => Box::new(
-                ReadXdrIter::<_, ManageBuyOfferResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageBuyOfferResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageBuyOfferResult(Box::new(t)))),
             ),
             TypeVariant::SetOptionsResultCode => Box::new(
-                ReadXdrIter::<_, SetOptionsResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SetOptionsResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetOptionsResultCode(Box::new(t)))),
             ),
             TypeVariant::SetOptionsResult => Box::new(
-                ReadXdrIter::<_, SetOptionsResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SetOptionsResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetOptionsResult(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustResultCode => Box::new(
-                ReadXdrIter::<_, ChangeTrustResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ChangeTrustResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ChangeTrustResultCode(Box::new(t)))),
             ),
             TypeVariant::ChangeTrustResult => Box::new(
-                ReadXdrIter::<_, ChangeTrustResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ChangeTrustResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ChangeTrustResult(Box::new(t)))),
             ),
             TypeVariant::AllowTrustResultCode => Box::new(
-                ReadXdrIter::<_, AllowTrustResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AllowTrustResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AllowTrustResultCode(Box::new(t)))),
             ),
             TypeVariant::AllowTrustResult => Box::new(
-                ReadXdrIter::<_, AllowTrustResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AllowTrustResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AllowTrustResult(Box::new(t)))),
             ),
             TypeVariant::AccountMergeResultCode => Box::new(
-                ReadXdrIter::<_, AccountMergeResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AccountMergeResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountMergeResultCode(Box::new(t)))),
             ),
             TypeVariant::AccountMergeResult => Box::new(
-                ReadXdrIter::<_, AccountMergeResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AccountMergeResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountMergeResult(Box::new(t)))),
             ),
             TypeVariant::InflationResultCode => Box::new(
-                ReadXdrIter::<_, InflationResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InflationResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InflationResultCode(Box::new(t)))),
             ),
             TypeVariant::InflationPayout => Box::new(
-                ReadXdrIter::<_, InflationPayout>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InflationPayout>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InflationPayout(Box::new(t)))),
             ),
             TypeVariant::InflationResult => Box::new(
-                ReadXdrIter::<_, InflationResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InflationResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InflationResult(Box::new(t)))),
             ),
             TypeVariant::ManageDataResultCode => Box::new(
-                ReadXdrIter::<_, ManageDataResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageDataResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageDataResultCode(Box::new(t)))),
             ),
             TypeVariant::ManageDataResult => Box::new(
-                ReadXdrIter::<_, ManageDataResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ManageDataResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ManageDataResult(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceResultCode => Box::new(
-                ReadXdrIter::<_, BumpSequenceResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, BumpSequenceResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BumpSequenceResultCode(Box::new(t)))),
             ),
             TypeVariant::BumpSequenceResult => Box::new(
-                ReadXdrIter::<_, BumpSequenceResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, BumpSequenceResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BumpSequenceResult(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, CreateClaimableBalanceResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, CreateClaimableBalanceResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::CreateClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, CreateClaimableBalanceResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, CreateClaimableBalanceResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, ClaimClaimableBalanceResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimClaimableBalanceResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::ClaimClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, ClaimClaimableBalanceResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClaimClaimableBalanceResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResultCode => Box::new(
                 ReadXdrIter::<_, BeginSponsoringFutureReservesResultCode>::new(
                     dec,
-                    r.depth_remaining,
+                    r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t)))),
             ),
             TypeVariant::BeginSponsoringFutureReservesResult => Box::new(
-                ReadXdrIter::<_, BeginSponsoringFutureReservesResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, BeginSponsoringFutureReservesResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResultCode => Box::new(
-                ReadXdrIter::<_, EndSponsoringFutureReservesResultCode>::new(
-                    dec,
-                    r.depth_remaining,
-                )
-                .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t)))),
+                ReadXdrIter::<_, EndSponsoringFutureReservesResultCode>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t)))),
             ),
             TypeVariant::EndSponsoringFutureReservesResult => Box::new(
-                ReadXdrIter::<_, EndSponsoringFutureReservesResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, EndSponsoringFutureReservesResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipResultCode => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, RevokeSponsorshipResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::RevokeSponsorshipResultCode(Box::new(t)))),
             ),
             TypeVariant::RevokeSponsorshipResult => Box::new(
-                ReadXdrIter::<_, RevokeSponsorshipResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, RevokeSponsorshipResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::RevokeSponsorshipResult(Box::new(t)))),
             ),
             TypeVariant::ClawbackResultCode => Box::new(
-                ReadXdrIter::<_, ClawbackResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClawbackResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackResultCode(Box::new(t)))),
             ),
             TypeVariant::ClawbackResult => Box::new(
-                ReadXdrIter::<_, ClawbackResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClawbackResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackResult(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResultCode => Box::new(
-                ReadXdrIter::<_, ClawbackClaimableBalanceResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClawbackClaimableBalanceResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t)))),
             ),
             TypeVariant::ClawbackClaimableBalanceResult => Box::new(
-                ReadXdrIter::<_, ClawbackClaimableBalanceResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ClawbackClaimableBalanceResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsResultCode => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SetTrustLineFlagsResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t)))),
             ),
             TypeVariant::SetTrustLineFlagsResult => Box::new(
-                ReadXdrIter::<_, SetTrustLineFlagsResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SetTrustLineFlagsResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SetTrustLineFlagsResult(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositResultCode => Box::new(
-                ReadXdrIter::<_, LiquidityPoolDepositResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolDepositResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolDepositResult => Box::new(
-                ReadXdrIter::<_, LiquidityPoolDepositResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolDepositResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolDepositResult(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResultCode => Box::new(
-                ReadXdrIter::<_, LiquidityPoolWithdrawResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolWithdrawResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t)))),
             ),
             TypeVariant::LiquidityPoolWithdrawResult => Box::new(
-                ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, LiquidityPoolWithdrawResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionResultCode => Box::new(
-                ReadXdrIter::<_, InvokeHostFunctionResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InvokeHostFunctionResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionResultCode(Box::new(t)))),
             ),
             TypeVariant::InvokeHostFunctionResult => Box::new(
-                ReadXdrIter::<_, InvokeHostFunctionResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InvokeHostFunctionResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionResult(Box::new(t)))),
             ),
             TypeVariant::ExtendFootprintTtlResultCode => Box::new(
-                ReadXdrIter::<_, ExtendFootprintTtlResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ExtendFootprintTtlResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtendFootprintTtlResultCode(Box::new(t)))),
             ),
             TypeVariant::ExtendFootprintTtlResult => Box::new(
-                ReadXdrIter::<_, ExtendFootprintTtlResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ExtendFootprintTtlResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtendFootprintTtlResult(Box::new(t)))),
             ),
             TypeVariant::RestoreFootprintResultCode => Box::new(
-                ReadXdrIter::<_, RestoreFootprintResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, RestoreFootprintResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::RestoreFootprintResultCode(Box::new(t)))),
             ),
             TypeVariant::RestoreFootprintResult => Box::new(
-                ReadXdrIter::<_, RestoreFootprintResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, RestoreFootprintResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::RestoreFootprintResult(Box::new(t)))),
             ),
             TypeVariant::OperationResultCode => Box::new(
-                ReadXdrIter::<_, OperationResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, OperationResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationResultCode(Box::new(t)))),
             ),
             TypeVariant::OperationResult => Box::new(
-                ReadXdrIter::<_, OperationResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, OperationResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationResult(Box::new(t)))),
             ),
             TypeVariant::OperationResultTr => Box::new(
-                ReadXdrIter::<_, OperationResultTr>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, OperationResultTr>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::OperationResultTr(Box::new(t)))),
             ),
             TypeVariant::TransactionResultCode => Box::new(
-                ReadXdrIter::<_, TransactionResultCode>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultCode>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultCode(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResult => Box::new(
-                ReadXdrIter::<_, InnerTransactionResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InnerTransactionResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InnerTransactionResult(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultResult => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InnerTransactionResultResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InnerTransactionResultResult(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultExt => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InnerTransactionResultExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InnerTransactionResultExt(Box::new(t)))),
             ),
             TypeVariant::InnerTransactionResultPair => Box::new(
-                ReadXdrIter::<_, InnerTransactionResultPair>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, InnerTransactionResultPair>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InnerTransactionResultPair(Box::new(t)))),
             ),
             TypeVariant::TransactionResult => Box::new(
-                ReadXdrIter::<_, TransactionResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResult(Box::new(t)))),
             ),
             TypeVariant::TransactionResultResult => Box::new(
-                ReadXdrIter::<_, TransactionResultResult>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultResult>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultResult(Box::new(t)))),
             ),
             TypeVariant::TransactionResultExt => Box::new(
-                ReadXdrIter::<_, TransactionResultExt>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TransactionResultExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionResultExt(Box::new(t)))),
             ),
             TypeVariant::Hash => Box::new(
-                ReadXdrIter::<_, Hash>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Hash>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Hash(Box::new(t)))),
             ),
             TypeVariant::Uint256 => Box::new(
-                ReadXdrIter::<_, Uint256>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Uint256>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint256(Box::new(t)))),
             ),
             TypeVariant::Uint32 => Box::new(
-                ReadXdrIter::<_, Uint32>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Uint32>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint32(Box::new(t)))),
             ),
             TypeVariant::Int32 => Box::new(
-                ReadXdrIter::<_, Int32>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Int32>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int32(Box::new(t)))),
             ),
             TypeVariant::Uint64 => Box::new(
-                ReadXdrIter::<_, Uint64>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Uint64>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint64(Box::new(t)))),
             ),
             TypeVariant::Int64 => Box::new(
-                ReadXdrIter::<_, Int64>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Int64>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Int64(Box::new(t)))),
             ),
             TypeVariant::TimePoint => Box::new(
-                ReadXdrIter::<_, TimePoint>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, TimePoint>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
             ),
             TypeVariant::Duration => Box::new(
-                ReadXdrIter::<_, Duration>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Duration>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
             TypeVariant::ExtensionPoint => Box::new(
-                ReadXdrIter::<_, ExtensionPoint>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, ExtensionPoint>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
             ),
             TypeVariant::CryptoKeyType => Box::new(
-                ReadXdrIter::<_, CryptoKeyType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, CryptoKeyType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::CryptoKeyType(Box::new(t)))),
             ),
             TypeVariant::PublicKeyType => Box::new(
-                ReadXdrIter::<_, PublicKeyType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PublicKeyType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PublicKeyType(Box::new(t)))),
             ),
             TypeVariant::SignerKeyType => Box::new(
-                ReadXdrIter::<_, SignerKeyType>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SignerKeyType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignerKeyType(Box::new(t)))),
             ),
             TypeVariant::PublicKey => Box::new(
-                ReadXdrIter::<_, PublicKey>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, PublicKey>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PublicKey(Box::new(t)))),
             ),
             TypeVariant::SignerKey => Box::new(
-                ReadXdrIter::<_, SignerKey>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SignerKey>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignerKey(Box::new(t)))),
             ),
             TypeVariant::SignerKeyEd25519SignedPayload => Box::new(
-                ReadXdrIter::<_, SignerKeyEd25519SignedPayload>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SignerKeyEd25519SignedPayload>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t)))),
             ),
             TypeVariant::Signature => Box::new(
-                ReadXdrIter::<_, Signature>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Signature>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Signature(Box::new(t)))),
             ),
             TypeVariant::SignatureHint => Box::new(
-                ReadXdrIter::<_, SignatureHint>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, SignatureHint>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignatureHint(Box::new(t)))),
             ),
             TypeVariant::NodeId => Box::new(
-                ReadXdrIter::<_, NodeId>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, NodeId>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::NodeId(Box::new(t)))),
             ),
             TypeVariant::AccountId => Box::new(
-                ReadXdrIter::<_, AccountId>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, AccountId>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
             ),
             TypeVariant::Curve25519Secret => Box::new(
-                ReadXdrIter::<_, Curve25519Secret>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Curve25519Secret>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t)))),
             ),
             TypeVariant::Curve25519Public => Box::new(
-                ReadXdrIter::<_, Curve25519Public>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, Curve25519Public>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Curve25519Public(Box::new(t)))),
             ),
             TypeVariant::HmacSha256Key => Box::new(
-                ReadXdrIter::<_, HmacSha256Key>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, HmacSha256Key>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Key(Box::new(t)))),
             ),
             TypeVariant::HmacSha256Mac => Box::new(
-                ReadXdrIter::<_, HmacSha256Mac>::new(dec, r.depth_remaining)
+                ReadXdrIter::<_, HmacSha256Mac>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t)))),
             ),
         }
     }
 
     #[cfg(feature = "std")]
-    pub fn from_xdr<B: AsRef<[u8]>>(v: TypeVariant, bytes: B) -> Result<Self> {
-        let mut cursor =
-            DepthLimitedRead::new(Cursor::new(bytes.as_ref()), DEFAULT_XDR_RW_DEPTH_LIMIT);
+    pub fn from_xdr<B: AsRef<[u8]>>(v: TypeVariant, bytes: B, limits: Limits) -> Result<Self> {
+        let mut cursor = Limited::new(Cursor::new(bytes.as_ref()), limits);
         let t = Self::read_xdr_to_end(v, &mut cursor)?;
         Ok(t)
     }
 
     #[cfg(feature = "base64")]
-    pub fn from_xdr_base64(v: TypeVariant, b64: String) -> Result<Self> {
+    pub fn from_xdr_base64(v: TypeVariant, b64: String, limits: Limits) -> Result<Self> {
         let mut b64_reader = Cursor::new(b64);
-        let mut dec = DepthLimitedRead::new(
+        let mut dec = Limited::new(
             base64::read::DecoderReader::new(&mut b64_reader, base64::STANDARD),
-            DEFAULT_XDR_RW_DEPTH_LIMIT,
+            limits,
         );
         let t = Self::read_xdr_to_end(v, &mut dec)?;
         Ok(t)
@@ -54323,7 +54200,7 @@ impl Variants<TypeVariant> for Type {
 impl WriteXdr for Type {
     #[cfg(feature = "std")]
     #[allow(clippy::too_many_lines)]
-    fn write_xdr<W: Write>(&self, w: &mut DepthLimitedWrite<W>) -> Result<()> {
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         match self {
             Self::Value(v) => v.write_xdr(w),
             Self::ScpBallot(v) => v.write_xdr(w),

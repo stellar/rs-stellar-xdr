@@ -13,7 +13,7 @@ use stellar_xdr::{
     TransactionExt, TransactionV1Envelope, Uint256,
 };
 #[cfg(all(feature = "std", feature = "base64"))]
-use stellar_xdr::{Type, TypeVariant};
+use stellar_xdr::{Limits, Type, TypeVariant};
 
 #[cfg(all(feature = "std", feature = "base64"))]
 #[test]
@@ -35,15 +35,19 @@ fn test_build_small_tx_with_std() -> Result<(), Error> {
         signatures: [].try_into()?,
     });
 
-    let xdr = te.to_xdr_base64()?;
+    let xdr = te.to_xdr_base64(Limits::default())?;
     assert_eq!(xdr, "AAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAB1N0ZWxsYXIAAAAAAAAAAAAAAAAA");
-    let typ =
-        Type::from_xdr_base64(TypeVariant::from_str("TransactionEnvelope").unwrap(), xdr).unwrap();
+    let typ = Type::from_xdr_base64(
+        TypeVariant::from_str("TransactionEnvelope").unwrap(),
+        xdr,
+        Limits::default(),
+    )
+    .unwrap();
     println!("{typ:?}");
     let any: &TransactionEnvelope = typ.value().downcast_ref().unwrap();
     println!("{any:?}");
 
-    let xdr = te.to_xdr()?;
+    let xdr = te.to_xdr(Limits::default())?;
     assert_eq!(
         xdr,
         vec![

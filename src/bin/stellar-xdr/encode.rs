@@ -119,7 +119,7 @@ macro_rules! run_x {
                 match self.input {
                     InputFormat::Json => {
                         let t = stellar_xdr::$m::Type::read_json(r#type, f)?;
-                        let l = stellar_xdr::$m::Limits::default();
+                        let l = stellar_xdr::$m::Limits::none();
 
                         match self.output {
                             OutputFormat::Single => stdout().write_all(&t.to_xdr(l)?)?,

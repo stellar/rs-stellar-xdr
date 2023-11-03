@@ -23,7 +23,7 @@ fn valid_len() {
         0x00, 0x00, 0x00, 0x03, // SCV_U32
         0x00, 0x00, 0x00, 0x2a, // 42
     ];
-    let result = ScVal::from_xdr(data, Limits::default());
+    let result = ScVal::from_xdr(data, Limits::none());
     assert!(result.is_ok());
 }
 
@@ -39,7 +39,7 @@ fn invalid_len() {
         0x00, 0x00, 0x00, 0x03, // SCV_U32
         0x00, 0x00, 0x00, 0x2a, // 42
     ];
-    let result = ScVal::from_xdr(data, Limits::default());
+    let result = ScVal::from_xdr(data, Limits::none());
     assert!(result.is_err());
 }
 
@@ -49,7 +49,7 @@ fn valid_bytes_len() {
         0x00, 0x00, 0x00, 0x08, // length
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
     ];
-    let result: Result<BytesM, _> = BytesM::from_xdr(data, Limits::default());
+    let result: Result<BytesM, _> = BytesM::from_xdr(data, Limits::none());
     assert_eq!(
         result,
         Ok(BytesM::try_from([1, 2, 3, 4, 5, 6, 7, 8]).unwrap())
@@ -63,7 +63,7 @@ fn valid_bytes_len_greater_than_preallocated_bytes_limit() {
     data[1] = 0x00; // length
     data[2] = 0x0B; // length
     data[3] = 0xB4; // length
-    let result: Result<BytesM, _> = BytesM::from_xdr(data, Limits::default());
+    let result: Result<BytesM, _> = BytesM::from_xdr(data, Limits::none());
     assert_eq!(result, Ok(BytesM::try_from([0x01u8; 2996]).unwrap()));
 }
 
@@ -73,6 +73,6 @@ fn invalid_bytes_len() {
         0xFF, 0xFF, 0xFF, 0xFF, // length
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
     ];
-    let result: Result<BytesM, _> = BytesM::from_xdr(data, Limits::default());
+    let result: Result<BytesM, _> = BytesM::from_xdr(data, Limits::none());
     assert!(result.is_err());
 }

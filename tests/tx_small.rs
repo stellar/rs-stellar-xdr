@@ -35,19 +35,19 @@ fn test_build_small_tx_with_std() -> Result<(), Error> {
         signatures: [].try_into()?,
     });
 
-    let xdr = te.to_xdr_base64(Limits::default())?;
+    let xdr = te.to_xdr_base64(Limits::none())?;
     assert_eq!(xdr, "AAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAB1N0ZWxsYXIAAAAAAAAAAAAAAAAA");
     let typ = Type::from_xdr_base64(
         TypeVariant::from_str("TransactionEnvelope").unwrap(),
         xdr,
-        Limits::default(),
+        Limits::none(),
     )
     .unwrap();
     println!("{typ:?}");
     let any: &TransactionEnvelope = typ.value().downcast_ref().unwrap();
     println!("{any:?}");
 
-    let xdr = te.to_xdr(Limits::default())?;
+    let xdr = te.to_xdr(Limits::none())?;
     assert_eq!(
         xdr,
         vec![

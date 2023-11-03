@@ -36,7 +36,8 @@ impl From<stellar_xdr::curr::Error> for Error {
             | stellar_xdr::curr::Error::Utf8Error(_)
             | stellar_xdr::curr::Error::InvalidHex
             | stellar_xdr::curr::Error::Io(_)
-            | stellar_xdr::curr::Error::DepthLimitExceeded => Error::WriteXdrCurr(e),
+            | stellar_xdr::curr::Error::DepthLimitExceeded
+            | stellar_xdr::curr::Error::LengthLimitExceeded => Error::WriteXdrCurr(e),
             stellar_xdr::curr::Error::Json(_) => Error::ReadJsonCurr(e),
         }
     }
@@ -53,7 +54,8 @@ impl From<stellar_xdr::next::Error> for Error {
             | stellar_xdr::next::Error::Utf8Error(_)
             | stellar_xdr::next::Error::InvalidHex
             | stellar_xdr::next::Error::Io(_)
-            | stellar_xdr::next::Error::DepthLimitExceeded => Error::WriteXdrNext(e),
+            | stellar_xdr::next::Error::DepthLimitExceeded
+            | stellar_xdr::next::Error::LengthLimitExceeded => Error::WriteXdrNext(e),
             stellar_xdr::next::Error::Json(_) => Error::ReadJsonNext(e),
         }
     }
@@ -117,10 +119,11 @@ macro_rules! run_x {
                 match self.input {
                     InputFormat::Json => {
                         let t = stellar_xdr::$m::Type::read_json(r#type, f)?;
+                        let l = stellar_xdr::$m::Limits::none();
 
                         match self.output {
-                            OutputFormat::Single => stdout().write_all(&t.to_xdr()?)?,
-                            OutputFormat::SingleBase64 => println!("{}", t.to_xdr_base64()?),
+                            OutputFormat::Single => stdout().write_all(&t.to_xdr(l)?)?,
+                            OutputFormat::SingleBase64 => println!("{}", t.to_xdr_base64(l)?),
                         }
                     }
                 };

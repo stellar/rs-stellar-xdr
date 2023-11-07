@@ -34,8 +34,8 @@ serde_json = "1.0.89"
 
 [features]
 default = ["std", "curr"]
-std = ["alloc", "dep:stellar-strkey"]
-alloc = ["dep:hex"]
+std = ["alloc"]
+alloc = ["dep:hex", "dep:stellar-strkey"]
 curr = []
 next = []
 

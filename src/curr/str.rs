@@ -13,7 +13,7 @@
 //# - SignerKey
 //# - SignerKeyEd25519SignedPayload
 //# - NodeId
-#![cfg(feature = "std")]
+#![cfg(feature = "alloc")]
 
 use super::{
     AccountId, Error, Hash, MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey, ScAddress,
@@ -31,7 +31,7 @@ impl core::fmt::Display for PublicKey {
         match self {
             PublicKey::PublicKeyTypeEd25519(Uint256(k)) => {
                 let k = stellar_strkey::ed25519::PublicKey::from_payload(k)
-                    .map_err(|_| std::fmt::Error)?;
+                    .map_err(|_| core::fmt::Error)?;
                 let s = k.to_string();
                 f.write_str(&s)?;
             }

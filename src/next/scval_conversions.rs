@@ -586,12 +586,35 @@ macro_rules! impl_for_tuple {
         }
 
         #[cfg(feature = "alloc")]
+        impl<$($typ),*> TryFrom<&($($typ,)*)> for ScVec
+        where
+            $($typ: TryInto<ScVal> + Clone),*
+        {
+            type Error = ();
+            fn try_from(v: &($($typ,)*)) -> Result<Self, Self::Error> {
+                let vec: Vec<ScVal> = vec![$(v.$idx.clone().try_into().map_err(|_| ())?),+];
+                Ok(ScVec(vec.try_into()?))
+            }
+        }
+
+        #[cfg(feature = "alloc")]
         impl<$($typ),*> TryFrom<($($typ,)*)> for ScVal
         where
             $($typ: TryInto<ScVal>),*
         {
             type Error = ();
             fn try_from(v: ($($typ,)*)) -> Result<Self, ()> {
+                Ok(ScVal::Vec(Some(<_ as TryInto<ScVec>>::try_into(v)?)))
+            }
+        }
+
+        #[cfg(feature = "alloc")]
+        impl<$($typ),*> TryFrom<&($($typ,)*)> for ScVal
+        where
+            $($typ: TryInto<ScVal> + Clone),*
+        {
+            type Error = ();
+            fn try_from(v: &($($typ,)*)) -> Result<Self, ()> {
                 Ok(ScVal::Vec(Some(<_ as TryInto<ScVec>>::try_into(v)?)))
             }
         }
@@ -805,6 +828,18 @@ mod test {
         let val: ScVal = v.clone().try_into().unwrap();
         let roundtrip: (i32, i64, Vec<bool>) = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn tuple_refs() {
+        extern crate alloc;
+        use alloc::vec;
+        use alloc::vec::Vec;
+        let v = &(1i32, 2i64, vec![true, false]);
+        let val: ScVal = v.try_into().unwrap();
+        let roundtrip: (i32, i64, Vec<bool>) = val.try_into().unwrap();
+        assert_eq!(v, &roundtrip);
     }
 
     #[test]

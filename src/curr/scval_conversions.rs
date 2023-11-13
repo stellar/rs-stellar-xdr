@@ -559,6 +559,18 @@ impl<T: Into<ScVal>> From<Option<T>> for ScVal {
     }
 }
 
+impl<T> From<&Option<T>> for ScVal
+where
+    for<'a> &'a T: Into<ScVal>,
+{
+    fn from(v: &Option<T>) -> Self {
+        match v {
+            Some(v) => v.into(),
+            None => ().into(),
+        }
+    }
+}
+
 macro_rules! impl_for_tuple {
     ( $count:literal $($typ:ident $idx:tt)+ ) => {
         #[cfg(feature = "alloc")]

@@ -561,11 +561,11 @@ impl<T: Into<ScVal>> From<Option<T>> for ScVal {
 
 impl<T> From<&Option<T>> for ScVal
 where
-    for<'a> &'a T: Into<ScVal>,
+    T: Into<ScVal> + Clone,
 {
     fn from(v: &Option<T>) -> Self {
         match v {
-            Some(v) => v.into(),
+            Some(v) => v.clone().into(),
             None => ().into(),
         }
     }
@@ -674,7 +674,7 @@ impl_for_tuple! { 13 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 T10 10 T1
 
 #[cfg(test)]
 mod test {
-    use super::{int128_helpers, Int128Parts, ScVal, UInt128Parts};
+    use super::{int128_helpers, Int128Parts, ScVal, ScVec, UInt128Parts};
 
     #[test]
     fn i32_pos() {
@@ -851,5 +851,10 @@ mod test {
         let v: Option<i64> = None;
         let val: ScVal = v.into();
         assert_eq!(val, ScVal::Void);
+    }
+
+    #[test]
+    fn scval_from() {
+        let _ = ScVal::from(ScVec::default());
     }
 }

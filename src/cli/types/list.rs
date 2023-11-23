@@ -1,7 +1,7 @@
 use clap::{Args, ValueEnum};
 use std::error::Error;
 
-use crate::Channel;
+use crate::cli::Channel;
 
 #[derive(Args, Debug, Clone)]
 #[command()]
@@ -45,8 +45,8 @@ impl Cmd {
 
     fn types(channel: &Channel) -> Vec<&'static str> {
         let types: &[&str] = match channel {
-            Channel::Curr => &stellar_xdr::curr::TypeVariant::VARIANTS_STR,
-            Channel::Next => &stellar_xdr::next::TypeVariant::VARIANTS_STR,
+            Channel::Curr => &crate::curr::TypeVariant::VARIANTS_STR,
+            Channel::Next => &crate::next::TypeVariant::VARIANTS_STR,
         };
         let mut types: Vec<&'static str> = types.to_vec();
         types.sort_unstable();

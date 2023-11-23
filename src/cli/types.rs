@@ -4,7 +4,7 @@ use std::error::Error;
 
 use clap::{Args, Subcommand};
 
-use crate::Channel;
+use crate::cli::Channel;
 
 #[derive(Args, Debug, Clone)]
 #[command()]

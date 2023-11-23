@@ -54,6 +54,13 @@ enum Cmd {
     Version,
 }
 
+/// Run the CLI.
+///
+/// TODO: How to pass in input to run from other CLI?
+///
+/// ## Errors
+///
+/// If the input cannot be parsed.
 pub fn run() -> Result<(), Box<dyn Error>> {
     let root = Root::try_parse()?;
     match root.cmd {

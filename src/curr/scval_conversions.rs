@@ -96,7 +96,7 @@ impl TryFrom<ScVal> for i64 {
 }
 
 impl From<()> for ScVal {
-    fn from(_: ()) -> Self {
+    fn from((): ()) -> Self {
         ScVal::Void
     }
 }
@@ -304,7 +304,7 @@ impl TryFrom<ScVal> for ScSymbol {
 impl TryFrom<String> for ScVal {
     type Error = ();
     fn try_from(v: String) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
     }
 }
 
@@ -312,7 +312,7 @@ impl TryFrom<String> for ScVal {
 impl TryFrom<&String> for ScVal {
     type Error = ();
     fn try_from(v: &String) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
     }
 }
 
@@ -336,7 +336,7 @@ impl TryFrom<&String> for ScSymbol {
 impl TryFrom<&str> for ScVal {
     type Error = ();
     fn try_from(v: &str) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
     }
 }
 
@@ -344,7 +344,7 @@ impl TryFrom<&str> for ScVal {
 impl TryFrom<&'static str> for ScVal {
     type Error = ();
     fn try_from(v: &'static str) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|_| ())?))
+        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
     }
 }
 

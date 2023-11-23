@@ -5,7 +5,7 @@ mod types;
 mod version;
 
 use clap::{Parser, Subcommand, ValueEnum};
-use std::{error::Error, fmt::Debug};
+use std::{error::Error, ffi::OsString, fmt::Debug};
 
 #[derive(Parser, Debug, Clone)]
 #[command(
@@ -54,15 +54,17 @@ enum Cmd {
     Version,
 }
 
-/// Run the CLI.
-///
-/// TODO: How to pass in input to run from other CLI?
+/// Run the CLI with the given args.
 ///
 /// ## Errors
 ///
 /// If the input cannot be parsed.
-pub fn run() -> Result<(), Box<dyn Error>> {
-    let root = Root::try_parse()?;
+pub fn run<I, T>(args: I) -> Result<(), Box<dyn Error>>
+where
+    I: IntoIterator<Item = T>,
+    T: Into<OsString> + Clone,
+{
+    let root = Root::try_parse_from(args)?;
     match root.cmd {
         Cmd::Types(c) => c.run(&root.channel)?,
         Cmd::Guess(c) => c.run(&root.channel)?,

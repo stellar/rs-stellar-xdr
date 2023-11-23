@@ -262,7 +262,7 @@ impl core::str::FromStr for AssetCode4 {
         let b = s.as_bytes();
         let mut code = AssetCode4([0u8; 4]);
         if b.len() <= code.0.len() {
-            code.0[..b.len()].copy_from_slice(&b);
+            code.0[..b.len()].copy_from_slice(b);
             Ok(code)
         } else {
             Err(Error::Invalid)
@@ -286,7 +286,7 @@ impl core::str::FromStr for AssetCode12 {
         let b = s.as_bytes();
         let mut code = AssetCode12([0u8; 12]);
         if b.len() <= code.0.len() {
-            code.0[..b.len()].copy_from_slice(&b);
+            code.0[..b.len()].copy_from_slice(b);
             Ok(code)
         } else {
             Err(Error::Invalid)

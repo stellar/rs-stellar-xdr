@@ -11,6 +11,12 @@ use stellar_xdr::next as stellar_xdr;
 
 use stellar_xdr::{BytesM, Hash, StringM, VecM};
 
+#[cfg(feature = "curr")]
+use stellar_xdr::AccountId;
+
+#[cfg(feature = "curr")]
+use std::str::FromStr;
+
 #[test]
 fn test_serde_ser() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(
@@ -30,6 +36,13 @@ fn test_serde_ser() -> Result<(), Box<dyn std::error::Error>> {
             *b"01234567890123456789013456789012"
         )?)?,
         "\"3031323334353637383930313233343536373839303133343536373839303132\""
+    );
+    #[cfg(feature = "curr")]
+    assert_eq!(
+        serde_json::to_string(&AccountId::from_str(
+            "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF"
+        )?)?,
+        "\"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF\""
     );
 
     Ok(())
@@ -52,6 +65,12 @@ fn test_serde_der() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(
         v,
         <_ as TryInto<Hash>>::try_into(*b"01234567890123456789013456789012")?,
+    );
+
+    #[cfg(feature = "curr")]
+    assert_eq!(
+        AccountId::from_str("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF")?,
+        serde_json::from_str("\"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF\"")?,
     );
 
     Ok(())

@@ -550,10 +550,25 @@ where
 // TODO: Add conversions from std::collections::HashMap, im_rcOrdMap, and other
 // popular map types to ScMap.
 
-impl<T: Into<ScVal>> From<Option<T>> for ScVal {
+impl<T> From<Option<T>> for ScVal
+where
+    T: Into<ScVal>,
+{
     fn from(v: Option<T>) -> Self {
         match v {
             Some(v) => v.into(),
+            None => ().into(),
+        }
+    }
+}
+
+impl<T> From<&Option<T>> for ScVal
+where
+    T: Into<ScVal> + Clone,
+{
+    fn from(v: &Option<T>) -> Self {
+        match v {
+            Some(v) => v.clone().into(),
             None => ().into(),
         }
     }
@@ -574,12 +589,35 @@ macro_rules! impl_for_tuple {
         }
 
         #[cfg(feature = "alloc")]
+        impl<$($typ),*> TryFrom<&($($typ,)*)> for ScVec
+        where
+            $($typ: TryInto<ScVal> + Clone),*
+        {
+            type Error = ();
+            fn try_from(v: &($($typ,)*)) -> Result<Self, Self::Error> {
+                let vec: Vec<ScVal> = vec![$(v.$idx.clone().try_into().map_err(|_| ())?),+];
+                Ok(ScVec(vec.try_into()?))
+            }
+        }
+
+        #[cfg(feature = "alloc")]
         impl<$($typ),*> TryFrom<($($typ,)*)> for ScVal
         where
             $($typ: TryInto<ScVal>),*
         {
             type Error = ();
             fn try_from(v: ($($typ,)*)) -> Result<Self, ()> {
+                Ok(ScVal::Vec(Some(<_ as TryInto<ScVec>>::try_into(v)?)))
+            }
+        }
+
+        #[cfg(feature = "alloc")]
+        impl<$($typ),*> TryFrom<&($($typ,)*)> for ScVal
+        where
+            $($typ: TryInto<ScVal> + Clone),*
+        {
+            type Error = ();
+            fn try_from(v: &($($typ,)*)) -> Result<Self, ()> {
                 Ok(ScVal::Vec(Some(<_ as TryInto<ScVec>>::try_into(v)?)))
             }
         }
@@ -639,7 +677,7 @@ impl_for_tuple! { 13 T0 0 T1 1 T2 2 T3 3 T4 4 T5 5 T6 6 T7 7 T8 8 T9 9 T10 10 T1
 
 #[cfg(test)]
 mod test {
-    use super::{int128_helpers, Int128Parts, ScVal, UInt128Parts};
+    use super::{int128_helpers, Int128Parts, ScVal, ScVec, UInt128Parts};
 
     #[test]
     fn i32_pos() {
@@ -795,6 +833,18 @@ mod test {
         assert_eq!(v, roundtrip);
     }
 
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn tuple_refs() {
+        extern crate alloc;
+        use alloc::vec;
+        use alloc::vec::Vec;
+        let v = &(1i32, 2i64, vec![true, false]);
+        let val: ScVal = v.try_into().unwrap();
+        let roundtrip: (i32, i64, Vec<bool>) = val.try_into().unwrap();
+        assert_eq!(v, &roundtrip);
+    }
+
     #[test]
     fn option() {
         let v: Option<i64> = Some(1);
@@ -804,5 +854,10 @@ mod test {
         let v: Option<i64> = None;
         let val: ScVal = v.into();
         assert_eq!(val, ScVal::Void);
+    }
+
+    #[test]
+    fn scval_from() {
+        let _ = ScVal::from(ScVec::default());
     }
 }

@@ -1,10 +1,6 @@
 //# Custom string representations of the following types, also used for JSON
 //# formatting.
 //#
-//# The types that has impls in this file are given to the xdrgen
-//# --rust-types-custom-str-impl cli option, so that xdrgen does not generate
-//# FromStr and Display impls for them.
-//#
 //# ## Strkey Types (SEP-23)
 //# - PublicKey
 //# - AccountId
@@ -13,11 +9,16 @@
 //# - SignerKey
 //# - SignerKeyEd25519SignedPayload
 //# - NodeId
+//#
+//# ## Asset Codes
+//# - AssetCode
+//# - AssetCode4
+//# - AssetCode12
 #![cfg(feature = "alloc")]
 
 use super::{
-    AccountId, Error, Hash, MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey, ScAddress,
-    SignerKey, SignerKeyEd25519SignedPayload, Uint256,
+    AccountId, AssetCode, AssetCode12, AssetCode4, Error, Hash, MuxedAccount, MuxedAccountMed25519,
+    NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload, Uint256,
 };
 
 impl From<stellar_strkey::DecodeError> for Error {
@@ -253,4 +254,119 @@ impl core::fmt::Display for ScAddress {
         }
         Ok(())
     }
+}
+
+impl core::str::FromStr for AssetCode4 {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let b = s.as_bytes();
+        let mut code = AssetCode4([0u8; 4]);
+        if b.len() <= code.0.len() {
+            code.0[..b.len()].copy_from_slice(&b);
+            Ok(code)
+        } else {
+            Err(Error::Invalid)
+        }
+    }
+}
+
+impl core::fmt::Display for AssetCode4 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if let Some(last_idx) = self.0.iter().rposition(|c| *c != 0) {
+            write_utf8_lossy_with_nuls(f, &self.0[..=last_idx])
+        } else {
+            Ok(())
+        }
+    }
+}
+
+impl core::str::FromStr for AssetCode12 {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let b = s.as_bytes();
+        let mut code = AssetCode12([0u8; 12]);
+        if b.len() <= code.0.len() {
+            code.0[..b.len()].copy_from_slice(&b);
+            Ok(code)
+        } else {
+            Err(Error::Invalid)
+        }
+    }
+}
+
+impl core::fmt::Display for AssetCode12 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if let Some(last_idx) = self.0.iter().rposition(|c| *c != 0) {
+            write_utf8_lossy_with_nuls(f, &self.0[..=last_idx])
+        } else {
+            Ok(())
+        }
+    }
+}
+
+impl core::str::FromStr for AssetCode {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let b = s.as_bytes();
+        if b.len() <= 4 {
+            Ok(AssetCode::CreditAlphanum4(AssetCode4::from_str(s)?))
+        } else if b.len() <= 12 {
+            Ok(AssetCode::CreditAlphanum12(AssetCode12::from_str(s)?))
+        } else {
+            Err(Error::Invalid)
+        }
+    }
+}
+
+impl core::fmt::Display for AssetCode {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            AssetCode::CreditAlphanum4(c) => c.fmt(f),
+            AssetCode::CreditAlphanum12(c) => c.fmt(f),
+        }
+    }
+}
+
+/// Writes a byte slice as a utf8 string, replacing any bytes in invalid utf8
+/// sequences as the nul byte.
+///
+/// A modified copy of the Rust stdlib docs examples here:
+/// <https://doc.rust-lang.org/stable/core/str/struct.Utf8Error.html#examples>
+///
+/// This particular implementation preserves the length of the string written
+/// such that exactly one byte is written for every byte in an invalid sequence,
+/// by writing a nul (0x00) byte for each.
+///
+/// Normally it would be common to write a Unicode Replacement Character
+/// (U+FFFD) for lossy coding but doing so would not preserve the length as a
+/// single invalid byte would be replaced by two bytes.
+pub fn write_utf8_lossy_with_nuls(
+    f: &mut impl core::fmt::Write,
+    mut input: &[u8],
+) -> core::fmt::Result {
+    loop {
+        match core::str::from_utf8(input) {
+            Ok(valid) => {
+                write!(f, "{valid}")?;
+                break;
+            }
+            Err(error) => {
+                let (valid, after_valid) = input.split_at(error.valid_up_to());
+                write!(f, "{}", core::str::from_utf8(valid).unwrap())?;
+
+                if let Some(invalid_sequence_length) = error.error_len() {
+                    for _ in 0..invalid_sequence_length {
+                        write!(f, "\0")?;
+                    }
+                    input = &after_valid[invalid_sequence_length..];
+                } else {
+                    for _ in 0..after_valid.len() {
+                        write!(f, "\0")?;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    Ok(())
 }

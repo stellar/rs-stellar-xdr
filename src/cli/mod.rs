@@ -18,7 +18,7 @@ use std::{error::Error, ffi::OsString, fmt::Debug};
     disable_colored_help = true,
     infer_subcommands = true,
 )]
-struct Root {
+pub struct Root {
     /// Channel of XDR to operate on
     #[arg(value_enum, default_value_t)]
     channel: Channel,
@@ -27,7 +27,7 @@ struct Root {
 }
 
 #[derive(ValueEnum, Debug, Clone)]
-pub(crate) enum Channel {
+pub enum Channel {
     #[value(name = "+curr")]
     Curr,
     #[value(name = "+next")]
@@ -41,7 +41,7 @@ impl Default for Channel {
 }
 
 #[derive(Subcommand, Debug, Clone)]
-enum Cmd {
+pub enum Cmd {
     /// View information about types
     Types(types::Cmd),
     /// Guess the XDR type

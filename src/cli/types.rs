@@ -1,7 +1,5 @@
 mod list;
 
-use std::error::Error;
-
 use clap::{Args, Subcommand};
 
 use crate::cli::Channel;
@@ -19,10 +17,9 @@ pub enum Sub {
 }
 
 impl Cmd {
-    pub fn run(&self, channel: &Channel) -> Result<(), Box<dyn Error>> {
+    pub fn run(&self, channel: &Channel) {
         match &self.sub {
-            Sub::List(c) => c.run(channel)?,
+            Sub::List(c) => c.run(channel),
         }
-        Ok(())
     }
 }

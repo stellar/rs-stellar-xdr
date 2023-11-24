@@ -4,8 +4,11 @@ use stellar_xdr::cli;
 
 fn main() {
     if let Err(e) = cli::run(env::args_os()) {
-        // TODO: Don't treat the 'help' case as an error.
-        // TODO: Remove Box<dyn Error> and replace with concrete errors.
-        Error::raw(clap::error::ErrorKind::ValueValidation, e).exit();
+        match e {
+            cli::Error::Clap(e) => e.exit(),
+            cli::Error::Guess(_) | cli::Error::Decode(_) | cli::Error::Encode(_) => {
+                Error::raw(clap::error::ErrorKind::ValueValidation, e).exit()
+            }
+        }
     }
 }

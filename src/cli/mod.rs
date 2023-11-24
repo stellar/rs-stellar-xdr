@@ -5,7 +5,7 @@ mod types;
 mod version;
 
 use clap::{Parser, Subcommand, ValueEnum};
-use std::{error::Error, ffi::OsString, fmt::Debug};
+use std::{ffi::OsString, fmt::Debug};
 
 #[derive(Parser, Debug, Clone)]
 #[command(
@@ -54,19 +54,32 @@ pub enum Cmd {
     Version,
 }
 
+#[derive(thiserror::Error, Debug)]
+#[allow(clippy::enum_variant_names)]
+pub enum Error {
+    #[error("{0}")]
+    Clap(#[from] clap::Error),
+    #[error("error decoding XDR: {0}")]
+    Guess(#[from] guess::Error),
+    #[error("error reading file: {0}")]
+    Decode(#[from] decode::Error),
+    #[error("error reading file: {0}")]
+    Encode(#[from] encode::Error),
+}
+
 /// Run the CLI with the given args.
 ///
 /// ## Errors
 ///
 /// If the input cannot be parsed.
-pub fn run<I, T>(args: I) -> Result<(), Box<dyn Error>>
+pub fn run<I, T>(args: I) -> Result<(), Error>
 where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
 {
     let root = Root::try_parse_from(args)?;
     match root.cmd {
-        Cmd::Types(c) => c.run(&root.channel)?,
+        Cmd::Types(c) => c.run(&root.channel),
         Cmd::Guess(c) => c.run(&root.channel)?,
         Cmd::Decode(c) => c.run(&root.channel)?,
         Cmd::Encode(c) => c.run(&root.channel)?,

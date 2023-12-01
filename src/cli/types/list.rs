@@ -1,7 +1,6 @@
 use clap::{Args, ValueEnum};
-use std::error::Error;
 
-use crate::Channel;
+use crate::cli::Channel;
 
 #[derive(Args, Debug, Clone)]
 #[command()]
@@ -25,7 +24,7 @@ impl Default for OutputFormat {
 }
 
 impl Cmd {
-    pub fn run(&self, channel: &Channel) -> Result<(), Box<dyn Error>> {
+    pub fn run(&self, channel: &Channel) {
         let types = Self::types(channel);
         match self.output {
             OutputFormat::Plain => {
@@ -34,19 +33,18 @@ impl Cmd {
                 }
             }
             OutputFormat::Json => {
-                println!("{}", serde_json::to_string(&types)?);
+                println!("{}", serde_json::to_string(&types).unwrap());
             }
             OutputFormat::JsonFormatted => {
-                println!("{}", serde_json::to_string_pretty(&types)?);
+                println!("{}", serde_json::to_string_pretty(&types).unwrap());
             }
         }
-        Ok(())
     }
 
     fn types(channel: &Channel) -> Vec<&'static str> {
         let types: &[&str] = match channel {
-            Channel::Curr => &stellar_xdr::curr::TypeVariant::VARIANTS_STR,
-            Channel::Next => &stellar_xdr::next::TypeVariant::VARIANTS_STR,
+            Channel::Curr => &crate::curr::TypeVariant::VARIANTS_STR,
+            Channel::Next => &crate::next::TypeVariant::VARIANTS_STR,
         };
         let mut types: Vec<&'static str> = types.to_vec();
         types.sort_unstable();

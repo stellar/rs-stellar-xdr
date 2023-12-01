@@ -4,7 +4,7 @@ CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features b
 
 CARGO_DOC_ARGS?=--open
 
-XDRGEN_VERSION=e90b9ee62a89f346a86ef66f889bcfd8e1a8fbcb
+XDRGEN_VERSION=685c10e4ce4906394af5fef6a9e0814f7c9e1c83
 XDRGEN_TYPES_CUSTOM_STR_IMPL=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12
 
 all: build test

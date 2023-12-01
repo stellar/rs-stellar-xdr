@@ -5,7 +5,7 @@ use super::{
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
-use alloc::{string::String, vec, vec::Vec};
+use alloc::{vec, vec::Vec};
 
 // TODO: Use the Error type for conversions in this file.
 
@@ -294,84 +294,6 @@ impl TryFrom<ScVal> for ScSymbol {
     fn try_from(v: ScVal) -> Result<Self, Self::Error> {
         if let ScVal::Symbol(s) = v {
             Ok(s)
-        } else {
-            Err(())
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<String> for ScVal {
-    type Error = ();
-    fn try_from(v: String) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&String> for ScVal {
-    type Error = ();
-    fn try_from(v: &String) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<String> for ScSymbol {
-    type Error = ();
-    fn try_from(v: String) -> Result<Self, Self::Error> {
-        Ok(ScSymbol(v.try_into().map_err(|_| ())?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&String> for ScSymbol {
-    type Error = ();
-    fn try_from(v: &String) -> Result<Self, Self::Error> {
-        Ok(ScSymbol(v.try_into().map_err(|_| ())?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&str> for ScVal {
-    type Error = ();
-    fn try_from(v: &str) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
-    }
-}
-
-#[cfg(not(feature = "alloc"))]
-impl TryFrom<&'static str> for ScVal {
-    type Error = ();
-    fn try_from(v: &'static str) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&str> for ScSymbol {
-    type Error = ();
-    fn try_from(v: &str) -> Result<Self, Self::Error> {
-        Ok(ScSymbol(v.try_into().map_err(|_| ())?))
-    }
-}
-
-#[cfg(not(feature = "alloc"))]
-impl TryFrom<&'static str> for ScSymbol {
-    type Error = ();
-    fn try_from(v: &'static str) -> Result<Self, Self::Error> {
-        Ok(ScSymbol(v.try_into().map_err(|_| ())?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<ScVal> for String {
-    type Error = ();
-    fn try_from(v: ScVal) -> Result<Self, Self::Error> {
-        if let ScVal::Symbol(s) = v {
-            // TODO: It might be worth distinguishing the error case where this
-            // is an invalid symbol with invalid characters.
-            Ok(s.0.into_utf8_string().map_err(|_| ())?)
         } else {
             Err(())
         }

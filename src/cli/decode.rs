@@ -8,16 +8,16 @@ use std::{
 use clap::{Args, ValueEnum};
 use serde::Serialize;
 
-use crate::Channel;
+use crate::cli::Channel;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("unknown type {0}, choose one of {1:?}")]
     UnknownType(String, &'static [&'static str]),
     #[error("error decoding XDR: {0}")]
-    ReadXdrCurr(#[from] stellar_xdr::curr::Error),
+    ReadXdrCurr(#[from] crate::curr::Error),
     #[error("error decoding XDR: {0}")]
-    ReadXdrNext(#[from] stellar_xdr::next::Error),
+    ReadXdrNext(#[from] crate::next::Error),
     #[error("error reading file: {0}")]
     ReadFile(#[from] std::io::Error),
     #[error("error generating JSON: {0}")]
@@ -75,35 +75,32 @@ macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
             let mut files = self.files()?;
-            let r#type = stellar_xdr::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
-                Error::UnknownType(
-                    self.r#type.clone(),
-                    &stellar_xdr::$m::TypeVariant::VARIANTS_STR,
-                )
+            let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
+                Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
             for f in &mut files {
-                let mut f = stellar_xdr::$m::Limited::new(f, stellar_xdr::$m::Limits::none());
+                let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
                 match self.input {
                     InputFormat::Single => {
-                        let t = stellar_xdr::$m::Type::read_xdr_to_end(r#type, &mut f)?;
+                        let t = crate::$m::Type::read_xdr_to_end(r#type, &mut f)?;
                         self.out(&t)?;
                     }
                     InputFormat::SingleBase64 => {
-                        let t = stellar_xdr::$m::Type::read_xdr_base64_to_end(r#type, &mut f)?;
+                        let t = crate::$m::Type::read_xdr_base64_to_end(r#type, &mut f)?;
                         self.out(&t)?;
                     }
                     InputFormat::Stream => {
-                        for t in stellar_xdr::$m::Type::read_xdr_iter(r#type, &mut f) {
+                        for t in crate::$m::Type::read_xdr_iter(r#type, &mut f) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamBase64 => {
-                        for t in stellar_xdr::$m::Type::read_xdr_base64_iter(r#type, &mut f) {
+                        for t in crate::$m::Type::read_xdr_base64_iter(r#type, &mut f) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamFramed => {
-                        for t in stellar_xdr::$m::Type::read_xdr_framed_iter(r#type, &mut f) {
+                        for t in crate::$m::Type::read_xdr_framed_iter(r#type, &mut f) {
                             self.out(&t?)?;
                         }
                     }

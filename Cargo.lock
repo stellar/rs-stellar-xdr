@@ -246,8 +246,9 @@ dependencies = [
 
 [[package]]
 name = "escape-bytes"
-version = "0.0.0"
-source = "git+https://github.com/stellar/escape-bytes?rev=457ee2147e84fcc969228e9b11c8431eb44f0df3#457ee2147e84fcc969228e9b11c8431eb44f0df3"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3871d161fec5b6fade5fe7afe2e196b86839c5526a8d256c7b1a04dbbe5241a4"
 
 [[package]]
 name = "fnv"

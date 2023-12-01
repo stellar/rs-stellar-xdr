@@ -123,3 +123,6 @@ pub mod curr;
 
 #[cfg(feature = "next")]
 pub mod next;
+
+#[cfg(feature = "cli")]
+pub mod cli;

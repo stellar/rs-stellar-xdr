@@ -64,13 +64,13 @@ fn test_debug_invalid_utf8() -> Result<(), Error> {
         ),
         "BytesM(68656c6c6fc328776f726c64)"
     );
-    // StringM replaces the invalid sequence with the Unicode replacement character.
+    // StringM escapes strings.
     assert_eq!(
         format!(
             "{:?}",
             <_ as TryInto<StringM>>::try_into(b"hello\xc3\x28world")?
         ),
-        "StringM(hello�(world)"
+        r"StringM(hello\xc3(world)"
     );
     Ok(())
 }
@@ -108,13 +108,13 @@ fn test_display_invalid_utf8() -> Result<(), Error> {
         ),
         "68656c6c6fc328776f726c64"
     );
-    // StringM replaces the invalid sequence with the Unicode replacement character.
+    // StringM escapes strings.
     assert_eq!(
         format!(
             "{}",
             <_ as TryInto<StringM>>::try_into(b"hello\xc3\x28world")?
         ),
-        "hello�(world"
+        r"hello\xc3(world"
     );
     Ok(())
 }

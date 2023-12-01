@@ -7,15 +7,15 @@ use std::{
 
 use clap::{Args, ValueEnum};
 
-use crate::Channel;
+use crate::cli::Channel;
 
 #[derive(thiserror::Error, Debug)]
 #[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[error("error decoding XDR: {0}")]
-    ReadXdrCurr(#[from] stellar_xdr::curr::Error),
+    ReadXdrCurr(#[from] crate::curr::Error),
     #[error("error decoding XDR: {0}")]
-    ReadXdrNext(#[from] stellar_xdr::next::Error),
+    ReadXdrNext(#[from] crate::next::Error),
     #[error("error reading file: {0}")]
     ReadFile(#[from] std::io::Error),
 }
@@ -69,26 +69,21 @@ impl Default for OutputFormat {
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let mut f = stellar_xdr::$m::Limited::new(
-                ResetRead::new(self.file()?),
-                stellar_xdr::$m::Limits::none(),
-            );
-            'variants: for v in stellar_xdr::$m::TypeVariant::VARIANTS {
+            let mut f =
+                crate::$m::Limited::new(ResetRead::new(self.file()?), crate::$m::Limits::none());
+            'variants: for v in crate::$m::TypeVariant::VARIANTS {
                 f.inner.reset();
                 let count: usize = match self.input {
-                    InputFormat::Single => stellar_xdr::$m::Type::read_xdr_to_end(v, &mut f)
+                    InputFormat::Single => crate::$m::Type::read_xdr_to_end(v, &mut f)
                         .ok()
                         .map(|_| 1)
                         .unwrap_or_default(),
-                    InputFormat::SingleBase64 => {
-                        stellar_xdr::$m::Type::read_xdr_base64_to_end(v, &mut f)
-                            .ok()
-                            .map(|_| 1)
-                            .unwrap_or_default()
-                    }
+                    InputFormat::SingleBase64 => crate::$m::Type::read_xdr_base64_to_end(v, &mut f)
+                        .ok()
+                        .map(|_| 1)
+                        .unwrap_or_default(),
                     InputFormat::Stream => {
-                        let iter =
-                            stellar_xdr::$m::Type::read_xdr_iter(v, &mut f).take(self.certainty);
+                        let iter = crate::$m::Type::read_xdr_iter(v, &mut f).take(self.certainty);
                         let mut count = 0;
                         for v in iter {
                             match v {
@@ -99,8 +94,8 @@ macro_rules! run_x {
                         count
                     }
                     InputFormat::StreamBase64 => {
-                        let iter = stellar_xdr::$m::Type::read_xdr_base64_iter(v, &mut f)
-                            .take(self.certainty);
+                        let iter =
+                            crate::$m::Type::read_xdr_base64_iter(v, &mut f).take(self.certainty);
                         let mut count = 0;
                         for v in iter {
                             match v {
@@ -111,8 +106,8 @@ macro_rules! run_x {
                         count
                     }
                     InputFormat::StreamFramed => {
-                        let iter = stellar_xdr::$m::Type::read_xdr_framed_iter(v, &mut f)
-                            .take(self.certainty);
+                        let iter =
+                            crate::$m::Type::read_xdr_framed_iter(v, &mut f).take(self.certainty);
                         let mut count = 0;
                         for v in iter {
                             match v {

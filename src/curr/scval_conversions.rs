@@ -5,7 +5,7 @@ use super::{
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
-use alloc::{vec, vec::Vec};
+use alloc::{string::String, vec, vec::Vec};
 
 // TODO: Use the Error type for conversions in this file.
 
@@ -297,6 +297,38 @@ impl TryFrom<ScVal> for ScSymbol {
         } else {
             Err(())
         }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<String> for ScSymbol {
+    type Error = ();
+    fn try_from(v: String) -> Result<Self, Self::Error> {
+        Ok(ScSymbol(v.try_into().map_err(|_| ())?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&String> for ScSymbol {
+    type Error = ();
+    fn try_from(v: &String) -> Result<Self, Self::Error> {
+        Ok(ScSymbol(v.try_into().map_err(|_| ())?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&str> for ScSymbol {
+    type Error = ();
+    fn try_from(v: &str) -> Result<Self, Self::Error> {
+        Ok(ScSymbol(v.try_into().map_err(|_| ())?))
+    }
+}
+
+#[cfg(not(feature = "alloc"))]
+impl TryFrom<&'static str> for ScSymbol {
+    type Error = ();
+    fn try_from(v: &'static str) -> Result<Self, Self::Error> {
+        Ok(ScSymbol(v.try_into().map_err(|_| ())?))
     }
 }
 

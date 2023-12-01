@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "c5dd8507bc84e10b67bf3bc74c8f716a660b425814b015025c6f6b6f20cb70e7",
+        "0d2b35a331a540b48643925d0869857236eb2487c02d340ea32e365e784ea2b8",
     ),
     (
         "xdr/next/Stellar-types.x",

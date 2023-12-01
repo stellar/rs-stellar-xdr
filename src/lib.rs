@@ -2,6 +2,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(docs, feature(doc_auto_cfg))]
 
+// TODO: Remove these clippy doc comment allows after improving the
+// auto-generated docs.
+#![allow(clippy::tabs_in_doc_comments)]
+#![allow(clippy::doc_markdown)]
+
 //! Library and CLI containing types and functionality for working with Stellar
 //! XDR.
 //!

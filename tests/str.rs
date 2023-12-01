@@ -4,8 +4,8 @@
 use stellar_xdr::curr as stellar_xdr;
 
 use stellar_xdr::{
-    AccountId, Error, Hash, MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey, ScAddress,
-    SignerKey, SignerKeyEd25519SignedPayload, Uint256,
+    AccountId, AssetCode, AssetCode12, AssetCode4, Error, Hash, MuxedAccount, MuxedAccountMed25519,
+    NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload, Uint256,
 };
 
 use std::str::FromStr;
@@ -397,4 +397,147 @@ fn sc_address_from_str_with_invalid() {
         "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAJLK",
     );
     assert_eq!(v, Err(Error::Invalid));
+}
+
+#[test]
+fn asset_code_4_from_str() {
+    assert_eq!(AssetCode4::from_str(""), Ok(AssetCode4(*b"\0\0\0\0")));
+    assert_eq!(AssetCode4::from_str("a"), Ok(AssetCode4(*b"a\0\0\0")));
+    assert_eq!(AssetCode4::from_str("ab"), Ok(AssetCode4(*b"ab\0\0")));
+    assert_eq!(AssetCode4::from_str("abc"), Ok(AssetCode4(*b"abc\0")));
+    assert_eq!(AssetCode4::from_str("abcd"), Ok(AssetCode4(*b"abcd")));
+
+    assert_eq!(AssetCode4::from_str("abcde"), Err(Error::Invalid));
+}
+
+#[test]
+fn asset_code_4_to_string() {
+    assert_eq!(AssetCode4(*b"\0\0\0\0").to_string(), "");
+    assert_eq!(AssetCode4(*b"a\0\0\0").to_string(), "a");
+    assert_eq!(AssetCode4(*b"ab\0\0").to_string(), "ab");
+    assert_eq!(AssetCode4(*b"abc\0").to_string(), "abc");
+    assert_eq!(AssetCode4(*b"abcd").to_string(), "abcd");
+
+    // Preserve as much of the code as possible, even if it contains nul bytes.
+    assert_eq!(AssetCode4(*b"a\0cd").to_string(), r"a\0cd");
+
+    // Replace bytes that are not valid utf8 with the replacement character � and preserve length.
+    assert_eq!(AssetCode4(*b"a\xc3\x28d").to_string(), r"a\xc3(d");
+    assert_eq!(AssetCode4(*b"a\xc3\xc3\x28").to_string(), r"a\xc3\xc3(");
+    assert_eq!(AssetCode4(*b"a\xc3\xc3\xc3").to_string(), r"a\xc3\xc3\xc3");
+}
+
+#[test]
+#[rustfmt::skip]
+fn asset_code_12_from_str() {
+    assert_eq!(AssetCode12::from_str(""), Ok(AssetCode12(*b"\0\0\0\0\0\0\0\0\0\0\0\0")));
+    assert_eq!(AssetCode12::from_str("a"), Ok(AssetCode12(*b"a\0\0\0\0\0\0\0\0\0\0\0")));
+    assert_eq!(AssetCode12::from_str("ab"), Ok(AssetCode12(*b"ab\0\0\0\0\0\0\0\0\0\0")));
+    assert_eq!(AssetCode12::from_str("abc"), Ok(AssetCode12(*b"abc\0\0\0\0\0\0\0\0\0")));
+    assert_eq!(AssetCode12::from_str("abcd"), Ok(AssetCode12(*b"abcd\0\0\0\0\0\0\0\0")));
+    assert_eq!(AssetCode12::from_str("abcde"), Ok(AssetCode12(*b"abcde\0\0\0\0\0\0\0")));
+    assert_eq!(AssetCode12::from_str("abcdef"), Ok(AssetCode12(*b"abcdef\0\0\0\0\0\0")));
+    assert_eq!(AssetCode12::from_str("abcdefg"), Ok(AssetCode12(*b"abcdefg\0\0\0\0\0")));
+    assert_eq!(AssetCode12::from_str("abcdefgh"), Ok(AssetCode12(*b"abcdefgh\0\0\0\0")));
+    assert_eq!(AssetCode12::from_str("abcdefghi"), Ok(AssetCode12(*b"abcdefghi\0\0\0")));
+    assert_eq!(AssetCode12::from_str("abcdefghij"), Ok(AssetCode12(*b"abcdefghij\0\0")));
+    assert_eq!(AssetCode12::from_str("abcdefghijk"), Ok(AssetCode12(*b"abcdefghijk\0")));
+    assert_eq!(AssetCode12::from_str("abcdefghijkl"), Ok(AssetCode12(*b"abcdefghijkl")));
+
+    assert_eq!(AssetCode12::from_str("abcdefghijklm"), Err(Error::Invalid));
+}
+
+#[test]
+#[rustfmt::skip]
+fn asset_code_12_to_string() {
+    assert_eq!(AssetCode12(*b"\0\0\0\0\0\0\0\0\0\0\0\0").to_string(), "");
+    assert_eq!(AssetCode12(*b"a\0\0\0\0\0\0\0\0\0\0\0").to_string(), "a");
+    assert_eq!(AssetCode12(*b"ab\0\0\0\0\0\0\0\0\0\0").to_string(), "ab");
+    assert_eq!(AssetCode12(*b"abc\0\0\0\0\0\0\0\0\0").to_string(), "abc");
+    assert_eq!(AssetCode12(*b"abcd\0\0\0\0\0\0\0\0").to_string(), "abcd");
+    assert_eq!(AssetCode12(*b"abcde\0\0\0\0\0\0\0").to_string(), "abcde");
+    assert_eq!(AssetCode12(*b"abcdef\0\0\0\0\0\0").to_string(), "abcdef");
+    assert_eq!(AssetCode12(*b"abcdefg\0\0\0\0\0").to_string(), "abcdefg");
+    assert_eq!(AssetCode12(*b"abcdefgh\0\0\0\0").to_string(), "abcdefgh");
+    assert_eq!(AssetCode12(*b"abcdefghi\0\0\0").to_string(), "abcdefghi");
+    assert_eq!(AssetCode12(*b"abcdefghij\0\0").to_string(), "abcdefghij");
+    assert_eq!(AssetCode12(*b"abcdefghijk\0").to_string(), "abcdefghijk");
+    assert_eq!(AssetCode12(*b"abcdefghijkl").to_string(), "abcdefghijkl");
+
+    // Preserve as much of the code as possible, even if it contains nul bytes.
+    assert_eq!(AssetCode12(*b"a\0cd\0\0\0\0\0\0\0\0").to_string(), r"a\0cd");
+
+    // Replace bytes that are not valid utf8 with the replacement character � and preserve length.
+    assert_eq!(AssetCode12(*b"a\xc3\x28d\0\0\0\0\0\0\0\0").to_string(), r"a\xc3(d");
+    assert_eq!(AssetCode12(*b"a\xc3\xc3\x28d\0\0\0\0\0\0\0").to_string(), r"a\xc3\xc3(d");
+}
+
+#[test]
+#[rustfmt::skip]
+fn asset_code_from_str() {
+    assert_eq!(AssetCode::from_str(""), Ok(AssetCode::CreditAlphanum4(AssetCode4(*b"\0\0\0\0"))));
+    assert_eq!(AssetCode::from_str("a"), Ok(AssetCode::CreditAlphanum4(AssetCode4(*b"a\0\0\0"))));
+    assert_eq!(AssetCode::from_str("ab"), Ok(AssetCode::CreditAlphanum4(AssetCode4(*b"ab\0\0"))));
+    assert_eq!(AssetCode::from_str("abc"), Ok(AssetCode::CreditAlphanum4(AssetCode4(*b"abc\0"))));
+    assert_eq!(AssetCode::from_str("abcd"), Ok(AssetCode::CreditAlphanum4(AssetCode4(*b"abcd"))));
+
+    assert_eq!(AssetCode::from_str("abcde"), Ok(AssetCode::CreditAlphanum12(AssetCode12(*b"abcde\0\0\0\0\0\0\0"))));
+    assert_eq!(AssetCode::from_str("abcdef"), Ok(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdef\0\0\0\0\0\0"))));
+    assert_eq!(AssetCode::from_str("abcdefg"), Ok(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefg\0\0\0\0\0"))));
+    assert_eq!(AssetCode::from_str("abcdefgh"), Ok(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefgh\0\0\0\0"))));
+    assert_eq!(AssetCode::from_str("abcdefghi"), Ok(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefghi\0\0\0"))));
+    assert_eq!(AssetCode::from_str("abcdefghij"), Ok(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefghij\0\0"))));
+    assert_eq!(AssetCode::from_str("abcdefghijk"), Ok(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefghijk\0"))));
+    assert_eq!(AssetCode::from_str("abcdefghijkl"), Ok(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefghijkl"))));
+
+    assert_eq!(AssetCode::from_str("abcdefghijklm"), Err(Error::Invalid));
+}
+
+#[test]
+#[rustfmt::skip]
+fn asset_code_to_string() {
+    assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"\0\0\0\0")).to_string(), "");
+    assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"a\0\0\0")).to_string(), "a");
+    assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"ab\0\0")).to_string(), "ab");
+    assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"abc\0")).to_string(), "abc");
+    assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"abcd")).to_string(), "abcd");
+
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"\0\0\0\0\0\0\0\0\0\0\0\0")).to_string(), "");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\0\0\0\0\0\0\0\0\0\0\0")).to_string(), "a");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"ab\0\0\0\0\0\0\0\0\0\0")).to_string(), "ab");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abc\0\0\0\0\0\0\0\0\0")).to_string(), "abc");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcd\0\0\0\0\0\0\0\0")).to_string(), "abcd");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcde\0\0\0\0\0\0\0")).to_string(), "abcde");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdef\0\0\0\0\0\0")).to_string(), "abcdef");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefg\0\0\0\0\0")).to_string(), "abcdefg");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefgh\0\0\0\0")).to_string(), "abcdefgh");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefghi\0\0\0")).to_string(), "abcdefghi");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefghij\0\0")).to_string(), "abcdefghij");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefghijk\0")).to_string(), "abcdefghijk");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefghijkl")).to_string(), "abcdefghijkl");
+
+    // Preserve as much of the code as possible, even if it contains nul bytes.
+    assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"a\0cd")).to_string(), r"a\0cd");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\0cd\0\0\0\0\0\0\0\0")).to_string(), r"a\0cd");
+
+    // Replace bytes that are not valid utf8 with the replacement character � and preserve length.
+    assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"a\xc3\x28d")).to_string(), r"a\xc3(d");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\xc3\x28d\0\0\0\0\0\0\0\0")).to_string(), r"a\xc3(d");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\xc3\xc3\x28d\0\0\0\0\0\0\0")).to_string(), r"a\xc3\xc3(d");
+}
+
+#[test]
+#[rustfmt::skip]
+fn asset_code_from_str_to_string_roundtrip_unicode() {
+    // Round tripped to correct variant based on byte length, not code point length.
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\xd9\xaa\xd9\xaa\0\0\0\0\0\0\0")).to_string(), r"a\xd9\xaa\xd9\xaa");
+    assert_eq!(AssetCode::from_str(r"a\xd9\xaa\xd9\xaa"), Ok(AssetCode::CreditAlphanum12(AssetCode12(*b"a\xd9\xaa\xd9\xaa\0\0\0\0\0\0\0"))));
+
+    // Round tripped to correct variant based on byte length even when utf8
+    // parsing error occurs. To preserve type consistency when round tripping
+    // the data, the length when parsing errors occur must be consistent with
+    // the input length, which is why a nul byte is expected instead of a
+    // Unicode Replacement Character, which would be two bytes.
+    assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"a\xc3\xc3d")).to_string(), r"a\xc3\xc3d");
+    assert_eq!(AssetCode::from_str(r"a\xc3\xc3d"), Ok(AssetCode::CreditAlphanum4(AssetCode4(*b"a\xc3\xc3d"))));
 }

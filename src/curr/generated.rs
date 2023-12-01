@@ -10345,23 +10345,6 @@ impl core::fmt::Debug for AssetCode4 {
         Ok(())
     }
 }
-impl core::fmt::Display for AssetCode4 {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = &self.0;
-        for b in v {
-            write!(f, "{b:02x}")?;
-        }
-        Ok(())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl core::str::FromStr for AssetCode4 {
-    type Err = Error;
-    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
-    }
-}
 impl From<AssetCode4> for [u8; 4] {
     #[must_use]
     fn from(x: AssetCode4) -> Self {
@@ -10459,23 +10442,6 @@ impl core::fmt::Debug for AssetCode12 {
         }
         write!(f, ")")?;
         Ok(())
-    }
-}
-impl core::fmt::Display for AssetCode12 {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = &self.0;
-        for b in v {
-            write!(f, "{b:02x}")?;
-        }
-        Ok(())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl core::str::FromStr for AssetCode12 {
-    type Err = Error;
-    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
     }
 }
 impl From<AssetCode12> for [u8; 12] {
@@ -10689,8 +10655,7 @@ impl WriteXdr for AssetType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AssetCode {

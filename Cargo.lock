@@ -245,6 +245,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "escape-bytes"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3871d161fec5b6fade5fe7afe2e196b86839c5526a8d256c7b1a04dbbe5241a4"
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -493,6 +499,7 @@ dependencies = [
  "base64 0.13.0",
  "clap",
  "crate-git-revision",
+ "escape-bytes",
  "hex",
  "serde",
  "serde_json",

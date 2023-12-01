@@ -68,7 +68,7 @@ fn test_serde_tx() -> Result<(), Box<dyn std::error::Error>> {
             "change_trust": {
               "line": {
                 "credit_alphanum4": {
-                  "asset_code": "41424344",
+                  "asset_code": "ABCD",
                   "issuer": "GBB5BH2JFIVOHKQK5WHM5XFSE2SPOUFJB3FU4CPZVR3EUVJXZLMHOLOM"
                 }
               },

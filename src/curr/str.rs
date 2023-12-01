@@ -13,11 +13,16 @@
 //# - SignerKey
 //# - SignerKeyEd25519SignedPayload
 //# - NodeId
+//#
+//# ## Asset Codes
+//# - AssetCode
+//# - AssetCode4
+//# - AssetCode12
 #![cfg(feature = "alloc")]
 
 use super::{
-    AccountId, Error, Hash, MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey, ScAddress,
-    SignerKey, SignerKeyEd25519SignedPayload, Uint256,
+    AccountId, AssetCode, AssetCode12, AssetCode4, Error, Hash, MuxedAccount, MuxedAccountMed25519,
+    NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload, Uint256,
 };
 
 impl From<stellar_strkey::DecodeError> for Error {
@@ -252,5 +257,71 @@ impl core::fmt::Display for ScAddress {
             }
         }
         Ok(())
+    }
+}
+
+impl core::str::FromStr for AssetCode4 {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let mut code = AssetCode4([0u8; 4]);
+        escape_bytes::unescape_into(&mut code.0, s.as_bytes()).map_err(|_| Error::Invalid)?;
+        Ok(code)
+    }
+}
+
+impl core::fmt::Display for AssetCode4 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if let Some(last_idx) = self.0.iter().rposition(|c| *c != 0) {
+            for b in escape_bytes::Escape::new(&self.0[..=last_idx]) {
+                write!(f, "{}", b as char)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl core::str::FromStr for AssetCode12 {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let mut code = AssetCode12([0u8; 12]);
+        escape_bytes::unescape_into(&mut code.0, s.as_bytes()).map_err(|_| Error::Invalid)?;
+        Ok(code)
+    }
+}
+
+impl core::fmt::Display for AssetCode12 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if let Some(last_idx) = self.0.iter().rposition(|c| *c != 0) {
+            for b in escape_bytes::Escape::new(&self.0[..=last_idx]) {
+                write!(f, "{}", b as char)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl core::str::FromStr for AssetCode {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let mut code = [0u8; 12];
+        let n = escape_bytes::unescape_into(&mut code, s.as_bytes()).map_err(|_| Error::Invalid)?;
+        if n <= 4 {
+            Ok(AssetCode::CreditAlphanum4(AssetCode4([
+                code[0], code[1], code[2], code[3],
+            ])))
+        } else if n <= 12 {
+            Ok(AssetCode::CreditAlphanum12(AssetCode12(code)))
+        } else {
+            Err(Error::Invalid)
+        }
+    }
+}
+
+impl core::fmt::Display for AssetCode {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            AssetCode::CreditAlphanum4(c) => c.fmt(f),
+            AssetCode::CreditAlphanum12(c) => c.fmt(f),
+        }
     }
 }

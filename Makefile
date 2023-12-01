@@ -4,7 +4,7 @@ CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features b
 
 CARGO_DOC_ARGS?=--open
 
-XDRGEN_VERSION=685c10e4ce4906394af5fef6a9e0814f7c9e1c83
+XDRGEN_VERSION=e2cac557162d99b12ae73b846cf3d5bfe16636de
 XDRGEN_TYPES_CUSTOM_STR_IMPL=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12
 
 all: build test
@@ -18,7 +18,7 @@ build: generate
 
 doc:
 	cargo test --doc --all-features
-	RUSTDOCFLAGS="--cfg docs" cargo +nightly doc --all-features $(CARGO_DOC_ARGS)
+	RUSTDOCFLAGS="--cfg docs" cargo +nightly doc --package stellar-xdr --all-features $(CARGO_DOC_ARGS)
 
 install:
 	cargo install --path . --force --features cli

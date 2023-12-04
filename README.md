@@ -6,10 +6,6 @@ XDR.
 Types are generated from XDR definitions hosted at [stellar/stellar-xdr]
 using [xdrgen].
 
-**This repository contains code that is in early development, incomplete,
-not tested, and not recommended for use. The API is unstable, experimental,
-and is receiving breaking changes frequently.**
-
 [stellar/stellar-xdr]: https://github.com/stellar/stellar-xdr
 [xdrgen]: https://github.com/stellar/xdrgen
 
@@ -21,11 +17,6 @@ To use the library, include in your toml:
 ```toml
 stellar-xdr = { version = "...", default-features = true, features = [] }
 ```
-
-XDR types are available under modules, with the `curr` module containing XDR
-types built from the `stellar/stellar-xdr` `curr` branch. Other top-level
-modules are built from other `stellar/stellar-xdr` branches and releases if
-enabled with features.
 
 ##### Features
 

@@ -12,10 +12,6 @@
 //! Types are generated from XDR definitions hosted at [stellar/stellar-xdr]
 //! using [xdrgen].
 //!
-//! **This repository contains code that is in early development, incomplete,
-//! not tested, and not recommended for use. The API is unstable, experimental,
-//! and is receiving breaking changes frequently.**
-//!
 //! [stellar/stellar-xdr]: https://github.com/stellar/stellar-xdr
 //! [xdrgen]: https://github.com/stellar/xdrgen
 //!

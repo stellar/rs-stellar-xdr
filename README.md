@@ -18,11 +18,6 @@ To use the library, include in your toml:
 stellar-xdr = { version = "...", default-features = true, features = [] }
 ```
 
-XDR types are available under modules, with the `curr` module containing XDR
-types built from the `stellar/stellar-xdr` `curr` branch. Other top-level
-modules are built from other `stellar/stellar-xdr` branches and releases if
-enabled with features.
-
 ##### Features
 
 The crate has several features, tiers of functionality, ancillary

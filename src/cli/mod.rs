@@ -27,6 +27,11 @@ pub struct Root {
 }
 
 impl Root {
+    /// Run the CLIs root command.
+    ///
+    /// ## Errors
+    ///
+    /// If the root command is configured with state that is invalid.
     pub fn run(&self) -> Result<(), Error> {
         match &self.cmd {
             Cmd::Types(c) => c.run(&self.channel),

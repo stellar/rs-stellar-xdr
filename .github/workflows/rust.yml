@@ -46,25 +46,29 @@ jobs:
           target: wasm32-unknown-unknown
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
-        # TODO: Address GitHub Actions concurrency limits and re-enable.
-        # - os: macos-latest
-        #   target: x86_64-apple-darwin
-        # - os: macos-latest
-        #   target: aarch64-apple-darwin
-        # TODO: Address disk space usage problems and re-enable.
-        # - os: windows-latest
-        #   target: x86_64-pc-windows-msvc
+        - os: macos-latest
+          target: x86_64-apple-darwin
+        - os: macos-latest
+          target: aarch64-apple-darwin
+        - os: windows-latest
+          target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.sys.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
+    - run: which cargo
+    - run: echo $PATH
+    - run: cargo --list
     - uses: stellar/binaries@v12
       with:
         name: cargo-hack
         version: 0.5.16
-    - run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
+    - run: cargo-hack hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
 
   test:
     strategy:
@@ -72,13 +76,14 @@ jobs:
         sys:
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
-        # TODO: Address GitHub Actions concurrency limits and re-enable.
-        # - os: macos-latest
-        #   target: x86_64-apple-darwin
-        # TODO: Address disk space usage problems and re-enable.
-        # - os: windows-latest
-        #   target: x86_64-pc-windows-msvc
+        - os: macos-latest
+          target: x86_64-apple-darwin
+        - os: windows-latest
+          target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.sys.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main

@@ -8,13 +8,12 @@ on:
 
 env:
   RUSTFLAGS: -Dwarnings -Dclippy::all -Dclippy::pedantic
-  CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex
 
 jobs:
 
   complete:
     if: always()
-    needs: [generate, fmt, build, test, publish-dry-run]
+    needs: [generate, fmt, build-and-test, publish-dry-run]
     runs-on: ubuntu-latest
     steps:
     - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
@@ -38,57 +37,74 @@ jobs:
     - run: rustup update
     - run: cargo fmt --all --check
 
-  build:
+  commands:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: stellar/actions/rust-cache@main
+    - run: rustup update
+    - uses: stellar/binaries@v14
+      with:
+        name: cargo-hack
+        version: 0.5.28
+    - id: commands
+      run: |
+        build="$(cargo hack --print-command-list clippy --feature-powerset --exclude-features default,cli --all-targets \
+          | sort \
+          | jq -R -s -c 'split("\n") | _nwise(6) | join("\n")' \
+          | jq -s -c \
+        )"
+        test="$(cargo hack --print-command-list test --feature-powerset --exclude-features default,cli --all-targets \
+          | sort \
+          | jq -R -s -c 'split("\n") | _nwise(6) | join("\n")' \
+          | jq -s -c \
+        )"
+        zipped="$(echo {} | jq -c --argjson build "$build" --argjson test "$test" \
+          '[$build,$test] | transpose | [.[] | {"build": .[0], "test": .[1]}] + [{"build": "cargo hack clippy --features cli --all-targets", "test": "cargo hack test --features cli --all-targets"}]' \
+        )"
+        echo "commands=$zipped" >> $GITHUB_OUTPUT
+    outputs:
+      commands: ${{ steps.commands.outputs.commands }}
+
+  build-and-test:
+    needs: commands
     strategy:
       matrix:
         sys:
         - os: ubuntu-latest
           target: wasm32-unknown-unknown
+          test: false
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
-        # TODO: Address GitHub Actions concurrency limits and re-enable.
-        # - os: macos-latest
-        #   target: x86_64-apple-darwin
-        # - os: macos-latest
-        #   target: aarch64-apple-darwin
-        # TODO: Address disk space usage problems and re-enable.
-        # - os: windows-latest
-        #   target: x86_64-pc-windows-msvc
+          test: true
+        - os: macos-latest
+          target: x86_64-apple-darwin
+          test: true
+        - os: macos-latest
+          target: aarch64-apple-darwin
+          test: false
+        - os: windows-latest
+          target: x86_64-pc-windows-msvc
+          test: true
+        commands: ${{ fromJSON(needs.commands.outputs.commands) }}
     runs-on: ${{ matrix.sys.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
-    - uses: stellar/binaries@v12
+    - uses: stellar/binaries@v14
       with:
         name: cargo-hack
-        version: 0.5.16
-    - run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
-
-  test:
-    strategy:
-      matrix:
-        sys:
-        - os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
-        # TODO: Address GitHub Actions concurrency limits and re-enable.
-        # - os: macos-latest
-        #   target: x86_64-apple-darwin
-        # TODO: Address disk space usage problems and re-enable.
-        # - os: windows-latest
-        #   target: x86_64-pc-windows-msvc
-    runs-on: ${{ matrix.sys.os }}
-    steps:
-    - uses: actions/checkout@v3
-    - uses: stellar/actions/rust-cache@main
-    - run: rustup update
-    - run: rustup target add ${{ matrix.sys.target }}
-    - uses: stellar/binaries@v12
-      with:
-        name: cargo-hack
-        version: 0.5.16
-    - run: cargo hack test $CARGO_HACK_ARGS
+        version: 0.5.28
+    - name: Build
+      run: echo "${{ matrix.commands.build }}" | xargs -I{} bash -x -c '{} --target ${{ matrix.sys.target }}'
+    - name: Test
+      if: matrix.sys.test
+      run: echo "${{ matrix.commands.test }}" | xargs -I{} bash -x -c '{} --target ${{ matrix.sys.target }}'
 
   publish-dry-run:
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')

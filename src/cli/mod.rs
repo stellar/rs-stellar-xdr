@@ -26,6 +26,19 @@ pub struct Root {
     cmd: Cmd,
 }
 
+impl Root {
+    pub fn run(&self) -> Result<(), Error> {
+        match &self.cmd {
+            Cmd::Types(c) => c.run(&self.channel),
+            Cmd::Guess(c) => c.run(&self.channel)?,
+            Cmd::Decode(c) => c.run(&self.channel)?,
+            Cmd::Encode(c) => c.run(&self.channel)?,
+            Cmd::Version => version::Cmd::run(),
+        }
+        Ok(())
+    }
+}
+
 #[derive(ValueEnum, Debug, Clone)]
 pub enum Channel {
     #[value(name = "+curr")]
@@ -78,12 +91,5 @@ where
     T: Into<OsString> + Clone,
 {
     let root = Root::try_parse_from(args)?;
-    match root.cmd {
-        Cmd::Types(c) => c.run(&root.channel),
-        Cmd::Guess(c) => c.run(&root.channel)?,
-        Cmd::Decode(c) => c.run(&root.channel)?,
-        Cmd::Encode(c) => c.run(&root.channel)?,
-        Cmd::Version => version::Cmd::run(),
-    }
-    Ok(())
+    root.run()
 }

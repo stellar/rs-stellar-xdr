@@ -64,7 +64,7 @@ jobs:
       shell: bash
       run: |
         cargo metadata --format-version 1
-        cargo metadata --format-version 1 | jq -r '.packages.[] | select(.name == "stellar-xdr") | .rust_version'
+        cargo metadata --format-version 1 | jq -r '.packages | .[] | select(.name == "stellar-xdr") | .rust_version'
         echo msrv="$(cargo metadata --format-version 1 | jq -r '.packages.[] | select(.name == "stellar-xdr") | .rust_version')" >> $GITHUB_OUTPUT
     - name: Installing the minimum supported Rust version
       run: rustup default ${{ steps.msrv.outputs.msrv }}

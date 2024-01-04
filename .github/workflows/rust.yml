@@ -62,8 +62,8 @@ jobs:
     - name: Get minimum supported Rust version
       id: msrv
       run: echo msrv="$(cargo metadata --format-version 1 | jq -r '.packages | .[] | select(.name == "stellar-xdr") | .rust_version')" >> $GITHUB_OUTPUT
-    - name: Installing the minimum supported Rust version
-      run: rustup default ${{ steps.msrv.outputs.msrv }}
+    - name: Use the minimum supported Rust version
+      run: rustup override set ${{ steps.msrv.outputs.msrv }}
     - run: rustup target add ${{ matrix.sys.target }}
     - run: cargo version
     - run: rustc version

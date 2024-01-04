@@ -65,6 +65,8 @@ jobs:
     - name: Installing the minimum supported Rust version
       run: rustup default ${{ steps.msrv.outputs.msrv }}
     - run: rustup target add ${{ matrix.sys.target }}
+    - run: cargo version
+    - run: rustc version
     - uses: stellar/binaries@v12
       with:
         name: cargo-hack

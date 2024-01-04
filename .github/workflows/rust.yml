@@ -61,6 +61,7 @@ jobs:
     - uses: stellar/actions/rust-cache@main
     - name: Get minimum supported Rust version
       id: msrv
+      shell: bash
       run: |
         cargo metadata --format-version 1
         cargo metadata --format-version 1 | jq -r '.packages.[] | select(.name == "stellar-xdr") | .rust_version'

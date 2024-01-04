@@ -59,6 +59,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
+    - run: rustup update
     - name: Get minimum supported Rust version
       id: msrv
       run: echo msrv="$(cargo metadata --format-version 1 | jq -r '.packages | .[] | select(.name == "stellar-xdr") | .rust_version')" >> $GITHUB_OUTPUT

@@ -96,6 +96,8 @@ jobs:
         # - os: windows-latest
         #   target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.sys.os }}
+    env:
+      RUSTFLAGS:
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main

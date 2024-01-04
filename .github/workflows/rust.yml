@@ -14,7 +14,7 @@ jobs:
 
   complete:
     if: always()
-    needs: [generate, fmt, build, test, publish-dry-run]
+    needs: [generate, fmt, build-and-test-msrv, build-and-test-latest, publish-dry-run]
     runs-on: ubuntu-latest
     steps:
     - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
@@ -38,7 +38,7 @@ jobs:
     - run: rustup update
     - run: cargo fmt --all --check
 
-  build:
+  build-and-test-msrv:
     strategy:
       matrix:
         sys:
@@ -46,6 +46,7 @@ jobs:
           target: wasm32-unknown-unknown
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
+        op: [build, test]
         # TODO: Address GitHub Actions concurrency limits and re-enable.
         # - os: macos-latest
         #   target: x86_64-apple-darwin
@@ -58,23 +59,32 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
-    - run: rustup update
+    - name: Installing the minimum supported Rust version
+      run: rustup default $(cargo metadata --format-version 1 | jq -r '.packages.[] | select(.name == "stellar-xdr") | .rust_version')
     - run: rustup target add ${{ matrix.sys.target }}
     - uses: stellar/binaries@v12
       with:
         name: cargo-hack
         version: 0.5.16
-    - run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
+    - if: matrix.op == 'build'
+      run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
+    - if: matrix.op == 'test'
+      run: cargo hack test $CARGO_HACK_ARGS
 
-  test:
+  build-and-test-latest:
     strategy:
       matrix:
         sys:
         - os: ubuntu-latest
+          target: wasm32-unknown-unknown
+        - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
+        op: [build, test]
         # TODO: Address GitHub Actions concurrency limits and re-enable.
         # - os: macos-latest
         #   target: x86_64-apple-darwin
+        # - os: macos-latest
+        #   target: aarch64-apple-darwin
         # TODO: Address disk space usage problems and re-enable.
         # - os: windows-latest
         #   target: x86_64-pc-windows-msvc
@@ -82,13 +92,17 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
-    - run: rustup update
+    - name: Installing the latest supported Rust version
+      run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
     - uses: stellar/binaries@v12
       with:
         name: cargo-hack
         version: 0.5.16
-    - run: cargo hack test $CARGO_HACK_ARGS
+    - if: matrix.op == 'build'
+      run: cargo hack check $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
+    - if: matrix.op == 'test'
+      run: cargo hack test $CARGO_HACK_ARGS
 
   publish-dry-run:
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')

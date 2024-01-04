@@ -64,6 +64,7 @@ jobs:
       run: echo msrv="$(cargo metadata --format-version 1 | jq -r '.packages | .[] | select(.name == "stellar-xdr") | .rust_version')" >> $GITHUB_OUTPUT
     - name: Use the minimum supported Rust version
       run: rustup override set ${{ steps.msrv.outputs.msrv }}
+    - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
     - run: cargo version
     - uses: stellar/binaries@v12
@@ -98,8 +99,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
-    - name: Installing the latest supported Rust version
-      run: rustup update
+    - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
     - uses: stellar/binaries@v12
       with:

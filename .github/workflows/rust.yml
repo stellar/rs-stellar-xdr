@@ -59,13 +59,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
-    - run: rustup update
     - name: Get minimum supported Rust version
       id: msrv
       run: echo msrv="$(cargo metadata --format-version 1 | jq -r '.packages | .[] | select(.name == "stellar-xdr") | .rust_version')" >> $GITHUB_OUTPUT
     - name: Use the minimum supported Rust version
       run: rustup override set ${{ steps.msrv.outputs.msrv }}
-    - run: rustup update
+    - run: rustup component add clippy --toolchain 1.74
     - run: rustup target add ${{ matrix.sys.target }}
     - run: cargo version
     - uses: stellar/binaries@v12

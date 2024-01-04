@@ -61,11 +61,7 @@ jobs:
     - uses: stellar/actions/rust-cache@main
     - name: Get minimum supported Rust version
       id: msrv
-      shell: bash
-      run: |
-        cargo metadata --format-version 1
-        cargo metadata --format-version 1 | jq -r '.packages | .[] | select(.name == "stellar-xdr") | .rust_version'
-        echo msrv="$(cargo metadata --format-version 1 | jq -r '.packages.[] | select(.name == "stellar-xdr") | .rust_version')" >> $GITHUB_OUTPUT
+      run: echo msrv="$(cargo metadata --format-version 1 | jq -r '.packages | .[] | select(.name == "stellar-xdr") | .rust_version')" >> $GITHUB_OUTPUT
     - name: Installing the minimum supported Rust version
       run: rustup default ${{ steps.msrv.outputs.msrv }}
     - run: rustup target add ${{ matrix.sys.target }}

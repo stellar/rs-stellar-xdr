@@ -38,15 +38,15 @@ jobs:
     - run: rustup update
     - run: cargo fmt --all --check
 
-  build-and-test-msrv:
+  build:
     strategy:
       matrix:
+        rust: [msrv, latest]
         sys:
         - os: ubuntu-latest
           target: wasm32-unknown-unknown
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
-        op: [build, test]
         # TODO: Address GitHub Actions concurrency limits and re-enable.
         # - os: macos-latest
         #   target: x86_64-apple-darwin
@@ -59,32 +59,30 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
-    - name: Get minimum supported Rust version
-      id: msrv
-      run: echo msrv="$(cargo metadata --format-version 1 | jq -r '.packages | .[] | select(.name == "stellar-xdr") | .rust_version')" >> $GITHUB_OUTPUT
     - name: Use the minimum supported Rust version
-      run: rustup override set ${{ steps.msrv.outputs.msrv }}
-    - run: rustup component add clippy --toolchain 1.74
+      if: matrix.rust == 'msrv'
+      run: |
+        msrv="$(cargo metadata --format-version 1 | jq -r '.packages | .[] | select(.name == "stellar-xdr") | .rust_version')"
+        rustup override set $msrv
+        rustup component add clippy --toolchain $msrv
+    - name: Disable warnings and clippy checks on latest
+      run: echo RUSTFLAGS= >> $GITHUB_ENV
+    - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
     - run: cargo version
     - uses: stellar/binaries@v12
       with:
         name: cargo-hack
         version: 0.5.16
-    - if: matrix.op == 'build'
-      run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
-    - if: matrix.op == 'test'
-      run: cargo hack test $CARGO_HACK_ARGS
+    - run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
 
-  build-and-test-latest:
+  test:
     strategy:
       matrix:
+        rust: [msrv, latest]
         sys:
         - os: ubuntu-latest
-          target: wasm32-unknown-unknown
-        - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
-        op: [build, test]
         # TODO: Address GitHub Actions concurrency limits and re-enable.
         # - os: macos-latest
         #   target: x86_64-apple-darwin
@@ -94,21 +92,26 @@ jobs:
         # - os: windows-latest
         #   target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.sys.os }}
-    env:
-      RUSTFLAGS:
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
+    - name: Use the minimum supported Rust version
+      if: matrix.rust == 'msrv'
+      run: |
+        msrv="$(cargo metadata --format-version 1 | jq -r '.packages | .[] | select(.name == "stellar-xdr") | .rust_version')"
+        rustup override set $msrv
+        rustup component add clippy --toolchain $msrv
+    - name: Disable warnings and clippy checks on latest
+      if: matrix.rust == 'latest'
+      run: echo RUSTFLAGS= >> $GITHUB_ENV
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
+    - run: cargo version
     - uses: stellar/binaries@v12
       with:
         name: cargo-hack
         version: 0.5.16
-    - if: matrix.op == 'build'
-      run: cargo hack check $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
-    - if: matrix.op == 'test'
-      run: cargo hack test $CARGO_HACK_ARGS
+    - run: cargo hack test $CARGO_HACK_ARGS
 
   publish-dry-run:
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')

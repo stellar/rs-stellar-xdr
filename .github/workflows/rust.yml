@@ -62,7 +62,7 @@ jobs:
     - name: Use the minimum supported Rust version
       if: matrix.rust == 'msrv'
       run: |
-        msrv="$(cargo metadata --format-version 1 --no-deps | jq -r '.packages | min | .rust_version')"
+        msrv="$(cargo metadata --format-version 1 --no-deps | jq -r '.packages | map(.rust_version) | map(values) | min')"
         rustup override set $msrv
         rustup component add clippy --toolchain $msrv
     - name: Disable warnings and clippy checks on latest
@@ -96,7 +96,7 @@ jobs:
     - name: Use the minimum supported Rust version
       if: matrix.rust == 'msrv'
       run: |
-        msrv="$(cargo metadata --format-version 1 --no-deps | jq -r '.packages | min | .rust_version')"
+        msrv="$(cargo metadata --format-version 1 --no-deps | jq -r '.packages | map(.rust_version) | map(values) | min')"
         rustup override set $msrv
         rustup component add clippy --toolchain $msrv
     - name: Disable warnings and clippy checks on latest

@@ -86,8 +86,6 @@ jobs:
         # TODO: Address GitHub Actions concurrency limits and re-enable.
         # - os: macos-latest
         #   target: x86_64-apple-darwin
-        # - os: macos-latest
-        #   target: aarch64-apple-darwin
         # TODO: Address disk space usage problems and re-enable.
         # - os: windows-latest
         #   target: x86_64-pc-windows-msvc

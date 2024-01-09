@@ -8528,8 +8528,7 @@ impl WriteXdr for ScAddressType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ScAddress {
@@ -10515,23 +10514,6 @@ impl core::fmt::Debug for AssetCode4 {
         Ok(())
     }
 }
-impl core::fmt::Display for AssetCode4 {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = &self.0;
-        for b in v {
-            write!(f, "{b:02x}")?;
-        }
-        Ok(())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl core::str::FromStr for AssetCode4 {
-    type Err = Error;
-    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
-    }
-}
 impl From<AssetCode4> for [u8; 4] {
     #[must_use]
     fn from(x: AssetCode4) -> Self {
@@ -10631,23 +10613,6 @@ impl core::fmt::Debug for AssetCode12 {
         }
         write!(f, ")")?;
         Ok(())
-    }
-}
-impl core::fmt::Display for AssetCode12 {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let v = &self.0;
-        for b in v {
-            write!(f, "{b:02x}")?;
-        }
-        Ok(())
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl core::str::FromStr for AssetCode12 {
-    type Err = Error;
-    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
     }
 }
 impl From<AssetCode12> for [u8; 12] {
@@ -10865,8 +10830,7 @@ impl WriteXdr for AssetType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AssetCode {
@@ -24126,8 +24090,7 @@ impl WriteXdr for LiquidityPoolParameters {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct MuxedAccountMed25519 {
     pub id: u64,
@@ -24178,8 +24141,7 @@ impl WriteXdr for MuxedAccountMed25519 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum MuxedAccount {
@@ -41371,8 +41333,7 @@ impl WriteXdr for SignerKeyType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PublicKey {
@@ -41474,8 +41435,7 @@ impl WriteXdr for PublicKey {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
@@ -41534,8 +41494,7 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SignerKey {
@@ -41875,8 +41834,7 @@ impl AsRef<[u8]> for SignatureHint {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 #[derive(Debug)]
 pub struct NodeId(pub PublicKey);
@@ -41930,8 +41888,7 @@ impl WriteXdr for NodeId {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 #[derive(Debug)]
 pub struct AccountId(pub PublicKey);

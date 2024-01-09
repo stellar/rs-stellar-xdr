@@ -7,7 +7,6 @@ on:
   merge_group:
 
 env:
-  RUSTFLAGS: -Dwarnings -Dclippy::all -Dclippy::pedantic
   CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex
 
 jobs:
@@ -41,6 +40,7 @@ jobs:
   build:
     strategy:
       matrix:
+        rust: [msrv, latest]
         sys:
         - os: ubuntu-latest
           target: wasm32-unknown-unknown
@@ -58,8 +58,20 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
+    - name: Use the minimum supported Rust version
+      if: matrix.rust == 'msrv'
+      run: |
+        msrv="$(cargo metadata --format-version 1 --no-deps | jq -r '.packages | map(.rust_version) | map(values) | min')"
+        rustup override set $msrv
+        rustup component add clippy --toolchain $msrv
+    - name: Error on warnings and clippy checks
+      # Only error on warnings and checks for the msrv, because new versions of
+      # Rust will frequently add new warnings and checks.
+      if: matrix.rust == 'msrv'
+      run: echo RUSTFLAGS='-Dwarnings -Dclippy::all -Dclippy::pedantic' >> $GITHUB_ENV
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
+    - run: cargo version
     - uses: stellar/binaries@v12
       with:
         name: cargo-hack
@@ -69,6 +81,7 @@ jobs:
   test:
     strategy:
       matrix:
+        rust: [msrv, latest]
         sys:
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
@@ -82,8 +95,19 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: stellar/actions/rust-cache@main
+    - name: Use the minimum supported Rust version
+      if: matrix.rust == 'msrv'
+      run: |
+        msrv="$(cargo metadata --format-version 1 --no-deps | jq -r '.packages | map(.rust_version) | map(values) | min')"
+        rustup override set $msrv
+    - name: Error on warnings and clippy checks
+      # Only error on warnings and checks for the msrv, because new versions of
+      # Rust will frequently add new warnings and checks.
+      if: matrix.rust == 'msrv'
+      run: echo RUSTFLAGS='-Dwarnings -Dclippy::all -Dclippy::pedantic' >> $GITHUB_ENV
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
+    - run: cargo version
     - uses: stellar/binaries@v12
       with:
         name: cargo-hack

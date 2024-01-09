@@ -7,7 +7,6 @@ on:
   merge_group:
 
 env:
-  RUSTFLAGS: -Dwarnings -Dclippy::all -Dclippy::pedantic
   CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex
 
 jobs:
@@ -65,9 +64,11 @@ jobs:
         msrv="$(cargo metadata --format-version 1 --no-deps | jq -r '.packages | map(.rust_version) | map(values) | min')"
         rustup override set $msrv
         rustup component add clippy --toolchain $msrv
-    - name: Disable warnings and clippy checks on latest
-      if: matrix.rust == 'latest'
-      run: echo RUSTFLAGS= >> $GITHUB_ENV
+    - name: Error on warnings and clippy checks
+      # Only error on warnings and checks for the msrv, because new versions of
+      # Rust will frequently add new warnings and checks.
+      if: matrix.rust == 'msrv'
+      run: echo RUSTFLAGS='-Dwarnings -Dclippy::all -Dclippy::pedantic' >> $GITHUB_ENV
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
     - run: cargo version
@@ -99,9 +100,11 @@ jobs:
       run: |
         msrv="$(cargo metadata --format-version 1 --no-deps | jq -r '.packages | map(.rust_version) | map(values) | min')"
         rustup override set $msrv
-    - name: Disable warnings and clippy checks on latest
-      if: matrix.rust == 'latest'
-      run: echo RUSTFLAGS= >> $GITHUB_ENV
+    - name: Error on warnings and clippy checks
+      # Only error on warnings and checks for the msrv, because new versions of
+      # Rust will frequently add new warnings and checks.
+      if: matrix.rust == 'msrv'
+      run: echo RUSTFLAGS='-Dwarnings -Dclippy::all -Dclippy::pedantic' >> $GITHUB_ENV
     - run: rustup update
     - run: rustup target add ${{ matrix.sys.target }}
     - run: cargo version

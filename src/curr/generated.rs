@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-config-setting.x",
-        "e466c4dfae1d5d181afbd990b91f26c5d8ed84a7fa987875f8d643cf97e34a77",
+        "fc42980e8710514679477f767ecad6f9348c38d24b1e4476fdd7e73e8e672ea8",
     ),
     (
         "xdr/curr/Stellar-contract-env-meta.x",
@@ -4238,8 +4238,11 @@ impl WriteXdr for ContractCostParamEntry {
 ///     // Number of snapshots to use when calculating average BucketList size
 ///     uint32 bucketListSizeWindowSampleSize;
 ///
+///     // How often to sample the BucketList size for the average, in ledgers
+///     uint32 bucketListWindowSamplePeriod;
+///
 ///     // Maximum number of bytes that we scan for eviction per ledger
-///     uint64 evictionScanSize;
+///     uint32 evictionScanSize;
 ///
 ///     // Lowest BucketList level to be scanned to evict entries
 ///     uint32 startingEvictionScanLevel;
@@ -4261,7 +4264,8 @@ pub struct StateArchivalSettings {
     pub temp_rent_rate_denominator: i64,
     pub max_entries_to_archive: u32,
     pub bucket_list_size_window_sample_size: u32,
-    pub eviction_scan_size: u64,
+    pub bucket_list_window_sample_period: u32,
+    pub eviction_scan_size: u32,
     pub starting_eviction_scan_level: u32,
 }
 
@@ -4277,7 +4281,8 @@ impl ReadXdr for StateArchivalSettings {
                 temp_rent_rate_denominator: i64::read_xdr(r)?,
                 max_entries_to_archive: u32::read_xdr(r)?,
                 bucket_list_size_window_sample_size: u32::read_xdr(r)?,
-                eviction_scan_size: u64::read_xdr(r)?,
+                bucket_list_window_sample_period: u32::read_xdr(r)?,
+                eviction_scan_size: u32::read_xdr(r)?,
                 starting_eviction_scan_level: u32::read_xdr(r)?,
             })
         })
@@ -4295,6 +4300,7 @@ impl WriteXdr for StateArchivalSettings {
             self.temp_rent_rate_denominator.write_xdr(w)?;
             self.max_entries_to_archive.write_xdr(w)?;
             self.bucket_list_size_window_sample_size.write_xdr(w)?;
+            self.bucket_list_window_sample_period.write_xdr(w)?;
             self.eviction_scan_size.write_xdr(w)?;
             self.starting_eviction_scan_level.write_xdr(w)?;
             Ok(())

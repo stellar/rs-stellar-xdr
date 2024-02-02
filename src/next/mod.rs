@@ -11,5 +11,3 @@ pub use scval_validations::*;
 
 #[cfg(feature = "alloc")]
 mod scmap;
-#[cfg(feature = "alloc")]
-pub use scmap::*;

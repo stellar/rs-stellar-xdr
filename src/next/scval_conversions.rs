@@ -102,7 +102,7 @@ impl From<()> for ScVal {
 }
 
 impl From<&()> for ScVal {
-    fn from(_: &()) -> Self {
+    fn from((): &()) -> Self {
         ScVal::Void
     }
 }
@@ -304,7 +304,7 @@ impl TryFrom<ScVal> for ScSymbol {
 impl TryFrom<String> for ScVal {
     type Error = ();
     fn try_from(v: String) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
+        Ok(ScVal::Symbol(v.try_into()?))
     }
 }
 
@@ -312,7 +312,7 @@ impl TryFrom<String> for ScVal {
 impl TryFrom<&String> for ScVal {
     type Error = ();
     fn try_from(v: &String) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
+        Ok(ScVal::Symbol(v.try_into()?))
     }
 }
 
@@ -336,7 +336,7 @@ impl TryFrom<&String> for ScSymbol {
 impl TryFrom<&str> for ScVal {
     type Error = ();
     fn try_from(v: &str) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
+        Ok(ScVal::Symbol(v.try_into()?))
     }
 }
 
@@ -344,7 +344,7 @@ impl TryFrom<&str> for ScVal {
 impl TryFrom<&'static str> for ScVal {
     type Error = ();
     fn try_from(v: &'static str) -> Result<Self, ()> {
-        Ok(ScVal::Symbol(v.try_into().map_err(|()| ())?))
+        Ok(ScVal::Symbol(v.try_into()?))
     }
 }
 
@@ -679,7 +679,7 @@ mod test {
     #[test]
     fn i32_pos() {
         let v = 5;
-        let val: ScVal = v.try_into().unwrap();
+        let val: ScVal = v.into();
         assert_eq!(val, ScVal::I32(5));
         let roundtrip: i32 = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
@@ -688,7 +688,7 @@ mod test {
     #[test]
     fn i32_neg() {
         let v = -5;
-        let val: ScVal = v.try_into().unwrap();
+        let val: ScVal = v.into();
         assert_eq!(val, ScVal::I32(-5));
         let roundtrip: i32 = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
@@ -699,7 +699,7 @@ mod test {
         use super::ScVal;
 
         let v = 5u32;
-        let val: ScVal = v.try_into().unwrap();
+        let val: ScVal = v.into();
         assert_eq!(val, ScVal::U32(5));
         let roundtrip: u32 = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
@@ -708,7 +708,7 @@ mod test {
     #[test]
     fn i64_pos() {
         let v = 5i64;
-        let val: ScVal = v.try_into().unwrap();
+        let val: ScVal = v.into();
         assert_eq!(val, ScVal::I64(5));
         let roundtrip: i64 = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
@@ -717,7 +717,7 @@ mod test {
     #[test]
     fn i64_neg() {
         let v = -5i64;
-        let val: ScVal = v.try_into().unwrap();
+        let val: ScVal = v.into();
         assert_eq!(val, ScVal::I64(-5));
         let roundtrip: i64 = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
@@ -726,7 +726,7 @@ mod test {
     #[test]
     fn u64() {
         let v = 5u64;
-        let val: ScVal = v.try_into().unwrap();
+        let val: ScVal = v.into();
         assert_eq!(val, ScVal::U64(5));
         let roundtrip: u64 = val.try_into().unwrap();
         assert_eq!(v, roundtrip);
@@ -741,7 +741,7 @@ mod test {
         assert_eq!(int128_helpers::u128_hi(u), hi);
         assert_eq!(int128_helpers::u128_lo(u), lo);
 
-        let val: ScVal = u.try_into().unwrap();
+        let val: ScVal = u.into();
         assert_eq!(val, ScVal::U128(UInt128Parts { hi, lo }));
         let roundtrip: u128 = val.try_into().unwrap();
         assert_eq!(u, roundtrip);
@@ -758,7 +758,7 @@ mod test {
             assert_eq!(int128_helpers::i128_hi(i), hi);
             assert_eq!(int128_helpers::i128_lo(i), lo);
 
-            let val: ScVal = i.try_into().unwrap();
+            let val: ScVal = i.into();
             assert_eq!(val, ScVal::I128(Int128Parts { hi, lo }));
             let roundtrip: i128 = val.try_into().unwrap();
             assert_eq!(i, roundtrip);

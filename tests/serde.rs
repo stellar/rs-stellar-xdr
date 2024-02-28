@@ -32,9 +32,9 @@ fn test_serde_ser() -> Result<(), Box<dyn std::error::Error>> {
         "\"hello world\""
     );
     assert_eq!(
-        serde_json::to_string(&<_ as TryInto<Hash>>::try_into(
+        serde_json::to_string(&<_ as Into<Hash>>::into(
             *b"01234567890123456789013456789012"
-        )?)?,
+        ))?,
         "\"3031323334353637383930313233343536373839303133343536373839303132\""
     );
     #[cfg(feature = "curr")]
@@ -64,7 +64,7 @@ fn test_serde_der() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     assert_eq!(
         v,
-        <_ as TryInto<Hash>>::try_into(*b"01234567890123456789013456789012")?,
+        <_ as Into<Hash>>::into(*b"01234567890123456789013456789012"),
     );
 
     #[cfg(feature = "curr")]

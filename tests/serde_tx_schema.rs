@@ -5,6 +5,7 @@ use stellar_xdr::curr as stellar_xdr;
 use stellar_xdr::TransactionEnvelope;
 
 #[cfg(feature = "curr")]
+#[allow(clippy::too_many_lines)]
 #[test]
 fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
     let schema = schemars::schema_for!(TransactionEnvelope);

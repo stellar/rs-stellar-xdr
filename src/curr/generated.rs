@@ -931,7 +931,10 @@ impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
 
 #[cfg(feature = "alloc")]
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)
+)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct VecM<T, const MAX: u32 = { u32::MAX }>(Vec<T>);
 
@@ -1337,7 +1340,11 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct BytesM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
@@ -1718,7 +1725,11 @@ impl<const MAX: u32> WriteXdr for BytesM<MAX> {
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct StringM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
@@ -2088,7 +2099,7 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Frame<T>(pub T)
@@ -2755,7 +2766,7 @@ mod test {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -2863,7 +2874,7 @@ impl AsRef<[u8]> for Value {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScpBallot {
@@ -2911,7 +2922,7 @@ impl WriteXdr for ScpBallot {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -3027,7 +3038,7 @@ impl WriteXdr for ScpStatementType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScpNomination {
@@ -3079,7 +3090,7 @@ impl WriteXdr for ScpNomination {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScpStatementPrepare {
@@ -3139,7 +3150,7 @@ impl WriteXdr for ScpStatementPrepare {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScpStatementConfirm {
@@ -3194,7 +3205,7 @@ impl WriteXdr for ScpStatementConfirm {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScpStatementExternalize {
@@ -3269,7 +3280,7 @@ impl WriteXdr for ScpStatementExternalize {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -3423,7 +3434,7 @@ impl WriteXdr for ScpStatementPledges {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScpStatement {
@@ -3471,7 +3482,7 @@ impl WriteXdr for ScpStatement {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScpEnvelope {
@@ -3517,7 +3528,7 @@ impl WriteXdr for ScpEnvelope {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScpQuorumSet {
@@ -3565,7 +3576,7 @@ impl WriteXdr for ScpQuorumSet {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ConfigSettingContractExecutionLanesV0 {
@@ -3615,7 +3626,7 @@ impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ConfigSettingContractComputeV0 {
@@ -3696,7 +3707,7 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ConfigSettingContractLedgerCostV0 {
@@ -3779,7 +3790,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ConfigSettingContractHistoricalDataV0 {
@@ -3823,7 +3834,7 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ConfigSettingContractEventsV0 {
@@ -3873,7 +3884,7 @@ impl WriteXdr for ConfigSettingContractEventsV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ConfigSettingContractBandwidthV0 {
@@ -3969,7 +3980,7 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -4186,7 +4197,7 @@ impl WriteXdr for ContractCostType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ContractCostParamEntry {
@@ -4253,7 +4264,7 @@ impl WriteXdr for ContractCostParamEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct StateArchivalSettings {
@@ -4322,7 +4333,7 @@ impl WriteXdr for StateArchivalSettings {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct EvictionIterator {
@@ -4375,7 +4386,7 @@ pub const CONTRACT_COST_COUNT_LIMIT: u64 = 1024;
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -4496,7 +4507,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -4693,7 +4704,7 @@ impl WriteXdr for ConfigSettingId {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -4919,7 +4930,7 @@ impl WriteXdr for ConfigSettingEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -5021,7 +5032,7 @@ impl WriteXdr for ScEnvMetaKind {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -5122,7 +5133,7 @@ impl WriteXdr for ScEnvMetaEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScMetaV0 {
@@ -5167,7 +5178,7 @@ impl WriteXdr for ScMetaV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -5269,7 +5280,7 @@ impl WriteXdr for ScMetaKind {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -5406,7 +5417,7 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -5630,7 +5641,7 @@ impl WriteXdr for ScSpecType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecTypeOption {
@@ -5672,7 +5683,7 @@ impl WriteXdr for ScSpecTypeOption {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecTypeResult {
@@ -5716,7 +5727,7 @@ impl WriteXdr for ScSpecTypeResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecTypeVec {
@@ -5758,7 +5769,7 @@ impl WriteXdr for ScSpecTypeVec {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecTypeMap {
@@ -5802,7 +5813,7 @@ impl WriteXdr for ScSpecTypeMap {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecTypeTuple {
@@ -5843,7 +5854,7 @@ impl WriteXdr for ScSpecTypeTuple {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecTypeBytesN {
@@ -5884,7 +5895,7 @@ impl WriteXdr for ScSpecTypeBytesN {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecTypeUdt {
@@ -5958,7 +5969,7 @@ impl WriteXdr for ScSpecTypeUdt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -6230,7 +6241,7 @@ impl WriteXdr for ScSpecTypeDef {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtStructFieldV0 {
@@ -6280,7 +6291,7 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtStructV0 {
@@ -6331,7 +6342,7 @@ impl WriteXdr for ScSpecUdtStructV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtUnionCaseVoidV0 {
@@ -6377,7 +6388,7 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtUnionCaseTupleV0 {
@@ -6426,7 +6437,7 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -6536,7 +6547,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -6649,7 +6660,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtUnionV0 {
@@ -6701,7 +6712,7 @@ impl WriteXdr for ScSpecUdtUnionV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtEnumCaseV0 {
@@ -6751,7 +6762,7 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtEnumV0 {
@@ -6803,7 +6814,7 @@ impl WriteXdr for ScSpecUdtEnumV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtErrorEnumCaseV0 {
@@ -6853,7 +6864,7 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecUdtErrorEnumV0 {
@@ -6905,7 +6916,7 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecFunctionInputV0 {
@@ -6955,7 +6966,7 @@ impl WriteXdr for ScSpecFunctionInputV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScSpecFunctionV0 {
@@ -7010,7 +7021,7 @@ impl WriteXdr for ScSpecFunctionV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -7144,7 +7155,7 @@ impl WriteXdr for ScSpecEntryKind {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -7327,7 +7338,7 @@ impl WriteXdr for ScSpecEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -7546,7 +7557,7 @@ impl WriteXdr for ScValType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -7697,7 +7708,7 @@ impl WriteXdr for ScErrorType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -7858,7 +7869,7 @@ impl WriteXdr for ScErrorCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -8015,7 +8026,7 @@ impl WriteXdr for ScError {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct UInt128Parts {
@@ -8059,7 +8070,7 @@ impl WriteXdr for UInt128Parts {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Int128Parts {
@@ -8105,7 +8116,7 @@ impl WriteXdr for Int128Parts {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct UInt256Parts {
@@ -8157,7 +8168,7 @@ impl WriteXdr for UInt256Parts {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Int256Parts {
@@ -8209,7 +8220,7 @@ impl WriteXdr for Int256Parts {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -8319,7 +8330,7 @@ impl WriteXdr for ContractExecutableType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -8427,7 +8438,7 @@ impl WriteXdr for ContractExecutable {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -8534,7 +8545,11 @@ impl WriteXdr for ScAddressType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ScAddress {
@@ -8642,7 +8657,7 @@ pub const SCSYMBOL_LIMIT: u64 = 32;
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -8747,7 +8762,7 @@ impl AsRef<[ScVal]> for ScVec {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -8852,7 +8867,7 @@ impl AsRef<[ScMapEntry]> for ScMap {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -8957,7 +8972,7 @@ impl AsRef<[u8]> for ScBytes {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -9062,7 +9077,7 @@ impl AsRef<[u8]> for ScString {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -9168,7 +9183,7 @@ impl AsRef<[u8]> for ScSymbol {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScNonceKey {
@@ -9209,7 +9224,7 @@ impl WriteXdr for ScNonceKey {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScContractInstance {
@@ -9311,7 +9326,7 @@ impl WriteXdr for ScContractInstance {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -9563,7 +9578,7 @@ impl WriteXdr for ScVal {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScMapEntry {
@@ -9611,7 +9626,7 @@ impl WriteXdr for ScMapEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -9716,7 +9731,7 @@ impl WriteXdr for StoredTransactionSet {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct StoredDebugTransactionSet {
@@ -9765,7 +9780,7 @@ impl WriteXdr for StoredDebugTransactionSet {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct PersistedScpStateV0 {
@@ -9814,7 +9829,7 @@ impl WriteXdr for PersistedScpStateV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct PersistedScpStateV1 {
@@ -9862,7 +9877,7 @@ impl WriteXdr for PersistedScpStateV1 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -9962,7 +9977,11 @@ impl WriteXdr for PersistedScpState {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 pub struct Thresholds(pub [u8; 4]);
 
@@ -10081,7 +10100,7 @@ impl AsRef<[u8]> for Thresholds {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -10186,7 +10205,7 @@ impl AsRef<[u8]> for String32 {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -10290,7 +10309,7 @@ impl AsRef<[u8]> for String64 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -10346,7 +10365,7 @@ impl WriteXdr for SequenceNumber {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -10450,7 +10469,7 @@ impl AsRef<[u8]> for DataValue {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -10505,7 +10524,11 @@ impl WriteXdr for PoolId {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 pub struct AssetCode4(pub [u8; 4]);
 
@@ -10606,7 +10629,11 @@ impl AsRef<[u8]> for AssetCode4 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 pub struct AssetCode12(pub [u8; 12]);
 
@@ -10714,7 +10741,7 @@ impl AsRef<[u8]> for AssetCode12 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -10836,7 +10863,11 @@ impl WriteXdr for AssetType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum AssetCode {
@@ -10939,7 +10970,7 @@ impl WriteXdr for AssetCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct AlphaNum4 {
@@ -10984,7 +11015,7 @@ impl WriteXdr for AlphaNum4 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct AlphaNum12 {
@@ -11038,7 +11069,7 @@ impl WriteXdr for AlphaNum12 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -11151,7 +11182,7 @@ impl WriteXdr for Asset {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Price {
@@ -11196,7 +11227,7 @@ impl WriteXdr for Price {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Liabilities {
@@ -11244,7 +11275,7 @@ impl WriteXdr for Liabilities {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -11368,7 +11399,7 @@ impl WriteXdr for ThresholdIndexes {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -11518,7 +11549,7 @@ impl WriteXdr for LedgerEntryType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Signer {
@@ -11576,7 +11607,7 @@ impl WriteXdr for Signer {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -11716,7 +11747,7 @@ pub const MAX_SIGNERS: u64 = 20;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -11782,7 +11813,7 @@ impl WriteXdr for SponsorshipDescriptor {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct AccountEntryExtensionV3 {
@@ -11833,7 +11864,7 @@ impl WriteXdr for AccountEntryExtensionV3 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -11947,7 +11978,7 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct AccountEntryExtensionV2 {
@@ -12001,7 +12032,7 @@ impl WriteXdr for AccountEntryExtensionV2 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -12113,7 +12144,7 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct AccountEntryExtensionV1 {
@@ -12161,7 +12192,7 @@ impl WriteXdr for AccountEntryExtensionV1 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -12288,7 +12319,7 @@ impl WriteXdr for AccountEntryExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct AccountEntry {
@@ -12364,7 +12395,7 @@ impl WriteXdr for AccountEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -12503,7 +12534,7 @@ pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -12616,7 +12647,7 @@ impl WriteXdr for LiquidityPoolType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -12737,7 +12768,7 @@ impl WriteXdr for TrustLineAsset {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -12842,7 +12873,7 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TrustLineEntryExtensionV2 {
@@ -12890,7 +12921,7 @@ impl WriteXdr for TrustLineEntryExtensionV2 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -13002,7 +13033,7 @@ impl WriteXdr for TrustLineEntryV1Ext {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TrustLineEntryV1 {
@@ -13062,7 +13093,7 @@ impl WriteXdr for TrustLineEntryV1 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -13193,7 +13224,7 @@ impl WriteXdr for TrustLineEntryExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TrustLineEntry {
@@ -13252,7 +13283,7 @@ impl WriteXdr for TrustLineEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -13362,7 +13393,7 @@ pub const MASK_OFFERENTRY_FLAGS: u64 = 1;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -13480,7 +13511,7 @@ impl WriteXdr for OfferEntryExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct OfferEntry {
@@ -13544,7 +13575,7 @@ impl WriteXdr for OfferEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -13652,7 +13683,7 @@ impl WriteXdr for DataEntryExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct DataEntry {
@@ -13708,7 +13739,7 @@ impl WriteXdr for DataEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -13850,7 +13881,7 @@ impl WriteXdr for ClaimPredicateType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -13992,7 +14023,7 @@ impl WriteXdr for ClaimPredicate {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -14093,7 +14124,7 @@ impl WriteXdr for ClaimantType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ClaimantV0 {
@@ -14143,7 +14174,7 @@ impl WriteXdr for ClaimantV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -14242,7 +14273,7 @@ impl WriteXdr for Claimant {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -14345,7 +14376,7 @@ impl WriteXdr for ClaimableBalanceIdType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -14449,7 +14480,7 @@ impl WriteXdr for ClaimableBalanceId {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -14560,7 +14591,7 @@ pub const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -14665,7 +14696,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ClaimableBalanceEntryExtensionV1 {
@@ -14713,7 +14744,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -14836,7 +14867,7 @@ impl WriteXdr for ClaimableBalanceEntryExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ClaimableBalanceEntry {
@@ -14891,7 +14922,7 @@ impl WriteXdr for ClaimableBalanceEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolConstantProductParameters {
@@ -14944,7 +14975,7 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolEntryConstantProduct {
@@ -15008,7 +15039,7 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -15128,7 +15159,7 @@ impl WriteXdr for LiquidityPoolEntryBody {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolEntry {
@@ -15173,7 +15204,7 @@ impl WriteXdr for LiquidityPoolEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -15283,7 +15314,7 @@ impl WriteXdr for ContractDataDurability {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ContractDataEntry {
@@ -15338,7 +15369,7 @@ impl WriteXdr for ContractDataEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ContractCodeEntry {
@@ -15386,7 +15417,7 @@ impl WriteXdr for ContractCodeEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TtlEntry {
@@ -15432,7 +15463,7 @@ impl WriteXdr for TtlEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -15537,7 +15568,7 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerEntryExtensionV1 {
@@ -15601,7 +15632,7 @@ impl WriteXdr for LedgerEntryExtensionV1 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -15780,7 +15811,7 @@ impl WriteXdr for LedgerEntryData {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -15918,7 +15949,7 @@ impl WriteXdr for LedgerEntryExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerEntry {
@@ -15965,7 +15996,7 @@ impl WriteXdr for LedgerEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyAccount {
@@ -16007,7 +16038,7 @@ impl WriteXdr for LedgerKeyAccount {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyTrustLine {
@@ -16052,7 +16083,7 @@ impl WriteXdr for LedgerKeyTrustLine {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyOffer {
@@ -16097,7 +16128,7 @@ impl WriteXdr for LedgerKeyOffer {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyData {
@@ -16141,7 +16172,7 @@ impl WriteXdr for LedgerKeyData {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyClaimableBalance {
@@ -16182,7 +16213,7 @@ impl WriteXdr for LedgerKeyClaimableBalance {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyLiquidityPool {
@@ -16225,7 +16256,7 @@ impl WriteXdr for LedgerKeyLiquidityPool {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyContractData {
@@ -16272,7 +16303,7 @@ impl WriteXdr for LedgerKeyContractData {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyContractCode {
@@ -16313,7 +16344,7 @@ impl WriteXdr for LedgerKeyContractCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyConfigSetting {
@@ -16355,7 +16386,7 @@ impl WriteXdr for LedgerKeyConfigSetting {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerKeyTtl {
@@ -16457,7 +16488,7 @@ impl WriteXdr for LedgerKeyTtl {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -16642,7 +16673,7 @@ impl WriteXdr for LedgerKey {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -16789,7 +16820,7 @@ impl WriteXdr for EnvelopeType {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -16898,7 +16929,7 @@ impl AsRef<[u8]> for UpgradeType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -17002,7 +17033,7 @@ impl WriteXdr for StellarValueType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerCloseValueSignature {
@@ -17050,7 +17081,7 @@ impl WriteXdr for LedgerCloseValueSignature {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -17171,7 +17202,7 @@ impl WriteXdr for StellarValueExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct StellarValue {
@@ -17232,7 +17263,7 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -17344,7 +17375,7 @@ impl WriteXdr for LedgerHeaderFlags {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -17449,7 +17480,7 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerHeaderExtensionV1 {
@@ -17497,7 +17528,7 @@ impl WriteXdr for LedgerHeaderExtensionV1 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -17635,7 +17666,7 @@ impl WriteXdr for LedgerHeaderExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerHeader {
@@ -17725,7 +17756,7 @@ impl WriteXdr for LedgerHeader {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -17859,7 +17890,7 @@ impl WriteXdr for LedgerUpgradeType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ConfigUpgradeSetKey {
@@ -17920,7 +17951,7 @@ impl WriteXdr for ConfigUpgradeSetKey {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -18065,7 +18096,7 @@ impl WriteXdr for LedgerUpgrade {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ConfigUpgradeSet {
@@ -18112,7 +18143,7 @@ impl WriteXdr for ConfigUpgradeSet {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -18229,7 +18260,7 @@ impl WriteXdr for BucketEntryType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -18336,7 +18367,7 @@ impl WriteXdr for BucketMetadataExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct BucketMetadata {
@@ -18388,7 +18419,7 @@ impl WriteXdr for BucketMetadata {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -18510,7 +18541,7 @@ impl WriteXdr for BucketEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -18612,7 +18643,7 @@ impl WriteXdr for TxSetComponentType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TxSetComponentTxsMaybeDiscountedFee {
@@ -18662,7 +18693,7 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -18769,7 +18800,7 @@ impl WriteXdr for TxSetComponent {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -18868,7 +18899,7 @@ impl WriteXdr for TransactionPhase {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionSet {
@@ -18913,7 +18944,7 @@ impl WriteXdr for TransactionSet {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionSetV1 {
@@ -18960,7 +18991,7 @@ impl WriteXdr for TransactionSetV1 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -19059,7 +19090,7 @@ impl WriteXdr for GeneralizedTransactionSet {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionResultPair {
@@ -19103,7 +19134,7 @@ impl WriteXdr for TransactionResultPair {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionResultSet {
@@ -19148,7 +19179,7 @@ impl WriteXdr for TransactionResultSet {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -19262,7 +19293,7 @@ impl WriteXdr for TransactionHistoryEntryExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionHistoryEntry {
@@ -19311,7 +19342,7 @@ impl WriteXdr for TransactionHistoryEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -19418,7 +19449,7 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionHistoryResultEntry {
@@ -19467,7 +19498,7 @@ impl WriteXdr for TransactionHistoryResultEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -19574,7 +19605,7 @@ impl WriteXdr for LedgerHeaderHistoryEntryExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerHeaderHistoryEntry {
@@ -19622,7 +19653,7 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerScpMessages {
@@ -19667,7 +19698,7 @@ impl WriteXdr for LedgerScpMessages {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ScpHistoryEntryV0 {
@@ -19713,7 +19744,7 @@ impl WriteXdr for ScpHistoryEntryV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -19815,7 +19846,7 @@ impl WriteXdr for ScpHistoryEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -19937,7 +19968,7 @@ impl WriteXdr for LedgerEntryChangeType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -20053,7 +20084,7 @@ impl WriteXdr for LedgerEntryChange {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -20160,7 +20191,7 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct OperationMeta {
@@ -20202,7 +20233,7 @@ impl WriteXdr for OperationMeta {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionMetaV1 {
@@ -20250,7 +20281,7 @@ impl WriteXdr for TransactionMetaV1 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionMetaV2 {
@@ -20300,7 +20331,7 @@ impl WriteXdr for TransactionMetaV2 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -20411,7 +20442,7 @@ impl WriteXdr for ContractEventType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ContractEventV0 {
@@ -20461,7 +20492,7 @@ impl WriteXdr for ContractEventV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -20575,7 +20606,7 @@ impl WriteXdr for ContractEventBody {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ContractEvent {
@@ -20626,7 +20657,7 @@ impl WriteXdr for ContractEvent {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct DiagnosticEvent {
@@ -20679,7 +20710,7 @@ impl WriteXdr for DiagnosticEvent {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SorobanTransactionMeta {
@@ -20737,7 +20768,7 @@ impl WriteXdr for SorobanTransactionMeta {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionMetaV3 {
@@ -20791,7 +20822,7 @@ impl WriteXdr for TransactionMetaV3 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct InvokeHostFunctionSuccessPreImage {
@@ -20843,7 +20874,7 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -20958,7 +20989,7 @@ impl WriteXdr for TransactionMeta {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionResultMeta {
@@ -21006,7 +21037,7 @@ impl WriteXdr for TransactionResultMeta {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct UpgradeEntryMeta {
@@ -21063,7 +21094,7 @@ impl WriteXdr for UpgradeEntryMeta {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerCloseMetaV0 {
@@ -21144,7 +21175,7 @@ impl WriteXdr for LedgerCloseMetaV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerCloseMetaV1 {
@@ -21213,7 +21244,7 @@ impl WriteXdr for LedgerCloseMetaV1 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -21321,7 +21352,7 @@ impl WriteXdr for LedgerCloseMeta {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -21440,7 +21471,7 @@ impl WriteXdr for ErrorCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SError {
@@ -21484,7 +21515,7 @@ impl WriteXdr for SError {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SendMore {
@@ -21526,7 +21557,7 @@ impl WriteXdr for SendMore {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SendMoreExtended {
@@ -21572,7 +21603,7 @@ impl WriteXdr for SendMoreExtended {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct AuthCert {
@@ -21627,7 +21658,7 @@ impl WriteXdr for AuthCert {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Hello {
@@ -21700,7 +21731,7 @@ pub const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED: u64 = 200;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Auth {
@@ -21743,7 +21774,7 @@ impl WriteXdr for Auth {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -21850,7 +21881,7 @@ impl WriteXdr for IpAddrType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -21962,7 +21993,7 @@ impl WriteXdr for PeerAddressIp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct PeerAddress {
@@ -22039,7 +22070,7 @@ impl WriteXdr for PeerAddress {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -22239,7 +22270,7 @@ impl WriteXdr for MessageType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct DontHave {
@@ -22284,7 +22315,7 @@ impl WriteXdr for DontHave {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -22386,7 +22417,7 @@ impl WriteXdr for SurveyMessageCommandType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -22494,7 +22525,7 @@ impl WriteXdr for SurveyMessageResponseType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SurveyRequestMessage {
@@ -22548,7 +22579,7 @@ impl WriteXdr for SurveyRequestMessage {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SignedSurveyRequestMessage {
@@ -22590,7 +22621,7 @@ impl WriteXdr for SignedSurveyRequestMessage {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -22701,7 +22732,7 @@ impl AsRef<[u8]> for EncryptedBody {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SurveyResponseMessage {
@@ -22755,7 +22786,7 @@ impl WriteXdr for SurveyResponseMessage {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SignedSurveyResponseMessage {
@@ -22815,7 +22846,7 @@ impl WriteXdr for SignedSurveyResponseMessage {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct PeerStats {
@@ -22896,7 +22927,7 @@ impl WriteXdr for PeerStats {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -23007,7 +23038,7 @@ impl AsRef<[PeerStats]> for PeerStatList {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TopologyResponseBodyV0 {
@@ -23064,7 +23095,7 @@ impl WriteXdr for TopologyResponseBodyV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TopologyResponseBodyV1 {
@@ -23124,7 +23155,7 @@ impl WriteXdr for TopologyResponseBodyV1 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -23235,7 +23266,7 @@ pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -23342,7 +23373,7 @@ impl AsRef<[Hash]> for TxAdvertVector {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct FloodAdvert {
@@ -23389,7 +23420,7 @@ pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -23496,7 +23527,7 @@ impl AsRef<[Hash]> for TxDemandVector {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct FloodDemand {
@@ -23584,7 +23615,7 @@ impl WriteXdr for FloodDemand {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -23829,7 +23860,7 @@ impl WriteXdr for StellarMessage {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct AuthenticatedMessageV0 {
@@ -23883,7 +23914,7 @@ impl WriteXdr for AuthenticatedMessageV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -23991,7 +24022,7 @@ pub const MAX_OPS_PER_TX: u64 = 100;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -24096,7 +24127,11 @@ impl WriteXdr for LiquidityPoolParameters {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 pub struct MuxedAccountMed25519 {
     pub id: u64,
@@ -24147,7 +24182,11 @@ impl WriteXdr for MuxedAccountMed25519 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum MuxedAccount {
@@ -24252,7 +24291,7 @@ impl WriteXdr for MuxedAccount {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct DecoratedSignature {
@@ -24323,7 +24362,7 @@ impl WriteXdr for DecoratedSignature {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -24558,7 +24597,7 @@ impl WriteXdr for OperationType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct CreateAccountOp {
@@ -24604,7 +24643,7 @@ impl WriteXdr for CreateAccountOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct PaymentOp {
@@ -24660,7 +24699,7 @@ impl WriteXdr for PaymentOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictReceiveOp {
@@ -24725,7 +24764,7 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictSendOp {
@@ -24787,7 +24826,7 @@ impl WriteXdr for PathPaymentStrictSendOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ManageSellOfferOp {
@@ -24847,7 +24886,7 @@ impl WriteXdr for ManageSellOfferOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ManageBuyOfferOp {
@@ -24903,7 +24942,7 @@ impl WriteXdr for ManageBuyOfferOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct CreatePassiveSellOfferOp {
@@ -24968,7 +25007,7 @@ impl WriteXdr for CreatePassiveSellOfferOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SetOptionsOp {
@@ -25046,7 +25085,7 @@ impl WriteXdr for SetOptionsOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -25168,7 +25207,7 @@ impl WriteXdr for ChangeTrustAsset {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ChangeTrustOp {
@@ -25216,7 +25255,7 @@ impl WriteXdr for ChangeTrustOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct AllowTrustOp {
@@ -25264,7 +25303,7 @@ impl WriteXdr for AllowTrustOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ManageDataOp {
@@ -25308,7 +25347,7 @@ impl WriteXdr for ManageDataOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct BumpSequenceOp {
@@ -25351,7 +25390,7 @@ impl WriteXdr for BumpSequenceOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct CreateClaimableBalanceOp {
@@ -25398,7 +25437,7 @@ impl WriteXdr for CreateClaimableBalanceOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ClaimClaimableBalanceOp {
@@ -25439,7 +25478,7 @@ impl WriteXdr for ClaimClaimableBalanceOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct BeginSponsoringFutureReservesOp {
@@ -25482,7 +25521,7 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -25589,7 +25628,7 @@ impl WriteXdr for RevokeSponsorshipType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct RevokeSponsorshipOpSigner {
@@ -25641,7 +25680,7 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -25751,7 +25790,7 @@ impl WriteXdr for RevokeSponsorshipOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ClawbackOp {
@@ -25798,7 +25837,7 @@ impl WriteXdr for ClawbackOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ClawbackClaimableBalanceOp {
@@ -25843,7 +25882,7 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SetTrustLineFlagsOp {
@@ -25905,7 +25944,7 @@ pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolDepositOp {
@@ -25961,7 +26000,7 @@ impl WriteXdr for LiquidityPoolDepositOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LiquidityPoolWithdrawOp {
@@ -26014,7 +26053,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -26127,7 +26166,7 @@ impl WriteXdr for HostFunctionType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -26234,7 +26273,7 @@ impl WriteXdr for ContractIdPreimageType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ContractIdPreimageFromAddress {
@@ -26286,7 +26325,7 @@ impl WriteXdr for ContractIdPreimageFromAddress {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -26395,7 +26434,7 @@ impl WriteXdr for ContractIdPreimage {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct CreateContractArgs {
@@ -26440,7 +26479,7 @@ impl WriteXdr for CreateContractArgs {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct InvokeContractArgs {
@@ -26493,7 +26532,7 @@ impl WriteXdr for InvokeContractArgs {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -26614,7 +26653,7 @@ impl WriteXdr for HostFunction {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -26724,7 +26763,7 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -26836,7 +26875,7 @@ impl WriteXdr for SorobanAuthorizedFunction {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SorobanAuthorizedInvocation {
@@ -26883,7 +26922,7 @@ impl WriteXdr for SorobanAuthorizedInvocation {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SorobanAddressCredentials {
@@ -26935,7 +26974,7 @@ impl WriteXdr for SorobanAddressCredentials {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -27045,7 +27084,7 @@ impl WriteXdr for SorobanCredentialsType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -27154,7 +27193,7 @@ impl WriteXdr for SorobanCredentials {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SorobanAuthorizationEntry {
@@ -27201,7 +27240,7 @@ impl WriteXdr for SorobanAuthorizationEntry {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct InvokeHostFunctionOp {
@@ -27246,7 +27285,7 @@ impl WriteXdr for InvokeHostFunctionOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ExtendFootprintTtlOp {
@@ -27290,7 +27329,7 @@ impl WriteXdr for ExtendFootprintTtlOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct RestoreFootprintOp {
@@ -27385,7 +27424,7 @@ impl WriteXdr for RestoreFootprintOp {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -27765,7 +27804,7 @@ impl WriteXdr for OperationBody {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Operation {
@@ -27811,7 +27850,7 @@ impl WriteXdr for Operation {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct HashIdPreimageOperationId {
@@ -27862,7 +27901,7 @@ impl WriteXdr for HashIdPreimageOperationId {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct HashIdPreimageRevokeId {
@@ -27916,7 +27955,7 @@ impl WriteXdr for HashIdPreimageRevokeId {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct HashIdPreimageContractId {
@@ -27963,7 +28002,7 @@ impl WriteXdr for HashIdPreimageContractId {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct HashIdPreimageSorobanAuthorization {
@@ -28043,7 +28082,7 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -28177,7 +28216,7 @@ impl WriteXdr for HashIdPreimage {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -28305,7 +28344,7 @@ impl WriteXdr for MemoType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -28430,7 +28469,7 @@ impl WriteXdr for Memo {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TimeBounds {
@@ -28475,7 +28514,7 @@ impl WriteXdr for TimeBounds {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerBounds {
@@ -28547,7 +28586,7 @@ impl WriteXdr for LedgerBounds {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct PreconditionsV2 {
@@ -28606,7 +28645,7 @@ impl WriteXdr for PreconditionsV2 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -28722,7 +28761,7 @@ impl WriteXdr for PreconditionType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -28835,7 +28874,7 @@ impl WriteXdr for Preconditions {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct LedgerFootprint {
@@ -28887,7 +28926,7 @@ impl WriteXdr for LedgerFootprint {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SorobanResources {
@@ -28948,7 +28987,7 @@ impl WriteXdr for SorobanResources {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SorobanTransactionData {
@@ -28997,7 +29036,7 @@ impl WriteXdr for SorobanTransactionData {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -29106,7 +29145,7 @@ impl WriteXdr for TransactionV0Ext {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionV0 {
@@ -29168,7 +29207,7 @@ impl WriteXdr for TransactionV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionV0Envelope {
@@ -29216,7 +29255,7 @@ impl WriteXdr for TransactionV0Envelope {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -29343,7 +29382,7 @@ impl WriteXdr for TransactionExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Transaction {
@@ -29405,7 +29444,7 @@ impl WriteXdr for Transaction {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionV1Envelope {
@@ -29451,7 +29490,7 @@ impl WriteXdr for TransactionV1Envelope {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -29551,7 +29590,7 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -29662,7 +29701,7 @@ impl WriteXdr for FeeBumpTransactionExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct FeeBumpTransaction {
@@ -29715,7 +29754,7 @@ impl WriteXdr for FeeBumpTransaction {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct FeeBumpTransactionEnvelope {
@@ -29765,7 +29804,7 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -29884,7 +29923,7 @@ impl WriteXdr for TransactionEnvelope {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -29996,7 +30035,7 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionSignaturePayload {
@@ -30043,7 +30082,7 @@ impl WriteXdr for TransactionSignaturePayload {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -30163,7 +30202,7 @@ impl WriteXdr for ClaimAtomType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ClaimOfferAtomV0 {
@@ -30229,7 +30268,7 @@ impl WriteXdr for ClaimOfferAtomV0 {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ClaimOfferAtom {
@@ -30293,7 +30332,7 @@ impl WriteXdr for ClaimOfferAtom {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ClaimLiquidityAtom {
@@ -30352,7 +30391,7 @@ impl WriteXdr for ClaimLiquidityAtom {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -30475,7 +30514,7 @@ impl WriteXdr for ClaimAtom {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -30606,7 +30645,7 @@ impl WriteXdr for CreateAccountResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -30749,7 +30788,7 @@ impl WriteXdr for CreateAccountResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -30910,7 +30949,7 @@ impl WriteXdr for PaymentResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -31100,7 +31139,7 @@ impl WriteXdr for PaymentResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -31266,7 +31305,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct SimplePaymentResult {
@@ -31314,7 +31353,7 @@ impl WriteXdr for SimplePaymentResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictReceiveResultSuccess {
@@ -31380,7 +31419,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -31593,7 +31632,7 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -31758,7 +31797,7 @@ impl WriteXdr for PathPaymentStrictSendResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct PathPaymentStrictSendResultSuccess {
@@ -31823,7 +31862,7 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -32035,7 +32074,7 @@ impl WriteXdr for PathPaymentStrictSendResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -32202,7 +32241,7 @@ impl WriteXdr for ManageSellOfferResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -32317,7 +32356,7 @@ impl WriteXdr for ManageOfferEffect {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -32440,7 +32479,7 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct ManageOfferSuccessResult {
@@ -32499,7 +32538,7 @@ impl WriteXdr for ManageOfferSuccessResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -32708,7 +32747,7 @@ impl WriteXdr for ManageSellOfferResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -32887,7 +32926,7 @@ impl WriteXdr for ManageBuyOfferResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -33089,7 +33128,7 @@ impl WriteXdr for ManageBuyOfferResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -33256,7 +33295,7 @@ impl WriteXdr for SetOptionsResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -33443,7 +33482,7 @@ impl WriteXdr for SetOptionsResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -33598,7 +33637,7 @@ impl WriteXdr for ChangeTrustResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -33769,7 +33808,7 @@ impl WriteXdr for ChangeTrustResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -33912,7 +33951,7 @@ impl WriteXdr for AllowTrustResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -34067,7 +34106,7 @@ impl WriteXdr for AllowTrustResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -34216,7 +34255,7 @@ impl WriteXdr for AccountMergeResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -34371,7 +34410,7 @@ impl WriteXdr for AccountMergeResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -34476,7 +34515,7 @@ impl WriteXdr for InflationResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct InflationPayout {
@@ -34524,7 +34563,7 @@ impl WriteXdr for InflationPayout {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -34639,7 +34678,7 @@ impl WriteXdr for InflationResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -34770,7 +34809,7 @@ impl WriteXdr for ManageDataResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -34904,7 +34943,7 @@ impl WriteXdr for ManageDataResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -35014,7 +35053,7 @@ impl WriteXdr for BumpSequenceResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -35126,7 +35165,7 @@ impl WriteXdr for BumpSequenceResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -35264,7 +35303,7 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -35410,7 +35449,7 @@ impl WriteXdr for CreateClaimableBalanceResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -35547,7 +35586,7 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -35692,7 +35731,7 @@ impl WriteXdr for ClaimClaimableBalanceResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -35814,7 +35853,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -35939,7 +35978,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -36050,7 +36089,7 @@ impl WriteXdr for EndSponsoringFutureReservesResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -36166,7 +36205,7 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -36303,7 +36342,7 @@ impl WriteXdr for RevokeSponsorshipResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -36449,7 +36488,7 @@ impl WriteXdr for RevokeSponsorshipResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -36580,7 +36619,7 @@ impl WriteXdr for ClawbackResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -36717,7 +36756,7 @@ impl WriteXdr for ClawbackResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -36839,7 +36878,7 @@ impl WriteXdr for ClawbackClaimableBalanceResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -36969,7 +37008,7 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -37106,7 +37145,7 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -37259,7 +37298,7 @@ impl WriteXdr for SetTrustLineFlagsResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -37408,7 +37447,7 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -37572,7 +37611,7 @@ impl WriteXdr for LiquidityPoolDepositResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -37709,7 +37748,7 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -37856,7 +37895,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -37993,7 +38032,7 @@ impl WriteXdr for InvokeHostFunctionResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -38142,7 +38181,7 @@ impl WriteXdr for InvokeHostFunctionResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -38267,7 +38306,7 @@ impl WriteXdr for ExtendFootprintTtlResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -38402,7 +38441,7 @@ impl WriteXdr for ExtendFootprintTtlResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -38527,7 +38566,7 @@ impl WriteXdr for RestoreFootprintResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -38663,7 +38702,7 @@ impl WriteXdr for RestoreFootprintResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -38851,7 +38890,7 @@ impl WriteXdr for OperationResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -39239,7 +39278,7 @@ impl WriteXdr for OperationResultTr {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -39406,7 +39445,7 @@ impl WriteXdr for OperationResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -39621,7 +39660,7 @@ impl WriteXdr for TransactionResultCode {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -39841,7 +39880,7 @@ impl WriteXdr for InnerTransactionResultResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -39974,7 +40013,7 @@ impl WriteXdr for InnerTransactionResultExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct InnerTransactionResult {
@@ -40022,7 +40061,7 @@ impl WriteXdr for InnerTransactionResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct InnerTransactionResultPair {
@@ -40089,7 +40128,7 @@ impl WriteXdr for InnerTransactionResultPair {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -40327,7 +40366,7 @@ impl WriteXdr for TransactionResultResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -40461,7 +40500,7 @@ impl WriteXdr for TransactionResultExt {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct TransactionResult {
@@ -40505,7 +40544,11 @@ impl WriteXdr for TransactionResult {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 pub struct Hash(pub [u8; 32]);
 
@@ -40623,7 +40666,11 @@ impl AsRef<[u8]> for Hash {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 pub struct Uint256(pub [u8; 32]);
 
@@ -40773,7 +40820,7 @@ pub type Int64 = i64;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -40828,7 +40875,7 @@ impl WriteXdr for TimePoint {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -40888,7 +40935,7 @@ impl WriteXdr for Duration {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[allow(clippy::large_enum_variant)]
@@ -40993,7 +41040,7 @@ impl WriteXdr for ExtensionPoint {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -41118,7 +41165,7 @@ impl WriteXdr for CryptoKeyType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -41222,7 +41269,7 @@ impl WriteXdr for PublicKeyType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[repr(i32)]
@@ -41339,7 +41386,11 @@ impl WriteXdr for SignerKeyType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum PublicKey {
@@ -41441,7 +41492,11 @@ impl WriteXdr for PublicKey {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
@@ -41500,7 +41555,11 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum SignerKey {
@@ -41618,7 +41677,7 @@ impl WriteXdr for SignerKey {
 #[derive(Default)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 #[derive(Debug)]
@@ -41722,7 +41781,11 @@ impl AsRef<[u8]> for Signature {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 pub struct SignatureHint(pub [u8; 4]);
 
@@ -41840,7 +41903,11 @@ impl AsRef<[u8]> for SignatureHint {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 #[derive(Debug)]
 pub struct NodeId(pub PublicKey);
@@ -41894,7 +41961,11 @@ impl WriteXdr for NodeId {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+    derive(
+        serde_with::SerializeDisplay,
+        serde_with::DeserializeFromStr,
+        schemars::JsonSchema
+    )
 )]
 #[derive(Debug)]
 pub struct AccountId(pub PublicKey);
@@ -41951,7 +42022,7 @@ impl WriteXdr for AccountId {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Curve25519Secret {
@@ -41992,7 +42063,7 @@ impl WriteXdr for Curve25519Secret {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct Curve25519Public {
@@ -42033,7 +42104,7 @@ impl WriteXdr for Curve25519Public {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct HmacSha256Key {
@@ -42074,7 +42145,7 @@ impl WriteXdr for HmacSha256Key {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub struct HmacSha256Mac {
@@ -42105,7 +42176,7 @@ impl WriteXdr for HmacSha256Mac {
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case")
 )]
 pub enum TypeVariant {
@@ -44267,7 +44338,7 @@ impl core::str::FromStr for TypeVariant {
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema),
     serde(rename_all = "snake_case"),
     serde(untagged)
 )]

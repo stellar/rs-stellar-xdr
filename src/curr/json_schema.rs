@@ -29,10 +29,14 @@ impl<const MAX: u32> JsonSchema for super::BytesM<MAX> {
     }
 
     fn json_schema(gen: &mut gen::SchemaGenerator) -> schema::Schema {
-        mut_array(Vec::<u8>::json_schema(gen), |array| ArrayValidation {
-            max_items: Some(MAX),
-            min_items: Some(MAX),
-            ..array
+        mut_string(String::json_schema(gen), |string: StringValidation| {
+            StringValidation {
+                pattern: Some(format!(
+                    "^[A-Fa-f0-9]{{{}}}$",
+                    MAX.checked_mul(2).unwrap_or(u32::MAX)
+                )),
+                ..string
+            }
         })
     }
 }

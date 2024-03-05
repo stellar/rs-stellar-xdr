@@ -656,14 +656,8 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
     },
     "DataValue": {
       "description": "DataValue is an XDR Typedef defines as:\n\n```text typedef opaque DataValue<64>; ```",
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      },
-      "maxItems": 64,
-      "minItems": 64
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{128}$"
     },
     "DecoratedSignature": {
       "description": "DecoratedSignature is an XDR Struct defines as:\n\n```text struct DecoratedSignature { SignatureHint hint;  // last 4 bytes of the public key, used as a hint Signature signature; // actual signature }; ```",
@@ -826,14 +820,8 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           ],
           "properties": {
             "upload_contract_wasm": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "format": "uint8",
-                "minimum": 0.0
-              },
-              "maxItems": 4294967295,
-              "minItems": 4294967295
+              "type": "string",
+              "pattern": "^[A-Fa-f0-9]{4294967295}$"
             }
           },
           "additionalProperties": false
@@ -2183,14 +2171,8 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
     },
     "ScBytes": {
       "description": "ScBytes is an XDR Typedef defines as:\n\n```text typedef opaque SCBytes<>; ```",
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      },
-      "maxItems": 4294967295,
-      "minItems": 4294967295
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{4294967295}$"
     },
     "ScContractInstance": {
       "description": "ScContractInstance is an XDR Struct defines as:\n\n```text struct SCContractInstance { ContractExecutable executable; SCMap* storage; }; ```",
@@ -2803,14 +2785,8 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
     },
     "Signature": {
       "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      },
-      "maxItems": 64,
-      "minItems": 64
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{128}$"
     },
     "SignatureHint": {
       "description": "SignatureHint is an XDR Typedef defines as:\n\n```text typedef opaque SignatureHint[4]; ```",
@@ -2906,14 +2882,8 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           "$ref": "#/definitions/Uint256"
         },
         "payload": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8",
-            "minimum": 0.0
-          },
-          "maxItems": 64,
-          "minItems": 64
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{128}$"
         }
       }
     },

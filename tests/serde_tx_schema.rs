@@ -1,8 +1,8 @@
 #![cfg(feature = "curr")]
-#![cfg(all(feature = "std", feature = "serde"))]
+#![cfg(all(feature = "std", feature = "serde", feature = "cli"))]
 
-use stellar_xdr::curr as stellar_xdr;
-use stellar_xdr::TransactionEnvelope;
+use stellar_xdr::curr as xdr;
+use xdr::TransactionEnvelope;
 
 #[cfg(feature = "curr")]
 #[allow(clippy::too_many_lines)]
@@ -228,22 +228,6 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
         }
       }
     },
-    "BytesM_for_4294967295": {
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      }
-    },
-    "BytesM_for_64": {
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      }
-    },
     "ChangeTrustAsset": {
       "description": "ChangeTrustAsset is an XDR Union defines as:\n\n```text union ChangeTrustAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: LiquidityPoolParameters liquidityPool;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
@@ -336,7 +320,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           ],
           "properties": {
             "and": {
-              "$ref": "#/definitions/VecM_for_ClaimPredicate_and_2"
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimPredicate"
+              },
+              "maxItems": 2
             }
           },
           "additionalProperties": false
@@ -348,7 +336,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           ],
           "properties": {
             "or": {
-              "$ref": "#/definitions/VecM_for_ClaimPredicate_and_2"
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimPredicate"
+              },
+              "maxItems": 2
             }
           },
           "additionalProperties": false
@@ -613,7 +605,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           "$ref": "#/definitions/Asset"
         },
         "claimants": {
-          "$ref": "#/definitions/VecM_for_Claimant_and_10"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Claimant"
+          },
+          "maxItems": 10
         }
       }
     },
@@ -660,11 +656,14 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
     },
     "DataValue": {
       "description": "DataValue is an XDR Typedef defines as:\n\n```text typedef opaque DataValue<64>; ```",
-      "allOf": [
-        {
-          "$ref": "#/definitions/BytesM_for_64"
-        }
-      ]
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
+      },
+      "maxItems": 64,
+      "minItems": 64
     },
     "DecoratedSignature": {
       "description": "DecoratedSignature is an XDR Struct defines as:\n\n```text struct DecoratedSignature { SignatureHint hint;  // last 4 bytes of the public key, used as a hint Signature signature; // actual signature }; ```",
@@ -747,7 +746,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
       ],
       "properties": {
         "signatures": {
-          "$ref": "#/definitions/VecM_for_DecoratedSignature_and_20"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DecoratedSignature"
+          },
+          "maxItems": 20
         },
         "tx": {
           "$ref": "#/definitions/FeeBumpTransaction"
@@ -823,7 +826,14 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           ],
           "properties": {
             "upload_contract_wasm": {
-              "$ref": "#/definitions/BytesM_for_4294967295"
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint8",
+                "minimum": 0.0
+              },
+              "maxItems": 4294967295,
+              "minItems": 4294967295
             }
           },
           "additionalProperties": false
@@ -890,7 +900,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
       ],
       "properties": {
         "args": {
-          "$ref": "#/definitions/VecM_for_ScVal_and_4294967295"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScVal"
+          },
+          "maxItems": 4294967295
         },
         "contract_address": {
           "$ref": "#/definitions/ScAddress"
@@ -909,7 +923,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
       ],
       "properties": {
         "auth": {
-          "$ref": "#/definitions/VecM_for_SorobanAuthorizationEntry_and_4294967295"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SorobanAuthorizationEntry"
+          },
+          "maxItems": 4294967295
         },
         "host_function": {
           "$ref": "#/definitions/HostFunction"
@@ -945,10 +963,18 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
       ],
       "properties": {
         "read_only": {
-          "$ref": "#/definitions/VecM_for_LedgerKey_and_4294967295"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LedgerKey"
+          },
+          "maxItems": 4294967295
         },
         "read_write": {
-          "$ref": "#/definitions/VecM_for_LedgerKey_and_4294967295"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LedgerKey"
+          },
+          "maxItems": 4294967295
         }
       }
     },
@@ -1411,7 +1437,8 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           ],
           "properties": {
             "text": {
-              "$ref": "#/definitions/StringM_for_28"
+              "type": "string",
+              "maxLength": 28
             }
           },
           "additionalProperties": false
@@ -1860,7 +1887,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           "$ref": "#/definitions/MuxedAccount"
         },
         "path": {
-          "$ref": "#/definitions/VecM_for_Asset_and_5"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Asset"
+          },
+          "maxItems": 5
         },
         "send_asset": {
           "$ref": "#/definitions/Asset"
@@ -1894,7 +1925,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           "$ref": "#/definitions/MuxedAccount"
         },
         "path": {
-          "$ref": "#/definitions/VecM_for_Asset_and_5"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Asset"
+          },
+          "maxItems": 5
         },
         "send_amount": {
           "type": "integer",
@@ -1979,7 +2014,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
       ],
       "properties": {
         "extra_signers": {
-          "$ref": "#/definitions/VecM_for_SignerKey_and_2"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SignerKey"
+          },
+          "maxItems": 2
         },
         "ledger_bounds": {
           "anyOf": [
@@ -2144,11 +2183,14 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
     },
     "ScBytes": {
       "description": "ScBytes is an XDR Typedef defines as:\n\n```text typedef opaque SCBytes<>; ```",
-      "allOf": [
-        {
-          "$ref": "#/definitions/BytesM_for_4294967295"
-        }
-      ]
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
+      },
+      "maxItems": 4294967295,
+      "minItems": 4294967295
     },
     "ScContractInstance": {
       "description": "ScContractInstance is an XDR Struct defines as:\n\n```text struct SCContractInstance { ContractExecutable executable; SCMap* storage; }; ```",
@@ -2317,11 +2359,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
     },
     "ScMap": {
       "description": "ScMap is an XDR Typedef defines as:\n\n```text typedef SCMapEntry SCMap<>; ```",
-      "allOf": [
-        {
-          "$ref": "#/definitions/VecM_for_ScMapEntry_and_4294967295"
-        }
-      ]
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ScMapEntry"
+      },
+      "maxItems": 4294967295
     },
     "ScMapEntry": {
       "description": "ScMapEntry is an XDR Struct defines as:\n\n```text struct SCMapEntry { SCVal key; SCVal val; }; ```",
@@ -2354,19 +2396,13 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
     },
     "ScString": {
       "description": "ScString is an XDR Typedef defines as:\n\n```text typedef string SCString<>; ```",
-      "allOf": [
-        {
-          "$ref": "#/definitions/StringM_for_4294967295"
-        }
-      ]
+      "type": "string",
+      "maxLength": 4294967295
     },
     "ScSymbol": {
       "description": "ScSymbol is an XDR Typedef defines as:\n\n```text typedef string SCSymbol<SCSYMBOL_LIMIT>; ```",
-      "allOf": [
-        {
-          "$ref": "#/definitions/StringM_for_32"
-        }
-      ]
+      "type": "string",
+      "maxLength": 32
     },
     "ScVal": {
       "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key;\n\ncase SCV_CONTRACT_INSTANCE: SCContractInstance instance; }; ```",
@@ -2642,11 +2678,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
     },
     "ScVec": {
       "description": "ScVec is an XDR Typedef defines as:\n\n```text typedef SCVal SCVec<>; ```",
-      "allOf": [
-        {
-          "$ref": "#/definitions/VecM_for_ScVal_and_4294967295"
-        }
-      ]
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ScVal"
+      },
+      "maxItems": 4294967295
     },
     "SequenceNumber": {
       "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
@@ -2767,11 +2803,14 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
     },
     "Signature": {
       "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
-      "allOf": [
-        {
-          "$ref": "#/definitions/BytesM_for_64"
-        }
-      ]
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
+      },
+      "maxItems": 64,
+      "minItems": 64
     },
     "SignatureHint": {
       "description": "SignatureHint is an XDR Typedef defines as:\n\n```text typedef opaque SignatureHint[4]; ```",
@@ -2867,7 +2906,14 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           "$ref": "#/definitions/Uint256"
         },
         "payload": {
-          "$ref": "#/definitions/BytesM_for_64"
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          },
+          "maxItems": 64,
+          "minItems": 64
         }
       }
     },
@@ -2955,7 +3001,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           "$ref": "#/definitions/SorobanAuthorizedFunction"
         },
         "sub_invocations": {
-          "$ref": "#/definitions/VecM_for_SorobanAuthorizedInvocation_and_4294967295"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SorobanAuthorizedInvocation"
+          },
+          "maxItems": 4294967295
         }
       }
     },
@@ -3035,55 +3085,13 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
     },
     "String32": {
       "description": "String32 is an XDR Typedef defines as:\n\n```text typedef string string32<32>; ```",
-      "allOf": [
-        {
-          "$ref": "#/definitions/StringM_for_32"
-        }
-      ]
+      "type": "string",
+      "maxLength": 32
     },
     "String64": {
       "description": "String64 is an XDR Typedef defines as:\n\n```text typedef string string64<64>; ```",
-      "allOf": [
-        {
-          "$ref": "#/definitions/StringM_for_64"
-        }
-      ]
-    },
-    "StringM_for_28": {
-      "description": "A string type that contains arbitrary bytes.\n\nConvertible, fallibly, to/from a Rust UTF-8 String using [`TryFrom`]/[`TryInto`]/[`StringM::to_utf8_string`].\n\nConvertible, lossyly, to a Rust UTF-8 String using [`StringM::to_utf8_string_lossy`].\n\nConvertible to/from escaped printable-ASCII using [`Display`]/[`ToString`]/[`FromStr`].",
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      }
-    },
-    "StringM_for_32": {
-      "description": "A string type that contains arbitrary bytes.\n\nConvertible, fallibly, to/from a Rust UTF-8 String using [`TryFrom`]/[`TryInto`]/[`StringM::to_utf8_string`].\n\nConvertible, lossyly, to a Rust UTF-8 String using [`StringM::to_utf8_string_lossy`].\n\nConvertible to/from escaped printable-ASCII using [`Display`]/[`ToString`]/[`FromStr`].",
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      }
-    },
-    "StringM_for_4294967295": {
-      "description": "A string type that contains arbitrary bytes.\n\nConvertible, fallibly, to/from a Rust UTF-8 String using [`TryFrom`]/[`TryInto`]/[`StringM::to_utf8_string`].\n\nConvertible, lossyly, to a Rust UTF-8 String using [`StringM::to_utf8_string_lossy`].\n\nConvertible to/from escaped printable-ASCII using [`Display`]/[`ToString`]/[`FromStr`].",
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      }
-    },
-    "StringM_for_64": {
-      "description": "A string type that contains arbitrary bytes.\n\nConvertible, fallibly, to/from a Rust UTF-8 String using [`TryFrom`]/[`TryInto`]/[`StringM::to_utf8_string`].\n\nConvertible, lossyly, to a Rust UTF-8 String using [`StringM::to_utf8_string_lossy`].\n\nConvertible to/from escaped printable-ASCII using [`Display`]/[`ToString`]/[`FromStr`].",
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      }
+      "type": "string",
+      "maxLength": 64
     },
     "TimeBounds": {
       "description": "TimeBounds is an XDR Struct defines as:\n\n```text struct TimeBounds { TimePoint minTime; TimePoint maxTime; // 0 here means no maxTime }; ```",
@@ -3135,7 +3143,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           "$ref": "#/definitions/Memo"
         },
         "operations": {
-          "$ref": "#/definitions/VecM_for_Operation_and_100"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Operation"
+          },
+          "maxItems": 100
         },
         "seq_num": {
           "$ref": "#/definitions/SequenceNumber"
@@ -3192,7 +3204,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
           "$ref": "#/definitions/Memo"
         },
         "operations": {
-          "$ref": "#/definitions/VecM_for_Operation_and_100"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Operation"
+          },
+          "maxItems": 100
         },
         "seq_num": {
           "$ref": "#/definitions/SequenceNumber"
@@ -3221,7 +3237,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
       ],
       "properties": {
         "signatures": {
-          "$ref": "#/definitions/VecM_for_DecoratedSignature_and_20"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DecoratedSignature"
+          },
+          "maxItems": 20
         },
         "tx": {
           "$ref": "#/definitions/TransactionV0"
@@ -3244,7 +3264,11 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
       ],
       "properties": {
         "signatures": {
-          "$ref": "#/definitions/VecM_for_DecoratedSignature_and_20"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DecoratedSignature"
+          },
+          "maxItems": 20
         },
         "tx": {
           "$ref": "#/definitions/Transaction"
@@ -3360,72 +3384,6 @@ fn test_serde_tx_schema() -> Result<(), Box<dyn std::error::Error>> {
       },
       "maxItems": 32,
       "minItems": 32
-    },
-    "VecM_for_Asset_and_5": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Asset"
-      }
-    },
-    "VecM_for_ClaimPredicate_and_2": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/ClaimPredicate"
-      }
-    },
-    "VecM_for_Claimant_and_10": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Claimant"
-      }
-    },
-    "VecM_for_DecoratedSignature_and_20": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/DecoratedSignature"
-      }
-    },
-    "VecM_for_LedgerKey_and_4294967295": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/LedgerKey"
-      }
-    },
-    "VecM_for_Operation_and_100": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Operation"
-      }
-    },
-    "VecM_for_ScMapEntry_and_4294967295": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/ScMapEntry"
-      }
-    },
-    "VecM_for_ScVal_and_4294967295": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/ScVal"
-      }
-    },
-    "VecM_for_SignerKey_and_2": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/SignerKey"
-      }
-    },
-    "VecM_for_SorobanAuthorizationEntry_and_4294967295": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/SorobanAuthorizationEntry"
-      }
-    },
-    "VecM_for_SorobanAuthorizedInvocation_and_4294967295": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/SorobanAuthorizedInvocation"
-      }
     }
   }
 }"##,

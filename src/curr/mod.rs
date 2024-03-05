@@ -1,6 +1,9 @@
 mod generated;
 pub use generated::*;
 
+#[cfg(feature = "serde")]
+mod json_schema;
+
 mod str;
 
 mod scval_conversions;

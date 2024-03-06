@@ -1,0 +1,3348 @@
+---
+source: tests/serde_tx_schema.rs
+expression: json
+---
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "AccountId": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PublicKey"
+        }
+      ],
+      "description": "AccountId is an XDR Typedef defines as:\n\n```text typedef PublicKey AccountID; ```"
+    },
+    "AllowTrustOp": {
+      "description": "AllowTrustOp is an XDR Struct defines as:\n\n```text struct AllowTrustOp { AccountID trustor; AssetCode asset;\n\n// One of 0, AUTHORIZED_FLAG, or AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG uint32 authorize; }; ```",
+      "properties": {
+        "asset": {
+          "$ref": "#/definitions/AssetCode"
+        },
+        "authorize": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "trustor": {
+          "$ref": "#/definitions/AccountId"
+        }
+      },
+      "required": [
+        "asset",
+        "authorize",
+        "trustor"
+      ],
+      "type": "object"
+    },
+    "AlphaNum12": {
+      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "properties": {
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode12"
+        },
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
+        }
+      },
+      "required": [
+        "asset_code",
+        "issuer"
+      ],
+      "type": "object"
+    },
+    "AlphaNum4": {
+      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "properties": {
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode4"
+        },
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
+        }
+      },
+      "required": [
+        "asset_code",
+        "issuer"
+      ],
+      "type": "object"
+    },
+    "Asset": {
+      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
+      "oneOf": [
+        {
+          "enum": [
+            "native"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "credit_alphanum4": {
+              "$ref": "#/definitions/AlphaNum4"
+            }
+          },
+          "required": [
+            "credit_alphanum4"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "credit_alphanum12": {
+              "$ref": "#/definitions/AlphaNum12"
+            }
+          },
+          "required": [
+            "credit_alphanum12"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "AssetCode": {
+      "description": "AssetCode is an XDR Union defines as:\n\n```text union AssetCode switch (AssetType type) { case ASSET_TYPE_CREDIT_ALPHANUM4: AssetCode4 assetCode4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AssetCode12 assetCode12;\n\n// add other asset types here in the future }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "CreditAlphanum4": {
+              "$ref": "#/definitions/AssetCode4"
+            }
+          },
+          "required": [
+            "CreditAlphanum4"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "CreditAlphanum12": {
+              "$ref": "#/definitions/AssetCode12"
+            }
+          },
+          "required": [
+            "CreditAlphanum12"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "AssetCode12": {
+      "description": "AssetCode12 is an XDR Typedef defines as:\n\n```text typedef opaque AssetCode12[12]; ```",
+      "items": {
+        "format": "uint8",
+        "minimum": 0.0,
+        "type": "integer"
+      },
+      "maxItems": 12,
+      "minItems": 12,
+      "type": "array"
+    },
+    "AssetCode4": {
+      "description": "AssetCode4 is an XDR Typedef defines as:\n\n```text typedef opaque AssetCode4[4]; ```",
+      "items": {
+        "format": "uint8",
+        "minimum": 0.0,
+        "type": "integer"
+      },
+      "maxItems": 4,
+      "minItems": 4,
+      "type": "array"
+    },
+    "BeginSponsoringFutureReservesOp": {
+      "description": "BeginSponsoringFutureReservesOp is an XDR Struct defines as:\n\n```text struct BeginSponsoringFutureReservesOp { AccountID sponsoredID; }; ```",
+      "properties": {
+        "sponsored_id": {
+          "$ref": "#/definitions/AccountId"
+        }
+      },
+      "required": [
+        "sponsored_id"
+      ],
+      "type": "object"
+    },
+    "BumpSequenceOp": {
+      "description": "BumpSequenceOp is an XDR Struct defines as:\n\n```text struct BumpSequenceOp { SequenceNumber bumpTo; }; ```",
+      "properties": {
+        "bump_to": {
+          "$ref": "#/definitions/SequenceNumber"
+        }
+      },
+      "required": [
+        "bump_to"
+      ],
+      "type": "object"
+    },
+    "ChangeTrustAsset": {
+      "description": "ChangeTrustAsset is an XDR Union defines as:\n\n```text union ChangeTrustAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: LiquidityPoolParameters liquidityPool;\n\n// add other asset types here in the future }; ```",
+      "oneOf": [
+        {
+          "enum": [
+            "native"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "credit_alphanum4": {
+              "$ref": "#/definitions/AlphaNum4"
+            }
+          },
+          "required": [
+            "credit_alphanum4"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "credit_alphanum12": {
+              "$ref": "#/definitions/AlphaNum12"
+            }
+          },
+          "required": [
+            "credit_alphanum12"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "pool_share": {
+              "$ref": "#/definitions/LiquidityPoolParameters"
+            }
+          },
+          "required": [
+            "pool_share"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ChangeTrustOp": {
+      "description": "ChangeTrustOp is an XDR Struct defines as:\n\n```text struct ChangeTrustOp { ChangeTrustAsset line;\n\n// if limit is set to 0, deletes the trust line int64 limit; }; ```",
+      "properties": {
+        "limit": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "line": {
+          "$ref": "#/definitions/ChangeTrustAsset"
+        }
+      },
+      "required": [
+        "limit",
+        "line"
+      ],
+      "type": "object"
+    },
+    "ClaimClaimableBalanceOp": {
+      "description": "ClaimClaimableBalanceOp is an XDR Struct defines as:\n\n```text struct ClaimClaimableBalanceOp { ClaimableBalanceID balanceID; }; ```",
+      "properties": {
+        "balance_id": {
+          "$ref": "#/definitions/ClaimableBalanceId"
+        }
+      },
+      "required": [
+        "balance_id"
+      ],
+      "type": "object"
+    },
+    "ClaimPredicate": {
+      "description": "ClaimPredicate is an XDR Union defines as:\n\n```text union ClaimPredicate switch (ClaimPredicateType type) { case CLAIM_PREDICATE_UNCONDITIONAL: void; case CLAIM_PREDICATE_AND: ClaimPredicate andPredicates<2>; case CLAIM_PREDICATE_OR: ClaimPredicate orPredicates<2>; case CLAIM_PREDICATE_NOT: ClaimPredicate* notPredicate; case CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME: int64 absBefore; // Predicate will be true if closeTime < absBefore case CLAIM_PREDICATE_BEFORE_RELATIVE_TIME: int64 relBefore; // Seconds since closeTime of the ledger in which the // ClaimableBalanceEntry was created }; ```",
+      "oneOf": [
+        {
+          "enum": [
+            "unconditional"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "and": {
+              "items": {
+                "$ref": "#/definitions/ClaimPredicate"
+              },
+              "maxItems": 2,
+              "type": "array"
+            }
+          },
+          "required": [
+            "and"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "or": {
+              "items": {
+                "$ref": "#/definitions/ClaimPredicate"
+              },
+              "maxItems": 2,
+              "type": "array"
+            }
+          },
+          "required": [
+            "or"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "not": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ClaimPredicate"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "not"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "before_absolute_time": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "before_absolute_time"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "before_relative_time": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "before_relative_time"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ClaimableBalanceId": {
+      "description": "ClaimableBalanceId is an XDR Union defines as:\n\n```text union ClaimableBalanceID switch (ClaimableBalanceIDType type) { case CLAIMABLE_BALANCE_ID_TYPE_V0: Hash v0; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "claimable_balance_id_type_v0": {
+              "$ref": "#/definitions/Hash"
+            }
+          },
+          "required": [
+            "claimable_balance_id_type_v0"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "Claimant": {
+      "description": "Claimant is an XDR Union defines as:\n\n```text union Claimant switch (ClaimantType type) { case CLAIMANT_TYPE_V0: struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } v0; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "claimant_type_v0": {
+              "$ref": "#/definitions/ClaimantV0"
+            }
+          },
+          "required": [
+            "claimant_type_v0"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ClaimantV0": {
+      "description": "ClaimantV0 is an XDR NestedStruct defines as:\n\n```text struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } ```",
+      "properties": {
+        "destination": {
+          "$ref": "#/definitions/AccountId"
+        },
+        "predicate": {
+          "$ref": "#/definitions/ClaimPredicate"
+        }
+      },
+      "required": [
+        "destination",
+        "predicate"
+      ],
+      "type": "object"
+    },
+    "ClawbackClaimableBalanceOp": {
+      "description": "ClawbackClaimableBalanceOp is an XDR Struct defines as:\n\n```text struct ClawbackClaimableBalanceOp { ClaimableBalanceID balanceID; }; ```",
+      "properties": {
+        "balance_id": {
+          "$ref": "#/definitions/ClaimableBalanceId"
+        }
+      },
+      "required": [
+        "balance_id"
+      ],
+      "type": "object"
+    },
+    "ClawbackOp": {
+      "description": "ClawbackOp is an XDR Struct defines as:\n\n```text struct ClawbackOp { Asset asset; MuxedAccount from; int64 amount; }; ```",
+      "properties": {
+        "amount": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "asset": {
+          "$ref": "#/definitions/Asset"
+        },
+        "from": {
+          "$ref": "#/definitions/MuxedAccount"
+        }
+      },
+      "required": [
+        "amount",
+        "asset",
+        "from"
+      ],
+      "type": "object"
+    },
+    "ConfigSettingId": {
+      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13 }; ```",
+      "enum": [
+        "contract_max_size_bytes",
+        "contract_compute_v0",
+        "contract_ledger_cost_v0",
+        "contract_historical_data_v0",
+        "contract_events_v0",
+        "contract_bandwidth_v0",
+        "contract_cost_params_cpu_instructions",
+        "contract_cost_params_memory_bytes",
+        "contract_data_key_size_bytes",
+        "contract_data_entry_size_bytes",
+        "state_archival",
+        "contract_execution_lanes",
+        "bucketlist_size_window",
+        "eviction_iterator"
+      ],
+      "type": "string"
+    },
+    "ContractDataDurability": {
+      "description": "ContractDataDurability is an XDR Enum defines as:\n\n```text enum ContractDataDurability { TEMPORARY = 0, PERSISTENT = 1 }; ```",
+      "enum": [
+        "temporary",
+        "persistent"
+      ],
+      "type": "string"
+    },
+    "ContractExecutable": {
+      "description": "ContractExecutable is an XDR Union defines as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
+      "oneOf": [
+        {
+          "enum": [
+            "stellar_asset"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "wasm": {
+              "$ref": "#/definitions/Hash"
+            }
+          },
+          "required": [
+            "wasm"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ContractIdPreimage": {
+      "description": "ContractIdPreimage is an XDR Union defines as:\n\n```text union ContractIDPreimage switch (ContractIDPreimageType type) { case CONTRACT_ID_PREIMAGE_FROM_ADDRESS: struct { SCAddress address; uint256 salt; } fromAddress; case CONTRACT_ID_PREIMAGE_FROM_ASSET: Asset fromAsset; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/ContractIdPreimageFromAddress"
+            }
+          },
+          "required": [
+            "address"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "asset": {
+              "$ref": "#/definitions/Asset"
+            }
+          },
+          "required": [
+            "asset"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ContractIdPreimageFromAddress": {
+      "description": "ContractIdPreimageFromAddress is an XDR NestedStruct defines as:\n\n```text struct { SCAddress address; uint256 salt; } ```",
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/ScAddress"
+        },
+        "salt": {
+          "$ref": "#/definitions/Uint256"
+        }
+      },
+      "required": [
+        "address",
+        "salt"
+      ],
+      "type": "object"
+    },
+    "CreateAccountOp": {
+      "description": "CreateAccountOp is an XDR Struct defines as:\n\n```text struct CreateAccountOp { AccountID destination; // account to create int64 startingBalance; // amount they end up with }; ```",
+      "properties": {
+        "destination": {
+          "$ref": "#/definitions/AccountId"
+        },
+        "starting_balance": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "destination",
+        "starting_balance"
+      ],
+      "type": "object"
+    },
+    "CreateClaimableBalanceOp": {
+      "description": "CreateClaimableBalanceOp is an XDR Struct defines as:\n\n```text struct CreateClaimableBalanceOp { Asset asset; int64 amount; Claimant claimants<10>; }; ```",
+      "properties": {
+        "amount": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "asset": {
+          "$ref": "#/definitions/Asset"
+        },
+        "claimants": {
+          "items": {
+            "$ref": "#/definitions/Claimant"
+          },
+          "maxItems": 10,
+          "type": "array"
+        }
+      },
+      "required": [
+        "amount",
+        "asset",
+        "claimants"
+      ],
+      "type": "object"
+    },
+    "CreateContractArgs": {
+      "description": "CreateContractArgs is an XDR Struct defines as:\n\n```text struct CreateContractArgs { ContractIDPreimage contractIDPreimage; ContractExecutable executable; }; ```",
+      "properties": {
+        "contract_id_preimage": {
+          "$ref": "#/definitions/ContractIdPreimage"
+        },
+        "executable": {
+          "$ref": "#/definitions/ContractExecutable"
+        }
+      },
+      "required": [
+        "contract_id_preimage",
+        "executable"
+      ],
+      "type": "object"
+    },
+    "CreatePassiveSellOfferOp": {
+      "description": "CreatePassiveSellOfferOp is an XDR Struct defines as:\n\n```text struct CreatePassiveSellOfferOp { Asset selling; // A Asset buying;  // B int64 amount;  // amount taker gets Price price;   // cost of A in terms of B }; ```",
+      "properties": {
+        "amount": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "buying": {
+          "$ref": "#/definitions/Asset"
+        },
+        "price": {
+          "$ref": "#/definitions/Price"
+        },
+        "selling": {
+          "$ref": "#/definitions/Asset"
+        }
+      },
+      "required": [
+        "amount",
+        "buying",
+        "price",
+        "selling"
+      ],
+      "type": "object"
+    },
+    "DataValue": {
+      "description": "DataValue is an XDR Typedef defines as:\n\n```text typedef opaque DataValue<64>; ```",
+      "pattern": "^[A-Fa-f0-9]{128}$",
+      "type": "string"
+    },
+    "DecoratedSignature": {
+      "description": "DecoratedSignature is an XDR Struct defines as:\n\n```text struct DecoratedSignature { SignatureHint hint;  // last 4 bytes of the public key, used as a hint Signature signature; // actual signature }; ```",
+      "properties": {
+        "hint": {
+          "$ref": "#/definitions/SignatureHint"
+        },
+        "signature": {
+          "$ref": "#/definitions/Signature"
+        }
+      },
+      "required": [
+        "hint",
+        "signature"
+      ],
+      "type": "object"
+    },
+    "Duration": {
+      "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
+      "format": "uint64",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "ExtendFootprintTtlOp": {
+      "description": "ExtendFootprintTtlOp is an XDR Struct defines as:\n\n```text struct ExtendFootprintTTLOp { ExtensionPoint ext; uint32 extendTo; }; ```",
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "extend_to": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ext",
+        "extend_to"
+      ],
+      "type": "object"
+    },
+    "ExtensionPoint": {
+      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "enum": [
+        "v0"
+      ],
+      "type": "string"
+    },
+    "FeeBumpTransaction": {
+      "description": "FeeBumpTransaction is an XDR Struct defines as:\n\n```text struct FeeBumpTransaction { MuxedAccount feeSource; int64 fee; union switch (EnvelopeType type) { case ENVELOPE_TYPE_TX: TransactionV1Envelope v1; } innerTx; union switch (int v) { case 0: void; } ext; }; ```",
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/FeeBumpTransactionExt"
+        },
+        "fee": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "fee_source": {
+          "$ref": "#/definitions/MuxedAccount"
+        },
+        "inner_tx": {
+          "$ref": "#/definitions/FeeBumpTransactionInnerTx"
+        }
+      },
+      "required": [
+        "ext",
+        "fee",
+        "fee_source",
+        "inner_tx"
+      ],
+      "type": "object"
+    },
+    "FeeBumpTransactionEnvelope": {
+      "description": "FeeBumpTransactionEnvelope is an XDR Struct defines as:\n\n```text struct FeeBumpTransactionEnvelope { FeeBumpTransaction tx; /* Each decorated signature is a signature over the SHA256 hash of * a TransactionSignaturePayload */ DecoratedSignature signatures<20>; }; ```",
+      "properties": {
+        "signatures": {
+          "items": {
+            "$ref": "#/definitions/DecoratedSignature"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "tx": {
+          "$ref": "#/definitions/FeeBumpTransaction"
+        }
+      },
+      "required": [
+        "signatures",
+        "tx"
+      ],
+      "type": "object"
+    },
+    "FeeBumpTransactionExt": {
+      "description": "FeeBumpTransactionExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "enum": [
+        "v0"
+      ],
+      "type": "string"
+    },
+    "FeeBumpTransactionInnerTx": {
+      "description": "FeeBumpTransactionInnerTx is an XDR NestedUnion defines as:\n\n```text union switch (EnvelopeType type) { case ENVELOPE_TYPE_TX: TransactionV1Envelope v1; } ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "tx": {
+              "$ref": "#/definitions/TransactionV1Envelope"
+            }
+          },
+          "required": [
+            "tx"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "Hash": {
+      "description": "Hash is an XDR Typedef defines as:\n\n```text typedef opaque Hash[32]; ```",
+      "items": {
+        "format": "uint8",
+        "minimum": 0.0,
+        "type": "integer"
+      },
+      "maxItems": 32,
+      "minItems": 32,
+      "type": "array"
+    },
+    "HostFunction": {
+      "description": "HostFunction is an XDR Union defines as:\n\n```text union HostFunction switch (HostFunctionType type) { case HOST_FUNCTION_TYPE_INVOKE_CONTRACT: InvokeContractArgs invokeContract; case HOST_FUNCTION_TYPE_CREATE_CONTRACT: CreateContractArgs createContract; case HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM: opaque wasm<>; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "invoke_contract": {
+              "$ref": "#/definitions/InvokeContractArgs"
+            }
+          },
+          "required": [
+            "invoke_contract"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "create_contract": {
+              "$ref": "#/definitions/CreateContractArgs"
+            }
+          },
+          "required": [
+            "create_contract"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "upload_contract_wasm": {
+              "pattern": "^[A-Fa-f0-9]{4294967295}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "upload_contract_wasm"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "Int128Parts": {
+      "description": "Int128Parts is an XDR Struct defines as:\n\n```text struct Int128Parts { int64 hi; uint64 lo; }; ```",
+      "properties": {
+        "hi": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "lo": {
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hi",
+        "lo"
+      ],
+      "type": "object"
+    },
+    "Int256Parts": {
+      "description": "Int256Parts is an XDR Struct defines as:\n\n```text struct Int256Parts { int64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
+      "properties": {
+        "hi_hi": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "hi_lo": {
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "lo_hi": {
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "lo_lo": {
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hi_hi",
+        "hi_lo",
+        "lo_hi",
+        "lo_lo"
+      ],
+      "type": "object"
+    },
+    "InvokeContractArgs": {
+      "description": "InvokeContractArgs is an XDR Struct defines as:\n\n```text struct InvokeContractArgs { SCAddress contractAddress; SCSymbol functionName; SCVal args<>; }; ```",
+      "properties": {
+        "args": {
+          "items": {
+            "$ref": "#/definitions/ScVal"
+          },
+          "maxItems": 4294967295,
+          "type": "array"
+        },
+        "contract_address": {
+          "$ref": "#/definitions/ScAddress"
+        },
+        "function_name": {
+          "$ref": "#/definitions/ScSymbol"
+        }
+      },
+      "required": [
+        "args",
+        "contract_address",
+        "function_name"
+      ],
+      "type": "object"
+    },
+    "InvokeHostFunctionOp": {
+      "description": "InvokeHostFunctionOp is an XDR Struct defines as:\n\n```text struct InvokeHostFunctionOp { // Host function to invoke. HostFunction hostFunction; // Per-address authorizations for this host function. SorobanAuthorizationEntry auth<>; }; ```",
+      "properties": {
+        "auth": {
+          "items": {
+            "$ref": "#/definitions/SorobanAuthorizationEntry"
+          },
+          "maxItems": 4294967295,
+          "type": "array"
+        },
+        "host_function": {
+          "$ref": "#/definitions/HostFunction"
+        }
+      },
+      "required": [
+        "auth",
+        "host_function"
+      ],
+      "type": "object"
+    },
+    "LedgerBounds": {
+      "description": "LedgerBounds is an XDR Struct defines as:\n\n```text struct LedgerBounds { uint32 minLedger; uint32 maxLedger; // 0 here means no maxLedger }; ```",
+      "properties": {
+        "max_ledger": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "min_ledger": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_ledger",
+        "min_ledger"
+      ],
+      "type": "object"
+    },
+    "LedgerFootprint": {
+      "description": "LedgerFootprint is an XDR Struct defines as:\n\n```text struct LedgerFootprint { LedgerKey readOnly<>; LedgerKey readWrite<>; }; ```",
+      "properties": {
+        "read_only": {
+          "items": {
+            "$ref": "#/definitions/LedgerKey"
+          },
+          "maxItems": 4294967295,
+          "type": "array"
+        },
+        "read_write": {
+          "items": {
+            "$ref": "#/definitions/LedgerKey"
+          },
+          "maxItems": 4294967295,
+          "type": "array"
+        }
+      },
+      "required": [
+        "read_only",
+        "read_write"
+      ],
+      "type": "object"
+    },
+    "LedgerKey": {
+      "description": "LedgerKey is an XDR Union defines as:\n\n```text union LedgerKey switch (LedgerEntryType type) { case ACCOUNT: struct { AccountID accountID; } account;\n\ncase TRUSTLINE: struct { AccountID accountID; TrustLineAsset asset; } trustLine;\n\ncase OFFER: struct { AccountID sellerID; int64 offerID; } offer;\n\ncase DATA: struct { AccountID accountID; string64 dataName; } data;\n\ncase CLAIMABLE_BALANCE: struct { ClaimableBalanceID balanceID; } claimableBalance;\n\ncase LIQUIDITY_POOL: struct { PoolID liquidityPoolID; } liquidityPool; case CONTRACT_DATA: struct { SCAddress contract; SCVal key; ContractDataDurability durability; } contractData; case CONTRACT_CODE: struct { Hash hash; } contractCode; case CONFIG_SETTING: struct { ConfigSettingID configSettingID; } configSetting; case TTL: struct { // Hash of the LedgerKey that is associated with this TTLEntry Hash keyHash; } ttl; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "account": {
+              "$ref": "#/definitions/LedgerKeyAccount"
+            }
+          },
+          "required": [
+            "account"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "trustline": {
+              "$ref": "#/definitions/LedgerKeyTrustLine"
+            }
+          },
+          "required": [
+            "trustline"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "offer": {
+              "$ref": "#/definitions/LedgerKeyOffer"
+            }
+          },
+          "required": [
+            "offer"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "data": {
+              "$ref": "#/definitions/LedgerKeyData"
+            }
+          },
+          "required": [
+            "data"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "claimable_balance": {
+              "$ref": "#/definitions/LedgerKeyClaimableBalance"
+            }
+          },
+          "required": [
+            "claimable_balance"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "liquidity_pool": {
+              "$ref": "#/definitions/LedgerKeyLiquidityPool"
+            }
+          },
+          "required": [
+            "liquidity_pool"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "contract_data": {
+              "$ref": "#/definitions/LedgerKeyContractData"
+            }
+          },
+          "required": [
+            "contract_data"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "contract_code": {
+              "$ref": "#/definitions/LedgerKeyContractCode"
+            }
+          },
+          "required": [
+            "contract_code"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "config_setting": {
+              "$ref": "#/definitions/LedgerKeyConfigSetting"
+            }
+          },
+          "required": [
+            "config_setting"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ttl": {
+              "$ref": "#/definitions/LedgerKeyTtl"
+            }
+          },
+          "required": [
+            "ttl"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "LedgerKeyAccount": {
+      "description": "LedgerKeyAccount is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; } ```",
+      "properties": {
+        "account_id": {
+          "$ref": "#/definitions/AccountId"
+        }
+      },
+      "required": [
+        "account_id"
+      ],
+      "type": "object"
+    },
+    "LedgerKeyClaimableBalance": {
+      "description": "LedgerKeyClaimableBalance is an XDR NestedStruct defines as:\n\n```text struct { ClaimableBalanceID balanceID; } ```",
+      "properties": {
+        "balance_id": {
+          "$ref": "#/definitions/ClaimableBalanceId"
+        }
+      },
+      "required": [
+        "balance_id"
+      ],
+      "type": "object"
+    },
+    "LedgerKeyConfigSetting": {
+      "description": "LedgerKeyConfigSetting is an XDR NestedStruct defines as:\n\n```text struct { ConfigSettingID configSettingID; } ```",
+      "properties": {
+        "config_setting_id": {
+          "$ref": "#/definitions/ConfigSettingId"
+        }
+      },
+      "required": [
+        "config_setting_id"
+      ],
+      "type": "object"
+    },
+    "LedgerKeyContractCode": {
+      "description": "LedgerKeyContractCode is an XDR NestedStruct defines as:\n\n```text struct { Hash hash; } ```",
+      "properties": {
+        "hash": {
+          "$ref": "#/definitions/Hash"
+        }
+      },
+      "required": [
+        "hash"
+      ],
+      "type": "object"
+    },
+    "LedgerKeyContractData": {
+      "description": "LedgerKeyContractData is an XDR NestedStruct defines as:\n\n```text struct { SCAddress contract; SCVal key; ContractDataDurability durability; } ```",
+      "properties": {
+        "contract": {
+          "$ref": "#/definitions/ScAddress"
+        },
+        "durability": {
+          "$ref": "#/definitions/ContractDataDurability"
+        },
+        "key": {
+          "$ref": "#/definitions/ScVal"
+        }
+      },
+      "required": [
+        "contract",
+        "durability",
+        "key"
+      ],
+      "type": "object"
+    },
+    "LedgerKeyData": {
+      "description": "LedgerKeyData is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; string64 dataName; } ```",
+      "properties": {
+        "account_id": {
+          "$ref": "#/definitions/AccountId"
+        },
+        "data_name": {
+          "$ref": "#/definitions/String64"
+        }
+      },
+      "required": [
+        "account_id",
+        "data_name"
+      ],
+      "type": "object"
+    },
+    "LedgerKeyLiquidityPool": {
+      "description": "LedgerKeyLiquidityPool is an XDR NestedStruct defines as:\n\n```text struct { PoolID liquidityPoolID; } ```",
+      "properties": {
+        "liquidity_pool_id": {
+          "$ref": "#/definitions/PoolId"
+        }
+      },
+      "required": [
+        "liquidity_pool_id"
+      ],
+      "type": "object"
+    },
+    "LedgerKeyOffer": {
+      "description": "LedgerKeyOffer is an XDR NestedStruct defines as:\n\n```text struct { AccountID sellerID; int64 offerID; } ```",
+      "properties": {
+        "offer_id": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "seller_id": {
+          "$ref": "#/definitions/AccountId"
+        }
+      },
+      "required": [
+        "offer_id",
+        "seller_id"
+      ],
+      "type": "object"
+    },
+    "LedgerKeyTrustLine": {
+      "description": "LedgerKeyTrustLine is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; TrustLineAsset asset; } ```",
+      "properties": {
+        "account_id": {
+          "$ref": "#/definitions/AccountId"
+        },
+        "asset": {
+          "$ref": "#/definitions/TrustLineAsset"
+        }
+      },
+      "required": [
+        "account_id",
+        "asset"
+      ],
+      "type": "object"
+    },
+    "LedgerKeyTtl": {
+      "description": "LedgerKeyTtl is an XDR NestedStruct defines as:\n\n```text struct { // Hash of the LedgerKey that is associated with this TTLEntry Hash keyHash; } ```",
+      "properties": {
+        "key_hash": {
+          "$ref": "#/definitions/Hash"
+        }
+      },
+      "required": [
+        "key_hash"
+      ],
+      "type": "object"
+    },
+    "LiquidityPoolConstantProductParameters": {
+      "description": "LiquidityPoolConstantProductParameters is an XDR Struct defines as:\n\n```text struct LiquidityPoolConstantProductParameters { Asset assetA; // assetA < assetB Asset assetB; int32 fee; // Fee is in basis points, so the actual rate is (fee/100)% }; ```",
+      "properties": {
+        "asset_a": {
+          "$ref": "#/definitions/Asset"
+        },
+        "asset_b": {
+          "$ref": "#/definitions/Asset"
+        },
+        "fee": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "asset_a",
+        "asset_b",
+        "fee"
+      ],
+      "type": "object"
+    },
+    "LiquidityPoolDepositOp": {
+      "description": "LiquidityPoolDepositOp is an XDR Struct defines as:\n\n```text struct LiquidityPoolDepositOp { PoolID liquidityPoolID; int64 maxAmountA; // maximum amount of first asset to deposit int64 maxAmountB; // maximum amount of second asset to deposit Price minPrice;   // minimum depositA/depositB Price maxPrice;   // maximum depositA/depositB }; ```",
+      "properties": {
+        "liquidity_pool_id": {
+          "$ref": "#/definitions/PoolId"
+        },
+        "max_amount_a": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "max_amount_b": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "max_price": {
+          "$ref": "#/definitions/Price"
+        },
+        "min_price": {
+          "$ref": "#/definitions/Price"
+        }
+      },
+      "required": [
+        "liquidity_pool_id",
+        "max_amount_a",
+        "max_amount_b",
+        "max_price",
+        "min_price"
+      ],
+      "type": "object"
+    },
+    "LiquidityPoolParameters": {
+      "description": "LiquidityPoolParameters is an XDR Union defines as:\n\n```text union LiquidityPoolParameters switch (LiquidityPoolType type) { case LIQUIDITY_POOL_CONSTANT_PRODUCT: LiquidityPoolConstantProductParameters constantProduct; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "liquidity_pool_constant_product": {
+              "$ref": "#/definitions/LiquidityPoolConstantProductParameters"
+            }
+          },
+          "required": [
+            "liquidity_pool_constant_product"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "LiquidityPoolWithdrawOp": {
+      "description": "LiquidityPoolWithdrawOp is an XDR Struct defines as:\n\n```text struct LiquidityPoolWithdrawOp { PoolID liquidityPoolID; int64 amount;     // amount of pool shares to withdraw int64 minAmountA; // minimum amount of first asset to withdraw int64 minAmountB; // minimum amount of second asset to withdraw }; ```",
+      "properties": {
+        "amount": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "liquidity_pool_id": {
+          "$ref": "#/definitions/PoolId"
+        },
+        "min_amount_a": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "min_amount_b": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "amount",
+        "liquidity_pool_id",
+        "min_amount_a",
+        "min_amount_b"
+      ],
+      "type": "object"
+    },
+    "ManageBuyOfferOp": {
+      "description": "ManageBuyOfferOp is an XDR Struct defines as:\n\n```text struct ManageBuyOfferOp { Asset selling; Asset buying; int64 buyAmount; // amount being bought. if set to 0, delete the offer Price price;     // price of thing being bought in terms of what you are // selling\n\n// 0=create a new offer, otherwise edit an existing offer int64 offerID; }; ```",
+      "properties": {
+        "buy_amount": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "buying": {
+          "$ref": "#/definitions/Asset"
+        },
+        "offer_id": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "price": {
+          "$ref": "#/definitions/Price"
+        },
+        "selling": {
+          "$ref": "#/definitions/Asset"
+        }
+      },
+      "required": [
+        "buy_amount",
+        "buying",
+        "offer_id",
+        "price",
+        "selling"
+      ],
+      "type": "object"
+    },
+    "ManageDataOp": {
+      "description": "ManageDataOp is an XDR Struct defines as:\n\n```text struct ManageDataOp { string64 dataName; DataValue* dataValue; // set to null to clear }; ```",
+      "properties": {
+        "data_name": {
+          "$ref": "#/definitions/String64"
+        },
+        "data_value": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/DataValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "data_name"
+      ],
+      "type": "object"
+    },
+    "ManageSellOfferOp": {
+      "description": "ManageSellOfferOp is an XDR Struct defines as:\n\n```text struct ManageSellOfferOp { Asset selling; Asset buying; int64 amount; // amount being sold. if set to 0, delete the offer Price price;  // price of thing being sold in terms of what you are buying\n\n// 0=create a new offer, otherwise edit an existing offer int64 offerID; }; ```",
+      "properties": {
+        "amount": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "buying": {
+          "$ref": "#/definitions/Asset"
+        },
+        "offer_id": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "price": {
+          "$ref": "#/definitions/Price"
+        },
+        "selling": {
+          "$ref": "#/definitions/Asset"
+        }
+      },
+      "required": [
+        "amount",
+        "buying",
+        "offer_id",
+        "price",
+        "selling"
+      ],
+      "type": "object"
+    },
+    "Memo": {
+      "description": "Memo is an XDR Union defines as:\n\n```text union Memo switch (MemoType type) { case MEMO_NONE: void; case MEMO_TEXT: string text<28>; case MEMO_ID: uint64 id; case MEMO_HASH: Hash hash; // the hash of what to pull from the content server case MEMO_RETURN: Hash retHash; // the hash of the tx you are rejecting }; ```",
+      "oneOf": [
+        {
+          "enum": [
+            "none"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "maxLength": 28,
+              "type": "string"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "format": "uint64",
+              "minimum": 0.0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "hash": {
+              "$ref": "#/definitions/Hash"
+            }
+          },
+          "required": [
+            "hash"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "return": {
+              "$ref": "#/definitions/Hash"
+            }
+          },
+          "required": [
+            "return"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "MuxedAccount": {
+      "description": "MuxedAccount is an XDR Union defines as:\n\n```text union MuxedAccount switch (CryptoKeyType type) { case KEY_TYPE_ED25519: uint256 ed25519; case KEY_TYPE_MUXED_ED25519: struct { uint64 id; uint256 ed25519; } med25519; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "Ed25519": {
+              "$ref": "#/definitions/Uint256"
+            }
+          },
+          "required": [
+            "Ed25519"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "MuxedEd25519": {
+              "$ref": "#/definitions/MuxedAccountMed25519"
+            }
+          },
+          "required": [
+            "MuxedEd25519"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "MuxedAccountMed25519": {
+      "description": "MuxedAccountMed25519 is an XDR NestedStruct defines as:\n\n```text struct { uint64 id; uint256 ed25519; } ```",
+      "properties": {
+        "ed25519": {
+          "$ref": "#/definitions/Uint256"
+        },
+        "id": {
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ed25519",
+        "id"
+      ],
+      "type": "object"
+    },
+    "Operation": {
+      "description": "Operation is an XDR Struct defines as:\n\n```text struct Operation { // sourceAccount is the account used to run the operation // if not set, the runtime defaults to \"sourceAccount\" specified at // the transaction level MuxedAccount* sourceAccount;\n\nunion switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountOp createAccountOp; case PAYMENT: PaymentOp paymentOp; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveOp pathPaymentStrictReceiveOp; case MANAGE_SELL_OFFER: ManageSellOfferOp manageSellOfferOp; case CREATE_PASSIVE_SELL_OFFER: CreatePassiveSellOfferOp createPassiveSellOfferOp; case SET_OPTIONS: SetOptionsOp setOptionsOp; case CHANGE_TRUST: ChangeTrustOp changeTrustOp; case ALLOW_TRUST: AllowTrustOp allowTrustOp; case ACCOUNT_MERGE: MuxedAccount destination; case INFLATION: void; case MANAGE_DATA: ManageDataOp manageDataOp; case BUMP_SEQUENCE: BumpSequenceOp bumpSequenceOp; case MANAGE_BUY_OFFER: ManageBuyOfferOp manageBuyOfferOp; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendOp pathPaymentStrictSendOp; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceOp createClaimableBalanceOp; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceOp claimClaimableBalanceOp; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesOp beginSponsoringFutureReservesOp; case END_SPONSORING_FUTURE_RESERVES: void; case REVOKE_SPONSORSHIP: RevokeSponsorshipOp revokeSponsorshipOp; case CLAWBACK: ClawbackOp clawbackOp; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceOp clawbackClaimableBalanceOp; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsOp setTrustLineFlagsOp; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositOp liquidityPoolDepositOp; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawOp liquidityPoolWithdrawOp; case INVOKE_HOST_FUNCTION: InvokeHostFunctionOp invokeHostFunctionOp; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLOp extendFootprintTTLOp; case RESTORE_FOOTPRINT: RestoreFootprintOp restoreFootprintOp; } body; }; ```",
+      "properties": {
+        "body": {
+          "$ref": "#/definitions/OperationBody"
+        },
+        "source_account": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/MuxedAccount"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "body"
+      ],
+      "type": "object"
+    },
+    "OperationBody": {
+      "description": "OperationBody is an XDR NestedUnion defines as:\n\n```text union switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountOp createAccountOp; case PAYMENT: PaymentOp paymentOp; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveOp pathPaymentStrictReceiveOp; case MANAGE_SELL_OFFER: ManageSellOfferOp manageSellOfferOp; case CREATE_PASSIVE_SELL_OFFER: CreatePassiveSellOfferOp createPassiveSellOfferOp; case SET_OPTIONS: SetOptionsOp setOptionsOp; case CHANGE_TRUST: ChangeTrustOp changeTrustOp; case ALLOW_TRUST: AllowTrustOp allowTrustOp; case ACCOUNT_MERGE: MuxedAccount destination; case INFLATION: void; case MANAGE_DATA: ManageDataOp manageDataOp; case BUMP_SEQUENCE: BumpSequenceOp bumpSequenceOp; case MANAGE_BUY_OFFER: ManageBuyOfferOp manageBuyOfferOp; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendOp pathPaymentStrictSendOp; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceOp createClaimableBalanceOp; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceOp claimClaimableBalanceOp; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesOp beginSponsoringFutureReservesOp; case END_SPONSORING_FUTURE_RESERVES: void; case REVOKE_SPONSORSHIP: RevokeSponsorshipOp revokeSponsorshipOp; case CLAWBACK: ClawbackOp clawbackOp; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceOp clawbackClaimableBalanceOp; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsOp setTrustLineFlagsOp; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositOp liquidityPoolDepositOp; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawOp liquidityPoolWithdrawOp; case INVOKE_HOST_FUNCTION: InvokeHostFunctionOp invokeHostFunctionOp; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLOp extendFootprintTTLOp; case RESTORE_FOOTPRINT: RestoreFootprintOp restoreFootprintOp; } ```",
+      "oneOf": [
+        {
+          "enum": [
+            "inflation",
+            "end_sponsoring_future_reserves"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "create_account": {
+              "$ref": "#/definitions/CreateAccountOp"
+            }
+          },
+          "required": [
+            "create_account"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "payment": {
+              "$ref": "#/definitions/PaymentOp"
+            }
+          },
+          "required": [
+            "payment"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "path_payment_strict_receive": {
+              "$ref": "#/definitions/PathPaymentStrictReceiveOp"
+            }
+          },
+          "required": [
+            "path_payment_strict_receive"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "manage_sell_offer": {
+              "$ref": "#/definitions/ManageSellOfferOp"
+            }
+          },
+          "required": [
+            "manage_sell_offer"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "create_passive_sell_offer": {
+              "$ref": "#/definitions/CreatePassiveSellOfferOp"
+            }
+          },
+          "required": [
+            "create_passive_sell_offer"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "set_options": {
+              "$ref": "#/definitions/SetOptionsOp"
+            }
+          },
+          "required": [
+            "set_options"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "change_trust": {
+              "$ref": "#/definitions/ChangeTrustOp"
+            }
+          },
+          "required": [
+            "change_trust"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "allow_trust": {
+              "$ref": "#/definitions/AllowTrustOp"
+            }
+          },
+          "required": [
+            "allow_trust"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "account_merge": {
+              "$ref": "#/definitions/MuxedAccount"
+            }
+          },
+          "required": [
+            "account_merge"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "manage_data": {
+              "$ref": "#/definitions/ManageDataOp"
+            }
+          },
+          "required": [
+            "manage_data"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bump_sequence": {
+              "$ref": "#/definitions/BumpSequenceOp"
+            }
+          },
+          "required": [
+            "bump_sequence"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "manage_buy_offer": {
+              "$ref": "#/definitions/ManageBuyOfferOp"
+            }
+          },
+          "required": [
+            "manage_buy_offer"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "path_payment_strict_send": {
+              "$ref": "#/definitions/PathPaymentStrictSendOp"
+            }
+          },
+          "required": [
+            "path_payment_strict_send"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "create_claimable_balance": {
+              "$ref": "#/definitions/CreateClaimableBalanceOp"
+            }
+          },
+          "required": [
+            "create_claimable_balance"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "claim_claimable_balance": {
+              "$ref": "#/definitions/ClaimClaimableBalanceOp"
+            }
+          },
+          "required": [
+            "claim_claimable_balance"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "begin_sponsoring_future_reserves": {
+              "$ref": "#/definitions/BeginSponsoringFutureReservesOp"
+            }
+          },
+          "required": [
+            "begin_sponsoring_future_reserves"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "revoke_sponsorship": {
+              "$ref": "#/definitions/RevokeSponsorshipOp"
+            }
+          },
+          "required": [
+            "revoke_sponsorship"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "clawback": {
+              "$ref": "#/definitions/ClawbackOp"
+            }
+          },
+          "required": [
+            "clawback"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "clawback_claimable_balance": {
+              "$ref": "#/definitions/ClawbackClaimableBalanceOp"
+            }
+          },
+          "required": [
+            "clawback_claimable_balance"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "set_trust_line_flags": {
+              "$ref": "#/definitions/SetTrustLineFlagsOp"
+            }
+          },
+          "required": [
+            "set_trust_line_flags"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "liquidity_pool_deposit": {
+              "$ref": "#/definitions/LiquidityPoolDepositOp"
+            }
+          },
+          "required": [
+            "liquidity_pool_deposit"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "liquidity_pool_withdraw": {
+              "$ref": "#/definitions/LiquidityPoolWithdrawOp"
+            }
+          },
+          "required": [
+            "liquidity_pool_withdraw"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "invoke_host_function": {
+              "$ref": "#/definitions/InvokeHostFunctionOp"
+            }
+          },
+          "required": [
+            "invoke_host_function"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "extend_footprint_ttl": {
+              "$ref": "#/definitions/ExtendFootprintTtlOp"
+            }
+          },
+          "required": [
+            "extend_footprint_ttl"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "restore_footprint": {
+              "$ref": "#/definitions/RestoreFootprintOp"
+            }
+          },
+          "required": [
+            "restore_footprint"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "PathPaymentStrictReceiveOp": {
+      "description": "PathPaymentStrictReceiveOp is an XDR Struct defines as:\n\n```text struct PathPaymentStrictReceiveOp { Asset sendAsset; // asset we pay with int64 sendMax;   // the maximum amount of sendAsset to // send (excluding fees). // The operation will fail if can't be met\n\nMuxedAccount destination; // recipient of the payment Asset destAsset;          // what they end up with int64 destAmount;         // amount they end up with\n\nAsset path<5>; // additional hops it must go through to get there }; ```",
+      "properties": {
+        "dest_amount": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "dest_asset": {
+          "$ref": "#/definitions/Asset"
+        },
+        "destination": {
+          "$ref": "#/definitions/MuxedAccount"
+        },
+        "path": {
+          "items": {
+            "$ref": "#/definitions/Asset"
+          },
+          "maxItems": 5,
+          "type": "array"
+        },
+        "send_asset": {
+          "$ref": "#/definitions/Asset"
+        },
+        "send_max": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "dest_amount",
+        "dest_asset",
+        "destination",
+        "path",
+        "send_asset",
+        "send_max"
+      ],
+      "type": "object"
+    },
+    "PathPaymentStrictSendOp": {
+      "description": "PathPaymentStrictSendOp is an XDR Struct defines as:\n\n```text struct PathPaymentStrictSendOp { Asset sendAsset;  // asset we pay with int64 sendAmount; // amount of sendAsset to send (excluding fees)\n\nMuxedAccount destination; // recipient of the payment Asset destAsset;          // what they end up with int64 destMin;            // the minimum amount of dest asset to // be received // The operation will fail if it can't be met\n\nAsset path<5>; // additional hops it must go through to get there }; ```",
+      "properties": {
+        "dest_asset": {
+          "$ref": "#/definitions/Asset"
+        },
+        "dest_min": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "destination": {
+          "$ref": "#/definitions/MuxedAccount"
+        },
+        "path": {
+          "items": {
+            "$ref": "#/definitions/Asset"
+          },
+          "maxItems": 5,
+          "type": "array"
+        },
+        "send_amount": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "send_asset": {
+          "$ref": "#/definitions/Asset"
+        }
+      },
+      "required": [
+        "dest_asset",
+        "dest_min",
+        "destination",
+        "path",
+        "send_amount",
+        "send_asset"
+      ],
+      "type": "object"
+    },
+    "PaymentOp": {
+      "description": "PaymentOp is an XDR Struct defines as:\n\n```text struct PaymentOp { MuxedAccount destination; // recipient of the payment Asset asset;              // what they end up with int64 amount;             // amount they end up with }; ```",
+      "properties": {
+        "amount": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "asset": {
+          "$ref": "#/definitions/Asset"
+        },
+        "destination": {
+          "$ref": "#/definitions/MuxedAccount"
+        }
+      },
+      "required": [
+        "amount",
+        "asset",
+        "destination"
+      ],
+      "type": "object"
+    },
+    "PoolId": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Hash"
+        }
+      ],
+      "description": "PoolId is an XDR Typedef defines as:\n\n```text typedef Hash PoolID; ```"
+    },
+    "Preconditions": {
+      "description": "Preconditions is an XDR Union defines as:\n\n```text union Preconditions switch (PreconditionType type) { case PRECOND_NONE: void; case PRECOND_TIME: TimeBounds timeBounds; case PRECOND_V2: PreconditionsV2 v2; }; ```",
+      "oneOf": [
+        {
+          "enum": [
+            "none"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "time": {
+              "$ref": "#/definitions/TimeBounds"
+            }
+          },
+          "required": [
+            "time"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "v2": {
+              "$ref": "#/definitions/PreconditionsV2"
+            }
+          },
+          "required": [
+            "v2"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "PreconditionsV2": {
+      "description": "PreconditionsV2 is an XDR Struct defines as:\n\n```text struct PreconditionsV2 { TimeBounds* timeBounds;\n\n// Transaction only valid for ledger numbers n such that // minLedger <= n < maxLedger (if maxLedger == 0, then // only minLedger is checked) LedgerBounds* ledgerBounds;\n\n// If NULL, only valid when sourceAccount's sequence number // is seqNum - 1.  Otherwise, valid when sourceAccount's // sequence number n satisfies minSeqNum <= n < tx.seqNum. // Note that after execution the account's sequence number // is always raised to tx.seqNum, and a transaction is not // valid if tx.seqNum is too high to ensure replay protection. SequenceNumber* minSeqNum;\n\n// For the transaction to be valid, the current ledger time must // be at least minSeqAge greater than sourceAccount's seqTime. Duration minSeqAge;\n\n// For the transaction to be valid, the current ledger number // must be at least minSeqLedgerGap greater than sourceAccount's // seqLedger. uint32 minSeqLedgerGap;\n\n// For the transaction to be valid, there must be a signature // corresponding to every Signer in this array, even if the // signature is not otherwise required by the sourceAccount or // operations. SignerKey extraSigners<2>; }; ```",
+      "properties": {
+        "extra_signers": {
+          "items": {
+            "$ref": "#/definitions/SignerKey"
+          },
+          "maxItems": 2,
+          "type": "array"
+        },
+        "ledger_bounds": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LedgerBounds"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "min_seq_age": {
+          "$ref": "#/definitions/Duration"
+        },
+        "min_seq_ledger_gap": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "min_seq_num": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SequenceNumber"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "time_bounds": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TimeBounds"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "extra_signers",
+        "min_seq_age",
+        "min_seq_ledger_gap"
+      ],
+      "type": "object"
+    },
+    "Price": {
+      "description": "Price is an XDR Struct defines as:\n\n```text struct Price { int32 n; // numerator int32 d; // denominator }; ```",
+      "properties": {
+        "d": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "n": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "d",
+        "n"
+      ],
+      "type": "object"
+    },
+    "PublicKey": {
+      "description": "PublicKey is an XDR Union defines as:\n\n```text union PublicKey switch (PublicKeyType type) { case PUBLIC_KEY_TYPE_ED25519: uint256 ed25519; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "PublicKeyTypeEd25519": {
+              "$ref": "#/definitions/Uint256"
+            }
+          },
+          "required": [
+            "PublicKeyTypeEd25519"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "RestoreFootprintOp": {
+      "description": "RestoreFootprintOp is an XDR Struct defines as:\n\n```text struct RestoreFootprintOp { ExtensionPoint ext; }; ```",
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "ext"
+      ],
+      "type": "object"
+    },
+    "RevokeSponsorshipOp": {
+      "description": "RevokeSponsorshipOp is an XDR Union defines as:\n\n```text union RevokeSponsorshipOp switch (RevokeSponsorshipType type) { case REVOKE_SPONSORSHIP_LEDGER_ENTRY: LedgerKey ledgerKey; case REVOKE_SPONSORSHIP_SIGNER: struct { AccountID accountID; SignerKey signerKey; } signer; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ledger_entry": {
+              "$ref": "#/definitions/LedgerKey"
+            }
+          },
+          "required": [
+            "ledger_entry"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "signer": {
+              "$ref": "#/definitions/RevokeSponsorshipOpSigner"
+            }
+          },
+          "required": [
+            "signer"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "RevokeSponsorshipOpSigner": {
+      "description": "RevokeSponsorshipOpSigner is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; SignerKey signerKey; } ```",
+      "properties": {
+        "account_id": {
+          "$ref": "#/definitions/AccountId"
+        },
+        "signer_key": {
+          "$ref": "#/definitions/SignerKey"
+        }
+      },
+      "required": [
+        "account_id",
+        "signer_key"
+      ],
+      "type": "object"
+    },
+    "ScAddress": {
+      "description": "ScAddress is an XDR Union defines as:\n\n```text union SCAddress switch (SCAddressType type) { case SC_ADDRESS_TYPE_ACCOUNT: AccountID accountId; case SC_ADDRESS_TYPE_CONTRACT: Hash contractId; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "Account": {
+              "$ref": "#/definitions/AccountId"
+            }
+          },
+          "required": [
+            "Account"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "Contract": {
+              "$ref": "#/definitions/Hash"
+            }
+          },
+          "required": [
+            "Contract"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ScBytes": {
+      "description": "ScBytes is an XDR Typedef defines as:\n\n```text typedef opaque SCBytes<>; ```",
+      "pattern": "^[A-Fa-f0-9]{4294967295}$",
+      "type": "string"
+    },
+    "ScContractInstance": {
+      "description": "ScContractInstance is an XDR Struct defines as:\n\n```text struct SCContractInstance { ContractExecutable executable; SCMap* storage; }; ```",
+      "properties": {
+        "executable": {
+          "$ref": "#/definitions/ContractExecutable"
+        },
+        "storage": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ScMap"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "executable"
+      ],
+      "type": "object"
+    },
+    "ScError": {
+      "description": "ScError is an XDR Union defines as:\n\n```text union SCError switch (SCErrorType type) { case SCE_CONTRACT: uint32 contractCode; case SCE_WASM_VM: case SCE_CONTEXT: case SCE_STORAGE: case SCE_OBJECT: case SCE_CRYPTO: case SCE_EVENTS: case SCE_BUDGET: case SCE_VALUE: case SCE_AUTH: SCErrorCode code; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "contract": {
+              "format": "uint32",
+              "minimum": 0.0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "contract"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "wasm_vm": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "required": [
+            "wasm_vm"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "required": [
+            "context"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "storage": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "required": [
+            "storage"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "object": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "required": [
+            "object"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "crypto": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "required": [
+            "crypto"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "events": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "required": [
+            "events"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "budget": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "required": [
+            "budget"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "auth": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "required": [
+            "auth"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ScErrorCode": {
+      "description": "ScErrorCode is an XDR Enum defines as:\n\n```text enum SCErrorCode { SCEC_ARITH_DOMAIN = 0,      // Some arithmetic was undefined (overflow, divide-by-zero). SCEC_INDEX_BOUNDS = 1,      // Something was indexed beyond its bounds. SCEC_INVALID_INPUT = 2,     // User provided some otherwise-bad data. SCEC_MISSING_VALUE = 3,     // Some value was required but not provided. SCEC_EXISTING_VALUE = 4,    // Some value was provided where not allowed. SCEC_EXCEEDED_LIMIT = 5,    // Some arbitrary limit -- gas or otherwise -- was hit. SCEC_INVALID_ACTION = 6,    // Data was valid but action requested was not. SCEC_INTERNAL_ERROR = 7,    // The host detected an error in its own logic. SCEC_UNEXPECTED_TYPE = 8,   // Some type wasn't as expected. SCEC_UNEXPECTED_SIZE = 9    // Something's size wasn't as expected. }; ```",
+      "enum": [
+        "arith_domain",
+        "index_bounds",
+        "invalid_input",
+        "missing_value",
+        "existing_value",
+        "exceeded_limit",
+        "invalid_action",
+        "internal_error",
+        "unexpected_type",
+        "unexpected_size"
+      ],
+      "type": "string"
+    },
+    "ScMap": {
+      "description": "ScMap is an XDR Typedef defines as:\n\n```text typedef SCMapEntry SCMap<>; ```",
+      "items": {
+        "$ref": "#/definitions/ScMapEntry"
+      },
+      "maxItems": 4294967295,
+      "type": "array"
+    },
+    "ScMapEntry": {
+      "description": "ScMapEntry is an XDR Struct defines as:\n\n```text struct SCMapEntry { SCVal key; SCVal val; }; ```",
+      "properties": {
+        "key": {
+          "$ref": "#/definitions/ScVal"
+        },
+        "val": {
+          "$ref": "#/definitions/ScVal"
+        }
+      },
+      "required": [
+        "key",
+        "val"
+      ],
+      "type": "object"
+    },
+    "ScNonceKey": {
+      "description": "ScNonceKey is an XDR Struct defines as:\n\n```text struct SCNonceKey { int64 nonce; }; ```",
+      "properties": {
+        "nonce": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "nonce"
+      ],
+      "type": "object"
+    },
+    "ScString": {
+      "description": "ScString is an XDR Typedef defines as:\n\n```text typedef string SCString<>; ```",
+      "maxLength": 4294967295,
+      "type": "string"
+    },
+    "ScSymbol": {
+      "description": "ScSymbol is an XDR Typedef defines as:\n\n```text typedef string SCSymbol<SCSYMBOL_LIMIT>; ```",
+      "maxLength": 32,
+      "type": "string"
+    },
+    "ScVal": {
+      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key;\n\ncase SCV_CONTRACT_INSTANCE: SCContractInstance instance; }; ```",
+      "oneOf": [
+        {
+          "enum": [
+            "void",
+            "ledger_key_contract_instance"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bool": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "bool"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "error": {
+              "$ref": "#/definitions/ScError"
+            }
+          },
+          "required": [
+            "error"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "u32": {
+              "format": "uint32",
+              "minimum": 0.0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "u32"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "i32": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "i32"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "u64": {
+              "format": "uint64",
+              "minimum": 0.0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "u64"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "i64": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "i64"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "timepoint": {
+              "$ref": "#/definitions/TimePoint"
+            }
+          },
+          "required": [
+            "timepoint"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "duration": {
+              "$ref": "#/definitions/Duration"
+            }
+          },
+          "required": [
+            "duration"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "u128": {
+              "$ref": "#/definitions/UInt128Parts"
+            }
+          },
+          "required": [
+            "u128"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "i128": {
+              "$ref": "#/definitions/Int128Parts"
+            }
+          },
+          "required": [
+            "i128"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "u256": {
+              "$ref": "#/definitions/UInt256Parts"
+            }
+          },
+          "required": [
+            "u256"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "i256": {
+              "$ref": "#/definitions/Int256Parts"
+            }
+          },
+          "required": [
+            "i256"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bytes": {
+              "$ref": "#/definitions/ScBytes"
+            }
+          },
+          "required": [
+            "bytes"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "string": {
+              "$ref": "#/definitions/ScString"
+            }
+          },
+          "required": [
+            "string"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "symbol": {
+              "$ref": "#/definitions/ScSymbol"
+            }
+          },
+          "required": [
+            "symbol"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "vec": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ScVec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "vec"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "map": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ScMap"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "map"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/ScAddress"
+            }
+          },
+          "required": [
+            "address"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ledger_key_nonce": {
+              "$ref": "#/definitions/ScNonceKey"
+            }
+          },
+          "required": [
+            "ledger_key_nonce"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "contract_instance": {
+              "$ref": "#/definitions/ScContractInstance"
+            }
+          },
+          "required": [
+            "contract_instance"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ScVec": {
+      "description": "ScVec is an XDR Typedef defines as:\n\n```text typedef SCVal SCVec<>; ```",
+      "items": {
+        "$ref": "#/definitions/ScVal"
+      },
+      "maxItems": 4294967295,
+      "type": "array"
+    },
+    "SequenceNumber": {
+      "description": "SequenceNumber is an XDR Typedef defines as:\n\n```text typedef int64 SequenceNumber; ```",
+      "format": "int64",
+      "type": "integer"
+    },
+    "SetOptionsOp": {
+      "description": "SetOptionsOp is an XDR Struct defines as:\n\n```text struct SetOptionsOp { AccountID* inflationDest; // sets the inflation destination\n\nuint32* clearFlags; // which flags to clear uint32* setFlags;   // which flags to set\n\n// account threshold manipulation uint32* masterWeight; // weight of the master account uint32* lowThreshold; uint32* medThreshold; uint32* highThreshold;\n\nstring32* homeDomain; // sets the home domain\n\n// Add, update or remove a signer for the account // signer is deleted if the weight is 0 Signer* signer; }; ```",
+      "properties": {
+        "clear_flags": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "high_threshold": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "home_domain": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/String32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inflation_dest": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AccountId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "low_threshold": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "master_weight": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "med_threshold": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "set_flags": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "signer": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Signer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "SetTrustLineFlagsOp": {
+      "description": "SetTrustLineFlagsOp is an XDR Struct defines as:\n\n```text struct SetTrustLineFlagsOp { AccountID trustor; Asset asset;\n\nuint32 clearFlags; // which flags to clear uint32 setFlags;   // which flags to set }; ```",
+      "properties": {
+        "asset": {
+          "$ref": "#/definitions/Asset"
+        },
+        "clear_flags": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "set_flags": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "trustor": {
+          "$ref": "#/definitions/AccountId"
+        }
+      },
+      "required": [
+        "asset",
+        "clear_flags",
+        "set_flags",
+        "trustor"
+      ],
+      "type": "object"
+    },
+    "Signature": {
+      "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
+      "pattern": "^[A-Fa-f0-9]{128}$",
+      "type": "string"
+    },
+    "SignatureHint": {
+      "description": "SignatureHint is an XDR Typedef defines as:\n\n```text typedef opaque SignatureHint[4]; ```",
+      "items": {
+        "format": "uint8",
+        "minimum": 0.0,
+        "type": "integer"
+      },
+      "maxItems": 4,
+      "minItems": 4,
+      "type": "array"
+    },
+    "Signer": {
+      "description": "Signer is an XDR Struct defines as:\n\n```text struct Signer { SignerKey key; uint32 weight; // really only need 1 byte }; ```",
+      "properties": {
+        "key": {
+          "$ref": "#/definitions/SignerKey"
+        },
+        "weight": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "key",
+        "weight"
+      ],
+      "type": "object"
+    },
+    "SignerKey": {
+      "description": "SignerKey is an XDR Union defines as:\n\n```text union SignerKey switch (SignerKeyType type) { case SIGNER_KEY_TYPE_ED25519: uint256 ed25519; case SIGNER_KEY_TYPE_PRE_AUTH_TX: /* SHA-256 Hash of TransactionSignaturePayload structure */ uint256 preAuthTx; case SIGNER_KEY_TYPE_HASH_X: /* Hash of random 256 bit preimage X */ uint256 hashX; case SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD: struct { /* Public key that must sign the payload. */ uint256 ed25519; /* Payload to be raw signed by ed25519. */ opaque payload<64>; } ed25519SignedPayload; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "Ed25519": {
+              "$ref": "#/definitions/Uint256"
+            }
+          },
+          "required": [
+            "Ed25519"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "PreAuthTx": {
+              "$ref": "#/definitions/Uint256"
+            }
+          },
+          "required": [
+            "PreAuthTx"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "HashX": {
+              "$ref": "#/definitions/Uint256"
+            }
+          },
+          "required": [
+            "HashX"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "Ed25519SignedPayload": {
+              "$ref": "#/definitions/SignerKeyEd25519SignedPayload"
+            }
+          },
+          "required": [
+            "Ed25519SignedPayload"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "SignerKeyEd25519SignedPayload": {
+      "description": "SignerKeyEd25519SignedPayload is an XDR NestedStruct defines as:\n\n```text struct { /* Public key that must sign the payload. */ uint256 ed25519; /* Payload to be raw signed by ed25519. */ opaque payload<64>; } ```",
+      "properties": {
+        "ed25519": {
+          "$ref": "#/definitions/Uint256"
+        },
+        "payload": {
+          "pattern": "^[A-Fa-f0-9]{128}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ed25519",
+        "payload"
+      ],
+      "type": "object"
+    },
+    "SorobanAddressCredentials": {
+      "description": "SorobanAddressCredentials is an XDR Struct defines as:\n\n```text struct SorobanAddressCredentials { SCAddress address; int64 nonce; uint32 signatureExpirationLedger; SCVal signature; }; ```",
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/ScAddress"
+        },
+        "nonce": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "signature": {
+          "$ref": "#/definitions/ScVal"
+        },
+        "signature_expiration_ledger": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "address",
+        "nonce",
+        "signature",
+        "signature_expiration_ledger"
+      ],
+      "type": "object"
+    },
+    "SorobanAuthorizationEntry": {
+      "description": "SorobanAuthorizationEntry is an XDR Struct defines as:\n\n```text struct SorobanAuthorizationEntry { SorobanCredentials credentials; SorobanAuthorizedInvocation rootInvocation; }; ```",
+      "properties": {
+        "credentials": {
+          "$ref": "#/definitions/SorobanCredentials"
+        },
+        "root_invocation": {
+          "$ref": "#/definitions/SorobanAuthorizedInvocation"
+        }
+      },
+      "required": [
+        "credentials",
+        "root_invocation"
+      ],
+      "type": "object"
+    },
+    "SorobanAuthorizedFunction": {
+      "description": "SorobanAuthorizedFunction is an XDR Union defines as:\n\n```text union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type) { case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN: InvokeContractArgs contractFn; case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN: CreateContractArgs createContractHostFn; }; ```",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "contract_fn": {
+              "$ref": "#/definitions/InvokeContractArgs"
+            }
+          },
+          "required": [
+            "contract_fn"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "create_contract_host_fn": {
+              "$ref": "#/definitions/CreateContractArgs"
+            }
+          },
+          "required": [
+            "create_contract_host_fn"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "SorobanAuthorizedInvocation": {
+      "description": "SorobanAuthorizedInvocation is an XDR Struct defines as:\n\n```text struct SorobanAuthorizedInvocation { SorobanAuthorizedFunction function; SorobanAuthorizedInvocation subInvocations<>; }; ```",
+      "properties": {
+        "function": {
+          "$ref": "#/definitions/SorobanAuthorizedFunction"
+        },
+        "sub_invocations": {
+          "items": {
+            "$ref": "#/definitions/SorobanAuthorizedInvocation"
+          },
+          "maxItems": 4294967295,
+          "type": "array"
+        }
+      },
+      "required": [
+        "function",
+        "sub_invocations"
+      ],
+      "type": "object"
+    },
+    "SorobanCredentials": {
+      "description": "SorobanCredentials is an XDR Union defines as:\n\n```text union SorobanCredentials switch (SorobanCredentialsType type) { case SOROBAN_CREDENTIALS_SOURCE_ACCOUNT: void; case SOROBAN_CREDENTIALS_ADDRESS: SorobanAddressCredentials address; }; ```",
+      "oneOf": [
+        {
+          "enum": [
+            "source_account"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/SorobanAddressCredentials"
+            }
+          },
+          "required": [
+            "address"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "SorobanResources": {
+      "description": "SorobanResources is an XDR Struct defines as:\n\n```text struct SorobanResources { // The ledger footprint of the transaction. LedgerFootprint footprint; // The maximum number of instructions this transaction can use uint32 instructions;\n\n// The maximum number of bytes this transaction can read from ledger uint32 readBytes; // The maximum number of bytes this transaction can write to ledger uint32 writeBytes; }; ```",
+      "properties": {
+        "footprint": {
+          "$ref": "#/definitions/LedgerFootprint"
+        },
+        "instructions": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "read_bytes": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "write_bytes": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "footprint",
+        "instructions",
+        "read_bytes",
+        "write_bytes"
+      ],
+      "type": "object"
+    },
+    "SorobanTransactionData": {
+      "description": "SorobanTransactionData is an XDR Struct defines as:\n\n```text struct SorobanTransactionData { ExtensionPoint ext; SorobanResources resources; // Amount of the transaction `fee` allocated to the Soroban resource fees. // The fraction of `resourceFee` corresponding to `resources` specified // above is *not* refundable (i.e. fees for instructions, ledger I/O), as // well as fees for the transaction size. // The remaining part of the fee is refundable and the charged value is // based on the actual consumption of refundable resources (events, ledger // rent bumps). // The `inclusionFee` used for prioritization of the transaction is defined // as `tx.fee - resourceFee`. int64 resourceFee; }; ```",
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "resource_fee": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "resources": {
+          "$ref": "#/definitions/SorobanResources"
+        }
+      },
+      "required": [
+        "ext",
+        "resource_fee",
+        "resources"
+      ],
+      "type": "object"
+    },
+    "String32": {
+      "description": "String32 is an XDR Typedef defines as:\n\n```text typedef string string32<32>; ```",
+      "maxLength": 32,
+      "type": "string"
+    },
+    "String64": {
+      "description": "String64 is an XDR Typedef defines as:\n\n```text typedef string string64<64>; ```",
+      "maxLength": 64,
+      "type": "string"
+    },
+    "TimeBounds": {
+      "description": "TimeBounds is an XDR Struct defines as:\n\n```text struct TimeBounds { TimePoint minTime; TimePoint maxTime; // 0 here means no maxTime }; ```",
+      "properties": {
+        "max_time": {
+          "$ref": "#/definitions/TimePoint"
+        },
+        "min_time": {
+          "$ref": "#/definitions/TimePoint"
+        }
+      },
+      "required": [
+        "max_time",
+        "min_time"
+      ],
+      "type": "object"
+    },
+    "TimePoint": {
+      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "format": "uint64",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "Transaction": {
+      "description": "Transaction is an XDR Struct defines as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
+      "properties": {
+        "cond": {
+          "$ref": "#/definitions/Preconditions"
+        },
+        "ext": {
+          "$ref": "#/definitions/TransactionExt"
+        },
+        "fee": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "memo": {
+          "$ref": "#/definitions/Memo"
+        },
+        "operations": {
+          "items": {
+            "$ref": "#/definitions/Operation"
+          },
+          "maxItems": 100,
+          "type": "array"
+        },
+        "seq_num": {
+          "$ref": "#/definitions/SequenceNumber"
+        },
+        "source_account": {
+          "$ref": "#/definitions/MuxedAccount"
+        }
+      },
+      "required": [
+        "cond",
+        "ext",
+        "fee",
+        "memo",
+        "operations",
+        "seq_num",
+        "source_account"
+      ],
+      "type": "object"
+    },
+    "TransactionExt": {
+      "description": "TransactionExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ```",
+      "oneOf": [
+        {
+          "enum": [
+            "v0"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/SorobanTransactionData"
+            }
+          },
+          "required": [
+            "v1"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "TransactionV0": {
+      "description": "TransactionV0 is an XDR Struct defines as:\n\n```text struct TransactionV0 { uint256 sourceAccountEd25519; uint32 fee; SequenceNumber seqNum; TimeBounds* timeBounds; Memo memo; Operation operations<MAX_OPS_PER_TX>; union switch (int v) { case 0: void; } ext; }; ```",
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/TransactionV0Ext"
+        },
+        "fee": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "memo": {
+          "$ref": "#/definitions/Memo"
+        },
+        "operations": {
+          "items": {
+            "$ref": "#/definitions/Operation"
+          },
+          "maxItems": 100,
+          "type": "array"
+        },
+        "seq_num": {
+          "$ref": "#/definitions/SequenceNumber"
+        },
+        "source_account_ed25519": {
+          "$ref": "#/definitions/Uint256"
+        },
+        "time_bounds": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TimeBounds"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "ext",
+        "fee",
+        "memo",
+        "operations",
+        "seq_num",
+        "source_account_ed25519"
+      ],
+      "type": "object"
+    },
+    "TransactionV0Envelope": {
+      "description": "TransactionV0Envelope is an XDR Struct defines as:\n\n```text struct TransactionV0Envelope { TransactionV0 tx; /* Each decorated signature is a signature over the SHA256 hash of * a TransactionSignaturePayload */ DecoratedSignature signatures<20>; }; ```",
+      "properties": {
+        "signatures": {
+          "items": {
+            "$ref": "#/definitions/DecoratedSignature"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "tx": {
+          "$ref": "#/definitions/TransactionV0"
+        }
+      },
+      "required": [
+        "signatures",
+        "tx"
+      ],
+      "type": "object"
+    },
+    "TransactionV0Ext": {
+      "description": "TransactionV0Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "enum": [
+        "v0"
+      ],
+      "type": "string"
+    },
+    "TransactionV1Envelope": {
+      "description": "TransactionV1Envelope is an XDR Struct defines as:\n\n```text struct TransactionV1Envelope { Transaction tx; /* Each decorated signature is a signature over the SHA256 hash of * a TransactionSignaturePayload */ DecoratedSignature signatures<20>; }; ```",
+      "properties": {
+        "signatures": {
+          "items": {
+            "$ref": "#/definitions/DecoratedSignature"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "tx": {
+          "$ref": "#/definitions/Transaction"
+        }
+      },
+      "required": [
+        "signatures",
+        "tx"
+      ],
+      "type": "object"
+    },
+    "TrustLineAsset": {
+      "description": "TrustLineAsset is an XDR Union defines as:\n\n```text union TrustLineAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: PoolID liquidityPoolID;\n\n// add other asset types here in the future }; ```",
+      "oneOf": [
+        {
+          "enum": [
+            "native"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "credit_alphanum4": {
+              "$ref": "#/definitions/AlphaNum4"
+            }
+          },
+          "required": [
+            "credit_alphanum4"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "credit_alphanum12": {
+              "$ref": "#/definitions/AlphaNum12"
+            }
+          },
+          "required": [
+            "credit_alphanum12"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "pool_share": {
+              "$ref": "#/definitions/PoolId"
+            }
+          },
+          "required": [
+            "pool_share"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "UInt128Parts": {
+      "description": "UInt128Parts is an XDR Struct defines as:\n\n```text struct UInt128Parts { uint64 hi; uint64 lo; }; ```",
+      "properties": {
+        "hi": {
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "lo": {
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hi",
+        "lo"
+      ],
+      "type": "object"
+    },
+    "UInt256Parts": {
+      "description": "UInt256Parts is an XDR Struct defines as:\n\n```text struct UInt256Parts { uint64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
+      "properties": {
+        "hi_hi": {
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "hi_lo": {
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "lo_hi": {
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "lo_lo": {
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hi_hi",
+        "hi_lo",
+        "lo_hi",
+        "lo_lo"
+      ],
+      "type": "object"
+    },
+    "Uint256": {
+      "description": "Uint256 is an XDR Typedef defines as:\n\n```text typedef opaque uint256[32]; ```",
+      "items": {
+        "format": "uint8",
+        "minimum": 0.0,
+        "type": "integer"
+      },
+      "maxItems": 32,
+      "minItems": 32,
+      "type": "array"
+    }
+  },
+  "description": "TransactionEnvelope is an XDR Union defines as:\n\n```text union TransactionEnvelope switch (EnvelopeType type) { case ENVELOPE_TYPE_TX_V0: TransactionV0Envelope v0; case ENVELOPE_TYPE_TX: TransactionV1Envelope v1; case ENVELOPE_TYPE_TX_FEE_BUMP: FeeBumpTransactionEnvelope feeBump; }; ```",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "tx_v0": {
+          "$ref": "#/definitions/TransactionV0Envelope"
+        }
+      },
+      "required": [
+        "tx_v0"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "tx": {
+          "$ref": "#/definitions/TransactionV1Envelope"
+        }
+      },
+      "required": [
+        "tx"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "tx_fee_bump": {
+          "$ref": "#/definitions/FeeBumpTransactionEnvelope"
+        }
+      },
+      "required": [
+        "tx_fee_bump"
+      ],
+      "type": "object"
+    }
+  ],
+  "title": "TransactionEnvelope"
+}

@@ -15,7 +15,7 @@ path = "src/bin/stellar-xdr/main.rs"
 required-features = ["cli"]
 doctest = false
 
-[build_dependencies]
+[build-dependencies]
 crate-git-revision = "0.0.6"
 
 [dependencies]
@@ -31,7 +31,8 @@ serde_json = { version = "1.0.89", optional = true }
 thiserror = { version = "1.0.37", optional = true }
 schemars = { version = "0.8.16", optional = true }
 
-[dev_dependencies]
+[dev-dependencies]
+insta = { version = "1.36.1", features = ["json"] }
 serde_json = "1.0.89"
 
 [features]
@@ -54,3 +55,7 @@ cli = ["std", "curr", "next", "base64", "serde", "serde_json", "dep:clap", "dep:
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docs"]
+
+[profile.dev.package]
+insta.opt-level = 3
+similar.opt-level = 3

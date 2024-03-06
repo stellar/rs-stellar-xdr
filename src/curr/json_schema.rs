@@ -29,17 +29,27 @@ impl<const MAX: u32> JsonSchema for super::BytesM<MAX> {
     }
 
     fn json_schema(gen: &mut gen::SchemaGenerator) -> schema::Schema {
-        mut_string(String::json_schema(gen), |string: StringValidation| {
-            StringValidation {
-                pattern: Some(format!(
-                    "^[A-Fa-f0-9]{{{}}}$",
-                    MAX.checked_mul(2).unwrap_or(u32::MAX)
-                )),
+        let schema_ = String::json_schema(gen);
+        if let Schema::Object(mut schema) = schema_ {
+            schema.extensions.insert(
+                "contentEncoding".to_owned(),
+                serde_json::Value::String("base64".to_string()),
+            );
+            schema.extensions.insert(
+                "contentMediaType".to_owned(),
+                serde_json::Value::String("text/plain".to_string()),
+            );
+            mut_string(schema.into(), |string| StringValidation {
+                max_length: Some(((MAX.checked_mul(4).unwrap_or(u32::MAX) / 3) + 3) & !3),
+                min_length: Some(((MAX.checked_mul(4).unwrap_or(u32::MAX) / 3) + 3) & !3),
                 ..string
-            }
-        })
+            })
+        } else {
+            schema_
+        }
     }
 }
+
 impl<T: JsonSchema + ReadXdr> JsonSchema for super::Frame<T> {
     fn schema_name() -> String {
         format!("Frame<{}>", T::schema_name())

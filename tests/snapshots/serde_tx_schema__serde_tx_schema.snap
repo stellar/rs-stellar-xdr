@@ -604,8 +604,11 @@ expression: json
       "type": "object"
     },
     "DataValue": {
+      "contentEncoding": "base64",
+      "contentMediaType": "text/plain",
       "description": "DataValue is an XDR Typedef defines as:\n\n```text typedef opaque DataValue<64>; ```",
-      "pattern": "^[A-Fa-f0-9]{128}$",
+      "maxLength": 88,
+      "minLength": 88,
       "type": "string"
     },
     "DecoratedSignature": {
@@ -766,7 +769,10 @@ expression: json
           "additionalProperties": false,
           "properties": {
             "upload_contract_wasm": {
-              "pattern": "^[A-Fa-f0-9]{4294967295}$",
+              "contentEncoding": "base64",
+              "contentMediaType": "text/plain",
+              "maxLength": 1431655768,
+              "minLength": 1431655768,
               "type": "string"
             }
           },
@@ -2119,8 +2125,11 @@ expression: json
       ]
     },
     "ScBytes": {
+      "contentEncoding": "base64",
+      "contentMediaType": "text/plain",
       "description": "ScBytes is an XDR Typedef defines as:\n\n```text typedef opaque SCBytes<>; ```",
-      "pattern": "^[A-Fa-f0-9]{4294967295}$",
+      "maxLength": 1431655768,
+      "minLength": 1431655768,
       "type": "string"
     },
     "ScContractInstance": {
@@ -2733,8 +2742,11 @@ expression: json
       "type": "object"
     },
     "Signature": {
+      "contentEncoding": "base64",
+      "contentMediaType": "text/plain",
       "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
-      "pattern": "^[A-Fa-f0-9]{128}$",
+      "maxLength": 88,
+      "minLength": 88,
       "type": "string"
     },
     "SignatureHint": {
@@ -2826,7 +2838,10 @@ expression: json
           "$ref": "#/definitions/Uint256"
         },
         "payload": {
-          "pattern": "^[A-Fa-f0-9]{128}$",
+          "contentEncoding": "base64",
+          "contentMediaType": "text/plain",
+          "maxLength": 88,
+          "minLength": 88,
           "type": "string"
         }
       },

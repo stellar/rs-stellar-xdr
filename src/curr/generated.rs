@@ -2206,6 +2206,7 @@ where
     }
 }
 
+#[cfg(all(feature = "schemars", feature = "serde", feature = "alloc"))]
 fn mut_array(
     schema: schemars::schema::Schema,
     f: impl FnOnce(schemars::schema::ArrayValidation) -> schemars::schema::ArrayValidation,
@@ -2220,6 +2221,7 @@ fn mut_array(
     }
 }
 
+#[cfg(all(feature = "schemars", feature = "serde", feature = "alloc"))]
 fn mut_string(
     schema: schemars::schema::Schema,
     f: impl FnOnce(schemars::schema::StringValidation) -> schemars::schema::StringValidation,

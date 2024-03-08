@@ -4,8 +4,8 @@ CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features b
 
 CARGO_DOC_ARGS?=--open
 
-XDRGEN_VERSION=6499bc7413bf3ecd413916bbb82dfb04bc71a0a0
-# LOCAL_XDRGEN=1
+XDRGEN_VERSION=c95a5bd7f9dff8dff53cadcef3014ceb69ab7088
+# XDRGEN_LOCAL=1
 XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12
 XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12
 
@@ -35,7 +35,7 @@ generate: src/curr/generated.rs xdr/curr-version src/next/generated.rs xdr/next-
 
 src/curr/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@
-ifeq ($(LOCAL_XDRGEN),)
+ifeq ($(XDRGEN_LOCAL),)
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.8 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
@@ -54,7 +54,7 @@ xdr/curr-version: $(wildcard .git/modules/xdr/curr/**/*) $(wildcard xdr/curr/*.x
 
 src/next/generated.rs: $(sort $(wildcard xdr/next/*.x))
 	> $@
-ifeq ($(LOCAL_XDRGEN),)
+ifeq ($(XDRGEN_LOCAL),)
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.8 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \

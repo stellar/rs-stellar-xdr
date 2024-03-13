@@ -1,4 +1,5 @@
 use clap::{Args, ValueEnum};
+use schemars::gen::SchemaSettings;
 
 use crate::cli::Channel;
 
@@ -38,9 +39,11 @@ macro_rules! run_x_case_for_type {
         if $type_name == stringify!($type) {
             match $output {
                 OutputFormat::JsonSchemaDraft7 => {
-                    let schema = schemars::schema_for!(crate::$m::$type);
+                    let settings = SchemaSettings::draft07();
+                    let generator = settings.into_generator();
+                    let schema = generator.into_root_schema_for::<crate::$m::$type>();
                     println!("{}", serde_json::to_string_pretty(&schema)?);
-                },
+                }
             }
         }
     };

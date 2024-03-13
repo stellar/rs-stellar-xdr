@@ -34,29 +34,17 @@ impl Default for OutputFormat {
     }
 }
 
-macro_rules! run_x_case_for_type {
-    ($type:tt, $m:tt, $type_name:expr, $output:expr) => {
-        if $type_name == stringify!($type) {
-            match $output {
-                OutputFormat::JsonSchemaDraft7 => {
-                    let settings = SchemaSettings::draft07();
-                    let generator = settings.into_generator();
-                    let schema = generator.into_root_schema_for::<crate::$m::$type>();
-                    println!("{}", serde_json::to_string_pretty(&schema)?);
-                }
-            }
-        }
-    };
-}
-
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
             use std::str::FromStr;
-            let _ = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
+            let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
-            crate::$m::call_macro_with_each_type! { run_x_case_for_type, $m, {&self.r#type}, {self.output} }
+            let settings = SchemaSettings::draft07();
+            let generator = settings.into_generator();
+            let schema = r#type.json_schema(generator);
+            println!("{}", serde_json::to_string_pretty(&schema)?);
             Ok(())
         }
     };

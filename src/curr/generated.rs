@@ -45366,6 +45366,612 @@ impl TypeVariant {
     pub const fn variants() -> [TypeVariant; 418] {
         Self::VARIANTS
     }
+
+    #[cfg(feature = "schemars")]
+    #[must_use]
+    #[allow(clippy::too_many_lines)]
+    pub fn json_schema(&self, gen: schemars::gen::SchemaGenerator) -> schemars::schema::RootSchema {
+        match self {
+            Self::Value => gen.into_root_schema_for::<Value>(),
+            Self::ScpBallot => gen.into_root_schema_for::<ScpBallot>(),
+            Self::ScpStatementType => gen.into_root_schema_for::<ScpStatementType>(),
+            Self::ScpNomination => gen.into_root_schema_for::<ScpNomination>(),
+            Self::ScpStatement => gen.into_root_schema_for::<ScpStatement>(),
+            Self::ScpStatementPledges => gen.into_root_schema_for::<ScpStatementPledges>(),
+            Self::ScpStatementPrepare => gen.into_root_schema_for::<ScpStatementPrepare>(),
+            Self::ScpStatementConfirm => gen.into_root_schema_for::<ScpStatementConfirm>(),
+            Self::ScpStatementExternalize => gen.into_root_schema_for::<ScpStatementExternalize>(),
+            Self::ScpEnvelope => gen.into_root_schema_for::<ScpEnvelope>(),
+            Self::ScpQuorumSet => gen.into_root_schema_for::<ScpQuorumSet>(),
+            Self::ConfigSettingContractExecutionLanesV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractExecutionLanesV0>()
+            }
+            Self::ConfigSettingContractComputeV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractComputeV0>()
+            }
+            Self::ConfigSettingContractLedgerCostV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractLedgerCostV0>()
+            }
+            Self::ConfigSettingContractHistoricalDataV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractHistoricalDataV0>()
+            }
+            Self::ConfigSettingContractEventsV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractEventsV0>()
+            }
+            Self::ConfigSettingContractBandwidthV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractBandwidthV0>()
+            }
+            Self::ContractCostType => gen.into_root_schema_for::<ContractCostType>(),
+            Self::ContractCostParamEntry => gen.into_root_schema_for::<ContractCostParamEntry>(),
+            Self::StateArchivalSettings => gen.into_root_schema_for::<StateArchivalSettings>(),
+            Self::EvictionIterator => gen.into_root_schema_for::<EvictionIterator>(),
+            Self::ContractCostParams => gen.into_root_schema_for::<ContractCostParams>(),
+            Self::ConfigSettingId => gen.into_root_schema_for::<ConfigSettingId>(),
+            Self::ConfigSettingEntry => gen.into_root_schema_for::<ConfigSettingEntry>(),
+            Self::ScEnvMetaKind => gen.into_root_schema_for::<ScEnvMetaKind>(),
+            Self::ScEnvMetaEntry => gen.into_root_schema_for::<ScEnvMetaEntry>(),
+            Self::ScMetaV0 => gen.into_root_schema_for::<ScMetaV0>(),
+            Self::ScMetaKind => gen.into_root_schema_for::<ScMetaKind>(),
+            Self::ScMetaEntry => gen.into_root_schema_for::<ScMetaEntry>(),
+            Self::ScSpecType => gen.into_root_schema_for::<ScSpecType>(),
+            Self::ScSpecTypeOption => gen.into_root_schema_for::<ScSpecTypeOption>(),
+            Self::ScSpecTypeResult => gen.into_root_schema_for::<ScSpecTypeResult>(),
+            Self::ScSpecTypeVec => gen.into_root_schema_for::<ScSpecTypeVec>(),
+            Self::ScSpecTypeMap => gen.into_root_schema_for::<ScSpecTypeMap>(),
+            Self::ScSpecTypeTuple => gen.into_root_schema_for::<ScSpecTypeTuple>(),
+            Self::ScSpecTypeBytesN => gen.into_root_schema_for::<ScSpecTypeBytesN>(),
+            Self::ScSpecTypeUdt => gen.into_root_schema_for::<ScSpecTypeUdt>(),
+            Self::ScSpecTypeDef => gen.into_root_schema_for::<ScSpecTypeDef>(),
+            Self::ScSpecUdtStructFieldV0 => gen.into_root_schema_for::<ScSpecUdtStructFieldV0>(),
+            Self::ScSpecUdtStructV0 => gen.into_root_schema_for::<ScSpecUdtStructV0>(),
+            Self::ScSpecUdtUnionCaseVoidV0 => {
+                gen.into_root_schema_for::<ScSpecUdtUnionCaseVoidV0>()
+            }
+            Self::ScSpecUdtUnionCaseTupleV0 => {
+                gen.into_root_schema_for::<ScSpecUdtUnionCaseTupleV0>()
+            }
+            Self::ScSpecUdtUnionCaseV0Kind => {
+                gen.into_root_schema_for::<ScSpecUdtUnionCaseV0Kind>()
+            }
+            Self::ScSpecUdtUnionCaseV0 => gen.into_root_schema_for::<ScSpecUdtUnionCaseV0>(),
+            Self::ScSpecUdtUnionV0 => gen.into_root_schema_for::<ScSpecUdtUnionV0>(),
+            Self::ScSpecUdtEnumCaseV0 => gen.into_root_schema_for::<ScSpecUdtEnumCaseV0>(),
+            Self::ScSpecUdtEnumV0 => gen.into_root_schema_for::<ScSpecUdtEnumV0>(),
+            Self::ScSpecUdtErrorEnumCaseV0 => {
+                gen.into_root_schema_for::<ScSpecUdtErrorEnumCaseV0>()
+            }
+            Self::ScSpecUdtErrorEnumV0 => gen.into_root_schema_for::<ScSpecUdtErrorEnumV0>(),
+            Self::ScSpecFunctionInputV0 => gen.into_root_schema_for::<ScSpecFunctionInputV0>(),
+            Self::ScSpecFunctionV0 => gen.into_root_schema_for::<ScSpecFunctionV0>(),
+            Self::ScSpecEntryKind => gen.into_root_schema_for::<ScSpecEntryKind>(),
+            Self::ScSpecEntry => gen.into_root_schema_for::<ScSpecEntry>(),
+            Self::ScValType => gen.into_root_schema_for::<ScValType>(),
+            Self::ScErrorType => gen.into_root_schema_for::<ScErrorType>(),
+            Self::ScErrorCode => gen.into_root_schema_for::<ScErrorCode>(),
+            Self::ScError => gen.into_root_schema_for::<ScError>(),
+            Self::UInt128Parts => gen.into_root_schema_for::<UInt128Parts>(),
+            Self::Int128Parts => gen.into_root_schema_for::<Int128Parts>(),
+            Self::UInt256Parts => gen.into_root_schema_for::<UInt256Parts>(),
+            Self::Int256Parts => gen.into_root_schema_for::<Int256Parts>(),
+            Self::ContractExecutableType => gen.into_root_schema_for::<ContractExecutableType>(),
+            Self::ContractExecutable => gen.into_root_schema_for::<ContractExecutable>(),
+            Self::ScAddressType => gen.into_root_schema_for::<ScAddressType>(),
+            Self::ScAddress => gen.into_root_schema_for::<ScAddress>(),
+            Self::ScVec => gen.into_root_schema_for::<ScVec>(),
+            Self::ScMap => gen.into_root_schema_for::<ScMap>(),
+            Self::ScBytes => gen.into_root_schema_for::<ScBytes>(),
+            Self::ScString => gen.into_root_schema_for::<ScString>(),
+            Self::ScSymbol => gen.into_root_schema_for::<ScSymbol>(),
+            Self::ScNonceKey => gen.into_root_schema_for::<ScNonceKey>(),
+            Self::ScContractInstance => gen.into_root_schema_for::<ScContractInstance>(),
+            Self::ScVal => gen.into_root_schema_for::<ScVal>(),
+            Self::ScMapEntry => gen.into_root_schema_for::<ScMapEntry>(),
+            Self::StoredTransactionSet => gen.into_root_schema_for::<StoredTransactionSet>(),
+            Self::StoredDebugTransactionSet => {
+                gen.into_root_schema_for::<StoredDebugTransactionSet>()
+            }
+            Self::PersistedScpStateV0 => gen.into_root_schema_for::<PersistedScpStateV0>(),
+            Self::PersistedScpStateV1 => gen.into_root_schema_for::<PersistedScpStateV1>(),
+            Self::PersistedScpState => gen.into_root_schema_for::<PersistedScpState>(),
+            Self::Thresholds => gen.into_root_schema_for::<Thresholds>(),
+            Self::String32 => gen.into_root_schema_for::<String32>(),
+            Self::String64 => gen.into_root_schema_for::<String64>(),
+            Self::SequenceNumber => gen.into_root_schema_for::<SequenceNumber>(),
+            Self::DataValue => gen.into_root_schema_for::<DataValue>(),
+            Self::PoolId => gen.into_root_schema_for::<PoolId>(),
+            Self::AssetCode4 => gen.into_root_schema_for::<AssetCode4>(),
+            Self::AssetCode12 => gen.into_root_schema_for::<AssetCode12>(),
+            Self::AssetType => gen.into_root_schema_for::<AssetType>(),
+            Self::AssetCode => gen.into_root_schema_for::<AssetCode>(),
+            Self::AlphaNum4 => gen.into_root_schema_for::<AlphaNum4>(),
+            Self::AlphaNum12 => gen.into_root_schema_for::<AlphaNum12>(),
+            Self::Asset => gen.into_root_schema_for::<Asset>(),
+            Self::Price => gen.into_root_schema_for::<Price>(),
+            Self::Liabilities => gen.into_root_schema_for::<Liabilities>(),
+            Self::ThresholdIndexes => gen.into_root_schema_for::<ThresholdIndexes>(),
+            Self::LedgerEntryType => gen.into_root_schema_for::<LedgerEntryType>(),
+            Self::Signer => gen.into_root_schema_for::<Signer>(),
+            Self::AccountFlags => gen.into_root_schema_for::<AccountFlags>(),
+            Self::SponsorshipDescriptor => gen.into_root_schema_for::<SponsorshipDescriptor>(),
+            Self::AccountEntryExtensionV3 => gen.into_root_schema_for::<AccountEntryExtensionV3>(),
+            Self::AccountEntryExtensionV2 => gen.into_root_schema_for::<AccountEntryExtensionV2>(),
+            Self::AccountEntryExtensionV2Ext => {
+                gen.into_root_schema_for::<AccountEntryExtensionV2Ext>()
+            }
+            Self::AccountEntryExtensionV1 => gen.into_root_schema_for::<AccountEntryExtensionV1>(),
+            Self::AccountEntryExtensionV1Ext => {
+                gen.into_root_schema_for::<AccountEntryExtensionV1Ext>()
+            }
+            Self::AccountEntry => gen.into_root_schema_for::<AccountEntry>(),
+            Self::AccountEntryExt => gen.into_root_schema_for::<AccountEntryExt>(),
+            Self::TrustLineFlags => gen.into_root_schema_for::<TrustLineFlags>(),
+            Self::LiquidityPoolType => gen.into_root_schema_for::<LiquidityPoolType>(),
+            Self::TrustLineAsset => gen.into_root_schema_for::<TrustLineAsset>(),
+            Self::TrustLineEntryExtensionV2 => {
+                gen.into_root_schema_for::<TrustLineEntryExtensionV2>()
+            }
+            Self::TrustLineEntryExtensionV2Ext => {
+                gen.into_root_schema_for::<TrustLineEntryExtensionV2Ext>()
+            }
+            Self::TrustLineEntry => gen.into_root_schema_for::<TrustLineEntry>(),
+            Self::TrustLineEntryExt => gen.into_root_schema_for::<TrustLineEntryExt>(),
+            Self::TrustLineEntryV1 => gen.into_root_schema_for::<TrustLineEntryV1>(),
+            Self::TrustLineEntryV1Ext => gen.into_root_schema_for::<TrustLineEntryV1Ext>(),
+            Self::OfferEntryFlags => gen.into_root_schema_for::<OfferEntryFlags>(),
+            Self::OfferEntry => gen.into_root_schema_for::<OfferEntry>(),
+            Self::OfferEntryExt => gen.into_root_schema_for::<OfferEntryExt>(),
+            Self::DataEntry => gen.into_root_schema_for::<DataEntry>(),
+            Self::DataEntryExt => gen.into_root_schema_for::<DataEntryExt>(),
+            Self::ClaimPredicateType => gen.into_root_schema_for::<ClaimPredicateType>(),
+            Self::ClaimPredicate => gen.into_root_schema_for::<ClaimPredicate>(),
+            Self::ClaimantType => gen.into_root_schema_for::<ClaimantType>(),
+            Self::Claimant => gen.into_root_schema_for::<Claimant>(),
+            Self::ClaimantV0 => gen.into_root_schema_for::<ClaimantV0>(),
+            Self::ClaimableBalanceIdType => gen.into_root_schema_for::<ClaimableBalanceIdType>(),
+            Self::ClaimableBalanceId => gen.into_root_schema_for::<ClaimableBalanceId>(),
+            Self::ClaimableBalanceFlags => gen.into_root_schema_for::<ClaimableBalanceFlags>(),
+            Self::ClaimableBalanceEntryExtensionV1 => {
+                gen.into_root_schema_for::<ClaimableBalanceEntryExtensionV1>()
+            }
+            Self::ClaimableBalanceEntryExtensionV1Ext => {
+                gen.into_root_schema_for::<ClaimableBalanceEntryExtensionV1Ext>()
+            }
+            Self::ClaimableBalanceEntry => gen.into_root_schema_for::<ClaimableBalanceEntry>(),
+            Self::ClaimableBalanceEntryExt => {
+                gen.into_root_schema_for::<ClaimableBalanceEntryExt>()
+            }
+            Self::LiquidityPoolConstantProductParameters => {
+                gen.into_root_schema_for::<LiquidityPoolConstantProductParameters>()
+            }
+            Self::LiquidityPoolEntry => gen.into_root_schema_for::<LiquidityPoolEntry>(),
+            Self::LiquidityPoolEntryBody => gen.into_root_schema_for::<LiquidityPoolEntryBody>(),
+            Self::LiquidityPoolEntryConstantProduct => {
+                gen.into_root_schema_for::<LiquidityPoolEntryConstantProduct>()
+            }
+            Self::ContractDataDurability => gen.into_root_schema_for::<ContractDataDurability>(),
+            Self::ContractDataEntry => gen.into_root_schema_for::<ContractDataEntry>(),
+            Self::ContractCodeEntry => gen.into_root_schema_for::<ContractCodeEntry>(),
+            Self::TtlEntry => gen.into_root_schema_for::<TtlEntry>(),
+            Self::LedgerEntryExtensionV1 => gen.into_root_schema_for::<LedgerEntryExtensionV1>(),
+            Self::LedgerEntryExtensionV1Ext => {
+                gen.into_root_schema_for::<LedgerEntryExtensionV1Ext>()
+            }
+            Self::LedgerEntry => gen.into_root_schema_for::<LedgerEntry>(),
+            Self::LedgerEntryData => gen.into_root_schema_for::<LedgerEntryData>(),
+            Self::LedgerEntryExt => gen.into_root_schema_for::<LedgerEntryExt>(),
+            Self::LedgerKey => gen.into_root_schema_for::<LedgerKey>(),
+            Self::LedgerKeyAccount => gen.into_root_schema_for::<LedgerKeyAccount>(),
+            Self::LedgerKeyTrustLine => gen.into_root_schema_for::<LedgerKeyTrustLine>(),
+            Self::LedgerKeyOffer => gen.into_root_schema_for::<LedgerKeyOffer>(),
+            Self::LedgerKeyData => gen.into_root_schema_for::<LedgerKeyData>(),
+            Self::LedgerKeyClaimableBalance => {
+                gen.into_root_schema_for::<LedgerKeyClaimableBalance>()
+            }
+            Self::LedgerKeyLiquidityPool => gen.into_root_schema_for::<LedgerKeyLiquidityPool>(),
+            Self::LedgerKeyContractData => gen.into_root_schema_for::<LedgerKeyContractData>(),
+            Self::LedgerKeyContractCode => gen.into_root_schema_for::<LedgerKeyContractCode>(),
+            Self::LedgerKeyConfigSetting => gen.into_root_schema_for::<LedgerKeyConfigSetting>(),
+            Self::LedgerKeyTtl => gen.into_root_schema_for::<LedgerKeyTtl>(),
+            Self::EnvelopeType => gen.into_root_schema_for::<EnvelopeType>(),
+            Self::UpgradeType => gen.into_root_schema_for::<UpgradeType>(),
+            Self::StellarValueType => gen.into_root_schema_for::<StellarValueType>(),
+            Self::LedgerCloseValueSignature => {
+                gen.into_root_schema_for::<LedgerCloseValueSignature>()
+            }
+            Self::StellarValue => gen.into_root_schema_for::<StellarValue>(),
+            Self::StellarValueExt => gen.into_root_schema_for::<StellarValueExt>(),
+            Self::LedgerHeaderFlags => gen.into_root_schema_for::<LedgerHeaderFlags>(),
+            Self::LedgerHeaderExtensionV1 => gen.into_root_schema_for::<LedgerHeaderExtensionV1>(),
+            Self::LedgerHeaderExtensionV1Ext => {
+                gen.into_root_schema_for::<LedgerHeaderExtensionV1Ext>()
+            }
+            Self::LedgerHeader => gen.into_root_schema_for::<LedgerHeader>(),
+            Self::LedgerHeaderExt => gen.into_root_schema_for::<LedgerHeaderExt>(),
+            Self::LedgerUpgradeType => gen.into_root_schema_for::<LedgerUpgradeType>(),
+            Self::ConfigUpgradeSetKey => gen.into_root_schema_for::<ConfigUpgradeSetKey>(),
+            Self::LedgerUpgrade => gen.into_root_schema_for::<LedgerUpgrade>(),
+            Self::ConfigUpgradeSet => gen.into_root_schema_for::<ConfigUpgradeSet>(),
+            Self::BucketEntryType => gen.into_root_schema_for::<BucketEntryType>(),
+            Self::BucketMetadata => gen.into_root_schema_for::<BucketMetadata>(),
+            Self::BucketMetadataExt => gen.into_root_schema_for::<BucketMetadataExt>(),
+            Self::BucketEntry => gen.into_root_schema_for::<BucketEntry>(),
+            Self::TxSetComponentType => gen.into_root_schema_for::<TxSetComponentType>(),
+            Self::TxSetComponent => gen.into_root_schema_for::<TxSetComponent>(),
+            Self::TxSetComponentTxsMaybeDiscountedFee => {
+                gen.into_root_schema_for::<TxSetComponentTxsMaybeDiscountedFee>()
+            }
+            Self::TransactionPhase => gen.into_root_schema_for::<TransactionPhase>(),
+            Self::TransactionSet => gen.into_root_schema_for::<TransactionSet>(),
+            Self::TransactionSetV1 => gen.into_root_schema_for::<TransactionSetV1>(),
+            Self::GeneralizedTransactionSet => {
+                gen.into_root_schema_for::<GeneralizedTransactionSet>()
+            }
+            Self::TransactionResultPair => gen.into_root_schema_for::<TransactionResultPair>(),
+            Self::TransactionResultSet => gen.into_root_schema_for::<TransactionResultSet>(),
+            Self::TransactionHistoryEntry => gen.into_root_schema_for::<TransactionHistoryEntry>(),
+            Self::TransactionHistoryEntryExt => {
+                gen.into_root_schema_for::<TransactionHistoryEntryExt>()
+            }
+            Self::TransactionHistoryResultEntry => {
+                gen.into_root_schema_for::<TransactionHistoryResultEntry>()
+            }
+            Self::TransactionHistoryResultEntryExt => {
+                gen.into_root_schema_for::<TransactionHistoryResultEntryExt>()
+            }
+            Self::LedgerHeaderHistoryEntry => {
+                gen.into_root_schema_for::<LedgerHeaderHistoryEntry>()
+            }
+            Self::LedgerHeaderHistoryEntryExt => {
+                gen.into_root_schema_for::<LedgerHeaderHistoryEntryExt>()
+            }
+            Self::LedgerScpMessages => gen.into_root_schema_for::<LedgerScpMessages>(),
+            Self::ScpHistoryEntryV0 => gen.into_root_schema_for::<ScpHistoryEntryV0>(),
+            Self::ScpHistoryEntry => gen.into_root_schema_for::<ScpHistoryEntry>(),
+            Self::LedgerEntryChangeType => gen.into_root_schema_for::<LedgerEntryChangeType>(),
+            Self::LedgerEntryChange => gen.into_root_schema_for::<LedgerEntryChange>(),
+            Self::LedgerEntryChanges => gen.into_root_schema_for::<LedgerEntryChanges>(),
+            Self::OperationMeta => gen.into_root_schema_for::<OperationMeta>(),
+            Self::TransactionMetaV1 => gen.into_root_schema_for::<TransactionMetaV1>(),
+            Self::TransactionMetaV2 => gen.into_root_schema_for::<TransactionMetaV2>(),
+            Self::ContractEventType => gen.into_root_schema_for::<ContractEventType>(),
+            Self::ContractEvent => gen.into_root_schema_for::<ContractEvent>(),
+            Self::ContractEventBody => gen.into_root_schema_for::<ContractEventBody>(),
+            Self::ContractEventV0 => gen.into_root_schema_for::<ContractEventV0>(),
+            Self::DiagnosticEvent => gen.into_root_schema_for::<DiagnosticEvent>(),
+            Self::SorobanTransactionMeta => gen.into_root_schema_for::<SorobanTransactionMeta>(),
+            Self::TransactionMetaV3 => gen.into_root_schema_for::<TransactionMetaV3>(),
+            Self::InvokeHostFunctionSuccessPreImage => {
+                gen.into_root_schema_for::<InvokeHostFunctionSuccessPreImage>()
+            }
+            Self::TransactionMeta => gen.into_root_schema_for::<TransactionMeta>(),
+            Self::TransactionResultMeta => gen.into_root_schema_for::<TransactionResultMeta>(),
+            Self::UpgradeEntryMeta => gen.into_root_schema_for::<UpgradeEntryMeta>(),
+            Self::LedgerCloseMetaV0 => gen.into_root_schema_for::<LedgerCloseMetaV0>(),
+            Self::LedgerCloseMetaV1 => gen.into_root_schema_for::<LedgerCloseMetaV1>(),
+            Self::LedgerCloseMeta => gen.into_root_schema_for::<LedgerCloseMeta>(),
+            Self::ErrorCode => gen.into_root_schema_for::<ErrorCode>(),
+            Self::SError => gen.into_root_schema_for::<SError>(),
+            Self::SendMore => gen.into_root_schema_for::<SendMore>(),
+            Self::SendMoreExtended => gen.into_root_schema_for::<SendMoreExtended>(),
+            Self::AuthCert => gen.into_root_schema_for::<AuthCert>(),
+            Self::Hello => gen.into_root_schema_for::<Hello>(),
+            Self::Auth => gen.into_root_schema_for::<Auth>(),
+            Self::IpAddrType => gen.into_root_schema_for::<IpAddrType>(),
+            Self::PeerAddress => gen.into_root_schema_for::<PeerAddress>(),
+            Self::PeerAddressIp => gen.into_root_schema_for::<PeerAddressIp>(),
+            Self::MessageType => gen.into_root_schema_for::<MessageType>(),
+            Self::DontHave => gen.into_root_schema_for::<DontHave>(),
+            Self::SurveyMessageCommandType => {
+                gen.into_root_schema_for::<SurveyMessageCommandType>()
+            }
+            Self::SurveyMessageResponseType => {
+                gen.into_root_schema_for::<SurveyMessageResponseType>()
+            }
+            Self::SurveyRequestMessage => gen.into_root_schema_for::<SurveyRequestMessage>(),
+            Self::SignedSurveyRequestMessage => {
+                gen.into_root_schema_for::<SignedSurveyRequestMessage>()
+            }
+            Self::EncryptedBody => gen.into_root_schema_for::<EncryptedBody>(),
+            Self::SurveyResponseMessage => gen.into_root_schema_for::<SurveyResponseMessage>(),
+            Self::SignedSurveyResponseMessage => {
+                gen.into_root_schema_for::<SignedSurveyResponseMessage>()
+            }
+            Self::PeerStats => gen.into_root_schema_for::<PeerStats>(),
+            Self::PeerStatList => gen.into_root_schema_for::<PeerStatList>(),
+            Self::TopologyResponseBodyV0 => gen.into_root_schema_for::<TopologyResponseBodyV0>(),
+            Self::TopologyResponseBodyV1 => gen.into_root_schema_for::<TopologyResponseBodyV1>(),
+            Self::SurveyResponseBody => gen.into_root_schema_for::<SurveyResponseBody>(),
+            Self::TxAdvertVector => gen.into_root_schema_for::<TxAdvertVector>(),
+            Self::FloodAdvert => gen.into_root_schema_for::<FloodAdvert>(),
+            Self::TxDemandVector => gen.into_root_schema_for::<TxDemandVector>(),
+            Self::FloodDemand => gen.into_root_schema_for::<FloodDemand>(),
+            Self::StellarMessage => gen.into_root_schema_for::<StellarMessage>(),
+            Self::AuthenticatedMessage => gen.into_root_schema_for::<AuthenticatedMessage>(),
+            Self::AuthenticatedMessageV0 => gen.into_root_schema_for::<AuthenticatedMessageV0>(),
+            Self::LiquidityPoolParameters => gen.into_root_schema_for::<LiquidityPoolParameters>(),
+            Self::MuxedAccount => gen.into_root_schema_for::<MuxedAccount>(),
+            Self::MuxedAccountMed25519 => gen.into_root_schema_for::<MuxedAccountMed25519>(),
+            Self::DecoratedSignature => gen.into_root_schema_for::<DecoratedSignature>(),
+            Self::OperationType => gen.into_root_schema_for::<OperationType>(),
+            Self::CreateAccountOp => gen.into_root_schema_for::<CreateAccountOp>(),
+            Self::PaymentOp => gen.into_root_schema_for::<PaymentOp>(),
+            Self::PathPaymentStrictReceiveOp => {
+                gen.into_root_schema_for::<PathPaymentStrictReceiveOp>()
+            }
+            Self::PathPaymentStrictSendOp => gen.into_root_schema_for::<PathPaymentStrictSendOp>(),
+            Self::ManageSellOfferOp => gen.into_root_schema_for::<ManageSellOfferOp>(),
+            Self::ManageBuyOfferOp => gen.into_root_schema_for::<ManageBuyOfferOp>(),
+            Self::CreatePassiveSellOfferOp => {
+                gen.into_root_schema_for::<CreatePassiveSellOfferOp>()
+            }
+            Self::SetOptionsOp => gen.into_root_schema_for::<SetOptionsOp>(),
+            Self::ChangeTrustAsset => gen.into_root_schema_for::<ChangeTrustAsset>(),
+            Self::ChangeTrustOp => gen.into_root_schema_for::<ChangeTrustOp>(),
+            Self::AllowTrustOp => gen.into_root_schema_for::<AllowTrustOp>(),
+            Self::ManageDataOp => gen.into_root_schema_for::<ManageDataOp>(),
+            Self::BumpSequenceOp => gen.into_root_schema_for::<BumpSequenceOp>(),
+            Self::CreateClaimableBalanceOp => {
+                gen.into_root_schema_for::<CreateClaimableBalanceOp>()
+            }
+            Self::ClaimClaimableBalanceOp => gen.into_root_schema_for::<ClaimClaimableBalanceOp>(),
+            Self::BeginSponsoringFutureReservesOp => {
+                gen.into_root_schema_for::<BeginSponsoringFutureReservesOp>()
+            }
+            Self::RevokeSponsorshipType => gen.into_root_schema_for::<RevokeSponsorshipType>(),
+            Self::RevokeSponsorshipOp => gen.into_root_schema_for::<RevokeSponsorshipOp>(),
+            Self::RevokeSponsorshipOpSigner => {
+                gen.into_root_schema_for::<RevokeSponsorshipOpSigner>()
+            }
+            Self::ClawbackOp => gen.into_root_schema_for::<ClawbackOp>(),
+            Self::ClawbackClaimableBalanceOp => {
+                gen.into_root_schema_for::<ClawbackClaimableBalanceOp>()
+            }
+            Self::SetTrustLineFlagsOp => gen.into_root_schema_for::<SetTrustLineFlagsOp>(),
+            Self::LiquidityPoolDepositOp => gen.into_root_schema_for::<LiquidityPoolDepositOp>(),
+            Self::LiquidityPoolWithdrawOp => gen.into_root_schema_for::<LiquidityPoolWithdrawOp>(),
+            Self::HostFunctionType => gen.into_root_schema_for::<HostFunctionType>(),
+            Self::ContractIdPreimageType => gen.into_root_schema_for::<ContractIdPreimageType>(),
+            Self::ContractIdPreimage => gen.into_root_schema_for::<ContractIdPreimage>(),
+            Self::ContractIdPreimageFromAddress => {
+                gen.into_root_schema_for::<ContractIdPreimageFromAddress>()
+            }
+            Self::CreateContractArgs => gen.into_root_schema_for::<CreateContractArgs>(),
+            Self::InvokeContractArgs => gen.into_root_schema_for::<InvokeContractArgs>(),
+            Self::HostFunction => gen.into_root_schema_for::<HostFunction>(),
+            Self::SorobanAuthorizedFunctionType => {
+                gen.into_root_schema_for::<SorobanAuthorizedFunctionType>()
+            }
+            Self::SorobanAuthorizedFunction => {
+                gen.into_root_schema_for::<SorobanAuthorizedFunction>()
+            }
+            Self::SorobanAuthorizedInvocation => {
+                gen.into_root_schema_for::<SorobanAuthorizedInvocation>()
+            }
+            Self::SorobanAddressCredentials => {
+                gen.into_root_schema_for::<SorobanAddressCredentials>()
+            }
+            Self::SorobanCredentialsType => gen.into_root_schema_for::<SorobanCredentialsType>(),
+            Self::SorobanCredentials => gen.into_root_schema_for::<SorobanCredentials>(),
+            Self::SorobanAuthorizationEntry => {
+                gen.into_root_schema_for::<SorobanAuthorizationEntry>()
+            }
+            Self::InvokeHostFunctionOp => gen.into_root_schema_for::<InvokeHostFunctionOp>(),
+            Self::ExtendFootprintTtlOp => gen.into_root_schema_for::<ExtendFootprintTtlOp>(),
+            Self::RestoreFootprintOp => gen.into_root_schema_for::<RestoreFootprintOp>(),
+            Self::Operation => gen.into_root_schema_for::<Operation>(),
+            Self::OperationBody => gen.into_root_schema_for::<OperationBody>(),
+            Self::HashIdPreimage => gen.into_root_schema_for::<HashIdPreimage>(),
+            Self::HashIdPreimageOperationId => {
+                gen.into_root_schema_for::<HashIdPreimageOperationId>()
+            }
+            Self::HashIdPreimageRevokeId => gen.into_root_schema_for::<HashIdPreimageRevokeId>(),
+            Self::HashIdPreimageContractId => {
+                gen.into_root_schema_for::<HashIdPreimageContractId>()
+            }
+            Self::HashIdPreimageSorobanAuthorization => {
+                gen.into_root_schema_for::<HashIdPreimageSorobanAuthorization>()
+            }
+            Self::MemoType => gen.into_root_schema_for::<MemoType>(),
+            Self::Memo => gen.into_root_schema_for::<Memo>(),
+            Self::TimeBounds => gen.into_root_schema_for::<TimeBounds>(),
+            Self::LedgerBounds => gen.into_root_schema_for::<LedgerBounds>(),
+            Self::PreconditionsV2 => gen.into_root_schema_for::<PreconditionsV2>(),
+            Self::PreconditionType => gen.into_root_schema_for::<PreconditionType>(),
+            Self::Preconditions => gen.into_root_schema_for::<Preconditions>(),
+            Self::LedgerFootprint => gen.into_root_schema_for::<LedgerFootprint>(),
+            Self::SorobanResources => gen.into_root_schema_for::<SorobanResources>(),
+            Self::SorobanTransactionData => gen.into_root_schema_for::<SorobanTransactionData>(),
+            Self::TransactionV0 => gen.into_root_schema_for::<TransactionV0>(),
+            Self::TransactionV0Ext => gen.into_root_schema_for::<TransactionV0Ext>(),
+            Self::TransactionV0Envelope => gen.into_root_schema_for::<TransactionV0Envelope>(),
+            Self::Transaction => gen.into_root_schema_for::<Transaction>(),
+            Self::TransactionExt => gen.into_root_schema_for::<TransactionExt>(),
+            Self::TransactionV1Envelope => gen.into_root_schema_for::<TransactionV1Envelope>(),
+            Self::FeeBumpTransaction => gen.into_root_schema_for::<FeeBumpTransaction>(),
+            Self::FeeBumpTransactionInnerTx => {
+                gen.into_root_schema_for::<FeeBumpTransactionInnerTx>()
+            }
+            Self::FeeBumpTransactionExt => gen.into_root_schema_for::<FeeBumpTransactionExt>(),
+            Self::FeeBumpTransactionEnvelope => {
+                gen.into_root_schema_for::<FeeBumpTransactionEnvelope>()
+            }
+            Self::TransactionEnvelope => gen.into_root_schema_for::<TransactionEnvelope>(),
+            Self::TransactionSignaturePayload => {
+                gen.into_root_schema_for::<TransactionSignaturePayload>()
+            }
+            Self::TransactionSignaturePayloadTaggedTransaction => {
+                gen.into_root_schema_for::<TransactionSignaturePayloadTaggedTransaction>()
+            }
+            Self::ClaimAtomType => gen.into_root_schema_for::<ClaimAtomType>(),
+            Self::ClaimOfferAtomV0 => gen.into_root_schema_for::<ClaimOfferAtomV0>(),
+            Self::ClaimOfferAtom => gen.into_root_schema_for::<ClaimOfferAtom>(),
+            Self::ClaimLiquidityAtom => gen.into_root_schema_for::<ClaimLiquidityAtom>(),
+            Self::ClaimAtom => gen.into_root_schema_for::<ClaimAtom>(),
+            Self::CreateAccountResultCode => gen.into_root_schema_for::<CreateAccountResultCode>(),
+            Self::CreateAccountResult => gen.into_root_schema_for::<CreateAccountResult>(),
+            Self::PaymentResultCode => gen.into_root_schema_for::<PaymentResultCode>(),
+            Self::PaymentResult => gen.into_root_schema_for::<PaymentResult>(),
+            Self::PathPaymentStrictReceiveResultCode => {
+                gen.into_root_schema_for::<PathPaymentStrictReceiveResultCode>()
+            }
+            Self::SimplePaymentResult => gen.into_root_schema_for::<SimplePaymentResult>(),
+            Self::PathPaymentStrictReceiveResult => {
+                gen.into_root_schema_for::<PathPaymentStrictReceiveResult>()
+            }
+            Self::PathPaymentStrictReceiveResultSuccess => {
+                gen.into_root_schema_for::<PathPaymentStrictReceiveResultSuccess>()
+            }
+            Self::PathPaymentStrictSendResultCode => {
+                gen.into_root_schema_for::<PathPaymentStrictSendResultCode>()
+            }
+            Self::PathPaymentStrictSendResult => {
+                gen.into_root_schema_for::<PathPaymentStrictSendResult>()
+            }
+            Self::PathPaymentStrictSendResultSuccess => {
+                gen.into_root_schema_for::<PathPaymentStrictSendResultSuccess>()
+            }
+            Self::ManageSellOfferResultCode => {
+                gen.into_root_schema_for::<ManageSellOfferResultCode>()
+            }
+            Self::ManageOfferEffect => gen.into_root_schema_for::<ManageOfferEffect>(),
+            Self::ManageOfferSuccessResult => {
+                gen.into_root_schema_for::<ManageOfferSuccessResult>()
+            }
+            Self::ManageOfferSuccessResultOffer => {
+                gen.into_root_schema_for::<ManageOfferSuccessResultOffer>()
+            }
+            Self::ManageSellOfferResult => gen.into_root_schema_for::<ManageSellOfferResult>(),
+            Self::ManageBuyOfferResultCode => {
+                gen.into_root_schema_for::<ManageBuyOfferResultCode>()
+            }
+            Self::ManageBuyOfferResult => gen.into_root_schema_for::<ManageBuyOfferResult>(),
+            Self::SetOptionsResultCode => gen.into_root_schema_for::<SetOptionsResultCode>(),
+            Self::SetOptionsResult => gen.into_root_schema_for::<SetOptionsResult>(),
+            Self::ChangeTrustResultCode => gen.into_root_schema_for::<ChangeTrustResultCode>(),
+            Self::ChangeTrustResult => gen.into_root_schema_for::<ChangeTrustResult>(),
+            Self::AllowTrustResultCode => gen.into_root_schema_for::<AllowTrustResultCode>(),
+            Self::AllowTrustResult => gen.into_root_schema_for::<AllowTrustResult>(),
+            Self::AccountMergeResultCode => gen.into_root_schema_for::<AccountMergeResultCode>(),
+            Self::AccountMergeResult => gen.into_root_schema_for::<AccountMergeResult>(),
+            Self::InflationResultCode => gen.into_root_schema_for::<InflationResultCode>(),
+            Self::InflationPayout => gen.into_root_schema_for::<InflationPayout>(),
+            Self::InflationResult => gen.into_root_schema_for::<InflationResult>(),
+            Self::ManageDataResultCode => gen.into_root_schema_for::<ManageDataResultCode>(),
+            Self::ManageDataResult => gen.into_root_schema_for::<ManageDataResult>(),
+            Self::BumpSequenceResultCode => gen.into_root_schema_for::<BumpSequenceResultCode>(),
+            Self::BumpSequenceResult => gen.into_root_schema_for::<BumpSequenceResult>(),
+            Self::CreateClaimableBalanceResultCode => {
+                gen.into_root_schema_for::<CreateClaimableBalanceResultCode>()
+            }
+            Self::CreateClaimableBalanceResult => {
+                gen.into_root_schema_for::<CreateClaimableBalanceResult>()
+            }
+            Self::ClaimClaimableBalanceResultCode => {
+                gen.into_root_schema_for::<ClaimClaimableBalanceResultCode>()
+            }
+            Self::ClaimClaimableBalanceResult => {
+                gen.into_root_schema_for::<ClaimClaimableBalanceResult>()
+            }
+            Self::BeginSponsoringFutureReservesResultCode => {
+                gen.into_root_schema_for::<BeginSponsoringFutureReservesResultCode>()
+            }
+            Self::BeginSponsoringFutureReservesResult => {
+                gen.into_root_schema_for::<BeginSponsoringFutureReservesResult>()
+            }
+            Self::EndSponsoringFutureReservesResultCode => {
+                gen.into_root_schema_for::<EndSponsoringFutureReservesResultCode>()
+            }
+            Self::EndSponsoringFutureReservesResult => {
+                gen.into_root_schema_for::<EndSponsoringFutureReservesResult>()
+            }
+            Self::RevokeSponsorshipResultCode => {
+                gen.into_root_schema_for::<RevokeSponsorshipResultCode>()
+            }
+            Self::RevokeSponsorshipResult => gen.into_root_schema_for::<RevokeSponsorshipResult>(),
+            Self::ClawbackResultCode => gen.into_root_schema_for::<ClawbackResultCode>(),
+            Self::ClawbackResult => gen.into_root_schema_for::<ClawbackResult>(),
+            Self::ClawbackClaimableBalanceResultCode => {
+                gen.into_root_schema_for::<ClawbackClaimableBalanceResultCode>()
+            }
+            Self::ClawbackClaimableBalanceResult => {
+                gen.into_root_schema_for::<ClawbackClaimableBalanceResult>()
+            }
+            Self::SetTrustLineFlagsResultCode => {
+                gen.into_root_schema_for::<SetTrustLineFlagsResultCode>()
+            }
+            Self::SetTrustLineFlagsResult => gen.into_root_schema_for::<SetTrustLineFlagsResult>(),
+            Self::LiquidityPoolDepositResultCode => {
+                gen.into_root_schema_for::<LiquidityPoolDepositResultCode>()
+            }
+            Self::LiquidityPoolDepositResult => {
+                gen.into_root_schema_for::<LiquidityPoolDepositResult>()
+            }
+            Self::LiquidityPoolWithdrawResultCode => {
+                gen.into_root_schema_for::<LiquidityPoolWithdrawResultCode>()
+            }
+            Self::LiquidityPoolWithdrawResult => {
+                gen.into_root_schema_for::<LiquidityPoolWithdrawResult>()
+            }
+            Self::InvokeHostFunctionResultCode => {
+                gen.into_root_schema_for::<InvokeHostFunctionResultCode>()
+            }
+            Self::InvokeHostFunctionResult => {
+                gen.into_root_schema_for::<InvokeHostFunctionResult>()
+            }
+            Self::ExtendFootprintTtlResultCode => {
+                gen.into_root_schema_for::<ExtendFootprintTtlResultCode>()
+            }
+            Self::ExtendFootprintTtlResult => {
+                gen.into_root_schema_for::<ExtendFootprintTtlResult>()
+            }
+            Self::RestoreFootprintResultCode => {
+                gen.into_root_schema_for::<RestoreFootprintResultCode>()
+            }
+            Self::RestoreFootprintResult => gen.into_root_schema_for::<RestoreFootprintResult>(),
+            Self::OperationResultCode => gen.into_root_schema_for::<OperationResultCode>(),
+            Self::OperationResult => gen.into_root_schema_for::<OperationResult>(),
+            Self::OperationResultTr => gen.into_root_schema_for::<OperationResultTr>(),
+            Self::TransactionResultCode => gen.into_root_schema_for::<TransactionResultCode>(),
+            Self::InnerTransactionResult => gen.into_root_schema_for::<InnerTransactionResult>(),
+            Self::InnerTransactionResultResult => {
+                gen.into_root_schema_for::<InnerTransactionResultResult>()
+            }
+            Self::InnerTransactionResultExt => {
+                gen.into_root_schema_for::<InnerTransactionResultExt>()
+            }
+            Self::InnerTransactionResultPair => {
+                gen.into_root_schema_for::<InnerTransactionResultPair>()
+            }
+            Self::TransactionResult => gen.into_root_schema_for::<TransactionResult>(),
+            Self::TransactionResultResult => gen.into_root_schema_for::<TransactionResultResult>(),
+            Self::TransactionResultExt => gen.into_root_schema_for::<TransactionResultExt>(),
+            Self::Hash => gen.into_root_schema_for::<Hash>(),
+            Self::Uint256 => gen.into_root_schema_for::<Uint256>(),
+            Self::Uint32 => gen.into_root_schema_for::<Uint32>(),
+            Self::Int32 => gen.into_root_schema_for::<Int32>(),
+            Self::Uint64 => gen.into_root_schema_for::<Uint64>(),
+            Self::Int64 => gen.into_root_schema_for::<Int64>(),
+            Self::TimePoint => gen.into_root_schema_for::<TimePoint>(),
+            Self::Duration => gen.into_root_schema_for::<Duration>(),
+            Self::ExtensionPoint => gen.into_root_schema_for::<ExtensionPoint>(),
+            Self::CryptoKeyType => gen.into_root_schema_for::<CryptoKeyType>(),
+            Self::PublicKeyType => gen.into_root_schema_for::<PublicKeyType>(),
+            Self::SignerKeyType => gen.into_root_schema_for::<SignerKeyType>(),
+            Self::PublicKey => gen.into_root_schema_for::<PublicKey>(),
+            Self::SignerKey => gen.into_root_schema_for::<SignerKey>(),
+            Self::SignerKeyEd25519SignedPayload => {
+                gen.into_root_schema_for::<SignerKeyEd25519SignedPayload>()
+            }
+            Self::Signature => gen.into_root_schema_for::<Signature>(),
+            Self::SignatureHint => gen.into_root_schema_for::<SignatureHint>(),
+            Self::NodeId => gen.into_root_schema_for::<NodeId>(),
+            Self::AccountId => gen.into_root_schema_for::<AccountId>(),
+            Self::Curve25519Secret => gen.into_root_schema_for::<Curve25519Secret>(),
+            Self::Curve25519Public => gen.into_root_schema_for::<Curve25519Public>(),
+            Self::HmacSha256Key => gen.into_root_schema_for::<HmacSha256Key>(),
+            Self::HmacSha256Mac => gen.into_root_schema_for::<HmacSha256Mac>(),
+        }
+    }
 }
 
 impl Name for TypeVariant {

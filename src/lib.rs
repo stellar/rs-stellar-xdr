@@ -126,3 +126,6 @@ pub mod next;
 
 #[cfg(feature = "cli")]
 pub mod cli;
+
+#[cfg(any(feature = "cli", feature = "wasm"))]
+pub mod schema;

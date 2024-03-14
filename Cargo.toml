@@ -49,9 +49,18 @@ schemars = ["alloc", "serde", "serde_json", "dep:schemars"]
 arbitrary = ["std", "dep:arbitrary"]
 hex = []
 
+wasm = ["std", "curr", "base64", "serde", "serde_json", "schemars",  "dep:thiserror"]
+# can also be compiled with --wasm32-wasi
+cli = ["dep:clap", "wasm"]
 # Features for the CLI.
-cli = ["std", "curr", "next", "base64", "serde", "serde_json", "schemars", "dep:clap", "dep:thiserror"]
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docs"]
+
+[workspace]
+members = ["crates/*"]
+
+[profile.release]
+# Tell `rustc` to optimize for small code size.
+opt-level = "s"

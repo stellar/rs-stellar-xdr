@@ -8718,7 +8718,6 @@ impl WriteXdr for ScAddressType {
     all(feature = "serde", feature = "alloc"),
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScAddress {
     Account(AccountId),
@@ -10753,37 +10752,6 @@ impl core::fmt::Debug for AssetCode4 {
         Ok(())
     }
 }
-#[cfg(feature = "schemars")]
-impl schemars::JsonSchema for AssetCode4 {
-    fn schema_name() -> String {
-        "AssetCode4".to_string()
-    }
-
-    fn is_referenceable() -> bool {
-        false
-    }
-
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        let schema_ = String::json_schema(gen);
-        if let schemars::schema::Schema::Object(mut schema) = schema_ {
-            schema.extensions.insert(
-                "contentEncoding".to_owned(),
-                serde_json::Value::String("hex".to_string()),
-            );
-            schema.extensions.insert(
-                "contentMediaType".to_owned(),
-                serde_json::Value::String("application/binary".to_string()),
-            );
-            mut_string(schema.into(), |string| schemars::schema::StringValidation {
-                max_length: 4_u32.checked_mul(2).map(Some).unwrap_or_default(),
-                min_length: 4_u32.checked_mul(2).map(Some).unwrap_or_default(),
-                ..string
-            })
-        } else {
-            schema_
-        }
-    }
-}
 impl From<AssetCode4> for [u8; 4] {
     #[must_use]
     fn from(x: AssetCode4) -> Self {
@@ -10883,37 +10851,6 @@ impl core::fmt::Debug for AssetCode12 {
         }
         write!(f, ")")?;
         Ok(())
-    }
-}
-#[cfg(feature = "schemars")]
-impl schemars::JsonSchema for AssetCode12 {
-    fn schema_name() -> String {
-        "AssetCode12".to_string()
-    }
-
-    fn is_referenceable() -> bool {
-        false
-    }
-
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        let schema_ = String::json_schema(gen);
-        if let schemars::schema::Schema::Object(mut schema) = schema_ {
-            schema.extensions.insert(
-                "contentEncoding".to_owned(),
-                serde_json::Value::String("hex".to_string()),
-            );
-            schema.extensions.insert(
-                "contentMediaType".to_owned(),
-                serde_json::Value::String("application/binary".to_string()),
-            );
-            mut_string(schema.into(), |string| schemars::schema::StringValidation {
-                max_length: 12_u32.checked_mul(2).map(Some).unwrap_or_default(),
-                min_length: 12_u32.checked_mul(2).map(Some).unwrap_or_default(),
-                ..string
-            })
-        } else {
-            schema_
-        }
     }
 }
 impl From<AssetCode12> for [u8; 12] {
@@ -11134,7 +11071,6 @@ impl WriteXdr for AssetType {
     all(feature = "serde", feature = "alloc"),
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum AssetCode {
     CreditAlphanum4(AssetCode4),
@@ -24551,7 +24487,6 @@ impl WriteXdr for LiquidityPoolParameters {
     all(feature = "serde", feature = "alloc"),
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct MuxedAccountMed25519 {
     pub id: u64,
     pub ed25519: Uint256,
@@ -24603,7 +24538,6 @@ impl WriteXdr for MuxedAccountMed25519 {
     all(feature = "serde", feature = "alloc"),
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum MuxedAccount {
     Ed25519(Uint256),
@@ -42012,7 +41946,6 @@ impl WriteXdr for SignerKeyType {
     all(feature = "serde", feature = "alloc"),
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum PublicKey {
     PublicKeyTypeEd25519(Uint256),
@@ -42115,7 +42048,6 @@ impl WriteXdr for PublicKey {
     all(feature = "serde", feature = "alloc"),
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
     pub payload: BytesM<64>,
@@ -42175,7 +42107,6 @@ impl WriteXdr for SignerKeyEd25519SignedPayload {
     all(feature = "serde", feature = "alloc"),
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum SignerKey {
     Ed25519(Uint256),
@@ -42548,7 +42479,6 @@ impl AsRef<[u8]> for SignatureHint {
     all(feature = "serde", feature = "alloc"),
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct NodeId(pub PublicKey);
 
@@ -42603,7 +42533,6 @@ impl WriteXdr for NodeId {
     all(feature = "serde", feature = "alloc"),
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct AccountId(pub PublicKey);
 

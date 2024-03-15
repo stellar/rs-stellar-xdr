@@ -26,11 +26,12 @@ pub struct Cmd {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
 pub enum OutputFormat {
     JsonSchemaDraft7,
+    JsonSchemaDraft201909,
 }
 
 impl Default for OutputFormat {
     fn default() -> Self {
-        Self::JsonSchemaDraft7
+        Self::JsonSchemaDraft201909
     }
 }
 
@@ -41,7 +42,10 @@ macro_rules! run_x {
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
-            let settings = SchemaSettings::draft07();
+            let settings = match self.output {
+                OutputFormat::JsonSchemaDraft7 => SchemaSettings::draft07(),
+                OutputFormat::JsonSchemaDraft201909 => SchemaSettings::draft2019_09(),
+            };
             let generator = settings.into_generator();
             let schema = r#type.json_schema(generator);
             println!("{}", serde_json::to_string_pretty(&schema)?);

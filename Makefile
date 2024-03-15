@@ -8,6 +8,8 @@ XDRGEN_VERSION=4ea81a540e25623567badd1f7dd649cc46cf9f21
 # XDRGEN_LOCAL=1
 XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12
 XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12
+XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_CURR=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12
+XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_NEXT=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12
 
 all: build test
 
@@ -39,12 +41,18 @@ ifeq ($(XDRGEN_LOCAL),)
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.8 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
-		xdrgen --language rust --namespace generated --output src/curr --rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR) $^ \
+		xdrgen --language rust --namespace generated --output src/curr \
+			--rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR) \
+			--rust-types-custom-jsonschema-impl '$(XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_CURR)' \
+		$^ \
 		'
 else
 	docker run -i --rm -v $$PWD/../xdrgen:/xdrgen -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		pushd /xdrgen && bundle install --deployment && rake install && popd && \
-		xdrgen --language rust --namespace generated --output src/curr --rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR) $^ \
+		xdrgen --language rust --namespace generated --output src/curr \
+			--rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR) \
+			--rust-types-custom-jsonschema-impl '$(XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_CURR)' \
+		$^ \
 		'
 endif
 	rustfmt $@
@@ -58,12 +66,18 @@ ifeq ($(XDRGEN_LOCAL),)
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.8 && \
 		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
-		xdrgen --language rust --namespace generated --output src/next --rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT) $^ \
+		xdrgen --language rust --namespace generated --output src/next \
+			--rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT) \
+			--rust-types-custom-jsonschema-impl '$(XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_NEXT)' \
+		$^ \
 		'
 else
 	docker run -i --rm -v $$PWD/../xdrgen:/xdrgen -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		pushd /xdrgen && bundle install --deployment && rake install && popd && \
-		xdrgen --language rust --namespace generated --output src/next --rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT) $^ \
+		xdrgen --language rust --namespace generated --output src/next \
+			--rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT) \
+			--rust-types-custom-jsonschema-impl '$(XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_NEXT)' \
+		$^ \
 		'
 endif
 	rustfmt $@

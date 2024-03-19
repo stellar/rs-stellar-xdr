@@ -2,7 +2,6 @@ mod utils;
 
 use std::{
     cmp,
-    convert::TryInto,
     io::{self, Read},
     str::FromStr,
 };
@@ -27,15 +26,11 @@ pub fn type_variants() -> String {
 
 // #[cfg(feature = "schema")]
 #[wasm_bindgen]
-pub fn schema(type_variant: &str) -> String {
-    let Schema(json_schema): Schema = type_variant.parse().unwrap();
-    serde_json::to_string(&json_schema).unwrap_or_else(|e| format!("{{\"error\": \"{e}\"}}"))
-}
-
-#[wasm_bindgen]
-pub fn transaction() -> String {
-    let Schema(json_schema): Schema = TypeVariant::Transaction.try_into().unwrap();
-    serde_json::to_string(&json_schema).unwrap_or_else(|e| format!("{{\"error\": \"{e}\"}}"))
+pub fn schema(type_variant: &str) -> Result<String, JsValue> {
+    let Schema(json_schema): Schema = type_variant
+        .parse()
+        .map_err(|_| JsValue::from_str("unknown type"))?;
+    serde_json_wasm::to_string(&json_schema).map_err(|e| JsValue::from_str(&format!("{e:?}")))
 }
 
 #[wasm_bindgen]
@@ -48,7 +43,7 @@ pub fn from_xdr(xdr_base64: String, variant: Option<String>) -> String {
     {
         f.inner.reset();
         if let Ok(res) = curr::Type::read_xdr_to_end(variant, &mut f) {
-            return serde_json::to_string(&res)
+            return serde_json_wasm::to_string(&res)
                 .unwrap_or_else(|e| format!("{{\"error\": \"{e}\"}}"));
         }
     }

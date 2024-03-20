@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "224c84c20c923d8b048cfba7d6e0ad24d6aadf67697b6a8d514b09f71f57af81",
+        "888152fb940b79a01ac00a5218ca91360cb0f01af7acc030d5805ebfec280203",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -20657,12 +20657,199 @@ impl WriteXdr for DiagnosticEvent {
     }
 }
 
+/// SorobanTransactionMetaExtV1 is an XDR Struct defines as:
+///
+/// ```text
+/// struct SorobanTransactionMetaExtV1
+/// {
+///     ExtensionPoint ext;
+///
+///     // The following are the components of the overall Soroban resource fee
+///     // charged for the transaction.
+///     // The following relation holds:
+///     // `resourceFeeCharged = totalNonRefundableResourceFeeCharged + totalRefundableResourceFeeCharged`
+///     // where `resourceFeeCharged` is the overall fee charged for the
+///     // transaction. Also, `resourceFeeCharged` <= `sorobanData.resourceFee`
+///     // i.e.we never charge more than the declared resource fee.
+///     // The inclusion fee for charged the Soroban transaction can be found using
+///     // the following equation:
+///     // `result.feeCharged = resourceFeeCharged + inclusionFeeCharged`.
+///
+///     // Total amount (in stroops) that has been charged for non-refundable
+///     // Soroban resources.
+///     // Non-refundable resources are charged based on the usage declared in
+///     // the transaction envelope (such as `instructions`, `readBytes` etc.) and
+///     // is charged regardless of the success of the transaction.
+///     int64 totalNonRefundableResourceFeeCharged;
+///     // Total amount (in stroops) that has been charged for refundable
+///     // Soroban resource fees.
+///     // Currently this comprises the rent fee (`rentFeeCharged`) and the
+///     // fee for the events and return value.
+///     // Refundable resources are charged based on the actual resources usage.
+///     // Since currently refundable resources are only used for the successful
+///     // transactions, this will be `0` for failed transactions.
+///     int64 totalRefundableResourceFeeCharged;
+///     // Amount (in stroops) that has been charged for rent.
+///     // This is a part of `totalNonRefundableResourceFeeCharged`.
+///     int64 rentFeeCharged;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct SorobanTransactionMetaExtV1 {
+    pub ext: ExtensionPoint,
+    pub total_non_refundable_resource_fee_charged: i64,
+    pub total_refundable_resource_fee_charged: i64,
+    pub rent_fee_charged: i64,
+}
+
+impl ReadXdr for SorobanTransactionMetaExtV1 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                total_non_refundable_resource_fee_charged: i64::read_xdr(r)?,
+                total_refundable_resource_fee_charged: i64::read_xdr(r)?,
+                rent_fee_charged: i64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SorobanTransactionMetaExtV1 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.total_non_refundable_resource_fee_charged
+                .write_xdr(w)?;
+            self.total_refundable_resource_fee_charged.write_xdr(w)?;
+            self.rent_fee_charged.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// SorobanTransactionMetaExt is an XDR Union defines as:
+///
+/// ```text
+/// union SorobanTransactionMetaExt switch (int v)
+/// {
+/// case 0:
+///     void;
+/// case 1:
+///     SorobanTransactionMetaExtV1 v1;
+/// };
+/// ```
+///
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum SorobanTransactionMetaExt {
+    V0,
+    V1(SorobanTransactionMetaExtV1),
+}
+
+impl SorobanTransactionMetaExt {
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0 => "V0",
+            Self::V1(_) => "V1",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => 0,
+            Self::V1(_) => 1,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SorobanTransactionMetaExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for SorobanTransactionMetaExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for SorobanTransactionMetaExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<i32> for SorobanTransactionMetaExt {}
+
+impl ReadXdr for SorobanTransactionMetaExt {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                1 => Self::V1(SorobanTransactionMetaExtV1::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for SorobanTransactionMetaExt {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
 /// SorobanTransactionMeta is an XDR Struct defines as:
 ///
 /// ```text
 /// struct SorobanTransactionMeta
 /// {
-///     ExtensionPoint ext;
+///     SorobanTransactionMetaExt ext;
 ///
 ///     ContractEvent events<>;             // custom events populated by the
 ///                                         // contracts themselves.
@@ -20683,7 +20870,7 @@ impl WriteXdr for DiagnosticEvent {
     serde(rename_all = "snake_case")
 )]
 pub struct SorobanTransactionMeta {
-    pub ext: ExtensionPoint,
+    pub ext: SorobanTransactionMetaExt,
     pub events: VecM<ContractEvent>,
     pub return_value: ScVal,
     pub diagnostic_events: VecM<DiagnosticEvent>,
@@ -20694,7 +20881,7 @@ impl ReadXdr for SorobanTransactionMeta {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                ext: ExtensionPoint::read_xdr(r)?,
+                ext: SorobanTransactionMetaExt::read_xdr(r)?,
                 events: VecM::<ContractEvent>::read_xdr(r)?,
                 return_value: ScVal::read_xdr(r)?,
                 diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
@@ -42463,6 +42650,8 @@ pub enum TypeVariant {
     ContractEventBody,
     ContractEventV0,
     DiagnosticEvent,
+    SorobanTransactionMetaExtV1,
+    SorobanTransactionMetaExt,
     SorobanTransactionMeta,
     TransactionMetaV3,
     InvokeHostFunctionSuccessPreImage,
@@ -42682,7 +42871,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 420] = [
+    pub const VARIANTS: [TypeVariant; 422] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -42887,6 +43076,8 @@ impl TypeVariant {
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
         TypeVariant::DiagnosticEvent,
+        TypeVariant::SorobanTransactionMetaExtV1,
+        TypeVariant::SorobanTransactionMetaExt,
         TypeVariant::SorobanTransactionMeta,
         TypeVariant::TransactionMetaV3,
         TypeVariant::InvokeHostFunctionSuccessPreImage,
@@ -43104,7 +43295,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 420] = [
+    pub const VARIANTS_STR: [&'static str; 422] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -43309,6 +43500,8 @@ impl TypeVariant {
         "ContractEventBody",
         "ContractEventV0",
         "DiagnosticEvent",
+        "SorobanTransactionMetaExtV1",
+        "SorobanTransactionMetaExt",
         "SorobanTransactionMeta",
         "TransactionMetaV3",
         "InvokeHostFunctionSuccessPreImage",
@@ -43737,6 +43930,8 @@ impl TypeVariant {
             Self::ContractEventBody => "ContractEventBody",
             Self::ContractEventV0 => "ContractEventV0",
             Self::DiagnosticEvent => "DiagnosticEvent",
+            Self::SorobanTransactionMetaExtV1 => "SorobanTransactionMetaExtV1",
+            Self::SorobanTransactionMetaExt => "SorobanTransactionMetaExt",
             Self::SorobanTransactionMeta => "SorobanTransactionMeta",
             Self::TransactionMetaV3 => "TransactionMetaV3",
             Self::InvokeHostFunctionSuccessPreImage => "InvokeHostFunctionSuccessPreImage",
@@ -43962,7 +44157,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 420] {
+    pub const fn variants() -> [TypeVariant; 422] {
         Self::VARIANTS
     }
 }
@@ -44195,6 +44390,8 @@ impl core::str::FromStr for TypeVariant {
             "ContractEventBody" => Ok(Self::ContractEventBody),
             "ContractEventV0" => Ok(Self::ContractEventV0),
             "DiagnosticEvent" => Ok(Self::DiagnosticEvent),
+            "SorobanTransactionMetaExtV1" => Ok(Self::SorobanTransactionMetaExtV1),
+            "SorobanTransactionMetaExt" => Ok(Self::SorobanTransactionMetaExt),
             "SorobanTransactionMeta" => Ok(Self::SorobanTransactionMeta),
             "TransactionMetaV3" => Ok(Self::TransactionMetaV3),
             "InvokeHostFunctionSuccessPreImage" => Ok(Self::InvokeHostFunctionSuccessPreImage),
@@ -44636,6 +44833,8 @@ pub enum Type {
     ContractEventBody(Box<ContractEventBody>),
     ContractEventV0(Box<ContractEventV0>),
     DiagnosticEvent(Box<DiagnosticEvent>),
+    SorobanTransactionMetaExtV1(Box<SorobanTransactionMetaExtV1>),
+    SorobanTransactionMetaExt(Box<SorobanTransactionMetaExt>),
     SorobanTransactionMeta(Box<SorobanTransactionMeta>),
     TransactionMetaV3(Box<TransactionMetaV3>),
     InvokeHostFunctionSuccessPreImage(Box<InvokeHostFunctionSuccessPreImage>),
@@ -44855,7 +45054,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 420] = [
+    pub const VARIANTS: [TypeVariant; 422] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -45060,6 +45259,8 @@ impl Type {
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
         TypeVariant::DiagnosticEvent,
+        TypeVariant::SorobanTransactionMetaExtV1,
+        TypeVariant::SorobanTransactionMetaExt,
         TypeVariant::SorobanTransactionMeta,
         TypeVariant::TransactionMetaV3,
         TypeVariant::InvokeHostFunctionSuccessPreImage,
@@ -45277,7 +45478,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 420] = [
+    pub const VARIANTS_STR: [&'static str; 422] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -45482,6 +45683,8 @@ impl Type {
         "ContractEventBody",
         "ContractEventV0",
         "DiagnosticEvent",
+        "SorobanTransactionMetaExtV1",
+        "SorobanTransactionMetaExt",
         "SorobanTransactionMeta",
         "TransactionMetaV3",
         "InvokeHostFunctionSuccessPreImage",
@@ -46559,6 +46762,16 @@ impl Type {
                 Ok(Self::DiagnosticEvent(Box::new(DiagnosticEvent::read_xdr(
                     r,
                 )?)))
+            }),
+            TypeVariant::SorobanTransactionMetaExtV1 => r.with_limited_depth(|r| {
+                Ok(Self::SorobanTransactionMetaExtV1(Box::new(
+                    SorobanTransactionMetaExtV1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SorobanTransactionMetaExt => r.with_limited_depth(|r| {
+                Ok(Self::SorobanTransactionMetaExt(Box::new(
+                    SorobanTransactionMetaExt::read_xdr(r)?,
+                )))
             }),
             TypeVariant::SorobanTransactionMeta => r.with_limited_depth(|r| {
                 Ok(Self::SorobanTransactionMeta(Box::new(
@@ -48408,6 +48621,14 @@ impl Type {
             TypeVariant::DiagnosticEvent => Box::new(
                 ReadXdrIter::<_, DiagnosticEvent>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionMetaExtV1 => Box::new(
+                ReadXdrIter::<_, SorobanTransactionMetaExtV1>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanTransactionMetaExtV1(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionMetaExt => Box::new(
+                ReadXdrIter::<_, SorobanTransactionMetaExt>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanTransactionMetaExt(Box::new(t)))),
             ),
             TypeVariant::SorobanTransactionMeta => Box::new(
                 ReadXdrIter::<_, SorobanTransactionMeta>::new(&mut r.inner, r.limits.clone())
@@ -50307,6 +50528,20 @@ impl Type {
             TypeVariant::DiagnosticEvent => Box::new(
                 ReadXdrIter::<_, Frame<DiagnosticEvent>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanTransactionMetaExtV1 => Box::new(
+                ReadXdrIter::<_, Frame<SorobanTransactionMetaExtV1>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SorobanTransactionMetaExtV1(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanTransactionMetaExt => Box::new(
+                ReadXdrIter::<_, Frame<SorobanTransactionMetaExt>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SorobanTransactionMetaExt(Box::new(t.0)))),
             ),
             TypeVariant::SorobanTransactionMeta => Box::new(
                 ReadXdrIter::<_, Frame<SorobanTransactionMeta>>::new(
@@ -52244,6 +52479,14 @@ impl Type {
                 ReadXdrIter::<_, DiagnosticEvent>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
             ),
+            TypeVariant::SorobanTransactionMetaExtV1 => Box::new(
+                ReadXdrIter::<_, SorobanTransactionMetaExtV1>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanTransactionMetaExtV1(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionMetaExt => Box::new(
+                ReadXdrIter::<_, SorobanTransactionMetaExt>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanTransactionMetaExt(Box::new(t)))),
+            ),
             TypeVariant::SorobanTransactionMeta => Box::new(
                 ReadXdrIter::<_, SorobanTransactionMeta>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionMeta(Box::new(t)))),
@@ -53683,6 +53926,12 @@ impl Type {
             TypeVariant::DiagnosticEvent => {
                 Ok(Self::DiagnosticEvent(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::SorobanTransactionMetaExtV1 => Ok(Self::SorobanTransactionMetaExtV1(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::SorobanTransactionMetaExt => Ok(Self::SorobanTransactionMetaExt(
+                Box::new(serde_json::from_reader(r)?),
+            )),
             TypeVariant::SorobanTransactionMeta => Ok(Self::SorobanTransactionMeta(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -54490,6 +54739,8 @@ impl Type {
             Self::ContractEventBody(ref v) => v.as_ref(),
             Self::ContractEventV0(ref v) => v.as_ref(),
             Self::DiagnosticEvent(ref v) => v.as_ref(),
+            Self::SorobanTransactionMetaExtV1(ref v) => v.as_ref(),
+            Self::SorobanTransactionMetaExt(ref v) => v.as_ref(),
             Self::SorobanTransactionMeta(ref v) => v.as_ref(),
             Self::TransactionMetaV3(ref v) => v.as_ref(),
             Self::InvokeHostFunctionSuccessPreImage(ref v) => v.as_ref(),
@@ -54923,6 +55174,8 @@ impl Type {
             Self::ContractEventBody(_) => "ContractEventBody",
             Self::ContractEventV0(_) => "ContractEventV0",
             Self::DiagnosticEvent(_) => "DiagnosticEvent",
+            Self::SorobanTransactionMetaExtV1(_) => "SorobanTransactionMetaExtV1",
+            Self::SorobanTransactionMetaExt(_) => "SorobanTransactionMetaExt",
             Self::SorobanTransactionMeta(_) => "SorobanTransactionMeta",
             Self::TransactionMetaV3(_) => "TransactionMetaV3",
             Self::InvokeHostFunctionSuccessPreImage(_) => "InvokeHostFunctionSuccessPreImage",
@@ -55152,7 +55405,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 420] {
+    pub const fn variants() -> [TypeVariant; 422] {
         Self::VARIANTS
     }
 
@@ -55384,6 +55637,8 @@ impl Type {
             Self::ContractEventBody(_) => TypeVariant::ContractEventBody,
             Self::ContractEventV0(_) => TypeVariant::ContractEventV0,
             Self::DiagnosticEvent(_) => TypeVariant::DiagnosticEvent,
+            Self::SorobanTransactionMetaExtV1(_) => TypeVariant::SorobanTransactionMetaExtV1,
+            Self::SorobanTransactionMetaExt(_) => TypeVariant::SorobanTransactionMetaExt,
             Self::SorobanTransactionMeta(_) => TypeVariant::SorobanTransactionMeta,
             Self::TransactionMetaV3(_) => TypeVariant::TransactionMetaV3,
             Self::InvokeHostFunctionSuccessPreImage(_) => {
@@ -55858,6 +56113,8 @@ impl WriteXdr for Type {
             Self::ContractEventBody(v) => v.write_xdr(w),
             Self::ContractEventV0(v) => v.write_xdr(w),
             Self::DiagnosticEvent(v) => v.write_xdr(w),
+            Self::SorobanTransactionMetaExtV1(v) => v.write_xdr(w),
+            Self::SorobanTransactionMetaExt(v) => v.write_xdr(w),
             Self::SorobanTransactionMeta(v) => v.write_xdr(w),
             Self::TransactionMetaV3(v) => v.write_xdr(w),
             Self::InvokeHostFunctionSuccessPreImage(v) => v.write_xdr(w),

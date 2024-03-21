@@ -8,7 +8,6 @@ pub enum Error {
 
 use schemars::{
     gen::SchemaSettings,
-    schema::SchemaObject,
     visit::{self, Visitor},
 };
 use std::str::FromStr;

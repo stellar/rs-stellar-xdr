@@ -87,4 +87,28 @@ Parse a `BucketEntry` framed stream from a bucket file:
 stellar-xdr decode --type BucketEntry --input stream-framed --output json-formatted bucket.xdr
 ```
 
+## Wasm pack
+
+`wasm-pack.sh` will use [`wasm-pack`](https://rustwasm.github.io/wasm-pack/installer/) to build a npm package and use [yalc](https://github.com/wclr/yalc) pubilsh it locally. It uses the following environment variables:
+- `PROFILE` - default `dev`
+- `TARGETS` - default `bundler nodejs web no-modules`
+
+After running the script you can install the package corresponding target with yalc:
+
+```
+yalc add stellar-xdr-wasm-web
+yalc link stellar-xdr-wasm-web
+```
+
+Then you can import package as normal
+
+```ts
+import * as xdr from "stellar-xdr-wasm-web";
+```
+
+#### cargo watch for changes
+
+```
+cargo watch -s "TARGETS=web ./wasm-pack.sh"
+```
 License: Apache-2.0

@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "fc42980e8710514679477f767ecad6f9348c38d24b1e4476fdd7e73e8e672ea8",
+        "9301586f4354724c9095686786171735c3b9d1ae062f7cea8f75fa10064962ab",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -46,7 +46,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "4f8f2324f567a40065f54f696ea1428740f043ea4154f5986d9f499ad00ac333",
+        "77dc7062ae6d0812136333e12e35b2294d7c2896a536be9c811eb0ed2abbbccb",
     ),
     (
         "xdr/next/Stellar-ledger.x",
@@ -3960,7 +3960,49 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 ///     // Cost of int256 shift (`shl`, `shr`) operation
 ///     Int256Shift = 21,
 ///     // Cost of drawing random bytes using a ChaCha20 PRNG
-///     ChaCha20DrawBytes = 22
+///     ChaCha20DrawBytes = 22,
+///
+///     // Cost of parsing wasm bytes that only encode instructions.
+///     ParseWasmInstructions = 23,
+///     // Cost of parsing a known number of wasm functions.
+///     ParseWasmFunctions = 24,
+///     // Cost of parsing a known number of wasm globals.
+///     ParseWasmGlobals = 25,
+///     // Cost of parsing a known number of wasm table entries.
+///     ParseWasmTableEntries = 26,
+///     // Cost of parsing a known number of wasm types.
+///     ParseWasmTypes = 27,
+///     // Cost of parsing a known number of wasm data segments.
+///     ParseWasmDataSegments = 28,
+///     // Cost of parsing a known number of wasm element segments.
+///     ParseWasmElemSegments = 29,
+///     // Cost of parsing a known number of wasm imports.
+///     ParseWasmImports = 30,
+///     // Cost of parsing a known number of wasm exports.
+///     ParseWasmExports = 31,
+///     // Cost of parsing a known number of data segment bytes.
+///     ParseWasmDataSegmentBytes = 32,
+///
+///     // Cost of instantiating wasm bytes that only encode instructions.
+///     InstantiateWasmInstructions = 33,
+///     // Cost of instantiating a known number of wasm functions.
+///     InstantiateWasmFunctions = 34,
+///     // Cost of instantiating a known number of wasm globals.
+///     InstantiateWasmGlobals = 35,
+///     // Cost of instantiating a known number of wasm table entries.
+///     InstantiateWasmTableEntries = 36,
+///     // Cost of instantiating a known number of wasm types.
+///     InstantiateWasmTypes = 37,
+///     // Cost of instantiating a known number of wasm data segments.
+///     InstantiateWasmDataSegments = 38,
+///     // Cost of instantiating a known number of wasm element segments.
+///     InstantiateWasmElemSegments = 39,
+///     // Cost of instantiating a known number of wasm imports.
+///     InstantiateWasmImports = 40,
+///     // Cost of instantiating a known number of wasm exports.
+///     InstantiateWasmExports = 41,
+///     // Cost of instantiating a known number of data segment bytes.
+///     InstantiateWasmDataSegmentBytes = 42
 /// };
 /// ```
 ///
@@ -3997,10 +4039,30 @@ pub enum ContractCostType {
     Int256Pow = 20,
     Int256Shift = 21,
     ChaCha20DrawBytes = 22,
+    ParseWasmInstructions = 23,
+    ParseWasmFunctions = 24,
+    ParseWasmGlobals = 25,
+    ParseWasmTableEntries = 26,
+    ParseWasmTypes = 27,
+    ParseWasmDataSegments = 28,
+    ParseWasmElemSegments = 29,
+    ParseWasmImports = 30,
+    ParseWasmExports = 31,
+    ParseWasmDataSegmentBytes = 32,
+    InstantiateWasmInstructions = 33,
+    InstantiateWasmFunctions = 34,
+    InstantiateWasmGlobals = 35,
+    InstantiateWasmTableEntries = 36,
+    InstantiateWasmTypes = 37,
+    InstantiateWasmDataSegments = 38,
+    InstantiateWasmElemSegments = 39,
+    InstantiateWasmImports = 40,
+    InstantiateWasmExports = 41,
+    InstantiateWasmDataSegmentBytes = 42,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 23] = [
+    pub const VARIANTS: [ContractCostType; 43] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::MemAlloc,
         ContractCostType::MemCpy,
@@ -4024,8 +4086,28 @@ impl ContractCostType {
         ContractCostType::Int256Pow,
         ContractCostType::Int256Shift,
         ContractCostType::ChaCha20DrawBytes,
+        ContractCostType::ParseWasmInstructions,
+        ContractCostType::ParseWasmFunctions,
+        ContractCostType::ParseWasmGlobals,
+        ContractCostType::ParseWasmTableEntries,
+        ContractCostType::ParseWasmTypes,
+        ContractCostType::ParseWasmDataSegments,
+        ContractCostType::ParseWasmElemSegments,
+        ContractCostType::ParseWasmImports,
+        ContractCostType::ParseWasmExports,
+        ContractCostType::ParseWasmDataSegmentBytes,
+        ContractCostType::InstantiateWasmInstructions,
+        ContractCostType::InstantiateWasmFunctions,
+        ContractCostType::InstantiateWasmGlobals,
+        ContractCostType::InstantiateWasmTableEntries,
+        ContractCostType::InstantiateWasmTypes,
+        ContractCostType::InstantiateWasmDataSegments,
+        ContractCostType::InstantiateWasmElemSegments,
+        ContractCostType::InstantiateWasmImports,
+        ContractCostType::InstantiateWasmExports,
+        ContractCostType::InstantiateWasmDataSegmentBytes,
     ];
-    pub const VARIANTS_STR: [&'static str; 23] = [
+    pub const VARIANTS_STR: [&'static str; 43] = [
         "WasmInsnExec",
         "MemAlloc",
         "MemCpy",
@@ -4049,6 +4131,26 @@ impl ContractCostType {
         "Int256Pow",
         "Int256Shift",
         "ChaCha20DrawBytes",
+        "ParseWasmInstructions",
+        "ParseWasmFunctions",
+        "ParseWasmGlobals",
+        "ParseWasmTableEntries",
+        "ParseWasmTypes",
+        "ParseWasmDataSegments",
+        "ParseWasmElemSegments",
+        "ParseWasmImports",
+        "ParseWasmExports",
+        "ParseWasmDataSegmentBytes",
+        "InstantiateWasmInstructions",
+        "InstantiateWasmFunctions",
+        "InstantiateWasmGlobals",
+        "InstantiateWasmTableEntries",
+        "InstantiateWasmTypes",
+        "InstantiateWasmDataSegments",
+        "InstantiateWasmElemSegments",
+        "InstantiateWasmImports",
+        "InstantiateWasmExports",
+        "InstantiateWasmDataSegmentBytes",
     ];
 
     #[must_use]
@@ -4077,11 +4179,31 @@ impl ContractCostType {
             Self::Int256Pow => "Int256Pow",
             Self::Int256Shift => "Int256Shift",
             Self::ChaCha20DrawBytes => "ChaCha20DrawBytes",
+            Self::ParseWasmInstructions => "ParseWasmInstructions",
+            Self::ParseWasmFunctions => "ParseWasmFunctions",
+            Self::ParseWasmGlobals => "ParseWasmGlobals",
+            Self::ParseWasmTableEntries => "ParseWasmTableEntries",
+            Self::ParseWasmTypes => "ParseWasmTypes",
+            Self::ParseWasmDataSegments => "ParseWasmDataSegments",
+            Self::ParseWasmElemSegments => "ParseWasmElemSegments",
+            Self::ParseWasmImports => "ParseWasmImports",
+            Self::ParseWasmExports => "ParseWasmExports",
+            Self::ParseWasmDataSegmentBytes => "ParseWasmDataSegmentBytes",
+            Self::InstantiateWasmInstructions => "InstantiateWasmInstructions",
+            Self::InstantiateWasmFunctions => "InstantiateWasmFunctions",
+            Self::InstantiateWasmGlobals => "InstantiateWasmGlobals",
+            Self::InstantiateWasmTableEntries => "InstantiateWasmTableEntries",
+            Self::InstantiateWasmTypes => "InstantiateWasmTypes",
+            Self::InstantiateWasmDataSegments => "InstantiateWasmDataSegments",
+            Self::InstantiateWasmElemSegments => "InstantiateWasmElemSegments",
+            Self::InstantiateWasmImports => "InstantiateWasmImports",
+            Self::InstantiateWasmExports => "InstantiateWasmExports",
+            Self::InstantiateWasmDataSegmentBytes => "InstantiateWasmDataSegmentBytes",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 23] {
+    pub const fn variants() -> [ContractCostType; 43] {
         Self::VARIANTS
     }
 }
@@ -4135,6 +4257,26 @@ impl TryFrom<i32> for ContractCostType {
             20 => ContractCostType::Int256Pow,
             21 => ContractCostType::Int256Shift,
             22 => ContractCostType::ChaCha20DrawBytes,
+            23 => ContractCostType::ParseWasmInstructions,
+            24 => ContractCostType::ParseWasmFunctions,
+            25 => ContractCostType::ParseWasmGlobals,
+            26 => ContractCostType::ParseWasmTableEntries,
+            27 => ContractCostType::ParseWasmTypes,
+            28 => ContractCostType::ParseWasmDataSegments,
+            29 => ContractCostType::ParseWasmElemSegments,
+            30 => ContractCostType::ParseWasmImports,
+            31 => ContractCostType::ParseWasmExports,
+            32 => ContractCostType::ParseWasmDataSegmentBytes,
+            33 => ContractCostType::InstantiateWasmInstructions,
+            34 => ContractCostType::InstantiateWasmFunctions,
+            35 => ContractCostType::InstantiateWasmGlobals,
+            36 => ContractCostType::InstantiateWasmTableEntries,
+            37 => ContractCostType::InstantiateWasmTypes,
+            38 => ContractCostType::InstantiateWasmDataSegments,
+            39 => ContractCostType::InstantiateWasmElemSegments,
+            40 => ContractCostType::InstantiateWasmImports,
+            41 => ContractCostType::InstantiateWasmExports,
+            42 => ContractCostType::InstantiateWasmDataSegmentBytes,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -15323,11 +15465,257 @@ impl WriteXdr for ContractDataEntry {
     }
 }
 
+/// ContractCodeCostInputs is an XDR Struct defines as:
+///
+/// ```text
+/// struct ContractCodeCostInputs {
+///     ExtensionPoint ext;
+///     uint32 nInstructions;
+///     uint32 nFunctions;
+///     uint32 nGlobals;
+///     uint32 nTableEntries;
+///     uint32 nTypes;
+///     uint32 nDataSegments;
+///     uint32 nElemSegments;
+///     uint32 nImports;
+///     uint32 nExports;
+///     uint32 nDataSegmentBytes;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractCodeCostInputs {
+    pub ext: ExtensionPoint,
+    pub n_instructions: u32,
+    pub n_functions: u32,
+    pub n_globals: u32,
+    pub n_table_entries: u32,
+    pub n_types: u32,
+    pub n_data_segments: u32,
+    pub n_elem_segments: u32,
+    pub n_imports: u32,
+    pub n_exports: u32,
+    pub n_data_segment_bytes: u32,
+}
+
+impl ReadXdr for ContractCodeCostInputs {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                n_instructions: u32::read_xdr(r)?,
+                n_functions: u32::read_xdr(r)?,
+                n_globals: u32::read_xdr(r)?,
+                n_table_entries: u32::read_xdr(r)?,
+                n_types: u32::read_xdr(r)?,
+                n_data_segments: u32::read_xdr(r)?,
+                n_elem_segments: u32::read_xdr(r)?,
+                n_imports: u32::read_xdr(r)?,
+                n_exports: u32::read_xdr(r)?,
+                n_data_segment_bytes: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ContractCodeCostInputs {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.n_instructions.write_xdr(w)?;
+            self.n_functions.write_xdr(w)?;
+            self.n_globals.write_xdr(w)?;
+            self.n_table_entries.write_xdr(w)?;
+            self.n_types.write_xdr(w)?;
+            self.n_data_segments.write_xdr(w)?;
+            self.n_elem_segments.write_xdr(w)?;
+            self.n_imports.write_xdr(w)?;
+            self.n_exports.write_xdr(w)?;
+            self.n_data_segment_bytes.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ContractCodeEntryV1 is an XDR NestedStruct defines as:
+///
+/// ```text
+/// struct
+///             {
+///                 ExtensionPoint ext;
+///                 ContractCodeCostInputs costInputs;
+///             }
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct ContractCodeEntryV1 {
+    pub ext: ExtensionPoint,
+    pub cost_inputs: ContractCodeCostInputs,
+}
+
+impl ReadXdr for ContractCodeEntryV1 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                cost_inputs: ContractCodeCostInputs::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ContractCodeEntryV1 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.cost_inputs.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ContractCodeEntryExt is an XDR NestedUnion defines as:
+///
+/// ```text
+/// union switch (int v)
+///     {
+///         case 0:
+///             void;
+///         case 1:
+///             struct
+///             {
+///                 ExtensionPoint ext;
+///                 ContractCodeCostInputs costInputs;
+///             } v1;
+///     }
+/// ```
+///
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ContractCodeEntryExt {
+    V0,
+    V1(ContractCodeEntryV1),
+}
+
+impl ContractCodeEntryExt {
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0 => "V0",
+            Self::V1(_) => "V1",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => 0,
+            Self::V1(_) => 1,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ContractCodeEntryExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for ContractCodeEntryExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for ContractCodeEntryExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<i32> for ContractCodeEntryExt {}
+
+impl ReadXdr for ContractCodeEntryExt {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                1 => Self::V1(ContractCodeEntryV1::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ContractCodeEntryExt {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
 /// ContractCodeEntry is an XDR Struct defines as:
 ///
 /// ```text
 /// struct ContractCodeEntry {
-///     ExtensionPoint ext;
+///     union switch (int v)
+///     {
+///         case 0:
+///             void;
+///         case 1:
+///             struct
+///             {
+///                 ExtensionPoint ext;
+///                 ContractCodeCostInputs costInputs;
+///             } v1;
+///     } ext;
 ///
 ///     Hash hash;
 ///     opaque code<>;
@@ -15342,7 +15730,7 @@ impl WriteXdr for ContractDataEntry {
     serde(rename_all = "snake_case")
 )]
 pub struct ContractCodeEntry {
-    pub ext: ExtensionPoint,
+    pub ext: ContractCodeEntryExt,
     pub hash: Hash,
     pub code: BytesM,
 }
@@ -15352,7 +15740,7 @@ impl ReadXdr for ContractCodeEntry {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                ext: ExtensionPoint::read_xdr(r)?,
+                ext: ContractCodeEntryExt::read_xdr(r)?,
                 hash: Hash::read_xdr(r)?,
                 code: BytesM::read_xdr(r)?,
             })
@@ -42584,7 +42972,10 @@ pub enum TypeVariant {
     LiquidityPoolEntryConstantProduct,
     ContractDataDurability,
     ContractDataEntry,
+    ContractCodeCostInputs,
     ContractCodeEntry,
+    ContractCodeEntryExt,
+    ContractCodeEntryV1,
     TtlEntry,
     LedgerEntryExtensionV1,
     LedgerEntryExtensionV1Ext,
@@ -42871,7 +43262,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 422] = [
+    pub const VARIANTS: [TypeVariant; 425] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -43010,7 +43401,10 @@ impl TypeVariant {
         TypeVariant::LiquidityPoolEntryConstantProduct,
         TypeVariant::ContractDataDurability,
         TypeVariant::ContractDataEntry,
+        TypeVariant::ContractCodeCostInputs,
         TypeVariant::ContractCodeEntry,
+        TypeVariant::ContractCodeEntryExt,
+        TypeVariant::ContractCodeEntryV1,
         TypeVariant::TtlEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
@@ -43295,7 +43689,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 422] = [
+    pub const VARIANTS_STR: [&'static str; 425] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -43434,7 +43828,10 @@ impl TypeVariant {
         "LiquidityPoolEntryConstantProduct",
         "ContractDataDurability",
         "ContractDataEntry",
+        "ContractCodeCostInputs",
         "ContractCodeEntry",
+        "ContractCodeEntryExt",
+        "ContractCodeEntryV1",
         "TtlEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
@@ -43864,7 +44261,10 @@ impl TypeVariant {
             Self::LiquidityPoolEntryConstantProduct => "LiquidityPoolEntryConstantProduct",
             Self::ContractDataDurability => "ContractDataDurability",
             Self::ContractDataEntry => "ContractDataEntry",
+            Self::ContractCodeCostInputs => "ContractCodeCostInputs",
             Self::ContractCodeEntry => "ContractCodeEntry",
+            Self::ContractCodeEntryExt => "ContractCodeEntryExt",
+            Self::ContractCodeEntryV1 => "ContractCodeEntryV1",
             Self::TtlEntry => "TtlEntry",
             Self::LedgerEntryExtensionV1 => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext => "LedgerEntryExtensionV1Ext",
@@ -44157,7 +44557,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 422] {
+    pub const fn variants() -> [TypeVariant; 425] {
         Self::VARIANTS
     }
 }
@@ -44324,7 +44724,10 @@ impl core::str::FromStr for TypeVariant {
             "LiquidityPoolEntryConstantProduct" => Ok(Self::LiquidityPoolEntryConstantProduct),
             "ContractDataDurability" => Ok(Self::ContractDataDurability),
             "ContractDataEntry" => Ok(Self::ContractDataEntry),
+            "ContractCodeCostInputs" => Ok(Self::ContractCodeCostInputs),
             "ContractCodeEntry" => Ok(Self::ContractCodeEntry),
+            "ContractCodeEntryExt" => Ok(Self::ContractCodeEntryExt),
+            "ContractCodeEntryV1" => Ok(Self::ContractCodeEntryV1),
             "TtlEntry" => Ok(Self::TtlEntry),
             "LedgerEntryExtensionV1" => Ok(Self::LedgerEntryExtensionV1),
             "LedgerEntryExtensionV1Ext" => Ok(Self::LedgerEntryExtensionV1Ext),
@@ -44767,7 +45170,10 @@ pub enum Type {
     LiquidityPoolEntryConstantProduct(Box<LiquidityPoolEntryConstantProduct>),
     ContractDataDurability(Box<ContractDataDurability>),
     ContractDataEntry(Box<ContractDataEntry>),
+    ContractCodeCostInputs(Box<ContractCodeCostInputs>),
     ContractCodeEntry(Box<ContractCodeEntry>),
+    ContractCodeEntryExt(Box<ContractCodeEntryExt>),
+    ContractCodeEntryV1(Box<ContractCodeEntryV1>),
     TtlEntry(Box<TtlEntry>),
     LedgerEntryExtensionV1(Box<LedgerEntryExtensionV1>),
     LedgerEntryExtensionV1Ext(Box<LedgerEntryExtensionV1Ext>),
@@ -45054,7 +45460,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 422] = [
+    pub const VARIANTS: [TypeVariant; 425] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -45193,7 +45599,10 @@ impl Type {
         TypeVariant::LiquidityPoolEntryConstantProduct,
         TypeVariant::ContractDataDurability,
         TypeVariant::ContractDataEntry,
+        TypeVariant::ContractCodeCostInputs,
         TypeVariant::ContractCodeEntry,
+        TypeVariant::ContractCodeEntryExt,
+        TypeVariant::ContractCodeEntryV1,
         TypeVariant::TtlEntry,
         TypeVariant::LedgerEntryExtensionV1,
         TypeVariant::LedgerEntryExtensionV1Ext,
@@ -45478,7 +45887,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 422] = [
+    pub const VARIANTS_STR: [&'static str; 425] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -45617,7 +46026,10 @@ impl Type {
         "LiquidityPoolEntryConstantProduct",
         "ContractDataDurability",
         "ContractDataEntry",
+        "ContractCodeCostInputs",
         "ContractCodeEntry",
+        "ContractCodeEntryExt",
+        "ContractCodeEntryV1",
         "TtlEntry",
         "LedgerEntryExtensionV1",
         "LedgerEntryExtensionV1Ext",
@@ -46469,9 +46881,24 @@ impl Type {
                     ContractDataEntry::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::ContractCodeCostInputs => r.with_limited_depth(|r| {
+                Ok(Self::ContractCodeCostInputs(Box::new(
+                    ContractCodeCostInputs::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::ContractCodeEntry => r.with_limited_depth(|r| {
                 Ok(Self::ContractCodeEntry(Box::new(
                     ContractCodeEntry::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractCodeEntryExt => r.with_limited_depth(|r| {
+                Ok(Self::ContractCodeEntryExt(Box::new(
+                    ContractCodeEntryExt::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractCodeEntryV1 => r.with_limited_depth(|r| {
+                Ok(Self::ContractCodeEntryV1(Box::new(
+                    ContractCodeEntryV1::read_xdr(r)?,
                 )))
             }),
             TypeVariant::TtlEntry => {
@@ -48349,9 +48776,21 @@ impl Type {
                 ReadXdrIter::<_, ContractDataEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t)))),
             ),
+            TypeVariant::ContractCodeCostInputs => Box::new(
+                ReadXdrIter::<_, ContractCodeCostInputs>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractCodeCostInputs(Box::new(t)))),
+            ),
             TypeVariant::ContractCodeEntry => Box::new(
                 ReadXdrIter::<_, ContractCodeEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
+            ),
+            TypeVariant::ContractCodeEntryExt => Box::new(
+                ReadXdrIter::<_, ContractCodeEntryExt>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractCodeEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::ContractCodeEntryV1 => Box::new(
+                ReadXdrIter::<_, ContractCodeEntryV1>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractCodeEntryV1(Box::new(t)))),
             ),
             TypeVariant::TtlEntry => Box::new(
                 ReadXdrIter::<_, TtlEntry>::new(&mut r.inner, r.limits.clone())
@@ -50217,9 +50656,24 @@ impl Type {
                 ReadXdrIter::<_, Frame<ContractDataEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t.0)))),
             ),
+            TypeVariant::ContractCodeCostInputs => Box::new(
+                ReadXdrIter::<_, Frame<ContractCodeCostInputs>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ContractCodeCostInputs(Box::new(t.0)))),
+            ),
             TypeVariant::ContractCodeEntry => Box::new(
                 ReadXdrIter::<_, Frame<ContractCodeEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractCodeEntryExt => Box::new(
+                ReadXdrIter::<_, Frame<ContractCodeEntryExt>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractCodeEntryExt(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractCodeEntryV1 => Box::new(
+                ReadXdrIter::<_, Frame<ContractCodeEntryV1>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractCodeEntryV1(Box::new(t.0)))),
             ),
             TypeVariant::TtlEntry => Box::new(
                 ReadXdrIter::<_, Frame<TtlEntry>>::new(&mut r.inner, r.limits.clone())
@@ -52215,9 +52669,21 @@ impl Type {
                 ReadXdrIter::<_, ContractDataEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractDataEntry(Box::new(t)))),
             ),
+            TypeVariant::ContractCodeCostInputs => Box::new(
+                ReadXdrIter::<_, ContractCodeCostInputs>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractCodeCostInputs(Box::new(t)))),
+            ),
             TypeVariant::ContractCodeEntry => Box::new(
                 ReadXdrIter::<_, ContractCodeEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractCodeEntry(Box::new(t)))),
+            ),
+            TypeVariant::ContractCodeEntryExt => Box::new(
+                ReadXdrIter::<_, ContractCodeEntryExt>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractCodeEntryExt(Box::new(t)))),
+            ),
+            TypeVariant::ContractCodeEntryV1 => Box::new(
+                ReadXdrIter::<_, ContractCodeEntryV1>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractCodeEntryV1(Box::new(t)))),
             ),
             TypeVariant::TtlEntry => Box::new(
                 ReadXdrIter::<_, TtlEntry>::new(dec, r.limits.clone())
@@ -53732,7 +54198,16 @@ impl Type {
             TypeVariant::ContractDataEntry => Ok(Self::ContractDataEntry(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::ContractCodeCostInputs => Ok(Self::ContractCodeCostInputs(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::ContractCodeEntry => Ok(Self::ContractCodeEntry(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractCodeEntryExt => Ok(Self::ContractCodeEntryExt(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ContractCodeEntryV1 => Ok(Self::ContractCodeEntryV1(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::TtlEntry => Ok(Self::TtlEntry(Box::new(serde_json::from_reader(r)?))),
@@ -54673,7 +55148,10 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(ref v) => v.as_ref(),
             Self::ContractDataDurability(ref v) => v.as_ref(),
             Self::ContractDataEntry(ref v) => v.as_ref(),
+            Self::ContractCodeCostInputs(ref v) => v.as_ref(),
             Self::ContractCodeEntry(ref v) => v.as_ref(),
+            Self::ContractCodeEntryExt(ref v) => v.as_ref(),
+            Self::ContractCodeEntryV1(ref v) => v.as_ref(),
             Self::TtlEntry(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1(ref v) => v.as_ref(),
             Self::LedgerEntryExtensionV1Ext(ref v) => v.as_ref(),
@@ -55108,7 +55586,10 @@ impl Type {
             Self::LiquidityPoolEntryConstantProduct(_) => "LiquidityPoolEntryConstantProduct",
             Self::ContractDataDurability(_) => "ContractDataDurability",
             Self::ContractDataEntry(_) => "ContractDataEntry",
+            Self::ContractCodeCostInputs(_) => "ContractCodeCostInputs",
             Self::ContractCodeEntry(_) => "ContractCodeEntry",
+            Self::ContractCodeEntryExt(_) => "ContractCodeEntryExt",
+            Self::ContractCodeEntryV1(_) => "ContractCodeEntryV1",
             Self::TtlEntry(_) => "TtlEntry",
             Self::LedgerEntryExtensionV1(_) => "LedgerEntryExtensionV1",
             Self::LedgerEntryExtensionV1Ext(_) => "LedgerEntryExtensionV1Ext",
@@ -55405,7 +55886,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 422] {
+    pub const fn variants() -> [TypeVariant; 425] {
         Self::VARIANTS
     }
 
@@ -55567,7 +56048,10 @@ impl Type {
             }
             Self::ContractDataDurability(_) => TypeVariant::ContractDataDurability,
             Self::ContractDataEntry(_) => TypeVariant::ContractDataEntry,
+            Self::ContractCodeCostInputs(_) => TypeVariant::ContractCodeCostInputs,
             Self::ContractCodeEntry(_) => TypeVariant::ContractCodeEntry,
+            Self::ContractCodeEntryExt(_) => TypeVariant::ContractCodeEntryExt,
+            Self::ContractCodeEntryV1(_) => TypeVariant::ContractCodeEntryV1,
             Self::TtlEntry(_) => TypeVariant::TtlEntry,
             Self::LedgerEntryExtensionV1(_) => TypeVariant::LedgerEntryExtensionV1,
             Self::LedgerEntryExtensionV1Ext(_) => TypeVariant::LedgerEntryExtensionV1Ext,
@@ -56047,7 +56531,10 @@ impl WriteXdr for Type {
             Self::LiquidityPoolEntryConstantProduct(v) => v.write_xdr(w),
             Self::ContractDataDurability(v) => v.write_xdr(w),
             Self::ContractDataEntry(v) => v.write_xdr(w),
+            Self::ContractCodeCostInputs(v) => v.write_xdr(w),
             Self::ContractCodeEntry(v) => v.write_xdr(w),
+            Self::ContractCodeEntryExt(v) => v.write_xdr(w),
+            Self::ContractCodeEntryV1(v) => v.write_xdr(w),
             Self::TtlEntry(v) => v.write_xdr(w),
             Self::LedgerEntryExtensionV1(v) => v.write_xdr(w),
             Self::LedgerEntryExtensionV1Ext(v) => v.write_xdr(w),

@@ -7,7 +7,7 @@ on:
   merge_group:
 
 env:
-  CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex
+  CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex
 
 jobs:
 

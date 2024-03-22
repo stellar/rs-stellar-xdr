@@ -956,6 +956,32 @@ impl<T, const MAX: u32> Default for VecM<T, MAX> {
     }
 }
 
+#[cfg(feature = "schemars")]
+impl<T: schemars::JsonSchema, const MAX: u32> schemars::JsonSchema for VecM<T, MAX> {
+    fn schema_name() -> String {
+        format!("VecM<{}, {}>", T::schema_name(), MAX)
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let schema = Vec::<T>::json_schema(gen);
+        if let schemars::schema::Schema::Object(mut schema) = schema {
+            if let Some(array) = schema.array.clone() {
+                schema.array = Some(Box::new(schemars::schema::ArrayValidation {
+                    max_items: Some(MAX),
+                    ..*array
+                }));
+            }
+            schema.into()
+        } else {
+            schema
+        }
+    }
+}
+
 impl<T, const MAX: u32> VecM<T, MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
@@ -1391,6 +1417,40 @@ impl<const MAX: u32> Deref for BytesM<MAX> {
     }
 }
 
+#[cfg(feature = "schemars")]
+impl<const MAX: u32> schemars::JsonSchema for BytesM<MAX> {
+    fn schema_name() -> String {
+        format!("BytesM<{MAX}>")
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let schema = String::json_schema(gen);
+        if let schemars::schema::Schema::Object(mut schema) = schema {
+            schema.extensions.insert(
+                "contentEncoding".to_owned(),
+                serde_json::Value::String("hex".to_string()),
+            );
+            schema.extensions.insert(
+                "contentMediaType".to_owned(),
+                serde_json::Value::String("application/binary".to_string()),
+            );
+            let string = *schema.string.unwrap_or_default().clone();
+            schema.string = Some(Box::new(schemars::schema::StringValidation {
+                max_length: MAX.checked_mul(2).map(Some).unwrap_or_default(),
+                min_length: None,
+                ..string
+            }));
+            schema.into()
+        } else {
+            schema
+        }
+    }
+}
+
 impl<const MAX: u32> Default for BytesM<MAX> {
     fn default() -> Self {
         Self(Vec::default())
@@ -1779,6 +1839,27 @@ impl<const MAX: u32> Default for StringM<MAX> {
     }
 }
 
+#[cfg(feature = "schemars")]
+impl<const MAX: u32> schemars::JsonSchema for StringM<MAX> {
+    fn schema_name() -> String {
+        format!("StringM<{MAX}>")
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let schema = String::json_schema(gen);
+        if let schemars::schema::Schema::Object(mut schema) = schema {
+            let string = *schema.string.unwrap_or_default().clone();
+            schema.string = Some(Box::new(schemars::schema::StringValidation {
+                max_length: Some(MAX),
+                ..string
+            }));
+            schema.into()
+        } else {
+            schema
+        }
+    }
+}
+
 impl<const MAX: u32> StringM<MAX> {
     pub const MAX_LEN: usize = { MAX as usize };
 
@@ -2094,6 +2175,17 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
 pub struct Frame<T>(pub T)
 where
     T: ReadXdr;
+
+#[cfg(feature = "schemars")]
+impl<T: schemars::JsonSchema + ReadXdr> schemars::JsonSchema for Frame<T> {
+    fn schema_name() -> String {
+        format!("Frame<{}>", T::schema_name())
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        T::json_schema(gen)
+    }
+}
 
 impl<T> ReadXdr for Frame<T>
 where
@@ -2758,6 +2850,7 @@ mod test {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct Value(pub BytesM);
 
@@ -2866,6 +2959,7 @@ impl AsRef<[u8]> for Value {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScpBallot {
     pub counter: u32,
     pub value: Value,
@@ -2914,6 +3008,7 @@ impl WriteXdr for ScpBallot {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScpStatementType {
     Prepare = 0,
@@ -3030,6 +3125,7 @@ impl WriteXdr for ScpStatementType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScpNomination {
     pub quorum_set_hash: Hash,
     pub votes: VecM<Value>,
@@ -3082,6 +3178,7 @@ impl WriteXdr for ScpNomination {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScpStatementPrepare {
     pub quorum_set_hash: Hash,
     pub ballot: ScpBallot,
@@ -3142,6 +3239,7 @@ impl WriteXdr for ScpStatementPrepare {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScpStatementConfirm {
     pub ballot: ScpBallot,
     pub n_prepared: u32,
@@ -3197,6 +3295,7 @@ impl WriteXdr for ScpStatementConfirm {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScpStatementExternalize {
     pub commit: ScpBallot,
     pub n_h: u32,
@@ -3272,6 +3371,7 @@ impl WriteXdr for ScpStatementExternalize {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpStatementPledges {
     Prepare(ScpStatementPrepare),
@@ -3426,6 +3526,7 @@ impl WriteXdr for ScpStatementPledges {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScpStatement {
     pub node_id: NodeId,
     pub slot_index: u64,
@@ -3474,6 +3575,7 @@ impl WriteXdr for ScpStatement {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScpEnvelope {
     pub statement: ScpStatement,
     pub signature: Signature,
@@ -3520,6 +3622,7 @@ impl WriteXdr for ScpEnvelope {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScpQuorumSet {
     pub threshold: u32,
     pub validators: VecM<NodeId>,
@@ -3568,6 +3671,7 @@ impl WriteXdr for ScpQuorumSet {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractExecutionLanesV0 {
     pub ledger_max_tx_count: u32,
 }
@@ -3618,6 +3722,7 @@ impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractComputeV0 {
     pub ledger_max_instructions: i64,
     pub tx_max_instructions: i64,
@@ -3699,6 +3804,7 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractLedgerCostV0 {
     pub ledger_max_read_ledger_entries: u32,
     pub ledger_max_read_bytes: u32,
@@ -3782,6 +3888,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractHistoricalDataV0 {
     pub fee_historical1_kb: i64,
 }
@@ -3826,6 +3933,7 @@ impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractEventsV0 {
     pub tx_max_contract_events_size_bytes: u32,
     pub fee_contract_events1_kb: i64,
@@ -3876,6 +3984,7 @@ impl WriteXdr for ConfigSettingContractEventsV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractBandwidthV0 {
     pub ledger_max_txs_size_bytes: u32,
     pub tx_max_size_bytes: u32,
@@ -3972,6 +4081,7 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractCostType {
     WasmInsnExec = 0,
@@ -4189,6 +4299,7 @@ impl WriteXdr for ContractCostType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ContractCostParamEntry {
     pub ext: ExtensionPoint,
     pub const_term: i64,
@@ -4256,6 +4367,7 @@ impl WriteXdr for ContractCostParamEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct StateArchivalSettings {
     pub max_entry_ttl: u32,
     pub min_temporary_ttl: u32,
@@ -4325,6 +4437,7 @@ impl WriteXdr for StateArchivalSettings {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct EvictionIterator {
     pub bucket_list_level: u32,
     pub is_curr_bucket: bool,
@@ -4378,6 +4491,7 @@ pub const CONTRACT_COST_COUNT_LIMIT: u64 = 1024;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct ContractCostParams(pub VecM<ContractCostParamEntry, 1024>);
 
@@ -4499,6 +4613,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ConfigSettingId {
     ContractMaxSizeBytes = 0,
@@ -4696,6 +4811,7 @@ impl WriteXdr for ConfigSettingId {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ConfigSettingEntry {
     ContractMaxSizeBytes(u32),
@@ -4922,6 +5038,7 @@ impl WriteXdr for ConfigSettingEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScEnvMetaKind {
     ScEnvMetaKindInterfaceVersion = 0,
@@ -5024,6 +5141,7 @@ impl WriteXdr for ScEnvMetaKind {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScEnvMetaEntry {
     ScEnvMetaKindInterfaceVersion(u64),
@@ -5125,6 +5243,7 @@ impl WriteXdr for ScEnvMetaEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScMetaV0 {
     pub key: StringM,
     pub val: StringM,
@@ -5170,6 +5289,7 @@ impl WriteXdr for ScMetaV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScMetaKind {
     ScMetaV0 = 0,
@@ -5272,6 +5392,7 @@ impl WriteXdr for ScMetaKind {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScMetaEntry {
     ScMetaV0(ScMetaV0),
@@ -5409,6 +5530,7 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecType {
     Val = 0,
@@ -5633,6 +5755,7 @@ impl WriteXdr for ScSpecType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecTypeOption {
     pub value_type: Box<ScSpecTypeDef>,
 }
@@ -5675,6 +5798,7 @@ impl WriteXdr for ScSpecTypeOption {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecTypeResult {
     pub ok_type: Box<ScSpecTypeDef>,
     pub error_type: Box<ScSpecTypeDef>,
@@ -5719,6 +5843,7 @@ impl WriteXdr for ScSpecTypeResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecTypeVec {
     pub element_type: Box<ScSpecTypeDef>,
 }
@@ -5761,6 +5886,7 @@ impl WriteXdr for ScSpecTypeVec {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecTypeMap {
     pub key_type: Box<ScSpecTypeDef>,
     pub value_type: Box<ScSpecTypeDef>,
@@ -5805,6 +5931,7 @@ impl WriteXdr for ScSpecTypeMap {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecTypeTuple {
     pub value_types: VecM<ScSpecTypeDef, 12>,
 }
@@ -5846,6 +5973,7 @@ impl WriteXdr for ScSpecTypeTuple {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecTypeBytesN {
     pub n: u32,
 }
@@ -5887,6 +6015,7 @@ impl WriteXdr for ScSpecTypeBytesN {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecTypeUdt {
     pub name: StringM<60>,
 }
@@ -5961,6 +6090,7 @@ impl WriteXdr for ScSpecTypeUdt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecTypeDef {
     Val,
@@ -6233,6 +6363,7 @@ impl WriteXdr for ScSpecTypeDef {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtStructFieldV0 {
     pub doc: StringM<1024>,
     pub name: StringM<30>,
@@ -6283,6 +6414,7 @@ impl WriteXdr for ScSpecUdtStructFieldV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtStructV0 {
     pub doc: StringM<1024>,
     pub lib: StringM<80>,
@@ -6334,6 +6466,7 @@ impl WriteXdr for ScSpecUdtStructV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtUnionCaseVoidV0 {
     pub doc: StringM<1024>,
     pub name: StringM<60>,
@@ -6380,6 +6513,7 @@ impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtUnionCaseTupleV0 {
     pub doc: StringM<1024>,
     pub name: StringM<60>,
@@ -6429,6 +6563,7 @@ impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecUdtUnionCaseV0Kind {
     VoidV0 = 0,
@@ -6539,6 +6674,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecUdtUnionCaseV0 {
     VoidV0(ScSpecUdtUnionCaseVoidV0),
@@ -6652,6 +6788,7 @@ impl WriteXdr for ScSpecUdtUnionCaseV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtUnionV0 {
     pub doc: StringM<1024>,
     pub lib: StringM<80>,
@@ -6704,6 +6841,7 @@ impl WriteXdr for ScSpecUdtUnionV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtEnumCaseV0 {
     pub doc: StringM<1024>,
     pub name: StringM<60>,
@@ -6754,6 +6892,7 @@ impl WriteXdr for ScSpecUdtEnumCaseV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtEnumV0 {
     pub doc: StringM<1024>,
     pub lib: StringM<80>,
@@ -6806,6 +6945,7 @@ impl WriteXdr for ScSpecUdtEnumV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtErrorEnumCaseV0 {
     pub doc: StringM<1024>,
     pub name: StringM<60>,
@@ -6856,6 +6996,7 @@ impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecUdtErrorEnumV0 {
     pub doc: StringM<1024>,
     pub lib: StringM<80>,
@@ -6908,6 +7049,7 @@ impl WriteXdr for ScSpecUdtErrorEnumV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecFunctionInputV0 {
     pub doc: StringM<1024>,
     pub name: StringM<30>,
@@ -6958,6 +7100,7 @@ impl WriteXdr for ScSpecFunctionInputV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecFunctionV0 {
     pub doc: StringM<1024>,
     pub name: ScSymbol,
@@ -7013,6 +7156,7 @@ impl WriteXdr for ScSpecFunctionV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScSpecEntryKind {
     FunctionV0 = 0,
@@ -7147,6 +7291,7 @@ impl WriteXdr for ScSpecEntryKind {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScSpecEntry {
     FunctionV0(ScSpecFunctionV0),
@@ -7330,6 +7475,7 @@ impl WriteXdr for ScSpecEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScValType {
     Bool = 0,
@@ -7549,6 +7695,7 @@ impl WriteXdr for ScValType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScErrorType {
     Contract = 0,
@@ -7700,6 +7847,7 @@ impl WriteXdr for ScErrorType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScErrorCode {
     ArithDomain = 0,
@@ -7861,6 +8009,7 @@ impl WriteXdr for ScErrorCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScError {
     Contract(u32),
@@ -8018,6 +8167,7 @@ impl WriteXdr for ScError {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct UInt128Parts {
     pub hi: u64,
     pub lo: u64,
@@ -8062,6 +8212,7 @@ impl WriteXdr for UInt128Parts {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Int128Parts {
     pub hi: i64,
     pub lo: u64,
@@ -8108,6 +8259,7 @@ impl WriteXdr for Int128Parts {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct UInt256Parts {
     pub hi_hi: u64,
     pub hi_lo: u64,
@@ -8160,6 +8312,7 @@ impl WriteXdr for UInt256Parts {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Int256Parts {
     pub hi_hi: i64,
     pub hi_lo: u64,
@@ -8212,6 +8365,7 @@ impl WriteXdr for Int256Parts {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractExecutableType {
     Wasm = 0,
@@ -8322,6 +8476,7 @@ impl WriteXdr for ContractExecutableType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ContractExecutable {
     Wasm(Hash),
@@ -8430,6 +8585,7 @@ impl WriteXdr for ContractExecutable {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ScAddressType {
     Account = 0,
@@ -8645,6 +8801,7 @@ pub const SCSYMBOL_LIMIT: u64 = 32;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct ScVec(pub VecM<ScVal>);
 
@@ -8750,6 +8907,7 @@ impl AsRef<[ScVal]> for ScVec {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct ScMap(pub VecM<ScMapEntry>);
 
@@ -8855,6 +9013,7 @@ impl AsRef<[ScMapEntry]> for ScMap {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct ScBytes(pub BytesM);
 
@@ -8960,6 +9119,7 @@ impl AsRef<[u8]> for ScBytes {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct ScString(pub StringM);
 
@@ -9065,6 +9225,7 @@ impl AsRef<[u8]> for ScString {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct ScSymbol(pub StringM<32>);
 
@@ -9171,6 +9332,7 @@ impl AsRef<[u8]> for ScSymbol {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScNonceKey {
     pub nonce: i64,
 }
@@ -9212,6 +9374,7 @@ impl WriteXdr for ScNonceKey {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScContractInstance {
     pub executable: ContractExecutable,
     pub storage: Option<ScMap>,
@@ -9314,6 +9477,7 @@ impl WriteXdr for ScContractInstance {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScVal {
     Bool(bool),
@@ -9566,6 +9730,7 @@ impl WriteXdr for ScVal {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScMapEntry {
     pub key: ScVal,
     pub val: ScVal,
@@ -9614,6 +9779,7 @@ impl WriteXdr for ScMapEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum StoredTransactionSet {
     V0(TransactionSet),
@@ -9719,6 +9885,7 @@ impl WriteXdr for StoredTransactionSet {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct StoredDebugTransactionSet {
     pub tx_set: StoredTransactionSet,
     pub ledger_seq: u32,
@@ -9768,6 +9935,7 @@ impl WriteXdr for StoredDebugTransactionSet {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PersistedScpStateV0 {
     pub scp_envelopes: VecM<ScpEnvelope>,
     pub quorum_sets: VecM<ScpQuorumSet>,
@@ -9817,6 +9985,7 @@ impl WriteXdr for PersistedScpStateV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PersistedScpStateV1 {
     pub scp_envelopes: VecM<ScpEnvelope>,
     pub quorum_sets: VecM<ScpQuorumSet>,
@@ -9865,6 +10034,7 @@ impl WriteXdr for PersistedScpStateV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum PersistedScpState {
     V0(PersistedScpStateV0),
@@ -9994,6 +10164,39 @@ impl core::str::FromStr for Thresholds {
         hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
     }
 }
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for Thresholds {
+    fn schema_name() -> String {
+        "Thresholds".to_string()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let schema = String::json_schema(gen);
+        if let schemars::schema::Schema::Object(mut schema) = schema {
+            schema.extensions.insert(
+                "contentEncoding".to_owned(),
+                serde_json::Value::String("hex".to_string()),
+            );
+            schema.extensions.insert(
+                "contentMediaType".to_owned(),
+                serde_json::Value::String("application/binary".to_string()),
+            );
+            let string = *schema.string.unwrap_or_default().clone();
+            schema.string = Some(Box::new(schemars::schema::StringValidation {
+                max_length: 4_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                min_length: 4_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                ..string
+            }));
+            schema.into()
+        } else {
+            schema
+        }
+    }
+}
 impl From<Thresholds> for [u8; 4] {
     #[must_use]
     fn from(x: Thresholds) -> Self {
@@ -10084,6 +10287,7 @@ impl AsRef<[u8]> for Thresholds {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct String32(pub StringM<32>);
 
@@ -10189,6 +10393,7 @@ impl AsRef<[u8]> for String32 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct String64(pub StringM<64>);
 
@@ -10293,6 +10498,7 @@ impl AsRef<[u8]> for String64 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct SequenceNumber(pub i64);
 
@@ -10349,6 +10555,7 @@ impl WriteXdr for SequenceNumber {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct DataValue(pub BytesM<64>);
 
@@ -10453,6 +10660,7 @@ impl AsRef<[u8]> for DataValue {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct PoolId(pub Hash);
 
@@ -10717,6 +10925,7 @@ impl AsRef<[u8]> for AssetCode12 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AssetType {
     Native = 0,
@@ -10942,6 +11151,7 @@ impl WriteXdr for AssetCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AlphaNum4 {
     pub asset_code: AssetCode4,
     pub issuer: AccountId,
@@ -10987,6 +11197,7 @@ impl WriteXdr for AlphaNum4 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AlphaNum12 {
     pub asset_code: AssetCode12,
     pub issuer: AccountId,
@@ -11041,6 +11252,7 @@ impl WriteXdr for AlphaNum12 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum Asset {
     Native,
@@ -11154,6 +11366,7 @@ impl WriteXdr for Asset {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Price {
     pub n: i32,
     pub d: i32,
@@ -11199,6 +11412,7 @@ impl WriteXdr for Price {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Liabilities {
     pub buying: i64,
     pub selling: i64,
@@ -11247,6 +11461,7 @@ impl WriteXdr for Liabilities {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ThresholdIndexes {
     MasterWeight = 0,
@@ -11371,6 +11586,7 @@ impl WriteXdr for ThresholdIndexes {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerEntryType {
     Account = 0,
@@ -11521,6 +11737,7 @@ impl WriteXdr for LedgerEntryType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Signer {
     pub key: SignerKey,
     pub weight: u32,
@@ -11579,6 +11796,7 @@ impl WriteXdr for Signer {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AccountFlags {
     RequiredFlag = 1,
@@ -11719,6 +11937,7 @@ pub const MAX_SIGNERS: u64 = 20;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct SponsorshipDescriptor(pub Option<AccountId>);
 
@@ -11785,6 +12004,7 @@ impl WriteXdr for SponsorshipDescriptor {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AccountEntryExtensionV3 {
     pub ext: ExtensionPoint,
     pub seq_ledger: u32,
@@ -11836,6 +12056,7 @@ impl WriteXdr for AccountEntryExtensionV3 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExtensionV2Ext {
     V0,
@@ -11950,6 +12171,7 @@ impl WriteXdr for AccountEntryExtensionV2Ext {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AccountEntryExtensionV2 {
     pub num_sponsored: u32,
     pub num_sponsoring: u32,
@@ -12004,6 +12226,7 @@ impl WriteXdr for AccountEntryExtensionV2 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExtensionV1Ext {
     V0,
@@ -12116,6 +12339,7 @@ impl WriteXdr for AccountEntryExtensionV1Ext {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AccountEntryExtensionV1 {
     pub liabilities: Liabilities,
     pub ext: AccountEntryExtensionV1Ext,
@@ -12164,6 +12388,7 @@ impl WriteXdr for AccountEntryExtensionV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountEntryExt {
     V0,
@@ -12291,6 +12516,7 @@ impl WriteXdr for AccountEntryExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AccountEntry {
     pub account_id: AccountId,
     pub balance: i64,
@@ -12367,6 +12593,7 @@ impl WriteXdr for AccountEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum TrustLineFlags {
     AuthorizedFlag = 1,
@@ -12506,6 +12733,7 @@ pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LiquidityPoolType {
     LiquidityPoolConstantProduct = 0,
@@ -12619,6 +12847,7 @@ impl WriteXdr for LiquidityPoolType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineAsset {
     Native,
@@ -12740,6 +12969,7 @@ impl WriteXdr for TrustLineAsset {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryExtensionV2Ext {
     V0,
@@ -12845,6 +13075,7 @@ impl WriteXdr for TrustLineEntryExtensionV2Ext {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TrustLineEntryExtensionV2 {
     pub liquidity_pool_use_count: i32,
     pub ext: TrustLineEntryExtensionV2Ext,
@@ -12893,6 +13124,7 @@ impl WriteXdr for TrustLineEntryExtensionV2 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryV1Ext {
     V0,
@@ -13005,6 +13237,7 @@ impl WriteXdr for TrustLineEntryV1Ext {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TrustLineEntryV1 {
     pub liabilities: Liabilities,
     pub ext: TrustLineEntryV1Ext,
@@ -13065,6 +13298,7 @@ impl WriteXdr for TrustLineEntryV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TrustLineEntryExt {
     V0,
@@ -13196,6 +13430,7 @@ impl WriteXdr for TrustLineEntryExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TrustLineEntry {
     pub account_id: AccountId,
     pub asset: TrustLineAsset,
@@ -13255,6 +13490,7 @@ impl WriteXdr for TrustLineEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum OfferEntryFlags {
     PassiveFlag = 1,
@@ -13365,6 +13601,7 @@ pub const MASK_OFFERENTRY_FLAGS: u64 = 1;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum OfferEntryExt {
     V0,
@@ -13483,6 +13720,7 @@ impl WriteXdr for OfferEntryExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct OfferEntry {
     pub seller_id: AccountId,
     pub offer_id: i64,
@@ -13547,6 +13785,7 @@ impl WriteXdr for OfferEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum DataEntryExt {
     V0,
@@ -13655,6 +13894,7 @@ impl WriteXdr for DataEntryExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct DataEntry {
     pub account_id: AccountId,
     pub data_name: String64,
@@ -13711,6 +13951,7 @@ impl WriteXdr for DataEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimPredicateType {
     Unconditional = 0,
@@ -13853,6 +14094,7 @@ impl WriteXdr for ClaimPredicateType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimPredicate {
     Unconditional,
@@ -13995,6 +14237,7 @@ impl WriteXdr for ClaimPredicate {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimantType {
     ClaimantTypeV0 = 0,
@@ -14096,6 +14339,7 @@ impl WriteXdr for ClaimantType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ClaimantV0 {
     pub destination: AccountId,
     pub predicate: ClaimPredicate,
@@ -14146,6 +14390,7 @@ impl WriteXdr for ClaimantV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum Claimant {
     ClaimantTypeV0(ClaimantV0),
@@ -14245,6 +14490,7 @@ impl WriteXdr for Claimant {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimableBalanceIdType {
     ClaimableBalanceIdTypeV0 = 0,
@@ -14348,6 +14594,7 @@ impl WriteXdr for ClaimableBalanceIdType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceId {
     ClaimableBalanceIdTypeV0(Hash),
@@ -14452,6 +14699,7 @@ impl WriteXdr for ClaimableBalanceId {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimableBalanceFlags {
     ClaimableBalanceClawbackEnabledFlag = 1,
@@ -14563,6 +14811,7 @@ pub const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceEntryExtensionV1Ext {
     V0,
@@ -14668,6 +14917,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ClaimableBalanceEntryExtensionV1 {
     pub ext: ClaimableBalanceEntryExtensionV1Ext,
     pub flags: u32,
@@ -14716,6 +14966,7 @@ impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceEntryExt {
     V0,
@@ -14839,6 +15090,7 @@ impl WriteXdr for ClaimableBalanceEntryExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ClaimableBalanceEntry {
     pub balance_id: ClaimableBalanceId,
     pub claimants: VecM<Claimant, 10>,
@@ -14894,6 +15146,7 @@ impl WriteXdr for ClaimableBalanceEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LiquidityPoolConstantProductParameters {
     pub asset_a: Asset,
     pub asset_b: Asset,
@@ -14947,6 +15200,7 @@ impl WriteXdr for LiquidityPoolConstantProductParameters {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LiquidityPoolEntryConstantProduct {
     pub params: LiquidityPoolConstantProductParameters,
     pub reserve_a: i64,
@@ -15011,6 +15265,7 @@ impl WriteXdr for LiquidityPoolEntryConstantProduct {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolEntryBody {
     LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct),
@@ -15131,6 +15386,7 @@ impl WriteXdr for LiquidityPoolEntryBody {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LiquidityPoolEntry {
     pub liquidity_pool_id: PoolId,
     pub body: LiquidityPoolEntryBody,
@@ -15176,6 +15432,7 @@ impl WriteXdr for LiquidityPoolEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractDataDurability {
     Temporary = 0,
@@ -15286,6 +15543,7 @@ impl WriteXdr for ContractDataDurability {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ContractDataEntry {
     pub ext: ExtensionPoint,
     pub contract: ScAddress,
@@ -15341,6 +15599,7 @@ impl WriteXdr for ContractDataEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ContractCodeEntry {
     pub ext: ExtensionPoint,
     pub hash: Hash,
@@ -15389,6 +15648,7 @@ impl WriteXdr for ContractCodeEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TtlEntry {
     pub key_hash: Hash,
     pub live_until_ledger_seq: u32,
@@ -15435,6 +15695,7 @@ impl WriteXdr for TtlEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryExtensionV1Ext {
     V0,
@@ -15540,6 +15801,7 @@ impl WriteXdr for LedgerEntryExtensionV1Ext {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerEntryExtensionV1 {
     pub sponsoring_id: SponsorshipDescriptor,
     pub ext: LedgerEntryExtensionV1Ext,
@@ -15604,6 +15866,7 @@ impl WriteXdr for LedgerEntryExtensionV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryData {
     Account(AccountEntry),
@@ -15783,6 +16046,7 @@ impl WriteXdr for LedgerEntryData {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryExt {
     V0,
@@ -15921,6 +16185,7 @@ impl WriteXdr for LedgerEntryExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerEntry {
     pub last_modified_ledger_seq: u32,
     pub data: LedgerEntryData,
@@ -15968,6 +16233,7 @@ impl WriteXdr for LedgerEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerKeyAccount {
     pub account_id: AccountId,
 }
@@ -16010,6 +16276,7 @@ impl WriteXdr for LedgerKeyAccount {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerKeyTrustLine {
     pub account_id: AccountId,
     pub asset: TrustLineAsset,
@@ -16055,6 +16322,7 @@ impl WriteXdr for LedgerKeyTrustLine {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerKeyOffer {
     pub seller_id: AccountId,
     pub offer_id: i64,
@@ -16100,6 +16368,7 @@ impl WriteXdr for LedgerKeyOffer {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerKeyData {
     pub account_id: AccountId,
     pub data_name: String64,
@@ -16144,6 +16413,7 @@ impl WriteXdr for LedgerKeyData {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerKeyClaimableBalance {
     pub balance_id: ClaimableBalanceId,
 }
@@ -16185,6 +16455,7 @@ impl WriteXdr for LedgerKeyClaimableBalance {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerKeyLiquidityPool {
     pub liquidity_pool_id: PoolId,
 }
@@ -16228,6 +16499,7 @@ impl WriteXdr for LedgerKeyLiquidityPool {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerKeyContractData {
     pub contract: ScAddress,
     pub key: ScVal,
@@ -16275,6 +16547,7 @@ impl WriteXdr for LedgerKeyContractData {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerKeyContractCode {
     pub hash: Hash,
 }
@@ -16316,6 +16589,7 @@ impl WriteXdr for LedgerKeyContractCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerKeyConfigSetting {
     pub config_setting_id: ConfigSettingId,
 }
@@ -16358,6 +16632,7 @@ impl WriteXdr for LedgerKeyConfigSetting {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerKeyTtl {
     pub key_hash: Hash,
 }
@@ -16460,6 +16735,7 @@ impl WriteXdr for LedgerKeyTtl {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerKey {
     Account(LedgerKeyAccount),
@@ -16645,6 +16921,7 @@ impl WriteXdr for LedgerKey {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum EnvelopeType {
     TxV0 = 0,
@@ -16792,6 +17069,7 @@ impl WriteXdr for EnvelopeType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct UpgradeType(pub BytesM<128>);
 
@@ -16901,6 +17179,7 @@ impl AsRef<[u8]> for UpgradeType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum StellarValueType {
     Basic = 0,
@@ -17005,6 +17284,7 @@ impl WriteXdr for StellarValueType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseValueSignature {
     pub node_id: NodeId,
     pub signature: Signature,
@@ -17053,6 +17333,7 @@ impl WriteXdr for LedgerCloseValueSignature {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum StellarValueExt {
     Basic,
@@ -17174,6 +17455,7 @@ impl WriteXdr for StellarValueExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct StellarValue {
     pub tx_set_hash: Hash,
     pub close_time: TimePoint,
@@ -17235,6 +17517,7 @@ pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerHeaderFlags {
     TradingFlag = 1,
@@ -17347,6 +17630,7 @@ impl WriteXdr for LedgerHeaderFlags {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderExtensionV1Ext {
     V0,
@@ -17452,6 +17736,7 @@ impl WriteXdr for LedgerHeaderExtensionV1Ext {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerHeaderExtensionV1 {
     pub flags: u32,
     pub ext: LedgerHeaderExtensionV1Ext,
@@ -17500,6 +17785,7 @@ impl WriteXdr for LedgerHeaderExtensionV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderExt {
     V0,
@@ -17638,6 +17924,7 @@ impl WriteXdr for LedgerHeaderExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerHeader {
     pub ledger_version: u32,
     pub previous_ledger_hash: Hash,
@@ -17728,6 +18015,7 @@ impl WriteXdr for LedgerHeader {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerUpgradeType {
     Version = 1,
@@ -17862,6 +18150,7 @@ impl WriteXdr for LedgerUpgradeType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigUpgradeSetKey {
     pub contract_id: Hash,
     pub content_hash: Hash,
@@ -17923,6 +18212,7 @@ impl WriteXdr for ConfigUpgradeSetKey {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerUpgrade {
     Version(u32),
@@ -18068,6 +18358,7 @@ impl WriteXdr for LedgerUpgrade {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigUpgradeSet {
     pub updated_entry: VecM<ConfigSettingEntry>,
 }
@@ -18115,6 +18406,7 @@ impl WriteXdr for ConfigUpgradeSet {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BucketEntryType {
     Metaentry = -1,
@@ -18232,6 +18524,7 @@ impl WriteXdr for BucketEntryType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum BucketMetadataExt {
     V0,
@@ -18339,6 +18632,7 @@ impl WriteXdr for BucketMetadataExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct BucketMetadata {
     pub ledger_version: u32,
     pub ext: BucketMetadataExt,
@@ -18391,6 +18685,7 @@ impl WriteXdr for BucketMetadata {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum BucketEntry {
     Liveentry(LedgerEntry),
@@ -18513,6 +18808,7 @@ impl WriteXdr for BucketEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum TxSetComponentType {
     TxsetCompTxsMaybeDiscountedFee = 0,
@@ -18615,6 +18911,7 @@ impl WriteXdr for TxSetComponentType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TxSetComponentTxsMaybeDiscountedFee {
     pub base_fee: Option<i64>,
     pub txs: VecM<TransactionEnvelope>,
@@ -18665,6 +18962,7 @@ impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TxSetComponent {
     TxsetCompTxsMaybeDiscountedFee(TxSetComponentTxsMaybeDiscountedFee),
@@ -18772,6 +19070,7 @@ impl WriteXdr for TxSetComponent {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionPhase {
     V0(VecM<TxSetComponent>),
@@ -18871,6 +19170,7 @@ impl WriteXdr for TransactionPhase {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionSet {
     pub previous_ledger_hash: Hash,
     pub txs: VecM<TransactionEnvelope>,
@@ -18916,6 +19216,7 @@ impl WriteXdr for TransactionSet {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionSetV1 {
     pub previous_ledger_hash: Hash,
     pub phases: VecM<TransactionPhase>,
@@ -18963,6 +19264,7 @@ impl WriteXdr for TransactionSetV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum GeneralizedTransactionSet {
     V1(TransactionSetV1),
@@ -19062,6 +19364,7 @@ impl WriteXdr for GeneralizedTransactionSet {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionResultPair {
     pub transaction_hash: Hash,
     pub result: TransactionResult,
@@ -19106,6 +19409,7 @@ impl WriteXdr for TransactionResultPair {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionResultSet {
     pub results: VecM<TransactionResultPair>,
 }
@@ -19151,6 +19455,7 @@ impl WriteXdr for TransactionResultSet {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryEntryExt {
     V0,
@@ -19265,6 +19570,7 @@ impl WriteXdr for TransactionHistoryEntryExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionHistoryEntry {
     pub ledger_seq: u32,
     pub tx_set: TransactionSet,
@@ -19314,6 +19620,7 @@ impl WriteXdr for TransactionHistoryEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionHistoryResultEntryExt {
     V0,
@@ -19421,6 +19728,7 @@ impl WriteXdr for TransactionHistoryResultEntryExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionHistoryResultEntry {
     pub ledger_seq: u32,
     pub tx_result_set: TransactionResultSet,
@@ -19470,6 +19778,7 @@ impl WriteXdr for TransactionHistoryResultEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerHeaderHistoryEntryExt {
     V0,
@@ -19577,6 +19886,7 @@ impl WriteXdr for LedgerHeaderHistoryEntryExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerHeaderHistoryEntry {
     pub hash: Hash,
     pub header: LedgerHeader,
@@ -19625,6 +19935,7 @@ impl WriteXdr for LedgerHeaderHistoryEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerScpMessages {
     pub ledger_seq: u32,
     pub messages: VecM<ScpEnvelope>,
@@ -19670,6 +19981,7 @@ impl WriteXdr for LedgerScpMessages {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScpHistoryEntryV0 {
     pub quorum_sets: VecM<ScpQuorumSet>,
     pub ledger_messages: LedgerScpMessages,
@@ -19716,6 +20028,7 @@ impl WriteXdr for ScpHistoryEntryV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScpHistoryEntry {
     V0(ScpHistoryEntryV0),
@@ -19818,6 +20131,7 @@ impl WriteXdr for ScpHistoryEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LedgerEntryChangeType {
     Created = 0,
@@ -19940,6 +20254,7 @@ impl WriteXdr for LedgerEntryChangeType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerEntryChange {
     Created(LedgerEntry),
@@ -20056,6 +20371,7 @@ impl WriteXdr for LedgerEntryChange {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct LedgerEntryChanges(pub VecM<LedgerEntryChange>);
 
@@ -20163,6 +20479,7 @@ impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct OperationMeta {
     pub changes: LedgerEntryChanges,
 }
@@ -20205,6 +20522,7 @@ impl WriteXdr for OperationMeta {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionMetaV1 {
     pub tx_changes: LedgerEntryChanges,
     pub operations: VecM<OperationMeta>,
@@ -20253,6 +20571,7 @@ impl WriteXdr for TransactionMetaV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionMetaV2 {
     pub tx_changes_before: LedgerEntryChanges,
     pub operations: VecM<OperationMeta>,
@@ -20303,6 +20622,7 @@ impl WriteXdr for TransactionMetaV2 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractEventType {
     System = 0,
@@ -20414,6 +20734,7 @@ impl WriteXdr for ContractEventType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ContractEventV0 {
     pub topics: VecM<ScVal>,
     pub data: ScVal,
@@ -20464,6 +20785,7 @@ impl WriteXdr for ContractEventV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ContractEventBody {
     V0(ContractEventV0),
@@ -20578,6 +20900,7 @@ impl WriteXdr for ContractEventBody {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ContractEvent {
     pub ext: ExtensionPoint,
     pub contract_id: Option<Hash>,
@@ -20629,6 +20952,7 @@ impl WriteXdr for ContractEvent {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct DiagnosticEvent {
     pub in_successful_contract_call: bool,
     pub event: ContractEvent,
@@ -20869,6 +21193,7 @@ impl WriteXdr for SorobanTransactionMetaExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanTransactionMeta {
     pub ext: SorobanTransactionMetaExt,
     pub events: VecM<ContractEvent>,
@@ -20927,6 +21252,7 @@ impl WriteXdr for SorobanTransactionMeta {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionMetaV3 {
     pub ext: ExtensionPoint,
     pub tx_changes_before: LedgerEntryChanges,
@@ -20981,6 +21307,7 @@ impl WriteXdr for TransactionMetaV3 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct InvokeHostFunctionSuccessPreImage {
     pub return_value: ScVal,
     pub events: VecM<ContractEvent>,
@@ -21033,6 +21360,7 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionMeta {
     V0(VecM<OperationMeta>),
@@ -21148,6 +21476,7 @@ impl WriteXdr for TransactionMeta {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionResultMeta {
     pub result: TransactionResultPair,
     pub fee_processing: LedgerEntryChanges,
@@ -21196,6 +21525,7 @@ impl WriteXdr for TransactionResultMeta {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct UpgradeEntryMeta {
     pub upgrade: LedgerUpgrade,
     pub changes: LedgerEntryChanges,
@@ -21253,6 +21583,7 @@ impl WriteXdr for UpgradeEntryMeta {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaV0 {
     pub ledger_header: LedgerHeaderHistoryEntry,
     pub tx_set: TransactionSet,
@@ -21484,6 +21815,7 @@ impl WriteXdr for LedgerCloseMetaExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaV1 {
     pub ext: LedgerCloseMetaExt,
     pub ledger_header: LedgerHeaderHistoryEntry,
@@ -21553,6 +21885,7 @@ impl WriteXdr for LedgerCloseMetaV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerCloseMeta {
     V0(LedgerCloseMetaV0),
@@ -21661,6 +21994,7 @@ impl WriteXdr for LedgerCloseMeta {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ErrorCode {
     Misc = 0,
@@ -21780,6 +22114,7 @@ impl WriteXdr for ErrorCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SError {
     pub code: ErrorCode,
     pub msg: StringM<100>,
@@ -21824,6 +22159,7 @@ impl WriteXdr for SError {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SendMore {
     pub num_messages: u32,
 }
@@ -21866,6 +22202,7 @@ impl WriteXdr for SendMore {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SendMoreExtended {
     pub num_messages: u32,
     pub num_bytes: u32,
@@ -21912,6 +22249,7 @@ impl WriteXdr for SendMoreExtended {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AuthCert {
     pub pubkey: Curve25519Public,
     pub expiration: u64,
@@ -21967,6 +22305,7 @@ impl WriteXdr for AuthCert {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Hello {
     pub ledger_version: u32,
     pub overlay_version: u32,
@@ -22040,6 +22379,7 @@ pub const AUTH_MSG_FLAG_FLOW_CONTROL_BYTES_REQUESTED: u64 = 200;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Auth {
     pub flags: i32,
 }
@@ -22083,6 +22423,7 @@ impl WriteXdr for Auth {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum IpAddrType {
     IPv4 = 0,
@@ -22190,6 +22531,7 @@ impl WriteXdr for IpAddrType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum PeerAddressIp {
     IPv4([u8; 4]),
@@ -22302,6 +22644,7 @@ impl WriteXdr for PeerAddressIp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PeerAddress {
     pub ip: PeerAddressIp,
     pub port: u32,
@@ -22379,6 +22722,7 @@ impl WriteXdr for PeerAddress {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum MessageType {
     ErrorMsg = 0,
@@ -22579,6 +22923,7 @@ impl WriteXdr for MessageType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct DontHave {
     pub type_: MessageType,
     pub req_hash: Uint256,
@@ -22624,6 +22969,7 @@ impl WriteXdr for DontHave {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SurveyMessageCommandType {
     SurveyTopology = 0,
@@ -22726,6 +23072,7 @@ impl WriteXdr for SurveyMessageCommandType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SurveyMessageResponseType {
     V0 = 0,
@@ -22834,6 +23181,7 @@ impl WriteXdr for SurveyMessageResponseType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SurveyRequestMessage {
     pub surveyor_peer_id: NodeId,
     pub surveyed_peer_id: NodeId,
@@ -22888,6 +23236,7 @@ impl WriteXdr for SurveyRequestMessage {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SignedSurveyRequestMessage {
     pub request_signature: Signature,
     pub request: SurveyRequestMessage,
@@ -22930,6 +23279,7 @@ impl WriteXdr for SignedSurveyRequestMessage {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct EncryptedBody(pub BytesM<64000>);
 
@@ -23041,6 +23391,7 @@ impl AsRef<[u8]> for EncryptedBody {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SurveyResponseMessage {
     pub surveyor_peer_id: NodeId,
     pub surveyed_peer_id: NodeId,
@@ -23095,6 +23446,7 @@ impl WriteXdr for SurveyResponseMessage {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SignedSurveyResponseMessage {
     pub response_signature: Signature,
     pub response: SurveyResponseMessage,
@@ -23155,6 +23507,7 @@ impl WriteXdr for SignedSurveyResponseMessage {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PeerStats {
     pub id: NodeId,
     pub version_str: StringM<100>,
@@ -23236,6 +23589,7 @@ impl WriteXdr for PeerStats {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct PeerStatList(pub VecM<PeerStats, 25>);
 
@@ -23347,6 +23701,7 @@ impl AsRef<[PeerStats]> for PeerStatList {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TopologyResponseBodyV0 {
     pub inbound_peers: PeerStatList,
     pub outbound_peers: PeerStatList,
@@ -23404,6 +23759,7 @@ impl WriteXdr for TopologyResponseBodyV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TopologyResponseBodyV1 {
     pub inbound_peers: PeerStatList,
     pub outbound_peers: PeerStatList,
@@ -23464,6 +23820,7 @@ impl WriteXdr for TopologyResponseBodyV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum SurveyResponseBody {
     V0(TopologyResponseBodyV0),
@@ -23575,6 +23932,7 @@ pub const TX_ADVERT_VECTOR_MAX_SIZE: u64 = 1000;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct TxAdvertVector(pub VecM<Hash, 1000>);
 
@@ -23682,6 +24040,7 @@ impl AsRef<[Hash]> for TxAdvertVector {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct FloodAdvert {
     pub tx_hashes: TxAdvertVector,
 }
@@ -23729,6 +24088,7 @@ pub const TX_DEMAND_VECTOR_MAX_SIZE: u64 = 1000;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct TxDemandVector(pub VecM<Hash, 1000>);
 
@@ -23836,6 +24196,7 @@ impl AsRef<[Hash]> for TxDemandVector {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct FloodDemand {
     pub tx_hashes: TxDemandVector,
 }
@@ -23924,6 +24285,7 @@ impl WriteXdr for FloodDemand {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum StellarMessage {
     ErrorMsg(SError),
@@ -24169,6 +24531,7 @@ impl WriteXdr for StellarMessage {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AuthenticatedMessageV0 {
     pub sequence: u64,
     pub message: StellarMessage,
@@ -24223,6 +24586,7 @@ impl WriteXdr for AuthenticatedMessageV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum AuthenticatedMessage {
     V0(AuthenticatedMessageV0),
@@ -24331,6 +24695,7 @@ pub const MAX_OPS_PER_TX: u64 = 100;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolParameters {
     LiquidityPoolConstantProduct(LiquidityPoolConstantProductParameters),
@@ -24592,6 +24957,7 @@ impl WriteXdr for MuxedAccount {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct DecoratedSignature {
     pub hint: SignatureHint,
     pub signature: Signature,
@@ -24663,6 +25029,7 @@ impl WriteXdr for DecoratedSignature {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum OperationType {
     CreateAccount = 0,
@@ -24898,6 +25265,7 @@ impl WriteXdr for OperationType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct CreateAccountOp {
     pub destination: AccountId,
     pub starting_balance: i64,
@@ -24944,6 +25312,7 @@ impl WriteXdr for CreateAccountOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PaymentOp {
     pub destination: MuxedAccount,
     pub asset: Asset,
@@ -25000,6 +25369,7 @@ impl WriteXdr for PaymentOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PathPaymentStrictReceiveOp {
     pub send_asset: Asset,
     pub send_max: i64,
@@ -25065,6 +25435,7 @@ impl WriteXdr for PathPaymentStrictReceiveOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PathPaymentStrictSendOp {
     pub send_asset: Asset,
     pub send_amount: i64,
@@ -25127,6 +25498,7 @@ impl WriteXdr for PathPaymentStrictSendOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ManageSellOfferOp {
     pub selling: Asset,
     pub buying: Asset,
@@ -25187,6 +25559,7 @@ impl WriteXdr for ManageSellOfferOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ManageBuyOfferOp {
     pub selling: Asset,
     pub buying: Asset,
@@ -25243,6 +25616,7 @@ impl WriteXdr for ManageBuyOfferOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct CreatePassiveSellOfferOp {
     pub selling: Asset,
     pub buying: Asset,
@@ -25308,6 +25682,7 @@ impl WriteXdr for CreatePassiveSellOfferOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SetOptionsOp {
     pub inflation_dest: Option<AccountId>,
     pub clear_flags: Option<u32>,
@@ -25386,6 +25761,7 @@ impl WriteXdr for SetOptionsOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ChangeTrustAsset {
     Native,
@@ -25508,6 +25884,7 @@ impl WriteXdr for ChangeTrustAsset {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ChangeTrustOp {
     pub line: ChangeTrustAsset,
     pub limit: i64,
@@ -25556,6 +25933,7 @@ impl WriteXdr for ChangeTrustOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct AllowTrustOp {
     pub trustor: AccountId,
     pub asset: AssetCode,
@@ -25604,6 +25982,7 @@ impl WriteXdr for AllowTrustOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ManageDataOp {
     pub data_name: String64,
     pub data_value: Option<DataValue>,
@@ -25648,6 +26027,7 @@ impl WriteXdr for ManageDataOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct BumpSequenceOp {
     pub bump_to: SequenceNumber,
 }
@@ -25691,6 +26071,7 @@ impl WriteXdr for BumpSequenceOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct CreateClaimableBalanceOp {
     pub asset: Asset,
     pub amount: i64,
@@ -25738,6 +26119,7 @@ impl WriteXdr for CreateClaimableBalanceOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ClaimClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
 }
@@ -25779,6 +26161,7 @@ impl WriteXdr for ClaimClaimableBalanceOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct BeginSponsoringFutureReservesOp {
     pub sponsored_id: AccountId,
 }
@@ -25822,6 +26205,7 @@ impl WriteXdr for BeginSponsoringFutureReservesOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum RevokeSponsorshipType {
     LedgerEntry = 0,
@@ -25929,6 +26313,7 @@ impl WriteXdr for RevokeSponsorshipType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct RevokeSponsorshipOpSigner {
     pub account_id: AccountId,
     pub signer_key: SignerKey,
@@ -25981,6 +26366,7 @@ impl WriteXdr for RevokeSponsorshipOpSigner {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum RevokeSponsorshipOp {
     LedgerEntry(LedgerKey),
@@ -26091,6 +26477,7 @@ impl WriteXdr for RevokeSponsorshipOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ClawbackOp {
     pub asset: Asset,
     pub from: MuxedAccount,
@@ -26138,6 +26525,7 @@ impl WriteXdr for ClawbackOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ClawbackClaimableBalanceOp {
     pub balance_id: ClaimableBalanceId,
 }
@@ -26183,6 +26571,7 @@ impl WriteXdr for ClawbackClaimableBalanceOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SetTrustLineFlagsOp {
     pub trustor: AccountId,
     pub asset: Asset,
@@ -26245,6 +26634,7 @@ pub const LIQUIDITY_POOL_FEE_V18: u64 = 30;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LiquidityPoolDepositOp {
     pub liquidity_pool_id: PoolId,
     pub max_amount_a: i64,
@@ -26301,6 +26691,7 @@ impl WriteXdr for LiquidityPoolDepositOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LiquidityPoolWithdrawOp {
     pub liquidity_pool_id: PoolId,
     pub amount: i64,
@@ -26354,6 +26745,7 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum HostFunctionType {
     InvokeContract = 0,
@@ -26467,6 +26859,7 @@ impl WriteXdr for HostFunctionType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ContractIdPreimageType {
     Address = 0,
@@ -26574,6 +26967,7 @@ impl WriteXdr for ContractIdPreimageType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ContractIdPreimageFromAddress {
     pub address: ScAddress,
     pub salt: Uint256,
@@ -26626,6 +27020,7 @@ impl WriteXdr for ContractIdPreimageFromAddress {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ContractIdPreimage {
     Address(ContractIdPreimageFromAddress),
@@ -26735,6 +27130,7 @@ impl WriteXdr for ContractIdPreimage {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct CreateContractArgs {
     pub contract_id_preimage: ContractIdPreimage,
     pub executable: ContractExecutable,
@@ -26780,6 +27176,7 @@ impl WriteXdr for CreateContractArgs {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct InvokeContractArgs {
     pub contract_address: ScAddress,
     pub function_name: ScSymbol,
@@ -26833,6 +27230,7 @@ impl WriteXdr for InvokeContractArgs {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum HostFunction {
     InvokeContract(InvokeContractArgs),
@@ -26954,6 +27352,7 @@ impl WriteXdr for HostFunction {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SorobanAuthorizedFunctionType {
     ContractFn = 0,
@@ -27064,6 +27463,7 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum SorobanAuthorizedFunction {
     ContractFn(InvokeContractArgs),
@@ -27176,6 +27576,7 @@ impl WriteXdr for SorobanAuthorizedFunction {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanAuthorizedInvocation {
     pub function: SorobanAuthorizedFunction,
     pub sub_invocations: VecM<SorobanAuthorizedInvocation>,
@@ -27223,6 +27624,7 @@ impl WriteXdr for SorobanAuthorizedInvocation {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanAddressCredentials {
     pub address: ScAddress,
     pub nonce: i64,
@@ -27275,6 +27677,7 @@ impl WriteXdr for SorobanAddressCredentials {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SorobanCredentialsType {
     SourceAccount = 0,
@@ -27385,6 +27788,7 @@ impl WriteXdr for SorobanCredentialsType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum SorobanCredentials {
     SourceAccount,
@@ -27494,6 +27898,7 @@ impl WriteXdr for SorobanCredentials {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanAuthorizationEntry {
     pub credentials: SorobanCredentials,
     pub root_invocation: SorobanAuthorizedInvocation,
@@ -27541,6 +27946,7 @@ impl WriteXdr for SorobanAuthorizationEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct InvokeHostFunctionOp {
     pub host_function: HostFunction,
     pub auth: VecM<SorobanAuthorizationEntry>,
@@ -27586,6 +27992,7 @@ impl WriteXdr for InvokeHostFunctionOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ExtendFootprintTtlOp {
     pub ext: ExtensionPoint,
     pub extend_to: u32,
@@ -27630,6 +28037,7 @@ impl WriteXdr for ExtendFootprintTtlOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct RestoreFootprintOp {
     pub ext: ExtensionPoint,
 }
@@ -27725,6 +28133,7 @@ impl WriteXdr for RestoreFootprintOp {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationBody {
     CreateAccount(CreateAccountOp),
@@ -28105,6 +28514,7 @@ impl WriteXdr for OperationBody {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Operation {
     pub source_account: Option<MuxedAccount>,
     pub body: OperationBody,
@@ -28151,6 +28561,7 @@ impl WriteXdr for Operation {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct HashIdPreimageOperationId {
     pub source_account: AccountId,
     pub seq_num: SequenceNumber,
@@ -28202,6 +28613,7 @@ impl WriteXdr for HashIdPreimageOperationId {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct HashIdPreimageRevokeId {
     pub source_account: AccountId,
     pub seq_num: SequenceNumber,
@@ -28256,6 +28668,7 @@ impl WriteXdr for HashIdPreimageRevokeId {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct HashIdPreimageContractId {
     pub network_id: Hash,
     pub contract_id_preimage: ContractIdPreimage,
@@ -28303,6 +28716,7 @@ impl WriteXdr for HashIdPreimageContractId {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct HashIdPreimageSorobanAuthorization {
     pub network_id: Hash,
     pub nonce: i64,
@@ -28383,6 +28797,7 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum HashIdPreimage {
     OpId(HashIdPreimageOperationId),
@@ -28517,6 +28932,7 @@ impl WriteXdr for HashIdPreimage {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum MemoType {
     None = 0,
@@ -28645,6 +29061,7 @@ impl WriteXdr for MemoType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum Memo {
     None,
@@ -28770,6 +29187,7 @@ impl WriteXdr for Memo {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TimeBounds {
     pub min_time: TimePoint,
     pub max_time: TimePoint,
@@ -28815,6 +29233,7 @@ impl WriteXdr for TimeBounds {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerBounds {
     pub min_ledger: u32,
     pub max_ledger: u32,
@@ -28887,6 +29306,7 @@ impl WriteXdr for LedgerBounds {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PreconditionsV2 {
     pub time_bounds: Option<TimeBounds>,
     pub ledger_bounds: Option<LedgerBounds>,
@@ -28946,6 +29366,7 @@ impl WriteXdr for PreconditionsV2 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PreconditionType {
     None = 0,
@@ -29062,6 +29483,7 @@ impl WriteXdr for PreconditionType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum Preconditions {
     None,
@@ -29175,6 +29597,7 @@ impl WriteXdr for Preconditions {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerFootprint {
     pub read_only: VecM<LedgerKey>,
     pub read_write: VecM<LedgerKey>,
@@ -29227,6 +29650,7 @@ impl WriteXdr for LedgerFootprint {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanResources {
     pub footprint: LedgerFootprint,
     pub instructions: u32,
@@ -29288,6 +29712,7 @@ impl WriteXdr for SorobanResources {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanTransactionData {
     pub ext: ExtensionPoint,
     pub resources: SorobanResources,
@@ -29337,6 +29762,7 @@ impl WriteXdr for SorobanTransactionData {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionV0Ext {
     V0,
@@ -29446,6 +29872,7 @@ impl WriteXdr for TransactionV0Ext {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionV0 {
     pub source_account_ed25519: Uint256,
     pub fee: u32,
@@ -29508,6 +29935,7 @@ impl WriteXdr for TransactionV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionV0Envelope {
     pub tx: TransactionV0,
     pub signatures: VecM<DecoratedSignature, 20>,
@@ -29556,6 +29984,7 @@ impl WriteXdr for TransactionV0Envelope {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionExt {
     V0,
@@ -29683,6 +30112,7 @@ impl WriteXdr for TransactionExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Transaction {
     pub source_account: MuxedAccount,
     pub fee: u32,
@@ -29745,6 +30175,7 @@ impl WriteXdr for Transaction {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionV1Envelope {
     pub tx: Transaction,
     pub signatures: VecM<DecoratedSignature, 20>,
@@ -29791,6 +30222,7 @@ impl WriteXdr for TransactionV1Envelope {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum FeeBumpTransactionInnerTx {
     Tx(TransactionV1Envelope),
@@ -29891,6 +30323,7 @@ impl WriteXdr for FeeBumpTransactionInnerTx {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum FeeBumpTransactionExt {
     V0,
@@ -30002,6 +30435,7 @@ impl WriteXdr for FeeBumpTransactionExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct FeeBumpTransaction {
     pub fee_source: MuxedAccount,
     pub fee: i64,
@@ -30055,6 +30489,7 @@ impl WriteXdr for FeeBumpTransaction {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct FeeBumpTransactionEnvelope {
     pub tx: FeeBumpTransaction,
     pub signatures: VecM<DecoratedSignature, 20>,
@@ -30105,6 +30540,7 @@ impl WriteXdr for FeeBumpTransactionEnvelope {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionEnvelope {
     TxV0(TransactionV0Envelope),
@@ -30224,6 +30660,7 @@ impl WriteXdr for TransactionEnvelope {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionSignaturePayloadTaggedTransaction {
     Tx(Transaction),
@@ -30336,6 +30773,7 @@ impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionSignaturePayload {
     pub network_id: Hash,
     pub tagged_transaction: TransactionSignaturePayloadTaggedTransaction,
@@ -30383,6 +30821,7 @@ impl WriteXdr for TransactionSignaturePayload {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimAtomType {
     V0 = 0,
@@ -30503,6 +30942,7 @@ impl WriteXdr for ClaimAtomType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ClaimOfferAtomV0 {
     pub seller_ed25519: Uint256,
     pub offer_id: i64,
@@ -30569,6 +31009,7 @@ impl WriteXdr for ClaimOfferAtomV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ClaimOfferAtom {
     pub seller_id: AccountId,
     pub offer_id: i64,
@@ -30633,6 +31074,7 @@ impl WriteXdr for ClaimOfferAtom {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ClaimLiquidityAtom {
     pub liquidity_pool_id: PoolId,
     pub asset_sold: Asset,
@@ -30692,6 +31134,7 @@ impl WriteXdr for ClaimLiquidityAtom {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimAtom {
     V0(ClaimOfferAtomV0),
@@ -30815,6 +31258,7 @@ impl WriteXdr for ClaimAtom {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum CreateAccountResultCode {
     Success = 0,
@@ -30946,6 +31390,7 @@ impl WriteXdr for CreateAccountResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum CreateAccountResult {
     Success,
@@ -31089,6 +31534,7 @@ impl WriteXdr for CreateAccountResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PaymentResultCode {
     Success = 0,
@@ -31250,6 +31696,7 @@ impl WriteXdr for PaymentResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum PaymentResult {
     Success,
@@ -31440,6 +31887,7 @@ impl WriteXdr for PaymentResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PathPaymentStrictReceiveResultCode {
     Success = 0,
@@ -31606,6 +32054,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SimplePaymentResult {
     pub destination: AccountId,
     pub asset: Asset,
@@ -31654,6 +32103,7 @@ impl WriteXdr for SimplePaymentResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PathPaymentStrictReceiveResultSuccess {
     pub offers: VecM<ClaimAtom>,
     pub last: SimplePaymentResult,
@@ -31720,6 +32170,7 @@ impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum PathPaymentStrictReceiveResult {
     Success(PathPaymentStrictReceiveResultSuccess),
@@ -31933,6 +32384,7 @@ impl WriteXdr for PathPaymentStrictReceiveResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PathPaymentStrictSendResultCode {
     Success = 0,
@@ -32098,6 +32550,7 @@ impl WriteXdr for PathPaymentStrictSendResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct PathPaymentStrictSendResultSuccess {
     pub offers: VecM<ClaimAtom>,
     pub last: SimplePaymentResult,
@@ -32163,6 +32616,7 @@ impl WriteXdr for PathPaymentStrictSendResultSuccess {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum PathPaymentStrictSendResult {
     Success(PathPaymentStrictSendResultSuccess),
@@ -32375,6 +32829,7 @@ impl WriteXdr for PathPaymentStrictSendResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageSellOfferResultCode {
     Success = 0,
@@ -32542,6 +32997,7 @@ impl WriteXdr for ManageSellOfferResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageOfferEffect {
     Created = 0,
@@ -32657,6 +33113,7 @@ impl WriteXdr for ManageOfferEffect {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageOfferSuccessResultOffer {
     Created(OfferEntry),
@@ -32780,6 +33237,7 @@ impl WriteXdr for ManageOfferSuccessResultOffer {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ManageOfferSuccessResult {
     pub offers_claimed: VecM<ClaimAtom>,
     pub offer: ManageOfferSuccessResultOffer,
@@ -32839,6 +33297,7 @@ impl WriteXdr for ManageOfferSuccessResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageSellOfferResult {
     Success(ManageOfferSuccessResult),
@@ -33048,6 +33507,7 @@ impl WriteXdr for ManageSellOfferResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageBuyOfferResultCode {
     Success = 0,
@@ -33227,6 +33687,7 @@ impl WriteXdr for ManageBuyOfferResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageBuyOfferResult {
     Success(ManageOfferSuccessResult),
@@ -33429,6 +33890,7 @@ impl WriteXdr for ManageBuyOfferResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SetOptionsResultCode {
     Success = 0,
@@ -33596,6 +34058,7 @@ impl WriteXdr for SetOptionsResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum SetOptionsResult {
     Success,
@@ -33783,6 +34246,7 @@ impl WriteXdr for SetOptionsResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ChangeTrustResultCode {
     Success = 0,
@@ -33938,6 +34402,7 @@ impl WriteXdr for ChangeTrustResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ChangeTrustResult {
     Success,
@@ -34109,6 +34574,7 @@ impl WriteXdr for ChangeTrustResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AllowTrustResultCode {
     Success = 0,
@@ -34252,6 +34718,7 @@ impl WriteXdr for AllowTrustResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum AllowTrustResult {
     Success,
@@ -34407,6 +34874,7 @@ impl WriteXdr for AllowTrustResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum AccountMergeResultCode {
     Success = 0,
@@ -34556,6 +35024,7 @@ impl WriteXdr for AccountMergeResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum AccountMergeResult {
     Success(i64),
@@ -34711,6 +35180,7 @@ impl WriteXdr for AccountMergeResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum InflationResultCode {
     Success = 0,
@@ -34816,6 +35286,7 @@ impl WriteXdr for InflationResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct InflationPayout {
     pub destination: AccountId,
     pub amount: i64,
@@ -34864,6 +35335,7 @@ impl WriteXdr for InflationPayout {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum InflationResult {
     Success(VecM<InflationPayout>),
@@ -34979,6 +35451,7 @@ impl WriteXdr for InflationResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ManageDataResultCode {
     Success = 0,
@@ -35110,6 +35583,7 @@ impl WriteXdr for ManageDataResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ManageDataResult {
     Success,
@@ -35244,6 +35718,7 @@ impl WriteXdr for ManageDataResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BumpSequenceResultCode {
     Success = 0,
@@ -35354,6 +35829,7 @@ impl WriteXdr for BumpSequenceResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum BumpSequenceResult {
     Success,
@@ -35466,6 +35942,7 @@ impl WriteXdr for BumpSequenceResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum CreateClaimableBalanceResultCode {
     Success = 0,
@@ -35604,6 +36081,7 @@ impl WriteXdr for CreateClaimableBalanceResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum CreateClaimableBalanceResult {
     Success(ClaimableBalanceId),
@@ -35750,6 +36228,7 @@ impl WriteXdr for CreateClaimableBalanceResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClaimClaimableBalanceResultCode {
     Success = 0,
@@ -35887,6 +36366,7 @@ impl WriteXdr for ClaimClaimableBalanceResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimClaimableBalanceResult {
     Success,
@@ -36032,6 +36512,7 @@ impl WriteXdr for ClaimClaimableBalanceResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum BeginSponsoringFutureReservesResultCode {
     Success = 0,
@@ -36154,6 +36635,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum BeginSponsoringFutureReservesResult {
     Success,
@@ -36279,6 +36761,7 @@ impl WriteXdr for BeginSponsoringFutureReservesResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum EndSponsoringFutureReservesResultCode {
     Success = 0,
@@ -36390,6 +36873,7 @@ impl WriteXdr for EndSponsoringFutureReservesResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum EndSponsoringFutureReservesResult {
     Success,
@@ -36506,6 +36990,7 @@ impl WriteXdr for EndSponsoringFutureReservesResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum RevokeSponsorshipResultCode {
     Success = 0,
@@ -36643,6 +37128,7 @@ impl WriteXdr for RevokeSponsorshipResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum RevokeSponsorshipResult {
     Success,
@@ -36789,6 +37275,7 @@ impl WriteXdr for RevokeSponsorshipResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClawbackResultCode {
     Success = 0,
@@ -36920,6 +37407,7 @@ impl WriteXdr for ClawbackResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ClawbackResult {
     Success,
@@ -37057,6 +37545,7 @@ impl WriteXdr for ClawbackResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ClawbackClaimableBalanceResultCode {
     Success = 0,
@@ -37179,6 +37668,7 @@ impl WriteXdr for ClawbackClaimableBalanceResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ClawbackClaimableBalanceResult {
     Success,
@@ -37309,6 +37799,7 @@ impl WriteXdr for ClawbackClaimableBalanceResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SetTrustLineFlagsResultCode {
     Success = 0,
@@ -37446,6 +37937,7 @@ impl WriteXdr for SetTrustLineFlagsResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum SetTrustLineFlagsResult {
     Success,
@@ -37599,6 +38091,7 @@ impl WriteXdr for SetTrustLineFlagsResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LiquidityPoolDepositResultCode {
     Success = 0,
@@ -37748,6 +38241,7 @@ impl WriteXdr for LiquidityPoolDepositResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolDepositResult {
     Success,
@@ -37912,6 +38406,7 @@ impl WriteXdr for LiquidityPoolDepositResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum LiquidityPoolWithdrawResultCode {
     Success = 0,
@@ -38049,6 +38544,7 @@ impl WriteXdr for LiquidityPoolWithdrawResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LiquidityPoolWithdrawResult {
     Success,
@@ -38196,6 +38692,7 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum InvokeHostFunctionResultCode {
     Success = 0,
@@ -38333,6 +38830,7 @@ impl WriteXdr for InvokeHostFunctionResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum InvokeHostFunctionResult {
     Success(Hash),
@@ -38482,6 +38980,7 @@ impl WriteXdr for InvokeHostFunctionResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum ExtendFootprintTtlResultCode {
     Success = 0,
@@ -38607,6 +39106,7 @@ impl WriteXdr for ExtendFootprintTtlResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ExtendFootprintTtlResult {
     Success,
@@ -38742,6 +39242,7 @@ impl WriteXdr for ExtendFootprintTtlResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum RestoreFootprintResultCode {
     Success = 0,
@@ -38867,6 +39368,7 @@ impl WriteXdr for RestoreFootprintResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum RestoreFootprintResult {
     Success,
@@ -39003,6 +39505,7 @@ impl WriteXdr for RestoreFootprintResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum OperationResultCode {
     OpInner = 0,
@@ -39191,6 +39694,7 @@ impl WriteXdr for OperationResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationResultTr {
     CreateAccount(CreateAccountResult),
@@ -39579,6 +40083,7 @@ impl WriteXdr for OperationResultTr {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum OperationResult {
     OpInner(OperationResultTr),
@@ -39746,6 +40251,7 @@ impl WriteXdr for OperationResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum TransactionResultCode {
     TxFeeBumpInnerSuccess = 1,
@@ -39961,6 +40467,7 @@ impl WriteXdr for TransactionResultCode {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum InnerTransactionResultResult {
     TxSuccess(VecM<OperationResult>),
@@ -40181,6 +40688,7 @@ impl WriteXdr for InnerTransactionResultResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum InnerTransactionResultExt {
     V0,
@@ -40314,6 +40822,7 @@ impl WriteXdr for InnerTransactionResultExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct InnerTransactionResult {
     pub fee_charged: i64,
     pub result: InnerTransactionResultResult,
@@ -40362,6 +40871,7 @@ impl WriteXdr for InnerTransactionResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct InnerTransactionResultPair {
     pub transaction_hash: Hash,
     pub result: InnerTransactionResult,
@@ -40429,6 +40939,7 @@ impl WriteXdr for InnerTransactionResultPair {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionResultResult {
     TxFeeBumpInnerSuccess(InnerTransactionResultPair),
@@ -40667,6 +41178,7 @@ impl WriteXdr for TransactionResultResult {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionResultExt {
     V0,
@@ -40801,6 +41313,7 @@ impl WriteXdr for TransactionResultExt {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TransactionResult {
     pub fee_charged: i64,
     pub result: TransactionResultResult,
@@ -40872,6 +41385,39 @@ impl core::str::FromStr for Hash {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for Hash {
+    fn schema_name() -> String {
+        "Hash".to_string()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let schema = String::json_schema(gen);
+        if let schemars::schema::Schema::Object(mut schema) = schema {
+            schema.extensions.insert(
+                "contentEncoding".to_owned(),
+                serde_json::Value::String("hex".to_string()),
+            );
+            schema.extensions.insert(
+                "contentMediaType".to_owned(),
+                serde_json::Value::String("application/binary".to_string()),
+            );
+            let string = *schema.string.unwrap_or_default().clone();
+            schema.string = Some(Box::new(schemars::schema::StringValidation {
+                max_length: 32_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                min_length: 32_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                ..string
+            }));
+            schema.into()
+        } else {
+            schema
+        }
     }
 }
 impl From<Hash> for [u8; 32] {
@@ -40990,6 +41536,39 @@ impl core::str::FromStr for Uint256 {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for Uint256 {
+    fn schema_name() -> String {
+        "Uint256".to_string()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let schema = String::json_schema(gen);
+        if let schemars::schema::Schema::Object(mut schema) = schema {
+            schema.extensions.insert(
+                "contentEncoding".to_owned(),
+                serde_json::Value::String("hex".to_string()),
+            );
+            schema.extensions.insert(
+                "contentMediaType".to_owned(),
+                serde_json::Value::String("application/binary".to_string()),
+            );
+            let string = *schema.string.unwrap_or_default().clone();
+            schema.string = Some(Box::new(schemars::schema::StringValidation {
+                max_length: 32_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                min_length: 32_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                ..string
+            }));
+            schema.into()
+        } else {
+            schema
+        }
     }
 }
 impl From<Uint256> for [u8; 32] {
@@ -41113,6 +41692,7 @@ pub type Int64 = i64;
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct TimePoint(pub u64);
 
@@ -41168,6 +41748,7 @@ impl WriteXdr for TimePoint {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct Duration(pub u64);
 
@@ -41228,6 +41809,7 @@ impl WriteXdr for Duration {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ExtensionPoint {
     V0,
@@ -41333,6 +41915,7 @@ impl WriteXdr for ExtensionPoint {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum CryptoKeyType {
     Ed25519 = 0,
@@ -41458,6 +42041,7 @@ impl WriteXdr for CryptoKeyType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum PublicKeyType {
     PublicKeyTypeEd25519 = 0,
@@ -41562,6 +42146,7 @@ impl WriteXdr for PublicKeyType {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SignerKeyType {
     Ed25519 = 0,
@@ -41958,6 +42543,7 @@ impl WriteXdr for SignerKey {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct Signature(pub BytesM<64>);
 
@@ -42089,6 +42675,39 @@ impl core::str::FromStr for SignatureHint {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
+    }
+}
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for SignatureHint {
+    fn schema_name() -> String {
+        "SignatureHint".to_string()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let schema = String::json_schema(gen);
+        if let schemars::schema::Schema::Object(mut schema) = schema {
+            schema.extensions.insert(
+                "contentEncoding".to_owned(),
+                serde_json::Value::String("hex".to_string()),
+            );
+            schema.extensions.insert(
+                "contentMediaType".to_owned(),
+                serde_json::Value::String("application/binary".to_string()),
+            );
+            let string = *schema.string.unwrap_or_default().clone();
+            schema.string = Some(Box::new(schemars::schema::StringValidation {
+                max_length: 4_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                min_length: 4_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                ..string
+            }));
+            schema.into()
+        } else {
+            schema
+        }
     }
 }
 impl From<SignatureHint> for [u8; 4] {
@@ -42291,6 +42910,7 @@ impl WriteXdr for AccountId {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Curve25519Secret {
     pub key: [u8; 32],
 }
@@ -42332,6 +42952,7 @@ impl WriteXdr for Curve25519Secret {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Curve25519Public {
     pub key: [u8; 32],
 }
@@ -42373,6 +42994,7 @@ impl WriteXdr for Curve25519Public {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct HmacSha256Key {
     pub key: [u8; 32],
 }
@@ -42414,6 +43036,7 @@ impl WriteXdr for HmacSha256Key {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct HmacSha256Mac {
     pub mac: [u8; 32],
 }
@@ -42439,12 +43062,859 @@ impl WriteXdr for HmacSha256Mac {
     }
 }
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! _call_macro_with_each_type_8b45a57eccbfd886a69e4462ad26dd8a94d8874f8cc9ceb6a6de8c91abcb1289 {
+    // The x-macro takes a single ident, the name of a macro to call ...
+    ($macro_to_call_back:ident, $($context:tt),*) => {{
+        // ... and calls it back, once for each XDR type.
+                        $macro_to_call_back!(Value, $($context),*);
+
+        $macro_to_call_back!(ScpBallot, $($context),*);
+
+        $macro_to_call_back!(ScpStatementType, $($context),*);
+
+        $macro_to_call_back!(ScpNomination, $($context),*);
+
+        $macro_to_call_back!(ScpStatement, $($context),*);
+
+        $macro_to_call_back!(ScpStatementPledges, $($context),*);
+
+        $macro_to_call_back!(ScpStatementPrepare, $($context),*);
+
+        $macro_to_call_back!(ScpStatementConfirm, $($context),*);
+
+        $macro_to_call_back!(ScpStatementExternalize, $($context),*);
+
+        $macro_to_call_back!(ScpEnvelope, $($context),*);
+
+        $macro_to_call_back!(ScpQuorumSet, $($context),*);
+
+        $macro_to_call_back!(ConfigSettingContractExecutionLanesV0, $($context),*);
+
+        $macro_to_call_back!(ConfigSettingContractComputeV0, $($context),*);
+
+        $macro_to_call_back!(ConfigSettingContractLedgerCostV0, $($context),*);
+
+        $macro_to_call_back!(ConfigSettingContractHistoricalDataV0, $($context),*);
+
+        $macro_to_call_back!(ConfigSettingContractEventsV0, $($context),*);
+
+        $macro_to_call_back!(ConfigSettingContractBandwidthV0, $($context),*);
+
+        $macro_to_call_back!(ContractCostType, $($context),*);
+
+        $macro_to_call_back!(ContractCostParamEntry, $($context),*);
+
+        $macro_to_call_back!(StateArchivalSettings, $($context),*);
+
+        $macro_to_call_back!(EvictionIterator, $($context),*);
+
+        $macro_to_call_back!(ContractCostParams, $($context),*);
+
+        $macro_to_call_back!(ConfigSettingId, $($context),*);
+
+        $macro_to_call_back!(ConfigSettingEntry, $($context),*);
+
+        $macro_to_call_back!(ScEnvMetaKind, $($context),*);
+
+        $macro_to_call_back!(ScEnvMetaEntry, $($context),*);
+
+        $macro_to_call_back!(ScMetaV0, $($context),*);
+
+        $macro_to_call_back!(ScMetaKind, $($context),*);
+
+        $macro_to_call_back!(ScMetaEntry, $($context),*);
+
+        $macro_to_call_back!(ScSpecType, $($context),*);
+
+        $macro_to_call_back!(ScSpecTypeOption, $($context),*);
+
+        $macro_to_call_back!(ScSpecTypeResult, $($context),*);
+
+        $macro_to_call_back!(ScSpecTypeVec, $($context),*);
+
+        $macro_to_call_back!(ScSpecTypeMap, $($context),*);
+
+        $macro_to_call_back!(ScSpecTypeTuple, $($context),*);
+
+        $macro_to_call_back!(ScSpecTypeBytesN, $($context),*);
+
+        $macro_to_call_back!(ScSpecTypeUdt, $($context),*);
+
+        $macro_to_call_back!(ScSpecTypeDef, $($context),*);
+
+        $macro_to_call_back!(ScSpecUdtStructFieldV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecUdtStructV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecUdtUnionCaseVoidV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecUdtUnionCaseTupleV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecUdtUnionCaseV0Kind, $($context),*);
+
+        $macro_to_call_back!(ScSpecUdtUnionCaseV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecUdtUnionV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecUdtEnumCaseV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecUdtEnumV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecUdtErrorEnumCaseV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecUdtErrorEnumV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecFunctionInputV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecFunctionV0, $($context),*);
+
+        $macro_to_call_back!(ScSpecEntryKind, $($context),*);
+
+        $macro_to_call_back!(ScSpecEntry, $($context),*);
+
+        $macro_to_call_back!(ScValType, $($context),*);
+
+        $macro_to_call_back!(ScErrorType, $($context),*);
+
+        $macro_to_call_back!(ScErrorCode, $($context),*);
+
+        $macro_to_call_back!(ScError, $($context),*);
+
+        $macro_to_call_back!(UInt128Parts, $($context),*);
+
+        $macro_to_call_back!(Int128Parts, $($context),*);
+
+        $macro_to_call_back!(UInt256Parts, $($context),*);
+
+        $macro_to_call_back!(Int256Parts, $($context),*);
+
+        $macro_to_call_back!(ContractExecutableType, $($context),*);
+
+        $macro_to_call_back!(ContractExecutable, $($context),*);
+
+        $macro_to_call_back!(ScAddressType, $($context),*);
+
+        $macro_to_call_back!(ScAddress, $($context),*);
+
+        $macro_to_call_back!(ScVec, $($context),*);
+
+        $macro_to_call_back!(ScMap, $($context),*);
+
+        $macro_to_call_back!(ScBytes, $($context),*);
+
+        $macro_to_call_back!(ScString, $($context),*);
+
+        $macro_to_call_back!(ScSymbol, $($context),*);
+
+        $macro_to_call_back!(ScNonceKey, $($context),*);
+
+        $macro_to_call_back!(ScContractInstance, $($context),*);
+
+        $macro_to_call_back!(ScVal, $($context),*);
+
+        $macro_to_call_back!(ScMapEntry, $($context),*);
+
+        $macro_to_call_back!(StoredTransactionSet, $($context),*);
+
+        $macro_to_call_back!(StoredDebugTransactionSet, $($context),*);
+
+        $macro_to_call_back!(PersistedScpStateV0, $($context),*);
+
+        $macro_to_call_back!(PersistedScpStateV1, $($context),*);
+
+        $macro_to_call_back!(PersistedScpState, $($context),*);
+
+        $macro_to_call_back!(Thresholds, $($context),*);
+
+        $macro_to_call_back!(String32, $($context),*);
+
+        $macro_to_call_back!(String64, $($context),*);
+
+        $macro_to_call_back!(SequenceNumber, $($context),*);
+
+        $macro_to_call_back!(DataValue, $($context),*);
+
+        $macro_to_call_back!(PoolId, $($context),*);
+
+        $macro_to_call_back!(AssetCode4, $($context),*);
+
+        $macro_to_call_back!(AssetCode12, $($context),*);
+
+        $macro_to_call_back!(AssetType, $($context),*);
+
+        $macro_to_call_back!(AssetCode, $($context),*);
+
+        $macro_to_call_back!(AlphaNum4, $($context),*);
+
+        $macro_to_call_back!(AlphaNum12, $($context),*);
+
+        $macro_to_call_back!(Asset, $($context),*);
+
+        $macro_to_call_back!(Price, $($context),*);
+
+        $macro_to_call_back!(Liabilities, $($context),*);
+
+        $macro_to_call_back!(ThresholdIndexes, $($context),*);
+
+        $macro_to_call_back!(LedgerEntryType, $($context),*);
+
+        $macro_to_call_back!(Signer, $($context),*);
+
+        $macro_to_call_back!(AccountFlags, $($context),*);
+
+        $macro_to_call_back!(SponsorshipDescriptor, $($context),*);
+
+        $macro_to_call_back!(AccountEntryExtensionV3, $($context),*);
+
+        $macro_to_call_back!(AccountEntryExtensionV2, $($context),*);
+
+        $macro_to_call_back!(AccountEntryExtensionV2Ext, $($context),*);
+
+        $macro_to_call_back!(AccountEntryExtensionV1, $($context),*);
+
+        $macro_to_call_back!(AccountEntryExtensionV1Ext, $($context),*);
+
+        $macro_to_call_back!(AccountEntry, $($context),*);
+
+        $macro_to_call_back!(AccountEntryExt, $($context),*);
+
+        $macro_to_call_back!(TrustLineFlags, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolType, $($context),*);
+
+        $macro_to_call_back!(TrustLineAsset, $($context),*);
+
+        $macro_to_call_back!(TrustLineEntryExtensionV2, $($context),*);
+
+        $macro_to_call_back!(TrustLineEntryExtensionV2Ext, $($context),*);
+
+        $macro_to_call_back!(TrustLineEntry, $($context),*);
+
+        $macro_to_call_back!(TrustLineEntryExt, $($context),*);
+
+        $macro_to_call_back!(TrustLineEntryV1, $($context),*);
+
+        $macro_to_call_back!(TrustLineEntryV1Ext, $($context),*);
+
+        $macro_to_call_back!(OfferEntryFlags, $($context),*);
+
+        $macro_to_call_back!(OfferEntry, $($context),*);
+
+        $macro_to_call_back!(OfferEntryExt, $($context),*);
+
+        $macro_to_call_back!(DataEntry, $($context),*);
+
+        $macro_to_call_back!(DataEntryExt, $($context),*);
+
+        $macro_to_call_back!(ClaimPredicateType, $($context),*);
+
+        $macro_to_call_back!(ClaimPredicate, $($context),*);
+
+        $macro_to_call_back!(ClaimantType, $($context),*);
+
+        $macro_to_call_back!(Claimant, $($context),*);
+
+        $macro_to_call_back!(ClaimantV0, $($context),*);
+
+        $macro_to_call_back!(ClaimableBalanceIdType, $($context),*);
+
+        $macro_to_call_back!(ClaimableBalanceId, $($context),*);
+
+        $macro_to_call_back!(ClaimableBalanceFlags, $($context),*);
+
+        $macro_to_call_back!(ClaimableBalanceEntryExtensionV1, $($context),*);
+
+        $macro_to_call_back!(ClaimableBalanceEntryExtensionV1Ext, $($context),*);
+
+        $macro_to_call_back!(ClaimableBalanceEntry, $($context),*);
+
+        $macro_to_call_back!(ClaimableBalanceEntryExt, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolConstantProductParameters, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolEntry, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolEntryBody, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolEntryConstantProduct, $($context),*);
+
+        $macro_to_call_back!(ContractDataDurability, $($context),*);
+
+        $macro_to_call_back!(ContractDataEntry, $($context),*);
+
+        $macro_to_call_back!(ContractCodeEntry, $($context),*);
+
+        $macro_to_call_back!(TtlEntry, $($context),*);
+
+        $macro_to_call_back!(LedgerEntryExtensionV1, $($context),*);
+
+        $macro_to_call_back!(LedgerEntryExtensionV1Ext, $($context),*);
+
+        $macro_to_call_back!(LedgerEntry, $($context),*);
+
+        $macro_to_call_back!(LedgerEntryData, $($context),*);
+
+        $macro_to_call_back!(LedgerEntryExt, $($context),*);
+
+        $macro_to_call_back!(LedgerKey, $($context),*);
+
+        $macro_to_call_back!(LedgerKeyAccount, $($context),*);
+
+        $macro_to_call_back!(LedgerKeyTrustLine, $($context),*);
+
+        $macro_to_call_back!(LedgerKeyOffer, $($context),*);
+
+        $macro_to_call_back!(LedgerKeyData, $($context),*);
+
+        $macro_to_call_back!(LedgerKeyClaimableBalance, $($context),*);
+
+        $macro_to_call_back!(LedgerKeyLiquidityPool, $($context),*);
+
+        $macro_to_call_back!(LedgerKeyContractData, $($context),*);
+
+        $macro_to_call_back!(LedgerKeyContractCode, $($context),*);
+
+        $macro_to_call_back!(LedgerKeyConfigSetting, $($context),*);
+
+        $macro_to_call_back!(LedgerKeyTtl, $($context),*);
+
+        $macro_to_call_back!(EnvelopeType, $($context),*);
+
+        $macro_to_call_back!(UpgradeType, $($context),*);
+
+        $macro_to_call_back!(StellarValueType, $($context),*);
+
+        $macro_to_call_back!(LedgerCloseValueSignature, $($context),*);
+
+        $macro_to_call_back!(StellarValue, $($context),*);
+
+        $macro_to_call_back!(StellarValueExt, $($context),*);
+
+        $macro_to_call_back!(LedgerHeaderFlags, $($context),*);
+
+        $macro_to_call_back!(LedgerHeaderExtensionV1, $($context),*);
+
+        $macro_to_call_back!(LedgerHeaderExtensionV1Ext, $($context),*);
+
+        $macro_to_call_back!(LedgerHeader, $($context),*);
+
+        $macro_to_call_back!(LedgerHeaderExt, $($context),*);
+
+        $macro_to_call_back!(LedgerUpgradeType, $($context),*);
+
+        $macro_to_call_back!(ConfigUpgradeSetKey, $($context),*);
+
+        $macro_to_call_back!(LedgerUpgrade, $($context),*);
+
+        $macro_to_call_back!(ConfigUpgradeSet, $($context),*);
+
+        $macro_to_call_back!(BucketEntryType, $($context),*);
+
+        $macro_to_call_back!(BucketMetadata, $($context),*);
+
+        $macro_to_call_back!(BucketMetadataExt, $($context),*);
+
+        $macro_to_call_back!(BucketEntry, $($context),*);
+
+        $macro_to_call_back!(TxSetComponentType, $($context),*);
+
+        $macro_to_call_back!(TxSetComponent, $($context),*);
+
+        $macro_to_call_back!(TxSetComponentTxsMaybeDiscountedFee, $($context),*);
+
+        $macro_to_call_back!(TransactionPhase, $($context),*);
+
+        $macro_to_call_back!(TransactionSet, $($context),*);
+
+        $macro_to_call_back!(TransactionSetV1, $($context),*);
+
+        $macro_to_call_back!(GeneralizedTransactionSet, $($context),*);
+
+        $macro_to_call_back!(TransactionResultPair, $($context),*);
+
+        $macro_to_call_back!(TransactionResultSet, $($context),*);
+
+        $macro_to_call_back!(TransactionHistoryEntry, $($context),*);
+
+        $macro_to_call_back!(TransactionHistoryEntryExt, $($context),*);
+
+        $macro_to_call_back!(TransactionHistoryResultEntry, $($context),*);
+
+        $macro_to_call_back!(TransactionHistoryResultEntryExt, $($context),*);
+
+        $macro_to_call_back!(LedgerHeaderHistoryEntry, $($context),*);
+
+        $macro_to_call_back!(LedgerHeaderHistoryEntryExt, $($context),*);
+
+        $macro_to_call_back!(LedgerScpMessages, $($context),*);
+
+        $macro_to_call_back!(ScpHistoryEntryV0, $($context),*);
+
+        $macro_to_call_back!(ScpHistoryEntry, $($context),*);
+
+        $macro_to_call_back!(LedgerEntryChangeType, $($context),*);
+
+        $macro_to_call_back!(LedgerEntryChange, $($context),*);
+
+        $macro_to_call_back!(LedgerEntryChanges, $($context),*);
+
+        $macro_to_call_back!(OperationMeta, $($context),*);
+
+        $macro_to_call_back!(TransactionMetaV1, $($context),*);
+
+        $macro_to_call_back!(TransactionMetaV2, $($context),*);
+
+        $macro_to_call_back!(ContractEventType, $($context),*);
+
+        $macro_to_call_back!(ContractEvent, $($context),*);
+
+        $macro_to_call_back!(ContractEventBody, $($context),*);
+
+        $macro_to_call_back!(ContractEventV0, $($context),*);
+
+        $macro_to_call_back!(DiagnosticEvent, $($context),*);
+
+        $macro_to_call_back!(SorobanTransactionMeta, $($context),*);
+
+        $macro_to_call_back!(TransactionMetaV3, $($context),*);
+
+        $macro_to_call_back!(InvokeHostFunctionSuccessPreImage, $($context),*);
+
+        $macro_to_call_back!(TransactionMeta, $($context),*);
+
+        $macro_to_call_back!(TransactionResultMeta, $($context),*);
+
+        $macro_to_call_back!(UpgradeEntryMeta, $($context),*);
+
+        $macro_to_call_back!(LedgerCloseMetaV0, $($context),*);
+
+        $macro_to_call_back!(LedgerCloseMetaV1, $($context),*);
+
+        $macro_to_call_back!(LedgerCloseMeta, $($context),*);
+
+        $macro_to_call_back!(ErrorCode, $($context),*);
+
+        $macro_to_call_back!(SError, $($context),*);
+
+        $macro_to_call_back!(SendMore, $($context),*);
+
+        $macro_to_call_back!(SendMoreExtended, $($context),*);
+
+        $macro_to_call_back!(AuthCert, $($context),*);
+
+        $macro_to_call_back!(Hello, $($context),*);
+
+        $macro_to_call_back!(Auth, $($context),*);
+
+        $macro_to_call_back!(IpAddrType, $($context),*);
+
+        $macro_to_call_back!(PeerAddress, $($context),*);
+
+        $macro_to_call_back!(PeerAddressIp, $($context),*);
+
+        $macro_to_call_back!(MessageType, $($context),*);
+
+        $macro_to_call_back!(DontHave, $($context),*);
+
+        $macro_to_call_back!(SurveyMessageCommandType, $($context),*);
+
+        $macro_to_call_back!(SurveyMessageResponseType, $($context),*);
+
+        $macro_to_call_back!(SurveyRequestMessage, $($context),*);
+
+        $macro_to_call_back!(SignedSurveyRequestMessage, $($context),*);
+
+        $macro_to_call_back!(EncryptedBody, $($context),*);
+
+        $macro_to_call_back!(SurveyResponseMessage, $($context),*);
+
+        $macro_to_call_back!(SignedSurveyResponseMessage, $($context),*);
+
+        $macro_to_call_back!(PeerStats, $($context),*);
+
+        $macro_to_call_back!(PeerStatList, $($context),*);
+
+        $macro_to_call_back!(TopologyResponseBodyV0, $($context),*);
+
+        $macro_to_call_back!(TopologyResponseBodyV1, $($context),*);
+
+        $macro_to_call_back!(SurveyResponseBody, $($context),*);
+
+        $macro_to_call_back!(TxAdvertVector, $($context),*);
+
+        $macro_to_call_back!(FloodAdvert, $($context),*);
+
+        $macro_to_call_back!(TxDemandVector, $($context),*);
+
+        $macro_to_call_back!(FloodDemand, $($context),*);
+
+        $macro_to_call_back!(StellarMessage, $($context),*);
+
+        $macro_to_call_back!(AuthenticatedMessage, $($context),*);
+
+        $macro_to_call_back!(AuthenticatedMessageV0, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolParameters, $($context),*);
+
+        $macro_to_call_back!(MuxedAccount, $($context),*);
+
+        $macro_to_call_back!(MuxedAccountMed25519, $($context),*);
+
+        $macro_to_call_back!(DecoratedSignature, $($context),*);
+
+        $macro_to_call_back!(OperationType, $($context),*);
+
+        $macro_to_call_back!(CreateAccountOp, $($context),*);
+
+        $macro_to_call_back!(PaymentOp, $($context),*);
+
+        $macro_to_call_back!(PathPaymentStrictReceiveOp, $($context),*);
+
+        $macro_to_call_back!(PathPaymentStrictSendOp, $($context),*);
+
+        $macro_to_call_back!(ManageSellOfferOp, $($context),*);
+
+        $macro_to_call_back!(ManageBuyOfferOp, $($context),*);
+
+        $macro_to_call_back!(CreatePassiveSellOfferOp, $($context),*);
+
+        $macro_to_call_back!(SetOptionsOp, $($context),*);
+
+        $macro_to_call_back!(ChangeTrustAsset, $($context),*);
+
+        $macro_to_call_back!(ChangeTrustOp, $($context),*);
+
+        $macro_to_call_back!(AllowTrustOp, $($context),*);
+
+        $macro_to_call_back!(ManageDataOp, $($context),*);
+
+        $macro_to_call_back!(BumpSequenceOp, $($context),*);
+
+        $macro_to_call_back!(CreateClaimableBalanceOp, $($context),*);
+
+        $macro_to_call_back!(ClaimClaimableBalanceOp, $($context),*);
+
+        $macro_to_call_back!(BeginSponsoringFutureReservesOp, $($context),*);
+
+        $macro_to_call_back!(RevokeSponsorshipType, $($context),*);
+
+        $macro_to_call_back!(RevokeSponsorshipOp, $($context),*);
+
+        $macro_to_call_back!(RevokeSponsorshipOpSigner, $($context),*);
+
+        $macro_to_call_back!(ClawbackOp, $($context),*);
+
+        $macro_to_call_back!(ClawbackClaimableBalanceOp, $($context),*);
+
+        $macro_to_call_back!(SetTrustLineFlagsOp, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolDepositOp, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolWithdrawOp, $($context),*);
+
+        $macro_to_call_back!(HostFunctionType, $($context),*);
+
+        $macro_to_call_back!(ContractIdPreimageType, $($context),*);
+
+        $macro_to_call_back!(ContractIdPreimage, $($context),*);
+
+        $macro_to_call_back!(ContractIdPreimageFromAddress, $($context),*);
+
+        $macro_to_call_back!(CreateContractArgs, $($context),*);
+
+        $macro_to_call_back!(InvokeContractArgs, $($context),*);
+
+        $macro_to_call_back!(HostFunction, $($context),*);
+
+        $macro_to_call_back!(SorobanAuthorizedFunctionType, $($context),*);
+
+        $macro_to_call_back!(SorobanAuthorizedFunction, $($context),*);
+
+        $macro_to_call_back!(SorobanAuthorizedInvocation, $($context),*);
+
+        $macro_to_call_back!(SorobanAddressCredentials, $($context),*);
+
+        $macro_to_call_back!(SorobanCredentialsType, $($context),*);
+
+        $macro_to_call_back!(SorobanCredentials, $($context),*);
+
+        $macro_to_call_back!(SorobanAuthorizationEntry, $($context),*);
+
+        $macro_to_call_back!(InvokeHostFunctionOp, $($context),*);
+
+        $macro_to_call_back!(ExtendFootprintTtlOp, $($context),*);
+
+        $macro_to_call_back!(RestoreFootprintOp, $($context),*);
+
+        $macro_to_call_back!(Operation, $($context),*);
+
+        $macro_to_call_back!(OperationBody, $($context),*);
+
+        $macro_to_call_back!(HashIdPreimage, $($context),*);
+
+        $macro_to_call_back!(HashIdPreimageOperationId, $($context),*);
+
+        $macro_to_call_back!(HashIdPreimageRevokeId, $($context),*);
+
+        $macro_to_call_back!(HashIdPreimageContractId, $($context),*);
+
+        $macro_to_call_back!(HashIdPreimageSorobanAuthorization, $($context),*);
+
+        $macro_to_call_back!(MemoType, $($context),*);
+
+        $macro_to_call_back!(Memo, $($context),*);
+
+        $macro_to_call_back!(TimeBounds, $($context),*);
+
+        $macro_to_call_back!(LedgerBounds, $($context),*);
+
+        $macro_to_call_back!(PreconditionsV2, $($context),*);
+
+        $macro_to_call_back!(PreconditionType, $($context),*);
+
+        $macro_to_call_back!(Preconditions, $($context),*);
+
+        $macro_to_call_back!(LedgerFootprint, $($context),*);
+
+        $macro_to_call_back!(SorobanResources, $($context),*);
+
+        $macro_to_call_back!(SorobanTransactionData, $($context),*);
+
+        $macro_to_call_back!(TransactionV0, $($context),*);
+
+        $macro_to_call_back!(TransactionV0Ext, $($context),*);
+
+        $macro_to_call_back!(TransactionV0Envelope, $($context),*);
+
+        $macro_to_call_back!(Transaction, $($context),*);
+
+        $macro_to_call_back!(TransactionExt, $($context),*);
+
+        $macro_to_call_back!(TransactionV1Envelope, $($context),*);
+
+        $macro_to_call_back!(FeeBumpTransaction, $($context),*);
+
+        $macro_to_call_back!(FeeBumpTransactionInnerTx, $($context),*);
+
+        $macro_to_call_back!(FeeBumpTransactionExt, $($context),*);
+
+        $macro_to_call_back!(FeeBumpTransactionEnvelope, $($context),*);
+
+        $macro_to_call_back!(TransactionEnvelope, $($context),*);
+
+        $macro_to_call_back!(TransactionSignaturePayload, $($context),*);
+
+        $macro_to_call_back!(TransactionSignaturePayloadTaggedTransaction, $($context),*);
+
+        $macro_to_call_back!(ClaimAtomType, $($context),*);
+
+        $macro_to_call_back!(ClaimOfferAtomV0, $($context),*);
+
+        $macro_to_call_back!(ClaimOfferAtom, $($context),*);
+
+        $macro_to_call_back!(ClaimLiquidityAtom, $($context),*);
+
+        $macro_to_call_back!(ClaimAtom, $($context),*);
+
+        $macro_to_call_back!(CreateAccountResultCode, $($context),*);
+
+        $macro_to_call_back!(CreateAccountResult, $($context),*);
+
+        $macro_to_call_back!(PaymentResultCode, $($context),*);
+
+        $macro_to_call_back!(PaymentResult, $($context),*);
+
+        $macro_to_call_back!(PathPaymentStrictReceiveResultCode, $($context),*);
+
+        $macro_to_call_back!(SimplePaymentResult, $($context),*);
+
+        $macro_to_call_back!(PathPaymentStrictReceiveResult, $($context),*);
+
+        $macro_to_call_back!(PathPaymentStrictReceiveResultSuccess, $($context),*);
+
+        $macro_to_call_back!(PathPaymentStrictSendResultCode, $($context),*);
+
+        $macro_to_call_back!(PathPaymentStrictSendResult, $($context),*);
+
+        $macro_to_call_back!(PathPaymentStrictSendResultSuccess, $($context),*);
+
+        $macro_to_call_back!(ManageSellOfferResultCode, $($context),*);
+
+        $macro_to_call_back!(ManageOfferEffect, $($context),*);
+
+        $macro_to_call_back!(ManageOfferSuccessResult, $($context),*);
+
+        $macro_to_call_back!(ManageOfferSuccessResultOffer, $($context),*);
+
+        $macro_to_call_back!(ManageSellOfferResult, $($context),*);
+
+        $macro_to_call_back!(ManageBuyOfferResultCode, $($context),*);
+
+        $macro_to_call_back!(ManageBuyOfferResult, $($context),*);
+
+        $macro_to_call_back!(SetOptionsResultCode, $($context),*);
+
+        $macro_to_call_back!(SetOptionsResult, $($context),*);
+
+        $macro_to_call_back!(ChangeTrustResultCode, $($context),*);
+
+        $macro_to_call_back!(ChangeTrustResult, $($context),*);
+
+        $macro_to_call_back!(AllowTrustResultCode, $($context),*);
+
+        $macro_to_call_back!(AllowTrustResult, $($context),*);
+
+        $macro_to_call_back!(AccountMergeResultCode, $($context),*);
+
+        $macro_to_call_back!(AccountMergeResult, $($context),*);
+
+        $macro_to_call_back!(InflationResultCode, $($context),*);
+
+        $macro_to_call_back!(InflationPayout, $($context),*);
+
+        $macro_to_call_back!(InflationResult, $($context),*);
+
+        $macro_to_call_back!(ManageDataResultCode, $($context),*);
+
+        $macro_to_call_back!(ManageDataResult, $($context),*);
+
+        $macro_to_call_back!(BumpSequenceResultCode, $($context),*);
+
+        $macro_to_call_back!(BumpSequenceResult, $($context),*);
+
+        $macro_to_call_back!(CreateClaimableBalanceResultCode, $($context),*);
+
+        $macro_to_call_back!(CreateClaimableBalanceResult, $($context),*);
+
+        $macro_to_call_back!(ClaimClaimableBalanceResultCode, $($context),*);
+
+        $macro_to_call_back!(ClaimClaimableBalanceResult, $($context),*);
+
+        $macro_to_call_back!(BeginSponsoringFutureReservesResultCode, $($context),*);
+
+        $macro_to_call_back!(BeginSponsoringFutureReservesResult, $($context),*);
+
+        $macro_to_call_back!(EndSponsoringFutureReservesResultCode, $($context),*);
+
+        $macro_to_call_back!(EndSponsoringFutureReservesResult, $($context),*);
+
+        $macro_to_call_back!(RevokeSponsorshipResultCode, $($context),*);
+
+        $macro_to_call_back!(RevokeSponsorshipResult, $($context),*);
+
+        $macro_to_call_back!(ClawbackResultCode, $($context),*);
+
+        $macro_to_call_back!(ClawbackResult, $($context),*);
+
+        $macro_to_call_back!(ClawbackClaimableBalanceResultCode, $($context),*);
+
+        $macro_to_call_back!(ClawbackClaimableBalanceResult, $($context),*);
+
+        $macro_to_call_back!(SetTrustLineFlagsResultCode, $($context),*);
+
+        $macro_to_call_back!(SetTrustLineFlagsResult, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolDepositResultCode, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolDepositResult, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolWithdrawResultCode, $($context),*);
+
+        $macro_to_call_back!(LiquidityPoolWithdrawResult, $($context),*);
+
+        $macro_to_call_back!(InvokeHostFunctionResultCode, $($context),*);
+
+        $macro_to_call_back!(InvokeHostFunctionResult, $($context),*);
+
+        $macro_to_call_back!(ExtendFootprintTtlResultCode, $($context),*);
+
+        $macro_to_call_back!(ExtendFootprintTtlResult, $($context),*);
+
+        $macro_to_call_back!(RestoreFootprintResultCode, $($context),*);
+
+        $macro_to_call_back!(RestoreFootprintResult, $($context),*);
+
+        $macro_to_call_back!(OperationResultCode, $($context),*);
+
+        $macro_to_call_back!(OperationResult, $($context),*);
+
+        $macro_to_call_back!(OperationResultTr, $($context),*);
+
+        $macro_to_call_back!(TransactionResultCode, $($context),*);
+
+        $macro_to_call_back!(InnerTransactionResult, $($context),*);
+
+        $macro_to_call_back!(InnerTransactionResultResult, $($context),*);
+
+        $macro_to_call_back!(InnerTransactionResultExt, $($context),*);
+
+        $macro_to_call_back!(InnerTransactionResultPair, $($context),*);
+
+        $macro_to_call_back!(TransactionResult, $($context),*);
+
+        $macro_to_call_back!(TransactionResultResult, $($context),*);
+
+        $macro_to_call_back!(TransactionResultExt, $($context),*);
+
+        $macro_to_call_back!(Hash, $($context),*);
+
+        $macro_to_call_back!(Uint256, $($context),*);
+
+        $macro_to_call_back!(Uint32, $($context),*);
+
+        $macro_to_call_back!(Int32, $($context),*);
+
+        $macro_to_call_back!(Uint64, $($context),*);
+
+        $macro_to_call_back!(Int64, $($context),*);
+
+        $macro_to_call_back!(TimePoint, $($context),*);
+
+        $macro_to_call_back!(Duration, $($context),*);
+
+        $macro_to_call_back!(ExtensionPoint, $($context),*);
+
+        $macro_to_call_back!(CryptoKeyType, $($context),*);
+
+        $macro_to_call_back!(PublicKeyType, $($context),*);
+
+        $macro_to_call_back!(SignerKeyType, $($context),*);
+
+        $macro_to_call_back!(PublicKey, $($context),*);
+
+        $macro_to_call_back!(SignerKey, $($context),*);
+
+        $macro_to_call_back!(SignerKeyEd25519SignedPayload, $($context),*);
+
+        $macro_to_call_back!(Signature, $($context),*);
+
+        $macro_to_call_back!(SignatureHint, $($context),*);
+
+        $macro_to_call_back!(NodeId, $($context),*);
+
+        $macro_to_call_back!(AccountId, $($context),*);
+
+        $macro_to_call_back!(Curve25519Secret, $($context),*);
+
+        $macro_to_call_back!(Curve25519Public, $($context),*);
+
+        $macro_to_call_back!(HmacSha256Key, $($context),*);
+
+        $macro_to_call_back!(HmacSha256Mac, $($context),*);
+
+
+    }};
+}
+pub use _call_macro_with_each_type_8b45a57eccbfd886a69e4462ad26dd8a94d8874f8cc9ceb6a6de8c91abcb1289 as call_macro_with_each_type;
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum TypeVariant {
     Value,
     ScpBallot,
@@ -44160,6 +45630,612 @@ impl TypeVariant {
     pub const fn variants() -> [TypeVariant; 422] {
         Self::VARIANTS
     }
+
+    #[cfg(feature = "schemars")]
+    #[must_use]
+    #[allow(clippy::too_many_lines)]
+    pub fn json_schema(&self, gen: schemars::gen::SchemaGenerator) -> schemars::schema::RootSchema {
+        match self {
+            Self::Value => gen.into_root_schema_for::<Value>(),
+            Self::ScpBallot => gen.into_root_schema_for::<ScpBallot>(),
+            Self::ScpStatementType => gen.into_root_schema_for::<ScpStatementType>(),
+            Self::ScpNomination => gen.into_root_schema_for::<ScpNomination>(),
+            Self::ScpStatement => gen.into_root_schema_for::<ScpStatement>(),
+            Self::ScpStatementPledges => gen.into_root_schema_for::<ScpStatementPledges>(),
+            Self::ScpStatementPrepare => gen.into_root_schema_for::<ScpStatementPrepare>(),
+            Self::ScpStatementConfirm => gen.into_root_schema_for::<ScpStatementConfirm>(),
+            Self::ScpStatementExternalize => gen.into_root_schema_for::<ScpStatementExternalize>(),
+            Self::ScpEnvelope => gen.into_root_schema_for::<ScpEnvelope>(),
+            Self::ScpQuorumSet => gen.into_root_schema_for::<ScpQuorumSet>(),
+            Self::ConfigSettingContractExecutionLanesV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractExecutionLanesV0>()
+            }
+            Self::ConfigSettingContractComputeV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractComputeV0>()
+            }
+            Self::ConfigSettingContractLedgerCostV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractLedgerCostV0>()
+            }
+            Self::ConfigSettingContractHistoricalDataV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractHistoricalDataV0>()
+            }
+            Self::ConfigSettingContractEventsV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractEventsV0>()
+            }
+            Self::ConfigSettingContractBandwidthV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractBandwidthV0>()
+            }
+            Self::ContractCostType => gen.into_root_schema_for::<ContractCostType>(),
+            Self::ContractCostParamEntry => gen.into_root_schema_for::<ContractCostParamEntry>(),
+            Self::StateArchivalSettings => gen.into_root_schema_for::<StateArchivalSettings>(),
+            Self::EvictionIterator => gen.into_root_schema_for::<EvictionIterator>(),
+            Self::ContractCostParams => gen.into_root_schema_for::<ContractCostParams>(),
+            Self::ConfigSettingId => gen.into_root_schema_for::<ConfigSettingId>(),
+            Self::ConfigSettingEntry => gen.into_root_schema_for::<ConfigSettingEntry>(),
+            Self::ScEnvMetaKind => gen.into_root_schema_for::<ScEnvMetaKind>(),
+            Self::ScEnvMetaEntry => gen.into_root_schema_for::<ScEnvMetaEntry>(),
+            Self::ScMetaV0 => gen.into_root_schema_for::<ScMetaV0>(),
+            Self::ScMetaKind => gen.into_root_schema_for::<ScMetaKind>(),
+            Self::ScMetaEntry => gen.into_root_schema_for::<ScMetaEntry>(),
+            Self::ScSpecType => gen.into_root_schema_for::<ScSpecType>(),
+            Self::ScSpecTypeOption => gen.into_root_schema_for::<ScSpecTypeOption>(),
+            Self::ScSpecTypeResult => gen.into_root_schema_for::<ScSpecTypeResult>(),
+            Self::ScSpecTypeVec => gen.into_root_schema_for::<ScSpecTypeVec>(),
+            Self::ScSpecTypeMap => gen.into_root_schema_for::<ScSpecTypeMap>(),
+            Self::ScSpecTypeTuple => gen.into_root_schema_for::<ScSpecTypeTuple>(),
+            Self::ScSpecTypeBytesN => gen.into_root_schema_for::<ScSpecTypeBytesN>(),
+            Self::ScSpecTypeUdt => gen.into_root_schema_for::<ScSpecTypeUdt>(),
+            Self::ScSpecTypeDef => gen.into_root_schema_for::<ScSpecTypeDef>(),
+            Self::ScSpecUdtStructFieldV0 => gen.into_root_schema_for::<ScSpecUdtStructFieldV0>(),
+            Self::ScSpecUdtStructV0 => gen.into_root_schema_for::<ScSpecUdtStructV0>(),
+            Self::ScSpecUdtUnionCaseVoidV0 => {
+                gen.into_root_schema_for::<ScSpecUdtUnionCaseVoidV0>()
+            }
+            Self::ScSpecUdtUnionCaseTupleV0 => {
+                gen.into_root_schema_for::<ScSpecUdtUnionCaseTupleV0>()
+            }
+            Self::ScSpecUdtUnionCaseV0Kind => {
+                gen.into_root_schema_for::<ScSpecUdtUnionCaseV0Kind>()
+            }
+            Self::ScSpecUdtUnionCaseV0 => gen.into_root_schema_for::<ScSpecUdtUnionCaseV0>(),
+            Self::ScSpecUdtUnionV0 => gen.into_root_schema_for::<ScSpecUdtUnionV0>(),
+            Self::ScSpecUdtEnumCaseV0 => gen.into_root_schema_for::<ScSpecUdtEnumCaseV0>(),
+            Self::ScSpecUdtEnumV0 => gen.into_root_schema_for::<ScSpecUdtEnumV0>(),
+            Self::ScSpecUdtErrorEnumCaseV0 => {
+                gen.into_root_schema_for::<ScSpecUdtErrorEnumCaseV0>()
+            }
+            Self::ScSpecUdtErrorEnumV0 => gen.into_root_schema_for::<ScSpecUdtErrorEnumV0>(),
+            Self::ScSpecFunctionInputV0 => gen.into_root_schema_for::<ScSpecFunctionInputV0>(),
+            Self::ScSpecFunctionV0 => gen.into_root_schema_for::<ScSpecFunctionV0>(),
+            Self::ScSpecEntryKind => gen.into_root_schema_for::<ScSpecEntryKind>(),
+            Self::ScSpecEntry => gen.into_root_schema_for::<ScSpecEntry>(),
+            Self::ScValType => gen.into_root_schema_for::<ScValType>(),
+            Self::ScErrorType => gen.into_root_schema_for::<ScErrorType>(),
+            Self::ScErrorCode => gen.into_root_schema_for::<ScErrorCode>(),
+            Self::ScError => gen.into_root_schema_for::<ScError>(),
+            Self::UInt128Parts => gen.into_root_schema_for::<UInt128Parts>(),
+            Self::Int128Parts => gen.into_root_schema_for::<Int128Parts>(),
+            Self::UInt256Parts => gen.into_root_schema_for::<UInt256Parts>(),
+            Self::Int256Parts => gen.into_root_schema_for::<Int256Parts>(),
+            Self::ContractExecutableType => gen.into_root_schema_for::<ContractExecutableType>(),
+            Self::ContractExecutable => gen.into_root_schema_for::<ContractExecutable>(),
+            Self::ScAddressType => gen.into_root_schema_for::<ScAddressType>(),
+            Self::ScAddress => gen.into_root_schema_for::<ScAddress>(),
+            Self::ScVec => gen.into_root_schema_for::<ScVec>(),
+            Self::ScMap => gen.into_root_schema_for::<ScMap>(),
+            Self::ScBytes => gen.into_root_schema_for::<ScBytes>(),
+            Self::ScString => gen.into_root_schema_for::<ScString>(),
+            Self::ScSymbol => gen.into_root_schema_for::<ScSymbol>(),
+            Self::ScNonceKey => gen.into_root_schema_for::<ScNonceKey>(),
+            Self::ScContractInstance => gen.into_root_schema_for::<ScContractInstance>(),
+            Self::ScVal => gen.into_root_schema_for::<ScVal>(),
+            Self::ScMapEntry => gen.into_root_schema_for::<ScMapEntry>(),
+            Self::StoredTransactionSet => gen.into_root_schema_for::<StoredTransactionSet>(),
+            Self::StoredDebugTransactionSet => {
+                gen.into_root_schema_for::<StoredDebugTransactionSet>()
+            }
+            Self::PersistedScpStateV0 => gen.into_root_schema_for::<PersistedScpStateV0>(),
+            Self::PersistedScpStateV1 => gen.into_root_schema_for::<PersistedScpStateV1>(),
+            Self::PersistedScpState => gen.into_root_schema_for::<PersistedScpState>(),
+            Self::Thresholds => gen.into_root_schema_for::<Thresholds>(),
+            Self::String32 => gen.into_root_schema_for::<String32>(),
+            Self::String64 => gen.into_root_schema_for::<String64>(),
+            Self::SequenceNumber => gen.into_root_schema_for::<SequenceNumber>(),
+            Self::DataValue => gen.into_root_schema_for::<DataValue>(),
+            Self::PoolId => gen.into_root_schema_for::<PoolId>(),
+            Self::AssetCode4 => gen.into_root_schema_for::<AssetCode4>(),
+            Self::AssetCode12 => gen.into_root_schema_for::<AssetCode12>(),
+            Self::AssetType => gen.into_root_schema_for::<AssetType>(),
+            Self::AssetCode => gen.into_root_schema_for::<AssetCode>(),
+            Self::AlphaNum4 => gen.into_root_schema_for::<AlphaNum4>(),
+            Self::AlphaNum12 => gen.into_root_schema_for::<AlphaNum12>(),
+            Self::Asset => gen.into_root_schema_for::<Asset>(),
+            Self::Price => gen.into_root_schema_for::<Price>(),
+            Self::Liabilities => gen.into_root_schema_for::<Liabilities>(),
+            Self::ThresholdIndexes => gen.into_root_schema_for::<ThresholdIndexes>(),
+            Self::LedgerEntryType => gen.into_root_schema_for::<LedgerEntryType>(),
+            Self::Signer => gen.into_root_schema_for::<Signer>(),
+            Self::AccountFlags => gen.into_root_schema_for::<AccountFlags>(),
+            Self::SponsorshipDescriptor => gen.into_root_schema_for::<SponsorshipDescriptor>(),
+            Self::AccountEntryExtensionV3 => gen.into_root_schema_for::<AccountEntryExtensionV3>(),
+            Self::AccountEntryExtensionV2 => gen.into_root_schema_for::<AccountEntryExtensionV2>(),
+            Self::AccountEntryExtensionV2Ext => {
+                gen.into_root_schema_for::<AccountEntryExtensionV2Ext>()
+            }
+            Self::AccountEntryExtensionV1 => gen.into_root_schema_for::<AccountEntryExtensionV1>(),
+            Self::AccountEntryExtensionV1Ext => {
+                gen.into_root_schema_for::<AccountEntryExtensionV1Ext>()
+            }
+            Self::AccountEntry => gen.into_root_schema_for::<AccountEntry>(),
+            Self::AccountEntryExt => gen.into_root_schema_for::<AccountEntryExt>(),
+            Self::TrustLineFlags => gen.into_root_schema_for::<TrustLineFlags>(),
+            Self::LiquidityPoolType => gen.into_root_schema_for::<LiquidityPoolType>(),
+            Self::TrustLineAsset => gen.into_root_schema_for::<TrustLineAsset>(),
+            Self::TrustLineEntryExtensionV2 => {
+                gen.into_root_schema_for::<TrustLineEntryExtensionV2>()
+            }
+            Self::TrustLineEntryExtensionV2Ext => {
+                gen.into_root_schema_for::<TrustLineEntryExtensionV2Ext>()
+            }
+            Self::TrustLineEntry => gen.into_root_schema_for::<TrustLineEntry>(),
+            Self::TrustLineEntryExt => gen.into_root_schema_for::<TrustLineEntryExt>(),
+            Self::TrustLineEntryV1 => gen.into_root_schema_for::<TrustLineEntryV1>(),
+            Self::TrustLineEntryV1Ext => gen.into_root_schema_for::<TrustLineEntryV1Ext>(),
+            Self::OfferEntryFlags => gen.into_root_schema_for::<OfferEntryFlags>(),
+            Self::OfferEntry => gen.into_root_schema_for::<OfferEntry>(),
+            Self::OfferEntryExt => gen.into_root_schema_for::<OfferEntryExt>(),
+            Self::DataEntry => gen.into_root_schema_for::<DataEntry>(),
+            Self::DataEntryExt => gen.into_root_schema_for::<DataEntryExt>(),
+            Self::ClaimPredicateType => gen.into_root_schema_for::<ClaimPredicateType>(),
+            Self::ClaimPredicate => gen.into_root_schema_for::<ClaimPredicate>(),
+            Self::ClaimantType => gen.into_root_schema_for::<ClaimantType>(),
+            Self::Claimant => gen.into_root_schema_for::<Claimant>(),
+            Self::ClaimantV0 => gen.into_root_schema_for::<ClaimantV0>(),
+            Self::ClaimableBalanceIdType => gen.into_root_schema_for::<ClaimableBalanceIdType>(),
+            Self::ClaimableBalanceId => gen.into_root_schema_for::<ClaimableBalanceId>(),
+            Self::ClaimableBalanceFlags => gen.into_root_schema_for::<ClaimableBalanceFlags>(),
+            Self::ClaimableBalanceEntryExtensionV1 => {
+                gen.into_root_schema_for::<ClaimableBalanceEntryExtensionV1>()
+            }
+            Self::ClaimableBalanceEntryExtensionV1Ext => {
+                gen.into_root_schema_for::<ClaimableBalanceEntryExtensionV1Ext>()
+            }
+            Self::ClaimableBalanceEntry => gen.into_root_schema_for::<ClaimableBalanceEntry>(),
+            Self::ClaimableBalanceEntryExt => {
+                gen.into_root_schema_for::<ClaimableBalanceEntryExt>()
+            }
+            Self::LiquidityPoolConstantProductParameters => {
+                gen.into_root_schema_for::<LiquidityPoolConstantProductParameters>()
+            }
+            Self::LiquidityPoolEntry => gen.into_root_schema_for::<LiquidityPoolEntry>(),
+            Self::LiquidityPoolEntryBody => gen.into_root_schema_for::<LiquidityPoolEntryBody>(),
+            Self::LiquidityPoolEntryConstantProduct => {
+                gen.into_root_schema_for::<LiquidityPoolEntryConstantProduct>()
+            }
+            Self::ContractDataDurability => gen.into_root_schema_for::<ContractDataDurability>(),
+            Self::ContractDataEntry => gen.into_root_schema_for::<ContractDataEntry>(),
+            Self::ContractCodeEntry => gen.into_root_schema_for::<ContractCodeEntry>(),
+            Self::TtlEntry => gen.into_root_schema_for::<TtlEntry>(),
+            Self::LedgerEntryExtensionV1 => gen.into_root_schema_for::<LedgerEntryExtensionV1>(),
+            Self::LedgerEntryExtensionV1Ext => {
+                gen.into_root_schema_for::<LedgerEntryExtensionV1Ext>()
+            }
+            Self::LedgerEntry => gen.into_root_schema_for::<LedgerEntry>(),
+            Self::LedgerEntryData => gen.into_root_schema_for::<LedgerEntryData>(),
+            Self::LedgerEntryExt => gen.into_root_schema_for::<LedgerEntryExt>(),
+            Self::LedgerKey => gen.into_root_schema_for::<LedgerKey>(),
+            Self::LedgerKeyAccount => gen.into_root_schema_for::<LedgerKeyAccount>(),
+            Self::LedgerKeyTrustLine => gen.into_root_schema_for::<LedgerKeyTrustLine>(),
+            Self::LedgerKeyOffer => gen.into_root_schema_for::<LedgerKeyOffer>(),
+            Self::LedgerKeyData => gen.into_root_schema_for::<LedgerKeyData>(),
+            Self::LedgerKeyClaimableBalance => {
+                gen.into_root_schema_for::<LedgerKeyClaimableBalance>()
+            }
+            Self::LedgerKeyLiquidityPool => gen.into_root_schema_for::<LedgerKeyLiquidityPool>(),
+            Self::LedgerKeyContractData => gen.into_root_schema_for::<LedgerKeyContractData>(),
+            Self::LedgerKeyContractCode => gen.into_root_schema_for::<LedgerKeyContractCode>(),
+            Self::LedgerKeyConfigSetting => gen.into_root_schema_for::<LedgerKeyConfigSetting>(),
+            Self::LedgerKeyTtl => gen.into_root_schema_for::<LedgerKeyTtl>(),
+            Self::EnvelopeType => gen.into_root_schema_for::<EnvelopeType>(),
+            Self::UpgradeType => gen.into_root_schema_for::<UpgradeType>(),
+            Self::StellarValueType => gen.into_root_schema_for::<StellarValueType>(),
+            Self::LedgerCloseValueSignature => {
+                gen.into_root_schema_for::<LedgerCloseValueSignature>()
+            }
+            Self::StellarValue => gen.into_root_schema_for::<StellarValue>(),
+            Self::StellarValueExt => gen.into_root_schema_for::<StellarValueExt>(),
+            Self::LedgerHeaderFlags => gen.into_root_schema_for::<LedgerHeaderFlags>(),
+            Self::LedgerHeaderExtensionV1 => gen.into_root_schema_for::<LedgerHeaderExtensionV1>(),
+            Self::LedgerHeaderExtensionV1Ext => {
+                gen.into_root_schema_for::<LedgerHeaderExtensionV1Ext>()
+            }
+            Self::LedgerHeader => gen.into_root_schema_for::<LedgerHeader>(),
+            Self::LedgerHeaderExt => gen.into_root_schema_for::<LedgerHeaderExt>(),
+            Self::LedgerUpgradeType => gen.into_root_schema_for::<LedgerUpgradeType>(),
+            Self::ConfigUpgradeSetKey => gen.into_root_schema_for::<ConfigUpgradeSetKey>(),
+            Self::LedgerUpgrade => gen.into_root_schema_for::<LedgerUpgrade>(),
+            Self::ConfigUpgradeSet => gen.into_root_schema_for::<ConfigUpgradeSet>(),
+            Self::BucketEntryType => gen.into_root_schema_for::<BucketEntryType>(),
+            Self::BucketMetadata => gen.into_root_schema_for::<BucketMetadata>(),
+            Self::BucketMetadataExt => gen.into_root_schema_for::<BucketMetadataExt>(),
+            Self::BucketEntry => gen.into_root_schema_for::<BucketEntry>(),
+            Self::TxSetComponentType => gen.into_root_schema_for::<TxSetComponentType>(),
+            Self::TxSetComponent => gen.into_root_schema_for::<TxSetComponent>(),
+            Self::TxSetComponentTxsMaybeDiscountedFee => {
+                gen.into_root_schema_for::<TxSetComponentTxsMaybeDiscountedFee>()
+            }
+            Self::TransactionPhase => gen.into_root_schema_for::<TransactionPhase>(),
+            Self::TransactionSet => gen.into_root_schema_for::<TransactionSet>(),
+            Self::TransactionSetV1 => gen.into_root_schema_for::<TransactionSetV1>(),
+            Self::GeneralizedTransactionSet => {
+                gen.into_root_schema_for::<GeneralizedTransactionSet>()
+            }
+            Self::TransactionResultPair => gen.into_root_schema_for::<TransactionResultPair>(),
+            Self::TransactionResultSet => gen.into_root_schema_for::<TransactionResultSet>(),
+            Self::TransactionHistoryEntry => gen.into_root_schema_for::<TransactionHistoryEntry>(),
+            Self::TransactionHistoryEntryExt => {
+                gen.into_root_schema_for::<TransactionHistoryEntryExt>()
+            }
+            Self::TransactionHistoryResultEntry => {
+                gen.into_root_schema_for::<TransactionHistoryResultEntry>()
+            }
+            Self::TransactionHistoryResultEntryExt => {
+                gen.into_root_schema_for::<TransactionHistoryResultEntryExt>()
+            }
+            Self::LedgerHeaderHistoryEntry => {
+                gen.into_root_schema_for::<LedgerHeaderHistoryEntry>()
+            }
+            Self::LedgerHeaderHistoryEntryExt => {
+                gen.into_root_schema_for::<LedgerHeaderHistoryEntryExt>()
+            }
+            Self::LedgerScpMessages => gen.into_root_schema_for::<LedgerScpMessages>(),
+            Self::ScpHistoryEntryV0 => gen.into_root_schema_for::<ScpHistoryEntryV0>(),
+            Self::ScpHistoryEntry => gen.into_root_schema_for::<ScpHistoryEntry>(),
+            Self::LedgerEntryChangeType => gen.into_root_schema_for::<LedgerEntryChangeType>(),
+            Self::LedgerEntryChange => gen.into_root_schema_for::<LedgerEntryChange>(),
+            Self::LedgerEntryChanges => gen.into_root_schema_for::<LedgerEntryChanges>(),
+            Self::OperationMeta => gen.into_root_schema_for::<OperationMeta>(),
+            Self::TransactionMetaV1 => gen.into_root_schema_for::<TransactionMetaV1>(),
+            Self::TransactionMetaV2 => gen.into_root_schema_for::<TransactionMetaV2>(),
+            Self::ContractEventType => gen.into_root_schema_for::<ContractEventType>(),
+            Self::ContractEvent => gen.into_root_schema_for::<ContractEvent>(),
+            Self::ContractEventBody => gen.into_root_schema_for::<ContractEventBody>(),
+            Self::ContractEventV0 => gen.into_root_schema_for::<ContractEventV0>(),
+            Self::DiagnosticEvent => gen.into_root_schema_for::<DiagnosticEvent>(),
+            Self::SorobanTransactionMeta => gen.into_root_schema_for::<SorobanTransactionMeta>(),
+            Self::TransactionMetaV3 => gen.into_root_schema_for::<TransactionMetaV3>(),
+            Self::InvokeHostFunctionSuccessPreImage => {
+                gen.into_root_schema_for::<InvokeHostFunctionSuccessPreImage>()
+            }
+            Self::TransactionMeta => gen.into_root_schema_for::<TransactionMeta>(),
+            Self::TransactionResultMeta => gen.into_root_schema_for::<TransactionResultMeta>(),
+            Self::UpgradeEntryMeta => gen.into_root_schema_for::<UpgradeEntryMeta>(),
+            Self::LedgerCloseMetaV0 => gen.into_root_schema_for::<LedgerCloseMetaV0>(),
+            Self::LedgerCloseMetaV1 => gen.into_root_schema_for::<LedgerCloseMetaV1>(),
+            Self::LedgerCloseMeta => gen.into_root_schema_for::<LedgerCloseMeta>(),
+            Self::ErrorCode => gen.into_root_schema_for::<ErrorCode>(),
+            Self::SError => gen.into_root_schema_for::<SError>(),
+            Self::SendMore => gen.into_root_schema_for::<SendMore>(),
+            Self::SendMoreExtended => gen.into_root_schema_for::<SendMoreExtended>(),
+            Self::AuthCert => gen.into_root_schema_for::<AuthCert>(),
+            Self::Hello => gen.into_root_schema_for::<Hello>(),
+            Self::Auth => gen.into_root_schema_for::<Auth>(),
+            Self::IpAddrType => gen.into_root_schema_for::<IpAddrType>(),
+            Self::PeerAddress => gen.into_root_schema_for::<PeerAddress>(),
+            Self::PeerAddressIp => gen.into_root_schema_for::<PeerAddressIp>(),
+            Self::MessageType => gen.into_root_schema_for::<MessageType>(),
+            Self::DontHave => gen.into_root_schema_for::<DontHave>(),
+            Self::SurveyMessageCommandType => {
+                gen.into_root_schema_for::<SurveyMessageCommandType>()
+            }
+            Self::SurveyMessageResponseType => {
+                gen.into_root_schema_for::<SurveyMessageResponseType>()
+            }
+            Self::SurveyRequestMessage => gen.into_root_schema_for::<SurveyRequestMessage>(),
+            Self::SignedSurveyRequestMessage => {
+                gen.into_root_schema_for::<SignedSurveyRequestMessage>()
+            }
+            Self::EncryptedBody => gen.into_root_schema_for::<EncryptedBody>(),
+            Self::SurveyResponseMessage => gen.into_root_schema_for::<SurveyResponseMessage>(),
+            Self::SignedSurveyResponseMessage => {
+                gen.into_root_schema_for::<SignedSurveyResponseMessage>()
+            }
+            Self::PeerStats => gen.into_root_schema_for::<PeerStats>(),
+            Self::PeerStatList => gen.into_root_schema_for::<PeerStatList>(),
+            Self::TopologyResponseBodyV0 => gen.into_root_schema_for::<TopologyResponseBodyV0>(),
+            Self::TopologyResponseBodyV1 => gen.into_root_schema_for::<TopologyResponseBodyV1>(),
+            Self::SurveyResponseBody => gen.into_root_schema_for::<SurveyResponseBody>(),
+            Self::TxAdvertVector => gen.into_root_schema_for::<TxAdvertVector>(),
+            Self::FloodAdvert => gen.into_root_schema_for::<FloodAdvert>(),
+            Self::TxDemandVector => gen.into_root_schema_for::<TxDemandVector>(),
+            Self::FloodDemand => gen.into_root_schema_for::<FloodDemand>(),
+            Self::StellarMessage => gen.into_root_schema_for::<StellarMessage>(),
+            Self::AuthenticatedMessage => gen.into_root_schema_for::<AuthenticatedMessage>(),
+            Self::AuthenticatedMessageV0 => gen.into_root_schema_for::<AuthenticatedMessageV0>(),
+            Self::LiquidityPoolParameters => gen.into_root_schema_for::<LiquidityPoolParameters>(),
+            Self::MuxedAccount => gen.into_root_schema_for::<MuxedAccount>(),
+            Self::MuxedAccountMed25519 => gen.into_root_schema_for::<MuxedAccountMed25519>(),
+            Self::DecoratedSignature => gen.into_root_schema_for::<DecoratedSignature>(),
+            Self::OperationType => gen.into_root_schema_for::<OperationType>(),
+            Self::CreateAccountOp => gen.into_root_schema_for::<CreateAccountOp>(),
+            Self::PaymentOp => gen.into_root_schema_for::<PaymentOp>(),
+            Self::PathPaymentStrictReceiveOp => {
+                gen.into_root_schema_for::<PathPaymentStrictReceiveOp>()
+            }
+            Self::PathPaymentStrictSendOp => gen.into_root_schema_for::<PathPaymentStrictSendOp>(),
+            Self::ManageSellOfferOp => gen.into_root_schema_for::<ManageSellOfferOp>(),
+            Self::ManageBuyOfferOp => gen.into_root_schema_for::<ManageBuyOfferOp>(),
+            Self::CreatePassiveSellOfferOp => {
+                gen.into_root_schema_for::<CreatePassiveSellOfferOp>()
+            }
+            Self::SetOptionsOp => gen.into_root_schema_for::<SetOptionsOp>(),
+            Self::ChangeTrustAsset => gen.into_root_schema_for::<ChangeTrustAsset>(),
+            Self::ChangeTrustOp => gen.into_root_schema_for::<ChangeTrustOp>(),
+            Self::AllowTrustOp => gen.into_root_schema_for::<AllowTrustOp>(),
+            Self::ManageDataOp => gen.into_root_schema_for::<ManageDataOp>(),
+            Self::BumpSequenceOp => gen.into_root_schema_for::<BumpSequenceOp>(),
+            Self::CreateClaimableBalanceOp => {
+                gen.into_root_schema_for::<CreateClaimableBalanceOp>()
+            }
+            Self::ClaimClaimableBalanceOp => gen.into_root_schema_for::<ClaimClaimableBalanceOp>(),
+            Self::BeginSponsoringFutureReservesOp => {
+                gen.into_root_schema_for::<BeginSponsoringFutureReservesOp>()
+            }
+            Self::RevokeSponsorshipType => gen.into_root_schema_for::<RevokeSponsorshipType>(),
+            Self::RevokeSponsorshipOp => gen.into_root_schema_for::<RevokeSponsorshipOp>(),
+            Self::RevokeSponsorshipOpSigner => {
+                gen.into_root_schema_for::<RevokeSponsorshipOpSigner>()
+            }
+            Self::ClawbackOp => gen.into_root_schema_for::<ClawbackOp>(),
+            Self::ClawbackClaimableBalanceOp => {
+                gen.into_root_schema_for::<ClawbackClaimableBalanceOp>()
+            }
+            Self::SetTrustLineFlagsOp => gen.into_root_schema_for::<SetTrustLineFlagsOp>(),
+            Self::LiquidityPoolDepositOp => gen.into_root_schema_for::<LiquidityPoolDepositOp>(),
+            Self::LiquidityPoolWithdrawOp => gen.into_root_schema_for::<LiquidityPoolWithdrawOp>(),
+            Self::HostFunctionType => gen.into_root_schema_for::<HostFunctionType>(),
+            Self::ContractIdPreimageType => gen.into_root_schema_for::<ContractIdPreimageType>(),
+            Self::ContractIdPreimage => gen.into_root_schema_for::<ContractIdPreimage>(),
+            Self::ContractIdPreimageFromAddress => {
+                gen.into_root_schema_for::<ContractIdPreimageFromAddress>()
+            }
+            Self::CreateContractArgs => gen.into_root_schema_for::<CreateContractArgs>(),
+            Self::InvokeContractArgs => gen.into_root_schema_for::<InvokeContractArgs>(),
+            Self::HostFunction => gen.into_root_schema_for::<HostFunction>(),
+            Self::SorobanAuthorizedFunctionType => {
+                gen.into_root_schema_for::<SorobanAuthorizedFunctionType>()
+            }
+            Self::SorobanAuthorizedFunction => {
+                gen.into_root_schema_for::<SorobanAuthorizedFunction>()
+            }
+            Self::SorobanAuthorizedInvocation => {
+                gen.into_root_schema_for::<SorobanAuthorizedInvocation>()
+            }
+            Self::SorobanAddressCredentials => {
+                gen.into_root_schema_for::<SorobanAddressCredentials>()
+            }
+            Self::SorobanCredentialsType => gen.into_root_schema_for::<SorobanCredentialsType>(),
+            Self::SorobanCredentials => gen.into_root_schema_for::<SorobanCredentials>(),
+            Self::SorobanAuthorizationEntry => {
+                gen.into_root_schema_for::<SorobanAuthorizationEntry>()
+            }
+            Self::InvokeHostFunctionOp => gen.into_root_schema_for::<InvokeHostFunctionOp>(),
+            Self::ExtendFootprintTtlOp => gen.into_root_schema_for::<ExtendFootprintTtlOp>(),
+            Self::RestoreFootprintOp => gen.into_root_schema_for::<RestoreFootprintOp>(),
+            Self::Operation => gen.into_root_schema_for::<Operation>(),
+            Self::OperationBody => gen.into_root_schema_for::<OperationBody>(),
+            Self::HashIdPreimage => gen.into_root_schema_for::<HashIdPreimage>(),
+            Self::HashIdPreimageOperationId => {
+                gen.into_root_schema_for::<HashIdPreimageOperationId>()
+            }
+            Self::HashIdPreimageRevokeId => gen.into_root_schema_for::<HashIdPreimageRevokeId>(),
+            Self::HashIdPreimageContractId => {
+                gen.into_root_schema_for::<HashIdPreimageContractId>()
+            }
+            Self::HashIdPreimageSorobanAuthorization => {
+                gen.into_root_schema_for::<HashIdPreimageSorobanAuthorization>()
+            }
+            Self::MemoType => gen.into_root_schema_for::<MemoType>(),
+            Self::Memo => gen.into_root_schema_for::<Memo>(),
+            Self::TimeBounds => gen.into_root_schema_for::<TimeBounds>(),
+            Self::LedgerBounds => gen.into_root_schema_for::<LedgerBounds>(),
+            Self::PreconditionsV2 => gen.into_root_schema_for::<PreconditionsV2>(),
+            Self::PreconditionType => gen.into_root_schema_for::<PreconditionType>(),
+            Self::Preconditions => gen.into_root_schema_for::<Preconditions>(),
+            Self::LedgerFootprint => gen.into_root_schema_for::<LedgerFootprint>(),
+            Self::SorobanResources => gen.into_root_schema_for::<SorobanResources>(),
+            Self::SorobanTransactionData => gen.into_root_schema_for::<SorobanTransactionData>(),
+            Self::TransactionV0 => gen.into_root_schema_for::<TransactionV0>(),
+            Self::TransactionV0Ext => gen.into_root_schema_for::<TransactionV0Ext>(),
+            Self::TransactionV0Envelope => gen.into_root_schema_for::<TransactionV0Envelope>(),
+            Self::Transaction => gen.into_root_schema_for::<Transaction>(),
+            Self::TransactionExt => gen.into_root_schema_for::<TransactionExt>(),
+            Self::TransactionV1Envelope => gen.into_root_schema_for::<TransactionV1Envelope>(),
+            Self::FeeBumpTransaction => gen.into_root_schema_for::<FeeBumpTransaction>(),
+            Self::FeeBumpTransactionInnerTx => {
+                gen.into_root_schema_for::<FeeBumpTransactionInnerTx>()
+            }
+            Self::FeeBumpTransactionExt => gen.into_root_schema_for::<FeeBumpTransactionExt>(),
+            Self::FeeBumpTransactionEnvelope => {
+                gen.into_root_schema_for::<FeeBumpTransactionEnvelope>()
+            }
+            Self::TransactionEnvelope => gen.into_root_schema_for::<TransactionEnvelope>(),
+            Self::TransactionSignaturePayload => {
+                gen.into_root_schema_for::<TransactionSignaturePayload>()
+            }
+            Self::TransactionSignaturePayloadTaggedTransaction => {
+                gen.into_root_schema_for::<TransactionSignaturePayloadTaggedTransaction>()
+            }
+            Self::ClaimAtomType => gen.into_root_schema_for::<ClaimAtomType>(),
+            Self::ClaimOfferAtomV0 => gen.into_root_schema_for::<ClaimOfferAtomV0>(),
+            Self::ClaimOfferAtom => gen.into_root_schema_for::<ClaimOfferAtom>(),
+            Self::ClaimLiquidityAtom => gen.into_root_schema_for::<ClaimLiquidityAtom>(),
+            Self::ClaimAtom => gen.into_root_schema_for::<ClaimAtom>(),
+            Self::CreateAccountResultCode => gen.into_root_schema_for::<CreateAccountResultCode>(),
+            Self::CreateAccountResult => gen.into_root_schema_for::<CreateAccountResult>(),
+            Self::PaymentResultCode => gen.into_root_schema_for::<PaymentResultCode>(),
+            Self::PaymentResult => gen.into_root_schema_for::<PaymentResult>(),
+            Self::PathPaymentStrictReceiveResultCode => {
+                gen.into_root_schema_for::<PathPaymentStrictReceiveResultCode>()
+            }
+            Self::SimplePaymentResult => gen.into_root_schema_for::<SimplePaymentResult>(),
+            Self::PathPaymentStrictReceiveResult => {
+                gen.into_root_schema_for::<PathPaymentStrictReceiveResult>()
+            }
+            Self::PathPaymentStrictReceiveResultSuccess => {
+                gen.into_root_schema_for::<PathPaymentStrictReceiveResultSuccess>()
+            }
+            Self::PathPaymentStrictSendResultCode => {
+                gen.into_root_schema_for::<PathPaymentStrictSendResultCode>()
+            }
+            Self::PathPaymentStrictSendResult => {
+                gen.into_root_schema_for::<PathPaymentStrictSendResult>()
+            }
+            Self::PathPaymentStrictSendResultSuccess => {
+                gen.into_root_schema_for::<PathPaymentStrictSendResultSuccess>()
+            }
+            Self::ManageSellOfferResultCode => {
+                gen.into_root_schema_for::<ManageSellOfferResultCode>()
+            }
+            Self::ManageOfferEffect => gen.into_root_schema_for::<ManageOfferEffect>(),
+            Self::ManageOfferSuccessResult => {
+                gen.into_root_schema_for::<ManageOfferSuccessResult>()
+            }
+            Self::ManageOfferSuccessResultOffer => {
+                gen.into_root_schema_for::<ManageOfferSuccessResultOffer>()
+            }
+            Self::ManageSellOfferResult => gen.into_root_schema_for::<ManageSellOfferResult>(),
+            Self::ManageBuyOfferResultCode => {
+                gen.into_root_schema_for::<ManageBuyOfferResultCode>()
+            }
+            Self::ManageBuyOfferResult => gen.into_root_schema_for::<ManageBuyOfferResult>(),
+            Self::SetOptionsResultCode => gen.into_root_schema_for::<SetOptionsResultCode>(),
+            Self::SetOptionsResult => gen.into_root_schema_for::<SetOptionsResult>(),
+            Self::ChangeTrustResultCode => gen.into_root_schema_for::<ChangeTrustResultCode>(),
+            Self::ChangeTrustResult => gen.into_root_schema_for::<ChangeTrustResult>(),
+            Self::AllowTrustResultCode => gen.into_root_schema_for::<AllowTrustResultCode>(),
+            Self::AllowTrustResult => gen.into_root_schema_for::<AllowTrustResult>(),
+            Self::AccountMergeResultCode => gen.into_root_schema_for::<AccountMergeResultCode>(),
+            Self::AccountMergeResult => gen.into_root_schema_for::<AccountMergeResult>(),
+            Self::InflationResultCode => gen.into_root_schema_for::<InflationResultCode>(),
+            Self::InflationPayout => gen.into_root_schema_for::<InflationPayout>(),
+            Self::InflationResult => gen.into_root_schema_for::<InflationResult>(),
+            Self::ManageDataResultCode => gen.into_root_schema_for::<ManageDataResultCode>(),
+            Self::ManageDataResult => gen.into_root_schema_for::<ManageDataResult>(),
+            Self::BumpSequenceResultCode => gen.into_root_schema_for::<BumpSequenceResultCode>(),
+            Self::BumpSequenceResult => gen.into_root_schema_for::<BumpSequenceResult>(),
+            Self::CreateClaimableBalanceResultCode => {
+                gen.into_root_schema_for::<CreateClaimableBalanceResultCode>()
+            }
+            Self::CreateClaimableBalanceResult => {
+                gen.into_root_schema_for::<CreateClaimableBalanceResult>()
+            }
+            Self::ClaimClaimableBalanceResultCode => {
+                gen.into_root_schema_for::<ClaimClaimableBalanceResultCode>()
+            }
+            Self::ClaimClaimableBalanceResult => {
+                gen.into_root_schema_for::<ClaimClaimableBalanceResult>()
+            }
+            Self::BeginSponsoringFutureReservesResultCode => {
+                gen.into_root_schema_for::<BeginSponsoringFutureReservesResultCode>()
+            }
+            Self::BeginSponsoringFutureReservesResult => {
+                gen.into_root_schema_for::<BeginSponsoringFutureReservesResult>()
+            }
+            Self::EndSponsoringFutureReservesResultCode => {
+                gen.into_root_schema_for::<EndSponsoringFutureReservesResultCode>()
+            }
+            Self::EndSponsoringFutureReservesResult => {
+                gen.into_root_schema_for::<EndSponsoringFutureReservesResult>()
+            }
+            Self::RevokeSponsorshipResultCode => {
+                gen.into_root_schema_for::<RevokeSponsorshipResultCode>()
+            }
+            Self::RevokeSponsorshipResult => gen.into_root_schema_for::<RevokeSponsorshipResult>(),
+            Self::ClawbackResultCode => gen.into_root_schema_for::<ClawbackResultCode>(),
+            Self::ClawbackResult => gen.into_root_schema_for::<ClawbackResult>(),
+            Self::ClawbackClaimableBalanceResultCode => {
+                gen.into_root_schema_for::<ClawbackClaimableBalanceResultCode>()
+            }
+            Self::ClawbackClaimableBalanceResult => {
+                gen.into_root_schema_for::<ClawbackClaimableBalanceResult>()
+            }
+            Self::SetTrustLineFlagsResultCode => {
+                gen.into_root_schema_for::<SetTrustLineFlagsResultCode>()
+            }
+            Self::SetTrustLineFlagsResult => gen.into_root_schema_for::<SetTrustLineFlagsResult>(),
+            Self::LiquidityPoolDepositResultCode => {
+                gen.into_root_schema_for::<LiquidityPoolDepositResultCode>()
+            }
+            Self::LiquidityPoolDepositResult => {
+                gen.into_root_schema_for::<LiquidityPoolDepositResult>()
+            }
+            Self::LiquidityPoolWithdrawResultCode => {
+                gen.into_root_schema_for::<LiquidityPoolWithdrawResultCode>()
+            }
+            Self::LiquidityPoolWithdrawResult => {
+                gen.into_root_schema_for::<LiquidityPoolWithdrawResult>()
+            }
+            Self::InvokeHostFunctionResultCode => {
+                gen.into_root_schema_for::<InvokeHostFunctionResultCode>()
+            }
+            Self::InvokeHostFunctionResult => {
+                gen.into_root_schema_for::<InvokeHostFunctionResult>()
+            }
+            Self::ExtendFootprintTtlResultCode => {
+                gen.into_root_schema_for::<ExtendFootprintTtlResultCode>()
+            }
+            Self::ExtendFootprintTtlResult => {
+                gen.into_root_schema_for::<ExtendFootprintTtlResult>()
+            }
+            Self::RestoreFootprintResultCode => {
+                gen.into_root_schema_for::<RestoreFootprintResultCode>()
+            }
+            Self::RestoreFootprintResult => gen.into_root_schema_for::<RestoreFootprintResult>(),
+            Self::OperationResultCode => gen.into_root_schema_for::<OperationResultCode>(),
+            Self::OperationResult => gen.into_root_schema_for::<OperationResult>(),
+            Self::OperationResultTr => gen.into_root_schema_for::<OperationResultTr>(),
+            Self::TransactionResultCode => gen.into_root_schema_for::<TransactionResultCode>(),
+            Self::InnerTransactionResult => gen.into_root_schema_for::<InnerTransactionResult>(),
+            Self::InnerTransactionResultResult => {
+                gen.into_root_schema_for::<InnerTransactionResultResult>()
+            }
+            Self::InnerTransactionResultExt => {
+                gen.into_root_schema_for::<InnerTransactionResultExt>()
+            }
+            Self::InnerTransactionResultPair => {
+                gen.into_root_schema_for::<InnerTransactionResultPair>()
+            }
+            Self::TransactionResult => gen.into_root_schema_for::<TransactionResult>(),
+            Self::TransactionResultResult => gen.into_root_schema_for::<TransactionResultResult>(),
+            Self::TransactionResultExt => gen.into_root_schema_for::<TransactionResultExt>(),
+            Self::Hash => gen.into_root_schema_for::<Hash>(),
+            Self::Uint256 => gen.into_root_schema_for::<Uint256>(),
+            Self::Uint32 => gen.into_root_schema_for::<Uint32>(),
+            Self::Int32 => gen.into_root_schema_for::<Int32>(),
+            Self::Uint64 => gen.into_root_schema_for::<Uint64>(),
+            Self::Int64 => gen.into_root_schema_for::<Int64>(),
+            Self::TimePoint => gen.into_root_schema_for::<TimePoint>(),
+            Self::Duration => gen.into_root_schema_for::<Duration>(),
+            Self::ExtensionPoint => gen.into_root_schema_for::<ExtensionPoint>(),
+            Self::CryptoKeyType => gen.into_root_schema_for::<CryptoKeyType>(),
+            Self::PublicKeyType => gen.into_root_schema_for::<PublicKeyType>(),
+            Self::SignerKeyType => gen.into_root_schema_for::<SignerKeyType>(),
+            Self::PublicKey => gen.into_root_schema_for::<PublicKey>(),
+            Self::SignerKey => gen.into_root_schema_for::<SignerKey>(),
+            Self::SignerKeyEd25519SignedPayload => {
+                gen.into_root_schema_for::<SignerKeyEd25519SignedPayload>()
+            }
+            Self::Signature => gen.into_root_schema_for::<Signature>(),
+            Self::SignatureHint => gen.into_root_schema_for::<SignatureHint>(),
+            Self::NodeId => gen.into_root_schema_for::<NodeId>(),
+            Self::AccountId => gen.into_root_schema_for::<AccountId>(),
+            Self::Curve25519Secret => gen.into_root_schema_for::<Curve25519Secret>(),
+            Self::Curve25519Public => gen.into_root_schema_for::<Curve25519Public>(),
+            Self::HmacSha256Key => gen.into_root_schema_for::<HmacSha256Key>(),
+            Self::HmacSha256Mac => gen.into_root_schema_for::<HmacSha256Mac>(),
+        }
+    }
 }
 
 impl Name for TypeVariant {
@@ -44628,6 +46704,7 @@ impl core::str::FromStr for TypeVariant {
     serde(rename_all = "snake_case"),
     serde(untagged)
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum Type {
     Value(Box<Value>),
     ScpBallot(Box<ScpBallot>),

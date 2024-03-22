@@ -1,6 +1,7 @@
 mod generated;
 pub use generated::*;
 
+mod jsonschema;
 mod str;
 
 mod scval_conversions;

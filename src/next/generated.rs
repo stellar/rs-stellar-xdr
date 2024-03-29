@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "9301586f4354724c9095686786171735c3b9d1ae062f7cea8f75fa10064962ab",
+        "393369678663cb0f9471a0b69e2a9cfa3ac93c4415fa40cec166e9a231ecbe0d",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -3945,8 +3945,9 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 ///     InvokeVmFunction = 13,
 ///     // Cost of computing a keccak256 hash from bytes.
 ///     ComputeKeccak256Hash = 14,
-///     // Cost of computing an ECDSA secp256k1 signature from bytes.
-///     ComputeEcdsaSecp256k1Sig = 15,
+///     // Cost of decoding an ECDSA signature computed from a 256-bit prime modulus
+///     // curve (e.g. secp256k1 and secp256r1)
+///     DecodeEcdsaCurve256Sig = 15,
 ///     // Cost of recovering an ECDSA secp256k1 key from a signature.
 ///     RecoverEcdsaSecp256k1Key = 16,
 ///     // Cost of int256 addition (`+`) and subtraction (`-`) operations
@@ -4002,7 +4003,13 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 ///     // Cost of instantiating a known number of wasm exports.
 ///     InstantiateWasmExports = 41,
 ///     // Cost of instantiating a known number of data segment bytes.
-///     InstantiateWasmDataSegmentBytes = 42
+///     InstantiateWasmDataSegmentBytes = 42,
+///
+///     // Cost of decoding a bytes array representing an uncompressed SEC-1 encoded
+///     // point on a 256-bit elliptic curve
+///     Sec1DecodePointUncompressed = 43,
+///     // Cost of verifying an ECDSA Secp256r1 signature
+///     VerifyEcdsaSecp256r1Sig = 44
 /// };
 /// ```
 ///
@@ -4031,7 +4038,7 @@ pub enum ContractCostType {
     VmCachedInstantiation = 12,
     InvokeVmFunction = 13,
     ComputeKeccak256Hash = 14,
-    ComputeEcdsaSecp256k1Sig = 15,
+    DecodeEcdsaCurve256Sig = 15,
     RecoverEcdsaSecp256k1Key = 16,
     Int256AddSub = 17,
     Int256Mul = 18,
@@ -4059,10 +4066,12 @@ pub enum ContractCostType {
     InstantiateWasmImports = 40,
     InstantiateWasmExports = 41,
     InstantiateWasmDataSegmentBytes = 42,
+    Sec1DecodePointUncompressed = 43,
+    VerifyEcdsaSecp256r1Sig = 44,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 43] = [
+    pub const VARIANTS: [ContractCostType; 45] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::MemAlloc,
         ContractCostType::MemCpy,
@@ -4078,7 +4087,7 @@ impl ContractCostType {
         ContractCostType::VmCachedInstantiation,
         ContractCostType::InvokeVmFunction,
         ContractCostType::ComputeKeccak256Hash,
-        ContractCostType::ComputeEcdsaSecp256k1Sig,
+        ContractCostType::DecodeEcdsaCurve256Sig,
         ContractCostType::RecoverEcdsaSecp256k1Key,
         ContractCostType::Int256AddSub,
         ContractCostType::Int256Mul,
@@ -4106,8 +4115,10 @@ impl ContractCostType {
         ContractCostType::InstantiateWasmImports,
         ContractCostType::InstantiateWasmExports,
         ContractCostType::InstantiateWasmDataSegmentBytes,
+        ContractCostType::Sec1DecodePointUncompressed,
+        ContractCostType::VerifyEcdsaSecp256r1Sig,
     ];
-    pub const VARIANTS_STR: [&'static str; 43] = [
+    pub const VARIANTS_STR: [&'static str; 45] = [
         "WasmInsnExec",
         "MemAlloc",
         "MemCpy",
@@ -4123,7 +4134,7 @@ impl ContractCostType {
         "VmCachedInstantiation",
         "InvokeVmFunction",
         "ComputeKeccak256Hash",
-        "ComputeEcdsaSecp256k1Sig",
+        "DecodeEcdsaCurve256Sig",
         "RecoverEcdsaSecp256k1Key",
         "Int256AddSub",
         "Int256Mul",
@@ -4151,6 +4162,8 @@ impl ContractCostType {
         "InstantiateWasmImports",
         "InstantiateWasmExports",
         "InstantiateWasmDataSegmentBytes",
+        "Sec1DecodePointUncompressed",
+        "VerifyEcdsaSecp256r1Sig",
     ];
 
     #[must_use]
@@ -4171,7 +4184,7 @@ impl ContractCostType {
             Self::VmCachedInstantiation => "VmCachedInstantiation",
             Self::InvokeVmFunction => "InvokeVmFunction",
             Self::ComputeKeccak256Hash => "ComputeKeccak256Hash",
-            Self::ComputeEcdsaSecp256k1Sig => "ComputeEcdsaSecp256k1Sig",
+            Self::DecodeEcdsaCurve256Sig => "DecodeEcdsaCurve256Sig",
             Self::RecoverEcdsaSecp256k1Key => "RecoverEcdsaSecp256k1Key",
             Self::Int256AddSub => "Int256AddSub",
             Self::Int256Mul => "Int256Mul",
@@ -4199,11 +4212,13 @@ impl ContractCostType {
             Self::InstantiateWasmImports => "InstantiateWasmImports",
             Self::InstantiateWasmExports => "InstantiateWasmExports",
             Self::InstantiateWasmDataSegmentBytes => "InstantiateWasmDataSegmentBytes",
+            Self::Sec1DecodePointUncompressed => "Sec1DecodePointUncompressed",
+            Self::VerifyEcdsaSecp256r1Sig => "VerifyEcdsaSecp256r1Sig",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 43] {
+    pub const fn variants() -> [ContractCostType; 45] {
         Self::VARIANTS
     }
 }
@@ -4249,7 +4264,7 @@ impl TryFrom<i32> for ContractCostType {
             12 => ContractCostType::VmCachedInstantiation,
             13 => ContractCostType::InvokeVmFunction,
             14 => ContractCostType::ComputeKeccak256Hash,
-            15 => ContractCostType::ComputeEcdsaSecp256k1Sig,
+            15 => ContractCostType::DecodeEcdsaCurve256Sig,
             16 => ContractCostType::RecoverEcdsaSecp256k1Key,
             17 => ContractCostType::Int256AddSub,
             18 => ContractCostType::Int256Mul,
@@ -4277,6 +4292,8 @@ impl TryFrom<i32> for ContractCostType {
             40 => ContractCostType::InstantiateWasmImports,
             41 => ContractCostType::InstantiateWasmExports,
             42 => ContractCostType::InstantiateWasmDataSegmentBytes,
+            43 => ContractCostType::Sec1DecodePointUncompressed,
+            44 => ContractCostType::VerifyEcdsaSecp256r1Sig,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

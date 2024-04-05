@@ -450,11 +450,11 @@ fn asset_code_12_from_str() {
 #[test]
 #[rustfmt::skip]
 fn asset_code_12_to_string() {
-    assert_eq!(AssetCode12(*b"\0\0\0\0\0\0\0\0\0\0\0\0").to_string(), "");
-    assert_eq!(AssetCode12(*b"a\0\0\0\0\0\0\0\0\0\0\0").to_string(), "a");
-    assert_eq!(AssetCode12(*b"ab\0\0\0\0\0\0\0\0\0\0").to_string(), "ab");
-    assert_eq!(AssetCode12(*b"abc\0\0\0\0\0\0\0\0\0").to_string(), "abc");
-    assert_eq!(AssetCode12(*b"abcd\0\0\0\0\0\0\0\0").to_string(), "abcd");
+    assert_eq!(AssetCode12(*b"\0\0\0\0\0\0\0\0\0\0\0\0").to_string(), r"\0\0\0\0\0");
+    assert_eq!(AssetCode12(*b"a\0\0\0\0\0\0\0\0\0\0\0").to_string(), r"a\0\0\0\0");
+    assert_eq!(AssetCode12(*b"ab\0\0\0\0\0\0\0\0\0\0").to_string(), r"ab\0\0\0");
+    assert_eq!(AssetCode12(*b"abc\0\0\0\0\0\0\0\0\0").to_string(), r"abc\0\0");
+    assert_eq!(AssetCode12(*b"abcd\0\0\0\0\0\0\0\0").to_string(), r"abcd\0");
     assert_eq!(AssetCode12(*b"abcde\0\0\0\0\0\0\0").to_string(), "abcde");
     assert_eq!(AssetCode12(*b"abcdef\0\0\0\0\0\0").to_string(), "abcdef");
     assert_eq!(AssetCode12(*b"abcdefg\0\0\0\0\0").to_string(), "abcdefg");
@@ -465,10 +465,10 @@ fn asset_code_12_to_string() {
     assert_eq!(AssetCode12(*b"abcdefghijkl").to_string(), "abcdefghijkl");
 
     // Preserve as much of the code as possible, even if it contains nul bytes.
-    assert_eq!(AssetCode12(*b"a\0cd\0\0\0\0\0\0\0\0").to_string(), r"a\0cd");
+    assert_eq!(AssetCode12(*b"a\0cd\0\0\0\0\0\0\0\0").to_string(), r"a\0cd\0");
 
     // Replace bytes that are not valid utf8 with the replacement character � and preserve length.
-    assert_eq!(AssetCode12(*b"a\xc3\x28d\0\0\0\0\0\0\0\0").to_string(), r"a\xc3(d");
+    assert_eq!(AssetCode12(*b"a\xc3\x28d\0\0\0\0\0\0\0\0").to_string(), r"a\xc3(d\0");
     assert_eq!(AssetCode12(*b"a\xc3\xc3\x28d\0\0\0\0\0\0\0").to_string(), r"a\xc3\xc3(d");
 }
 
@@ -502,11 +502,11 @@ fn asset_code_to_string() {
     assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"abc\0")).to_string(), "abc");
     assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"abcd")).to_string(), "abcd");
 
-    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"\0\0\0\0\0\0\0\0\0\0\0\0")).to_string(), "");
-    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\0\0\0\0\0\0\0\0\0\0\0")).to_string(), "a");
-    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"ab\0\0\0\0\0\0\0\0\0\0")).to_string(), "ab");
-    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abc\0\0\0\0\0\0\0\0\0")).to_string(), "abc");
-    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcd\0\0\0\0\0\0\0\0")).to_string(), "abcd");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"\0\0\0\0\0\0\0\0\0\0\0\0")).to_string(), r"\0\0\0\0\0");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\0\0\0\0\0\0\0\0\0\0\0")).to_string(), r"a\0\0\0\0");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"ab\0\0\0\0\0\0\0\0\0\0")).to_string(), r"ab\0\0\0");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abc\0\0\0\0\0\0\0\0\0")).to_string(), r"abc\0\0");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcd\0\0\0\0\0\0\0\0")).to_string(), r"abcd\0");
     assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcde\0\0\0\0\0\0\0")).to_string(), "abcde");
     assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdef\0\0\0\0\0\0")).to_string(), "abcdef");
     assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"abcdefg\0\0\0\0\0")).to_string(), "abcdefg");
@@ -518,11 +518,11 @@ fn asset_code_to_string() {
 
     // Preserve as much of the code as possible, even if it contains nul bytes.
     assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"a\0cd")).to_string(), r"a\0cd");
-    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\0cd\0\0\0\0\0\0\0\0")).to_string(), r"a\0cd");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\0cd\0\0\0\0\0\0\0\0")).to_string(), r"a\0cd\0");
 
     // Replace bytes that are not valid utf8 with the replacement character � and preserve length.
     assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"a\xc3\x28d")).to_string(), r"a\xc3(d");
-    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\xc3\x28d\0\0\0\0\0\0\0\0")).to_string(), r"a\xc3(d");
+    assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\xc3\x28d\0\0\0\0\0\0\0\0")).to_string(), r"a\xc3(d\0");
     assert_eq!(AssetCode::CreditAlphanum12(AssetCode12(*b"a\xc3\xc3\x28d\0\0\0\0\0\0\0")).to_string(), r"a\xc3\xc3(d");
 }
 

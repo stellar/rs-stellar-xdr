@@ -1,4 +1,5 @@
 use std::{
+    fmt::Debug,
     fs::File,
     io::{stdin, Read},
     path::PathBuf,
@@ -63,6 +64,8 @@ impl Default for InputFormat {
 pub enum OutputFormat {
     Json,
     JsonFormatted,
+    RustDebug,
+    RustDebugFormatted,
 }
 
 impl Default for OutputFormat {
@@ -138,10 +141,12 @@ impl Cmd {
         }
     }
 
-    fn out(&self, v: &impl Serialize) -> Result<(), Error> {
+    fn out(&self, v: &(impl Serialize+Debug)) -> Result<(), Error> {
         match self.output {
             OutputFormat::Json => println!("{}", serde_json::to_string(v)?),
             OutputFormat::JsonFormatted => println!("{}", serde_json::to_string_pretty(v)?),
+            OutputFormat::RustDebug => println!("{v:?}"),
+            OutputFormat::RustDebugFormatted => println!("{v:#?}"),
         }
         Ok(())
     }

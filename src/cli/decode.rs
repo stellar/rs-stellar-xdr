@@ -141,7 +141,7 @@ impl Cmd {
         }
     }
 
-    fn out(&self, v: &(impl Serialize+Debug)) -> Result<(), Error> {
+    fn out(&self, v: &(impl Serialize + Debug)) -> Result<(), Error> {
         match self.output {
             OutputFormat::Json => println!("{}", serde_json::to_string(v)?),
             OutputFormat::JsonFormatted => println!("{}", serde_json::to_string_pretty(v)?),

@@ -291,10 +291,21 @@ impl core::str::FromStr for AssetCode12 {
 
 impl core::fmt::Display for AssetCode12 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        if let Some(last_idx) = self.0.iter().rposition(|c| *c != 0) {
-            for b in escape_bytes::Escape::new(&self.0[..=last_idx]) {
-                write!(f, "{}", b as char)?;
-            }
+        // AssetCode12's are always rendered as at least 5 characters, because
+        // any asset code shorter than 5 characters is an AssetCode4.
+        // AssetCode12 contains a fixed length 12-byte array, and the constant
+        // and slices in this function never operate out-of-bounds because of
+        // that.
+        const MIN_LENGTH: usize = 5;
+        let len = MIN_LENGTH
+            + self
+                .0
+                .iter()
+                .skip(MIN_LENGTH)
+                .rposition(|c| *c != 0)
+                .map_or(0, |last_idx| last_idx + 1);
+        for b in escape_bytes::Escape::new(&self.0[..len]) {
+            write!(f, "{}", b as char)?;
         }
         Ok(())
     }

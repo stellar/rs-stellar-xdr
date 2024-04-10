@@ -15765,6 +15765,7 @@ impl WriteXdr for ContractDataEntry {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ContractCodeCostInputs {
     pub ext: ExtensionPoint,
     pub n_instructions: u32,
@@ -15837,6 +15838,7 @@ impl WriteXdr for ContractCodeCostInputs {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ContractCodeEntryV1 {
     pub ext: ExtensionPoint,
     pub cost_inputs: ContractCodeCostInputs,
@@ -15889,6 +15891,7 @@ impl WriteXdr for ContractCodeEntryV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ContractCodeEntryExt {
     V0,
@@ -21431,6 +21434,7 @@ impl WriteXdr for DiagnosticEvent {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanTransactionMetaExtV1 {
     pub ext: ExtensionPoint,
     pub total_non_refundable_resource_fee_charged: i64,
@@ -21486,6 +21490,7 @@ impl WriteXdr for SorobanTransactionMetaExtV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum SorobanTransactionMetaExt {
     V0,
@@ -22043,6 +22048,7 @@ impl WriteXdr for LedgerCloseMetaV0 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct LedgerCloseMetaExtV1 {
     pub ext: ExtensionPoint,
     pub soroban_fee_write1_kb: i64,
@@ -22091,6 +22097,7 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case")
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum LedgerCloseMetaExt {
     V0,
@@ -43469,7 +43476,7 @@ impl WriteXdr for HmacSha256Mac {
 
 #[doc(hidden)]
 #[macro_export]
-macro_rules! _call_macro_with_each_type_8b45a57eccbfd886a69e4462ad26dd8a94d8874f8cc9ceb6a6de8c91abcb1289 {
+macro_rules! _call_macro_with_each_type_a8ec9d9a49f25ea23e8e612173231a39cfdf209abcfa15580b47b2a63e940f47 {
     // The x-macro takes a single ident, the name of a macro to call ...
     ($macro_to_call_back:ident, $($context:tt),*) => {{
         // ... and calls it back, once for each XDR type.
@@ -43749,7 +43756,13 @@ macro_rules! _call_macro_with_each_type_8b45a57eccbfd886a69e4462ad26dd8a94d8874f
 
         $macro_to_call_back!(ContractDataEntry, $($context),*);
 
+        $macro_to_call_back!(ContractCodeCostInputs, $($context),*);
+
         $macro_to_call_back!(ContractCodeEntry, $($context),*);
+
+        $macro_to_call_back!(ContractCodeEntryExt, $($context),*);
+
+        $macro_to_call_back!(ContractCodeEntryV1, $($context),*);
 
         $macro_to_call_back!(TtlEntry, $($context),*);
 
@@ -43881,6 +43894,10 @@ macro_rules! _call_macro_with_each_type_8b45a57eccbfd886a69e4462ad26dd8a94d8874f
 
         $macro_to_call_back!(DiagnosticEvent, $($context),*);
 
+        $macro_to_call_back!(SorobanTransactionMetaExtV1, $($context),*);
+
+        $macro_to_call_back!(SorobanTransactionMetaExt, $($context),*);
+
         $macro_to_call_back!(SorobanTransactionMeta, $($context),*);
 
         $macro_to_call_back!(TransactionMetaV3, $($context),*);
@@ -43894,6 +43911,10 @@ macro_rules! _call_macro_with_each_type_8b45a57eccbfd886a69e4462ad26dd8a94d8874f
         $macro_to_call_back!(UpgradeEntryMeta, $($context),*);
 
         $macro_to_call_back!(LedgerCloseMetaV0, $($context),*);
+
+        $macro_to_call_back!(LedgerCloseMetaExtV1, $($context),*);
+
+        $macro_to_call_back!(LedgerCloseMetaExt, $($context),*);
 
         $macro_to_call_back!(LedgerCloseMetaV1, $($context),*);
 
@@ -44312,7 +44333,7 @@ macro_rules! _call_macro_with_each_type_8b45a57eccbfd886a69e4462ad26dd8a94d8874f
 
     }};
 }
-pub use _call_macro_with_each_type_8b45a57eccbfd886a69e4462ad26dd8a94d8874f8cc9ceb6a6de8c91abcb1289 as call_macro_with_each_type;
+pub use _call_macro_with_each_type_a8ec9d9a49f25ea23e8e612173231a39cfdf209abcfa15580b47b2a63e940f47 as call_macro_with_each_type;
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -46231,7 +46252,10 @@ impl TypeVariant {
             }
             Self::ContractDataDurability => gen.into_root_schema_for::<ContractDataDurability>(),
             Self::ContractDataEntry => gen.into_root_schema_for::<ContractDataEntry>(),
+            Self::ContractCodeCostInputs => gen.into_root_schema_for::<ContractCodeCostInputs>(),
             Self::ContractCodeEntry => gen.into_root_schema_for::<ContractCodeEntry>(),
+            Self::ContractCodeEntryExt => gen.into_root_schema_for::<ContractCodeEntryExt>(),
+            Self::ContractCodeEntryV1 => gen.into_root_schema_for::<ContractCodeEntryV1>(),
             Self::TtlEntry => gen.into_root_schema_for::<TtlEntry>(),
             Self::LedgerEntryExtensionV1 => gen.into_root_schema_for::<LedgerEntryExtensionV1>(),
             Self::LedgerEntryExtensionV1Ext => {
@@ -46319,6 +46343,12 @@ impl TypeVariant {
             Self::ContractEventBody => gen.into_root_schema_for::<ContractEventBody>(),
             Self::ContractEventV0 => gen.into_root_schema_for::<ContractEventV0>(),
             Self::DiagnosticEvent => gen.into_root_schema_for::<DiagnosticEvent>(),
+            Self::SorobanTransactionMetaExtV1 => {
+                gen.into_root_schema_for::<SorobanTransactionMetaExtV1>()
+            }
+            Self::SorobanTransactionMetaExt => {
+                gen.into_root_schema_for::<SorobanTransactionMetaExt>()
+            }
             Self::SorobanTransactionMeta => gen.into_root_schema_for::<SorobanTransactionMeta>(),
             Self::TransactionMetaV3 => gen.into_root_schema_for::<TransactionMetaV3>(),
             Self::InvokeHostFunctionSuccessPreImage => {
@@ -46328,6 +46358,8 @@ impl TypeVariant {
             Self::TransactionResultMeta => gen.into_root_schema_for::<TransactionResultMeta>(),
             Self::UpgradeEntryMeta => gen.into_root_schema_for::<UpgradeEntryMeta>(),
             Self::LedgerCloseMetaV0 => gen.into_root_schema_for::<LedgerCloseMetaV0>(),
+            Self::LedgerCloseMetaExtV1 => gen.into_root_schema_for::<LedgerCloseMetaExtV1>(),
+            Self::LedgerCloseMetaExt => gen.into_root_schema_for::<LedgerCloseMetaExt>(),
             Self::LedgerCloseMetaV1 => gen.into_root_schema_for::<LedgerCloseMetaV1>(),
             Self::LedgerCloseMeta => gen.into_root_schema_for::<LedgerCloseMeta>(),
             Self::ErrorCode => gen.into_root_schema_for::<ErrorCode>(),

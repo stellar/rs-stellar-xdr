@@ -92,6 +92,16 @@
 //! ```console
 //! stellar-xdr decode --type BucketEntry --input stream-framed --output json-formatted bucket.xdr
 //! ```
+//!
+//! #### Bindings
+//!
+//! The crate has language bindings in other languages, where the crate is
+//! embedded as Wasm:
+//!
+//! ##### JavaScript/TypeScript
+//!
+//! The source repositories `bindings/js/pkg` directory contains a prebuilt
+//! bundler (e.g. webpack, etc) compatible npm package.
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -126,6 +136,3 @@ pub mod next;
 
 #[cfg(feature = "cli")]
 pub mod cli;
-
-#[cfg(any(feature = "cli", feature = "wasm"))]
-pub mod schema;

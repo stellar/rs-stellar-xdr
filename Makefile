@@ -20,6 +20,16 @@ build: generate
 	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets
 	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets --release --target wasm32-unknown-unknown
 
+generate-bindings: generate-bindings-js
+
+generate-bindings-js:
+	cd bindings/js \
+		&& rm -fr pkg \
+		&& wasm-pack build --"$${PROFILE:-dev}" --out-dir pkg --out-name stellar-xdr \
+		&& cat <<< "$$(jq '.name = "stellar-xdr"' pkg/package.json)" > pkg/package.json \
+		&& rm pkg/.gitignore \
+		&& ls -lah pkg
+
 doc:
 	cargo test --doc --all-features
 	RUSTDOCFLAGS="--cfg docs" cargo +nightly doc --package stellar-xdr --all-features $(CARGO_DOC_ARGS)

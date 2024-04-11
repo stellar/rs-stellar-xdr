@@ -25,8 +25,9 @@ generate-bindings: generate-bindings-js
 generate-bindings-js:
 	cd bindings/js \
 		&& rm -fr pkg \
-		&& wasm-pack build --"$${PROFILE:-dev}" --out-dir pkg --out-name stellar-xdr \
-		&& cat <<< "$$(jq '.name = "stellar-xdr"' pkg/package.json)" > pkg/package.json \
+		&& wasm-pack build --"$${PROFILE:-dev}" --out-dir pkg --out-name stellar-xdr --target web \
+		&& json="$$(jq '.name = "stellar-xdr"' pkg/package.json)" \
+		&& echo "$$contents" > pkg/package.json \
 		&& rm pkg/.gitignore \
 		&& ls -lah pkg
 

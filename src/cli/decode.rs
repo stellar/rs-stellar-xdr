@@ -52,6 +52,7 @@ pub enum InputFormat {
     Stream,
     StreamBase64,
     StreamFramed,
+    VarArray,
 }
 
 impl Default for InputFormat {
@@ -105,6 +106,19 @@ macro_rules! run_x {
                     InputFormat::StreamFramed => {
                         for t in crate::$m::Type::read_xdr_framed_iter(r#type, &mut f) {
                             self.out(&t?)?;
+                        }
+                    }
+                    InputFormat::VarArray => {
+                        use crate::$m::ReadXdr;
+                        let len = u32::read_xdr(&mut f)?;
+                        for _ in 0..len {
+                            let t = crate::$m::Type::read_xdr(r#type, &mut f)?;
+                            self.out(&t)?;
+                        }
+                        // Check that any further reads, such as this read of one byte, read no
+                        // data, indicating EOF. If a byte is read the data is invalid.
+                        if f.read(&mut [0u8; 1])? != 0 {
+                            Err(crate::$m::Error::Invalid)?;
                         }
                     }
                 };

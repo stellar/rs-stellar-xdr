@@ -21,12 +21,12 @@
 //#
 //# ## Other
 //# - ClaimableBalanceId
-#![cfg(feature = "std")]
+#![cfg(feature = "alloc")]
 
 use super::{
-    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, Error, Hash, Limits,
-    MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey, ReadXdr, ScAddress, SignerKey,
-    SignerKeyEd25519SignedPayload, Uint256, WriteXdr,
+    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, Error, Hash, MuxedAccount,
+    MuxedAccountMed25519, NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload,
+    Uint256,
 };
 
 impl From<stellar_strkey::DecodeError> for Error {
@@ -345,26 +345,26 @@ impl core::str::FromStr for ClaimableBalanceId {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         let bytes = hex::decode(s).map_err(|_| Error::InvalidHex)?;
-        ClaimableBalanceId::from_xdr(
-            bytes,
-            // No limit is safe for encoding ClaimableBalanceId as the type is a
-            // fixed size type.
-            Limits::none(),
-        )
+        match bytes.as_slice() {
+            [0, 0, 0, 0, ..] => Ok(ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(
+                (&bytes[4..]).try_into()?,
+            ))),
+            _ => Err(Error::Invalid),
+        }
     }
 }
 
 impl core::fmt::Display for ClaimableBalanceId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let bytes = self
-            .to_xdr(
-                // No limit is safe for encoding ClaimableBalanceId as the type is a
-                // fixed size type.
-                Limits::none(),
-            )
-            .map_err(|_| core::fmt::Error)?;
-        for b in bytes {
-            write!(f, "{b:02x}")?;
+        match self {
+            ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(bytes)) => {
+                for b in [0u8, 0, 0, 0] {
+                    write!(f, "{b:02x}")?;
+                }
+                for b in bytes {
+                    write!(f, "{b:02x}")?;
+                }
+            }
         }
         Ok(())
     }

@@ -555,11 +555,11 @@ fn claimable_balance_id() {
     // Half byte short.
     assert_eq!(ClaimableBalanceId::from_str("00000000010101010101010101010101010101010101010101010101010101010101010"), Err(Error::InvalidHex));
     // Full byte short.
-    assert_eq!(ClaimableBalanceId::from_str("0000000001010101010101010101010101010101010101010101010101010101010101"), Err(Error::Io(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "failed to fill whole buffer"))));
+    assert_eq!(ClaimableBalanceId::from_str("0000000001010101010101010101010101010101010101010101010101010101010101"), Err(Error::LengthMismatch));
     // Half byte too long.
     assert_eq!(ClaimableBalanceId::from_str("0000000001010101010101010101010101010101010101010101010101010101010101011"), Err(Error::InvalidHex));
     // Full byte too long.
-    assert_eq!(ClaimableBalanceId::from_str("00000000010101010101010101010101010101010101010101010101010101010101010101"), Err(Error::Invalid));
+    assert_eq!(ClaimableBalanceId::from_str("00000000010101010101010101010101010101010101010101010101010101010101010101"), Err(Error::LengthMismatch));
     // Unrecognized discriminant value.
     assert_eq!(ClaimableBalanceId::from_str("000000010101010101010101010101010101010101010101010101010101010101010101"), Err(Error::Invalid));
 }

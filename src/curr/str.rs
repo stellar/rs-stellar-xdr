@@ -344,6 +344,10 @@ impl core::fmt::Display for AssetCode {
 impl core::str::FromStr for ClaimableBalanceId {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        // This conversion to a hex string could be done by XDR encoding the
+        // self value, but because XDR encoding requires the std feature, this
+        // approach is taken instead to preserve the fact that the serde feature
+        // is available with alloc only.
         let bytes = hex::decode(s).map_err(|_| Error::InvalidHex)?;
         match bytes.as_slice() {
             [0, 0, 0, 0, ..] => Ok(ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(
@@ -356,6 +360,10 @@ impl core::str::FromStr for ClaimableBalanceId {
 
 impl core::fmt::Display for ClaimableBalanceId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        // This conversion from a hex string could be done by XDR decoding the
+        // self value, but because XDR decoding requires the std feature, this
+        // approach is taken instead to preserve the fact that the serde feature
+        // is available with alloc only.
         match self {
             ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(bytes)) => {
                 for b in [0u8, 0, 0, 0] {

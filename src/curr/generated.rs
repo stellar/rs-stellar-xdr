@@ -14504,8 +14504,7 @@ impl WriteXdr for ClaimableBalanceIdType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceId {

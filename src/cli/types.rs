@@ -1,4 +1,4 @@
-mod list;
+pub mod list;
 
 use clap::{Args, Subcommand};
 
@@ -12,7 +12,7 @@ pub struct Cmd {
 }
 
 #[derive(Subcommand, Clone, Debug)]
-pub enum Sub {
+enum Sub {
     List(list::Cmd),
 }
 

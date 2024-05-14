@@ -18,11 +18,15 @@
 //# - AssetCode
 //# - AssetCode4
 //# - AssetCode12
+//#
+//# ## Other
+//# - ClaimableBalanceId
 #![cfg(feature = "alloc")]
 
 use super::{
-    AccountId, AssetCode, AssetCode12, AssetCode4, Error, Hash, MuxedAccount, MuxedAccountMed25519,
-    NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload, Uint256,
+    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, Error, Hash, MuxedAccount,
+    MuxedAccountMed25519, NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload,
+    Uint256,
 };
 
 impl From<stellar_strkey::DecodeError> for Error {
@@ -323,5 +327,42 @@ impl core::fmt::Display for AssetCode {
             AssetCode::CreditAlphanum4(c) => c.fmt(f),
             AssetCode::CreditAlphanum12(c) => c.fmt(f),
         }
+    }
+}
+
+impl core::str::FromStr for ClaimableBalanceId {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        // This conversion to a hex string could be done by XDR encoding the
+        // self value, but because XDR encoding requires the std feature, this
+        // approach is taken instead to preserve the fact that the serde feature
+        // is available with alloc only.
+        let bytes = hex::decode(s).map_err(|_| Error::InvalidHex)?;
+        match bytes.as_slice() {
+            [0, 0, 0, 0, ..] => Ok(ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(
+                (&bytes[4..]).try_into()?,
+            ))),
+            _ => Err(Error::Invalid),
+        }
+    }
+}
+
+impl core::fmt::Display for ClaimableBalanceId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        // This conversion from a hex string could be done by XDR decoding the
+        // self value, but because XDR decoding requires the std feature, this
+        // approach is taken instead to preserve the fact that the serde feature
+        // is available with alloc only.
+        match self {
+            ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(bytes)) => {
+                for b in [0u8, 0, 0, 0] {
+                    write!(f, "{b:02x}")?;
+                }
+                for b in bytes {
+                    write!(f, "{b:02x}")?;
+                }
+            }
+        }
+        Ok(())
     }
 }

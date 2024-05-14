@@ -4,8 +4,9 @@
 use stellar_xdr::curr as stellar_xdr;
 
 use stellar_xdr::{
-    AccountId, AssetCode, AssetCode12, AssetCode4, Error, Hash, MuxedAccount, MuxedAccountMed25519,
-    NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload, Uint256,
+    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, Error, Hash, MuxedAccount,
+    MuxedAccountMed25519, NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload,
+    Uint256,
 };
 
 use std::str::FromStr;
@@ -540,4 +541,25 @@ fn asset_code_from_str_to_string_roundtrip_unicode() {
     // Unicode Replacement Character, which would be two bytes.
     assert_eq!(AssetCode::CreditAlphanum4(AssetCode4(*b"a\xc3\xc3d")).to_string(), r"a\xc3\xc3d");
     assert_eq!(AssetCode::from_str(r"a\xc3\xc3d"), Ok(AssetCode::CreditAlphanum4(AssetCode4(*b"a\xc3\xc3d"))));
+}
+
+#[test]
+#[rustfmt::skip]
+fn claimable_balance_id() {
+    assert_eq!(
+        ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash([1u8; 32])).to_string(),
+        "000000000101010101010101010101010101010101010101010101010101010101010101",
+    );
+    // Valid
+    assert_eq!(ClaimableBalanceId::from_str("000000000101010101010101010101010101010101010101010101010101010101010101"), Ok(ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash([1u8; 32]))));
+    // Half byte short.
+    assert_eq!(ClaimableBalanceId::from_str("00000000010101010101010101010101010101010101010101010101010101010101010"), Err(Error::InvalidHex));
+    // Full byte short.
+    assert_eq!(ClaimableBalanceId::from_str("0000000001010101010101010101010101010101010101010101010101010101010101"), Err(Error::LengthMismatch));
+    // Half byte too long.
+    assert_eq!(ClaimableBalanceId::from_str("0000000001010101010101010101010101010101010101010101010101010101010101011"), Err(Error::InvalidHex));
+    // Full byte too long.
+    assert_eq!(ClaimableBalanceId::from_str("00000000010101010101010101010101010101010101010101010101010101010101010101"), Err(Error::LengthMismatch));
+    // Unrecognized discriminant value.
+    assert_eq!(ClaimableBalanceId::from_str("000000010101010101010101010101010101010101010101010101010101010101010101"), Err(Error::Invalid));
 }

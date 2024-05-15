@@ -17,6 +17,11 @@ enum Sub {
 }
 
 impl Cmd {
+    /// Run the CLIs types command.
+    ///
+    /// ## Panics
+    ///
+    /// If the lists sub-command panics.
     pub fn run(&self, channel: &Channel) {
         match &self.sub {
             Sub::List(c) => c.run(channel),

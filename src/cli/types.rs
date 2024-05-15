@@ -1,4 +1,4 @@
-mod list;
+pub mod list;
 
 use clap::{Args, Subcommand};
 
@@ -12,11 +12,16 @@ pub struct Cmd {
 }
 
 #[derive(Subcommand, Clone, Debug)]
-pub enum Sub {
+enum Sub {
     List(list::Cmd),
 }
 
 impl Cmd {
+    /// Run the CLIs types command.
+    ///
+    /// ## Panics
+    ///
+    /// If the lists sub-command panics.
     pub fn run(&self, channel: &Channel) {
         match &self.sub {
             Sub::List(c) => c.run(channel),

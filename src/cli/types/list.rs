@@ -24,6 +24,11 @@ impl Default for OutputFormat {
 }
 
 impl Cmd {
+    /// Run the CLIs types list command.
+    ///
+    /// ## Panics
+    ///
+    /// If the list cannot be rendered as JSON.
     pub fn run(&self, channel: &Channel) {
         let types = Self::types(channel);
         match self.output {

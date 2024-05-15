@@ -131,6 +131,11 @@ macro_rules! run_x {
 }
 
 impl Cmd {
+    /// Run the CLIs encode command.
+    ///
+    /// ## Errors
+    ///
+    /// If the command is configured with state that is invalid.
     pub fn run(&self, channel: &Channel) -> Result<(), Error> {
         match channel {
             Channel::Curr => self.run_curr()?,

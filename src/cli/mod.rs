@@ -1,7 +1,7 @@
-mod decode;
-mod encode;
-mod guess;
-mod types;
+pub mod decode;
+pub mod encode;
+pub mod guess;
+pub mod types;
 mod version;
 
 use clap::{Parser, Subcommand, ValueEnum};

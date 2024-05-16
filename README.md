@@ -47,7 +47,16 @@ Ancillary functionality:
 1. `base64` – Enables support for base64 encoding and decoding.
 2. `serde` – Enables support for serializing and deserializing types with
 the serde crate.
-3. `arbitrary` – Enables support for interop with the arbitrary crate.
+3. `serde_json` – Enables support for built-in functionality specifically
+for serde_json. Often not required to use the types with serde_json, and
+only necessary to use utility functions that depend on serde_json.
+4. `arbitrary` – Enables support for interop with the arbitrary crate.
+5. `hex` – Enables support for hex in string representations of some types.
+Automatically enabled when serde is enabled.
+6. `schemars` – Enables support for JSON Schema generation. (Experimental)
+
+Features marked experimental may disappear at anytime, see breaking changes
+at anytime, or and may be minimal implementations instead of complete.
 
 Channels of XDR:
 
@@ -88,23 +97,3 @@ stellar-xdr decode --type BucketEntry --input stream-framed --output json-format
 ```
 
 License: Apache-2.0
-
-
-### For Developers: How to Regenerate From XDR
-To regenerate types from XDR definitions
-1. Update XDR definitions
-```concole
-git submodule update --init --remote
-```
-The `--init` flag is only required for the first time setting up the local project. 
-`--remote` flag will make sure to fetch the latest changes from from the remote-tracking branches `curr` and `next` at [stellar/stellar-xdr]. 
-
-**_NOTE:_** if you had multiple remotes specified in the submodules (e.g. one tracking `stellar/stellar-xdr`, the other tracking `your-fork/stellar-xdr`),
-make sure the remote that tracks [stellar/stellar-xdr] match with what's specifies in the `.git/config` or `.gitsubmodules` (with `.git/config` taking precedence. If neither file specifies it, then `origin` is used).
-
-2. Recompile and test
-```console
-make
-```
-
-When the regenerated types are ready to be merged, make sure to commit the regenerated code file `src/curr/generated.rs`, `src/next/generated.rs`, the version string file `xdr/curr-version`, `xdr/next-version`, as well as the submodule files `xdr/curr`, `xdr/next`.

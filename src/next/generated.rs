@@ -14752,7 +14752,6 @@ impl WriteXdr for ClaimableBalanceIdType {
     all(feature = "serde", feature = "alloc"),
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimableBalanceId {
     ClaimableBalanceIdTypeV0(Hash),

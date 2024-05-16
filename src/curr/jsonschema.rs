@@ -26,3 +26,4 @@ impl_json_schema_string!(ScAddress);
 impl_json_schema_string!(AssetCode);
 impl_json_schema_string!(AssetCode4);
 impl_json_schema_string!(AssetCode12);
+impl_json_schema_string!(ClaimableBalanceId);

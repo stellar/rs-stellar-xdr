@@ -79,6 +79,22 @@ fn test_build_small_tx_with_alloc() -> Result<(), Error> {
     Ok(())
 }
 
+#[cfg(feature = "alloc")]
+#[test]
+fn convert_reference_of_tx_to_unsigned_transaction_envelope() -> Result<(), Error> {
+    let tx = &Transaction {
+        source_account: MuxedAccount::Ed25519(Uint256([0; 32])),
+        fee: 0,
+        seq_num: SequenceNumber(1),
+        cond: Preconditions::None,
+        memo: Memo::Text("Stellar".as_bytes().try_into()?),
+        operations: [].to_vec().try_into()?,
+        ext: TransactionExt::V0,
+    };
+    let _: TransactionEnvelope = tx.into();
+    Ok(())
+}
+
 #[cfg(not(feature = "alloc"))]
 #[test]
 fn test_build_small_tx_with_alloc() -> Result<(), Error> {

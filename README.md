@@ -9,16 +9,16 @@ using [xdrgen].
 [stellar/stellar-xdr]: https://github.com/stellar/stellar-xdr
 [xdrgen]: https://github.com/stellar/xdrgen
 
-### Usage
+## Usage
 
-#### Library
+### Library
 To use the library, include in your toml:
 
 ```toml
 stellar-xdr = { version = "...", default-features = true, features = [] }
 ```
 
-##### Features
+#### Features
 
 The crate has several features, tiers of functionality, ancillary
 functionality, and channels of XDR.
@@ -67,7 +67,7 @@ If a single channel is enabled the types are available at the root of the
 crate. If multiple channels are enabled they are available in modules at
 the root of the crate.
 
-#### CLI
+### CLI
 
 To use the CLI:
 
@@ -75,7 +75,7 @@ To use the CLI:
 cargo install --locked stellar-xdr --version ... --features cli
 ```
 
-##### Examples
+#### Examples
 
 Parse a `TransactionEnvelope`:
 ```console
@@ -95,5 +95,3 @@ Parse a `BucketEntry` framed stream from a bucket file:
 ```console
 stellar-xdr decode --type BucketEntry --input stream-framed --output json-formatted bucket.xdr
 ```
-
-License: Apache-2.0

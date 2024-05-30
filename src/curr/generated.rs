@@ -50,11 +50,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-ledger.x",
-        "888152fb940b79a01ac00a5218ca91360cb0f01af7acc030d5805ebfec280203",
+        "46c1c55972750b97650ff00788a2be4764975b787ef51c8fa931c56e2028a3c4",
     ),
     (
         "xdr/curr/Stellar-overlay.x",
-        "de3957c58b96ae07968b3d3aebea84f83603e95322d1fa336360e13e3aba737a",
+        "8c73b7c3ad974e7fc4aa4fdf34f7ad50053406254efbd7406c96657cf41691d3",
     ),
     (
         "xdr/curr/Stellar-transaction.x",
@@ -21387,6 +21387,112 @@ impl WriteXdr for DiagnosticEvent {
     }
 }
 
+/// DiagnosticEvents is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef DiagnosticEvent DiagnosticEvents<>;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Debug)]
+pub struct DiagnosticEvents(pub VecM<DiagnosticEvent>);
+
+impl From<DiagnosticEvents> for VecM<DiagnosticEvent> {
+    #[must_use]
+    fn from(x: DiagnosticEvents) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<DiagnosticEvent>> for DiagnosticEvents {
+    #[must_use]
+    fn from(x: VecM<DiagnosticEvent>) -> Self {
+        DiagnosticEvents(x)
+    }
+}
+
+impl AsRef<VecM<DiagnosticEvent>> for DiagnosticEvents {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<DiagnosticEvent> {
+        &self.0
+    }
+}
+
+impl ReadXdr for DiagnosticEvents {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<DiagnosticEvent>::read_xdr(r)?;
+            let v = DiagnosticEvents(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for DiagnosticEvents {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for DiagnosticEvents {
+    type Target = VecM<DiagnosticEvent>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<DiagnosticEvents> for Vec<DiagnosticEvent> {
+    #[must_use]
+    fn from(x: DiagnosticEvents) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<DiagnosticEvent>> for DiagnosticEvents {
+    type Error = Error;
+    fn try_from(x: Vec<DiagnosticEvent>) -> Result<Self> {
+        Ok(DiagnosticEvents(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<DiagnosticEvent>> for DiagnosticEvents {
+    type Error = Error;
+    fn try_from(x: &Vec<DiagnosticEvent>) -> Result<Self> {
+        Ok(DiagnosticEvents(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<DiagnosticEvent>> for DiagnosticEvents {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<DiagnosticEvent> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[DiagnosticEvent]> for DiagnosticEvents {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[DiagnosticEvent] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[DiagnosticEvent] {
+        self.0 .0
+    }
+}
+
 /// SorobanTransactionMetaExtV1 is an XDR Struct defines as:
 ///
 /// ```text
@@ -23120,7 +23226,12 @@ impl WriteXdr for PeerAddress {
 ///     SEND_MORE_EXTENDED = 20,
 ///
 ///     FLOOD_ADVERT = 18,
-///     FLOOD_DEMAND = 19
+///     FLOOD_DEMAND = 19,
+///
+///     TIME_SLICED_SURVEY_REQUEST = 21,
+///     TIME_SLICED_SURVEY_RESPONSE = 22,
+///     TIME_SLICED_SURVEY_START_COLLECTING = 23,
+///     TIME_SLICED_SURVEY_STOP_COLLECTING = 24
 /// };
 /// ```
 ///
@@ -23155,10 +23266,14 @@ pub enum MessageType {
     SendMoreExtended = 20,
     FloodAdvert = 18,
     FloodDemand = 19,
+    TimeSlicedSurveyRequest = 21,
+    TimeSlicedSurveyResponse = 22,
+    TimeSlicedSurveyStartCollecting = 23,
+    TimeSlicedSurveyStopCollecting = 24,
 }
 
 impl MessageType {
-    pub const VARIANTS: [MessageType; 20] = [
+    pub const VARIANTS: [MessageType; 24] = [
         MessageType::ErrorMsg,
         MessageType::Auth,
         MessageType::DontHave,
@@ -23179,8 +23294,12 @@ impl MessageType {
         MessageType::SendMoreExtended,
         MessageType::FloodAdvert,
         MessageType::FloodDemand,
+        MessageType::TimeSlicedSurveyRequest,
+        MessageType::TimeSlicedSurveyResponse,
+        MessageType::TimeSlicedSurveyStartCollecting,
+        MessageType::TimeSlicedSurveyStopCollecting,
     ];
-    pub const VARIANTS_STR: [&'static str; 20] = [
+    pub const VARIANTS_STR: [&'static str; 24] = [
         "ErrorMsg",
         "Auth",
         "DontHave",
@@ -23201,6 +23320,10 @@ impl MessageType {
         "SendMoreExtended",
         "FloodAdvert",
         "FloodDemand",
+        "TimeSlicedSurveyRequest",
+        "TimeSlicedSurveyResponse",
+        "TimeSlicedSurveyStartCollecting",
+        "TimeSlicedSurveyStopCollecting",
     ];
 
     #[must_use]
@@ -23226,11 +23349,15 @@ impl MessageType {
             Self::SendMoreExtended => "SendMoreExtended",
             Self::FloodAdvert => "FloodAdvert",
             Self::FloodDemand => "FloodDemand",
+            Self::TimeSlicedSurveyRequest => "TimeSlicedSurveyRequest",
+            Self::TimeSlicedSurveyResponse => "TimeSlicedSurveyResponse",
+            Self::TimeSlicedSurveyStartCollecting => "TimeSlicedSurveyStartCollecting",
+            Self::TimeSlicedSurveyStopCollecting => "TimeSlicedSurveyStopCollecting",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 20] {
+    pub const fn variants() -> [MessageType; 24] {
         Self::VARIANTS
     }
 }
@@ -23281,6 +23408,10 @@ impl TryFrom<i32> for MessageType {
             20 => MessageType::SendMoreExtended,
             18 => MessageType::FloodAdvert,
             19 => MessageType::FloodDemand,
+            21 => MessageType::TimeSlicedSurveyRequest,
+            22 => MessageType::TimeSlicedSurveyResponse,
+            23 => MessageType::TimeSlicedSurveyStartCollecting,
+            24 => MessageType::TimeSlicedSurveyStopCollecting,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -23367,7 +23498,8 @@ impl WriteXdr for DontHave {
 /// ```text
 /// enum SurveyMessageCommandType
 /// {
-///     SURVEY_TOPOLOGY = 0
+///     SURVEY_TOPOLOGY = 0,
+///     TIME_SLICED_SURVEY_TOPOLOGY = 1
 /// };
 /// ```
 ///
@@ -23383,21 +23515,26 @@ impl WriteXdr for DontHave {
 #[repr(i32)]
 pub enum SurveyMessageCommandType {
     SurveyTopology = 0,
+    TimeSlicedSurveyTopology = 1,
 }
 
 impl SurveyMessageCommandType {
-    pub const VARIANTS: [SurveyMessageCommandType; 1] = [SurveyMessageCommandType::SurveyTopology];
-    pub const VARIANTS_STR: [&'static str; 1] = ["SurveyTopology"];
+    pub const VARIANTS: [SurveyMessageCommandType; 2] = [
+        SurveyMessageCommandType::SurveyTopology,
+        SurveyMessageCommandType::TimeSlicedSurveyTopology,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["SurveyTopology", "TimeSlicedSurveyTopology"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::SurveyTopology => "SurveyTopology",
+            Self::TimeSlicedSurveyTopology => "TimeSlicedSurveyTopology",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SurveyMessageCommandType; 1] {
+    pub const fn variants() -> [SurveyMessageCommandType; 2] {
         Self::VARIANTS
     }
 }
@@ -23429,6 +23566,7 @@ impl TryFrom<i32> for SurveyMessageCommandType {
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
             0 => SurveyMessageCommandType::SurveyTopology,
+            1 => SurveyMessageCommandType::TimeSlicedSurveyTopology,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -23470,7 +23608,8 @@ impl WriteXdr for SurveyMessageCommandType {
 /// enum SurveyMessageResponseType
 /// {
 ///     SURVEY_TOPOLOGY_RESPONSE_V0 = 0,
-///     SURVEY_TOPOLOGY_RESPONSE_V1 = 1
+///     SURVEY_TOPOLOGY_RESPONSE_V1 = 1,
+///     SURVEY_TOPOLOGY_RESPONSE_V2 = 2
 /// };
 /// ```
 ///
@@ -23487,23 +23626,28 @@ impl WriteXdr for SurveyMessageCommandType {
 pub enum SurveyMessageResponseType {
     V0 = 0,
     V1 = 1,
+    V2 = 2,
 }
 
 impl SurveyMessageResponseType {
-    pub const VARIANTS: [SurveyMessageResponseType; 2] =
-        [SurveyMessageResponseType::V0, SurveyMessageResponseType::V1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: [SurveyMessageResponseType; 3] = [
+        SurveyMessageResponseType::V0,
+        SurveyMessageResponseType::V1,
+        SurveyMessageResponseType::V2,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V1 => "V1",
+            Self::V2 => "V2",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SurveyMessageResponseType; 2] {
+    pub const fn variants() -> [SurveyMessageResponseType; 3] {
         Self::VARIANTS
     }
 }
@@ -23536,6 +23680,7 @@ impl TryFrom<i32> for SurveyMessageResponseType {
         let e = match i {
             0 => SurveyMessageResponseType::V0,
             1 => SurveyMessageResponseType::V1,
+            2 => SurveyMessageResponseType::V2,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -23567,6 +23712,198 @@ impl WriteXdr for SurveyMessageResponseType {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
             i.write_xdr(w)
+        })
+    }
+}
+
+/// TimeSlicedSurveyStartCollectingMessage is an XDR Struct defines as:
+///
+/// ```text
+/// struct TimeSlicedSurveyStartCollectingMessage
+/// {
+///     NodeID surveyorID;
+///     uint32 nonce;
+///     uint32 ledgerNum;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TimeSlicedSurveyStartCollectingMessage {
+    pub surveyor_id: NodeId,
+    pub nonce: u32,
+    pub ledger_num: u32,
+}
+
+impl ReadXdr for TimeSlicedSurveyStartCollectingMessage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                surveyor_id: NodeId::read_xdr(r)?,
+                nonce: u32::read_xdr(r)?,
+                ledger_num: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TimeSlicedSurveyStartCollectingMessage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.surveyor_id.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            self.ledger_num.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// SignedTimeSlicedSurveyStartCollectingMessage is an XDR Struct defines as:
+///
+/// ```text
+/// struct SignedTimeSlicedSurveyStartCollectingMessage
+/// {
+///     Signature signature;
+///     TimeSlicedSurveyStartCollectingMessage startCollecting;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct SignedTimeSlicedSurveyStartCollectingMessage {
+    pub signature: Signature,
+    pub start_collecting: TimeSlicedSurveyStartCollectingMessage,
+}
+
+impl ReadXdr for SignedTimeSlicedSurveyStartCollectingMessage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                signature: Signature::read_xdr(r)?,
+                start_collecting: TimeSlicedSurveyStartCollectingMessage::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.signature.write_xdr(w)?;
+            self.start_collecting.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// TimeSlicedSurveyStopCollectingMessage is an XDR Struct defines as:
+///
+/// ```text
+/// struct TimeSlicedSurveyStopCollectingMessage
+/// {
+///     NodeID surveyorID;
+///     uint32 nonce;
+///     uint32 ledgerNum;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TimeSlicedSurveyStopCollectingMessage {
+    pub surveyor_id: NodeId,
+    pub nonce: u32,
+    pub ledger_num: u32,
+}
+
+impl ReadXdr for TimeSlicedSurveyStopCollectingMessage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                surveyor_id: NodeId::read_xdr(r)?,
+                nonce: u32::read_xdr(r)?,
+                ledger_num: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TimeSlicedSurveyStopCollectingMessage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.surveyor_id.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            self.ledger_num.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// SignedTimeSlicedSurveyStopCollectingMessage is an XDR Struct defines as:
+///
+/// ```text
+/// struct SignedTimeSlicedSurveyStopCollectingMessage
+/// {
+///     Signature signature;
+///     TimeSlicedSurveyStopCollectingMessage stopCollecting;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct SignedTimeSlicedSurveyStopCollectingMessage {
+    pub signature: Signature,
+    pub stop_collecting: TimeSlicedSurveyStopCollectingMessage,
+}
+
+impl ReadXdr for SignedTimeSlicedSurveyStopCollectingMessage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                signature: Signature::read_xdr(r)?,
+                stop_collecting: TimeSlicedSurveyStopCollectingMessage::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.signature.write_xdr(w)?;
+            self.stop_collecting.write_xdr(w)?;
+            Ok(())
         })
     }
 }
@@ -23629,6 +23966,60 @@ impl WriteXdr for SurveyRequestMessage {
     }
 }
 
+/// TimeSlicedSurveyRequestMessage is an XDR Struct defines as:
+///
+/// ```text
+/// struct TimeSlicedSurveyRequestMessage
+/// {
+///     SurveyRequestMessage request;
+///     uint32 nonce;
+///     uint32 inboundPeersIndex;
+///     uint32 outboundPeersIndex;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TimeSlicedSurveyRequestMessage {
+    pub request: SurveyRequestMessage,
+    pub nonce: u32,
+    pub inbound_peers_index: u32,
+    pub outbound_peers_index: u32,
+}
+
+impl ReadXdr for TimeSlicedSurveyRequestMessage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                request: SurveyRequestMessage::read_xdr(r)?,
+                nonce: u32::read_xdr(r)?,
+                inbound_peers_index: u32::read_xdr(r)?,
+                outbound_peers_index: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TimeSlicedSurveyRequestMessage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.request.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            self.inbound_peers_index.write_xdr(w)?;
+            self.outbound_peers_index.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// SignedSurveyRequestMessage is an XDR Struct defines as:
 ///
 /// ```text
@@ -23665,6 +24056,52 @@ impl ReadXdr for SignedSurveyRequestMessage {
 }
 
 impl WriteXdr for SignedSurveyRequestMessage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.request_signature.write_xdr(w)?;
+            self.request.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// SignedTimeSlicedSurveyRequestMessage is an XDR Struct defines as:
+///
+/// ```text
+/// struct SignedTimeSlicedSurveyRequestMessage
+/// {
+///     Signature requestSignature;
+///     TimeSlicedSurveyRequestMessage request;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct SignedTimeSlicedSurveyRequestMessage {
+    pub request_signature: Signature,
+    pub request: TimeSlicedSurveyRequestMessage,
+}
+
+impl ReadXdr for SignedTimeSlicedSurveyRequestMessage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                request_signature: Signature::read_xdr(r)?,
+                request: TimeSlicedSurveyRequestMessage::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -23839,6 +24276,52 @@ impl WriteXdr for SurveyResponseMessage {
     }
 }
 
+/// TimeSlicedSurveyResponseMessage is an XDR Struct defines as:
+///
+/// ```text
+/// struct TimeSlicedSurveyResponseMessage
+/// {
+///     SurveyResponseMessage response;
+///     uint32 nonce;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TimeSlicedSurveyResponseMessage {
+    pub response: SurveyResponseMessage,
+    pub nonce: u32,
+}
+
+impl ReadXdr for TimeSlicedSurveyResponseMessage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                response: SurveyResponseMessage::read_xdr(r)?,
+                nonce: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TimeSlicedSurveyResponseMessage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.response.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// SignedSurveyResponseMessage is an XDR Struct defines as:
 ///
 /// ```text
@@ -23875,6 +24358,52 @@ impl ReadXdr for SignedSurveyResponseMessage {
 }
 
 impl WriteXdr for SignedSurveyResponseMessage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.response_signature.write_xdr(w)?;
+            self.response.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// SignedTimeSlicedSurveyResponseMessage is an XDR Struct defines as:
+///
+/// ```text
+/// struct SignedTimeSlicedSurveyResponseMessage
+/// {
+///     Signature responseSignature;
+///     TimeSlicedSurveyResponseMessage response;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct SignedTimeSlicedSurveyResponseMessage {
+    pub response_signature: Signature,
+    pub response: TimeSlicedSurveyResponseMessage,
+}
+
+impl ReadXdr for SignedTimeSlicedSurveyResponseMessage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                response_signature: Signature::read_xdr(r)?,
+                response: TimeSlicedSurveyResponseMessage::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -24091,6 +24620,242 @@ impl AsRef<[PeerStats]> for PeerStatList {
     }
 }
 
+/// TimeSlicedNodeData is an XDR Struct defines as:
+///
+/// ```text
+/// struct TimeSlicedNodeData
+/// {
+///     uint32 addedAuthenticatedPeers;
+///     uint32 droppedAuthenticatedPeers;
+///     uint32 totalInboundPeerCount;
+///     uint32 totalOutboundPeerCount;
+///
+///     // SCP stats
+///     uint32 p75SCPFirstToSelfLatencyMs;
+///     uint32 p75SCPSelfToOtherLatencyMs;
+///
+///     // How many times the node lost sync in the time slice
+///     uint32 lostSyncCount;
+///
+///     // Config data
+///     bool isValidator;
+///     uint32 maxInboundPeerCount;
+///     uint32 maxOutboundPeerCount;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TimeSlicedNodeData {
+    pub added_authenticated_peers: u32,
+    pub dropped_authenticated_peers: u32,
+    pub total_inbound_peer_count: u32,
+    pub total_outbound_peer_count: u32,
+    pub p75_scp_first_to_self_latency_ms: u32,
+    pub p75_scp_self_to_other_latency_ms: u32,
+    pub lost_sync_count: u32,
+    pub is_validator: bool,
+    pub max_inbound_peer_count: u32,
+    pub max_outbound_peer_count: u32,
+}
+
+impl ReadXdr for TimeSlicedNodeData {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                added_authenticated_peers: u32::read_xdr(r)?,
+                dropped_authenticated_peers: u32::read_xdr(r)?,
+                total_inbound_peer_count: u32::read_xdr(r)?,
+                total_outbound_peer_count: u32::read_xdr(r)?,
+                p75_scp_first_to_self_latency_ms: u32::read_xdr(r)?,
+                p75_scp_self_to_other_latency_ms: u32::read_xdr(r)?,
+                lost_sync_count: u32::read_xdr(r)?,
+                is_validator: bool::read_xdr(r)?,
+                max_inbound_peer_count: u32::read_xdr(r)?,
+                max_outbound_peer_count: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TimeSlicedNodeData {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.added_authenticated_peers.write_xdr(w)?;
+            self.dropped_authenticated_peers.write_xdr(w)?;
+            self.total_inbound_peer_count.write_xdr(w)?;
+            self.total_outbound_peer_count.write_xdr(w)?;
+            self.p75_scp_first_to_self_latency_ms.write_xdr(w)?;
+            self.p75_scp_self_to_other_latency_ms.write_xdr(w)?;
+            self.lost_sync_count.write_xdr(w)?;
+            self.is_validator.write_xdr(w)?;
+            self.max_inbound_peer_count.write_xdr(w)?;
+            self.max_outbound_peer_count.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// TimeSlicedPeerData is an XDR Struct defines as:
+///
+/// ```text
+/// struct TimeSlicedPeerData
+/// {
+///     PeerStats peerStats;
+///     uint32 averageLatencyMs;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TimeSlicedPeerData {
+    pub peer_stats: PeerStats,
+    pub average_latency_ms: u32,
+}
+
+impl ReadXdr for TimeSlicedPeerData {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                peer_stats: PeerStats::read_xdr(r)?,
+                average_latency_ms: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TimeSlicedPeerData {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.peer_stats.write_xdr(w)?;
+            self.average_latency_ms.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// TimeSlicedPeerDataList is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef TimeSlicedPeerData TimeSlicedPeerDataList<25>;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Debug)]
+pub struct TimeSlicedPeerDataList(pub VecM<TimeSlicedPeerData, 25>);
+
+impl From<TimeSlicedPeerDataList> for VecM<TimeSlicedPeerData, 25> {
+    #[must_use]
+    fn from(x: TimeSlicedPeerDataList) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<TimeSlicedPeerData, 25>> for TimeSlicedPeerDataList {
+    #[must_use]
+    fn from(x: VecM<TimeSlicedPeerData, 25>) -> Self {
+        TimeSlicedPeerDataList(x)
+    }
+}
+
+impl AsRef<VecM<TimeSlicedPeerData, 25>> for TimeSlicedPeerDataList {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<TimeSlicedPeerData, 25> {
+        &self.0
+    }
+}
+
+impl ReadXdr for TimeSlicedPeerDataList {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<TimeSlicedPeerData, 25>::read_xdr(r)?;
+            let v = TimeSlicedPeerDataList(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for TimeSlicedPeerDataList {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for TimeSlicedPeerDataList {
+    type Target = VecM<TimeSlicedPeerData, 25>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<TimeSlicedPeerDataList> for Vec<TimeSlicedPeerData> {
+    #[must_use]
+    fn from(x: TimeSlicedPeerDataList) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
+    type Error = Error;
+    fn try_from(x: Vec<TimeSlicedPeerData>) -> Result<Self> {
+        Ok(TimeSlicedPeerDataList(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
+    type Error = Error;
+    fn try_from(x: &Vec<TimeSlicedPeerData>) -> Result<Self> {
+        Ok(TimeSlicedPeerDataList(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<TimeSlicedPeerData> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[TimeSlicedPeerData] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[TimeSlicedPeerData] {
+        self.0 .0
+    }
+}
+
 /// TopologyResponseBodyV0 is an XDR Struct defines as:
 ///
 /// ```text
@@ -24210,6 +24975,56 @@ impl WriteXdr for TopologyResponseBodyV1 {
     }
 }
 
+/// TopologyResponseBodyV2 is an XDR Struct defines as:
+///
+/// ```text
+/// struct TopologyResponseBodyV2
+/// {
+///     TimeSlicedPeerDataList inboundPeers;
+///     TimeSlicedPeerDataList outboundPeers;
+///     TimeSlicedNodeData nodeData;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TopologyResponseBodyV2 {
+    pub inbound_peers: TimeSlicedPeerDataList,
+    pub outbound_peers: TimeSlicedPeerDataList,
+    pub node_data: TimeSlicedNodeData,
+}
+
+impl ReadXdr for TopologyResponseBodyV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                inbound_peers: TimeSlicedPeerDataList::read_xdr(r)?,
+                outbound_peers: TimeSlicedPeerDataList::read_xdr(r)?,
+                node_data: TimeSlicedNodeData::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TopologyResponseBodyV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.inbound_peers.write_xdr(w)?;
+            self.outbound_peers.write_xdr(w)?;
+            self.node_data.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// SurveyResponseBody is an XDR Union defines as:
 ///
 /// ```text
@@ -24219,6 +25034,8 @@ impl WriteXdr for TopologyResponseBodyV1 {
 ///     TopologyResponseBodyV0 topologyResponseBodyV0;
 /// case SURVEY_TOPOLOGY_RESPONSE_V1:
 ///     TopologyResponseBodyV1 topologyResponseBodyV1;
+/// case SURVEY_TOPOLOGY_RESPONSE_V2:
+///     TopologyResponseBodyV2 topologyResponseBodyV2;
 /// };
 /// ```
 ///
@@ -24235,18 +25052,23 @@ impl WriteXdr for TopologyResponseBodyV1 {
 pub enum SurveyResponseBody {
     V0(TopologyResponseBodyV0),
     V1(TopologyResponseBodyV1),
+    V2(TopologyResponseBodyV2),
 }
 
 impl SurveyResponseBody {
-    pub const VARIANTS: [SurveyMessageResponseType; 2] =
-        [SurveyMessageResponseType::V0, SurveyMessageResponseType::V1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: [SurveyMessageResponseType; 3] = [
+        SurveyMessageResponseType::V0,
+        SurveyMessageResponseType::V1,
+        SurveyMessageResponseType::V2,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
             Self::V1(_) => "V1",
+            Self::V2(_) => "V2",
         }
     }
 
@@ -24256,11 +25078,12 @@ impl SurveyResponseBody {
         match self {
             Self::V0(_) => SurveyMessageResponseType::V0,
             Self::V1(_) => SurveyMessageResponseType::V1,
+            Self::V2(_) => SurveyMessageResponseType::V2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SurveyMessageResponseType; 2] {
+    pub const fn variants() -> [SurveyMessageResponseType; 3] {
         Self::VARIANTS
     }
 }
@@ -24297,6 +25120,7 @@ impl ReadXdr for SurveyResponseBody {
             let v = match dv {
                 SurveyMessageResponseType::V0 => Self::V0(TopologyResponseBodyV0::read_xdr(r)?),
                 SurveyMessageResponseType::V1 => Self::V1(TopologyResponseBodyV1::read_xdr(r)?),
+                SurveyMessageResponseType::V2 => Self::V2(TopologyResponseBodyV2::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -24314,6 +25138,7 @@ impl WriteXdr for SurveyResponseBody {
             match self {
                 Self::V0(v) => v.write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
+                Self::V2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -24666,6 +25491,20 @@ impl WriteXdr for FloodDemand {
 /// case SURVEY_RESPONSE:
 ///     SignedSurveyResponseMessage signedSurveyResponseMessage;
 ///
+/// case TIME_SLICED_SURVEY_REQUEST:
+///     SignedTimeSlicedSurveyRequestMessage signedTimeSlicedSurveyRequestMessage;
+///
+/// case TIME_SLICED_SURVEY_RESPONSE:
+///     SignedTimeSlicedSurveyResponseMessage signedTimeSlicedSurveyResponseMessage;
+///
+/// case TIME_SLICED_SURVEY_START_COLLECTING:
+///     SignedTimeSlicedSurveyStartCollectingMessage
+///         signedTimeSlicedSurveyStartCollectingMessage;
+///
+/// case TIME_SLICED_SURVEY_STOP_COLLECTING:
+///     SignedTimeSlicedSurveyStopCollectingMessage
+///         signedTimeSlicedSurveyStopCollectingMessage;
+///
 /// // SCP
 /// case GET_SCP_QUORUMSET:
 ///     uint256 qSetHash;
@@ -24710,6 +25549,10 @@ pub enum StellarMessage {
     Transaction(TransactionEnvelope),
     SurveyRequest(SignedSurveyRequestMessage),
     SurveyResponse(SignedSurveyResponseMessage),
+    TimeSlicedSurveyRequest(SignedTimeSlicedSurveyRequestMessage),
+    TimeSlicedSurveyResponse(SignedTimeSlicedSurveyResponseMessage),
+    TimeSlicedSurveyStartCollecting(SignedTimeSlicedSurveyStartCollectingMessage),
+    TimeSlicedSurveyStopCollecting(SignedTimeSlicedSurveyStopCollectingMessage),
     GetScpQuorumset(Uint256),
     ScpQuorumset(ScpQuorumSet),
     ScpMessage(ScpEnvelope),
@@ -24721,7 +25564,7 @@ pub enum StellarMessage {
 }
 
 impl StellarMessage {
-    pub const VARIANTS: [MessageType; 20] = [
+    pub const VARIANTS: [MessageType; 24] = [
         MessageType::ErrorMsg,
         MessageType::Hello,
         MessageType::Auth,
@@ -24734,6 +25577,10 @@ impl StellarMessage {
         MessageType::Transaction,
         MessageType::SurveyRequest,
         MessageType::SurveyResponse,
+        MessageType::TimeSlicedSurveyRequest,
+        MessageType::TimeSlicedSurveyResponse,
+        MessageType::TimeSlicedSurveyStartCollecting,
+        MessageType::TimeSlicedSurveyStopCollecting,
         MessageType::GetScpQuorumset,
         MessageType::ScpQuorumset,
         MessageType::ScpMessage,
@@ -24743,7 +25590,7 @@ impl StellarMessage {
         MessageType::FloodAdvert,
         MessageType::FloodDemand,
     ];
-    pub const VARIANTS_STR: [&'static str; 20] = [
+    pub const VARIANTS_STR: [&'static str; 24] = [
         "ErrorMsg",
         "Hello",
         "Auth",
@@ -24756,6 +25603,10 @@ impl StellarMessage {
         "Transaction",
         "SurveyRequest",
         "SurveyResponse",
+        "TimeSlicedSurveyRequest",
+        "TimeSlicedSurveyResponse",
+        "TimeSlicedSurveyStartCollecting",
+        "TimeSlicedSurveyStopCollecting",
         "GetScpQuorumset",
         "ScpQuorumset",
         "ScpMessage",
@@ -24781,6 +25632,10 @@ impl StellarMessage {
             Self::Transaction(_) => "Transaction",
             Self::SurveyRequest(_) => "SurveyRequest",
             Self::SurveyResponse(_) => "SurveyResponse",
+            Self::TimeSlicedSurveyRequest(_) => "TimeSlicedSurveyRequest",
+            Self::TimeSlicedSurveyResponse(_) => "TimeSlicedSurveyResponse",
+            Self::TimeSlicedSurveyStartCollecting(_) => "TimeSlicedSurveyStartCollecting",
+            Self::TimeSlicedSurveyStopCollecting(_) => "TimeSlicedSurveyStopCollecting",
             Self::GetScpQuorumset(_) => "GetScpQuorumset",
             Self::ScpQuorumset(_) => "ScpQuorumset",
             Self::ScpMessage(_) => "ScpMessage",
@@ -24808,6 +25663,12 @@ impl StellarMessage {
             Self::Transaction(_) => MessageType::Transaction,
             Self::SurveyRequest(_) => MessageType::SurveyRequest,
             Self::SurveyResponse(_) => MessageType::SurveyResponse,
+            Self::TimeSlicedSurveyRequest(_) => MessageType::TimeSlicedSurveyRequest,
+            Self::TimeSlicedSurveyResponse(_) => MessageType::TimeSlicedSurveyResponse,
+            Self::TimeSlicedSurveyStartCollecting(_) => {
+                MessageType::TimeSlicedSurveyStartCollecting
+            }
+            Self::TimeSlicedSurveyStopCollecting(_) => MessageType::TimeSlicedSurveyStopCollecting,
             Self::GetScpQuorumset(_) => MessageType::GetScpQuorumset,
             Self::ScpQuorumset(_) => MessageType::ScpQuorumset,
             Self::ScpMessage(_) => MessageType::ScpMessage,
@@ -24820,7 +25681,7 @@ impl StellarMessage {
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 20] {
+    pub const fn variants() -> [MessageType; 24] {
         Self::VARIANTS
     }
 }
@@ -24872,6 +25733,22 @@ impl ReadXdr for StellarMessage {
                 MessageType::SurveyResponse => {
                     Self::SurveyResponse(SignedSurveyResponseMessage::read_xdr(r)?)
                 }
+                MessageType::TimeSlicedSurveyRequest => Self::TimeSlicedSurveyRequest(
+                    SignedTimeSlicedSurveyRequestMessage::read_xdr(r)?,
+                ),
+                MessageType::TimeSlicedSurveyResponse => Self::TimeSlicedSurveyResponse(
+                    SignedTimeSlicedSurveyResponseMessage::read_xdr(r)?,
+                ),
+                MessageType::TimeSlicedSurveyStartCollecting => {
+                    Self::TimeSlicedSurveyStartCollecting(
+                        SignedTimeSlicedSurveyStartCollectingMessage::read_xdr(r)?,
+                    )
+                }
+                MessageType::TimeSlicedSurveyStopCollecting => {
+                    Self::TimeSlicedSurveyStopCollecting(
+                        SignedTimeSlicedSurveyStopCollectingMessage::read_xdr(r)?,
+                    )
+                }
                 MessageType::GetScpQuorumset => Self::GetScpQuorumset(Uint256::read_xdr(r)?),
                 MessageType::ScpQuorumset => Self::ScpQuorumset(ScpQuorumSet::read_xdr(r)?),
                 MessageType::ScpMessage => Self::ScpMessage(ScpEnvelope::read_xdr(r)?),
@@ -24909,6 +25786,10 @@ impl WriteXdr for StellarMessage {
                 Self::Transaction(v) => v.write_xdr(w)?,
                 Self::SurveyRequest(v) => v.write_xdr(w)?,
                 Self::SurveyResponse(v) => v.write_xdr(w)?,
+                Self::TimeSlicedSurveyRequest(v) => v.write_xdr(w)?,
+                Self::TimeSlicedSurveyResponse(v) => v.write_xdr(w)?,
+                Self::TimeSlicedSurveyStartCollecting(v) => v.write_xdr(w)?,
+                Self::TimeSlicedSurveyStopCollecting(v) => v.write_xdr(w)?,
                 Self::GetScpQuorumset(v) => v.write_xdr(w)?,
                 Self::ScpQuorumset(v) => v.write_xdr(w)?,
                 Self::ScpMessage(v) => v.write_xdr(w)?,
@@ -43687,6 +44568,7 @@ pub enum TypeVariant {
     ContractEventBody,
     ContractEventV0,
     DiagnosticEvent,
+    DiagnosticEvents,
     SorobanTransactionMetaExtV1,
     SorobanTransactionMetaExt,
     SorobanTransactionMeta,
@@ -43714,15 +44596,27 @@ pub enum TypeVariant {
     DontHave,
     SurveyMessageCommandType,
     SurveyMessageResponseType,
+    TimeSlicedSurveyStartCollectingMessage,
+    SignedTimeSlicedSurveyStartCollectingMessage,
+    TimeSlicedSurveyStopCollectingMessage,
+    SignedTimeSlicedSurveyStopCollectingMessage,
     SurveyRequestMessage,
+    TimeSlicedSurveyRequestMessage,
     SignedSurveyRequestMessage,
+    SignedTimeSlicedSurveyRequestMessage,
     EncryptedBody,
     SurveyResponseMessage,
+    TimeSlicedSurveyResponseMessage,
     SignedSurveyResponseMessage,
+    SignedTimeSlicedSurveyResponseMessage,
     PeerStats,
     PeerStatList,
+    TimeSlicedNodeData,
+    TimeSlicedPeerData,
+    TimeSlicedPeerDataList,
     TopologyResponseBodyV0,
     TopologyResponseBodyV1,
+    TopologyResponseBodyV2,
     SurveyResponseBody,
     TxAdvertVector,
     FloodAdvert,
@@ -43908,7 +44802,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 425] = [
+    pub const VARIANTS: [TypeVariant; 438] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -44116,6 +45010,7 @@ impl TypeVariant {
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
         TypeVariant::DiagnosticEvent,
+        TypeVariant::DiagnosticEvents,
         TypeVariant::SorobanTransactionMetaExtV1,
         TypeVariant::SorobanTransactionMetaExt,
         TypeVariant::SorobanTransactionMeta,
@@ -44143,15 +45038,27 @@ impl TypeVariant {
         TypeVariant::DontHave,
         TypeVariant::SurveyMessageCommandType,
         TypeVariant::SurveyMessageResponseType,
+        TypeVariant::TimeSlicedSurveyStartCollectingMessage,
+        TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage,
+        TypeVariant::TimeSlicedSurveyStopCollectingMessage,
+        TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage,
         TypeVariant::SurveyRequestMessage,
+        TypeVariant::TimeSlicedSurveyRequestMessage,
         TypeVariant::SignedSurveyRequestMessage,
+        TypeVariant::SignedTimeSlicedSurveyRequestMessage,
         TypeVariant::EncryptedBody,
         TypeVariant::SurveyResponseMessage,
+        TypeVariant::TimeSlicedSurveyResponseMessage,
         TypeVariant::SignedSurveyResponseMessage,
+        TypeVariant::SignedTimeSlicedSurveyResponseMessage,
         TypeVariant::PeerStats,
         TypeVariant::PeerStatList,
+        TypeVariant::TimeSlicedNodeData,
+        TypeVariant::TimeSlicedPeerData,
+        TypeVariant::TimeSlicedPeerDataList,
         TypeVariant::TopologyResponseBodyV0,
         TypeVariant::TopologyResponseBodyV1,
+        TypeVariant::TopologyResponseBodyV2,
         TypeVariant::SurveyResponseBody,
         TypeVariant::TxAdvertVector,
         TypeVariant::FloodAdvert,
@@ -44335,7 +45242,7 @@ impl TypeVariant {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 425] = [
+    pub const VARIANTS_STR: [&'static str; 438] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -44543,6 +45450,7 @@ impl TypeVariant {
         "ContractEventBody",
         "ContractEventV0",
         "DiagnosticEvent",
+        "DiagnosticEvents",
         "SorobanTransactionMetaExtV1",
         "SorobanTransactionMetaExt",
         "SorobanTransactionMeta",
@@ -44570,15 +45478,27 @@ impl TypeVariant {
         "DontHave",
         "SurveyMessageCommandType",
         "SurveyMessageResponseType",
+        "TimeSlicedSurveyStartCollectingMessage",
+        "SignedTimeSlicedSurveyStartCollectingMessage",
+        "TimeSlicedSurveyStopCollectingMessage",
+        "SignedTimeSlicedSurveyStopCollectingMessage",
         "SurveyRequestMessage",
+        "TimeSlicedSurveyRequestMessage",
         "SignedSurveyRequestMessage",
+        "SignedTimeSlicedSurveyRequestMessage",
         "EncryptedBody",
         "SurveyResponseMessage",
+        "TimeSlicedSurveyResponseMessage",
         "SignedSurveyResponseMessage",
+        "SignedTimeSlicedSurveyResponseMessage",
         "PeerStats",
         "PeerStatList",
+        "TimeSlicedNodeData",
+        "TimeSlicedPeerData",
+        "TimeSlicedPeerDataList",
         "TopologyResponseBodyV0",
         "TopologyResponseBodyV1",
+        "TopologyResponseBodyV2",
         "SurveyResponseBody",
         "TxAdvertVector",
         "FloodAdvert",
@@ -44976,6 +45896,7 @@ impl TypeVariant {
             Self::ContractEventBody => "ContractEventBody",
             Self::ContractEventV0 => "ContractEventV0",
             Self::DiagnosticEvent => "DiagnosticEvent",
+            Self::DiagnosticEvents => "DiagnosticEvents",
             Self::SorobanTransactionMetaExtV1 => "SorobanTransactionMetaExtV1",
             Self::SorobanTransactionMetaExt => "SorobanTransactionMetaExt",
             Self::SorobanTransactionMeta => "SorobanTransactionMeta",
@@ -45003,15 +45924,33 @@ impl TypeVariant {
             Self::DontHave => "DontHave",
             Self::SurveyMessageCommandType => "SurveyMessageCommandType",
             Self::SurveyMessageResponseType => "SurveyMessageResponseType",
+            Self::TimeSlicedSurveyStartCollectingMessage => {
+                "TimeSlicedSurveyStartCollectingMessage"
+            }
+            Self::SignedTimeSlicedSurveyStartCollectingMessage => {
+                "SignedTimeSlicedSurveyStartCollectingMessage"
+            }
+            Self::TimeSlicedSurveyStopCollectingMessage => "TimeSlicedSurveyStopCollectingMessage",
+            Self::SignedTimeSlicedSurveyStopCollectingMessage => {
+                "SignedTimeSlicedSurveyStopCollectingMessage"
+            }
             Self::SurveyRequestMessage => "SurveyRequestMessage",
+            Self::TimeSlicedSurveyRequestMessage => "TimeSlicedSurveyRequestMessage",
             Self::SignedSurveyRequestMessage => "SignedSurveyRequestMessage",
+            Self::SignedTimeSlicedSurveyRequestMessage => "SignedTimeSlicedSurveyRequestMessage",
             Self::EncryptedBody => "EncryptedBody",
             Self::SurveyResponseMessage => "SurveyResponseMessage",
+            Self::TimeSlicedSurveyResponseMessage => "TimeSlicedSurveyResponseMessage",
             Self::SignedSurveyResponseMessage => "SignedSurveyResponseMessage",
+            Self::SignedTimeSlicedSurveyResponseMessage => "SignedTimeSlicedSurveyResponseMessage",
             Self::PeerStats => "PeerStats",
             Self::PeerStatList => "PeerStatList",
+            Self::TimeSlicedNodeData => "TimeSlicedNodeData",
+            Self::TimeSlicedPeerData => "TimeSlicedPeerData",
+            Self::TimeSlicedPeerDataList => "TimeSlicedPeerDataList",
             Self::TopologyResponseBodyV0 => "TopologyResponseBodyV0",
             Self::TopologyResponseBodyV1 => "TopologyResponseBodyV1",
+            Self::TopologyResponseBodyV2 => "TopologyResponseBodyV2",
             Self::SurveyResponseBody => "SurveyResponseBody",
             Self::TxAdvertVector => "TxAdvertVector",
             Self::FloodAdvert => "FloodAdvert",
@@ -45203,7 +46142,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 425] {
+    pub const fn variants() -> [TypeVariant; 438] {
         Self::VARIANTS
     }
 
@@ -45481,6 +46420,7 @@ impl TypeVariant {
             Self::ContractEventBody => gen.into_root_schema_for::<ContractEventBody>(),
             Self::ContractEventV0 => gen.into_root_schema_for::<ContractEventV0>(),
             Self::DiagnosticEvent => gen.into_root_schema_for::<DiagnosticEvent>(),
+            Self::DiagnosticEvents => gen.into_root_schema_for::<DiagnosticEvents>(),
             Self::SorobanTransactionMetaExtV1 => {
                 gen.into_root_schema_for::<SorobanTransactionMetaExtV1>()
             }
@@ -45518,19 +46458,47 @@ impl TypeVariant {
             Self::SurveyMessageResponseType => {
                 gen.into_root_schema_for::<SurveyMessageResponseType>()
             }
+            Self::TimeSlicedSurveyStartCollectingMessage => {
+                gen.into_root_schema_for::<TimeSlicedSurveyStartCollectingMessage>()
+            }
+            Self::SignedTimeSlicedSurveyStartCollectingMessage => {
+                gen.into_root_schema_for::<SignedTimeSlicedSurveyStartCollectingMessage>()
+            }
+            Self::TimeSlicedSurveyStopCollectingMessage => {
+                gen.into_root_schema_for::<TimeSlicedSurveyStopCollectingMessage>()
+            }
+            Self::SignedTimeSlicedSurveyStopCollectingMessage => {
+                gen.into_root_schema_for::<SignedTimeSlicedSurveyStopCollectingMessage>()
+            }
             Self::SurveyRequestMessage => gen.into_root_schema_for::<SurveyRequestMessage>(),
+            Self::TimeSlicedSurveyRequestMessage => {
+                gen.into_root_schema_for::<TimeSlicedSurveyRequestMessage>()
+            }
             Self::SignedSurveyRequestMessage => {
                 gen.into_root_schema_for::<SignedSurveyRequestMessage>()
             }
+            Self::SignedTimeSlicedSurveyRequestMessage => {
+                gen.into_root_schema_for::<SignedTimeSlicedSurveyRequestMessage>()
+            }
             Self::EncryptedBody => gen.into_root_schema_for::<EncryptedBody>(),
             Self::SurveyResponseMessage => gen.into_root_schema_for::<SurveyResponseMessage>(),
+            Self::TimeSlicedSurveyResponseMessage => {
+                gen.into_root_schema_for::<TimeSlicedSurveyResponseMessage>()
+            }
             Self::SignedSurveyResponseMessage => {
                 gen.into_root_schema_for::<SignedSurveyResponseMessage>()
             }
+            Self::SignedTimeSlicedSurveyResponseMessage => {
+                gen.into_root_schema_for::<SignedTimeSlicedSurveyResponseMessage>()
+            }
             Self::PeerStats => gen.into_root_schema_for::<PeerStats>(),
             Self::PeerStatList => gen.into_root_schema_for::<PeerStatList>(),
+            Self::TimeSlicedNodeData => gen.into_root_schema_for::<TimeSlicedNodeData>(),
+            Self::TimeSlicedPeerData => gen.into_root_schema_for::<TimeSlicedPeerData>(),
+            Self::TimeSlicedPeerDataList => gen.into_root_schema_for::<TimeSlicedPeerDataList>(),
             Self::TopologyResponseBodyV0 => gen.into_root_schema_for::<TopologyResponseBodyV0>(),
             Self::TopologyResponseBodyV1 => gen.into_root_schema_for::<TopologyResponseBodyV1>(),
+            Self::TopologyResponseBodyV2 => gen.into_root_schema_for::<TopologyResponseBodyV2>(),
             Self::SurveyResponseBody => gen.into_root_schema_for::<SurveyResponseBody>(),
             Self::TxAdvertVector => gen.into_root_schema_for::<TxAdvertVector>(),
             Self::FloodAdvert => gen.into_root_schema_for::<FloodAdvert>(),
@@ -46056,6 +47024,7 @@ impl core::str::FromStr for TypeVariant {
             "ContractEventBody" => Ok(Self::ContractEventBody),
             "ContractEventV0" => Ok(Self::ContractEventV0),
             "DiagnosticEvent" => Ok(Self::DiagnosticEvent),
+            "DiagnosticEvents" => Ok(Self::DiagnosticEvents),
             "SorobanTransactionMetaExtV1" => Ok(Self::SorobanTransactionMetaExtV1),
             "SorobanTransactionMetaExt" => Ok(Self::SorobanTransactionMetaExt),
             "SorobanTransactionMeta" => Ok(Self::SorobanTransactionMeta),
@@ -46083,15 +47052,39 @@ impl core::str::FromStr for TypeVariant {
             "DontHave" => Ok(Self::DontHave),
             "SurveyMessageCommandType" => Ok(Self::SurveyMessageCommandType),
             "SurveyMessageResponseType" => Ok(Self::SurveyMessageResponseType),
+            "TimeSlicedSurveyStartCollectingMessage" => {
+                Ok(Self::TimeSlicedSurveyStartCollectingMessage)
+            }
+            "SignedTimeSlicedSurveyStartCollectingMessage" => {
+                Ok(Self::SignedTimeSlicedSurveyStartCollectingMessage)
+            }
+            "TimeSlicedSurveyStopCollectingMessage" => {
+                Ok(Self::TimeSlicedSurveyStopCollectingMessage)
+            }
+            "SignedTimeSlicedSurveyStopCollectingMessage" => {
+                Ok(Self::SignedTimeSlicedSurveyStopCollectingMessage)
+            }
             "SurveyRequestMessage" => Ok(Self::SurveyRequestMessage),
+            "TimeSlicedSurveyRequestMessage" => Ok(Self::TimeSlicedSurveyRequestMessage),
             "SignedSurveyRequestMessage" => Ok(Self::SignedSurveyRequestMessage),
+            "SignedTimeSlicedSurveyRequestMessage" => {
+                Ok(Self::SignedTimeSlicedSurveyRequestMessage)
+            }
             "EncryptedBody" => Ok(Self::EncryptedBody),
             "SurveyResponseMessage" => Ok(Self::SurveyResponseMessage),
+            "TimeSlicedSurveyResponseMessage" => Ok(Self::TimeSlicedSurveyResponseMessage),
             "SignedSurveyResponseMessage" => Ok(Self::SignedSurveyResponseMessage),
+            "SignedTimeSlicedSurveyResponseMessage" => {
+                Ok(Self::SignedTimeSlicedSurveyResponseMessage)
+            }
             "PeerStats" => Ok(Self::PeerStats),
             "PeerStatList" => Ok(Self::PeerStatList),
+            "TimeSlicedNodeData" => Ok(Self::TimeSlicedNodeData),
+            "TimeSlicedPeerData" => Ok(Self::TimeSlicedPeerData),
+            "TimeSlicedPeerDataList" => Ok(Self::TimeSlicedPeerDataList),
             "TopologyResponseBodyV0" => Ok(Self::TopologyResponseBodyV0),
             "TopologyResponseBodyV1" => Ok(Self::TopologyResponseBodyV1),
+            "TopologyResponseBodyV2" => Ok(Self::TopologyResponseBodyV2),
             "SurveyResponseBody" => Ok(Self::SurveyResponseBody),
             "TxAdvertVector" => Ok(Self::TxAdvertVector),
             "FloodAdvert" => Ok(Self::FloodAdvert),
@@ -46503,6 +47496,7 @@ pub enum Type {
     ContractEventBody(Box<ContractEventBody>),
     ContractEventV0(Box<ContractEventV0>),
     DiagnosticEvent(Box<DiagnosticEvent>),
+    DiagnosticEvents(Box<DiagnosticEvents>),
     SorobanTransactionMetaExtV1(Box<SorobanTransactionMetaExtV1>),
     SorobanTransactionMetaExt(Box<SorobanTransactionMetaExt>),
     SorobanTransactionMeta(Box<SorobanTransactionMeta>),
@@ -46530,15 +47524,27 @@ pub enum Type {
     DontHave(Box<DontHave>),
     SurveyMessageCommandType(Box<SurveyMessageCommandType>),
     SurveyMessageResponseType(Box<SurveyMessageResponseType>),
+    TimeSlicedSurveyStartCollectingMessage(Box<TimeSlicedSurveyStartCollectingMessage>),
+    SignedTimeSlicedSurveyStartCollectingMessage(Box<SignedTimeSlicedSurveyStartCollectingMessage>),
+    TimeSlicedSurveyStopCollectingMessage(Box<TimeSlicedSurveyStopCollectingMessage>),
+    SignedTimeSlicedSurveyStopCollectingMessage(Box<SignedTimeSlicedSurveyStopCollectingMessage>),
     SurveyRequestMessage(Box<SurveyRequestMessage>),
+    TimeSlicedSurveyRequestMessage(Box<TimeSlicedSurveyRequestMessage>),
     SignedSurveyRequestMessage(Box<SignedSurveyRequestMessage>),
+    SignedTimeSlicedSurveyRequestMessage(Box<SignedTimeSlicedSurveyRequestMessage>),
     EncryptedBody(Box<EncryptedBody>),
     SurveyResponseMessage(Box<SurveyResponseMessage>),
+    TimeSlicedSurveyResponseMessage(Box<TimeSlicedSurveyResponseMessage>),
     SignedSurveyResponseMessage(Box<SignedSurveyResponseMessage>),
+    SignedTimeSlicedSurveyResponseMessage(Box<SignedTimeSlicedSurveyResponseMessage>),
     PeerStats(Box<PeerStats>),
     PeerStatList(Box<PeerStatList>),
+    TimeSlicedNodeData(Box<TimeSlicedNodeData>),
+    TimeSlicedPeerData(Box<TimeSlicedPeerData>),
+    TimeSlicedPeerDataList(Box<TimeSlicedPeerDataList>),
     TopologyResponseBodyV0(Box<TopologyResponseBodyV0>),
     TopologyResponseBodyV1(Box<TopologyResponseBodyV1>),
+    TopologyResponseBodyV2(Box<TopologyResponseBodyV2>),
     SurveyResponseBody(Box<SurveyResponseBody>),
     TxAdvertVector(Box<TxAdvertVector>),
     FloodAdvert(Box<FloodAdvert>),
@@ -46724,7 +47730,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 425] = [
+    pub const VARIANTS: [TypeVariant; 438] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -46932,6 +47938,7 @@ impl Type {
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
         TypeVariant::DiagnosticEvent,
+        TypeVariant::DiagnosticEvents,
         TypeVariant::SorobanTransactionMetaExtV1,
         TypeVariant::SorobanTransactionMetaExt,
         TypeVariant::SorobanTransactionMeta,
@@ -46959,15 +47966,27 @@ impl Type {
         TypeVariant::DontHave,
         TypeVariant::SurveyMessageCommandType,
         TypeVariant::SurveyMessageResponseType,
+        TypeVariant::TimeSlicedSurveyStartCollectingMessage,
+        TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage,
+        TypeVariant::TimeSlicedSurveyStopCollectingMessage,
+        TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage,
         TypeVariant::SurveyRequestMessage,
+        TypeVariant::TimeSlicedSurveyRequestMessage,
         TypeVariant::SignedSurveyRequestMessage,
+        TypeVariant::SignedTimeSlicedSurveyRequestMessage,
         TypeVariant::EncryptedBody,
         TypeVariant::SurveyResponseMessage,
+        TypeVariant::TimeSlicedSurveyResponseMessage,
         TypeVariant::SignedSurveyResponseMessage,
+        TypeVariant::SignedTimeSlicedSurveyResponseMessage,
         TypeVariant::PeerStats,
         TypeVariant::PeerStatList,
+        TypeVariant::TimeSlicedNodeData,
+        TypeVariant::TimeSlicedPeerData,
+        TypeVariant::TimeSlicedPeerDataList,
         TypeVariant::TopologyResponseBodyV0,
         TypeVariant::TopologyResponseBodyV1,
+        TypeVariant::TopologyResponseBodyV2,
         TypeVariant::SurveyResponseBody,
         TypeVariant::TxAdvertVector,
         TypeVariant::FloodAdvert,
@@ -47151,7 +48170,7 @@ impl Type {
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
     ];
-    pub const VARIANTS_STR: [&'static str; 425] = [
+    pub const VARIANTS_STR: [&'static str; 438] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47359,6 +48378,7 @@ impl Type {
         "ContractEventBody",
         "ContractEventV0",
         "DiagnosticEvent",
+        "DiagnosticEvents",
         "SorobanTransactionMetaExtV1",
         "SorobanTransactionMetaExt",
         "SorobanTransactionMeta",
@@ -47386,15 +48406,27 @@ impl Type {
         "DontHave",
         "SurveyMessageCommandType",
         "SurveyMessageResponseType",
+        "TimeSlicedSurveyStartCollectingMessage",
+        "SignedTimeSlicedSurveyStartCollectingMessage",
+        "TimeSlicedSurveyStopCollectingMessage",
+        "SignedTimeSlicedSurveyStopCollectingMessage",
         "SurveyRequestMessage",
+        "TimeSlicedSurveyRequestMessage",
         "SignedSurveyRequestMessage",
+        "SignedTimeSlicedSurveyRequestMessage",
         "EncryptedBody",
         "SurveyResponseMessage",
+        "TimeSlicedSurveyResponseMessage",
         "SignedSurveyResponseMessage",
+        "SignedTimeSlicedSurveyResponseMessage",
         "PeerStats",
         "PeerStatList",
+        "TimeSlicedNodeData",
+        "TimeSlicedPeerData",
+        "TimeSlicedPeerDataList",
         "TopologyResponseBodyV0",
         "TopologyResponseBodyV1",
+        "TopologyResponseBodyV2",
         "SurveyResponseBody",
         "TxAdvertVector",
         "FloodAdvert",
@@ -48454,6 +49486,11 @@ impl Type {
                     r,
                 )?)))
             }),
+            TypeVariant::DiagnosticEvents => r.with_limited_depth(|r| {
+                Ok(Self::DiagnosticEvents(Box::new(
+                    DiagnosticEvents::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::SorobanTransactionMetaExtV1 => r.with_limited_depth(|r| {
                 Ok(Self::SorobanTransactionMetaExtV1(Box::new(
                     SorobanTransactionMetaExtV1::read_xdr(r)?,
@@ -48567,14 +49604,46 @@ impl Type {
                     SurveyMessageResponseType::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::TimeSlicedSurveyStartCollectingMessage => r.with_limited_depth(|r| {
+                Ok(Self::TimeSlicedSurveyStartCollectingMessage(Box::new(
+                    TimeSlicedSurveyStartCollectingMessage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage => {
+                r.with_limited_depth(|r| {
+                    Ok(Self::SignedTimeSlicedSurveyStartCollectingMessage(
+                        Box::new(SignedTimeSlicedSurveyStartCollectingMessage::read_xdr(r)?),
+                    ))
+                })
+            }
+            TypeVariant::TimeSlicedSurveyStopCollectingMessage => r.with_limited_depth(|r| {
+                Ok(Self::TimeSlicedSurveyStopCollectingMessage(Box::new(
+                    TimeSlicedSurveyStopCollectingMessage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage => r.with_limited_depth(|r| {
+                Ok(Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::new(
+                    SignedTimeSlicedSurveyStopCollectingMessage::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::SurveyRequestMessage => r.with_limited_depth(|r| {
                 Ok(Self::SurveyRequestMessage(Box::new(
                     SurveyRequestMessage::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::TimeSlicedSurveyRequestMessage => r.with_limited_depth(|r| {
+                Ok(Self::TimeSlicedSurveyRequestMessage(Box::new(
+                    TimeSlicedSurveyRequestMessage::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::SignedSurveyRequestMessage => r.with_limited_depth(|r| {
                 Ok(Self::SignedSurveyRequestMessage(Box::new(
                     SignedSurveyRequestMessage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SignedTimeSlicedSurveyRequestMessage => r.with_limited_depth(|r| {
+                Ok(Self::SignedTimeSlicedSurveyRequestMessage(Box::new(
+                    SignedTimeSlicedSurveyRequestMessage::read_xdr(r)?,
                 )))
             }),
             TypeVariant::EncryptedBody => r.with_limited_depth(|r| {
@@ -48585,9 +49654,19 @@ impl Type {
                     SurveyResponseMessage::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::TimeSlicedSurveyResponseMessage => r.with_limited_depth(|r| {
+                Ok(Self::TimeSlicedSurveyResponseMessage(Box::new(
+                    TimeSlicedSurveyResponseMessage::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::SignedSurveyResponseMessage => r.with_limited_depth(|r| {
                 Ok(Self::SignedSurveyResponseMessage(Box::new(
                     SignedSurveyResponseMessage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SignedTimeSlicedSurveyResponseMessage => r.with_limited_depth(|r| {
+                Ok(Self::SignedTimeSlicedSurveyResponseMessage(Box::new(
+                    SignedTimeSlicedSurveyResponseMessage::read_xdr(r)?,
                 )))
             }),
             TypeVariant::PeerStats => {
@@ -48595,6 +49674,21 @@ impl Type {
             }
             TypeVariant::PeerStatList => r.with_limited_depth(|r| {
                 Ok(Self::PeerStatList(Box::new(PeerStatList::read_xdr(r)?)))
+            }),
+            TypeVariant::TimeSlicedNodeData => r.with_limited_depth(|r| {
+                Ok(Self::TimeSlicedNodeData(Box::new(
+                    TimeSlicedNodeData::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TimeSlicedPeerData => r.with_limited_depth(|r| {
+                Ok(Self::TimeSlicedPeerData(Box::new(
+                    TimeSlicedPeerData::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TimeSlicedPeerDataList => r.with_limited_depth(|r| {
+                Ok(Self::TimeSlicedPeerDataList(Box::new(
+                    TimeSlicedPeerDataList::read_xdr(r)?,
+                )))
             }),
             TypeVariant::TopologyResponseBodyV0 => r.with_limited_depth(|r| {
                 Ok(Self::TopologyResponseBodyV0(Box::new(
@@ -48604,6 +49698,11 @@ impl Type {
             TypeVariant::TopologyResponseBodyV1 => r.with_limited_depth(|r| {
                 Ok(Self::TopologyResponseBodyV1(Box::new(
                     TopologyResponseBodyV1::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TopologyResponseBodyV2 => r.with_limited_depth(|r| {
+                Ok(Self::TopologyResponseBodyV2(Box::new(
+                    TopologyResponseBodyV2::read_xdr(r)?,
                 )))
             }),
             TypeVariant::SurveyResponseBody => r.with_limited_depth(|r| {
@@ -50325,6 +51424,10 @@ impl Type {
                 ReadXdrIter::<_, DiagnosticEvent>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
             ),
+            TypeVariant::DiagnosticEvents => Box::new(
+                ReadXdrIter::<_, DiagnosticEvents>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::DiagnosticEvents(Box::new(t)))),
+            ),
             TypeVariant::SorobanTransactionMetaExtV1 => Box::new(
                 ReadXdrIter::<_, SorobanTransactionMetaExtV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionMetaExtV1(Box::new(t)))),
@@ -50436,13 +51539,57 @@ impl Type {
                 ReadXdrIter::<_, SurveyMessageResponseType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t)))),
             ),
+            TypeVariant::TimeSlicedSurveyStartCollectingMessage => Box::new(
+                ReadXdrIter::<_, TimeSlicedSurveyStartCollectingMessage>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TimeSlicedSurveyStartCollectingMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage => Box::new(
+                ReadXdrIter::<_, SignedTimeSlicedSurveyStartCollectingMessage>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| Self::SignedTimeSlicedSurveyStartCollectingMessage(Box::new(t)))
+                }),
+            ),
+            TypeVariant::TimeSlicedSurveyStopCollectingMessage => Box::new(
+                ReadXdrIter::<_, TimeSlicedSurveyStopCollectingMessage>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TimeSlicedSurveyStopCollectingMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage => Box::new(
+                ReadXdrIter::<_, SignedTimeSlicedSurveyStopCollectingMessage>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::new(t)))),
+            ),
             TypeVariant::SurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, SurveyRequestMessage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
             ),
+            TypeVariant::TimeSlicedSurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, TimeSlicedSurveyRequestMessage>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TimeSlicedSurveyRequestMessage(Box::new(t)))),
+            ),
             TypeVariant::SignedSurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, SignedSurveyRequestMessage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, SignedTimeSlicedSurveyRequestMessage>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SignedTimeSlicedSurveyRequestMessage(Box::new(t)))),
             ),
             TypeVariant::EncryptedBody => Box::new(
                 ReadXdrIter::<_, EncryptedBody>::new(&mut r.inner, r.limits.clone())
@@ -50452,9 +51599,23 @@ impl Type {
                 ReadXdrIter::<_, SurveyResponseMessage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t)))),
             ),
+            TypeVariant::TimeSlicedSurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, TimeSlicedSurveyResponseMessage>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TimeSlicedSurveyResponseMessage(Box::new(t)))),
+            ),
             TypeVariant::SignedSurveyResponseMessage => Box::new(
                 ReadXdrIter::<_, SignedSurveyResponseMessage>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, SignedTimeSlicedSurveyResponseMessage>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SignedTimeSlicedSurveyResponseMessage(Box::new(t)))),
             ),
             TypeVariant::PeerStats => Box::new(
                 ReadXdrIter::<_, PeerStats>::new(&mut r.inner, r.limits.clone())
@@ -50464,6 +51625,18 @@ impl Type {
                 ReadXdrIter::<_, PeerStatList>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
+            TypeVariant::TimeSlicedNodeData => Box::new(
+                ReadXdrIter::<_, TimeSlicedNodeData>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimeSlicedNodeData(Box::new(t)))),
+            ),
+            TypeVariant::TimeSlicedPeerData => Box::new(
+                ReadXdrIter::<_, TimeSlicedPeerData>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimeSlicedPeerData(Box::new(t)))),
+            ),
+            TypeVariant::TimeSlicedPeerDataList => Box::new(
+                ReadXdrIter::<_, TimeSlicedPeerDataList>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimeSlicedPeerDataList(Box::new(t)))),
+            ),
             TypeVariant::TopologyResponseBodyV0 => Box::new(
                 ReadXdrIter::<_, TopologyResponseBodyV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t)))),
@@ -50471,6 +51644,10 @@ impl Type {
             TypeVariant::TopologyResponseBodyV1 => Box::new(
                 ReadXdrIter::<_, TopologyResponseBodyV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t)))),
+            ),
+            TypeVariant::TopologyResponseBodyV2 => Box::new(
+                ReadXdrIter::<_, TopologyResponseBodyV2>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV2(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
                 ReadXdrIter::<_, SurveyResponseBody>::new(&mut r.inner, r.limits.clone())
@@ -52247,6 +53424,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<DiagnosticEvent>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t.0)))),
             ),
+            TypeVariant::DiagnosticEvents => Box::new(
+                ReadXdrIter::<_, Frame<DiagnosticEvents>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::DiagnosticEvents(Box::new(t.0)))),
+            ),
             TypeVariant::SorobanTransactionMetaExtV1 => Box::new(
                 ReadXdrIter::<_, Frame<SorobanTransactionMetaExtV1>>::new(
                     &mut r.inner,
@@ -52373,9 +53554,48 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t.0)))),
             ),
+            TypeVariant::TimeSlicedSurveyStartCollectingMessage => Box::new(
+                ReadXdrIter::<_, Frame<TimeSlicedSurveyStartCollectingMessage>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TimeSlicedSurveyStartCollectingMessage(Box::new(t.0)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage => Box::new(
+                ReadXdrIter::<_, Frame<SignedTimeSlicedSurveyStartCollectingMessage>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| Self::SignedTimeSlicedSurveyStartCollectingMessage(Box::new(t.0)))
+                }),
+            ),
+            TypeVariant::TimeSlicedSurveyStopCollectingMessage => Box::new(
+                ReadXdrIter::<_, Frame<TimeSlicedSurveyStopCollectingMessage>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TimeSlicedSurveyStopCollectingMessage(Box::new(t.0)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage => Box::new(
+                ReadXdrIter::<_, Frame<SignedTimeSlicedSurveyStopCollectingMessage>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::new(t.0)))
+                }),
+            ),
             TypeVariant::SurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, Frame<SurveyRequestMessage>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t.0)))),
+            ),
+            TypeVariant::TimeSlicedSurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, Frame<TimeSlicedSurveyRequestMessage>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TimeSlicedSurveyRequestMessage(Box::new(t.0)))),
             ),
             TypeVariant::SignedSurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, Frame<SignedSurveyRequestMessage>>::new(
@@ -52383,6 +53603,13 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t.0)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, Frame<SignedTimeSlicedSurveyRequestMessage>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SignedTimeSlicedSurveyRequestMessage(Box::new(t.0)))),
             ),
             TypeVariant::EncryptedBody => Box::new(
                 ReadXdrIter::<_, Frame<EncryptedBody>>::new(&mut r.inner, r.limits.clone())
@@ -52392,12 +53619,26 @@ impl Type {
                 ReadXdrIter::<_, Frame<SurveyResponseMessage>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t.0)))),
             ),
+            TypeVariant::TimeSlicedSurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, Frame<TimeSlicedSurveyResponseMessage>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TimeSlicedSurveyResponseMessage(Box::new(t.0)))),
+            ),
             TypeVariant::SignedSurveyResponseMessage => Box::new(
                 ReadXdrIter::<_, Frame<SignedSurveyResponseMessage>>::new(
                     &mut r.inner,
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t.0)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, Frame<SignedTimeSlicedSurveyResponseMessage>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SignedTimeSlicedSurveyResponseMessage(Box::new(t.0)))),
             ),
             TypeVariant::PeerStats => Box::new(
                 ReadXdrIter::<_, Frame<PeerStats>>::new(&mut r.inner, r.limits.clone())
@@ -52406,6 +53647,21 @@ impl Type {
             TypeVariant::PeerStatList => Box::new(
                 ReadXdrIter::<_, Frame<PeerStatList>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t.0)))),
+            ),
+            TypeVariant::TimeSlicedNodeData => Box::new(
+                ReadXdrIter::<_, Frame<TimeSlicedNodeData>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimeSlicedNodeData(Box::new(t.0)))),
+            ),
+            TypeVariant::TimeSlicedPeerData => Box::new(
+                ReadXdrIter::<_, Frame<TimeSlicedPeerData>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimeSlicedPeerData(Box::new(t.0)))),
+            ),
+            TypeVariant::TimeSlicedPeerDataList => Box::new(
+                ReadXdrIter::<_, Frame<TimeSlicedPeerDataList>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TimeSlicedPeerDataList(Box::new(t.0)))),
             ),
             TypeVariant::TopologyResponseBodyV0 => Box::new(
                 ReadXdrIter::<_, Frame<TopologyResponseBodyV0>>::new(
@@ -52420,6 +53676,13 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t.0)))),
+            ),
+            TypeVariant::TopologyResponseBodyV2 => Box::new(
+                ReadXdrIter::<_, Frame<TopologyResponseBodyV2>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TopologyResponseBodyV2(Box::new(t.0)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
                 ReadXdrIter::<_, Frame<SurveyResponseBody>>::new(&mut r.inner, r.limits.clone())
@@ -54209,6 +55472,10 @@ impl Type {
                 ReadXdrIter::<_, DiagnosticEvent>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
             ),
+            TypeVariant::DiagnosticEvents => Box::new(
+                ReadXdrIter::<_, DiagnosticEvents>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::DiagnosticEvents(Box::new(t)))),
+            ),
             TypeVariant::SorobanTransactionMetaExtV1 => Box::new(
                 ReadXdrIter::<_, SorobanTransactionMetaExtV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionMetaExtV1(Box::new(t)))),
@@ -54317,13 +55584,48 @@ impl Type {
                 ReadXdrIter::<_, SurveyMessageResponseType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyMessageResponseType(Box::new(t)))),
             ),
+            TypeVariant::TimeSlicedSurveyStartCollectingMessage => Box::new(
+                ReadXdrIter::<_, TimeSlicedSurveyStartCollectingMessage>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::TimeSlicedSurveyStartCollectingMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage => Box::new(
+                ReadXdrIter::<_, SignedTimeSlicedSurveyStartCollectingMessage>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| {
+                    r.map(|t| Self::SignedTimeSlicedSurveyStartCollectingMessage(Box::new(t)))
+                }),
+            ),
+            TypeVariant::TimeSlicedSurveyStopCollectingMessage => Box::new(
+                ReadXdrIter::<_, TimeSlicedSurveyStopCollectingMessage>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimeSlicedSurveyStopCollectingMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage => Box::new(
+                ReadXdrIter::<_, SignedTimeSlicedSurveyStopCollectingMessage>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::new(t)))),
+            ),
             TypeVariant::SurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, SurveyRequestMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyRequestMessage(Box::new(t)))),
             ),
+            TypeVariant::TimeSlicedSurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, TimeSlicedSurveyRequestMessage>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimeSlicedSurveyRequestMessage(Box::new(t)))),
+            ),
             TypeVariant::SignedSurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, SignedSurveyRequestMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyRequestMessage => Box::new(
+                ReadXdrIter::<_, SignedTimeSlicedSurveyRequestMessage>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SignedTimeSlicedSurveyRequestMessage(Box::new(t)))),
             ),
             TypeVariant::EncryptedBody => Box::new(
                 ReadXdrIter::<_, EncryptedBody>::new(dec, r.limits.clone())
@@ -54333,9 +55635,17 @@ impl Type {
                 ReadXdrIter::<_, SurveyResponseMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SurveyResponseMessage(Box::new(t)))),
             ),
+            TypeVariant::TimeSlicedSurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, TimeSlicedSurveyResponseMessage>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimeSlicedSurveyResponseMessage(Box::new(t)))),
+            ),
             TypeVariant::SignedSurveyResponseMessage => Box::new(
                 ReadXdrIter::<_, SignedSurveyResponseMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t)))),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyResponseMessage => Box::new(
+                ReadXdrIter::<_, SignedTimeSlicedSurveyResponseMessage>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SignedTimeSlicedSurveyResponseMessage(Box::new(t)))),
             ),
             TypeVariant::PeerStats => Box::new(
                 ReadXdrIter::<_, PeerStats>::new(dec, r.limits.clone())
@@ -54345,6 +55655,18 @@ impl Type {
                 ReadXdrIter::<_, PeerStatList>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
+            TypeVariant::TimeSlicedNodeData => Box::new(
+                ReadXdrIter::<_, TimeSlicedNodeData>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimeSlicedNodeData(Box::new(t)))),
+            ),
+            TypeVariant::TimeSlicedPeerData => Box::new(
+                ReadXdrIter::<_, TimeSlicedPeerData>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimeSlicedPeerData(Box::new(t)))),
+            ),
+            TypeVariant::TimeSlicedPeerDataList => Box::new(
+                ReadXdrIter::<_, TimeSlicedPeerDataList>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimeSlicedPeerDataList(Box::new(t)))),
+            ),
             TypeVariant::TopologyResponseBodyV0 => Box::new(
                 ReadXdrIter::<_, TopologyResponseBodyV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t)))),
@@ -54352,6 +55674,10 @@ impl Type {
             TypeVariant::TopologyResponseBodyV1 => Box::new(
                 ReadXdrIter::<_, TopologyResponseBodyV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t)))),
+            ),
+            TypeVariant::TopologyResponseBodyV2 => Box::new(
+                ReadXdrIter::<_, TopologyResponseBodyV2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TopologyResponseBodyV2(Box::new(t)))),
             ),
             TypeVariant::SurveyResponseBody => Box::new(
                 ReadXdrIter::<_, SurveyResponseBody>::new(dec, r.limits.clone())
@@ -55665,6 +56991,9 @@ impl Type {
             TypeVariant::DiagnosticEvent => {
                 Ok(Self::DiagnosticEvent(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::DiagnosticEvents => Ok(Self::DiagnosticEvents(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::SorobanTransactionMetaExtV1 => Ok(Self::SorobanTransactionMetaExtV1(
                 Box::new(serde_json::from_reader(r)?),
             )),
@@ -55730,29 +57059,69 @@ impl Type {
             TypeVariant::SurveyMessageResponseType => Ok(Self::SurveyMessageResponseType(
                 Box::new(serde_json::from_reader(r)?),
             )),
+            TypeVariant::TimeSlicedSurveyStartCollectingMessage => Ok(
+                Self::TimeSlicedSurveyStartCollectingMessage(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage => {
+                Ok(Self::SignedTimeSlicedSurveyStartCollectingMessage(
+                    Box::new(serde_json::from_reader(r)?),
+                ))
+            }
+            TypeVariant::TimeSlicedSurveyStopCollectingMessage => Ok(
+                Self::TimeSlicedSurveyStopCollectingMessage(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage => {
+                Ok(Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::new(
+                    serde_json::from_reader(r)?,
+                )))
+            }
             TypeVariant::SurveyRequestMessage => Ok(Self::SurveyRequestMessage(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::TimeSlicedSurveyRequestMessage => Ok(
+                Self::TimeSlicedSurveyRequestMessage(Box::new(serde_json::from_reader(r)?)),
+            ),
             TypeVariant::SignedSurveyRequestMessage => Ok(Self::SignedSurveyRequestMessage(
                 Box::new(serde_json::from_reader(r)?),
             )),
+            TypeVariant::SignedTimeSlicedSurveyRequestMessage => Ok(
+                Self::SignedTimeSlicedSurveyRequestMessage(Box::new(serde_json::from_reader(r)?)),
+            ),
             TypeVariant::EncryptedBody => {
                 Ok(Self::EncryptedBody(Box::new(serde_json::from_reader(r)?)))
             }
             TypeVariant::SurveyResponseMessage => Ok(Self::SurveyResponseMessage(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::TimeSlicedSurveyResponseMessage => Ok(
+                Self::TimeSlicedSurveyResponseMessage(Box::new(serde_json::from_reader(r)?)),
+            ),
             TypeVariant::SignedSurveyResponseMessage => Ok(Self::SignedSurveyResponseMessage(
                 Box::new(serde_json::from_reader(r)?),
             )),
+            TypeVariant::SignedTimeSlicedSurveyResponseMessage => Ok(
+                Self::SignedTimeSlicedSurveyResponseMessage(Box::new(serde_json::from_reader(r)?)),
+            ),
             TypeVariant::PeerStats => Ok(Self::PeerStats(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::PeerStatList => {
                 Ok(Self::PeerStatList(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::TimeSlicedNodeData => Ok(Self::TimeSlicedNodeData(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TimeSlicedPeerData => Ok(Self::TimeSlicedPeerData(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TimeSlicedPeerDataList => Ok(Self::TimeSlicedPeerDataList(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::TopologyResponseBodyV0 => Ok(Self::TopologyResponseBodyV0(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::TopologyResponseBodyV1 => Ok(Self::TopologyResponseBodyV1(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TopologyResponseBodyV2 => Ok(Self::TopologyResponseBodyV2(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::SurveyResponseBody => Ok(Self::SurveyResponseBody(Box::new(
@@ -56481,6 +57850,7 @@ impl Type {
             Self::ContractEventBody(ref v) => v.as_ref(),
             Self::ContractEventV0(ref v) => v.as_ref(),
             Self::DiagnosticEvent(ref v) => v.as_ref(),
+            Self::DiagnosticEvents(ref v) => v.as_ref(),
             Self::SorobanTransactionMetaExtV1(ref v) => v.as_ref(),
             Self::SorobanTransactionMetaExt(ref v) => v.as_ref(),
             Self::SorobanTransactionMeta(ref v) => v.as_ref(),
@@ -56508,15 +57878,27 @@ impl Type {
             Self::DontHave(ref v) => v.as_ref(),
             Self::SurveyMessageCommandType(ref v) => v.as_ref(),
             Self::SurveyMessageResponseType(ref v) => v.as_ref(),
+            Self::TimeSlicedSurveyStartCollectingMessage(ref v) => v.as_ref(),
+            Self::SignedTimeSlicedSurveyStartCollectingMessage(ref v) => v.as_ref(),
+            Self::TimeSlicedSurveyStopCollectingMessage(ref v) => v.as_ref(),
+            Self::SignedTimeSlicedSurveyStopCollectingMessage(ref v) => v.as_ref(),
             Self::SurveyRequestMessage(ref v) => v.as_ref(),
+            Self::TimeSlicedSurveyRequestMessage(ref v) => v.as_ref(),
             Self::SignedSurveyRequestMessage(ref v) => v.as_ref(),
+            Self::SignedTimeSlicedSurveyRequestMessage(ref v) => v.as_ref(),
             Self::EncryptedBody(ref v) => v.as_ref(),
             Self::SurveyResponseMessage(ref v) => v.as_ref(),
+            Self::TimeSlicedSurveyResponseMessage(ref v) => v.as_ref(),
             Self::SignedSurveyResponseMessage(ref v) => v.as_ref(),
+            Self::SignedTimeSlicedSurveyResponseMessage(ref v) => v.as_ref(),
             Self::PeerStats(ref v) => v.as_ref(),
             Self::PeerStatList(ref v) => v.as_ref(),
+            Self::TimeSlicedNodeData(ref v) => v.as_ref(),
+            Self::TimeSlicedPeerData(ref v) => v.as_ref(),
+            Self::TimeSlicedPeerDataList(ref v) => v.as_ref(),
             Self::TopologyResponseBodyV0(ref v) => v.as_ref(),
             Self::TopologyResponseBodyV1(ref v) => v.as_ref(),
+            Self::TopologyResponseBodyV2(ref v) => v.as_ref(),
             Self::SurveyResponseBody(ref v) => v.as_ref(),
             Self::TxAdvertVector(ref v) => v.as_ref(),
             Self::FloodAdvert(ref v) => v.as_ref(),
@@ -56919,6 +58301,7 @@ impl Type {
             Self::ContractEventBody(_) => "ContractEventBody",
             Self::ContractEventV0(_) => "ContractEventV0",
             Self::DiagnosticEvent(_) => "DiagnosticEvent",
+            Self::DiagnosticEvents(_) => "DiagnosticEvents",
             Self::SorobanTransactionMetaExtV1(_) => "SorobanTransactionMetaExtV1",
             Self::SorobanTransactionMetaExt(_) => "SorobanTransactionMetaExt",
             Self::SorobanTransactionMeta(_) => "SorobanTransactionMeta",
@@ -56946,15 +58329,37 @@ impl Type {
             Self::DontHave(_) => "DontHave",
             Self::SurveyMessageCommandType(_) => "SurveyMessageCommandType",
             Self::SurveyMessageResponseType(_) => "SurveyMessageResponseType",
+            Self::TimeSlicedSurveyStartCollectingMessage(_) => {
+                "TimeSlicedSurveyStartCollectingMessage"
+            }
+            Self::SignedTimeSlicedSurveyStartCollectingMessage(_) => {
+                "SignedTimeSlicedSurveyStartCollectingMessage"
+            }
+            Self::TimeSlicedSurveyStopCollectingMessage(_) => {
+                "TimeSlicedSurveyStopCollectingMessage"
+            }
+            Self::SignedTimeSlicedSurveyStopCollectingMessage(_) => {
+                "SignedTimeSlicedSurveyStopCollectingMessage"
+            }
             Self::SurveyRequestMessage(_) => "SurveyRequestMessage",
+            Self::TimeSlicedSurveyRequestMessage(_) => "TimeSlicedSurveyRequestMessage",
             Self::SignedSurveyRequestMessage(_) => "SignedSurveyRequestMessage",
+            Self::SignedTimeSlicedSurveyRequestMessage(_) => "SignedTimeSlicedSurveyRequestMessage",
             Self::EncryptedBody(_) => "EncryptedBody",
             Self::SurveyResponseMessage(_) => "SurveyResponseMessage",
+            Self::TimeSlicedSurveyResponseMessage(_) => "TimeSlicedSurveyResponseMessage",
             Self::SignedSurveyResponseMessage(_) => "SignedSurveyResponseMessage",
+            Self::SignedTimeSlicedSurveyResponseMessage(_) => {
+                "SignedTimeSlicedSurveyResponseMessage"
+            }
             Self::PeerStats(_) => "PeerStats",
             Self::PeerStatList(_) => "PeerStatList",
+            Self::TimeSlicedNodeData(_) => "TimeSlicedNodeData",
+            Self::TimeSlicedPeerData(_) => "TimeSlicedPeerData",
+            Self::TimeSlicedPeerDataList(_) => "TimeSlicedPeerDataList",
             Self::TopologyResponseBodyV0(_) => "TopologyResponseBodyV0",
             Self::TopologyResponseBodyV1(_) => "TopologyResponseBodyV1",
+            Self::TopologyResponseBodyV2(_) => "TopologyResponseBodyV2",
             Self::SurveyResponseBody(_) => "SurveyResponseBody",
             Self::TxAdvertVector(_) => "TxAdvertVector",
             Self::FloodAdvert(_) => "FloodAdvert",
@@ -57150,7 +58555,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 425] {
+    pub const fn variants() -> [TypeVariant; 438] {
         Self::VARIANTS
     }
 
@@ -57385,6 +58790,7 @@ impl Type {
             Self::ContractEventBody(_) => TypeVariant::ContractEventBody,
             Self::ContractEventV0(_) => TypeVariant::ContractEventV0,
             Self::DiagnosticEvent(_) => TypeVariant::DiagnosticEvent,
+            Self::DiagnosticEvents(_) => TypeVariant::DiagnosticEvents,
             Self::SorobanTransactionMetaExtV1(_) => TypeVariant::SorobanTransactionMetaExtV1,
             Self::SorobanTransactionMetaExt(_) => TypeVariant::SorobanTransactionMetaExt,
             Self::SorobanTransactionMeta(_) => TypeVariant::SorobanTransactionMeta,
@@ -57414,15 +58820,41 @@ impl Type {
             Self::DontHave(_) => TypeVariant::DontHave,
             Self::SurveyMessageCommandType(_) => TypeVariant::SurveyMessageCommandType,
             Self::SurveyMessageResponseType(_) => TypeVariant::SurveyMessageResponseType,
+            Self::TimeSlicedSurveyStartCollectingMessage(_) => {
+                TypeVariant::TimeSlicedSurveyStartCollectingMessage
+            }
+            Self::SignedTimeSlicedSurveyStartCollectingMessage(_) => {
+                TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage
+            }
+            Self::TimeSlicedSurveyStopCollectingMessage(_) => {
+                TypeVariant::TimeSlicedSurveyStopCollectingMessage
+            }
+            Self::SignedTimeSlicedSurveyStopCollectingMessage(_) => {
+                TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage
+            }
             Self::SurveyRequestMessage(_) => TypeVariant::SurveyRequestMessage,
+            Self::TimeSlicedSurveyRequestMessage(_) => TypeVariant::TimeSlicedSurveyRequestMessage,
             Self::SignedSurveyRequestMessage(_) => TypeVariant::SignedSurveyRequestMessage,
+            Self::SignedTimeSlicedSurveyRequestMessage(_) => {
+                TypeVariant::SignedTimeSlicedSurveyRequestMessage
+            }
             Self::EncryptedBody(_) => TypeVariant::EncryptedBody,
             Self::SurveyResponseMessage(_) => TypeVariant::SurveyResponseMessage,
+            Self::TimeSlicedSurveyResponseMessage(_) => {
+                TypeVariant::TimeSlicedSurveyResponseMessage
+            }
             Self::SignedSurveyResponseMessage(_) => TypeVariant::SignedSurveyResponseMessage,
+            Self::SignedTimeSlicedSurveyResponseMessage(_) => {
+                TypeVariant::SignedTimeSlicedSurveyResponseMessage
+            }
             Self::PeerStats(_) => TypeVariant::PeerStats,
             Self::PeerStatList(_) => TypeVariant::PeerStatList,
+            Self::TimeSlicedNodeData(_) => TypeVariant::TimeSlicedNodeData,
+            Self::TimeSlicedPeerData(_) => TypeVariant::TimeSlicedPeerData,
+            Self::TimeSlicedPeerDataList(_) => TypeVariant::TimeSlicedPeerDataList,
             Self::TopologyResponseBodyV0(_) => TypeVariant::TopologyResponseBodyV0,
             Self::TopologyResponseBodyV1(_) => TypeVariant::TopologyResponseBodyV1,
+            Self::TopologyResponseBodyV2(_) => TypeVariant::TopologyResponseBodyV2,
             Self::SurveyResponseBody(_) => TypeVariant::SurveyResponseBody,
             Self::TxAdvertVector(_) => TypeVariant::TxAdvertVector,
             Self::FloodAdvert(_) => TypeVariant::FloodAdvert,
@@ -57864,6 +59296,7 @@ impl WriteXdr for Type {
             Self::ContractEventBody(v) => v.write_xdr(w),
             Self::ContractEventV0(v) => v.write_xdr(w),
             Self::DiagnosticEvent(v) => v.write_xdr(w),
+            Self::DiagnosticEvents(v) => v.write_xdr(w),
             Self::SorobanTransactionMetaExtV1(v) => v.write_xdr(w),
             Self::SorobanTransactionMetaExt(v) => v.write_xdr(w),
             Self::SorobanTransactionMeta(v) => v.write_xdr(w),
@@ -57891,15 +59324,27 @@ impl WriteXdr for Type {
             Self::DontHave(v) => v.write_xdr(w),
             Self::SurveyMessageCommandType(v) => v.write_xdr(w),
             Self::SurveyMessageResponseType(v) => v.write_xdr(w),
+            Self::TimeSlicedSurveyStartCollectingMessage(v) => v.write_xdr(w),
+            Self::SignedTimeSlicedSurveyStartCollectingMessage(v) => v.write_xdr(w),
+            Self::TimeSlicedSurveyStopCollectingMessage(v) => v.write_xdr(w),
+            Self::SignedTimeSlicedSurveyStopCollectingMessage(v) => v.write_xdr(w),
             Self::SurveyRequestMessage(v) => v.write_xdr(w),
+            Self::TimeSlicedSurveyRequestMessage(v) => v.write_xdr(w),
             Self::SignedSurveyRequestMessage(v) => v.write_xdr(w),
+            Self::SignedTimeSlicedSurveyRequestMessage(v) => v.write_xdr(w),
             Self::EncryptedBody(v) => v.write_xdr(w),
             Self::SurveyResponseMessage(v) => v.write_xdr(w),
+            Self::TimeSlicedSurveyResponseMessage(v) => v.write_xdr(w),
             Self::SignedSurveyResponseMessage(v) => v.write_xdr(w),
+            Self::SignedTimeSlicedSurveyResponseMessage(v) => v.write_xdr(w),
             Self::PeerStats(v) => v.write_xdr(w),
             Self::PeerStatList(v) => v.write_xdr(w),
+            Self::TimeSlicedNodeData(v) => v.write_xdr(w),
+            Self::TimeSlicedPeerData(v) => v.write_xdr(w),
+            Self::TimeSlicedPeerDataList(v) => v.write_xdr(w),
             Self::TopologyResponseBodyV0(v) => v.write_xdr(w),
             Self::TopologyResponseBodyV1(v) => v.write_xdr(w),
+            Self::TopologyResponseBodyV2(v) => v.write_xdr(w),
             Self::SurveyResponseBody(v) => v.write_xdr(w),
             Self::TxAdvertVector(v) => v.write_xdr(w),
             Self::FloodAdvert(v) => v.write_xdr(w),

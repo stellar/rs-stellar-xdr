@@ -28,7 +28,11 @@ install:
 	cargo install --locked --path . --force --features cli
 
 readme:
-	cargo readme > README.md
+	cargo +nightly rustdoc -- -Zunstable-options -wjson \
+		&& echo '# stellar-xdr' \
+		| cat target/doc/stellar_xdr.json \
+		| jq -r '"# stellar-xdr\n\n" + .index[.root].docs' \
+		> README.md
 
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'

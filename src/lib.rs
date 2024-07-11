@@ -59,6 +59,10 @@
 //! 4. `arbitrary` – Enables support for interop with the arbitrary crate.
 //! 5. `hex` – Enables support for hex in string representations of some types.
 //! Automatically enabled when serde is enabled.
+//! 6. `schemars` – Enables support for JSON Schema generation. (Experimental)
+//!
+//! Features marked experimental may disappear at anytime, see breaking changes
+//! at anytime, or and may be minimal implementations instead of complete.
 //!
 //! Channels of XDR:
 //!

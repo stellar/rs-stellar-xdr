@@ -53,7 +53,16 @@
 //! 1. `base64` – Enables support for base64 encoding and decoding.
 //! 2. `serde` – Enables support for serializing and deserializing types with
 //! the serde crate.
-//! 3. `arbitrary` – Enables support for interop with the arbitrary crate.
+//! 3. `serde_json` – Enables support for built-in functionality specifically
+//! for serde_json. Often not required to use the types with serde_json, and
+//! only necessary to use utility functions that depend on serde_json.
+//! 4. `arbitrary` – Enables support for interop with the arbitrary crate.
+//! 5. `hex` – Enables support for hex in string representations of some types.
+//! Automatically enabled when serde is enabled.
+//! 6. `schemars` – Enables support for JSON Schema generation. (Experimental)
+//!
+//! Features marked experimental may disappear at anytime, see breaking changes
+//! at anytime, or and may be minimal implementations instead of complete.
 //!
 //! Channels of XDR:
 //!

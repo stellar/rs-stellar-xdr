@@ -1,7 +1,7 @@
-mod decode;
-mod encode;
-mod guess;
-mod types;
+pub mod decode;
+pub mod encode;
+pub mod guess;
+pub mod types;
 mod version;
 
 use clap::{Parser, Subcommand, ValueEnum};
@@ -34,7 +34,7 @@ impl Root {
     /// If the root command is configured with state that is invalid.
     pub fn run(&self) -> Result<(), Error> {
         match &self.cmd {
-            Cmd::Types(c) => c.run(&self.channel),
+            Cmd::Types(c) => c.run(&self.channel)?,
             Cmd::Guess(c) => c.run(&self.channel)?,
             Cmd::Decode(c) => c.run(&self.channel)?,
             Cmd::Encode(c) => c.run(&self.channel)?,
@@ -77,6 +77,8 @@ pub enum Cmd {
 pub enum Error {
     #[error("{0}")]
     Clap(#[from] clap::Error),
+    #[error("{0}")]
+    Types(#[from] types::Error),
     #[error("error decoding XDR: {0}")]
     Guess(#[from] guess::Error),
     #[error("error reading file: {0}")]

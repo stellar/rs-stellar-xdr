@@ -7,7 +7,7 @@ use std::{
 
 use clap::{Args, ValueEnum};
 
-use crate::cli::Channel;
+use crate::cli::{skip_whitespace::SkipWhitespace, Channel};
 
 #[derive(thiserror::Error, Debug)]
 #[allow(clippy::enum_variant_names)]
@@ -69,21 +69,29 @@ impl Default for OutputFormat {
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let mut f =
-                crate::$m::Limited::new(ResetRead::new(self.file()?), crate::$m::Limits::none());
+            let mut rr = ResetRead::new(self.file()?);
             'variants: for v in crate::$m::TypeVariant::VARIANTS {
-                f.inner.reset();
+                rr.reset();
                 let count: usize = match self.input {
-                    InputFormat::Single => crate::$m::Type::read_xdr_to_end(v, &mut f)
-                        .ok()
-                        .map(|_| 1)
-                        .unwrap_or_default(),
-                    InputFormat::SingleBase64 => crate::$m::Type::read_xdr_base64_to_end(v, &mut f)
-                        .ok()
-                        .map(|_| 1)
-                        .unwrap_or_default(),
+                    InputFormat::Single => {
+                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
+                        crate::$m::Type::read_xdr_to_end(v, &mut l)
+                            .ok()
+                            .map(|_| 1)
+                            .unwrap_or_default()
+                    }
+                    InputFormat::SingleBase64 => {
+                        let sw = SkipWhitespace::new(&mut rr);
+                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                        crate::$m::Type::read_xdr_base64_to_end(v, &mut l)
+                            .ok()
+                            .map(|_| 1)
+                            .unwrap_or_default()
+                    }
                     InputFormat::Stream => {
-                        let iter = crate::$m::Type::read_xdr_iter(v, &mut f).take(self.certainty);
+                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
+                        let iter = crate::$m::Type::read_xdr_iter(v, &mut l);
+                        let iter = iter.take(self.certainty);
                         let mut count = 0;
                         for v in iter {
                             match v {
@@ -94,8 +102,10 @@ macro_rules! run_x {
                         count
                     }
                     InputFormat::StreamBase64 => {
-                        let iter =
-                            crate::$m::Type::read_xdr_base64_iter(v, &mut f).take(self.certainty);
+                        let sw = SkipWhitespace::new(&mut rr);
+                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                        let iter = crate::$m::Type::read_xdr_base64_iter(v, &mut l);
+                        let iter = iter.take(self.certainty);
                         let mut count = 0;
                         for v in iter {
                             match v {
@@ -106,8 +116,9 @@ macro_rules! run_x {
                         count
                     }
                     InputFormat::StreamFramed => {
-                        let iter =
-                            crate::$m::Type::read_xdr_framed_iter(v, &mut f).take(self.certainty);
+                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
+                        let iter = crate::$m::Type::read_xdr_framed_iter(v, &mut l);
+                        let iter = iter.take(self.certainty);
                         let mut count = 0;
                         for v in iter {
                             match v {

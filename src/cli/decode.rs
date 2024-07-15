@@ -84,32 +84,32 @@ macro_rules! run_x {
             for f in &mut files {
                 match self.input {
                     InputFormat::Single => {
-                        let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
-                        let t = crate::$m::Type::read_xdr_to_end(r#type, &mut f)?;
+                        let mut l = crate::$m::Limited::new(f, crate::$m::Limits::none());
+                        let t = crate::$m::Type::read_xdr_to_end(r#type, &mut l)?;
                         self.out(&t)?;
                     }
                     InputFormat::SingleBase64 => {
-                        let f = SkipWhitespace::new(f);
-                        let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
-                        let t = crate::$m::Type::read_xdr_base64_to_end(r#type, &mut f)?;
+                        let sw = SkipWhitespace::new(f);
+                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                        let t = crate::$m::Type::read_xdr_base64_to_end(r#type, &mut l)?;
                         self.out(&t)?;
                     }
                     InputFormat::Stream => {
-                        let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
-                        for t in crate::$m::Type::read_xdr_iter(r#type, &mut f) {
+                        let mut l = crate::$m::Limited::new(f, crate::$m::Limits::none());
+                        for t in crate::$m::Type::read_xdr_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamBase64 => {
-                        let f = SkipWhitespace::new(f);
-                        let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
-                        for t in crate::$m::Type::read_xdr_base64_iter(r#type, &mut f) {
+                        let sw = SkipWhitespace::new(f);
+                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                        for t in crate::$m::Type::read_xdr_base64_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamFramed => {
-                        let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
-                        for t in crate::$m::Type::read_xdr_framed_iter(r#type, &mut f) {
+                        let mut l = crate::$m::Limited::new(f, crate::$m::Limits::none());
+                        for t in crate::$m::Type::read_xdr_framed_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
                     }

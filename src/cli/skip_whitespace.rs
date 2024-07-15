@@ -1,9 +1,9 @@
 use std::io::Read;
 
-/// Forwards read operations to the wrapped object, skipping over any whitespace
-/// in what is written to buf when the function returns.
+/// Forwards read operations to the wrapped object, skipping over any
+/// whitespace.
 pub struct SkipWhitespace<R: Read> {
-    inner: R,
+    pub inner: R,
 }
 
 impl<R: Read> SkipWhitespace<R> {

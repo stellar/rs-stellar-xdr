@@ -1,6 +1,7 @@
 pub mod decode;
 pub mod encode;
 pub mod guess;
+mod skip_whitespace;
 pub mod types;
 mod version;
 

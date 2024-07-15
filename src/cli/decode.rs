@@ -9,7 +9,7 @@ use std::{
 use clap::{Args, ValueEnum};
 use serde::Serialize;
 
-use crate::cli::Channel;
+use crate::cli::{skip_whitespace::SkipWhitespace, Channel};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -82,27 +82,33 @@ macro_rules! run_x {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
             for f in &mut files {
-                let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
                 match self.input {
                     InputFormat::Single => {
+                        let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
                         let t = crate::$m::Type::read_xdr_to_end(r#type, &mut f)?;
                         self.out(&t)?;
                     }
                     InputFormat::SingleBase64 => {
+                        let f = SkipWhitespace::new(f);
+                        let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
                         let t = crate::$m::Type::read_xdr_base64_to_end(r#type, &mut f)?;
                         self.out(&t)?;
                     }
                     InputFormat::Stream => {
+                        let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
                         for t in crate::$m::Type::read_xdr_iter(r#type, &mut f) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamBase64 => {
+                        let f = SkipWhitespace::new(f);
+                        let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
                         for t in crate::$m::Type::read_xdr_base64_iter(r#type, &mut f) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamFramed => {
+                        let mut f = crate::$m::Limited::new(f, crate::$m::Limits::none());
                         for t in crate::$m::Type::read_xdr_framed_iter(r#type, &mut f) {
                             self.out(&t?)?;
                         }

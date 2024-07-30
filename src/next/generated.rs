@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "393369678663cb0f9471a0b69e2a9cfa3ac93c4415fa40cec166e9a231ecbe0d",
+        "c92782d7c6d6f0ea0b2148cabc66c557f38cb23714257f2131235a88f4282366",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "888152fb940b79a01ac00a5218ca91360cb0f01af7acc030d5805ebfec280203",
+        "3f9f0ad62cdd34390cf0cbe16e3266374c061b5f5abbe8fbe1396de32bcc23eb",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -62,7 +62,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-types.x",
-        "6e3b13f0d3e360b09fa5e2b0e55d43f4d974a769df66afb34e8aecbb329d3f15",
+        "afe02efc4e6767ed8909c3b4350c4045449b614ce487adcf7e9f816f309bf6f8",
     ),
 ];
 
@@ -3757,6 +3757,54 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
     }
 }
 
+/// ConfigSettingContractParallelComputeV0 is an XDR Struct defines as:
+///
+/// ```text
+/// struct ConfigSettingContractParallelComputeV0
+/// {
+///     // Maximum number of threads that can be used to apply a
+///     // transaction set to close the ledger.
+///     // This doesn't limit or defined the actual number of
+///     // threads used and instead only defines the minimum number
+///     // of physical threads that a tier-1 validator has to support
+///     // in order to not fall out of sync with the network.
+///     uint32 ledgerMaxParallelThreads;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ConfigSettingContractParallelComputeV0 {
+    pub ledger_max_parallel_threads: u32,
+}
+
+impl ReadXdr for ConfigSettingContractParallelComputeV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_max_parallel_threads: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractParallelComputeV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_max_parallel_threads.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:
 ///
 /// ```text
@@ -4760,7 +4808,8 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 ///     CONFIG_SETTING_STATE_ARCHIVAL = 10,
 ///     CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11,
 ///     CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12,
-///     CONFIG_SETTING_EVICTION_ITERATOR = 13
+///     CONFIG_SETTING_EVICTION_ITERATOR = 13,
+///     CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14
 /// };
 /// ```
 ///
@@ -4789,10 +4838,11 @@ pub enum ConfigSettingId {
     ContractExecutionLanes = 11,
     BucketlistSizeWindow = 12,
     EvictionIterator = 13,
+    ContractParallelComputeV0 = 14,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 14] = [
+    pub const VARIANTS: [ConfigSettingId; 15] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -4807,8 +4857,9 @@ impl ConfigSettingId {
         ConfigSettingId::ContractExecutionLanes,
         ConfigSettingId::BucketlistSizeWindow,
         ConfigSettingId::EvictionIterator,
+        ConfigSettingId::ContractParallelComputeV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 14] = [
+    pub const VARIANTS_STR: [&'static str; 15] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -4823,6 +4874,7 @@ impl ConfigSettingId {
         "ContractExecutionLanes",
         "BucketlistSizeWindow",
         "EvictionIterator",
+        "ContractParallelComputeV0",
     ];
 
     #[must_use]
@@ -4842,11 +4894,12 @@ impl ConfigSettingId {
             Self::ContractExecutionLanes => "ContractExecutionLanes",
             Self::BucketlistSizeWindow => "BucketlistSizeWindow",
             Self::EvictionIterator => "EvictionIterator",
+            Self::ContractParallelComputeV0 => "ContractParallelComputeV0",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 14] {
+    pub const fn variants() -> [ConfigSettingId; 15] {
         Self::VARIANTS
     }
 }
@@ -4891,6 +4944,7 @@ impl TryFrom<i32> for ConfigSettingId {
             11 => ConfigSettingId::ContractExecutionLanes,
             12 => ConfigSettingId::BucketlistSizeWindow,
             13 => ConfigSettingId::EvictionIterator,
+            14 => ConfigSettingId::ContractParallelComputeV0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -4959,6 +5013,8 @@ impl WriteXdr for ConfigSettingId {
 ///     uint64 bucketListSizeWindow<>;
 /// case CONFIG_SETTING_EVICTION_ITERATOR:
 ///     EvictionIterator evictionIterator;
+/// case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0:
+///     ConfigSettingContractParallelComputeV0 contractParallelCompute;
 /// };
 /// ```
 ///
@@ -4987,10 +5043,11 @@ pub enum ConfigSettingEntry {
     ContractExecutionLanes(ConfigSettingContractExecutionLanesV0),
     BucketlistSizeWindow(VecM<u64>),
     EvictionIterator(EvictionIterator),
+    ContractParallelComputeV0(ConfigSettingContractParallelComputeV0),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 14] = [
+    pub const VARIANTS: [ConfigSettingId; 15] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -5005,8 +5062,9 @@ impl ConfigSettingEntry {
         ConfigSettingId::ContractExecutionLanes,
         ConfigSettingId::BucketlistSizeWindow,
         ConfigSettingId::EvictionIterator,
+        ConfigSettingId::ContractParallelComputeV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 14] = [
+    pub const VARIANTS_STR: [&'static str; 15] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -5021,6 +5079,7 @@ impl ConfigSettingEntry {
         "ContractExecutionLanes",
         "BucketlistSizeWindow",
         "EvictionIterator",
+        "ContractParallelComputeV0",
     ];
 
     #[must_use]
@@ -5040,6 +5099,7 @@ impl ConfigSettingEntry {
             Self::ContractExecutionLanes(_) => "ContractExecutionLanes",
             Self::BucketlistSizeWindow(_) => "BucketlistSizeWindow",
             Self::EvictionIterator(_) => "EvictionIterator",
+            Self::ContractParallelComputeV0(_) => "ContractParallelComputeV0",
         }
     }
 
@@ -5065,11 +5125,12 @@ impl ConfigSettingEntry {
             Self::ContractExecutionLanes(_) => ConfigSettingId::ContractExecutionLanes,
             Self::BucketlistSizeWindow(_) => ConfigSettingId::BucketlistSizeWindow,
             Self::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
+            Self::ContractParallelComputeV0(_) => ConfigSettingId::ContractParallelComputeV0,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 14] {
+    pub const fn variants() -> [ConfigSettingId; 15] {
         Self::VARIANTS
     }
 }
@@ -5145,6 +5206,9 @@ impl ReadXdr for ConfigSettingEntry {
                 ConfigSettingId::EvictionIterator => {
                     Self::EvictionIterator(EvictionIterator::read_xdr(r)?)
                 }
+                ConfigSettingId::ContractParallelComputeV0 => Self::ContractParallelComputeV0(
+                    ConfigSettingContractParallelComputeV0::read_xdr(r)?,
+                ),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -5174,6 +5238,7 @@ impl WriteXdr for ConfigSettingEntry {
                 Self::ContractExecutionLanes(v) => v.write_xdr(w)?,
                 Self::BucketlistSizeWindow(v) => v.write_xdr(w)?,
                 Self::EvictionIterator(v) => v.write_xdr(w)?,
+                Self::ContractParallelComputeV0(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -19300,6 +19365,264 @@ impl WriteXdr for TxSetComponentType {
     }
 }
 
+/// TxExecutionThread is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef TransactionEnvelope TxExecutionThread<>;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Debug)]
+pub struct TxExecutionThread(pub VecM<TransactionEnvelope>);
+
+impl From<TxExecutionThread> for VecM<TransactionEnvelope> {
+    #[must_use]
+    fn from(x: TxExecutionThread) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<TransactionEnvelope>> for TxExecutionThread {
+    #[must_use]
+    fn from(x: VecM<TransactionEnvelope>) -> Self {
+        TxExecutionThread(x)
+    }
+}
+
+impl AsRef<VecM<TransactionEnvelope>> for TxExecutionThread {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<TransactionEnvelope> {
+        &self.0
+    }
+}
+
+impl ReadXdr for TxExecutionThread {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<TransactionEnvelope>::read_xdr(r)?;
+            let v = TxExecutionThread(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for TxExecutionThread {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for TxExecutionThread {
+    type Target = VecM<TransactionEnvelope>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<TxExecutionThread> for Vec<TransactionEnvelope> {
+    #[must_use]
+    fn from(x: TxExecutionThread) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<TransactionEnvelope>> for TxExecutionThread {
+    type Error = Error;
+    fn try_from(x: Vec<TransactionEnvelope>) -> Result<Self> {
+        Ok(TxExecutionThread(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<TransactionEnvelope>> for TxExecutionThread {
+    type Error = Error;
+    fn try_from(x: &Vec<TransactionEnvelope>) -> Result<Self> {
+        Ok(TxExecutionThread(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<TransactionEnvelope>> for TxExecutionThread {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<TransactionEnvelope> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[TransactionEnvelope]> for TxExecutionThread {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[TransactionEnvelope] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[TransactionEnvelope] {
+        self.0 .0
+    }
+}
+
+/// ParallelTxExecutionStage is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef TxExecutionThread ParallelTxExecutionStage<>;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Debug)]
+pub struct ParallelTxExecutionStage(pub VecM<TxExecutionThread>);
+
+impl From<ParallelTxExecutionStage> for VecM<TxExecutionThread> {
+    #[must_use]
+    fn from(x: ParallelTxExecutionStage) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<TxExecutionThread>> for ParallelTxExecutionStage {
+    #[must_use]
+    fn from(x: VecM<TxExecutionThread>) -> Self {
+        ParallelTxExecutionStage(x)
+    }
+}
+
+impl AsRef<VecM<TxExecutionThread>> for ParallelTxExecutionStage {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<TxExecutionThread> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ParallelTxExecutionStage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<TxExecutionThread>::read_xdr(r)?;
+            let v = ParallelTxExecutionStage(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ParallelTxExecutionStage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for ParallelTxExecutionStage {
+    type Target = VecM<TxExecutionThread>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ParallelTxExecutionStage> for Vec<TxExecutionThread> {
+    #[must_use]
+    fn from(x: ParallelTxExecutionStage) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<TxExecutionThread>> for ParallelTxExecutionStage {
+    type Error = Error;
+    fn try_from(x: Vec<TxExecutionThread>) -> Result<Self> {
+        Ok(ParallelTxExecutionStage(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<TxExecutionThread>> for ParallelTxExecutionStage {
+    type Error = Error;
+    fn try_from(x: &Vec<TxExecutionThread>) -> Result<Self> {
+        Ok(ParallelTxExecutionStage(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<TxExecutionThread>> for ParallelTxExecutionStage {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<TxExecutionThread> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[TxExecutionThread]> for ParallelTxExecutionStage {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[TxExecutionThread] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[TxExecutionThread] {
+        self.0 .0
+    }
+}
+
+/// ParallelTxsComponent is an XDR Struct defines as:
+///
+/// ```text
+/// struct ParallelTxsComponent
+/// {
+///   int64* baseFee;
+///   ParallelTxExecutionStage executionStages<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ParallelTxsComponent {
+    pub base_fee: Option<i64>,
+    pub execution_stages: VecM<ParallelTxExecutionStage>,
+}
+
+impl ReadXdr for ParallelTxsComponent {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                base_fee: Option::<i64>::read_xdr(r)?,
+                execution_stages: VecM::<ParallelTxExecutionStage>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ParallelTxsComponent {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.base_fee.write_xdr(w)?;
+            self.execution_stages.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// TxSetComponentTxsMaybeDiscountedFee is an XDR NestedStruct defines as:
 ///
 /// ```text
@@ -19465,6 +19788,8 @@ impl WriteXdr for TxSetComponent {
 /// {
 /// case 0:
 ///     TxSetComponent v0Components<>;
+/// case 1:
+///     ParallelTxsComponent parallelTxsComponent;
 /// };
 /// ```
 ///
@@ -19480,16 +19805,18 @@ impl WriteXdr for TxSetComponent {
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionPhase {
     V0(VecM<TxSetComponent>),
+    V1(ParallelTxsComponent),
 }
 
 impl TransactionPhase {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
+            Self::V1(_) => "V1",
         }
     }
 
@@ -19498,11 +19825,12 @@ impl TransactionPhase {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
+            Self::V1(_) => 1,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> [i32; 2] {
         Self::VARIANTS
     }
 }
@@ -19537,6 +19865,7 @@ impl ReadXdr for TransactionPhase {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 0 => Self::V0(VecM::<TxSetComponent>::read_xdr(r)?),
+                1 => Self::V1(ParallelTxsComponent::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -19553,6 +19882,7 @@ impl WriteXdr for TransactionPhase {
             #[allow(clippy::match_same_arms)]
             match self {
                 Self::V0(v) => v.write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -44247,6 +44577,242 @@ impl WriteXdr for HmacSha256Mac {
     }
 }
 
+/// ShortHashSeed is an XDR Struct defines as:
+///
+/// ```text
+/// struct ShortHashSeed
+/// {
+///     opaque seed[16];
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ShortHashSeed {
+    pub seed: [u8; 16],
+}
+
+impl ReadXdr for ShortHashSeed {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                seed: <[u8; 16]>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ShortHashSeed {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.seed.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// BinaryFuseFilterType is an XDR Enum defines as:
+///
+/// ```text
+/// enum BinaryFuseFilterType
+/// {
+///     BINARY_FUSE_FILTER_8_BIT = 0,
+///     BINARY_FUSE_FILTER_16_BIT = 1,
+///     BINARY_FUSE_FILTER_32_BIT = 2
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum BinaryFuseFilterType {
+    B8Bit = 0,
+    B16Bit = 1,
+    B32Bit = 2,
+}
+
+impl BinaryFuseFilterType {
+    pub const VARIANTS: [BinaryFuseFilterType; 3] = [
+        BinaryFuseFilterType::B8Bit,
+        BinaryFuseFilterType::B16Bit,
+        BinaryFuseFilterType::B32Bit,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["B8Bit", "B16Bit", "B32Bit"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::B8Bit => "B8Bit",
+            Self::B16Bit => "B16Bit",
+            Self::B32Bit => "B32Bit",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [BinaryFuseFilterType; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for BinaryFuseFilterType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<BinaryFuseFilterType> for BinaryFuseFilterType {
+    fn variants() -> slice::Iter<'static, BinaryFuseFilterType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for BinaryFuseFilterType {}
+
+impl fmt::Display for BinaryFuseFilterType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for BinaryFuseFilterType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => BinaryFuseFilterType::B8Bit,
+            1 => BinaryFuseFilterType::B16Bit,
+            2 => BinaryFuseFilterType::B32Bit,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<BinaryFuseFilterType> for i32 {
+    #[must_use]
+    fn from(e: BinaryFuseFilterType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for BinaryFuseFilterType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for BinaryFuseFilterType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+/// SerializedBinaryFuseFilter is an XDR Struct defines as:
+///
+/// ```text
+/// struct SerializedBinaryFuseFilter
+/// {
+///     BinaryFuseFilterType type;
+///
+///     // Seed used to hash input to filter
+///     ShortHashSeed inputHashSeed;
+///
+///     // Seed used for internal filter hash operations
+///     ShortHashSeed filterSeed;
+///     uint32 segmentLength;
+///     uint32 segementLengthMask;
+///     uint32 segmentCount;
+///     uint32 segmentCountLength;
+///     uint32 fingerprintLength; // Length in terms of element count, not bytes
+///
+///     // Array of uint8_t, uint16_t, or uint32_t depending on filter type
+///     opaque fingerprints<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct SerializedBinaryFuseFilter {
+    pub type_: BinaryFuseFilterType,
+    pub input_hash_seed: ShortHashSeed,
+    pub filter_seed: ShortHashSeed,
+    pub segment_length: u32,
+    pub segement_length_mask: u32,
+    pub segment_count: u32,
+    pub segment_count_length: u32,
+    pub fingerprint_length: u32,
+    pub fingerprints: BytesM,
+}
+
+impl ReadXdr for SerializedBinaryFuseFilter {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                type_: BinaryFuseFilterType::read_xdr(r)?,
+                input_hash_seed: ShortHashSeed::read_xdr(r)?,
+                filter_seed: ShortHashSeed::read_xdr(r)?,
+                segment_length: u32::read_xdr(r)?,
+                segement_length_mask: u32::read_xdr(r)?,
+                segment_count: u32::read_xdr(r)?,
+                segment_count_length: u32::read_xdr(r)?,
+                fingerprint_length: u32::read_xdr(r)?,
+                fingerprints: BytesM::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SerializedBinaryFuseFilter {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.type_.write_xdr(w)?;
+            self.input_hash_seed.write_xdr(w)?;
+            self.filter_seed.write_xdr(w)?;
+            self.segment_length.write_xdr(w)?;
+            self.segement_length_mask.write_xdr(w)?;
+            self.segment_count.write_xdr(w)?;
+            self.segment_count_length.write_xdr(w)?;
+            self.fingerprint_length.write_xdr(w)?;
+            self.fingerprints.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -44268,6 +44834,7 @@ pub enum TypeVariant {
     ScpQuorumSet,
     ConfigSettingContractExecutionLanesV0,
     ConfigSettingContractComputeV0,
+    ConfigSettingContractParallelComputeV0,
     ConfigSettingContractLedgerCostV0,
     ConfigSettingContractHistoricalDataV0,
     ConfigSettingContractEventsV0,
@@ -44434,6 +45001,9 @@ pub enum TypeVariant {
     BucketMetadataExt,
     BucketEntry,
     TxSetComponentType,
+    TxExecutionThread,
+    ParallelTxExecutionStage,
+    ParallelTxsComponent,
     TxSetComponent,
     TxSetComponentTxsMaybeDiscountedFee,
     TransactionPhase,
@@ -44692,10 +45262,13 @@ pub enum TypeVariant {
     Curve25519Public,
     HmacSha256Key,
     HmacSha256Mac,
+    ShortHashSeed,
+    BinaryFuseFilterType,
+    SerializedBinaryFuseFilter,
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 437] = [
+    pub const VARIANTS: [TypeVariant; 444] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -44709,6 +45282,7 @@ impl TypeVariant {
         TypeVariant::ScpQuorumSet,
         TypeVariant::ConfigSettingContractExecutionLanesV0,
         TypeVariant::ConfigSettingContractComputeV0,
+        TypeVariant::ConfigSettingContractParallelComputeV0,
         TypeVariant::ConfigSettingContractLedgerCostV0,
         TypeVariant::ConfigSettingContractHistoricalDataV0,
         TypeVariant::ConfigSettingContractEventsV0,
@@ -44875,6 +45449,9 @@ impl TypeVariant {
         TypeVariant::BucketMetadataExt,
         TypeVariant::BucketEntry,
         TypeVariant::TxSetComponentType,
+        TypeVariant::TxExecutionThread,
+        TypeVariant::ParallelTxExecutionStage,
+        TypeVariant::ParallelTxsComponent,
         TypeVariant::TxSetComponent,
         TypeVariant::TxSetComponentTxsMaybeDiscountedFee,
         TypeVariant::TransactionPhase,
@@ -45133,8 +45710,11 @@ impl TypeVariant {
         TypeVariant::Curve25519Public,
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
+        TypeVariant::ShortHashSeed,
+        TypeVariant::BinaryFuseFilterType,
+        TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 437] = [
+    pub const VARIANTS_STR: [&'static str; 444] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -45148,6 +45728,7 @@ impl TypeVariant {
         "ScpQuorumSet",
         "ConfigSettingContractExecutionLanesV0",
         "ConfigSettingContractComputeV0",
+        "ConfigSettingContractParallelComputeV0",
         "ConfigSettingContractLedgerCostV0",
         "ConfigSettingContractHistoricalDataV0",
         "ConfigSettingContractEventsV0",
@@ -45314,6 +45895,9 @@ impl TypeVariant {
         "BucketMetadataExt",
         "BucketEntry",
         "TxSetComponentType",
+        "TxExecutionThread",
+        "ParallelTxExecutionStage",
+        "ParallelTxsComponent",
         "TxSetComponent",
         "TxSetComponentTxsMaybeDiscountedFee",
         "TransactionPhase",
@@ -45572,6 +46156,9 @@ impl TypeVariant {
         "Curve25519Public",
         "HmacSha256Key",
         "HmacSha256Mac",
+        "ShortHashSeed",
+        "BinaryFuseFilterType",
+        "SerializedBinaryFuseFilter",
     ];
 
     #[must_use]
@@ -45591,6 +46178,9 @@ impl TypeVariant {
             Self::ScpQuorumSet => "ScpQuorumSet",
             Self::ConfigSettingContractExecutionLanesV0 => "ConfigSettingContractExecutionLanesV0",
             Self::ConfigSettingContractComputeV0 => "ConfigSettingContractComputeV0",
+            Self::ConfigSettingContractParallelComputeV0 => {
+                "ConfigSettingContractParallelComputeV0"
+            }
             Self::ConfigSettingContractLedgerCostV0 => "ConfigSettingContractLedgerCostV0",
             Self::ConfigSettingContractHistoricalDataV0 => "ConfigSettingContractHistoricalDataV0",
             Self::ConfigSettingContractEventsV0 => "ConfigSettingContractEventsV0",
@@ -45759,6 +46349,9 @@ impl TypeVariant {
             Self::BucketMetadataExt => "BucketMetadataExt",
             Self::BucketEntry => "BucketEntry",
             Self::TxSetComponentType => "TxSetComponentType",
+            Self::TxExecutionThread => "TxExecutionThread",
+            Self::ParallelTxExecutionStage => "ParallelTxExecutionStage",
+            Self::ParallelTxsComponent => "ParallelTxsComponent",
             Self::TxSetComponent => "TxSetComponent",
             Self::TxSetComponentTxsMaybeDiscountedFee => "TxSetComponentTxsMaybeDiscountedFee",
             Self::TransactionPhase => "TransactionPhase",
@@ -46027,12 +46620,15 @@ impl TypeVariant {
             Self::Curve25519Public => "Curve25519Public",
             Self::HmacSha256Key => "HmacSha256Key",
             Self::HmacSha256Mac => "HmacSha256Mac",
+            Self::ShortHashSeed => "ShortHashSeed",
+            Self::BinaryFuseFilterType => "BinaryFuseFilterType",
+            Self::SerializedBinaryFuseFilter => "SerializedBinaryFuseFilter",
         }
     }
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 437] {
+    pub const fn variants() -> [TypeVariant; 444] {
         Self::VARIANTS
     }
 
@@ -46057,6 +46653,9 @@ impl TypeVariant {
             }
             Self::ConfigSettingContractComputeV0 => {
                 gen.into_root_schema_for::<ConfigSettingContractComputeV0>()
+            }
+            Self::ConfigSettingContractParallelComputeV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractParallelComputeV0>()
             }
             Self::ConfigSettingContractLedgerCostV0 => {
                 gen.into_root_schema_for::<ConfigSettingContractLedgerCostV0>()
@@ -46268,6 +46867,11 @@ impl TypeVariant {
             Self::BucketMetadataExt => gen.into_root_schema_for::<BucketMetadataExt>(),
             Self::BucketEntry => gen.into_root_schema_for::<BucketEntry>(),
             Self::TxSetComponentType => gen.into_root_schema_for::<TxSetComponentType>(),
+            Self::TxExecutionThread => gen.into_root_schema_for::<TxExecutionThread>(),
+            Self::ParallelTxExecutionStage => {
+                gen.into_root_schema_for::<ParallelTxExecutionStage>()
+            }
+            Self::ParallelTxsComponent => gen.into_root_schema_for::<ParallelTxsComponent>(),
             Self::TxSetComponent => gen.into_root_schema_for::<TxSetComponent>(),
             Self::TxSetComponentTxsMaybeDiscountedFee => {
                 gen.into_root_schema_for::<TxSetComponentTxsMaybeDiscountedFee>()
@@ -46678,6 +47282,11 @@ impl TypeVariant {
             Self::Curve25519Public => gen.into_root_schema_for::<Curve25519Public>(),
             Self::HmacSha256Key => gen.into_root_schema_for::<HmacSha256Key>(),
             Self::HmacSha256Mac => gen.into_root_schema_for::<HmacSha256Mac>(),
+            Self::ShortHashSeed => gen.into_root_schema_for::<ShortHashSeed>(),
+            Self::BinaryFuseFilterType => gen.into_root_schema_for::<BinaryFuseFilterType>(),
+            Self::SerializedBinaryFuseFilter => {
+                gen.into_root_schema_for::<SerializedBinaryFuseFilter>()
+            }
         }
     }
 }
@@ -46715,6 +47324,9 @@ impl core::str::FromStr for TypeVariant {
                 Ok(Self::ConfigSettingContractExecutionLanesV0)
             }
             "ConfigSettingContractComputeV0" => Ok(Self::ConfigSettingContractComputeV0),
+            "ConfigSettingContractParallelComputeV0" => {
+                Ok(Self::ConfigSettingContractParallelComputeV0)
+            }
             "ConfigSettingContractLedgerCostV0" => Ok(Self::ConfigSettingContractLedgerCostV0),
             "ConfigSettingContractHistoricalDataV0" => {
                 Ok(Self::ConfigSettingContractHistoricalDataV0)
@@ -46885,6 +47497,9 @@ impl core::str::FromStr for TypeVariant {
             "BucketMetadataExt" => Ok(Self::BucketMetadataExt),
             "BucketEntry" => Ok(Self::BucketEntry),
             "TxSetComponentType" => Ok(Self::TxSetComponentType),
+            "TxExecutionThread" => Ok(Self::TxExecutionThread),
+            "ParallelTxExecutionStage" => Ok(Self::ParallelTxExecutionStage),
+            "ParallelTxsComponent" => Ok(Self::ParallelTxsComponent),
             "TxSetComponent" => Ok(Self::TxSetComponent),
             "TxSetComponentTxsMaybeDiscountedFee" => Ok(Self::TxSetComponentTxsMaybeDiscountedFee),
             "TransactionPhase" => Ok(Self::TransactionPhase),
@@ -47163,6 +47778,9 @@ impl core::str::FromStr for TypeVariant {
             "Curve25519Public" => Ok(Self::Curve25519Public),
             "HmacSha256Key" => Ok(Self::HmacSha256Key),
             "HmacSha256Mac" => Ok(Self::HmacSha256Mac),
+            "ShortHashSeed" => Ok(Self::ShortHashSeed),
+            "BinaryFuseFilterType" => Ok(Self::BinaryFuseFilterType),
+            "SerializedBinaryFuseFilter" => Ok(Self::SerializedBinaryFuseFilter),
             _ => Err(Error::Invalid),
         }
     }
@@ -47190,6 +47808,7 @@ pub enum Type {
     ScpQuorumSet(Box<ScpQuorumSet>),
     ConfigSettingContractExecutionLanesV0(Box<ConfigSettingContractExecutionLanesV0>),
     ConfigSettingContractComputeV0(Box<ConfigSettingContractComputeV0>),
+    ConfigSettingContractParallelComputeV0(Box<ConfigSettingContractParallelComputeV0>),
     ConfigSettingContractLedgerCostV0(Box<ConfigSettingContractLedgerCostV0>),
     ConfigSettingContractHistoricalDataV0(Box<ConfigSettingContractHistoricalDataV0>),
     ConfigSettingContractEventsV0(Box<ConfigSettingContractEventsV0>),
@@ -47356,6 +47975,9 @@ pub enum Type {
     BucketMetadataExt(Box<BucketMetadataExt>),
     BucketEntry(Box<BucketEntry>),
     TxSetComponentType(Box<TxSetComponentType>),
+    TxExecutionThread(Box<TxExecutionThread>),
+    ParallelTxExecutionStage(Box<ParallelTxExecutionStage>),
+    ParallelTxsComponent(Box<ParallelTxsComponent>),
     TxSetComponent(Box<TxSetComponent>),
     TxSetComponentTxsMaybeDiscountedFee(Box<TxSetComponentTxsMaybeDiscountedFee>),
     TransactionPhase(Box<TransactionPhase>),
@@ -47614,10 +48236,13 @@ pub enum Type {
     Curve25519Public(Box<Curve25519Public>),
     HmacSha256Key(Box<HmacSha256Key>),
     HmacSha256Mac(Box<HmacSha256Mac>),
+    ShortHashSeed(Box<ShortHashSeed>),
+    BinaryFuseFilterType(Box<BinaryFuseFilterType>),
+    SerializedBinaryFuseFilter(Box<SerializedBinaryFuseFilter>),
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 437] = [
+    pub const VARIANTS: [TypeVariant; 444] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -47631,6 +48256,7 @@ impl Type {
         TypeVariant::ScpQuorumSet,
         TypeVariant::ConfigSettingContractExecutionLanesV0,
         TypeVariant::ConfigSettingContractComputeV0,
+        TypeVariant::ConfigSettingContractParallelComputeV0,
         TypeVariant::ConfigSettingContractLedgerCostV0,
         TypeVariant::ConfigSettingContractHistoricalDataV0,
         TypeVariant::ConfigSettingContractEventsV0,
@@ -47797,6 +48423,9 @@ impl Type {
         TypeVariant::BucketMetadataExt,
         TypeVariant::BucketEntry,
         TypeVariant::TxSetComponentType,
+        TypeVariant::TxExecutionThread,
+        TypeVariant::ParallelTxExecutionStage,
+        TypeVariant::ParallelTxsComponent,
         TypeVariant::TxSetComponent,
         TypeVariant::TxSetComponentTxsMaybeDiscountedFee,
         TypeVariant::TransactionPhase,
@@ -48055,8 +48684,11 @@ impl Type {
         TypeVariant::Curve25519Public,
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
+        TypeVariant::ShortHashSeed,
+        TypeVariant::BinaryFuseFilterType,
+        TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 437] = [
+    pub const VARIANTS_STR: [&'static str; 444] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -48070,6 +48702,7 @@ impl Type {
         "ScpQuorumSet",
         "ConfigSettingContractExecutionLanesV0",
         "ConfigSettingContractComputeV0",
+        "ConfigSettingContractParallelComputeV0",
         "ConfigSettingContractLedgerCostV0",
         "ConfigSettingContractHistoricalDataV0",
         "ConfigSettingContractEventsV0",
@@ -48236,6 +48869,9 @@ impl Type {
         "BucketMetadataExt",
         "BucketEntry",
         "TxSetComponentType",
+        "TxExecutionThread",
+        "ParallelTxExecutionStage",
+        "ParallelTxsComponent",
         "TxSetComponent",
         "TxSetComponentTxsMaybeDiscountedFee",
         "TransactionPhase",
@@ -48494,6 +49130,9 @@ impl Type {
         "Curve25519Public",
         "HmacSha256Key",
         "HmacSha256Mac",
+        "ShortHashSeed",
+        "BinaryFuseFilterType",
+        "SerializedBinaryFuseFilter",
     ];
 
     #[cfg(feature = "std")]
@@ -48551,6 +49190,11 @@ impl Type {
             TypeVariant::ConfigSettingContractComputeV0 => r.with_limited_depth(|r| {
                 Ok(Self::ConfigSettingContractComputeV0(Box::new(
                     ConfigSettingContractComputeV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingContractParallelComputeV0(Box::new(
+                    ConfigSettingContractParallelComputeV0::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ConfigSettingContractLedgerCostV0 => r.with_limited_depth(|r| {
@@ -49237,6 +49881,21 @@ impl Type {
             TypeVariant::TxSetComponentType => r.with_limited_depth(|r| {
                 Ok(Self::TxSetComponentType(Box::new(
                     TxSetComponentType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TxExecutionThread => r.with_limited_depth(|r| {
+                Ok(Self::TxExecutionThread(Box::new(
+                    TxExecutionThread::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ParallelTxExecutionStage => r.with_limited_depth(|r| {
+                Ok(Self::ParallelTxExecutionStage(Box::new(
+                    ParallelTxExecutionStage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ParallelTxsComponent => r.with_limited_depth(|r| {
+                Ok(Self::ParallelTxsComponent(Box::new(
+                    ParallelTxsComponent::read_xdr(r)?,
                 )))
             }),
             TypeVariant::TxSetComponent => r.with_limited_depth(|r| {
@@ -50395,6 +51054,19 @@ impl Type {
             TypeVariant::HmacSha256Mac => r.with_limited_depth(|r| {
                 Ok(Self::HmacSha256Mac(Box::new(HmacSha256Mac::read_xdr(r)?)))
             }),
+            TypeVariant::ShortHashSeed => r.with_limited_depth(|r| {
+                Ok(Self::ShortHashSeed(Box::new(ShortHashSeed::read_xdr(r)?)))
+            }),
+            TypeVariant::BinaryFuseFilterType => r.with_limited_depth(|r| {
+                Ok(Self::BinaryFuseFilterType(Box::new(
+                    BinaryFuseFilterType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SerializedBinaryFuseFilter => r.with_limited_depth(|r| {
+                Ok(Self::SerializedBinaryFuseFilter(Box::new(
+                    SerializedBinaryFuseFilter::read_xdr(r)?,
+                )))
+            }),
         }
     }
 
@@ -50494,6 +51166,13 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractParallelComputeV0>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractParallelComputeV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(
@@ -51182,6 +51861,18 @@ impl Type {
             TypeVariant::TxSetComponentType => Box::new(
                 ReadXdrIter::<_, TxSetComponentType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
+            ),
+            TypeVariant::TxExecutionThread => Box::new(
+                ReadXdrIter::<_, TxExecutionThread>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TxExecutionThread(Box::new(t)))),
+            ),
+            TypeVariant::ParallelTxExecutionStage => Box::new(
+                ReadXdrIter::<_, ParallelTxExecutionStage>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ParallelTxExecutionStage(Box::new(t)))),
+            ),
+            TypeVariant::ParallelTxsComponent => Box::new(
+                ReadXdrIter::<_, ParallelTxsComponent>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ParallelTxsComponent(Box::new(t)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
                 ReadXdrIter::<_, TxSetComponent>::new(&mut r.inner, r.limits.clone())
@@ -52321,6 +53012,18 @@ impl Type {
                 ReadXdrIter::<_, HmacSha256Mac>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t)))),
             ),
+            TypeVariant::ShortHashSeed => Box::new(
+                ReadXdrIter::<_, ShortHashSeed>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ShortHashSeed(Box::new(t)))),
+            ),
+            TypeVariant::BinaryFuseFilterType => Box::new(
+                ReadXdrIter::<_, BinaryFuseFilterType>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::BinaryFuseFilterType(Box::new(t)))),
+            ),
+            TypeVariant::SerializedBinaryFuseFilter => Box::new(
+                ReadXdrIter::<_, SerializedBinaryFuseFilter>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SerializedBinaryFuseFilter(Box::new(t)))),
+            ),
         }
     }
 
@@ -52391,6 +53094,13 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractParallelComputeV0>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractParallelComputeV0(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractLedgerCostV0>>::new(
@@ -53163,6 +53873,21 @@ impl Type {
             TypeVariant::TxSetComponentType => Box::new(
                 ReadXdrIter::<_, Frame<TxSetComponentType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t.0)))),
+            ),
+            TypeVariant::TxExecutionThread => Box::new(
+                ReadXdrIter::<_, Frame<TxExecutionThread>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TxExecutionThread(Box::new(t.0)))),
+            ),
+            TypeVariant::ParallelTxExecutionStage => Box::new(
+                ReadXdrIter::<_, Frame<ParallelTxExecutionStage>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ParallelTxExecutionStage(Box::new(t.0)))),
+            ),
+            TypeVariant::ParallelTxsComponent => Box::new(
+                ReadXdrIter::<_, Frame<ParallelTxsComponent>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ParallelTxsComponent(Box::new(t.0)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
                 ReadXdrIter::<_, Frame<TxSetComponent>>::new(&mut r.inner, r.limits.clone())
@@ -54502,6 +55227,21 @@ impl Type {
                 ReadXdrIter::<_, Frame<HmacSha256Mac>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t.0)))),
             ),
+            TypeVariant::ShortHashSeed => Box::new(
+                ReadXdrIter::<_, Frame<ShortHashSeed>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ShortHashSeed(Box::new(t.0)))),
+            ),
+            TypeVariant::BinaryFuseFilterType => Box::new(
+                ReadXdrIter::<_, Frame<BinaryFuseFilterType>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::BinaryFuseFilterType(Box::new(t.0)))),
+            ),
+            TypeVariant::SerializedBinaryFuseFilter => Box::new(
+                ReadXdrIter::<_, Frame<SerializedBinaryFuseFilter>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SerializedBinaryFuseFilter(Box::new(t.0)))),
+            ),
         }
     }
 
@@ -54564,6 +55304,13 @@ impl Type {
             TypeVariant::ConfigSettingContractComputeV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractParallelComputeV0>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractParallelComputeV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(dec, r.limits.clone())
@@ -55231,6 +55978,18 @@ impl Type {
             TypeVariant::TxSetComponentType => Box::new(
                 ReadXdrIter::<_, TxSetComponentType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
+            ),
+            TypeVariant::TxExecutionThread => Box::new(
+                ReadXdrIter::<_, TxExecutionThread>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TxExecutionThread(Box::new(t)))),
+            ),
+            TypeVariant::ParallelTxExecutionStage => Box::new(
+                ReadXdrIter::<_, ParallelTxExecutionStage>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ParallelTxExecutionStage(Box::new(t)))),
+            ),
+            TypeVariant::ParallelTxsComponent => Box::new(
+                ReadXdrIter::<_, ParallelTxsComponent>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ParallelTxsComponent(Box::new(t)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
                 ReadXdrIter::<_, TxSetComponent>::new(dec, r.limits.clone())
@@ -56283,6 +57042,18 @@ impl Type {
                 ReadXdrIter::<_, HmacSha256Mac>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t)))),
             ),
+            TypeVariant::ShortHashSeed => Box::new(
+                ReadXdrIter::<_, ShortHashSeed>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ShortHashSeed(Box::new(t)))),
+            ),
+            TypeVariant::BinaryFuseFilterType => Box::new(
+                ReadXdrIter::<_, BinaryFuseFilterType>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::BinaryFuseFilterType(Box::new(t)))),
+            ),
+            TypeVariant::SerializedBinaryFuseFilter => Box::new(
+                ReadXdrIter::<_, SerializedBinaryFuseFilter>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SerializedBinaryFuseFilter(Box::new(t)))),
+            ),
         }
     }
 
@@ -56342,6 +57113,9 @@ impl Type {
             ),
             TypeVariant::ConfigSettingContractComputeV0 => Ok(
                 Self::ConfigSettingContractComputeV0(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => Ok(
+                Self::ConfigSettingContractParallelComputeV0(Box::new(serde_json::from_reader(r)?)),
             ),
             TypeVariant::ConfigSettingContractLedgerCostV0 => Ok(
                 Self::ConfigSettingContractLedgerCostV0(Box::new(serde_json::from_reader(r)?)),
@@ -56773,6 +57547,15 @@ impl Type {
                 Ok(Self::BucketEntry(Box::new(serde_json::from_reader(r)?)))
             }
             TypeVariant::TxSetComponentType => Ok(Self::TxSetComponentType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TxExecutionThread => Ok(Self::TxExecutionThread(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ParallelTxExecutionStage => Ok(Self::ParallelTxExecutionStage(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ParallelTxsComponent => Ok(Self::ParallelTxsComponent(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::TxSetComponent => {
@@ -57499,6 +58282,15 @@ impl Type {
             TypeVariant::HmacSha256Mac => {
                 Ok(Self::HmacSha256Mac(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::ShortHashSeed => {
+                Ok(Self::ShortHashSeed(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::BinaryFuseFilterType => Ok(Self::BinaryFuseFilterType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SerializedBinaryFuseFilter => Ok(Self::SerializedBinaryFuseFilter(
+                Box::new(serde_json::from_reader(r)?),
+            )),
         }
     }
 
@@ -57521,6 +58313,7 @@ impl Type {
             Self::ScpQuorumSet(ref v) => v.as_ref(),
             Self::ConfigSettingContractExecutionLanesV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractComputeV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractParallelComputeV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractLedgerCostV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractHistoricalDataV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractEventsV0(ref v) => v.as_ref(),
@@ -57687,6 +58480,9 @@ impl Type {
             Self::BucketMetadataExt(ref v) => v.as_ref(),
             Self::BucketEntry(ref v) => v.as_ref(),
             Self::TxSetComponentType(ref v) => v.as_ref(),
+            Self::TxExecutionThread(ref v) => v.as_ref(),
+            Self::ParallelTxExecutionStage(ref v) => v.as_ref(),
+            Self::ParallelTxsComponent(ref v) => v.as_ref(),
             Self::TxSetComponent(ref v) => v.as_ref(),
             Self::TxSetComponentTxsMaybeDiscountedFee(ref v) => v.as_ref(),
             Self::TransactionPhase(ref v) => v.as_ref(),
@@ -57945,6 +58741,9 @@ impl Type {
             Self::Curve25519Public(ref v) => v.as_ref(),
             Self::HmacSha256Key(ref v) => v.as_ref(),
             Self::HmacSha256Mac(ref v) => v.as_ref(),
+            Self::ShortHashSeed(ref v) => v.as_ref(),
+            Self::BinaryFuseFilterType(ref v) => v.as_ref(),
+            Self::SerializedBinaryFuseFilter(ref v) => v.as_ref(),
         }
     }
 
@@ -57967,6 +58766,9 @@ impl Type {
                 "ConfigSettingContractExecutionLanesV0"
             }
             Self::ConfigSettingContractComputeV0(_) => "ConfigSettingContractComputeV0",
+            Self::ConfigSettingContractParallelComputeV0(_) => {
+                "ConfigSettingContractParallelComputeV0"
+            }
             Self::ConfigSettingContractLedgerCostV0(_) => "ConfigSettingContractLedgerCostV0",
             Self::ConfigSettingContractHistoricalDataV0(_) => {
                 "ConfigSettingContractHistoricalDataV0"
@@ -58137,6 +58939,9 @@ impl Type {
             Self::BucketMetadataExt(_) => "BucketMetadataExt",
             Self::BucketEntry(_) => "BucketEntry",
             Self::TxSetComponentType(_) => "TxSetComponentType",
+            Self::TxExecutionThread(_) => "TxExecutionThread",
+            Self::ParallelTxExecutionStage(_) => "ParallelTxExecutionStage",
+            Self::ParallelTxsComponent(_) => "ParallelTxsComponent",
             Self::TxSetComponent(_) => "TxSetComponent",
             Self::TxSetComponentTxsMaybeDiscountedFee(_) => "TxSetComponentTxsMaybeDiscountedFee",
             Self::TransactionPhase(_) => "TransactionPhase",
@@ -58413,12 +59218,15 @@ impl Type {
             Self::Curve25519Public(_) => "Curve25519Public",
             Self::HmacSha256Key(_) => "HmacSha256Key",
             Self::HmacSha256Mac(_) => "HmacSha256Mac",
+            Self::ShortHashSeed(_) => "ShortHashSeed",
+            Self::BinaryFuseFilterType(_) => "BinaryFuseFilterType",
+            Self::SerializedBinaryFuseFilter(_) => "SerializedBinaryFuseFilter",
         }
     }
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 437] {
+    pub const fn variants() -> [TypeVariant; 444] {
         Self::VARIANTS
     }
 
@@ -58441,6 +59249,9 @@ impl Type {
                 TypeVariant::ConfigSettingContractExecutionLanesV0
             }
             Self::ConfigSettingContractComputeV0(_) => TypeVariant::ConfigSettingContractComputeV0,
+            Self::ConfigSettingContractParallelComputeV0(_) => {
+                TypeVariant::ConfigSettingContractParallelComputeV0
+            }
             Self::ConfigSettingContractLedgerCostV0(_) => {
                 TypeVariant::ConfigSettingContractLedgerCostV0
             }
@@ -58621,6 +59432,9 @@ impl Type {
             Self::BucketMetadataExt(_) => TypeVariant::BucketMetadataExt,
             Self::BucketEntry(_) => TypeVariant::BucketEntry,
             Self::TxSetComponentType(_) => TypeVariant::TxSetComponentType,
+            Self::TxExecutionThread(_) => TypeVariant::TxExecutionThread,
+            Self::ParallelTxExecutionStage(_) => TypeVariant::ParallelTxExecutionStage,
+            Self::ParallelTxsComponent(_) => TypeVariant::ParallelTxsComponent,
             Self::TxSetComponent(_) => TypeVariant::TxSetComponent,
             Self::TxSetComponentTxsMaybeDiscountedFee(_) => {
                 TypeVariant::TxSetComponentTxsMaybeDiscountedFee
@@ -58929,6 +59743,9 @@ impl Type {
             Self::Curve25519Public(_) => TypeVariant::Curve25519Public,
             Self::HmacSha256Key(_) => TypeVariant::HmacSha256Key,
             Self::HmacSha256Mac(_) => TypeVariant::HmacSha256Mac,
+            Self::ShortHashSeed(_) => TypeVariant::ShortHashSeed,
+            Self::BinaryFuseFilterType(_) => TypeVariant::BinaryFuseFilterType,
+            Self::SerializedBinaryFuseFilter(_) => TypeVariant::SerializedBinaryFuseFilter,
         }
     }
 }
@@ -58964,6 +59781,7 @@ impl WriteXdr for Type {
             Self::ScpQuorumSet(v) => v.write_xdr(w),
             Self::ConfigSettingContractExecutionLanesV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractComputeV0(v) => v.write_xdr(w),
+            Self::ConfigSettingContractParallelComputeV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractLedgerCostV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractHistoricalDataV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractEventsV0(v) => v.write_xdr(w),
@@ -59130,6 +59948,9 @@ impl WriteXdr for Type {
             Self::BucketMetadataExt(v) => v.write_xdr(w),
             Self::BucketEntry(v) => v.write_xdr(w),
             Self::TxSetComponentType(v) => v.write_xdr(w),
+            Self::TxExecutionThread(v) => v.write_xdr(w),
+            Self::ParallelTxExecutionStage(v) => v.write_xdr(w),
+            Self::ParallelTxsComponent(v) => v.write_xdr(w),
             Self::TxSetComponent(v) => v.write_xdr(w),
             Self::TxSetComponentTxsMaybeDiscountedFee(v) => v.write_xdr(w),
             Self::TransactionPhase(v) => v.write_xdr(w),
@@ -59388,6 +60209,9 @@ impl WriteXdr for Type {
             Self::Curve25519Public(v) => v.write_xdr(w),
             Self::HmacSha256Key(v) => v.write_xdr(w),
             Self::HmacSha256Mac(v) => v.write_xdr(w),
+            Self::ShortHashSeed(v) => v.write_xdr(w),
+            Self::BinaryFuseFilterType(v) => v.write_xdr(w),
+            Self::SerializedBinaryFuseFilter(v) => v.write_xdr(w),
         }
     }
 }

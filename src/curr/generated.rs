@@ -62,7 +62,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-types.x",
-        "6e3b13f0d3e360b09fa5e2b0e55d43f4d974a769df66afb34e8aecbb329d3f15",
+        "253f515fc5e06bc938105e92a4c7f562251d4ebc178d39d6e6751e6b85fe1064",
     ),
 ];
 
@@ -44353,6 +44353,242 @@ impl WriteXdr for HmacSha256Mac {
     }
 }
 
+/// ShortHashSeed is an XDR Struct defines as:
+///
+/// ```text
+/// struct ShortHashSeed
+/// {
+///     opaque seed[16];
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ShortHashSeed {
+    pub seed: [u8; 16],
+}
+
+impl ReadXdr for ShortHashSeed {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                seed: <[u8; 16]>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ShortHashSeed {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.seed.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// BinaryFuseFilterType is an XDR Enum defines as:
+///
+/// ```text
+/// enum BinaryFuseFilterType
+/// {
+///     BINARY_FUSE_FILTER_8_BIT = 0,
+///     BINARY_FUSE_FILTER_16_BIT = 1,
+///     BINARY_FUSE_FILTER_32_BIT = 2
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum BinaryFuseFilterType {
+    B8Bit = 0,
+    B16Bit = 1,
+    B32Bit = 2,
+}
+
+impl BinaryFuseFilterType {
+    pub const VARIANTS: [BinaryFuseFilterType; 3] = [
+        BinaryFuseFilterType::B8Bit,
+        BinaryFuseFilterType::B16Bit,
+        BinaryFuseFilterType::B32Bit,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["B8Bit", "B16Bit", "B32Bit"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::B8Bit => "B8Bit",
+            Self::B16Bit => "B16Bit",
+            Self::B32Bit => "B32Bit",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [BinaryFuseFilterType; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for BinaryFuseFilterType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<BinaryFuseFilterType> for BinaryFuseFilterType {
+    fn variants() -> slice::Iter<'static, BinaryFuseFilterType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for BinaryFuseFilterType {}
+
+impl fmt::Display for BinaryFuseFilterType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for BinaryFuseFilterType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => BinaryFuseFilterType::B8Bit,
+            1 => BinaryFuseFilterType::B16Bit,
+            2 => BinaryFuseFilterType::B32Bit,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<BinaryFuseFilterType> for i32 {
+    #[must_use]
+    fn from(e: BinaryFuseFilterType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for BinaryFuseFilterType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for BinaryFuseFilterType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+/// SerializedBinaryFuseFilter is an XDR Struct defines as:
+///
+/// ```text
+/// struct SerializedBinaryFuseFilter
+/// {
+///     BinaryFuseFilterType type;
+///
+///     // Seed used to hash input to filter
+///     ShortHashSeed inputHashSeed;
+///
+///     // Seed used for internal filter hash operations
+///     ShortHashSeed filterSeed;
+///     uint32 segmentLength;
+///     uint32 segementLengthMask;
+///     uint32 segmentCount;
+///     uint32 segmentCountLength;
+///     uint32 fingerprintLength; // Length in terms of element count, not bytes
+///
+///     // Array of uint8_t, uint16_t, or uint32_t depending on filter type
+///     opaque fingerprints<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct SerializedBinaryFuseFilter {
+    pub type_: BinaryFuseFilterType,
+    pub input_hash_seed: ShortHashSeed,
+    pub filter_seed: ShortHashSeed,
+    pub segment_length: u32,
+    pub segement_length_mask: u32,
+    pub segment_count: u32,
+    pub segment_count_length: u32,
+    pub fingerprint_length: u32,
+    pub fingerprints: BytesM,
+}
+
+impl ReadXdr for SerializedBinaryFuseFilter {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                type_: BinaryFuseFilterType::read_xdr(r)?,
+                input_hash_seed: ShortHashSeed::read_xdr(r)?,
+                filter_seed: ShortHashSeed::read_xdr(r)?,
+                segment_length: u32::read_xdr(r)?,
+                segement_length_mask: u32::read_xdr(r)?,
+                segment_count: u32::read_xdr(r)?,
+                segment_count_length: u32::read_xdr(r)?,
+                fingerprint_length: u32::read_xdr(r)?,
+                fingerprints: BytesM::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SerializedBinaryFuseFilter {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.type_.write_xdr(w)?;
+            self.input_hash_seed.write_xdr(w)?;
+            self.filter_seed.write_xdr(w)?;
+            self.segment_length.write_xdr(w)?;
+            self.segement_length_mask.write_xdr(w)?;
+            self.segment_count.write_xdr(w)?;
+            self.segment_count_length.write_xdr(w)?;
+            self.fingerprint_length.write_xdr(w)?;
+            self.fingerprints.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -44799,10 +45035,13 @@ pub enum TypeVariant {
     Curve25519Public,
     HmacSha256Key,
     HmacSha256Mac,
+    ShortHashSeed,
+    BinaryFuseFilterType,
+    SerializedBinaryFuseFilter,
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 438] = [
+    pub const VARIANTS: [TypeVariant; 441] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -45241,8 +45480,11 @@ impl TypeVariant {
         TypeVariant::Curve25519Public,
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
+        TypeVariant::ShortHashSeed,
+        TypeVariant::BinaryFuseFilterType,
+        TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 438] = [
+    pub const VARIANTS_STR: [&'static str; 441] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -45681,6 +45923,9 @@ impl TypeVariant {
         "Curve25519Public",
         "HmacSha256Key",
         "HmacSha256Mac",
+        "ShortHashSeed",
+        "BinaryFuseFilterType",
+        "SerializedBinaryFuseFilter",
     ];
 
     #[must_use]
@@ -46137,12 +46382,15 @@ impl TypeVariant {
             Self::Curve25519Public => "Curve25519Public",
             Self::HmacSha256Key => "HmacSha256Key",
             Self::HmacSha256Mac => "HmacSha256Mac",
+            Self::ShortHashSeed => "ShortHashSeed",
+            Self::BinaryFuseFilterType => "BinaryFuseFilterType",
+            Self::SerializedBinaryFuseFilter => "SerializedBinaryFuseFilter",
         }
     }
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 438] {
+    pub const fn variants() -> [TypeVariant; 441] {
         Self::VARIANTS
     }
 
@@ -46789,6 +47037,11 @@ impl TypeVariant {
             Self::Curve25519Public => gen.into_root_schema_for::<Curve25519Public>(),
             Self::HmacSha256Key => gen.into_root_schema_for::<HmacSha256Key>(),
             Self::HmacSha256Mac => gen.into_root_schema_for::<HmacSha256Mac>(),
+            Self::ShortHashSeed => gen.into_root_schema_for::<ShortHashSeed>(),
+            Self::BinaryFuseFilterType => gen.into_root_schema_for::<BinaryFuseFilterType>(),
+            Self::SerializedBinaryFuseFilter => {
+                gen.into_root_schema_for::<SerializedBinaryFuseFilter>()
+            }
         }
     }
 }
@@ -47275,6 +47528,9 @@ impl core::str::FromStr for TypeVariant {
             "Curve25519Public" => Ok(Self::Curve25519Public),
             "HmacSha256Key" => Ok(Self::HmacSha256Key),
             "HmacSha256Mac" => Ok(Self::HmacSha256Mac),
+            "ShortHashSeed" => Ok(Self::ShortHashSeed),
+            "BinaryFuseFilterType" => Ok(Self::BinaryFuseFilterType),
+            "SerializedBinaryFuseFilter" => Ok(Self::SerializedBinaryFuseFilter),
             _ => Err(Error::Invalid),
         }
     }
@@ -47727,10 +47983,13 @@ pub enum Type {
     Curve25519Public(Box<Curve25519Public>),
     HmacSha256Key(Box<HmacSha256Key>),
     HmacSha256Mac(Box<HmacSha256Mac>),
+    ShortHashSeed(Box<ShortHashSeed>),
+    BinaryFuseFilterType(Box<BinaryFuseFilterType>),
+    SerializedBinaryFuseFilter(Box<SerializedBinaryFuseFilter>),
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 438] = [
+    pub const VARIANTS: [TypeVariant; 441] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -48169,8 +48428,11 @@ impl Type {
         TypeVariant::Curve25519Public,
         TypeVariant::HmacSha256Key,
         TypeVariant::HmacSha256Mac,
+        TypeVariant::ShortHashSeed,
+        TypeVariant::BinaryFuseFilterType,
+        TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 438] = [
+    pub const VARIANTS_STR: [&'static str; 441] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -48609,6 +48871,9 @@ impl Type {
         "Curve25519Public",
         "HmacSha256Key",
         "HmacSha256Mac",
+        "ShortHashSeed",
+        "BinaryFuseFilterType",
+        "SerializedBinaryFuseFilter",
     ];
 
     #[cfg(feature = "std")]
@@ -50514,6 +50779,19 @@ impl Type {
             }),
             TypeVariant::HmacSha256Mac => r.with_limited_depth(|r| {
                 Ok(Self::HmacSha256Mac(Box::new(HmacSha256Mac::read_xdr(r)?)))
+            }),
+            TypeVariant::ShortHashSeed => r.with_limited_depth(|r| {
+                Ok(Self::ShortHashSeed(Box::new(ShortHashSeed::read_xdr(r)?)))
+            }),
+            TypeVariant::BinaryFuseFilterType => r.with_limited_depth(|r| {
+                Ok(Self::BinaryFuseFilterType(Box::new(
+                    BinaryFuseFilterType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SerializedBinaryFuseFilter => r.with_limited_depth(|r| {
+                Ok(Self::SerializedBinaryFuseFilter(Box::new(
+                    SerializedBinaryFuseFilter::read_xdr(r)?,
+                )))
             }),
         }
     }
@@ -52444,6 +52722,18 @@ impl Type {
             TypeVariant::HmacSha256Mac => Box::new(
                 ReadXdrIter::<_, HmacSha256Mac>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t)))),
+            ),
+            TypeVariant::ShortHashSeed => Box::new(
+                ReadXdrIter::<_, ShortHashSeed>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ShortHashSeed(Box::new(t)))),
+            ),
+            TypeVariant::BinaryFuseFilterType => Box::new(
+                ReadXdrIter::<_, BinaryFuseFilterType>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::BinaryFuseFilterType(Box::new(t)))),
+            ),
+            TypeVariant::SerializedBinaryFuseFilter => Box::new(
+                ReadXdrIter::<_, SerializedBinaryFuseFilter>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SerializedBinaryFuseFilter(Box::new(t)))),
             ),
         }
     }
@@ -54630,6 +54920,21 @@ impl Type {
                 ReadXdrIter::<_, Frame<HmacSha256Mac>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t.0)))),
             ),
+            TypeVariant::ShortHashSeed => Box::new(
+                ReadXdrIter::<_, Frame<ShortHashSeed>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ShortHashSeed(Box::new(t.0)))),
+            ),
+            TypeVariant::BinaryFuseFilterType => Box::new(
+                ReadXdrIter::<_, Frame<BinaryFuseFilterType>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::BinaryFuseFilterType(Box::new(t.0)))),
+            ),
+            TypeVariant::SerializedBinaryFuseFilter => Box::new(
+                ReadXdrIter::<_, Frame<SerializedBinaryFuseFilter>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SerializedBinaryFuseFilter(Box::new(t.0)))),
+            ),
         }
     }
 
@@ -56415,6 +56720,18 @@ impl Type {
                 ReadXdrIter::<_, HmacSha256Mac>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HmacSha256Mac(Box::new(t)))),
             ),
+            TypeVariant::ShortHashSeed => Box::new(
+                ReadXdrIter::<_, ShortHashSeed>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ShortHashSeed(Box::new(t)))),
+            ),
+            TypeVariant::BinaryFuseFilterType => Box::new(
+                ReadXdrIter::<_, BinaryFuseFilterType>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::BinaryFuseFilterType(Box::new(t)))),
+            ),
+            TypeVariant::SerializedBinaryFuseFilter => Box::new(
+                ReadXdrIter::<_, SerializedBinaryFuseFilter>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SerializedBinaryFuseFilter(Box::new(t)))),
+            ),
         }
     }
 
@@ -57634,6 +57951,15 @@ impl Type {
             TypeVariant::HmacSha256Mac => {
                 Ok(Self::HmacSha256Mac(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::ShortHashSeed => {
+                Ok(Self::ShortHashSeed(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::BinaryFuseFilterType => Ok(Self::BinaryFuseFilterType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SerializedBinaryFuseFilter => Ok(Self::SerializedBinaryFuseFilter(
+                Box::new(serde_json::from_reader(r)?),
+            )),
         }
     }
 
@@ -58081,6 +58407,9 @@ impl Type {
             Self::Curve25519Public(ref v) => v.as_ref(),
             Self::HmacSha256Key(ref v) => v.as_ref(),
             Self::HmacSha256Mac(ref v) => v.as_ref(),
+            Self::ShortHashSeed(ref v) => v.as_ref(),
+            Self::BinaryFuseFilterType(ref v) => v.as_ref(),
+            Self::SerializedBinaryFuseFilter(ref v) => v.as_ref(),
         }
     }
 
@@ -58550,12 +58879,15 @@ impl Type {
             Self::Curve25519Public(_) => "Curve25519Public",
             Self::HmacSha256Key(_) => "HmacSha256Key",
             Self::HmacSha256Mac(_) => "HmacSha256Mac",
+            Self::ShortHashSeed(_) => "ShortHashSeed",
+            Self::BinaryFuseFilterType(_) => "BinaryFuseFilterType",
+            Self::SerializedBinaryFuseFilter(_) => "SerializedBinaryFuseFilter",
         }
     }
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 438] {
+    pub const fn variants() -> [TypeVariant; 441] {
         Self::VARIANTS
     }
 
@@ -59067,6 +59399,9 @@ impl Type {
             Self::Curve25519Public(_) => TypeVariant::Curve25519Public,
             Self::HmacSha256Key(_) => TypeVariant::HmacSha256Key,
             Self::HmacSha256Mac(_) => TypeVariant::HmacSha256Mac,
+            Self::ShortHashSeed(_) => TypeVariant::ShortHashSeed,
+            Self::BinaryFuseFilterType(_) => TypeVariant::BinaryFuseFilterType,
+            Self::SerializedBinaryFuseFilter(_) => TypeVariant::SerializedBinaryFuseFilter,
         }
     }
 }
@@ -59527,6 +59862,9 @@ impl WriteXdr for Type {
             Self::Curve25519Public(v) => v.write_xdr(w),
             Self::HmacSha256Key(v) => v.write_xdr(w),
             Self::HmacSha256Mac(v) => v.write_xdr(w),
+            Self::ShortHashSeed(v) => v.write_xdr(w),
+            Self::BinaryFuseFilterType(v) => v.write_xdr(w),
+            Self::SerializedBinaryFuseFilter(v) => v.write_xdr(w),
         }
     }
 }

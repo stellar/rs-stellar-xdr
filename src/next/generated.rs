@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "3f9f0ad62cdd34390cf0cbe16e3266374c061b5f5abbe8fbe1396de32bcc23eb",
+        "0faadb179156fa2664366812e3757f0c6e637439dc2e7941c5dfcc8650b5d93d",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -18855,6 +18855,120 @@ impl WriteXdr for ConfigUpgradeSet {
     }
 }
 
+/// BucketListType is an XDR Enum defines as:
+///
+/// ```text
+/// enum BucketListType
+/// {
+///     LIVE = 0,
+///     HOT_ARCHIVE = 1,
+///     COLD_ARCHIVE = 2
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum BucketListType {
+    Live = 0,
+    HotArchive = 1,
+    ColdArchive = 2,
+}
+
+impl BucketListType {
+    pub const VARIANTS: [BucketListType; 3] = [
+        BucketListType::Live,
+        BucketListType::HotArchive,
+        BucketListType::ColdArchive,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["Live", "HotArchive", "ColdArchive"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Live => "Live",
+            Self::HotArchive => "HotArchive",
+            Self::ColdArchive => "ColdArchive",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [BucketListType; 3] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for BucketListType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<BucketListType> for BucketListType {
+    fn variants() -> slice::Iter<'static, BucketListType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for BucketListType {}
+
+impl fmt::Display for BucketListType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for BucketListType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => BucketListType::Live,
+            1 => BucketListType::HotArchive,
+            2 => BucketListType::ColdArchive,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<BucketListType> for i32 {
+    #[must_use]
+    fn from(e: BucketListType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for BucketListType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for BucketListType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
 /// BucketEntryType is an XDR Enum defines as:
 ///
 /// ```text
@@ -18977,6 +19091,127 @@ impl WriteXdr for BucketEntryType {
     }
 }
 
+/// HotArchiveBucketEntryType is an XDR Enum defines as:
+///
+/// ```text
+/// enum HotArchiveBucketEntryType
+/// {
+///     HOT_ARCHIVE_METAENTRY = -1, // Bucket metadata, should come first.
+///     HOT_ARCHIVE_ARCHIVED = 0,   // Entry is Archived
+///     HOT_ARCHIVE_LIVE = 1,       // Entry was previously HOT_ARCHIVE_ARCHIVED, or HOT_ARCHIVE_DELETED, but
+///                                 // has been added back to the live BucketList.
+///                                 // Does not need to be persisted.
+///     HOT_ARCHIVE_DELETED = 2     // Entry deleted (Note: must be persisted in archive)
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum HotArchiveBucketEntryType {
+    Metaentry = -1,
+    Archived = 0,
+    Live = 1,
+    Deleted = 2,
+}
+
+impl HotArchiveBucketEntryType {
+    pub const VARIANTS: [HotArchiveBucketEntryType; 4] = [
+        HotArchiveBucketEntryType::Metaentry,
+        HotArchiveBucketEntryType::Archived,
+        HotArchiveBucketEntryType::Live,
+        HotArchiveBucketEntryType::Deleted,
+    ];
+    pub const VARIANTS_STR: [&'static str; 4] = ["Metaentry", "Archived", "Live", "Deleted"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Metaentry => "Metaentry",
+            Self::Archived => "Archived",
+            Self::Live => "Live",
+            Self::Deleted => "Deleted",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [HotArchiveBucketEntryType; 4] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for HotArchiveBucketEntryType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<HotArchiveBucketEntryType> for HotArchiveBucketEntryType {
+    fn variants() -> slice::Iter<'static, HotArchiveBucketEntryType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for HotArchiveBucketEntryType {}
+
+impl fmt::Display for HotArchiveBucketEntryType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for HotArchiveBucketEntryType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            -1 => HotArchiveBucketEntryType::Metaentry,
+            0 => HotArchiveBucketEntryType::Archived,
+            1 => HotArchiveBucketEntryType::Live,
+            2 => HotArchiveBucketEntryType::Deleted,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<HotArchiveBucketEntryType> for i32 {
+    #[must_use]
+    fn from(e: HotArchiveBucketEntryType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for HotArchiveBucketEntryType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for HotArchiveBucketEntryType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
 /// BucketMetadataExt is an XDR NestedUnion defines as:
 ///
 /// ```text
@@ -18984,6 +19219,8 @@ impl WriteXdr for BucketEntryType {
 ///     {
 ///     case 0:
 ///         void;
+///     case 1:
+///         BucketListType bucketListType;
 ///     }
 /// ```
 ///
@@ -18999,16 +19236,18 @@ impl WriteXdr for BucketEntryType {
 #[allow(clippy::large_enum_variant)]
 pub enum BucketMetadataExt {
     V0,
+    V1(BucketListType),
 }
 
 impl BucketMetadataExt {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
+            Self::V1(_) => "V1",
         }
     }
 
@@ -19017,11 +19256,12 @@ impl BucketMetadataExt {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0 => 0,
+            Self::V1(_) => 1,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> [i32; 2] {
         Self::VARIANTS
     }
 }
@@ -19056,6 +19296,7 @@ impl ReadXdr for BucketMetadataExt {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 0 => Self::V0,
+                1 => Self::V1(BucketListType::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -19072,6 +19313,7 @@ impl WriteXdr for BucketMetadataExt {
             #[allow(clippy::match_same_arms)]
             match self {
                 Self::V0 => ().write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -19091,6 +19333,8 @@ impl WriteXdr for BucketMetadataExt {
 ///     {
 ///     case 0:
 ///         void;
+///     case 1:
+///         BucketListType bucketListType;
 ///     }
 ///     ext;
 /// };
@@ -19253,6 +19497,136 @@ impl WriteXdr for BucketEntry {
                 Self::Liveentry(v) => v.write_xdr(w)?,
                 Self::Initentry(v) => v.write_xdr(w)?,
                 Self::Deadentry(v) => v.write_xdr(w)?,
+                Self::Metaentry(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+/// HotArchiveBucketEntry is an XDR Union defines as:
+///
+/// ```text
+/// union HotArchiveBucketEntry switch (HotArchiveBucketEntryType type)
+/// {
+/// case HOT_ARCHIVE_ARCHIVED:
+///     LedgerEntry archivedEntry;
+///
+/// case HOT_ARCHIVE_LIVE:
+/// case HOT_ARCHIVE_DELETED:
+///     LedgerKey key;
+/// case HOT_ARCHIVE_METAENTRY:
+///     BucketMetadata metaEntry;
+/// };
+/// ```
+///
+// union with discriminant HotArchiveBucketEntryType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[allow(clippy::large_enum_variant)]
+pub enum HotArchiveBucketEntry {
+    Archived(LedgerEntry),
+    Live(LedgerKey),
+    Deleted(LedgerKey),
+    Metaentry(BucketMetadata),
+}
+
+impl HotArchiveBucketEntry {
+    pub const VARIANTS: [HotArchiveBucketEntryType; 4] = [
+        HotArchiveBucketEntryType::Archived,
+        HotArchiveBucketEntryType::Live,
+        HotArchiveBucketEntryType::Deleted,
+        HotArchiveBucketEntryType::Metaentry,
+    ];
+    pub const VARIANTS_STR: [&'static str; 4] = ["Archived", "Live", "Deleted", "Metaentry"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Archived(_) => "Archived",
+            Self::Live(_) => "Live",
+            Self::Deleted(_) => "Deleted",
+            Self::Metaentry(_) => "Metaentry",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> HotArchiveBucketEntryType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Archived(_) => HotArchiveBucketEntryType::Archived,
+            Self::Live(_) => HotArchiveBucketEntryType::Live,
+            Self::Deleted(_) => HotArchiveBucketEntryType::Deleted,
+            Self::Metaentry(_) => HotArchiveBucketEntryType::Metaentry,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [HotArchiveBucketEntryType; 4] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for HotArchiveBucketEntry {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<HotArchiveBucketEntryType> for HotArchiveBucketEntry {
+    #[must_use]
+    fn discriminant(&self) -> HotArchiveBucketEntryType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<HotArchiveBucketEntryType> for HotArchiveBucketEntry {
+    fn variants() -> slice::Iter<'static, HotArchiveBucketEntryType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<HotArchiveBucketEntryType> for HotArchiveBucketEntry {}
+
+impl ReadXdr for HotArchiveBucketEntry {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: HotArchiveBucketEntryType =
+                <HotArchiveBucketEntryType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                HotArchiveBucketEntryType::Archived => Self::Archived(LedgerEntry::read_xdr(r)?),
+                HotArchiveBucketEntryType::Live => Self::Live(LedgerKey::read_xdr(r)?),
+                HotArchiveBucketEntryType::Deleted => Self::Deleted(LedgerKey::read_xdr(r)?),
+                HotArchiveBucketEntryType::Metaentry => {
+                    Self::Metaentry(BucketMetadata::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for HotArchiveBucketEntry {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Archived(v) => v.write_xdr(w)?,
+                Self::Live(v) => v.write_xdr(w)?,
+                Self::Deleted(v) => v.write_xdr(w)?,
                 Self::Metaentry(v) => v.write_xdr(w)?,
             };
             Ok(())
@@ -44996,10 +45370,13 @@ pub enum TypeVariant {
     ConfigUpgradeSetKey,
     LedgerUpgrade,
     ConfigUpgradeSet,
+    BucketListType,
     BucketEntryType,
+    HotArchiveBucketEntryType,
     BucketMetadata,
     BucketMetadataExt,
     BucketEntry,
+    HotArchiveBucketEntry,
     TxSetComponentType,
     TxExecutionThread,
     ParallelTxExecutionStage,
@@ -45268,7 +45645,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 444] = [
+    pub const VARIANTS: [TypeVariant; 447] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -45444,10 +45821,13 @@ impl TypeVariant {
         TypeVariant::ConfigUpgradeSetKey,
         TypeVariant::LedgerUpgrade,
         TypeVariant::ConfigUpgradeSet,
+        TypeVariant::BucketListType,
         TypeVariant::BucketEntryType,
+        TypeVariant::HotArchiveBucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
         TypeVariant::BucketEntry,
+        TypeVariant::HotArchiveBucketEntry,
         TypeVariant::TxSetComponentType,
         TypeVariant::TxExecutionThread,
         TypeVariant::ParallelTxExecutionStage,
@@ -45714,7 +46094,7 @@ impl TypeVariant {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 444] = [
+    pub const VARIANTS_STR: [&'static str; 447] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -45890,10 +46270,13 @@ impl TypeVariant {
         "ConfigUpgradeSetKey",
         "LedgerUpgrade",
         "ConfigUpgradeSet",
+        "BucketListType",
         "BucketEntryType",
+        "HotArchiveBucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
         "BucketEntry",
+        "HotArchiveBucketEntry",
         "TxSetComponentType",
         "TxExecutionThread",
         "ParallelTxExecutionStage",
@@ -46344,10 +46727,13 @@ impl TypeVariant {
             Self::ConfigUpgradeSetKey => "ConfigUpgradeSetKey",
             Self::LedgerUpgrade => "LedgerUpgrade",
             Self::ConfigUpgradeSet => "ConfigUpgradeSet",
+            Self::BucketListType => "BucketListType",
             Self::BucketEntryType => "BucketEntryType",
+            Self::HotArchiveBucketEntryType => "HotArchiveBucketEntryType",
             Self::BucketMetadata => "BucketMetadata",
             Self::BucketMetadataExt => "BucketMetadataExt",
             Self::BucketEntry => "BucketEntry",
+            Self::HotArchiveBucketEntry => "HotArchiveBucketEntry",
             Self::TxSetComponentType => "TxSetComponentType",
             Self::TxExecutionThread => "TxExecutionThread",
             Self::ParallelTxExecutionStage => "ParallelTxExecutionStage",
@@ -46628,7 +47014,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 444] {
+    pub const fn variants() -> [TypeVariant; 447] {
         Self::VARIANTS
     }
 
@@ -46862,10 +47248,15 @@ impl TypeVariant {
             Self::ConfigUpgradeSetKey => gen.into_root_schema_for::<ConfigUpgradeSetKey>(),
             Self::LedgerUpgrade => gen.into_root_schema_for::<LedgerUpgrade>(),
             Self::ConfigUpgradeSet => gen.into_root_schema_for::<ConfigUpgradeSet>(),
+            Self::BucketListType => gen.into_root_schema_for::<BucketListType>(),
             Self::BucketEntryType => gen.into_root_schema_for::<BucketEntryType>(),
+            Self::HotArchiveBucketEntryType => {
+                gen.into_root_schema_for::<HotArchiveBucketEntryType>()
+            }
             Self::BucketMetadata => gen.into_root_schema_for::<BucketMetadata>(),
             Self::BucketMetadataExt => gen.into_root_schema_for::<BucketMetadataExt>(),
             Self::BucketEntry => gen.into_root_schema_for::<BucketEntry>(),
+            Self::HotArchiveBucketEntry => gen.into_root_schema_for::<HotArchiveBucketEntry>(),
             Self::TxSetComponentType => gen.into_root_schema_for::<TxSetComponentType>(),
             Self::TxExecutionThread => gen.into_root_schema_for::<TxExecutionThread>(),
             Self::ParallelTxExecutionStage => {
@@ -47492,10 +47883,13 @@ impl core::str::FromStr for TypeVariant {
             "ConfigUpgradeSetKey" => Ok(Self::ConfigUpgradeSetKey),
             "LedgerUpgrade" => Ok(Self::LedgerUpgrade),
             "ConfigUpgradeSet" => Ok(Self::ConfigUpgradeSet),
+            "BucketListType" => Ok(Self::BucketListType),
             "BucketEntryType" => Ok(Self::BucketEntryType),
+            "HotArchiveBucketEntryType" => Ok(Self::HotArchiveBucketEntryType),
             "BucketMetadata" => Ok(Self::BucketMetadata),
             "BucketMetadataExt" => Ok(Self::BucketMetadataExt),
             "BucketEntry" => Ok(Self::BucketEntry),
+            "HotArchiveBucketEntry" => Ok(Self::HotArchiveBucketEntry),
             "TxSetComponentType" => Ok(Self::TxSetComponentType),
             "TxExecutionThread" => Ok(Self::TxExecutionThread),
             "ParallelTxExecutionStage" => Ok(Self::ParallelTxExecutionStage),
@@ -47970,10 +48364,13 @@ pub enum Type {
     ConfigUpgradeSetKey(Box<ConfigUpgradeSetKey>),
     LedgerUpgrade(Box<LedgerUpgrade>),
     ConfigUpgradeSet(Box<ConfigUpgradeSet>),
+    BucketListType(Box<BucketListType>),
     BucketEntryType(Box<BucketEntryType>),
+    HotArchiveBucketEntryType(Box<HotArchiveBucketEntryType>),
     BucketMetadata(Box<BucketMetadata>),
     BucketMetadataExt(Box<BucketMetadataExt>),
     BucketEntry(Box<BucketEntry>),
+    HotArchiveBucketEntry(Box<HotArchiveBucketEntry>),
     TxSetComponentType(Box<TxSetComponentType>),
     TxExecutionThread(Box<TxExecutionThread>),
     ParallelTxExecutionStage(Box<ParallelTxExecutionStage>),
@@ -48242,7 +48639,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 444] = [
+    pub const VARIANTS: [TypeVariant; 447] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -48418,10 +48815,13 @@ impl Type {
         TypeVariant::ConfigUpgradeSetKey,
         TypeVariant::LedgerUpgrade,
         TypeVariant::ConfigUpgradeSet,
+        TypeVariant::BucketListType,
         TypeVariant::BucketEntryType,
+        TypeVariant::HotArchiveBucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
         TypeVariant::BucketEntry,
+        TypeVariant::HotArchiveBucketEntry,
         TypeVariant::TxSetComponentType,
         TypeVariant::TxExecutionThread,
         TypeVariant::ParallelTxExecutionStage,
@@ -48688,7 +49088,7 @@ impl Type {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 444] = [
+    pub const VARIANTS_STR: [&'static str; 447] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -48864,10 +49264,13 @@ impl Type {
         "ConfigUpgradeSetKey",
         "LedgerUpgrade",
         "ConfigUpgradeSet",
+        "BucketListType",
         "BucketEntryType",
+        "HotArchiveBucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
         "BucketEntry",
+        "HotArchiveBucketEntry",
         "TxSetComponentType",
         "TxExecutionThread",
         "ParallelTxExecutionStage",
@@ -49862,10 +50265,18 @@ impl Type {
                     ConfigUpgradeSet::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::BucketListType => r.with_limited_depth(|r| {
+                Ok(Self::BucketListType(Box::new(BucketListType::read_xdr(r)?)))
+            }),
             TypeVariant::BucketEntryType => r.with_limited_depth(|r| {
                 Ok(Self::BucketEntryType(Box::new(BucketEntryType::read_xdr(
                     r,
                 )?)))
+            }),
+            TypeVariant::HotArchiveBucketEntryType => r.with_limited_depth(|r| {
+                Ok(Self::HotArchiveBucketEntryType(Box::new(
+                    HotArchiveBucketEntryType::read_xdr(r)?,
+                )))
             }),
             TypeVariant::BucketMetadata => r.with_limited_depth(|r| {
                 Ok(Self::BucketMetadata(Box::new(BucketMetadata::read_xdr(r)?)))
@@ -49878,6 +50289,11 @@ impl Type {
             TypeVariant::BucketEntry => {
                 r.with_limited_depth(|r| Ok(Self::BucketEntry(Box::new(BucketEntry::read_xdr(r)?))))
             }
+            TypeVariant::HotArchiveBucketEntry => r.with_limited_depth(|r| {
+                Ok(Self::HotArchiveBucketEntry(Box::new(
+                    HotArchiveBucketEntry::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::TxSetComponentType => r.with_limited_depth(|r| {
                 Ok(Self::TxSetComponentType(Box::new(
                     TxSetComponentType::read_xdr(r)?,
@@ -51842,9 +52258,17 @@ impl Type {
                 ReadXdrIter::<_, ConfigUpgradeSet>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t)))),
             ),
+            TypeVariant::BucketListType => Box::new(
+                ReadXdrIter::<_, BucketListType>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::BucketListType(Box::new(t)))),
+            ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, BucketEntryType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t)))),
+            ),
+            TypeVariant::HotArchiveBucketEntryType => Box::new(
+                ReadXdrIter::<_, HotArchiveBucketEntryType>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HotArchiveBucketEntryType(Box::new(t)))),
             ),
             TypeVariant::BucketMetadata => Box::new(
                 ReadXdrIter::<_, BucketMetadata>::new(&mut r.inner, r.limits.clone())
@@ -51857,6 +52281,10 @@ impl Type {
             TypeVariant::BucketEntry => Box::new(
                 ReadXdrIter::<_, BucketEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntry(Box::new(t)))),
+            ),
+            TypeVariant::HotArchiveBucketEntry => Box::new(
+                ReadXdrIter::<_, HotArchiveBucketEntry>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HotArchiveBucketEntry(Box::new(t)))),
             ),
             TypeVariant::TxSetComponentType => Box::new(
                 ReadXdrIter::<_, TxSetComponentType>::new(&mut r.inner, r.limits.clone())
@@ -53854,9 +54282,20 @@ impl Type {
                 ReadXdrIter::<_, Frame<ConfigUpgradeSet>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t.0)))),
             ),
+            TypeVariant::BucketListType => Box::new(
+                ReadXdrIter::<_, Frame<BucketListType>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::BucketListType(Box::new(t.0)))),
+            ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, Frame<BucketEntryType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t.0)))),
+            ),
+            TypeVariant::HotArchiveBucketEntryType => Box::new(
+                ReadXdrIter::<_, Frame<HotArchiveBucketEntryType>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::HotArchiveBucketEntryType(Box::new(t.0)))),
             ),
             TypeVariant::BucketMetadata => Box::new(
                 ReadXdrIter::<_, Frame<BucketMetadata>>::new(&mut r.inner, r.limits.clone())
@@ -53869,6 +54308,10 @@ impl Type {
             TypeVariant::BucketEntry => Box::new(
                 ReadXdrIter::<_, Frame<BucketEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::HotArchiveBucketEntry => Box::new(
+                ReadXdrIter::<_, Frame<HotArchiveBucketEntry>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HotArchiveBucketEntry(Box::new(t.0)))),
             ),
             TypeVariant::TxSetComponentType => Box::new(
                 ReadXdrIter::<_, Frame<TxSetComponentType>>::new(&mut r.inner, r.limits.clone())
@@ -55959,9 +56402,17 @@ impl Type {
                 ReadXdrIter::<_, ConfigUpgradeSet>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigUpgradeSet(Box::new(t)))),
             ),
+            TypeVariant::BucketListType => Box::new(
+                ReadXdrIter::<_, BucketListType>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::BucketListType(Box::new(t)))),
+            ),
             TypeVariant::BucketEntryType => Box::new(
                 ReadXdrIter::<_, BucketEntryType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntryType(Box::new(t)))),
+            ),
+            TypeVariant::HotArchiveBucketEntryType => Box::new(
+                ReadXdrIter::<_, HotArchiveBucketEntryType>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HotArchiveBucketEntryType(Box::new(t)))),
             ),
             TypeVariant::BucketMetadata => Box::new(
                 ReadXdrIter::<_, BucketMetadata>::new(dec, r.limits.clone())
@@ -55974,6 +56425,10 @@ impl Type {
             TypeVariant::BucketEntry => Box::new(
                 ReadXdrIter::<_, BucketEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketEntry(Box::new(t)))),
+            ),
+            TypeVariant::HotArchiveBucketEntry => Box::new(
+                ReadXdrIter::<_, HotArchiveBucketEntry>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HotArchiveBucketEntry(Box::new(t)))),
             ),
             TypeVariant::TxSetComponentType => Box::new(
                 ReadXdrIter::<_, TxSetComponentType>::new(dec, r.limits.clone())
@@ -57534,9 +57989,15 @@ impl Type {
             TypeVariant::ConfigUpgradeSet => Ok(Self::ConfigUpgradeSet(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::BucketListType => {
+                Ok(Self::BucketListType(Box::new(serde_json::from_reader(r)?)))
+            }
             TypeVariant::BucketEntryType => {
                 Ok(Self::BucketEntryType(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::HotArchiveBucketEntryType => Ok(Self::HotArchiveBucketEntryType(
+                Box::new(serde_json::from_reader(r)?),
+            )),
             TypeVariant::BucketMetadata => {
                 Ok(Self::BucketMetadata(Box::new(serde_json::from_reader(r)?)))
             }
@@ -57546,6 +58007,9 @@ impl Type {
             TypeVariant::BucketEntry => {
                 Ok(Self::BucketEntry(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::HotArchiveBucketEntry => Ok(Self::HotArchiveBucketEntry(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::TxSetComponentType => Ok(Self::TxSetComponentType(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -58475,10 +58939,13 @@ impl Type {
             Self::ConfigUpgradeSetKey(ref v) => v.as_ref(),
             Self::LedgerUpgrade(ref v) => v.as_ref(),
             Self::ConfigUpgradeSet(ref v) => v.as_ref(),
+            Self::BucketListType(ref v) => v.as_ref(),
             Self::BucketEntryType(ref v) => v.as_ref(),
+            Self::HotArchiveBucketEntryType(ref v) => v.as_ref(),
             Self::BucketMetadata(ref v) => v.as_ref(),
             Self::BucketMetadataExt(ref v) => v.as_ref(),
             Self::BucketEntry(ref v) => v.as_ref(),
+            Self::HotArchiveBucketEntry(ref v) => v.as_ref(),
             Self::TxSetComponentType(ref v) => v.as_ref(),
             Self::TxExecutionThread(ref v) => v.as_ref(),
             Self::ParallelTxExecutionStage(ref v) => v.as_ref(),
@@ -58934,10 +59401,13 @@ impl Type {
             Self::ConfigUpgradeSetKey(_) => "ConfigUpgradeSetKey",
             Self::LedgerUpgrade(_) => "LedgerUpgrade",
             Self::ConfigUpgradeSet(_) => "ConfigUpgradeSet",
+            Self::BucketListType(_) => "BucketListType",
             Self::BucketEntryType(_) => "BucketEntryType",
+            Self::HotArchiveBucketEntryType(_) => "HotArchiveBucketEntryType",
             Self::BucketMetadata(_) => "BucketMetadata",
             Self::BucketMetadataExt(_) => "BucketMetadataExt",
             Self::BucketEntry(_) => "BucketEntry",
+            Self::HotArchiveBucketEntry(_) => "HotArchiveBucketEntry",
             Self::TxSetComponentType(_) => "TxSetComponentType",
             Self::TxExecutionThread(_) => "TxExecutionThread",
             Self::ParallelTxExecutionStage(_) => "ParallelTxExecutionStage",
@@ -59226,7 +59696,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 444] {
+    pub const fn variants() -> [TypeVariant; 447] {
         Self::VARIANTS
     }
 
@@ -59427,10 +59897,13 @@ impl Type {
             Self::ConfigUpgradeSetKey(_) => TypeVariant::ConfigUpgradeSetKey,
             Self::LedgerUpgrade(_) => TypeVariant::LedgerUpgrade,
             Self::ConfigUpgradeSet(_) => TypeVariant::ConfigUpgradeSet,
+            Self::BucketListType(_) => TypeVariant::BucketListType,
             Self::BucketEntryType(_) => TypeVariant::BucketEntryType,
+            Self::HotArchiveBucketEntryType(_) => TypeVariant::HotArchiveBucketEntryType,
             Self::BucketMetadata(_) => TypeVariant::BucketMetadata,
             Self::BucketMetadataExt(_) => TypeVariant::BucketMetadataExt,
             Self::BucketEntry(_) => TypeVariant::BucketEntry,
+            Self::HotArchiveBucketEntry(_) => TypeVariant::HotArchiveBucketEntry,
             Self::TxSetComponentType(_) => TypeVariant::TxSetComponentType,
             Self::TxExecutionThread(_) => TypeVariant::TxExecutionThread,
             Self::ParallelTxExecutionStage(_) => TypeVariant::ParallelTxExecutionStage,
@@ -59943,10 +60416,13 @@ impl WriteXdr for Type {
             Self::ConfigUpgradeSetKey(v) => v.write_xdr(w),
             Self::LedgerUpgrade(v) => v.write_xdr(w),
             Self::ConfigUpgradeSet(v) => v.write_xdr(w),
+            Self::BucketListType(v) => v.write_xdr(w),
             Self::BucketEntryType(v) => v.write_xdr(w),
+            Self::HotArchiveBucketEntryType(v) => v.write_xdr(w),
             Self::BucketMetadata(v) => v.write_xdr(w),
             Self::BucketMetadataExt(v) => v.write_xdr(w),
             Self::BucketEntry(v) => v.write_xdr(w),
+            Self::HotArchiveBucketEntry(v) => v.write_xdr(w),
             Self::TxSetComponentType(v) => v.write_xdr(w),
             Self::TxExecutionThread(v) => v.write_xdr(w),
             Self::ParallelTxExecutionStage(v) => v.write_xdr(w),

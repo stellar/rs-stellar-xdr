@@ -18,7 +18,7 @@
 pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     (
         "xdr/next/Stellar-SCP.x",
-        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
+        "2b855c7f79b8e50cf15ca1e1aa89fb16bbb38117de0b1c969c80e675ae1ca4bb",
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
@@ -26,11 +26,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
-        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
+        "8d30dbf039e41e149725b34f2c809fc034c0879adac9d85fc49b8371f9a0444f",
     ),
     (
         "xdr/next/Stellar-contract-meta.x",
-        "f01532c11ca044e19d9f9f16fe373e9af64835da473be556b9a807ee3319ae0d",
+        "6a7d15d520858ec034ed717358d947b496924d1642d29eac5f3423a315693d7b",
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "0d2b35a331a540b48643925d0869857236eb2487c02d340ea32e365e784ea2b8",
+        "747639c267aa298c01e5c026a776679454171d717207ef60aed158c5dedae957",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -28622,7 +28622,8 @@ impl WriteXdr for LiquidityPoolWithdrawOp {
 /// {
 ///     HOST_FUNCTION_TYPE_INVOKE_CONTRACT = 0,
 ///     HOST_FUNCTION_TYPE_CREATE_CONTRACT = 1,
-///     HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM = 2
+///     HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM = 2,
+///     HOST_FUNCTION_TYPE_CREATE_CONTRACT_V2 = 3
 /// };
 /// ```
 ///
@@ -28640,16 +28641,22 @@ pub enum HostFunctionType {
     InvokeContract = 0,
     CreateContract = 1,
     UploadContractWasm = 2,
+    CreateContractV2 = 3,
 }
 
 impl HostFunctionType {
-    pub const VARIANTS: [HostFunctionType; 3] = [
+    pub const VARIANTS: [HostFunctionType; 4] = [
         HostFunctionType::InvokeContract,
         HostFunctionType::CreateContract,
         HostFunctionType::UploadContractWasm,
+        HostFunctionType::CreateContractV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] =
-        ["InvokeContract", "CreateContract", "UploadContractWasm"];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "InvokeContract",
+        "CreateContract",
+        "UploadContractWasm",
+        "CreateContractV2",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -28657,11 +28664,12 @@ impl HostFunctionType {
             Self::InvokeContract => "InvokeContract",
             Self::CreateContract => "CreateContract",
             Self::UploadContractWasm => "UploadContractWasm",
+            Self::CreateContractV2 => "CreateContractV2",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [HostFunctionType; 3] {
+    pub const fn variants() -> [HostFunctionType; 4] {
         Self::VARIANTS
     }
 }
@@ -28695,6 +28703,7 @@ impl TryFrom<i32> for HostFunctionType {
             0 => HostFunctionType::InvokeContract,
             1 => HostFunctionType::CreateContract,
             2 => HostFunctionType::UploadContractWasm,
+            3 => HostFunctionType::CreateContractV2,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -29048,6 +29057,57 @@ impl WriteXdr for CreateContractArgs {
     }
 }
 
+/// CreateContractArgsV2 is an XDR Struct defines as:
+///
+/// ```text
+/// struct CreateContractArgsV2
+/// {
+///     ContractIDPreimage contractIDPreimage;
+///     ContractExecutable executable;
+///     // Arguments of the contract's constructor.
+///     SCVal constructorArgs<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct CreateContractArgsV2 {
+    pub contract_id_preimage: ContractIdPreimage,
+    pub executable: ContractExecutable,
+    pub constructor_args: VecM<ScVal>,
+}
+
+impl ReadXdr for CreateContractArgsV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                contract_id_preimage: ContractIdPreimage::read_xdr(r)?,
+                executable: ContractExecutable::read_xdr(r)?,
+                constructor_args: VecM::<ScVal>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for CreateContractArgsV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.contract_id_preimage.write_xdr(w)?;
+            self.executable.write_xdr(w)?;
+            self.constructor_args.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// InvokeContractArgs is an XDR Struct defines as:
 ///
 /// ```text
@@ -29108,6 +29168,8 @@ impl WriteXdr for InvokeContractArgs {
 ///     CreateContractArgs createContract;
 /// case HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM:
 ///     opaque wasm<>;
+/// case HOST_FUNCTION_TYPE_CREATE_CONTRACT_V2:
+///     CreateContractArgsV2 createContractV2;
 /// };
 /// ```
 ///
@@ -29125,16 +29187,22 @@ pub enum HostFunction {
     InvokeContract(InvokeContractArgs),
     CreateContract(CreateContractArgs),
     UploadContractWasm(BytesM),
+    CreateContractV2(CreateContractArgsV2),
 }
 
 impl HostFunction {
-    pub const VARIANTS: [HostFunctionType; 3] = [
+    pub const VARIANTS: [HostFunctionType; 4] = [
         HostFunctionType::InvokeContract,
         HostFunctionType::CreateContract,
         HostFunctionType::UploadContractWasm,
+        HostFunctionType::CreateContractV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] =
-        ["InvokeContract", "CreateContract", "UploadContractWasm"];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "InvokeContract",
+        "CreateContract",
+        "UploadContractWasm",
+        "CreateContractV2",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -29142,6 +29210,7 @@ impl HostFunction {
             Self::InvokeContract(_) => "InvokeContract",
             Self::CreateContract(_) => "CreateContract",
             Self::UploadContractWasm(_) => "UploadContractWasm",
+            Self::CreateContractV2(_) => "CreateContractV2",
         }
     }
 
@@ -29152,11 +29221,12 @@ impl HostFunction {
             Self::InvokeContract(_) => HostFunctionType::InvokeContract,
             Self::CreateContract(_) => HostFunctionType::CreateContract,
             Self::UploadContractWasm(_) => HostFunctionType::UploadContractWasm,
+            Self::CreateContractV2(_) => HostFunctionType::CreateContractV2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [HostFunctionType; 3] {
+    pub const fn variants() -> [HostFunctionType; 4] {
         Self::VARIANTS
     }
 }
@@ -29199,6 +29269,9 @@ impl ReadXdr for HostFunction {
                 HostFunctionType::UploadContractWasm => {
                     Self::UploadContractWasm(BytesM::read_xdr(r)?)
                 }
+                HostFunctionType::CreateContractV2 => {
+                    Self::CreateContractV2(CreateContractArgsV2::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -29217,6 +29290,7 @@ impl WriteXdr for HostFunction {
                 Self::InvokeContract(v) => v.write_xdr(w)?,
                 Self::CreateContract(v) => v.write_xdr(w)?,
                 Self::UploadContractWasm(v) => v.write_xdr(w)?,
+                Self::CreateContractV2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -29229,7 +29303,8 @@ impl WriteXdr for HostFunction {
 /// enum SorobanAuthorizedFunctionType
 /// {
 ///     SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN = 0,
-///     SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN = 1
+///     SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN = 1,
+///     SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN = 2
 /// };
 /// ```
 ///
@@ -29246,25 +29321,32 @@ impl WriteXdr for HostFunction {
 pub enum SorobanAuthorizedFunctionType {
     ContractFn = 0,
     CreateContractHostFn = 1,
+    CreateContractV2HostFn = 2,
 }
 
 impl SorobanAuthorizedFunctionType {
-    pub const VARIANTS: [SorobanAuthorizedFunctionType; 2] = [
+    pub const VARIANTS: [SorobanAuthorizedFunctionType; 3] = [
         SorobanAuthorizedFunctionType::ContractFn,
         SorobanAuthorizedFunctionType::CreateContractHostFn,
+        SorobanAuthorizedFunctionType::CreateContractV2HostFn,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["ContractFn", "CreateContractHostFn"];
+    pub const VARIANTS_STR: [&'static str; 3] = [
+        "ContractFn",
+        "CreateContractHostFn",
+        "CreateContractV2HostFn",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::ContractFn => "ContractFn",
             Self::CreateContractHostFn => "CreateContractHostFn",
+            Self::CreateContractV2HostFn => "CreateContractV2HostFn",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SorobanAuthorizedFunctionType; 2] {
+    pub const fn variants() -> [SorobanAuthorizedFunctionType; 3] {
         Self::VARIANTS
     }
 }
@@ -29297,6 +29379,7 @@ impl TryFrom<i32> for SorobanAuthorizedFunctionType {
         let e = match i {
             0 => SorobanAuthorizedFunctionType::ContractFn,
             1 => SorobanAuthorizedFunctionType::CreateContractHostFn,
+            2 => SorobanAuthorizedFunctionType::CreateContractV2HostFn,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -29339,8 +29422,14 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
 /// {
 /// case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN:
 ///     InvokeContractArgs contractFn;
+/// // This variant of auth payload for creating new contract instances is no
+/// // longer accepted after protocol 22.
 /// case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN:
 ///     CreateContractArgs createContractHostFn;
+/// // This variant of auth payload for creating new contract instances
+/// // is only accepted in and after protocol 22.
+/// case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN:
+///     CreateContractArgsV2 createContractV2HostFn;
 /// };
 /// ```
 ///
@@ -29357,20 +29446,27 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
 pub enum SorobanAuthorizedFunction {
     ContractFn(InvokeContractArgs),
     CreateContractHostFn(CreateContractArgs),
+    CreateContractV2HostFn(CreateContractArgsV2),
 }
 
 impl SorobanAuthorizedFunction {
-    pub const VARIANTS: [SorobanAuthorizedFunctionType; 2] = [
+    pub const VARIANTS: [SorobanAuthorizedFunctionType; 3] = [
         SorobanAuthorizedFunctionType::ContractFn,
         SorobanAuthorizedFunctionType::CreateContractHostFn,
+        SorobanAuthorizedFunctionType::CreateContractV2HostFn,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["ContractFn", "CreateContractHostFn"];
+    pub const VARIANTS_STR: [&'static str; 3] = [
+        "ContractFn",
+        "CreateContractHostFn",
+        "CreateContractV2HostFn",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::ContractFn(_) => "ContractFn",
             Self::CreateContractHostFn(_) => "CreateContractHostFn",
+            Self::CreateContractV2HostFn(_) => "CreateContractV2HostFn",
         }
     }
 
@@ -29380,11 +29476,14 @@ impl SorobanAuthorizedFunction {
         match self {
             Self::ContractFn(_) => SorobanAuthorizedFunctionType::ContractFn,
             Self::CreateContractHostFn(_) => SorobanAuthorizedFunctionType::CreateContractHostFn,
+            Self::CreateContractV2HostFn(_) => {
+                SorobanAuthorizedFunctionType::CreateContractV2HostFn
+            }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SorobanAuthorizedFunctionType; 2] {
+    pub const fn variants() -> [SorobanAuthorizedFunctionType; 3] {
         Self::VARIANTS
     }
 }
@@ -29425,6 +29524,9 @@ impl ReadXdr for SorobanAuthorizedFunction {
                 SorobanAuthorizedFunctionType::CreateContractHostFn => {
                     Self::CreateContractHostFn(CreateContractArgs::read_xdr(r)?)
                 }
+                SorobanAuthorizedFunctionType::CreateContractV2HostFn => {
+                    Self::CreateContractV2HostFn(CreateContractArgsV2::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -29442,6 +29544,7 @@ impl WriteXdr for SorobanAuthorizedFunction {
             match self {
                 Self::ContractFn(v) => v.write_xdr(w)?,
                 Self::CreateContractHostFn(v) => v.write_xdr(w)?,
+                Self::CreateContractV2HostFn(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -45499,6 +45602,7 @@ pub enum TypeVariant {
     ContractIdPreimage,
     ContractIdPreimageFromAddress,
     CreateContractArgs,
+    CreateContractArgsV2,
     InvokeContractArgs,
     HostFunction,
     SorobanAuthorizedFunctionType,
@@ -45645,7 +45749,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 447] = [
+    pub const VARIANTS: [TypeVariant; 448] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -45950,6 +46054,7 @@ impl TypeVariant {
         TypeVariant::ContractIdPreimage,
         TypeVariant::ContractIdPreimageFromAddress,
         TypeVariant::CreateContractArgs,
+        TypeVariant::CreateContractArgsV2,
         TypeVariant::InvokeContractArgs,
         TypeVariant::HostFunction,
         TypeVariant::SorobanAuthorizedFunctionType,
@@ -46094,7 +46199,7 @@ impl TypeVariant {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 447] = [
+    pub const VARIANTS_STR: [&'static str; 448] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -46399,6 +46504,7 @@ impl TypeVariant {
         "ContractIdPreimage",
         "ContractIdPreimageFromAddress",
         "CreateContractArgs",
+        "CreateContractArgsV2",
         "InvokeContractArgs",
         "HostFunction",
         "SorobanAuthorizedFunctionType",
@@ -46862,6 +46968,7 @@ impl TypeVariant {
             Self::ContractIdPreimage => "ContractIdPreimage",
             Self::ContractIdPreimageFromAddress => "ContractIdPreimageFromAddress",
             Self::CreateContractArgs => "CreateContractArgs",
+            Self::CreateContractArgsV2 => "CreateContractArgsV2",
             Self::InvokeContractArgs => "InvokeContractArgs",
             Self::HostFunction => "HostFunction",
             Self::SorobanAuthorizedFunctionType => "SorobanAuthorizedFunctionType",
@@ -47014,7 +47121,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 447] {
+    pub const fn variants() -> [TypeVariant; 448] {
         Self::VARIANTS
     }
 
@@ -47439,6 +47546,7 @@ impl TypeVariant {
                 gen.into_root_schema_for::<ContractIdPreimageFromAddress>()
             }
             Self::CreateContractArgs => gen.into_root_schema_for::<CreateContractArgs>(),
+            Self::CreateContractArgsV2 => gen.into_root_schema_for::<CreateContractArgsV2>(),
             Self::InvokeContractArgs => gen.into_root_schema_for::<InvokeContractArgs>(),
             Self::HostFunction => gen.into_root_schema_for::<HostFunction>(),
             Self::SorobanAuthorizedFunctionType => {
@@ -48024,6 +48132,7 @@ impl core::str::FromStr for TypeVariant {
             "ContractIdPreimage" => Ok(Self::ContractIdPreimage),
             "ContractIdPreimageFromAddress" => Ok(Self::ContractIdPreimageFromAddress),
             "CreateContractArgs" => Ok(Self::CreateContractArgs),
+            "CreateContractArgsV2" => Ok(Self::CreateContractArgsV2),
             "InvokeContractArgs" => Ok(Self::InvokeContractArgs),
             "HostFunction" => Ok(Self::HostFunction),
             "SorobanAuthorizedFunctionType" => Ok(Self::SorobanAuthorizedFunctionType),
@@ -48493,6 +48602,7 @@ pub enum Type {
     ContractIdPreimage(Box<ContractIdPreimage>),
     ContractIdPreimageFromAddress(Box<ContractIdPreimageFromAddress>),
     CreateContractArgs(Box<CreateContractArgs>),
+    CreateContractArgsV2(Box<CreateContractArgsV2>),
     InvokeContractArgs(Box<InvokeContractArgs>),
     HostFunction(Box<HostFunction>),
     SorobanAuthorizedFunctionType(Box<SorobanAuthorizedFunctionType>),
@@ -48639,7 +48749,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 447] = [
+    pub const VARIANTS: [TypeVariant; 448] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -48944,6 +49054,7 @@ impl Type {
         TypeVariant::ContractIdPreimage,
         TypeVariant::ContractIdPreimageFromAddress,
         TypeVariant::CreateContractArgs,
+        TypeVariant::CreateContractArgsV2,
         TypeVariant::InvokeContractArgs,
         TypeVariant::HostFunction,
         TypeVariant::SorobanAuthorizedFunctionType,
@@ -49088,7 +49199,7 @@ impl Type {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 447] = [
+    pub const VARIANTS_STR: [&'static str; 448] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -49393,6 +49504,7 @@ impl Type {
         "ContractIdPreimage",
         "ContractIdPreimageFromAddress",
         "CreateContractArgs",
+        "CreateContractArgsV2",
         "InvokeContractArgs",
         "HostFunction",
         "SorobanAuthorizedFunctionType",
@@ -50840,6 +50952,11 @@ impl Type {
             TypeVariant::CreateContractArgs => r.with_limited_depth(|r| {
                 Ok(Self::CreateContractArgs(Box::new(
                     CreateContractArgs::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::CreateContractArgsV2 => r.with_limited_depth(|r| {
+                Ok(Self::CreateContractArgsV2(Box::new(
+                    CreateContractArgsV2::read_xdr(r)?,
                 )))
             }),
             TypeVariant::InvokeContractArgs => r.with_limited_depth(|r| {
@@ -52817,6 +52934,10 @@ impl Type {
             TypeVariant::CreateContractArgs => Box::new(
                 ReadXdrIter::<_, CreateContractArgs>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
+            ),
+            TypeVariant::CreateContractArgsV2 => Box::new(
+                ReadXdrIter::<_, CreateContractArgsV2>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::CreateContractArgsV2(Box::new(t)))),
             ),
             TypeVariant::InvokeContractArgs => Box::new(
                 ReadXdrIter::<_, InvokeContractArgs>::new(&mut r.inner, r.limits.clone())
@@ -54934,6 +55055,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<CreateContractArgs>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t.0)))),
             ),
+            TypeVariant::CreateContractArgsV2 => Box::new(
+                ReadXdrIter::<_, Frame<CreateContractArgsV2>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::CreateContractArgsV2(Box::new(t.0)))),
+            ),
             TypeVariant::InvokeContractArgs => Box::new(
                 ReadXdrIter::<_, Frame<InvokeContractArgs>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeContractArgs(Box::new(t.0)))),
@@ -56929,6 +57054,10 @@ impl Type {
                 ReadXdrIter::<_, CreateContractArgs>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::CreateContractArgs(Box::new(t)))),
             ),
+            TypeVariant::CreateContractArgsV2 => Box::new(
+                ReadXdrIter::<_, CreateContractArgsV2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::CreateContractArgsV2(Box::new(t)))),
+            ),
             TypeVariant::InvokeContractArgs => Box::new(
                 ReadXdrIter::<_, InvokeContractArgs>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeContractArgs(Box::new(t)))),
@@ -58358,6 +58487,9 @@ impl Type {
             TypeVariant::CreateContractArgs => Ok(Self::CreateContractArgs(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::CreateContractArgsV2 => Ok(Self::CreateContractArgsV2(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::InvokeContractArgs => Ok(Self::InvokeContractArgs(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -59068,6 +59200,7 @@ impl Type {
             Self::ContractIdPreimage(ref v) => v.as_ref(),
             Self::ContractIdPreimageFromAddress(ref v) => v.as_ref(),
             Self::CreateContractArgs(ref v) => v.as_ref(),
+            Self::CreateContractArgsV2(ref v) => v.as_ref(),
             Self::InvokeContractArgs(ref v) => v.as_ref(),
             Self::HostFunction(ref v) => v.as_ref(),
             Self::SorobanAuthorizedFunctionType(ref v) => v.as_ref(),
@@ -59540,6 +59673,7 @@ impl Type {
             Self::ContractIdPreimage(_) => "ContractIdPreimage",
             Self::ContractIdPreimageFromAddress(_) => "ContractIdPreimageFromAddress",
             Self::CreateContractArgs(_) => "CreateContractArgs",
+            Self::CreateContractArgsV2(_) => "CreateContractArgsV2",
             Self::InvokeContractArgs(_) => "InvokeContractArgs",
             Self::HostFunction(_) => "HostFunction",
             Self::SorobanAuthorizedFunctionType(_) => "SorobanAuthorizedFunctionType",
@@ -59696,7 +59830,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 447] {
+    pub const fn variants() -> [TypeVariant; 448] {
         Self::VARIANTS
     }
 
@@ -60048,6 +60182,7 @@ impl Type {
             Self::ContractIdPreimage(_) => TypeVariant::ContractIdPreimage,
             Self::ContractIdPreimageFromAddress(_) => TypeVariant::ContractIdPreimageFromAddress,
             Self::CreateContractArgs(_) => TypeVariant::CreateContractArgs,
+            Self::CreateContractArgsV2(_) => TypeVariant::CreateContractArgsV2,
             Self::InvokeContractArgs(_) => TypeVariant::InvokeContractArgs,
             Self::HostFunction(_) => TypeVariant::HostFunction,
             Self::SorobanAuthorizedFunctionType(_) => TypeVariant::SorobanAuthorizedFunctionType,
@@ -60545,6 +60680,7 @@ impl WriteXdr for Type {
             Self::ContractIdPreimage(v) => v.write_xdr(w),
             Self::ContractIdPreimageFromAddress(v) => v.write_xdr(w),
             Self::CreateContractArgs(v) => v.write_xdr(w),
+            Self::CreateContractArgsV2(v) => v.write_xdr(w),
             Self::InvokeContractArgs(v) => v.write_xdr(w),
             Self::HostFunction(v) => v.write_xdr(w),
             Self::SorobanAuthorizedFunctionType(v) => v.write_xdr(w),

@@ -18,7 +18,7 @@
 pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     (
         "xdr/curr/Stellar-SCP.x",
-        "2b855c7f79b8e50cf15ca1e1aa89fb16bbb38117de0b1c969c80e675ae1ca4bb",
+        "8f32b04d008f8bc33b8843d075e69837231a673691ee41d8b821ca229a6e802a",
     ),
     (
         "xdr/curr/Stellar-contract-config-setting.x",
@@ -26,11 +26,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-env-meta.x",
-        "8d30dbf039e41e149725b34f2c809fc034c0879adac9d85fc49b8371f9a0444f",
+        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
     ),
     (
         "xdr/curr/Stellar-contract-meta.x",
-        "6a7d15d520858ec034ed717358d947b496924d1642d29eac5f3423a315693d7b",
+        "f01532c11ca044e19d9f9f16fe373e9af64835da473be556b9a807ee3319ae0d",
     ),
     (
         "xdr/curr/Stellar-contract-spec.x",

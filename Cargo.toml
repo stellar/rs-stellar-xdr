@@ -7,7 +7,7 @@ authors = ["Stellar Development Foundation <info@stellar.org>"]
 license = "Apache-2.0"
 version = "21.2.0"
 edition = "2021"
-rust-version = "1.74.0"
+rust-version = "1.79.0"
 
 [[bin]]
 name = "stellar-xdr"
@@ -15,7 +15,7 @@ path = "src/bin/stellar-xdr/main.rs"
 required-features = ["cli"]
 doctest = false
 
-[build_dependencies]
+[build-dependencies]
 crate-git-revision = "0.0.6"
 
 [dependencies]
@@ -31,7 +31,7 @@ serde_json = { version = "1.0.89", optional = true }
 thiserror = { version = "1.0.37", optional = true }
 schemars = { version = "0.8.16", optional = true }
 
-[dev_dependencies]
+[dev-dependencies]
 serde_json = "1.0.89"
 
 [features]

@@ -138,7 +138,7 @@ macro_rules! run_x {
                                     Err(e) => Err(e)?,
                                 };
                                 let l = crate::$m::Limits::none();
-                                stdout().write_all(&t.to_xdr(l.clone())?)?
+                                stdout().write_all(&t.to_xdr(l)?)?
                             }
                         }
                     },

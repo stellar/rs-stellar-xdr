@@ -97,6 +97,8 @@ pub enum OutputFormat {
     Single,
     SingleBase64,
     Stream,
+    // TODO: StreamBase64,
+    // TODO: StreamFramed,
 }
 
 impl Default for OutputFormat {

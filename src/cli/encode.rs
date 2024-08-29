@@ -96,6 +96,9 @@ impl Default for InputFormat {
 pub enum OutputFormat {
     Single,
     SingleBase64,
+    Stream,
+    // TODO: StreamBase64,
+    // TODO: StreamFramed,
 }
 
 impl Default for OutputFormat {
@@ -114,15 +117,33 @@ macro_rules! run_x {
             })?;
             for f in &mut files {
                 match self.input {
-                    InputFormat::Json => {
-                        let t = crate::$m::Type::read_json(r#type, f)?;
-                        let l = crate::$m::Limits::none();
-
-                        match self.output {
-                            OutputFormat::Single => stdout().write_all(&t.to_xdr(l)?)?,
-                            OutputFormat::SingleBase64 => println!("{}", t.to_xdr_base64(l)?),
+                    InputFormat::Json => match self.output {
+                        OutputFormat::Single => {
+                            let t = crate::$m::Type::from_json(r#type, f)?;
+                            let l = crate::$m::Limits::none();
+                            stdout().write_all(&t.to_xdr(l)?)?
                         }
-                    }
+                        OutputFormat::SingleBase64 => {
+                            let t = crate::$m::Type::from_json(r#type, f)?;
+                            let l = crate::$m::Limits::none();
+                            println!("{}", t.to_xdr_base64(l)?)
+                        }
+                        OutputFormat::Stream => {
+                            let mut de =
+                                serde_json::Deserializer::new(serde_json::de::IoRead::new(f));
+                            loop {
+                                let t = match crate::$m::Type::deserialize_json(r#type, &mut de) {
+                                    Ok(t) => t,
+                                    Err(crate::$m::Error::Json(ref inner)) if inner.is_eof() => {
+                                        break;
+                                    }
+                                    Err(e) => Err(e)?,
+                                };
+                                let l = crate::$m::Limits::none();
+                                stdout().write_all(&t.to_xdr(l)?)?
+                            }
+                        }
+                    },
                 };
             }
             Ok(())

@@ -26,7 +26,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
-        "928a30de814ee589bc1d2aadd8dd81c39f71b7e6f430f56974505ccb1f49654b",
+        "75a271414d852096fea3283c63b7f2a702f2905f78fc28eb60ec7d7bd366a780",
     ),
     (
         "xdr/next/Stellar-contract-meta.x",
@@ -5347,13 +5347,61 @@ impl WriteXdr for ScEnvMetaKind {
     }
 }
 
+/// ScEnvMetaEntryInterfaceVersion is an XDR NestedStruct defines as:
+///
+/// ```text
+/// struct {
+///         uint32 protocol;
+///         uint32 preRelease;
+///     }
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ScEnvMetaEntryInterfaceVersion {
+    pub protocol: u32,
+    pub pre_release: u32,
+}
+
+impl ReadXdr for ScEnvMetaEntryInterfaceVersion {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                protocol: u32::read_xdr(r)?,
+                pre_release: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ScEnvMetaEntryInterfaceVersion {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.protocol.write_xdr(w)?;
+            self.pre_release.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScEnvMetaEntry is an XDR Union defines as:
 ///
 /// ```text
 /// union SCEnvMetaEntry switch (SCEnvMetaKind kind)
 /// {
 /// case SC_ENV_META_KIND_INTERFACE_VERSION:
-///     uint64 interfaceVersion;
+///     struct {
+///         uint32 protocol;
+///         uint32 preRelease;
+///     } interfaceVersion;
 /// };
 /// ```
 ///
@@ -5368,7 +5416,7 @@ impl WriteXdr for ScEnvMetaKind {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ScEnvMetaEntry {
-    ScEnvMetaKindInterfaceVersion(u64),
+    ScEnvMetaKindInterfaceVersion(ScEnvMetaEntryInterfaceVersion),
 }
 
 impl ScEnvMetaEntry {
@@ -5426,7 +5474,9 @@ impl ReadXdr for ScEnvMetaEntry {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 ScEnvMetaKind::ScEnvMetaKindInterfaceVersion => {
-                    Self::ScEnvMetaKindInterfaceVersion(u64::read_xdr(r)?)
+                    Self::ScEnvMetaKindInterfaceVersion(ScEnvMetaEntryInterfaceVersion::read_xdr(
+                        r,
+                    )?)
                 }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
@@ -46445,6 +46495,7 @@ pub enum TypeVariant {
     ConfigSettingEntry,
     ScEnvMetaKind,
     ScEnvMetaEntry,
+    ScEnvMetaEntryInterfaceVersion,
     ScMetaV0,
     ScMetaKind,
     ScMetaEntry,
@@ -46883,7 +46934,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 462] = [
+    pub const VARIANTS: [TypeVariant; 463] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -46911,6 +46962,7 @@ impl TypeVariant {
         TypeVariant::ConfigSettingEntry,
         TypeVariant::ScEnvMetaKind,
         TypeVariant::ScEnvMetaEntry,
+        TypeVariant::ScEnvMetaEntryInterfaceVersion,
         TypeVariant::ScMetaV0,
         TypeVariant::ScMetaKind,
         TypeVariant::ScMetaEntry,
@@ -47347,7 +47399,7 @@ impl TypeVariant {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 462] = [
+    pub const VARIANTS_STR: [&'static str; 463] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47375,6 +47427,7 @@ impl TypeVariant {
         "ConfigSettingEntry",
         "ScEnvMetaKind",
         "ScEnvMetaEntry",
+        "ScEnvMetaEntryInterfaceVersion",
         "ScMetaV0",
         "ScMetaKind",
         "ScMetaEntry",
@@ -47845,6 +47898,7 @@ impl TypeVariant {
             Self::ConfigSettingEntry => "ConfigSettingEntry",
             Self::ScEnvMetaKind => "ScEnvMetaKind",
             Self::ScEnvMetaEntry => "ScEnvMetaEntry",
+            Self::ScEnvMetaEntryInterfaceVersion => "ScEnvMetaEntryInterfaceVersion",
             Self::ScMetaV0 => "ScMetaV0",
             Self::ScMetaKind => "ScMetaKind",
             Self::ScMetaEntry => "ScMetaEntry",
@@ -48297,7 +48351,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 462] {
+    pub const fn variants() -> [TypeVariant; 463] {
         Self::VARIANTS
     }
 
@@ -48347,6 +48401,9 @@ impl TypeVariant {
             Self::ConfigSettingEntry => gen.into_root_schema_for::<ConfigSettingEntry>(),
             Self::ScEnvMetaKind => gen.into_root_schema_for::<ScEnvMetaKind>(),
             Self::ScEnvMetaEntry => gen.into_root_schema_for::<ScEnvMetaEntry>(),
+            Self::ScEnvMetaEntryInterfaceVersion => {
+                gen.into_root_schema_for::<ScEnvMetaEntryInterfaceVersion>()
+            }
             Self::ScMetaV0 => gen.into_root_schema_for::<ScMetaV0>(),
             Self::ScMetaKind => gen.into_root_schema_for::<ScMetaKind>(),
             Self::ScMetaEntry => gen.into_root_schema_for::<ScMetaEntry>(),
@@ -49035,6 +49092,7 @@ impl core::str::FromStr for TypeVariant {
             "ConfigSettingEntry" => Ok(Self::ConfigSettingEntry),
             "ScEnvMetaKind" => Ok(Self::ScEnvMetaKind),
             "ScEnvMetaEntry" => Ok(Self::ScEnvMetaEntry),
+            "ScEnvMetaEntryInterfaceVersion" => Ok(Self::ScEnvMetaEntryInterfaceVersion),
             "ScMetaV0" => Ok(Self::ScMetaV0),
             "ScMetaKind" => Ok(Self::ScMetaKind),
             "ScMetaEntry" => Ok(Self::ScMetaEntry),
@@ -49533,6 +49591,7 @@ pub enum Type {
     ConfigSettingEntry(Box<ConfigSettingEntry>),
     ScEnvMetaKind(Box<ScEnvMetaKind>),
     ScEnvMetaEntry(Box<ScEnvMetaEntry>),
+    ScEnvMetaEntryInterfaceVersion(Box<ScEnvMetaEntryInterfaceVersion>),
     ScMetaV0(Box<ScMetaV0>),
     ScMetaKind(Box<ScMetaKind>),
     ScMetaEntry(Box<ScMetaEntry>),
@@ -49971,7 +50030,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 462] = [
+    pub const VARIANTS: [TypeVariant; 463] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -49999,6 +50058,7 @@ impl Type {
         TypeVariant::ConfigSettingEntry,
         TypeVariant::ScEnvMetaKind,
         TypeVariant::ScEnvMetaEntry,
+        TypeVariant::ScEnvMetaEntryInterfaceVersion,
         TypeVariant::ScMetaV0,
         TypeVariant::ScMetaKind,
         TypeVariant::ScMetaEntry,
@@ -50435,7 +50495,7 @@ impl Type {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 462] = [
+    pub const VARIANTS_STR: [&'static str; 463] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50463,6 +50523,7 @@ impl Type {
         "ConfigSettingEntry",
         "ScEnvMetaKind",
         "ScEnvMetaEntry",
+        "ScEnvMetaEntryInterfaceVersion",
         "ScMetaV0",
         "ScMetaKind",
         "ScMetaEntry",
@@ -51022,6 +51083,11 @@ impl Type {
             }),
             TypeVariant::ScEnvMetaEntry => r.with_limited_depth(|r| {
                 Ok(Self::ScEnvMetaEntry(Box::new(ScEnvMetaEntry::read_xdr(r)?)))
+            }),
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => r.with_limited_depth(|r| {
+                Ok(Self::ScEnvMetaEntryInterfaceVersion(Box::new(
+                    ScEnvMetaEntryInterfaceVersion::read_xdr(r)?,
+                )))
             }),
             TypeVariant::ScMetaV0 => {
                 r.with_limited_depth(|r| Ok(Self::ScMetaV0(Box::new(ScMetaV0::read_xdr(r)?))))
@@ -53087,6 +53153,13 @@ impl Type {
                 ReadXdrIter::<_, ScEnvMetaEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t)))),
             ),
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => Box::new(
+                ReadXdrIter::<_, ScEnvMetaEntryInterfaceVersion>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ScEnvMetaEntryInterfaceVersion(Box::new(t)))),
+            ),
             TypeVariant::ScMetaV0 => Box::new(
                 ReadXdrIter::<_, ScMetaV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMetaV0(Box::new(t)))),
@@ -55089,6 +55162,13 @@ impl Type {
             TypeVariant::ScEnvMetaEntry => Box::new(
                 ReadXdrIter::<_, Frame<ScEnvMetaEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t.0)))),
+            ),
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => Box::new(
+                ReadXdrIter::<_, Frame<ScEnvMetaEntryInterfaceVersion>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ScEnvMetaEntryInterfaceVersion(Box::new(t.0)))),
             ),
             TypeVariant::ScMetaV0 => Box::new(
                 ReadXdrIter::<_, Frame<ScMetaV0>>::new(&mut r.inner, r.limits.clone())
@@ -57378,6 +57458,10 @@ impl Type {
                 ReadXdrIter::<_, ScEnvMetaEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScEnvMetaEntry(Box::new(t)))),
             ),
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => Box::new(
+                ReadXdrIter::<_, ScEnvMetaEntryInterfaceVersion>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScEnvMetaEntryInterfaceVersion(Box::new(t)))),
+            ),
             TypeVariant::ScMetaV0 => Box::new(
                 ReadXdrIter::<_, ScMetaV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMetaV0(Box::new(t)))),
@@ -59248,6 +59332,9 @@ impl Type {
             TypeVariant::ScEnvMetaEntry => {
                 Ok(Self::ScEnvMetaEntry(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => Ok(
+                Self::ScEnvMetaEntryInterfaceVersion(Box::new(serde_json::from_reader(r)?)),
+            ),
             TypeVariant::ScMetaV0 => Ok(Self::ScMetaV0(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScMetaKind => Ok(Self::ScMetaKind(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScMetaEntry => {
@@ -60538,6 +60625,11 @@ impl Type {
             TypeVariant::ScEnvMetaEntry => Ok(Self::ScEnvMetaEntry(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => {
+                Ok(Self::ScEnvMetaEntryInterfaceVersion(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )))
+            }
             TypeVariant::ScMetaV0 => Ok(Self::ScMetaV0(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61945,6 +62037,7 @@ impl Type {
             Self::ConfigSettingEntry(ref v) => v.as_ref(),
             Self::ScEnvMetaKind(ref v) => v.as_ref(),
             Self::ScEnvMetaEntry(ref v) => v.as_ref(),
+            Self::ScEnvMetaEntryInterfaceVersion(ref v) => v.as_ref(),
             Self::ScMetaV0(ref v) => v.as_ref(),
             Self::ScMetaKind(ref v) => v.as_ref(),
             Self::ScMetaEntry(ref v) => v.as_ref(),
@@ -62420,6 +62513,7 @@ impl Type {
             Self::ConfigSettingEntry(_) => "ConfigSettingEntry",
             Self::ScEnvMetaKind(_) => "ScEnvMetaKind",
             Self::ScEnvMetaEntry(_) => "ScEnvMetaEntry",
+            Self::ScEnvMetaEntryInterfaceVersion(_) => "ScEnvMetaEntryInterfaceVersion",
             Self::ScMetaV0(_) => "ScMetaV0",
             Self::ScMetaKind(_) => "ScMetaKind",
             Self::ScMetaEntry(_) => "ScMetaEntry",
@@ -62880,7 +62974,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 462] {
+    pub const fn variants() -> [TypeVariant; 463] {
         Self::VARIANTS
     }
 
@@ -62925,6 +63019,7 @@ impl Type {
             Self::ConfigSettingEntry(_) => TypeVariant::ConfigSettingEntry,
             Self::ScEnvMetaKind(_) => TypeVariant::ScEnvMetaKind,
             Self::ScEnvMetaEntry(_) => TypeVariant::ScEnvMetaEntry,
+            Self::ScEnvMetaEntryInterfaceVersion(_) => TypeVariant::ScEnvMetaEntryInterfaceVersion,
             Self::ScMetaV0(_) => TypeVariant::ScMetaV0,
             Self::ScMetaKind(_) => TypeVariant::ScMetaKind,
             Self::ScMetaEntry(_) => TypeVariant::ScMetaEntry,
@@ -63467,6 +63562,7 @@ impl WriteXdr for Type {
             Self::ConfigSettingEntry(v) => v.write_xdr(w),
             Self::ScEnvMetaKind(v) => v.write_xdr(w),
             Self::ScEnvMetaEntry(v) => v.write_xdr(w),
+            Self::ScEnvMetaEntryInterfaceVersion(v) => v.write_xdr(w),
             Self::ScMetaV0(v) => v.write_xdr(w),
             Self::ScMetaKind(v) => v.write_xdr(w),
             Self::ScMetaEntry(v) => v.write_xdr(w),

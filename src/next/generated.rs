@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "c92782d7c6d6f0ea0b2148cabc66c557f38cb23714257f2131235a88f4282366",
+        "a9e6d9f5e767db4b8b72b4723db4dd52982dca86697ce0aee7c9a79bae5c689d",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "bf6050037be5e1a42371a1cc151be23c8908b35220a8f1d8b0d4d6bd7f3b36ed",
+        "767dd9690d219a84e03f3fec48c0e5dddd3178cd052f0e313b6fab95c03914a2",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -4166,7 +4166,54 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 ///     // point on a 256-bit elliptic curve
 ///     Sec1DecodePointUncompressed = 43,
 ///     // Cost of verifying an ECDSA Secp256r1 signature
-///     VerifyEcdsaSecp256r1Sig = 44
+///     VerifyEcdsaSecp256r1Sig = 44,
+///
+///     // Cost of encoding a BLS12-381 Fp (base field element)
+///     Bls12381EncodeFp = 45,
+///     // Cost of decoding a BLS12-381 Fp (base field element)
+///     Bls12381DecodeFp = 46,
+///     // Cost of validating a G1 point lies on the curve and belongs to the correct subgroup
+///     Bls12381G1Validate = 47,
+///     // Cost of validating a G2 point lies on the curve and belongs to the correct subgroup
+///     Bls12381G2Validate = 48,
+///     // Cost of converting a BLS12-381 G1 point from projective to affine coordinates
+///     Bls12381G1ProjectiveToAffine = 49,
+///     // Cost of converting a BLS12-381 G2 point from projective to affine coordinates
+///     Bls12381G2ProjectiveToAffine = 50,
+///     // Cost of performing BLS12-381 G1 point addition
+///     Bls12381G1Add = 51,
+///     // Cost of performing BLS12-381 G1 scalar multiplication
+///     Bls12381G1Mul = 52,
+///     // Cost of performing BLS12-381 G1 multi-scalar multiplication (MSM)
+///     Bls12381G1Msm = 53,
+///     // Cost of mapping a BLS12-381 Fp field element to a G1 point
+///     Bls12381MapFpToG1 = 54,
+///     // Cost of hashing to a BLS12-381 G1 point
+///     Bls12381HashToG1 = 55,
+///     // Cost of performing BLS12-381 G2 point addition
+///     Bls12381G2Add = 56,
+///     // Cost of performing BLS12-381 G2 scalar multiplication
+///     Bls12381G2Mul = 57,
+///     // Cost of performing BLS12-381 G2 multi-scalar multiplication (MSM)
+///     Bls12381G2Msm = 58,
+///     // Cost of mapping a BLS12-381 Fp2 field element to a G2 point
+///     Bls12381MapFp2ToG2 = 59,
+///     // Cost of hashing to a BLS12-381 G2 point
+///     Bls12381HashToG2 = 60,
+///     // Cost of performing BLS12-381 pairing operation
+///     Bls12381Pairing = 61,
+///     // Cost of converting a BLS12-381 scalar element from U256
+///     Bls12381FrFromU256 = 62,
+///     // Cost of converting a BLS12-381 scalar element to U256
+///     Bls12381FrToU256 = 63,
+///     // Cost of performing BLS12-381 scalar element addition/subtraction
+///     Bls12381FrAddSub = 64,
+///     // Cost of performing BLS12-381 scalar element multiplication
+///     Bls12381FrMul = 65,
+///     // Cost of performing BLS12-381 scalar element exponentiation
+///     Bls12381FrPow = 66,
+///     // Cost of performing BLS12-381 scalar element inversion
+///     Bls12381FrInv = 67
 /// };
 /// ```
 ///
@@ -4226,10 +4273,33 @@ pub enum ContractCostType {
     InstantiateWasmDataSegmentBytes = 42,
     Sec1DecodePointUncompressed = 43,
     VerifyEcdsaSecp256r1Sig = 44,
+    Bls12381EncodeFp = 45,
+    Bls12381DecodeFp = 46,
+    Bls12381G1Validate = 47,
+    Bls12381G2Validate = 48,
+    Bls12381G1ProjectiveToAffine = 49,
+    Bls12381G2ProjectiveToAffine = 50,
+    Bls12381G1Add = 51,
+    Bls12381G1Mul = 52,
+    Bls12381G1Msm = 53,
+    Bls12381MapFpToG1 = 54,
+    Bls12381HashToG1 = 55,
+    Bls12381G2Add = 56,
+    Bls12381G2Mul = 57,
+    Bls12381G2Msm = 58,
+    Bls12381MapFp2ToG2 = 59,
+    Bls12381HashToG2 = 60,
+    Bls12381Pairing = 61,
+    Bls12381FrFromU256 = 62,
+    Bls12381FrToU256 = 63,
+    Bls12381FrAddSub = 64,
+    Bls12381FrMul = 65,
+    Bls12381FrPow = 66,
+    Bls12381FrInv = 67,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 45] = [
+    pub const VARIANTS: [ContractCostType; 68] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::MemAlloc,
         ContractCostType::MemCpy,
@@ -4275,8 +4345,31 @@ impl ContractCostType {
         ContractCostType::InstantiateWasmDataSegmentBytes,
         ContractCostType::Sec1DecodePointUncompressed,
         ContractCostType::VerifyEcdsaSecp256r1Sig,
+        ContractCostType::Bls12381EncodeFp,
+        ContractCostType::Bls12381DecodeFp,
+        ContractCostType::Bls12381G1Validate,
+        ContractCostType::Bls12381G2Validate,
+        ContractCostType::Bls12381G1ProjectiveToAffine,
+        ContractCostType::Bls12381G2ProjectiveToAffine,
+        ContractCostType::Bls12381G1Add,
+        ContractCostType::Bls12381G1Mul,
+        ContractCostType::Bls12381G1Msm,
+        ContractCostType::Bls12381MapFpToG1,
+        ContractCostType::Bls12381HashToG1,
+        ContractCostType::Bls12381G2Add,
+        ContractCostType::Bls12381G2Mul,
+        ContractCostType::Bls12381G2Msm,
+        ContractCostType::Bls12381MapFp2ToG2,
+        ContractCostType::Bls12381HashToG2,
+        ContractCostType::Bls12381Pairing,
+        ContractCostType::Bls12381FrFromU256,
+        ContractCostType::Bls12381FrToU256,
+        ContractCostType::Bls12381FrAddSub,
+        ContractCostType::Bls12381FrMul,
+        ContractCostType::Bls12381FrPow,
+        ContractCostType::Bls12381FrInv,
     ];
-    pub const VARIANTS_STR: [&'static str; 45] = [
+    pub const VARIANTS_STR: [&'static str; 68] = [
         "WasmInsnExec",
         "MemAlloc",
         "MemCpy",
@@ -4322,6 +4415,29 @@ impl ContractCostType {
         "InstantiateWasmDataSegmentBytes",
         "Sec1DecodePointUncompressed",
         "VerifyEcdsaSecp256r1Sig",
+        "Bls12381EncodeFp",
+        "Bls12381DecodeFp",
+        "Bls12381G1Validate",
+        "Bls12381G2Validate",
+        "Bls12381G1ProjectiveToAffine",
+        "Bls12381G2ProjectiveToAffine",
+        "Bls12381G1Add",
+        "Bls12381G1Mul",
+        "Bls12381G1Msm",
+        "Bls12381MapFpToG1",
+        "Bls12381HashToG1",
+        "Bls12381G2Add",
+        "Bls12381G2Mul",
+        "Bls12381G2Msm",
+        "Bls12381MapFp2ToG2",
+        "Bls12381HashToG2",
+        "Bls12381Pairing",
+        "Bls12381FrFromU256",
+        "Bls12381FrToU256",
+        "Bls12381FrAddSub",
+        "Bls12381FrMul",
+        "Bls12381FrPow",
+        "Bls12381FrInv",
     ];
 
     #[must_use]
@@ -4372,11 +4488,34 @@ impl ContractCostType {
             Self::InstantiateWasmDataSegmentBytes => "InstantiateWasmDataSegmentBytes",
             Self::Sec1DecodePointUncompressed => "Sec1DecodePointUncompressed",
             Self::VerifyEcdsaSecp256r1Sig => "VerifyEcdsaSecp256r1Sig",
+            Self::Bls12381EncodeFp => "Bls12381EncodeFp",
+            Self::Bls12381DecodeFp => "Bls12381DecodeFp",
+            Self::Bls12381G1Validate => "Bls12381G1Validate",
+            Self::Bls12381G2Validate => "Bls12381G2Validate",
+            Self::Bls12381G1ProjectiveToAffine => "Bls12381G1ProjectiveToAffine",
+            Self::Bls12381G2ProjectiveToAffine => "Bls12381G2ProjectiveToAffine",
+            Self::Bls12381G1Add => "Bls12381G1Add",
+            Self::Bls12381G1Mul => "Bls12381G1Mul",
+            Self::Bls12381G1Msm => "Bls12381G1Msm",
+            Self::Bls12381MapFpToG1 => "Bls12381MapFpToG1",
+            Self::Bls12381HashToG1 => "Bls12381HashToG1",
+            Self::Bls12381G2Add => "Bls12381G2Add",
+            Self::Bls12381G2Mul => "Bls12381G2Mul",
+            Self::Bls12381G2Msm => "Bls12381G2Msm",
+            Self::Bls12381MapFp2ToG2 => "Bls12381MapFp2ToG2",
+            Self::Bls12381HashToG2 => "Bls12381HashToG2",
+            Self::Bls12381Pairing => "Bls12381Pairing",
+            Self::Bls12381FrFromU256 => "Bls12381FrFromU256",
+            Self::Bls12381FrToU256 => "Bls12381FrToU256",
+            Self::Bls12381FrAddSub => "Bls12381FrAddSub",
+            Self::Bls12381FrMul => "Bls12381FrMul",
+            Self::Bls12381FrPow => "Bls12381FrPow",
+            Self::Bls12381FrInv => "Bls12381FrInv",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 45] {
+    pub const fn variants() -> [ContractCostType; 68] {
         Self::VARIANTS
     }
 }
@@ -4452,6 +4591,29 @@ impl TryFrom<i32> for ContractCostType {
             42 => ContractCostType::InstantiateWasmDataSegmentBytes,
             43 => ContractCostType::Sec1DecodePointUncompressed,
             44 => ContractCostType::VerifyEcdsaSecp256r1Sig,
+            45 => ContractCostType::Bls12381EncodeFp,
+            46 => ContractCostType::Bls12381DecodeFp,
+            47 => ContractCostType::Bls12381G1Validate,
+            48 => ContractCostType::Bls12381G2Validate,
+            49 => ContractCostType::Bls12381G1ProjectiveToAffine,
+            50 => ContractCostType::Bls12381G2ProjectiveToAffine,
+            51 => ContractCostType::Bls12381G1Add,
+            52 => ContractCostType::Bls12381G1Mul,
+            53 => ContractCostType::Bls12381G1Msm,
+            54 => ContractCostType::Bls12381MapFpToG1,
+            55 => ContractCostType::Bls12381HashToG1,
+            56 => ContractCostType::Bls12381G2Add,
+            57 => ContractCostType::Bls12381G2Mul,
+            58 => ContractCostType::Bls12381G2Msm,
+            59 => ContractCostType::Bls12381MapFp2ToG2,
+            60 => ContractCostType::Bls12381HashToG2,
+            61 => ContractCostType::Bls12381Pairing,
+            62 => ContractCostType::Bls12381FrFromU256,
+            63 => ContractCostType::Bls12381FrToU256,
+            64 => ContractCostType::Bls12381FrAddSub,
+            65 => ContractCostType::Bls12381FrMul,
+            66 => ContractCostType::Bls12381FrPow,
+            67 => ContractCostType::Bls12381FrInv,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -29940,12 +30102,16 @@ impl WriteXdr for SorobanAuthorizedFunctionType {
 /// {
 /// case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN:
 ///     InvokeContractArgs contractFn;
-/// // This variant of auth payload for creating new contract instances is no
-/// // longer accepted after protocol 22.
+/// // This variant of auth payload for creating new contract instances
+/// // doesn't allow specifying the constructor arguments, creating contracts
+/// // with constructors that take arguments is only possible by authorizing
+/// // `SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN`
+/// // (protocol 22+).
 /// case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN:
 ///     CreateContractArgs createContractHostFn;
 /// // This variant of auth payload for creating new contract instances
-/// // is only accepted in and after protocol 22.
+/// // is only accepted in and after protocol 22. It allows authorizing the
+/// // contract constructor arguments.
 /// case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN:
 ///     CreateContractArgsV2 createContractV2HostFn;
 /// };

@@ -7,7 +7,7 @@ authors = ["Stellar Development Foundation <info@stellar.org>"]
 license = "Apache-2.0"
 version = "22.0.0"
 edition = "2021"
-rust-version = "1.74.0"
+rust-version = "1.81.0"
 
 [[bin]]
 name = "stellar-xdr"
@@ -30,9 +30,7 @@ clap = { version = "4.2.4", default-features = false, features = ["std", "derive
 serde_json = { version = "1.0.89", optional = true }
 thiserror = { version = "1.0.37", optional = true }
 schemars = { version = "0.8.16", optional = true }
-embedded-io = { version = "0.6.1", default-features = false, optional = true }
-embedded-io-cursor = { git = "https://github.com/lightsail-network/embedded-io-cursor", rev = "0b7ff9270d7ec1d3204375650f04cb0258ac1ada", default-features = false, features = ["alloc"], optional = true }
-# TODO: embedded-io-cursor not published yet.
+embedded-io-extras = {  version = "0.0.1", default-features = false, features = ["alloc"], optional = true }
 
 [dev-dependencies]
 serde_json = "1.0.89"
@@ -40,7 +38,7 @@ serde_json = "1.0.89"
 [features]
 default = ["std", "curr"]
 std = ["alloc"]
-alloc = ["dep:hex", "dep:stellar-strkey", "dep:embedded-io", "dep:embedded-io-cursor", "escape-bytes/alloc", "hex/alloc"]
+alloc = ["dep:hex", "dep:stellar-strkey", "dep:embedded-io-extras", "escape-bytes/alloc", "hex/alloc"]
 curr = []
 next = []
 

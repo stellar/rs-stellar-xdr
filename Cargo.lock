@@ -257,9 +257,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
 
 [[package]]
-name = "embedded-io-cursor"
+name = "embedded-io-extras"
 version = "0.0.1"
-source = "git+https://github.com/lightsail-network/embedded-io-cursor?rev=0b7ff9270d7ec1d3204375650f04cb0258ac1ada#0b7ff9270d7ec1d3204375650f04cb0258ac1ada"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c151a27502f81447537f6dd1a11fe1162b66ebd4a27da09003f976de9af41fe"
 dependencies = [
  "embedded-io",
 ]
@@ -553,8 +554,7 @@ dependencies = [
  "base64 0.13.0",
  "clap",
  "crate-git-revision",
- "embedded-io",
- "embedded-io-cursor",
+ "embedded-io-extras",
  "escape-bytes",
  "hex",
  "schemars",

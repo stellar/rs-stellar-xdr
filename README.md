@@ -32,8 +32,8 @@ decode), and is the default feature set.
 2. `alloc` – The alloc feature uses `Box` and `Vec` types for recursive
 references and arrays, and is automatically enabled if the std feature is
 enabled. The default global allocator is used. Support for a custom
-allocator will be added in [#39]. Encode or decode capability exists, 
-but still in an experimental stage, there may be breaking changes at any time.
+allocator will be added in [#39]. Encode or decode capability exists, but
+still in an experimental stage, there may be breaking changes at any time.
 3. If std or alloc are not enabled recursive and array types requires static
 lifetime values. No encode or decode capability exists. Encode and decode
 capability will be added in [#47].

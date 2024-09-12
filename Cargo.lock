@@ -251,6 +251,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d6ef0072f8a535281e4876be788938b528e9a1d43900b82c2569af7da799125"
 
 [[package]]
+name = "embedded-io"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
+
+[[package]]
+name = "embedded-io-cursor"
+version = "0.0.1"
+source = "git+https://github.com/lightsail-network/embedded-io-cursor?rev=0b7ff9270d7ec1d3204375650f04cb0258ac1ada#0b7ff9270d7ec1d3204375650f04cb0258ac1ada"
+dependencies = [
+ "embedded-io",
+]
+
+[[package]]
 name = "escape-bytes"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -523,13 +537,12 @@ dependencies = [
 
 [[package]]
 name = "stellar-strkey"
-version = "0.0.9"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e3aa3ed00e70082cb43febc1c2afa5056b9bb3e348bbb43d0cd0aa88a611144"
+checksum = "0989c9a05eccbd08b60e603a1c7e3ed3ec92c0de73b8681fc964d272ab2b2697"
 dependencies = [
  "crate-git-revision",
  "data-encoding",
- "thiserror",
 ]
 
 [[package]]
@@ -540,6 +553,8 @@ dependencies = [
  "base64 0.13.0",
  "clap",
  "crate-git-revision",
+ "embedded-io",
+ "embedded-io-cursor",
  "escape-bytes",
  "hex",
  "schemars",

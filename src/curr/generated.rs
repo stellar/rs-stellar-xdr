@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-config-setting.x",
-        "73c32b6f05b43e1c22318ace568d607a633687d1adbb35cb3d022164cf38dab3",
+        "f5487397dda4c27135f0f9e930042a186d1abdc9698163ca6a30efe1a03ee495",
     ),
     (
         "xdr/curr/Stellar-contract-env-meta.x",
@@ -4124,48 +4124,52 @@ impl WriteXdr for ConfigSettingContractBandwidthV0 {
 ///     Bls12381EncodeFp = 45,
 ///     // Cost of decoding a BLS12-381 Fp (base field element)
 ///     Bls12381DecodeFp = 46,
-///     // Cost of validating a G1 point lies on the curve and belongs to the correct subgroup
-///     Bls12381G1Validate = 47,
-///     // Cost of validating a G2 point lies on the curve and belongs to the correct subgroup
-///     Bls12381G2Validate = 48,
+///     // Cost of checking a G1 point lies on the curve
+///     Bls12381G1CheckPointOnCurve = 47,
+///     // Cost of checking a G1 point belongs to the correct subgroup
+///     Bls12381G1CheckPointInSubgroup = 48,
+///     // Cost of checking a G2 point lies on the curve
+///     Bls12381G2CheckPointOnCurve = 49,
+///     // Cost of checking a G2 point belongs to the correct subgroup
+///     Bls12381G2CheckPointInSubgroup = 50,
 ///     // Cost of converting a BLS12-381 G1 point from projective to affine coordinates
-///     Bls12381G1ProjectiveToAffine = 49,
+///     Bls12381G1ProjectiveToAffine = 51,
 ///     // Cost of converting a BLS12-381 G2 point from projective to affine coordinates
-///     Bls12381G2ProjectiveToAffine = 50,
+///     Bls12381G2ProjectiveToAffine = 52,
 ///     // Cost of performing BLS12-381 G1 point addition
-///     Bls12381G1Add = 51,
+///     Bls12381G1Add = 53,
 ///     // Cost of performing BLS12-381 G1 scalar multiplication
-///     Bls12381G1Mul = 52,
+///     Bls12381G1Mul = 54,
 ///     // Cost of performing BLS12-381 G1 multi-scalar multiplication (MSM)
-///     Bls12381G1Msm = 53,
+///     Bls12381G1Msm = 55,
 ///     // Cost of mapping a BLS12-381 Fp field element to a G1 point
-///     Bls12381MapFpToG1 = 54,
+///     Bls12381MapFpToG1 = 56,
 ///     // Cost of hashing to a BLS12-381 G1 point
-///     Bls12381HashToG1 = 55,
+///     Bls12381HashToG1 = 57,
 ///     // Cost of performing BLS12-381 G2 point addition
-///     Bls12381G2Add = 56,
+///     Bls12381G2Add = 58,
 ///     // Cost of performing BLS12-381 G2 scalar multiplication
-///     Bls12381G2Mul = 57,
+///     Bls12381G2Mul = 59,
 ///     // Cost of performing BLS12-381 G2 multi-scalar multiplication (MSM)
-///     Bls12381G2Msm = 58,
+///     Bls12381G2Msm = 60,
 ///     // Cost of mapping a BLS12-381 Fp2 field element to a G2 point
-///     Bls12381MapFp2ToG2 = 59,
+///     Bls12381MapFp2ToG2 = 61,
 ///     // Cost of hashing to a BLS12-381 G2 point
-///     Bls12381HashToG2 = 60,
+///     Bls12381HashToG2 = 62,
 ///     // Cost of performing BLS12-381 pairing operation
-///     Bls12381Pairing = 61,
+///     Bls12381Pairing = 63,
 ///     // Cost of converting a BLS12-381 scalar element from U256
-///     Bls12381FrFromU256 = 62,
+///     Bls12381FrFromU256 = 64,
 ///     // Cost of converting a BLS12-381 scalar element to U256
-///     Bls12381FrToU256 = 63,
+///     Bls12381FrToU256 = 65,
 ///     // Cost of performing BLS12-381 scalar element addition/subtraction
-///     Bls12381FrAddSub = 64,
+///     Bls12381FrAddSub = 66,
 ///     // Cost of performing BLS12-381 scalar element multiplication
-///     Bls12381FrMul = 65,
+///     Bls12381FrMul = 67,
 ///     // Cost of performing BLS12-381 scalar element exponentiation
-///     Bls12381FrPow = 66,
+///     Bls12381FrPow = 68,
 ///     // Cost of performing BLS12-381 scalar element inversion
-///     Bls12381FrInv = 67
+///     Bls12381FrInv = 69
 /// };
 /// ```
 ///
@@ -4227,31 +4231,33 @@ pub enum ContractCostType {
     VerifyEcdsaSecp256r1Sig = 44,
     Bls12381EncodeFp = 45,
     Bls12381DecodeFp = 46,
-    Bls12381G1Validate = 47,
-    Bls12381G2Validate = 48,
-    Bls12381G1ProjectiveToAffine = 49,
-    Bls12381G2ProjectiveToAffine = 50,
-    Bls12381G1Add = 51,
-    Bls12381G1Mul = 52,
-    Bls12381G1Msm = 53,
-    Bls12381MapFpToG1 = 54,
-    Bls12381HashToG1 = 55,
-    Bls12381G2Add = 56,
-    Bls12381G2Mul = 57,
-    Bls12381G2Msm = 58,
-    Bls12381MapFp2ToG2 = 59,
-    Bls12381HashToG2 = 60,
-    Bls12381Pairing = 61,
-    Bls12381FrFromU256 = 62,
-    Bls12381FrToU256 = 63,
-    Bls12381FrAddSub = 64,
-    Bls12381FrMul = 65,
-    Bls12381FrPow = 66,
-    Bls12381FrInv = 67,
+    Bls12381G1CheckPointOnCurve = 47,
+    Bls12381G1CheckPointInSubgroup = 48,
+    Bls12381G2CheckPointOnCurve = 49,
+    Bls12381G2CheckPointInSubgroup = 50,
+    Bls12381G1ProjectiveToAffine = 51,
+    Bls12381G2ProjectiveToAffine = 52,
+    Bls12381G1Add = 53,
+    Bls12381G1Mul = 54,
+    Bls12381G1Msm = 55,
+    Bls12381MapFpToG1 = 56,
+    Bls12381HashToG1 = 57,
+    Bls12381G2Add = 58,
+    Bls12381G2Mul = 59,
+    Bls12381G2Msm = 60,
+    Bls12381MapFp2ToG2 = 61,
+    Bls12381HashToG2 = 62,
+    Bls12381Pairing = 63,
+    Bls12381FrFromU256 = 64,
+    Bls12381FrToU256 = 65,
+    Bls12381FrAddSub = 66,
+    Bls12381FrMul = 67,
+    Bls12381FrPow = 68,
+    Bls12381FrInv = 69,
 }
 
 impl ContractCostType {
-    pub const VARIANTS: [ContractCostType; 68] = [
+    pub const VARIANTS: [ContractCostType; 70] = [
         ContractCostType::WasmInsnExec,
         ContractCostType::MemAlloc,
         ContractCostType::MemCpy,
@@ -4299,8 +4305,10 @@ impl ContractCostType {
         ContractCostType::VerifyEcdsaSecp256r1Sig,
         ContractCostType::Bls12381EncodeFp,
         ContractCostType::Bls12381DecodeFp,
-        ContractCostType::Bls12381G1Validate,
-        ContractCostType::Bls12381G2Validate,
+        ContractCostType::Bls12381G1CheckPointOnCurve,
+        ContractCostType::Bls12381G1CheckPointInSubgroup,
+        ContractCostType::Bls12381G2CheckPointOnCurve,
+        ContractCostType::Bls12381G2CheckPointInSubgroup,
         ContractCostType::Bls12381G1ProjectiveToAffine,
         ContractCostType::Bls12381G2ProjectiveToAffine,
         ContractCostType::Bls12381G1Add,
@@ -4321,7 +4329,7 @@ impl ContractCostType {
         ContractCostType::Bls12381FrPow,
         ContractCostType::Bls12381FrInv,
     ];
-    pub const VARIANTS_STR: [&'static str; 68] = [
+    pub const VARIANTS_STR: [&'static str; 70] = [
         "WasmInsnExec",
         "MemAlloc",
         "MemCpy",
@@ -4369,8 +4377,10 @@ impl ContractCostType {
         "VerifyEcdsaSecp256r1Sig",
         "Bls12381EncodeFp",
         "Bls12381DecodeFp",
-        "Bls12381G1Validate",
-        "Bls12381G2Validate",
+        "Bls12381G1CheckPointOnCurve",
+        "Bls12381G1CheckPointInSubgroup",
+        "Bls12381G2CheckPointOnCurve",
+        "Bls12381G2CheckPointInSubgroup",
         "Bls12381G1ProjectiveToAffine",
         "Bls12381G2ProjectiveToAffine",
         "Bls12381G1Add",
@@ -4442,8 +4452,10 @@ impl ContractCostType {
             Self::VerifyEcdsaSecp256r1Sig => "VerifyEcdsaSecp256r1Sig",
             Self::Bls12381EncodeFp => "Bls12381EncodeFp",
             Self::Bls12381DecodeFp => "Bls12381DecodeFp",
-            Self::Bls12381G1Validate => "Bls12381G1Validate",
-            Self::Bls12381G2Validate => "Bls12381G2Validate",
+            Self::Bls12381G1CheckPointOnCurve => "Bls12381G1CheckPointOnCurve",
+            Self::Bls12381G1CheckPointInSubgroup => "Bls12381G1CheckPointInSubgroup",
+            Self::Bls12381G2CheckPointOnCurve => "Bls12381G2CheckPointOnCurve",
+            Self::Bls12381G2CheckPointInSubgroup => "Bls12381G2CheckPointInSubgroup",
             Self::Bls12381G1ProjectiveToAffine => "Bls12381G1ProjectiveToAffine",
             Self::Bls12381G2ProjectiveToAffine => "Bls12381G2ProjectiveToAffine",
             Self::Bls12381G1Add => "Bls12381G1Add",
@@ -4467,7 +4479,7 @@ impl ContractCostType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ContractCostType; 68] {
+    pub const fn variants() -> [ContractCostType; 70] {
         Self::VARIANTS
     }
 }
@@ -4545,27 +4557,29 @@ impl TryFrom<i32> for ContractCostType {
             44 => ContractCostType::VerifyEcdsaSecp256r1Sig,
             45 => ContractCostType::Bls12381EncodeFp,
             46 => ContractCostType::Bls12381DecodeFp,
-            47 => ContractCostType::Bls12381G1Validate,
-            48 => ContractCostType::Bls12381G2Validate,
-            49 => ContractCostType::Bls12381G1ProjectiveToAffine,
-            50 => ContractCostType::Bls12381G2ProjectiveToAffine,
-            51 => ContractCostType::Bls12381G1Add,
-            52 => ContractCostType::Bls12381G1Mul,
-            53 => ContractCostType::Bls12381G1Msm,
-            54 => ContractCostType::Bls12381MapFpToG1,
-            55 => ContractCostType::Bls12381HashToG1,
-            56 => ContractCostType::Bls12381G2Add,
-            57 => ContractCostType::Bls12381G2Mul,
-            58 => ContractCostType::Bls12381G2Msm,
-            59 => ContractCostType::Bls12381MapFp2ToG2,
-            60 => ContractCostType::Bls12381HashToG2,
-            61 => ContractCostType::Bls12381Pairing,
-            62 => ContractCostType::Bls12381FrFromU256,
-            63 => ContractCostType::Bls12381FrToU256,
-            64 => ContractCostType::Bls12381FrAddSub,
-            65 => ContractCostType::Bls12381FrMul,
-            66 => ContractCostType::Bls12381FrPow,
-            67 => ContractCostType::Bls12381FrInv,
+            47 => ContractCostType::Bls12381G1CheckPointOnCurve,
+            48 => ContractCostType::Bls12381G1CheckPointInSubgroup,
+            49 => ContractCostType::Bls12381G2CheckPointOnCurve,
+            50 => ContractCostType::Bls12381G2CheckPointInSubgroup,
+            51 => ContractCostType::Bls12381G1ProjectiveToAffine,
+            52 => ContractCostType::Bls12381G2ProjectiveToAffine,
+            53 => ContractCostType::Bls12381G1Add,
+            54 => ContractCostType::Bls12381G1Mul,
+            55 => ContractCostType::Bls12381G1Msm,
+            56 => ContractCostType::Bls12381MapFpToG1,
+            57 => ContractCostType::Bls12381HashToG1,
+            58 => ContractCostType::Bls12381G2Add,
+            59 => ContractCostType::Bls12381G2Mul,
+            60 => ContractCostType::Bls12381G2Msm,
+            61 => ContractCostType::Bls12381MapFp2ToG2,
+            62 => ContractCostType::Bls12381HashToG2,
+            63 => ContractCostType::Bls12381Pairing,
+            64 => ContractCostType::Bls12381FrFromU256,
+            65 => ContractCostType::Bls12381FrToU256,
+            66 => ContractCostType::Bls12381FrAddSub,
+            67 => ContractCostType::Bls12381FrMul,
+            68 => ContractCostType::Bls12381FrPow,
+            69 => ContractCostType::Bls12381FrInv,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

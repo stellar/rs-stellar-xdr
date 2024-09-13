@@ -23,6 +23,8 @@ pub enum Error {
     ReadFile(#[from] std::io::Error),
     #[error("error generating JSON: {0}")]
     GenerateJson(#[from] serde_json::Error),
+    #[error("error generating CBOR: {0}")]
+    GenerateCbor(#[from] serde_cbor::Error),
 }
 
 #[derive(Args, Debug, Clone)]
@@ -66,6 +68,7 @@ pub enum OutputFormat {
     JsonFormatted,
     RustDebug,
     RustDebugFormatted,
+    Cbor,
 }
 
 impl Default for OutputFormat {
@@ -158,6 +161,9 @@ impl Cmd {
             OutputFormat::JsonFormatted => println!("{}", serde_json::to_string_pretty(v)?),
             OutputFormat::RustDebug => println!("{v:?}"),
             OutputFormat::RustDebugFormatted => println!("{v:#?}"),
+            OutputFormat::Cbor => {
+                serde_cbor::to_writer(std::io::stdout(), v).map_err(Error::GenerateCbor)?
+            }
         }
         Ok(())
     }

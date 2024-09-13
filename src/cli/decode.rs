@@ -23,6 +23,8 @@ pub enum Error {
     ReadFile(#[from] std::io::Error),
     #[error("error generating JSON: {0}")]
     GenerateJson(#[from] serde_json::Error),
+    #[error("error generating message pack: {0}")]
+    GenerateMessagePack(#[from] rmp_serde::encode::Error),
 }
 
 #[derive(Args, Debug, Clone)]
@@ -66,6 +68,7 @@ pub enum OutputFormat {
     JsonFormatted,
     RustDebug,
     RustDebugFormatted,
+    MessagePack,
 }
 
 impl Default for OutputFormat {
@@ -158,6 +161,10 @@ impl Cmd {
             OutputFormat::JsonFormatted => println!("{}", serde_json::to_string_pretty(v)?),
             OutputFormat::RustDebug => println!("{v:?}"),
             OutputFormat::RustDebugFormatted => println!("{v:#?}"),
+            OutputFormat::MessagePack => {
+                let mut out = std::io::stdout();
+                rmp_serde::encode::write(&mut out, v).map_err(Error::GenerateMessagePack)?;
+            }
         }
         Ok(())
     }

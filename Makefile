@@ -4,7 +4,8 @@ CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features b
 
 CARGO_DOC_ARGS?=--open
 
-XDRGEN_VERSION=b7bc57ecdd277c9575930d3e17c12dfaa76655fc
+# TODO: Update this after https://github.com/stellar/xdrgen/pull/205 is merged
+XDRGEN_VERSION=e57dfa9199f476acde88ddb096699c829ad86c28
 # XDRGEN_LOCAL=1
 XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId
 XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId
@@ -44,7 +45,7 @@ src/curr/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 ifeq ($(XDRGEN_LOCAL),)
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.8 && \
-		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
+		gem specific_install https://github.com/lightsail-network/xdrgen.git -b $(XDRGEN_VERSION) && \
 		xdrgen --language rust --namespace generated --output src/curr \
 			--rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR) \
 			--rust-types-custom-jsonschema-impl '$(XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_CURR)' \
@@ -69,7 +70,7 @@ src/next/generated.rs: $(sort $(wildcard xdr/next/*.x))
 ifeq ($(XDRGEN_LOCAL),)
 	docker run -i --rm -v $$PWD:/wd -w /wd docker.io/library/ruby:latest /bin/bash -c '\
 		gem install specific_install -v 0.3.8 && \
-		gem specific_install https://github.com/stellar/xdrgen.git -b $(XDRGEN_VERSION) && \
+		gem specific_install https://github.com/lightsail-network/xdrgen.git -b $(XDRGEN_VERSION) && \
 		xdrgen --language rust --namespace generated --output src/next \
 			--rust-types-custom-str-impl $(XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT) \
 			--rust-types-custom-jsonschema-impl '$(XDRGEN_TYPES_CUSTOM_JSONSCHEMA_IMPL_NEXT)' \

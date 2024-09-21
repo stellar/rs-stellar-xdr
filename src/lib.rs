@@ -5,6 +5,8 @@
 // auto-generated docs.
 #![allow(clippy::tabs_in_doc_comments)]
 #![allow(clippy::doc_markdown)]
+// TODO: Make clippy happy
+#![allow(clippy::doc_lazy_continuation)]
 
 //! Library and CLI containing types and functionality for working with Stellar
 //! XDR.
@@ -60,6 +62,9 @@
 //! 5. `hex` – Enables support for hex in string representations of some types.
 //! Automatically enabled when serde is enabled.
 //! 6. `schemars` – Enables support for JSON Schema generation. (Experimental)
+//! 7. `embedded_io` - Enables support for encoding and decoding using the
+//! `embedded-io` library, without relying on `std::io`, making it suitable for
+//! `no_std` environments. (Experimental)
 //!
 //! Features marked experimental may disappear at anytime, see breaking changes
 //! at anytime, or and may be minimal implementations instead of complete.

@@ -130,6 +130,8 @@ jobs:
         name: cargo-hack
         version: 0.5.16
     - run: cargo hack test $CARGO_HACK_ARGS
+    # TODO: Features "std" and "embedded_io" cannot be enabled simultaneously.
+    - run: cargo hack test $EMBEDDED_IO_CARGO_HACK_ARGS
 
   publish-dry-run:
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')

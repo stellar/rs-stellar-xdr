@@ -11,7 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex
+  CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex --skip "embedded_io"
+  EMBEDDED_IO_CARGO_HACK_ARGS: --feature-powerset --exclude-features default --skip "cli,std,base64,serde,serde_json,schemars,arbitrary,hex"
 
 jobs:
 
@@ -90,6 +91,9 @@ jobs:
         name: cargo-hack
         version: 0.5.16
     - run: cargo hack clippy $CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
+    # TODO: Features "std" and "embedded_io" cannot be enabled simultaneously.
+    # Is there a better solution to solve it?
+    - run: cargo hack clippy $EMBEDDED_IO_CARGO_HACK_ARGS --target ${{ matrix.sys.target }} --all-targets
 
   test:
     strategy:

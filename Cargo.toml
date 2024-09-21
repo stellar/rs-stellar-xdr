@@ -30,7 +30,7 @@ clap = { version = "4.2.4", default-features = false, features = ["std", "derive
 serde_json = { version = "1.0.89", optional = true }
 thiserror = { version = "1.0.37", optional = true }
 schemars = { version = "0.8.16", optional = true }
-embedded-io-extras = {  version = "0.0.1", default-features = false, features = ["alloc"], optional = true }
+embedded-io-extras = {  version = "0.0.2", default-features = false, optional = true }
 
 [dev-dependencies]
 serde_json = "1.0.89"
@@ -38,7 +38,8 @@ serde_json = "1.0.89"
 [features]
 default = ["std", "curr"]
 std = ["alloc"]
-alloc = ["dep:hex", "dep:stellar-strkey", "dep:embedded-io-extras", "escape-bytes/alloc", "hex/alloc"]
+embedded_io = ["alloc", "dep:embedded-io-extras"]
+alloc = ["dep:hex", "dep:stellar-strkey", "escape-bytes/alloc", "hex/alloc", "embedded-io-extras/alloc"]
 curr = []
 next = []
 

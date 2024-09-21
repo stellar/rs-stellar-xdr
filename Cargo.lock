@@ -258,9 +258,9 @@ checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
 
 [[package]]
 name = "embedded-io-extras"
-version = "0.0.1"
+version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c151a27502f81447537f6dd1a11fe1162b66ebd4a27da09003f976de9af41fe"
+checksum = "c2f31813223d8ced7a76dcd83823400f0c40c0390439fa6467f6edcd67b2a036"
 dependencies = [
  "embedded-io",
 ]

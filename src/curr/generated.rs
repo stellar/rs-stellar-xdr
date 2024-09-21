@@ -112,7 +112,7 @@ use std::{
     io::{BufRead, BufReader, Cursor, Read, Write},
 };
 
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
+#[cfg(feature = "embedded_io")]
 use embedded_io_extras::{Cursor, Error as _, ErrorType, Read, Write};
 
 /// Error contains all errors returned by functions in this crate. It can be
@@ -130,7 +130,7 @@ pub enum Error {
     InvalidHex,
     #[cfg(feature = "std")]
     Io(io::Error),
-    #[cfg(all(not(feature = "std"), feature = "alloc"))]
+    #[cfg(feature = "embedded_io")]
     Io(embedded_io_extras::ErrorKind),
     DepthLimitExceeded,
     #[cfg(feature = "serde_json")]
@@ -148,14 +148,14 @@ impl PartialEq for Error {
             // case for comparing errors outputted by the XDR library is for
             // error case testing, and a lack of the ability to compare has a
             // detrimental affect on failure testing, so this is a tradeoff.
-            #[cfg(feature = "alloc")]
+            #[cfg(any(feature = "std", feature = "embedded_io"))]
             (Self::Io(l), Self::Io(r)) => l.kind() == r.kind(),
             _ => core::mem::discriminant(self) == core::mem::discriminant(other),
         }
     }
 }
 
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
+#[cfg(feature = "embedded_io")]
 impl embedded_io_extras::Error for Error {
     fn kind(&self) -> embedded_io_extras::ErrorKind {
         match self {
@@ -165,10 +165,11 @@ impl embedded_io_extras::Error for Error {
     }
 }
 
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
+#[cfg(feature = "embedded_io")]
 impl From<embedded_io_extras::ReadExactError<Error>> for Error {
     fn from(value: embedded_io_extras::ReadExactError<Error>) -> Self {
         match value {
+            // TODO: maybe we should map the error to a more specific error?
             embedded_io_extras::ReadExactError::UnexpectedEof => {
                 Error::Io(embedded_io_extras::ErrorKind::Other)
             }
@@ -203,7 +204,7 @@ impl fmt::Display for Error {
             Error::InvalidHex => write!(f, "hex invalid"),
             #[cfg(feature = "std")]
             Error::Io(e) => write!(f, "{e}"),
-            #[cfg(all(not(feature = "std"), feature = "alloc"))]
+            #[cfg(feature = "embedded_io")]
             Error::Io(_) => write!(f, "io error"),
             Error::DepthLimitExceeded => write!(f, "depth limit exceeded"),
             #[cfg(feature = "serde_json")]
@@ -257,7 +258,7 @@ impl From<Error> for () {
 #[allow(dead_code)]
 type Result<T> = core::result::Result<T, Error>;
 
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
+#[cfg(feature = "embedded_io")]
 impl<T> ErrorType for Limited<T> {
     type Error = Error;
 }
@@ -295,7 +296,7 @@ where
 
 /// `Limits` contains the limits that a limited reader or writer will be
 /// constrained to.
-#[cfg(feature = "alloc")]
+#[cfg(any(feature = "std", feature = "embedded_io"))]
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Limits {
     /// Defines the maximum depth for recursive calls in `Read/WriteXdr` to
@@ -312,7 +313,7 @@ pub struct Limits {
     pub len: usize,
 }
 
-#[cfg(feature = "alloc")]
+#[cfg(any(feature = "std", feature = "embedded_io"))]
 impl Limits {
     #[must_use]
     pub fn none() -> Self {
@@ -343,13 +344,13 @@ impl Limits {
 ///
 /// Intended for use with readers and writers and limiting their reads and
 /// writes.
-#[cfg(feature = "alloc")]
+#[cfg(any(feature = "std", feature = "embedded_io"))]
 pub struct Limited<L> {
     pub inner: L,
     pub(crate) limits: Limits,
 }
 
-#[cfg(feature = "alloc")]
+#[cfg(any(feature = "std", feature = "embedded_io"))]
 impl<L> Limited<L> {
     /// Constructs a new `Limited`.
     ///
@@ -402,7 +403,7 @@ impl<R: Read> Read for Limited<R> {
     }
 }
 
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
+#[cfg(feature = "embedded_io")]
 impl<R: Read> Read for Limited<R> {
     /// Forwards the read operation to the wrapped object.
     fn read(&mut self, buf: &mut [u8]) -> core::result::Result<usize, Self::Error> {
@@ -436,7 +437,7 @@ impl<W: Write> Write for Limited<W> {
     }
 }
 
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
+#[cfg(feature = "embedded_io")]
 impl<W: Write> Write for Limited<W> {
     /// Forwards the write operation to the wrapped object.
     fn write(&mut self, buf: &[u8]) -> core::result::Result<usize, Self::Error> {
@@ -521,7 +522,7 @@ where
     ///
     /// Use [`ReadXdR: Read_xdr_to_end`] when the intent is for all bytes in the
     /// read implementation to be consumed by the read.
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self>;
 
     /// Construct the type from the XDR bytes base64 encoded.
@@ -556,7 +557,7 @@ where
     ///
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr_to_end<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let s = Self::read_xdr(r)?;
         // Check that any further reads, such as this read of one byte, read no
@@ -596,7 +597,7 @@ where
     ///
     /// Use [`ReadXdR: Read_xdr_into_to_end`] when the intent is for all bytes
     /// in the read implementation to be consumed by the read.
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr_into<R: Read>(&mut self, r: &mut Limited<R>) -> Result<()> {
         *self = Self::read_xdr(r)?;
         Ok(())
@@ -620,7 +621,7 @@ where
     ///
     /// All implementations should continue if the read implementation returns
     /// [`ErrorKind::Interrupted`](std::io::ErrorKind::Interrupted).
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr_into_to_end<R: Read>(&mut self, r: &mut Limited<R>) -> Result<()> {
         Self::read_xdr_into(self, r)?;
         // Check that any further reads, such as this read of one byte, read no
@@ -669,7 +670,7 @@ where
     ///
     /// An error is returned if the bytes are not completely consumed by the
     /// deserialization.
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn from_xdr(bytes: impl AsRef<[u8]>, limits: Limits) -> Result<Self> {
         let mut cursor = Limited::new(Cursor::new(bytes.as_ref()), limits);
         let t = Self::read_xdr_to_end(&mut cursor)?;
@@ -693,10 +694,10 @@ where
 }
 
 pub trait WriteXdr {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()>;
 
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn to_xdr(&self, limits: Limits) -> Result<Vec<u8>> {
         let mut cursor = Limited::new(Cursor::new(vec![]), limits);
         self.write_xdr(&mut cursor)?;
@@ -718,13 +719,13 @@ pub trait WriteXdr {
 
 /// `Pad_len` returns the number of bytes to pad an XDR value of the given
 /// length to make the final serialized size a multiple of 4.
-#[cfg(feature = "alloc")]
+#[cfg(any(feature = "std", feature = "embedded_io"))]
 fn pad_len(len: usize) -> usize {
     (4 - (len % 4)) % 4
 }
 
 impl ReadXdr for i32 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 4];
         r.with_limited_depth(|r| {
@@ -736,7 +737,7 @@ impl ReadXdr for i32 {
 }
 
 impl WriteXdr for i32 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 4] = self.to_be_bytes();
         w.with_limited_depth(|w| {
@@ -747,7 +748,7 @@ impl WriteXdr for i32 {
 }
 
 impl ReadXdr for u32 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 4];
         r.with_limited_depth(|r| {
@@ -759,7 +760,7 @@ impl ReadXdr for u32 {
 }
 
 impl WriteXdr for u32 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 4] = self.to_be_bytes();
         w.with_limited_depth(|w| {
@@ -770,7 +771,7 @@ impl WriteXdr for u32 {
 }
 
 impl ReadXdr for i64 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 8];
         r.with_limited_depth(|r| {
@@ -782,7 +783,7 @@ impl ReadXdr for i64 {
 }
 
 impl WriteXdr for i64 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 8] = self.to_be_bytes();
         w.with_limited_depth(|w| {
@@ -793,7 +794,7 @@ impl WriteXdr for i64 {
 }
 
 impl ReadXdr for u64 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         let mut b = [0u8; 8];
         r.with_limited_depth(|r| {
@@ -805,7 +806,7 @@ impl ReadXdr for u64 {
 }
 
 impl WriteXdr for u64 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         let b: [u8; 8] = self.to_be_bytes();
         w.with_limited_depth(|w| {
@@ -816,35 +817,35 @@ impl WriteXdr for u64 {
 }
 
 impl ReadXdr for f32 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
         todo!()
     }
 }
 
 impl WriteXdr for f32 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
         todo!()
     }
 }
 
 impl ReadXdr for f64 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
         todo!()
     }
 }
 
 impl WriteXdr for f64 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
         todo!()
     }
 }
 
 impl ReadXdr for bool {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = u32::read_xdr(r)?;
@@ -855,7 +856,7 @@ impl ReadXdr for bool {
 }
 
 impl WriteXdr for bool {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i = u32::from(*self); // true = 1, false = 0
@@ -865,7 +866,7 @@ impl WriteXdr for bool {
 }
 
 impl<T: ReadXdr> ReadXdr for Option<T> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = u32::read_xdr(r)?;
@@ -882,7 +883,7 @@ impl<T: ReadXdr> ReadXdr for Option<T> {
 }
 
 impl<T: WriteXdr> WriteXdr for Option<T> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             if let Some(t) = self {
@@ -897,35 +898,35 @@ impl<T: WriteXdr> WriteXdr for Option<T> {
 }
 
 impl<T: ReadXdr> ReadXdr for Box<T> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| Ok(Box::new(T::read_xdr(r)?)))
     }
 }
 
 impl<T: WriteXdr> WriteXdr for Box<T> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| T::write_xdr(self, w))
     }
 }
 
 impl ReadXdr for () {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(_r: &mut Limited<R>) -> Result<Self> {
         Ok(())
     }
 }
 
 impl WriteXdr for () {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, _w: &mut Limited<W>) -> Result<()> {
         Ok(())
     }
 }
 
 impl<const N: usize> ReadXdr for [u8; N] {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             r.consume_len(N)?;
@@ -944,7 +945,7 @@ impl<const N: usize> ReadXdr for [u8; N] {
 }
 
 impl<const N: usize> WriteXdr for [u8; N] {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             w.consume_len(N)?;
@@ -958,7 +959,7 @@ impl<const N: usize> WriteXdr for [u8; N] {
 }
 
 impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let mut vec = Vec::with_capacity(N);
@@ -973,7 +974,7 @@ impl<T: ReadXdr, const N: usize> ReadXdr for [T; N] {
 }
 
 impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             for t in self {
@@ -1332,7 +1333,7 @@ impl<'a, const MAX: u32> TryFrom<&'a VecM<u8, MAX>> for &'a str {
 }
 
 impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let len: u32 = u32::read_xdr(r)?;
@@ -1359,7 +1360,7 @@ impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
 }
 
 impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
@@ -1379,7 +1380,7 @@ impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
 }
 
 impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let len = u32::read_xdr(r)?;
@@ -1399,7 +1400,7 @@ impl<T: ReadXdr, const MAX: u32> ReadXdr for VecM<T, MAX> {
 }
 
 impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
@@ -1772,7 +1773,7 @@ impl<'a, const MAX: u32> TryFrom<&'a BytesM<MAX>> for &'a str {
 }
 
 impl<const MAX: u32> ReadXdr for BytesM<MAX> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let len: u32 = u32::read_xdr(r)?;
@@ -1799,7 +1800,7 @@ impl<const MAX: u32> ReadXdr for BytesM<MAX> {
 }
 
 impl<const MAX: u32> WriteXdr for BytesM<MAX> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
@@ -2175,7 +2176,7 @@ impl<'a, const MAX: u32> TryFrom<&'a StringM<MAX>> for &'a str {
 }
 
 impl<const MAX: u32> ReadXdr for StringM<MAX> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let len: u32 = u32::read_xdr(r)?;
@@ -2202,7 +2203,7 @@ impl<const MAX: u32> ReadXdr for StringM<MAX> {
 }
 
 impl<const MAX: u32> WriteXdr for StringM<MAX> {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
@@ -2248,7 +2249,7 @@ impl<T> ReadXdr for Frame<T>
 where
     T: ReadXdr,
 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         // Read the frame header value that contains 1 flag-bit and a 33-bit length.
         //  - The 1 flag bit is 0 when there are more frames for the same record.
@@ -2268,7 +2269,7 @@ where
     }
 }
 
-#[cfg(all(test, feature = "alloc"))]
+#[cfg(all(test, any(feature = "std", feature = "embedded_io")))]
 mod tests {
     use super::*;
 
@@ -2378,7 +2379,7 @@ mod tests {
     }
 }
 
-#[cfg(all(test, feature = "alloc"))]
+#[cfg(all(test, any(feature = "std", feature = "embedded_io")))]
 mod test {
     use super::*;
 
@@ -2891,6 +2892,219 @@ mod test {
     }
 }
 
+#[cfg(all(test, any(feature = "std", feature = "embedded_io")))]
+mod test_io {
+    // We will use different IO libraries according to the feature,
+    // we hope the selected IO library can work as expected
+
+    use super::*;
+
+    #[test]
+    fn test_read_exact_success() {
+        let data = b"The quick brown fox jumps over the lazy dog.";
+        let mut cursor = Cursor::new(data);
+        let mut buffer = [0u8; 19]; // Exactly the length of "The quick brown fox"
+
+        // Attempt to read exactly 19 bytes
+        assert!(cursor.read_exact(&mut buffer).is_ok());
+        assert_eq!(&buffer, b"The quick brown fox");
+        assert_eq!(cursor.position(), 19);
+    }
+
+    #[test]
+    fn test_read_exact_less_than_available() {
+        let data = b"Hello, Rust!";
+        let mut cursor = Cursor::new(data);
+        let mut buffer = [0u8; 5];
+
+        // Attempt to read 5 bytes from the start
+        assert!(cursor.read_exact(&mut buffer).is_ok());
+        assert_eq!(&buffer, b"Hello");
+        assert_eq!(cursor.position(), 5);
+    }
+
+    #[test]
+    fn test_read_exact_exact_eof() {
+        let data = b"Data";
+        let mut cursor = Cursor::new(data);
+        let mut buffer = [0u8; 4];
+
+        // Attempt to read exactly 4 bytes, which is the entire buffer
+        assert!(cursor.read_exact(&mut buffer).is_ok());
+        assert_eq!(&buffer, b"Data");
+        assert_eq!(cursor.position(), 4);
+
+        // Further attempt to read should fail with EOF
+        let mut buffer_eof = [0u8; 1];
+        let result = cursor.read_exact(&mut buffer_eof);
+        assert!(result.is_err());
+        #[cfg(feature = "std")]
+        assert_eq!(
+            result.unwrap_err().kind(),
+            std::io::ErrorKind::UnexpectedEof
+        );
+        #[cfg(feature = "embedded_io")]
+        assert_eq!(
+            result.unwrap_err(),
+            embedded_io_extras::ReadExactError::UnexpectedEof
+        );
+        assert_eq!(cursor.position(), 4); // Position should remain at EOF
+    }
+
+    #[test]
+    fn test_read_exact_past_eof() {
+        let data = b"Short";
+        let mut cursor = Cursor::new(data);
+        let mut buffer = [0u8; 10]; // Requesting more bytes than available
+
+        // Attempt to read 10 bytes from a 5-byte buffer
+        let result = cursor.read_exact(&mut buffer);
+        assert!(result.is_err());
+        #[cfg(feature = "std")]
+        assert_eq!(
+            result.unwrap_err().kind(),
+            std::io::ErrorKind::UnexpectedEof
+        );
+        #[cfg(feature = "embedded_io")]
+        assert_eq!(
+            result.unwrap_err(),
+            embedded_io_extras::ReadExactError::UnexpectedEof
+        );
+        assert_eq!(cursor.position(), 5); // Position should move to EOF
+    }
+
+    #[test]
+    fn test_read_exact_empty_buffer() {
+        let data = b"Non-empty";
+        let mut cursor = Cursor::new(data);
+        let mut buffer = [0u8; 0]; // Zero-length buffer
+
+        // Attempt to read zero bytes
+        assert!(cursor.read_exact(&mut buffer).is_ok());
+        assert_eq!(cursor.position(), 0); // Position should remain unchanged
+    }
+
+    #[test]
+    fn test_read_exact_from_empty_cursor() {
+        let data: &[u8] = b"";
+        let mut cursor = Cursor::new(data);
+        let mut buffer = [0u8; 5];
+
+        // Attempt to read from an empty cursor
+        let result = cursor.read_exact(&mut buffer);
+        assert!(result.is_err());
+        #[cfg(feature = "std")]
+        assert_eq!(
+            result.unwrap_err().kind(),
+            std::io::ErrorKind::UnexpectedEof
+        );
+        #[cfg(feature = "embedded_io")]
+        assert_eq!(
+            result.unwrap_err(),
+            embedded_io_extras::ReadExactError::UnexpectedEof
+        );
+        assert_eq!(cursor.position(), 0); // Position remains at 0
+    }
+
+    #[test]
+    fn test_read_exact_multiple_reads() {
+        let data = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let mut cursor = Cursor::new(data);
+
+        let mut buffer1 = [0u8; 10];
+        let mut buffer2 = [0u8; 10];
+        let mut buffer3 = [0u8; 10]; // Only 6 bytes left
+
+        // First read: 10 bytes
+        assert!(cursor.read_exact(&mut buffer1).is_ok());
+        assert_eq!(&buffer1, b"ABCDEFGHIJ");
+        assert_eq!(cursor.position(), 10);
+
+        // Second read: 10 bytes
+        assert!(cursor.read_exact(&mut buffer2).is_ok());
+        assert_eq!(&buffer2, b"KLMNOPQRST");
+        assert_eq!(cursor.position(), 20);
+
+        // Third read: Attempt to read 10 bytes, but only 6 are available
+        let result = cursor.read_exact(&mut buffer3);
+        assert!(result.is_err());
+        #[cfg(feature = "std")]
+        assert_eq!(
+            result.unwrap_err().kind(),
+            std::io::ErrorKind::UnexpectedEof
+        );
+        #[cfg(feature = "embedded_io")]
+        assert_eq!(
+            result.unwrap_err(),
+            embedded_io_extras::ReadExactError::UnexpectedEof
+        );
+        // read_exact makes no promises about the content of the buffer on error
+        // assert_eq!(&buffer3[..6], b"UVWXYZ");
+        assert_eq!(cursor.position(), 26); // Position should be at EOF
+    }
+
+    #[test]
+    fn test_cursor_read_exact_after_eof() {
+        let data = b"End";
+        let mut cursor = Cursor::new(data);
+        let mut buffer = [0u8; 3];
+
+        // First read: read the entire buffer
+        assert!(cursor.read_exact(&mut buffer).is_ok());
+        assert_eq!(&buffer, b"End");
+        assert_eq!(cursor.position(), 3);
+
+        // Second read: attempt to read again, should fail
+        let mut buffer_eof = [0u8; 1];
+        let result = cursor.read_exact(&mut buffer_eof);
+        assert!(result.is_err());
+        #[cfg(feature = "std")]
+        assert_eq!(
+            result.unwrap_err().kind(),
+            std::io::ErrorKind::UnexpectedEof
+        );
+        #[cfg(feature = "embedded_io")]
+        assert_eq!(
+            result.unwrap_err(),
+            embedded_io_extras::ReadExactError::UnexpectedEof
+        );
+        assert_eq!(cursor.position(), 3); // Position remains at EOF
+    }
+
+    #[test]
+    fn test_slice_read_exact_success() {
+        let data = b"SliceReadTest";
+        let mut slice = &data[..];
+        let mut buffer = [0u8; 13]; // Exact length
+
+        // Using Read trait directly on slice
+        assert!(slice.read_exact(&mut buffer).is_ok());
+        assert_eq!(&buffer, b"SliceReadTest");
+    }
+
+    #[test]
+    fn test_slice_read_exact_partial() {
+        let data = b"SlicePartial";
+        let mut slice = &data[..];
+        let mut buffer = [0u8; 20]; // Request more bytes than available
+
+        // Using Read trait directly on slice
+        let result = slice.read_exact(&mut buffer);
+        assert!(result.is_err());
+        #[cfg(feature = "std")]
+        assert_eq!(
+            result.unwrap_err().kind(),
+            std::io::ErrorKind::UnexpectedEof
+        );
+        #[cfg(feature = "embedded_io")]
+        assert_eq!(
+            result.unwrap_err(),
+            embedded_io_extras::ReadExactError::UnexpectedEof
+        );
+        // read_exact makes no promises about the content of the buffer on error
+    }
+}
+
 /// Value is an XDR Typedef defines as:
 ///
 /// ```text
@@ -2931,7 +3145,7 @@ impl AsRef<BytesM> for Value {
 }
 
 impl ReadXdr for Value {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::read_xdr(r)?;
@@ -2942,7 +3156,7 @@ impl ReadXdr for Value {
 }
 
 impl WriteXdr for Value {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -3021,7 +3235,7 @@ pub struct ScpBallot {
 }
 
 impl ReadXdr for ScpBallot {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3033,7 +3247,7 @@ impl ReadXdr for ScpBallot {
 }
 
 impl WriteXdr for ScpBallot {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.counter.write_xdr(w)?;
@@ -3142,7 +3356,7 @@ impl From<ScpStatementType> for i32 {
 }
 
 impl ReadXdr for ScpStatementType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -3153,7 +3367,7 @@ impl ReadXdr for ScpStatementType {
 }
 
 impl WriteXdr for ScpStatementType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -3188,7 +3402,7 @@ pub struct ScpNomination {
 }
 
 impl ReadXdr for ScpNomination {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3201,7 +3415,7 @@ impl ReadXdr for ScpNomination {
 }
 
 impl WriteXdr for ScpNomination {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.quorum_set_hash.write_xdr(w)?;
@@ -3244,7 +3458,7 @@ pub struct ScpStatementPrepare {
 }
 
 impl ReadXdr for ScpStatementPrepare {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3260,7 +3474,7 @@ impl ReadXdr for ScpStatementPrepare {
 }
 
 impl WriteXdr for ScpStatementPrepare {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.quorum_set_hash.write_xdr(w)?;
@@ -3304,7 +3518,7 @@ pub struct ScpStatementConfirm {
 }
 
 impl ReadXdr for ScpStatementConfirm {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3319,7 +3533,7 @@ impl ReadXdr for ScpStatementConfirm {
 }
 
 impl WriteXdr for ScpStatementConfirm {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ballot.write_xdr(w)?;
@@ -3358,7 +3572,7 @@ pub struct ScpStatementExternalize {
 }
 
 impl ReadXdr for ScpStatementExternalize {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3371,7 +3585,7 @@ impl ReadXdr for ScpStatementExternalize {
 }
 
 impl WriteXdr for ScpStatementExternalize {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.commit.write_xdr(w)?;
@@ -3494,7 +3708,7 @@ impl Variants<ScpStatementType> for ScpStatementPledges {
 impl Union<ScpStatementType> for ScpStatementPledges {}
 
 impl ReadXdr for ScpStatementPledges {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScpStatementType = <ScpStatementType as ReadXdr>::read_xdr(r)?;
@@ -3515,7 +3729,7 @@ impl ReadXdr for ScpStatementPledges {
 }
 
 impl WriteXdr for ScpStatementPledges {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -3589,7 +3803,7 @@ pub struct ScpStatement {
 }
 
 impl ReadXdr for ScpStatement {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3602,7 +3816,7 @@ impl ReadXdr for ScpStatement {
 }
 
 impl WriteXdr for ScpStatement {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.node_id.write_xdr(w)?;
@@ -3637,7 +3851,7 @@ pub struct ScpEnvelope {
 }
 
 impl ReadXdr for ScpEnvelope {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3649,7 +3863,7 @@ impl ReadXdr for ScpEnvelope {
 }
 
 impl WriteXdr for ScpEnvelope {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.statement.write_xdr(w)?;
@@ -3685,7 +3899,7 @@ pub struct ScpQuorumSet {
 }
 
 impl ReadXdr for ScpQuorumSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3698,7 +3912,7 @@ impl ReadXdr for ScpQuorumSet {
 }
 
 impl WriteXdr for ScpQuorumSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.threshold.write_xdr(w)?;
@@ -3732,7 +3946,7 @@ pub struct ConfigSettingContractExecutionLanesV0 {
 }
 
 impl ReadXdr for ConfigSettingContractExecutionLanesV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3743,7 +3957,7 @@ impl ReadXdr for ConfigSettingContractExecutionLanesV0 {
 }
 
 impl WriteXdr for ConfigSettingContractExecutionLanesV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_max_tx_count.write_xdr(w)?;
@@ -3786,7 +4000,7 @@ pub struct ConfigSettingContractComputeV0 {
 }
 
 impl ReadXdr for ConfigSettingContractComputeV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3800,7 +4014,7 @@ impl ReadXdr for ConfigSettingContractComputeV0 {
 }
 
 impl WriteXdr for ConfigSettingContractComputeV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_max_instructions.write_xdr(w)?;
@@ -3879,7 +4093,7 @@ pub struct ConfigSettingContractLedgerCostV0 {
 }
 
 impl ReadXdr for ConfigSettingContractLedgerCostV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3904,7 +4118,7 @@ impl ReadXdr for ConfigSettingContractLedgerCostV0 {
 }
 
 impl WriteXdr for ConfigSettingContractLedgerCostV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_max_read_ledger_entries.write_xdr(w)?;
@@ -3949,7 +4163,7 @@ pub struct ConfigSettingContractHistoricalDataV0 {
 }
 
 impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -3960,7 +4174,7 @@ impl ReadXdr for ConfigSettingContractHistoricalDataV0 {
 }
 
 impl WriteXdr for ConfigSettingContractHistoricalDataV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.fee_historical1_kb.write_xdr(w)?;
@@ -3995,7 +4209,7 @@ pub struct ConfigSettingContractEventsV0 {
 }
 
 impl ReadXdr for ConfigSettingContractEventsV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -4007,7 +4221,7 @@ impl ReadXdr for ConfigSettingContractEventsV0 {
 }
 
 impl WriteXdr for ConfigSettingContractEventsV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_max_contract_events_size_bytes.write_xdr(w)?;
@@ -4047,7 +4261,7 @@ pub struct ConfigSettingContractBandwidthV0 {
 }
 
 impl ReadXdr for ConfigSettingContractBandwidthV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -4060,7 +4274,7 @@ impl ReadXdr for ConfigSettingContractBandwidthV0 {
 }
 
 impl WriteXdr for ConfigSettingContractBandwidthV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_max_txs_size_bytes.write_xdr(w)?;
@@ -4636,7 +4850,7 @@ impl From<ContractCostType> for i32 {
 }
 
 impl ReadXdr for ContractCostType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -4647,7 +4861,7 @@ impl ReadXdr for ContractCostType {
 }
 
 impl WriteXdr for ContractCostType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -4683,7 +4897,7 @@ pub struct ContractCostParamEntry {
 }
 
 impl ReadXdr for ContractCostParamEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -4696,7 +4910,7 @@ impl ReadXdr for ContractCostParamEntry {
 }
 
 impl WriteXdr for ContractCostParamEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -4758,7 +4972,7 @@ pub struct StateArchivalSettings {
 }
 
 impl ReadXdr for StateArchivalSettings {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -4778,7 +4992,7 @@ impl ReadXdr for StateArchivalSettings {
 }
 
 impl WriteXdr for StateArchivalSettings {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.max_entry_ttl.write_xdr(w)?;
@@ -4821,7 +5035,7 @@ pub struct EvictionIterator {
 }
 
 impl ReadXdr for EvictionIterator {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -4834,7 +5048,7 @@ impl ReadXdr for EvictionIterator {
 }
 
 impl WriteXdr for EvictionIterator {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.bucket_list_level.write_xdr(w)?;
@@ -4893,7 +5107,7 @@ impl AsRef<VecM<ContractCostParamEntry, 1024>> for ContractCostParams {
 }
 
 impl ReadXdr for ContractCostParams {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<ContractCostParamEntry, 1024>::read_xdr(r)?;
@@ -4904,7 +5118,7 @@ impl ReadXdr for ContractCostParams {
 }
 
 impl WriteXdr for ContractCostParams {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -5123,7 +5337,7 @@ impl From<ConfigSettingId> for i32 {
 }
 
 impl ReadXdr for ConfigSettingId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -5134,7 +5348,7 @@ impl ReadXdr for ConfigSettingId {
 }
 
 impl WriteXdr for ConfigSettingId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -5314,7 +5528,7 @@ impl Variants<ConfigSettingId> for ConfigSettingEntry {
 impl Union<ConfigSettingId> for ConfigSettingEntry {}
 
 impl ReadXdr for ConfigSettingEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ConfigSettingId = <ConfigSettingId as ReadXdr>::read_xdr(r)?;
@@ -5371,7 +5585,7 @@ impl ReadXdr for ConfigSettingEntry {
 }
 
 impl WriteXdr for ConfigSettingEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -5479,7 +5693,7 @@ impl From<ScEnvMetaKind> for i32 {
 }
 
 impl ReadXdr for ScEnvMetaKind {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -5490,7 +5704,7 @@ impl ReadXdr for ScEnvMetaKind {
 }
 
 impl WriteXdr for ScEnvMetaKind {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -5522,7 +5736,7 @@ pub struct ScEnvMetaEntryInterfaceVersion {
 }
 
 impl ReadXdr for ScEnvMetaEntryInterfaceVersion {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -5534,7 +5748,7 @@ impl ReadXdr for ScEnvMetaEntryInterfaceVersion {
 }
 
 impl WriteXdr for ScEnvMetaEntryInterfaceVersion {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.protocol.write_xdr(w)?;
@@ -5619,7 +5833,7 @@ impl Variants<ScEnvMetaKind> for ScEnvMetaEntry {
 impl Union<ScEnvMetaKind> for ScEnvMetaEntry {}
 
 impl ReadXdr for ScEnvMetaEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScEnvMetaKind = <ScEnvMetaKind as ReadXdr>::read_xdr(r)?;
@@ -5639,7 +5853,7 @@ impl ReadXdr for ScEnvMetaEntry {
 }
 
 impl WriteXdr for ScEnvMetaEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -5676,7 +5890,7 @@ pub struct ScMetaV0 {
 }
 
 impl ReadXdr for ScMetaV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -5688,7 +5902,7 @@ impl ReadXdr for ScMetaV0 {
 }
 
 impl WriteXdr for ScMetaV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
@@ -5780,7 +5994,7 @@ impl From<ScMetaKind> for i32 {
 }
 
 impl ReadXdr for ScMetaKind {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -5791,7 +6005,7 @@ impl ReadXdr for ScMetaKind {
 }
 
 impl WriteXdr for ScMetaKind {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -5872,7 +6086,7 @@ impl Variants<ScMetaKind> for ScMetaEntry {
 impl Union<ScMetaKind> for ScMetaEntry {}
 
 impl ReadXdr for ScMetaEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScMetaKind = <ScMetaKind as ReadXdr>::read_xdr(r)?;
@@ -5888,7 +6102,7 @@ impl ReadXdr for ScMetaEntry {
 }
 
 impl WriteXdr for ScMetaEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -6145,7 +6359,7 @@ impl From<ScSpecType> for i32 {
 }
 
 impl ReadXdr for ScSpecType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -6156,7 +6370,7 @@ impl ReadXdr for ScSpecType {
 }
 
 impl WriteXdr for ScSpecType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -6187,7 +6401,7 @@ pub struct ScSpecTypeOption {
 }
 
 impl ReadXdr for ScSpecTypeOption {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -6198,7 +6412,7 @@ impl ReadXdr for ScSpecTypeOption {
 }
 
 impl WriteXdr for ScSpecTypeOption {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.value_type.write_xdr(w)?;
@@ -6231,7 +6445,7 @@ pub struct ScSpecTypeResult {
 }
 
 impl ReadXdr for ScSpecTypeResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -6243,7 +6457,7 @@ impl ReadXdr for ScSpecTypeResult {
 }
 
 impl WriteXdr for ScSpecTypeResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ok_type.write_xdr(w)?;
@@ -6275,7 +6489,7 @@ pub struct ScSpecTypeVec {
 }
 
 impl ReadXdr for ScSpecTypeVec {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -6286,7 +6500,7 @@ impl ReadXdr for ScSpecTypeVec {
 }
 
 impl WriteXdr for ScSpecTypeVec {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.element_type.write_xdr(w)?;
@@ -6319,7 +6533,7 @@ pub struct ScSpecTypeMap {
 }
 
 impl ReadXdr for ScSpecTypeMap {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -6331,7 +6545,7 @@ impl ReadXdr for ScSpecTypeMap {
 }
 
 impl WriteXdr for ScSpecTypeMap {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key_type.write_xdr(w)?;
@@ -6363,7 +6577,7 @@ pub struct ScSpecTypeTuple {
 }
 
 impl ReadXdr for ScSpecTypeTuple {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -6374,7 +6588,7 @@ impl ReadXdr for ScSpecTypeTuple {
 }
 
 impl WriteXdr for ScSpecTypeTuple {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.value_types.write_xdr(w)?;
@@ -6405,7 +6619,7 @@ pub struct ScSpecTypeBytesN {
 }
 
 impl ReadXdr for ScSpecTypeBytesN {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -6416,7 +6630,7 @@ impl ReadXdr for ScSpecTypeBytesN {
 }
 
 impl WriteXdr for ScSpecTypeBytesN {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.n.write_xdr(w)?;
@@ -6447,7 +6661,7 @@ pub struct ScSpecTypeUdt {
 }
 
 impl ReadXdr for ScSpecTypeUdt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -6458,7 +6672,7 @@ impl ReadXdr for ScSpecTypeUdt {
 }
 
 impl WriteXdr for ScSpecTypeUdt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.name.write_xdr(w)?;
@@ -6694,7 +6908,7 @@ impl Variants<ScSpecType> for ScSpecTypeDef {
 impl Union<ScSpecType> for ScSpecTypeDef {}
 
 impl ReadXdr for ScSpecTypeDef {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScSpecType = <ScSpecType as ReadXdr>::read_xdr(r)?;
@@ -6734,7 +6948,7 @@ impl ReadXdr for ScSpecTypeDef {
 }
 
 impl WriteXdr for ScSpecTypeDef {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -6797,7 +7011,7 @@ pub struct ScSpecUdtStructFieldV0 {
 }
 
 impl ReadXdr for ScSpecUdtStructFieldV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -6810,7 +7024,7 @@ impl ReadXdr for ScSpecUdtStructFieldV0 {
 }
 
 impl WriteXdr for ScSpecUdtStructFieldV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
@@ -6849,7 +7063,7 @@ pub struct ScSpecUdtStructV0 {
 }
 
 impl ReadXdr for ScSpecUdtStructV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -6863,7 +7077,7 @@ impl ReadXdr for ScSpecUdtStructV0 {
 }
 
 impl WriteXdr for ScSpecUdtStructV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
@@ -6899,7 +7113,7 @@ pub struct ScSpecUdtUnionCaseVoidV0 {
 }
 
 impl ReadXdr for ScSpecUdtUnionCaseVoidV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -6911,7 +7125,7 @@ impl ReadXdr for ScSpecUdtUnionCaseVoidV0 {
 }
 
 impl WriteXdr for ScSpecUdtUnionCaseVoidV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
@@ -6947,7 +7161,7 @@ pub struct ScSpecUdtUnionCaseTupleV0 {
 }
 
 impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -6960,7 +7174,7 @@ impl ReadXdr for ScSpecUdtUnionCaseTupleV0 {
 }
 
 impl WriteXdr for ScSpecUdtUnionCaseTupleV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
@@ -7060,7 +7274,7 @@ impl From<ScSpecUdtUnionCaseV0Kind> for i32 {
 }
 
 impl ReadXdr for ScSpecUdtUnionCaseV0Kind {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -7071,7 +7285,7 @@ impl ReadXdr for ScSpecUdtUnionCaseV0Kind {
 }
 
 impl WriteXdr for ScSpecUdtUnionCaseV0Kind {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -7160,7 +7374,7 @@ impl Variants<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {
 impl Union<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {}
 
 impl ReadXdr for ScSpecUdtUnionCaseV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScSpecUdtUnionCaseV0Kind = <ScSpecUdtUnionCaseV0Kind as ReadXdr>::read_xdr(r)?;
@@ -7181,7 +7395,7 @@ impl ReadXdr for ScSpecUdtUnionCaseV0 {
 }
 
 impl WriteXdr for ScSpecUdtUnionCaseV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -7223,7 +7437,7 @@ pub struct ScSpecUdtUnionV0 {
 }
 
 impl ReadXdr for ScSpecUdtUnionV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -7237,7 +7451,7 @@ impl ReadXdr for ScSpecUdtUnionV0 {
 }
 
 impl WriteXdr for ScSpecUdtUnionV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
@@ -7275,7 +7489,7 @@ pub struct ScSpecUdtEnumCaseV0 {
 }
 
 impl ReadXdr for ScSpecUdtEnumCaseV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -7288,7 +7502,7 @@ impl ReadXdr for ScSpecUdtEnumCaseV0 {
 }
 
 impl WriteXdr for ScSpecUdtEnumCaseV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
@@ -7327,7 +7541,7 @@ pub struct ScSpecUdtEnumV0 {
 }
 
 impl ReadXdr for ScSpecUdtEnumV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -7341,7 +7555,7 @@ impl ReadXdr for ScSpecUdtEnumV0 {
 }
 
 impl WriteXdr for ScSpecUdtEnumV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
@@ -7379,7 +7593,7 @@ pub struct ScSpecUdtErrorEnumCaseV0 {
 }
 
 impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -7392,7 +7606,7 @@ impl ReadXdr for ScSpecUdtErrorEnumCaseV0 {
 }
 
 impl WriteXdr for ScSpecUdtErrorEnumCaseV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
@@ -7431,7 +7645,7 @@ pub struct ScSpecUdtErrorEnumV0 {
 }
 
 impl ReadXdr for ScSpecUdtErrorEnumV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -7445,7 +7659,7 @@ impl ReadXdr for ScSpecUdtErrorEnumV0 {
 }
 
 impl WriteXdr for ScSpecUdtErrorEnumV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
@@ -7483,7 +7697,7 @@ pub struct ScSpecFunctionInputV0 {
 }
 
 impl ReadXdr for ScSpecFunctionInputV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -7496,7 +7710,7 @@ impl ReadXdr for ScSpecFunctionInputV0 {
 }
 
 impl WriteXdr for ScSpecFunctionInputV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
@@ -7535,7 +7749,7 @@ pub struct ScSpecFunctionV0 {
 }
 
 impl ReadXdr for ScSpecFunctionV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -7549,7 +7763,7 @@ impl ReadXdr for ScSpecFunctionV0 {
 }
 
 impl WriteXdr for ScSpecFunctionV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.doc.write_xdr(w)?;
@@ -7671,7 +7885,7 @@ impl From<ScSpecEntryKind> for i32 {
 }
 
 impl ReadXdr for ScSpecEntryKind {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -7682,7 +7896,7 @@ impl ReadXdr for ScSpecEntryKind {
 }
 
 impl WriteXdr for ScSpecEntryKind {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -7795,7 +8009,7 @@ impl Variants<ScSpecEntryKind> for ScSpecEntry {
 impl Union<ScSpecEntryKind> for ScSpecEntry {}
 
 impl ReadXdr for ScSpecEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScSpecEntryKind = <ScSpecEntryKind as ReadXdr>::read_xdr(r)?;
@@ -7817,7 +8031,7 @@ impl ReadXdr for ScSpecEntry {
 }
 
 impl WriteXdr for ScSpecEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -8075,7 +8289,7 @@ impl From<ScValType> for i32 {
 }
 
 impl ReadXdr for ScValType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -8086,7 +8300,7 @@ impl ReadXdr for ScValType {
 }
 
 impl WriteXdr for ScValType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -8227,7 +8441,7 @@ impl From<ScErrorType> for i32 {
 }
 
 impl ReadXdr for ScErrorType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -8238,7 +8452,7 @@ impl ReadXdr for ScErrorType {
 }
 
 impl WriteXdr for ScErrorType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -8387,7 +8601,7 @@ impl From<ScErrorCode> for i32 {
 }
 
 impl ReadXdr for ScErrorCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -8398,7 +8612,7 @@ impl ReadXdr for ScErrorCode {
 }
 
 impl WriteXdr for ScErrorCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -8530,7 +8744,7 @@ impl Variants<ScErrorType> for ScError {
 impl Union<ScErrorType> for ScError {}
 
 impl ReadXdr for ScError {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScErrorType = <ScErrorType as ReadXdr>::read_xdr(r)?;
@@ -8555,7 +8769,7 @@ impl ReadXdr for ScError {
 }
 
 impl WriteXdr for ScError {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -8600,7 +8814,7 @@ pub struct UInt128Parts {
 }
 
 impl ReadXdr for UInt128Parts {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -8612,7 +8826,7 @@ impl ReadXdr for UInt128Parts {
 }
 
 impl WriteXdr for UInt128Parts {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hi.write_xdr(w)?;
@@ -8645,7 +8859,7 @@ pub struct Int128Parts {
 }
 
 impl ReadXdr for Int128Parts {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -8657,7 +8871,7 @@ impl ReadXdr for Int128Parts {
 }
 
 impl WriteXdr for Int128Parts {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hi.write_xdr(w)?;
@@ -8694,7 +8908,7 @@ pub struct UInt256Parts {
 }
 
 impl ReadXdr for UInt256Parts {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -8708,7 +8922,7 @@ impl ReadXdr for UInt256Parts {
 }
 
 impl WriteXdr for UInt256Parts {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hi_hi.write_xdr(w)?;
@@ -8747,7 +8961,7 @@ pub struct Int256Parts {
 }
 
 impl ReadXdr for Int256Parts {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -8761,7 +8975,7 @@ impl ReadXdr for Int256Parts {
 }
 
 impl WriteXdr for Int256Parts {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hi_hi.write_xdr(w)?;
@@ -8862,7 +9076,7 @@ impl From<ContractExecutableType> for i32 {
 }
 
 impl ReadXdr for ContractExecutableType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -8873,7 +9087,7 @@ impl ReadXdr for ContractExecutableType {
 }
 
 impl WriteXdr for ContractExecutableType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -8962,7 +9176,7 @@ impl Variants<ContractExecutableType> for ContractExecutable {
 impl Union<ContractExecutableType> for ContractExecutable {}
 
 impl ReadXdr for ContractExecutable {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ContractExecutableType = <ContractExecutableType as ReadXdr>::read_xdr(r)?;
@@ -8979,7 +9193,7 @@ impl ReadXdr for ContractExecutable {
 }
 
 impl WriteXdr for ContractExecutable {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -9079,7 +9293,7 @@ impl From<ScAddressType> for i32 {
 }
 
 impl ReadXdr for ScAddressType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -9090,7 +9304,7 @@ impl ReadXdr for ScAddressType {
 }
 
 impl WriteXdr for ScAddressType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -9174,7 +9388,7 @@ impl Variants<ScAddressType> for ScAddress {
 impl Union<ScAddressType> for ScAddress {}
 
 impl ReadXdr for ScAddress {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScAddressType = <ScAddressType as ReadXdr>::read_xdr(r)?;
@@ -9191,7 +9405,7 @@ impl ReadXdr for ScAddress {
 }
 
 impl WriteXdr for ScAddress {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -9253,7 +9467,7 @@ impl AsRef<VecM<ScVal>> for ScVec {
 }
 
 impl ReadXdr for ScVec {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<ScVal>::read_xdr(r)?;
@@ -9264,7 +9478,7 @@ impl ReadXdr for ScVec {
 }
 
 impl WriteXdr for ScVec {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -9359,7 +9573,7 @@ impl AsRef<VecM<ScMapEntry>> for ScMap {
 }
 
 impl ReadXdr for ScMap {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<ScMapEntry>::read_xdr(r)?;
@@ -9370,7 +9584,7 @@ impl ReadXdr for ScMap {
 }
 
 impl WriteXdr for ScMap {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -9465,7 +9679,7 @@ impl AsRef<BytesM> for ScBytes {
 }
 
 impl ReadXdr for ScBytes {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::read_xdr(r)?;
@@ -9476,7 +9690,7 @@ impl ReadXdr for ScBytes {
 }
 
 impl WriteXdr for ScBytes {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -9571,7 +9785,7 @@ impl AsRef<StringM> for ScString {
 }
 
 impl ReadXdr for ScString {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = StringM::read_xdr(r)?;
@@ -9582,7 +9796,7 @@ impl ReadXdr for ScString {
 }
 
 impl WriteXdr for ScString {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -9677,7 +9891,7 @@ impl AsRef<StringM<32>> for ScSymbol {
 }
 
 impl ReadXdr for ScSymbol {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = StringM::<32>::read_xdr(r)?;
@@ -9688,7 +9902,7 @@ impl ReadXdr for ScSymbol {
 }
 
 impl WriteXdr for ScSymbol {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -9764,7 +9978,7 @@ pub struct ScNonceKey {
 }
 
 impl ReadXdr for ScNonceKey {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -9775,7 +9989,7 @@ impl ReadXdr for ScNonceKey {
 }
 
 impl WriteXdr for ScNonceKey {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.nonce.write_xdr(w)?;
@@ -9807,7 +10021,7 @@ pub struct ScContractInstance {
 }
 
 impl ReadXdr for ScContractInstance {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -9819,7 +10033,7 @@ impl ReadXdr for ScContractInstance {
 }
 
 impl WriteXdr for ScContractInstance {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.executable.write_xdr(w)?;
@@ -10066,7 +10280,7 @@ impl Variants<ScValType> for ScVal {
 impl Union<ScValType> for ScVal {}
 
 impl ReadXdr for ScVal {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ScValType = <ScValType as ReadXdr>::read_xdr(r)?;
@@ -10105,7 +10319,7 @@ impl ReadXdr for ScVal {
 }
 
 impl WriteXdr for ScVal {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -10163,7 +10377,7 @@ pub struct ScMapEntry {
 }
 
 impl ReadXdr for ScMapEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -10175,7 +10389,7 @@ impl ReadXdr for ScMapEntry {
 }
 
 impl WriteXdr for ScMapEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
@@ -10262,7 +10476,7 @@ impl Variants<i32> for StoredTransactionSet {
 impl Union<i32> for StoredTransactionSet {}
 
 impl ReadXdr for StoredTransactionSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -10279,7 +10493,7 @@ impl ReadXdr for StoredTransactionSet {
 }
 
 impl WriteXdr for StoredTransactionSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -10319,7 +10533,7 @@ pub struct StoredDebugTransactionSet {
 }
 
 impl ReadXdr for StoredDebugTransactionSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -10332,7 +10546,7 @@ impl ReadXdr for StoredDebugTransactionSet {
 }
 
 impl WriteXdr for StoredDebugTransactionSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_set.write_xdr(w)?;
@@ -10369,7 +10583,7 @@ pub struct PersistedScpStateV0 {
 }
 
 impl ReadXdr for PersistedScpStateV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -10382,7 +10596,7 @@ impl ReadXdr for PersistedScpStateV0 {
 }
 
 impl WriteXdr for PersistedScpStateV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.scp_envelopes.write_xdr(w)?;
@@ -10418,7 +10632,7 @@ pub struct PersistedScpStateV1 {
 }
 
 impl ReadXdr for PersistedScpStateV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -10430,7 +10644,7 @@ impl ReadXdr for PersistedScpStateV1 {
 }
 
 impl WriteXdr for PersistedScpStateV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.scp_envelopes.write_xdr(w)?;
@@ -10517,7 +10731,7 @@ impl Variants<i32> for PersistedScpState {
 impl Union<i32> for PersistedScpState {}
 
 impl ReadXdr for PersistedScpState {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -10534,7 +10748,7 @@ impl ReadXdr for PersistedScpState {
 }
 
 impl WriteXdr for PersistedScpState {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -10645,7 +10859,7 @@ impl AsRef<[u8; 4]> for Thresholds {
 }
 
 impl ReadXdr for Thresholds {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 4]>::read_xdr(r)?;
@@ -10656,7 +10870,7 @@ impl ReadXdr for Thresholds {
 }
 
 impl WriteXdr for Thresholds {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -10739,7 +10953,7 @@ impl AsRef<StringM<32>> for String32 {
 }
 
 impl ReadXdr for String32 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = StringM::<32>::read_xdr(r)?;
@@ -10750,7 +10964,7 @@ impl ReadXdr for String32 {
 }
 
 impl WriteXdr for String32 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -10845,7 +11059,7 @@ impl AsRef<StringM<64>> for String64 {
 }
 
 impl ReadXdr for String64 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = StringM::<64>::read_xdr(r)?;
@@ -10856,7 +11070,7 @@ impl ReadXdr for String64 {
 }
 
 impl WriteXdr for String64 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -10950,7 +11164,7 @@ impl AsRef<i64> for SequenceNumber {
 }
 
 impl ReadXdr for SequenceNumber {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = i64::read_xdr(r)?;
@@ -10961,7 +11175,7 @@ impl ReadXdr for SequenceNumber {
 }
 
 impl WriteXdr for SequenceNumber {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -11007,7 +11221,7 @@ impl AsRef<BytesM<64>> for DataValue {
 }
 
 impl ReadXdr for DataValue {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::<64>::read_xdr(r)?;
@@ -11018,7 +11232,7 @@ impl ReadXdr for DataValue {
 }
 
 impl WriteXdr for DataValue {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -11112,7 +11326,7 @@ impl AsRef<Hash> for PoolId {
 }
 
 impl ReadXdr for PoolId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = Hash::read_xdr(r)?;
@@ -11123,7 +11337,7 @@ impl ReadXdr for PoolId {
 }
 
 impl WriteXdr for PoolId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -11176,7 +11390,7 @@ impl AsRef<[u8; 4]> for AssetCode4 {
 }
 
 impl ReadXdr for AssetCode4 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 4]>::read_xdr(r)?;
@@ -11187,7 +11401,7 @@ impl ReadXdr for AssetCode4 {
 }
 
 impl WriteXdr for AssetCode4 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -11277,7 +11491,7 @@ impl AsRef<[u8; 12]> for AssetCode12 {
 }
 
 impl ReadXdr for AssetCode12 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 12]>::read_xdr(r)?;
@@ -11288,7 +11502,7 @@ impl ReadXdr for AssetCode12 {
 }
 
 impl WriteXdr for AssetCode12 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -11431,7 +11645,7 @@ impl From<AssetType> for i32 {
 }
 
 impl ReadXdr for AssetType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -11442,7 +11656,7 @@ impl ReadXdr for AssetType {
 }
 
 impl WriteXdr for AssetType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -11529,7 +11743,7 @@ impl Variants<AssetType> for AssetCode {
 impl Union<AssetType> for AssetCode {}
 
 impl ReadXdr for AssetCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
@@ -11546,7 +11760,7 @@ impl ReadXdr for AssetCode {
 }
 
 impl WriteXdr for AssetCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -11584,7 +11798,7 @@ pub struct AlphaNum4 {
 }
 
 impl ReadXdr for AlphaNum4 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -11596,7 +11810,7 @@ impl ReadXdr for AlphaNum4 {
 }
 
 impl WriteXdr for AlphaNum4 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.asset_code.write_xdr(w)?;
@@ -11630,7 +11844,7 @@ pub struct AlphaNum12 {
 }
 
 impl ReadXdr for AlphaNum12 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -11642,7 +11856,7 @@ impl ReadXdr for AlphaNum12 {
 }
 
 impl WriteXdr for AlphaNum12 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.asset_code.write_xdr(w)?;
@@ -11742,7 +11956,7 @@ impl Variants<AssetType> for Asset {
 impl Union<AssetType> for Asset {}
 
 impl ReadXdr for Asset {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
@@ -11760,7 +11974,7 @@ impl ReadXdr for Asset {
 }
 
 impl WriteXdr for Asset {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -11799,7 +12013,7 @@ pub struct Price {
 }
 
 impl ReadXdr for Price {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -11811,7 +12025,7 @@ impl ReadXdr for Price {
 }
 
 impl WriteXdr for Price {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.n.write_xdr(w)?;
@@ -11845,7 +12059,7 @@ pub struct Liabilities {
 }
 
 impl ReadXdr for Liabilities {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -11857,7 +12071,7 @@ impl ReadXdr for Liabilities {
 }
 
 impl WriteXdr for Liabilities {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.buying.write_xdr(w)?;
@@ -11966,7 +12180,7 @@ impl From<ThresholdIndexes> for i32 {
 }
 
 impl ReadXdr for ThresholdIndexes {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -11977,7 +12191,7 @@ impl ReadXdr for ThresholdIndexes {
 }
 
 impl WriteXdr for ThresholdIndexes {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -12126,7 +12340,7 @@ impl From<LedgerEntryType> for i32 {
 }
 
 impl ReadXdr for LedgerEntryType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -12137,7 +12351,7 @@ impl ReadXdr for LedgerEntryType {
 }
 
 impl WriteXdr for LedgerEntryType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -12170,7 +12384,7 @@ pub struct Signer {
 }
 
 impl ReadXdr for Signer {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -12182,7 +12396,7 @@ impl ReadXdr for Signer {
 }
 
 impl WriteXdr for Signer {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
@@ -12306,7 +12520,7 @@ impl From<AccountFlags> for i32 {
 }
 
 impl ReadXdr for AccountFlags {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -12317,7 +12531,7 @@ impl ReadXdr for AccountFlags {
 }
 
 impl WriteXdr for AccountFlags {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -12389,7 +12603,7 @@ impl AsRef<Option<AccountId>> for SponsorshipDescriptor {
 }
 
 impl ReadXdr for SponsorshipDescriptor {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = Option::<AccountId>::read_xdr(r)?;
@@ -12400,7 +12614,7 @@ impl ReadXdr for SponsorshipDescriptor {
 }
 
 impl WriteXdr for SponsorshipDescriptor {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -12438,7 +12652,7 @@ pub struct AccountEntryExtensionV3 {
 }
 
 impl ReadXdr for AccountEntryExtensionV3 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -12451,7 +12665,7 @@ impl ReadXdr for AccountEntryExtensionV3 {
 }
 
 impl WriteXdr for AccountEntryExtensionV3 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -12539,7 +12753,7 @@ impl Variants<i32> for AccountEntryExtensionV2Ext {
 impl Union<i32> for AccountEntryExtensionV2Ext {}
 
 impl ReadXdr for AccountEntryExtensionV2Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -12556,7 +12770,7 @@ impl ReadXdr for AccountEntryExtensionV2Ext {
 }
 
 impl WriteXdr for AccountEntryExtensionV2Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -12606,7 +12820,7 @@ pub struct AccountEntryExtensionV2 {
 }
 
 impl ReadXdr for AccountEntryExtensionV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -12620,7 +12834,7 @@ impl ReadXdr for AccountEntryExtensionV2 {
 }
 
 impl WriteXdr for AccountEntryExtensionV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.num_sponsored.write_xdr(w)?;
@@ -12709,7 +12923,7 @@ impl Variants<i32> for AccountEntryExtensionV1Ext {
 impl Union<i32> for AccountEntryExtensionV1Ext {}
 
 impl ReadXdr for AccountEntryExtensionV1Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -12726,7 +12940,7 @@ impl ReadXdr for AccountEntryExtensionV1Ext {
 }
 
 impl WriteXdr for AccountEntryExtensionV1Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -12772,7 +12986,7 @@ pub struct AccountEntryExtensionV1 {
 }
 
 impl ReadXdr for AccountEntryExtensionV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -12784,7 +12998,7 @@ impl ReadXdr for AccountEntryExtensionV1 {
 }
 
 impl WriteXdr for AccountEntryExtensionV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liabilities.write_xdr(w)?;
@@ -12871,7 +13085,7 @@ impl Variants<i32> for AccountEntryExt {
 impl Union<i32> for AccountEntryExt {}
 
 impl ReadXdr for AccountEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -12888,7 +13102,7 @@ impl ReadXdr for AccountEntryExt {
 }
 
 impl WriteXdr for AccountEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -12957,7 +13171,7 @@ pub struct AccountEntry {
 }
 
 impl ReadXdr for AccountEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -12977,7 +13191,7 @@ impl ReadXdr for AccountEntry {
 }
 
 impl WriteXdr for AccountEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
@@ -13098,7 +13312,7 @@ impl From<TrustLineFlags> for i32 {
 }
 
 impl ReadXdr for TrustLineFlags {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -13109,7 +13323,7 @@ impl ReadXdr for TrustLineFlags {
 }
 
 impl WriteXdr for TrustLineFlags {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -13224,7 +13438,7 @@ impl From<LiquidityPoolType> for i32 {
 }
 
 impl ReadXdr for LiquidityPoolType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -13235,7 +13449,7 @@ impl ReadXdr for LiquidityPoolType {
 }
 
 impl WriteXdr for LiquidityPoolType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -13342,7 +13556,7 @@ impl Variants<AssetType> for TrustLineAsset {
 impl Union<AssetType> for TrustLineAsset {}
 
 impl ReadXdr for TrustLineAsset {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
@@ -13361,7 +13575,7 @@ impl ReadXdr for TrustLineAsset {
 }
 
 impl WriteXdr for TrustLineAsset {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -13449,7 +13663,7 @@ impl Variants<i32> for TrustLineEntryExtensionV2Ext {
 impl Union<i32> for TrustLineEntryExtensionV2Ext {}
 
 impl ReadXdr for TrustLineEntryExtensionV2Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -13465,7 +13679,7 @@ impl ReadXdr for TrustLineEntryExtensionV2Ext {
 }
 
 impl WriteXdr for TrustLineEntryExtensionV2Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -13508,7 +13722,7 @@ pub struct TrustLineEntryExtensionV2 {
 }
 
 impl ReadXdr for TrustLineEntryExtensionV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -13520,7 +13734,7 @@ impl ReadXdr for TrustLineEntryExtensionV2 {
 }
 
 impl WriteXdr for TrustLineEntryExtensionV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_use_count.write_xdr(w)?;
@@ -13607,7 +13821,7 @@ impl Variants<i32> for TrustLineEntryV1Ext {
 impl Union<i32> for TrustLineEntryV1Ext {}
 
 impl ReadXdr for TrustLineEntryV1Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -13624,7 +13838,7 @@ impl ReadXdr for TrustLineEntryV1Ext {
 }
 
 impl WriteXdr for TrustLineEntryV1Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -13670,7 +13884,7 @@ pub struct TrustLineEntryV1 {
 }
 
 impl ReadXdr for TrustLineEntryV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -13682,7 +13896,7 @@ impl ReadXdr for TrustLineEntryV1 {
 }
 
 impl WriteXdr for TrustLineEntryV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liabilities.write_xdr(w)?;
@@ -13781,7 +13995,7 @@ impl Variants<i32> for TrustLineEntryExt {
 impl Union<i32> for TrustLineEntryExt {}
 
 impl ReadXdr for TrustLineEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -13798,7 +14012,7 @@ impl ReadXdr for TrustLineEntryExt {
 }
 
 impl WriteXdr for TrustLineEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -13867,7 +14081,7 @@ pub struct TrustLineEntry {
 }
 
 impl ReadXdr for TrustLineEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -13883,7 +14097,7 @@ impl ReadXdr for TrustLineEntry {
 }
 
 impl WriteXdr for TrustLineEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
@@ -13981,7 +14195,7 @@ impl From<OfferEntryFlags> for i32 {
 }
 
 impl ReadXdr for OfferEntryFlags {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -13992,7 +14206,7 @@ impl ReadXdr for OfferEntryFlags {
 }
 
 impl WriteXdr for OfferEntryFlags {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -14081,7 +14295,7 @@ impl Variants<i32> for OfferEntryExt {
 impl Union<i32> for OfferEntryExt {}
 
 impl ReadXdr for OfferEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -14097,7 +14311,7 @@ impl ReadXdr for OfferEntryExt {
 }
 
 impl WriteXdr for OfferEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -14159,7 +14373,7 @@ pub struct OfferEntry {
 }
 
 impl ReadXdr for OfferEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -14177,7 +14391,7 @@ impl ReadXdr for OfferEntry {
 }
 
 impl WriteXdr for OfferEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.seller_id.write_xdr(w)?;
@@ -14265,7 +14479,7 @@ impl Variants<i32> for DataEntryExt {
 impl Union<i32> for DataEntryExt {}
 
 impl ReadXdr for DataEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -14281,7 +14495,7 @@ impl ReadXdr for DataEntryExt {
 }
 
 impl WriteXdr for DataEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -14329,7 +14543,7 @@ pub struct DataEntry {
 }
 
 impl ReadXdr for DataEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -14343,7 +14557,7 @@ impl ReadXdr for DataEntry {
 }
 
 impl WriteXdr for DataEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
@@ -14471,7 +14685,7 @@ impl From<ClaimPredicateType> for i32 {
 }
 
 impl ReadXdr for ClaimPredicateType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -14482,7 +14696,7 @@ impl ReadXdr for ClaimPredicateType {
 }
 
 impl WriteXdr for ClaimPredicateType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -14603,7 +14817,7 @@ impl Variants<ClaimPredicateType> for ClaimPredicate {
 impl Union<ClaimPredicateType> for ClaimPredicate {}
 
 impl ReadXdr for ClaimPredicate {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClaimPredicateType = <ClaimPredicateType as ReadXdr>::read_xdr(r)?;
@@ -14628,7 +14842,7 @@ impl ReadXdr for ClaimPredicate {
 }
 
 impl WriteXdr for ClaimPredicate {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -14728,7 +14942,7 @@ impl From<ClaimantType> for i32 {
 }
 
 impl ReadXdr for ClaimantType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -14739,7 +14953,7 @@ impl ReadXdr for ClaimantType {
 }
 
 impl WriteXdr for ClaimantType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -14772,7 +14986,7 @@ pub struct ClaimantV0 {
 }
 
 impl ReadXdr for ClaimantV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -14784,7 +14998,7 @@ impl ReadXdr for ClaimantV0 {
 }
 
 impl WriteXdr for ClaimantV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
@@ -14870,7 +15084,7 @@ impl Variants<ClaimantType> for Claimant {
 impl Union<ClaimantType> for Claimant {}
 
 impl ReadXdr for Claimant {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClaimantType = <ClaimantType as ReadXdr>::read_xdr(r)?;
@@ -14886,7 +15100,7 @@ impl ReadXdr for Claimant {
 }
 
 impl WriteXdr for Claimant {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -14982,7 +15196,7 @@ impl From<ClaimableBalanceIdType> for i32 {
 }
 
 impl ReadXdr for ClaimableBalanceIdType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -14993,7 +15207,7 @@ impl ReadXdr for ClaimableBalanceIdType {
 }
 
 impl WriteXdr for ClaimableBalanceIdType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -15073,7 +15287,7 @@ impl Variants<ClaimableBalanceIdType> for ClaimableBalanceId {
 impl Union<ClaimableBalanceIdType> for ClaimableBalanceId {}
 
 impl ReadXdr for ClaimableBalanceId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXdr>::read_xdr(r)?;
@@ -15091,7 +15305,7 @@ impl ReadXdr for ClaimableBalanceId {
 }
 
 impl WriteXdr for ClaimableBalanceId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -15189,7 +15403,7 @@ impl From<ClaimableBalanceFlags> for i32 {
 }
 
 impl ReadXdr for ClaimableBalanceFlags {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -15200,7 +15414,7 @@ impl ReadXdr for ClaimableBalanceFlags {
 }
 
 impl WriteXdr for ClaimableBalanceFlags {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -15289,7 +15503,7 @@ impl Variants<i32> for ClaimableBalanceEntryExtensionV1Ext {
 impl Union<i32> for ClaimableBalanceEntryExtensionV1Ext {}
 
 impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -15305,7 +15519,7 @@ impl ReadXdr for ClaimableBalanceEntryExtensionV1Ext {
 }
 
 impl WriteXdr for ClaimableBalanceEntryExtensionV1Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -15348,7 +15562,7 @@ pub struct ClaimableBalanceEntryExtensionV1 {
 }
 
 impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -15360,7 +15574,7 @@ impl ReadXdr for ClaimableBalanceEntryExtensionV1 {
 }
 
 impl WriteXdr for ClaimableBalanceEntryExtensionV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -15447,7 +15661,7 @@ impl Variants<i32> for ClaimableBalanceEntryExt {
 impl Union<i32> for ClaimableBalanceEntryExt {}
 
 impl ReadXdr for ClaimableBalanceEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -15464,7 +15678,7 @@ impl ReadXdr for ClaimableBalanceEntryExt {
 }
 
 impl WriteXdr for ClaimableBalanceEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -15524,7 +15738,7 @@ pub struct ClaimableBalanceEntry {
 }
 
 impl ReadXdr for ClaimableBalanceEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -15539,7 +15753,7 @@ impl ReadXdr for ClaimableBalanceEntry {
 }
 
 impl WriteXdr for ClaimableBalanceEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
@@ -15578,7 +15792,7 @@ pub struct LiquidityPoolConstantProductParameters {
 }
 
 impl ReadXdr for LiquidityPoolConstantProductParameters {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -15591,7 +15805,7 @@ impl ReadXdr for LiquidityPoolConstantProductParameters {
 }
 
 impl WriteXdr for LiquidityPoolConstantProductParameters {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.asset_a.write_xdr(w)?;
@@ -15634,7 +15848,7 @@ pub struct LiquidityPoolEntryConstantProduct {
 }
 
 impl ReadXdr for LiquidityPoolEntryConstantProduct {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -15649,7 +15863,7 @@ impl ReadXdr for LiquidityPoolEntryConstantProduct {
 }
 
 impl WriteXdr for LiquidityPoolEntryConstantProduct {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.params.write_xdr(w)?;
@@ -15745,7 +15959,7 @@ impl Variants<LiquidityPoolType> for LiquidityPoolEntryBody {
 impl Union<LiquidityPoolType> for LiquidityPoolEntryBody {}
 
 impl ReadXdr for LiquidityPoolEntryBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
@@ -15765,7 +15979,7 @@ impl ReadXdr for LiquidityPoolEntryBody {
 }
 
 impl WriteXdr for LiquidityPoolEntryBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -15817,7 +16031,7 @@ pub struct LiquidityPoolEntry {
 }
 
 impl ReadXdr for LiquidityPoolEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -15829,7 +16043,7 @@ impl ReadXdr for LiquidityPoolEntry {
 }
 
 impl WriteXdr for LiquidityPoolEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
@@ -15927,7 +16141,7 @@ impl From<ContractDataDurability> for i32 {
 }
 
 impl ReadXdr for ContractDataDurability {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -15938,7 +16152,7 @@ impl ReadXdr for ContractDataDurability {
 }
 
 impl WriteXdr for ContractDataDurability {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -15977,7 +16191,7 @@ pub struct ContractDataEntry {
 }
 
 impl ReadXdr for ContractDataEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -15992,7 +16206,7 @@ impl ReadXdr for ContractDataEntry {
 }
 
 impl WriteXdr for ContractDataEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -16046,7 +16260,7 @@ pub struct ContractCodeCostInputs {
 }
 
 impl ReadXdr for ContractCodeCostInputs {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -16067,7 +16281,7 @@ impl ReadXdr for ContractCodeCostInputs {
 }
 
 impl WriteXdr for ContractCodeCostInputs {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -16110,7 +16324,7 @@ pub struct ContractCodeEntryV1 {
 }
 
 impl ReadXdr for ContractCodeEntryV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -16122,7 +16336,7 @@ impl ReadXdr for ContractCodeEntryV1 {
 }
 
 impl WriteXdr for ContractCodeEntryV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -16213,7 +16427,7 @@ impl Variants<i32> for ContractCodeEntryExt {
 impl Union<i32> for ContractCodeEntryExt {}
 
 impl ReadXdr for ContractCodeEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -16230,7 +16444,7 @@ impl ReadXdr for ContractCodeEntryExt {
 }
 
 impl WriteXdr for ContractCodeEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -16280,7 +16494,7 @@ pub struct ContractCodeEntry {
 }
 
 impl ReadXdr for ContractCodeEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -16293,7 +16507,7 @@ impl ReadXdr for ContractCodeEntry {
 }
 
 impl WriteXdr for ContractCodeEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -16328,7 +16542,7 @@ pub struct TtlEntry {
 }
 
 impl ReadXdr for TtlEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -16340,7 +16554,7 @@ impl ReadXdr for TtlEntry {
 }
 
 impl WriteXdr for TtlEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key_hash.write_xdr(w)?;
@@ -16422,7 +16636,7 @@ impl Variants<i32> for LedgerEntryExtensionV1Ext {
 impl Union<i32> for LedgerEntryExtensionV1Ext {}
 
 impl ReadXdr for LedgerEntryExtensionV1Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -16438,7 +16652,7 @@ impl ReadXdr for LedgerEntryExtensionV1Ext {
 }
 
 impl WriteXdr for LedgerEntryExtensionV1Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -16481,7 +16695,7 @@ pub struct LedgerEntryExtensionV1 {
 }
 
 impl ReadXdr for LedgerEntryExtensionV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -16493,7 +16707,7 @@ impl ReadXdr for LedgerEntryExtensionV1 {
 }
 
 impl WriteXdr for LedgerEntryExtensionV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.sponsoring_id.write_xdr(w)?;
@@ -16642,7 +16856,7 @@ impl Variants<LedgerEntryType> for LedgerEntryData {
 impl Union<LedgerEntryType> for LedgerEntryData {}
 
 impl ReadXdr for LedgerEntryData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
@@ -16677,7 +16891,7 @@ impl ReadXdr for LedgerEntryData {
 }
 
 impl WriteXdr for LedgerEntryData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -16776,7 +16990,7 @@ impl Variants<i32> for LedgerEntryExt {
 impl Union<i32> for LedgerEntryExt {}
 
 impl ReadXdr for LedgerEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -16793,7 +17007,7 @@ impl ReadXdr for LedgerEntryExt {
 }
 
 impl WriteXdr for LedgerEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -16866,7 +17080,7 @@ pub struct LedgerEntry {
 }
 
 impl ReadXdr for LedgerEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -16879,7 +17093,7 @@ impl ReadXdr for LedgerEntry {
 }
 
 impl WriteXdr for LedgerEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.last_modified_ledger_seq.write_xdr(w)?;
@@ -16912,7 +17126,7 @@ pub struct LedgerKeyAccount {
 }
 
 impl ReadXdr for LedgerKeyAccount {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -16923,7 +17137,7 @@ impl ReadXdr for LedgerKeyAccount {
 }
 
 impl WriteXdr for LedgerKeyAccount {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
@@ -16956,7 +17170,7 @@ pub struct LedgerKeyTrustLine {
 }
 
 impl ReadXdr for LedgerKeyTrustLine {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -16968,7 +17182,7 @@ impl ReadXdr for LedgerKeyTrustLine {
 }
 
 impl WriteXdr for LedgerKeyTrustLine {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
@@ -17002,7 +17216,7 @@ pub struct LedgerKeyOffer {
 }
 
 impl ReadXdr for LedgerKeyOffer {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -17014,7 +17228,7 @@ impl ReadXdr for LedgerKeyOffer {
 }
 
 impl WriteXdr for LedgerKeyOffer {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.seller_id.write_xdr(w)?;
@@ -17048,7 +17262,7 @@ pub struct LedgerKeyData {
 }
 
 impl ReadXdr for LedgerKeyData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -17060,7 +17274,7 @@ impl ReadXdr for LedgerKeyData {
 }
 
 impl WriteXdr for LedgerKeyData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
@@ -17092,7 +17306,7 @@ pub struct LedgerKeyClaimableBalance {
 }
 
 impl ReadXdr for LedgerKeyClaimableBalance {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -17103,7 +17317,7 @@ impl ReadXdr for LedgerKeyClaimableBalance {
 }
 
 impl WriteXdr for LedgerKeyClaimableBalance {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
@@ -17134,7 +17348,7 @@ pub struct LedgerKeyLiquidityPool {
 }
 
 impl ReadXdr for LedgerKeyLiquidityPool {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -17145,7 +17359,7 @@ impl ReadXdr for LedgerKeyLiquidityPool {
 }
 
 impl WriteXdr for LedgerKeyLiquidityPool {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
@@ -17180,7 +17394,7 @@ pub struct LedgerKeyContractData {
 }
 
 impl ReadXdr for LedgerKeyContractData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -17193,7 +17407,7 @@ impl ReadXdr for LedgerKeyContractData {
 }
 
 impl WriteXdr for LedgerKeyContractData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.contract.write_xdr(w)?;
@@ -17226,7 +17440,7 @@ pub struct LedgerKeyContractCode {
 }
 
 impl ReadXdr for LedgerKeyContractCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -17237,7 +17451,7 @@ impl ReadXdr for LedgerKeyContractCode {
 }
 
 impl WriteXdr for LedgerKeyContractCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hash.write_xdr(w)?;
@@ -17268,7 +17482,7 @@ pub struct LedgerKeyConfigSetting {
 }
 
 impl ReadXdr for LedgerKeyConfigSetting {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -17279,7 +17493,7 @@ impl ReadXdr for LedgerKeyConfigSetting {
 }
 
 impl WriteXdr for LedgerKeyConfigSetting {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.config_setting_id.write_xdr(w)?;
@@ -17311,7 +17525,7 @@ pub struct LedgerKeyTtl {
 }
 
 impl ReadXdr for LedgerKeyTtl {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -17322,7 +17536,7 @@ impl ReadXdr for LedgerKeyTtl {
 }
 
 impl WriteXdr for LedgerKeyTtl {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key_hash.write_xdr(w)?;
@@ -17511,7 +17725,7 @@ impl Variants<LedgerEntryType> for LedgerKey {
 impl Union<LedgerEntryType> for LedgerKey {}
 
 impl ReadXdr for LedgerKey {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LedgerEntryType = <LedgerEntryType as ReadXdr>::read_xdr(r)?;
@@ -17546,7 +17760,7 @@ impl ReadXdr for LedgerKey {
 }
 
 impl WriteXdr for LedgerKey {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -17708,7 +17922,7 @@ impl From<EnvelopeType> for i32 {
 }
 
 impl ReadXdr for EnvelopeType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -17719,7 +17933,7 @@ impl ReadXdr for EnvelopeType {
 }
 
 impl WriteXdr for EnvelopeType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -17822,7 +18036,7 @@ impl From<BucketListType> for i32 {
 }
 
 impl ReadXdr for BucketListType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -17833,7 +18047,7 @@ impl ReadXdr for BucketListType {
 }
 
 impl WriteXdr for BucketListType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -17944,7 +18158,7 @@ impl From<BucketEntryType> for i32 {
 }
 
 impl ReadXdr for BucketEntryType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -17955,7 +18169,7 @@ impl ReadXdr for BucketEntryType {
 }
 
 impl WriteXdr for BucketEntryType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -18065,7 +18279,7 @@ impl From<HotArchiveBucketEntryType> for i32 {
 }
 
 impl ReadXdr for HotArchiveBucketEntryType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -18076,7 +18290,7 @@ impl ReadXdr for HotArchiveBucketEntryType {
 }
 
 impl WriteXdr for HotArchiveBucketEntryType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -18195,7 +18409,7 @@ impl From<ColdArchiveBucketEntryType> for i32 {
 }
 
 impl ReadXdr for ColdArchiveBucketEntryType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -18206,7 +18420,7 @@ impl ReadXdr for ColdArchiveBucketEntryType {
 }
 
 impl WriteXdr for ColdArchiveBucketEntryType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -18292,7 +18506,7 @@ impl Variants<i32> for BucketMetadataExt {
 impl Union<i32> for BucketMetadataExt {}
 
 impl ReadXdr for BucketMetadataExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -18309,7 +18523,7 @@ impl ReadXdr for BucketMetadataExt {
 }
 
 impl WriteXdr for BucketMetadataExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -18357,7 +18571,7 @@ pub struct BucketMetadata {
 }
 
 impl ReadXdr for BucketMetadata {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -18369,7 +18583,7 @@ impl ReadXdr for BucketMetadata {
 }
 
 impl WriteXdr for BucketMetadata {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_version.write_xdr(w)?;
@@ -18472,7 +18686,7 @@ impl Variants<BucketEntryType> for BucketEntry {
 impl Union<BucketEntryType> for BucketEntry {}
 
 impl ReadXdr for BucketEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: BucketEntryType = <BucketEntryType as ReadXdr>::read_xdr(r)?;
@@ -18491,7 +18705,7 @@ impl ReadXdr for BucketEntry {
 }
 
 impl WriteXdr for BucketEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -18599,7 +18813,7 @@ impl Variants<HotArchiveBucketEntryType> for HotArchiveBucketEntry {
 impl Union<HotArchiveBucketEntryType> for HotArchiveBucketEntry {}
 
 impl ReadXdr for HotArchiveBucketEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: HotArchiveBucketEntryType =
@@ -18621,7 +18835,7 @@ impl ReadXdr for HotArchiveBucketEntry {
 }
 
 impl WriteXdr for HotArchiveBucketEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -18661,7 +18875,7 @@ pub struct ColdArchiveArchivedLeaf {
 }
 
 impl ReadXdr for ColdArchiveArchivedLeaf {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -18673,7 +18887,7 @@ impl ReadXdr for ColdArchiveArchivedLeaf {
 }
 
 impl WriteXdr for ColdArchiveArchivedLeaf {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.index.write_xdr(w)?;
@@ -18707,7 +18921,7 @@ pub struct ColdArchiveDeletedLeaf {
 }
 
 impl ReadXdr for ColdArchiveDeletedLeaf {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -18719,7 +18933,7 @@ impl ReadXdr for ColdArchiveDeletedLeaf {
 }
 
 impl WriteXdr for ColdArchiveDeletedLeaf {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.index.write_xdr(w)?;
@@ -18753,7 +18967,7 @@ pub struct ColdArchiveBoundaryLeaf {
 }
 
 impl ReadXdr for ColdArchiveBoundaryLeaf {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -18765,7 +18979,7 @@ impl ReadXdr for ColdArchiveBoundaryLeaf {
 }
 
 impl WriteXdr for ColdArchiveBoundaryLeaf {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.index.write_xdr(w)?;
@@ -18801,7 +19015,7 @@ pub struct ColdArchiveHashEntry {
 }
 
 impl ReadXdr for ColdArchiveHashEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -18814,7 +19028,7 @@ impl ReadXdr for ColdArchiveHashEntry {
 }
 
 impl WriteXdr for ColdArchiveHashEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.index.write_xdr(w)?;
@@ -18929,7 +19143,7 @@ impl Variants<ColdArchiveBucketEntryType> for ColdArchiveBucketEntry {
 impl Union<ColdArchiveBucketEntryType> for ColdArchiveBucketEntry {}
 
 impl ReadXdr for ColdArchiveBucketEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ColdArchiveBucketEntryType =
@@ -18958,7 +19172,7 @@ impl ReadXdr for ColdArchiveBucketEntry {
 }
 
 impl WriteXdr for ColdArchiveBucketEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -19015,7 +19229,7 @@ impl AsRef<BytesM<128>> for UpgradeType {
 }
 
 impl ReadXdr for UpgradeType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::<128>::read_xdr(r)?;
@@ -19026,7 +19240,7 @@ impl ReadXdr for UpgradeType {
 }
 
 impl WriteXdr for UpgradeType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -19167,7 +19381,7 @@ impl From<StellarValueType> for i32 {
 }
 
 impl ReadXdr for StellarValueType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -19178,7 +19392,7 @@ impl ReadXdr for StellarValueType {
 }
 
 impl WriteXdr for StellarValueType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -19211,7 +19425,7 @@ pub struct LedgerCloseValueSignature {
 }
 
 impl ReadXdr for LedgerCloseValueSignature {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -19223,7 +19437,7 @@ impl ReadXdr for LedgerCloseValueSignature {
 }
 
 impl WriteXdr for LedgerCloseValueSignature {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.node_id.write_xdr(w)?;
@@ -19310,7 +19524,7 @@ impl Variants<StellarValueType> for StellarValueExt {
 impl Union<StellarValueType> for StellarValueExt {}
 
 impl ReadXdr for StellarValueExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: StellarValueType = <StellarValueType as ReadXdr>::read_xdr(r)?;
@@ -19327,7 +19541,7 @@ impl ReadXdr for StellarValueExt {
 }
 
 impl WriteXdr for StellarValueExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -19384,7 +19598,7 @@ pub struct StellarValue {
 }
 
 impl ReadXdr for StellarValue {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -19398,7 +19612,7 @@ impl ReadXdr for StellarValue {
 }
 
 impl WriteXdr for StellarValue {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_set_hash.write_xdr(w)?;
@@ -19512,7 +19726,7 @@ impl From<LedgerHeaderFlags> for i32 {
 }
 
 impl ReadXdr for LedgerHeaderFlags {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -19523,7 +19737,7 @@ impl ReadXdr for LedgerHeaderFlags {
 }
 
 impl WriteXdr for LedgerHeaderFlags {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -19604,7 +19818,7 @@ impl Variants<i32> for LedgerHeaderExtensionV1Ext {
 impl Union<i32> for LedgerHeaderExtensionV1Ext {}
 
 impl ReadXdr for LedgerHeaderExtensionV1Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -19620,7 +19834,7 @@ impl ReadXdr for LedgerHeaderExtensionV1Ext {
 }
 
 impl WriteXdr for LedgerHeaderExtensionV1Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -19663,7 +19877,7 @@ pub struct LedgerHeaderExtensionV1 {
 }
 
 impl ReadXdr for LedgerHeaderExtensionV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -19675,7 +19889,7 @@ impl ReadXdr for LedgerHeaderExtensionV1 {
 }
 
 impl WriteXdr for LedgerHeaderExtensionV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.flags.write_xdr(w)?;
@@ -19762,7 +19976,7 @@ impl Variants<i32> for LedgerHeaderExt {
 impl Union<i32> for LedgerHeaderExt {}
 
 impl ReadXdr for LedgerHeaderExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -19779,7 +19993,7 @@ impl ReadXdr for LedgerHeaderExt {
 }
 
 impl WriteXdr for LedgerHeaderExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -19864,7 +20078,7 @@ pub struct LedgerHeader {
 }
 
 impl ReadXdr for LedgerHeader {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -19889,7 +20103,7 @@ impl ReadXdr for LedgerHeader {
 }
 
 impl WriteXdr for LedgerHeader {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_version.write_xdr(w)?;
@@ -20034,7 +20248,7 @@ impl From<LedgerUpgradeType> for i32 {
 }
 
 impl ReadXdr for LedgerUpgradeType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -20045,7 +20259,7 @@ impl ReadXdr for LedgerUpgradeType {
 }
 
 impl WriteXdr for LedgerUpgradeType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -20077,7 +20291,7 @@ pub struct ConfigUpgradeSetKey {
 }
 
 impl ReadXdr for ConfigUpgradeSetKey {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -20089,7 +20303,7 @@ impl ReadXdr for ConfigUpgradeSetKey {
 }
 
 impl WriteXdr for ConfigUpgradeSetKey {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.contract_id.write_xdr(w)?;
@@ -20220,7 +20434,7 @@ impl Variants<LedgerUpgradeType> for LedgerUpgrade {
 impl Union<LedgerUpgradeType> for LedgerUpgrade {}
 
 impl ReadXdr for LedgerUpgrade {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LedgerUpgradeType = <LedgerUpgradeType as ReadXdr>::read_xdr(r)?;
@@ -20244,7 +20458,7 @@ impl ReadXdr for LedgerUpgrade {
 }
 
 impl WriteXdr for LedgerUpgrade {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -20284,7 +20498,7 @@ pub struct ConfigUpgradeSet {
 }
 
 impl ReadXdr for ConfigUpgradeSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -20295,7 +20509,7 @@ impl ReadXdr for ConfigUpgradeSet {
 }
 
 impl WriteXdr for ConfigUpgradeSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.updated_entry.write_xdr(w)?;
@@ -20389,7 +20603,7 @@ impl From<TxSetComponentType> for i32 {
 }
 
 impl ReadXdr for TxSetComponentType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -20400,7 +20614,7 @@ impl ReadXdr for TxSetComponentType {
 }
 
 impl WriteXdr for TxSetComponentType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -20433,7 +20647,7 @@ pub struct TxSetComponentTxsMaybeDiscountedFee {
 }
 
 impl ReadXdr for TxSetComponentTxsMaybeDiscountedFee {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -20445,7 +20659,7 @@ impl ReadXdr for TxSetComponentTxsMaybeDiscountedFee {
 }
 
 impl WriteXdr for TxSetComponentTxsMaybeDiscountedFee {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.base_fee.write_xdr(w)?;
@@ -20534,7 +20748,7 @@ impl Variants<TxSetComponentType> for TxSetComponent {
 impl Union<TxSetComponentType> for TxSetComponent {}
 
 impl ReadXdr for TxSetComponent {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: TxSetComponentType = <TxSetComponentType as ReadXdr>::read_xdr(r)?;
@@ -20554,7 +20768,7 @@ impl ReadXdr for TxSetComponent {
 }
 
 impl WriteXdr for TxSetComponent {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -20639,7 +20853,7 @@ impl Variants<i32> for TransactionPhase {
 impl Union<i32> for TransactionPhase {}
 
 impl ReadXdr for TransactionPhase {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -20655,7 +20869,7 @@ impl ReadXdr for TransactionPhase {
 }
 
 impl WriteXdr for TransactionPhase {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -20692,7 +20906,7 @@ pub struct TransactionSet {
 }
 
 impl ReadXdr for TransactionSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -20704,7 +20918,7 @@ impl ReadXdr for TransactionSet {
 }
 
 impl WriteXdr for TransactionSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.previous_ledger_hash.write_xdr(w)?;
@@ -20738,7 +20952,7 @@ pub struct TransactionSetV1 {
 }
 
 impl ReadXdr for TransactionSetV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -20750,7 +20964,7 @@ impl ReadXdr for TransactionSetV1 {
 }
 
 impl WriteXdr for TransactionSetV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.previous_ledger_hash.write_xdr(w)?;
@@ -20833,7 +21047,7 @@ impl Variants<i32> for GeneralizedTransactionSet {
 impl Union<i32> for GeneralizedTransactionSet {}
 
 impl ReadXdr for GeneralizedTransactionSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -20849,7 +21063,7 @@ impl ReadXdr for GeneralizedTransactionSet {
 }
 
 impl WriteXdr for GeneralizedTransactionSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -20886,7 +21100,7 @@ pub struct TransactionResultPair {
 }
 
 impl ReadXdr for TransactionResultPair {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -20898,7 +21112,7 @@ impl ReadXdr for TransactionResultPair {
 }
 
 impl WriteXdr for TransactionResultPair {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.transaction_hash.write_xdr(w)?;
@@ -20930,7 +21144,7 @@ pub struct TransactionResultSet {
 }
 
 impl ReadXdr for TransactionResultSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -20941,7 +21155,7 @@ impl ReadXdr for TransactionResultSet {
 }
 
 impl WriteXdr for TransactionResultSet {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.results.write_xdr(w)?;
@@ -21027,7 +21241,7 @@ impl Variants<i32> for TransactionHistoryEntryExt {
 impl Union<i32> for TransactionHistoryEntryExt {}
 
 impl ReadXdr for TransactionHistoryEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -21044,7 +21258,7 @@ impl ReadXdr for TransactionHistoryEntryExt {
 }
 
 impl WriteXdr for TransactionHistoryEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -21093,7 +21307,7 @@ pub struct TransactionHistoryEntry {
 }
 
 impl ReadXdr for TransactionHistoryEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -21106,7 +21320,7 @@ impl ReadXdr for TransactionHistoryEntry {
 }
 
 impl WriteXdr for TransactionHistoryEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_seq.write_xdr(w)?;
@@ -21189,7 +21403,7 @@ impl Variants<i32> for TransactionHistoryResultEntryExt {
 impl Union<i32> for TransactionHistoryResultEntryExt {}
 
 impl ReadXdr for TransactionHistoryResultEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -21205,7 +21419,7 @@ impl ReadXdr for TransactionHistoryResultEntryExt {
 }
 
 impl WriteXdr for TransactionHistoryResultEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -21251,7 +21465,7 @@ pub struct TransactionHistoryResultEntry {
 }
 
 impl ReadXdr for TransactionHistoryResultEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -21264,7 +21478,7 @@ impl ReadXdr for TransactionHistoryResultEntry {
 }
 
 impl WriteXdr for TransactionHistoryResultEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_seq.write_xdr(w)?;
@@ -21347,7 +21561,7 @@ impl Variants<i32> for LedgerHeaderHistoryEntryExt {
 impl Union<i32> for LedgerHeaderHistoryEntryExt {}
 
 impl ReadXdr for LedgerHeaderHistoryEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -21363,7 +21577,7 @@ impl ReadXdr for LedgerHeaderHistoryEntryExt {
 }
 
 impl WriteXdr for LedgerHeaderHistoryEntryExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -21409,7 +21623,7 @@ pub struct LedgerHeaderHistoryEntry {
 }
 
 impl ReadXdr for LedgerHeaderHistoryEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -21422,7 +21636,7 @@ impl ReadXdr for LedgerHeaderHistoryEntry {
 }
 
 impl WriteXdr for LedgerHeaderHistoryEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hash.write_xdr(w)?;
@@ -21457,7 +21671,7 @@ pub struct LedgerScpMessages {
 }
 
 impl ReadXdr for LedgerScpMessages {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -21469,7 +21683,7 @@ impl ReadXdr for LedgerScpMessages {
 }
 
 impl WriteXdr for LedgerScpMessages {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_seq.write_xdr(w)?;
@@ -21503,7 +21717,7 @@ pub struct ScpHistoryEntryV0 {
 }
 
 impl ReadXdr for ScpHistoryEntryV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -21515,7 +21729,7 @@ impl ReadXdr for ScpHistoryEntryV0 {
 }
 
 impl WriteXdr for ScpHistoryEntryV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.quorum_sets.write_xdr(w)?;
@@ -21597,7 +21811,7 @@ impl Variants<i32> for ScpHistoryEntry {
 impl Union<i32> for ScpHistoryEntry {}
 
 impl ReadXdr for ScpHistoryEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -21613,7 +21827,7 @@ impl ReadXdr for ScpHistoryEntry {
 }
 
 impl WriteXdr for ScpHistoryEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -21725,7 +21939,7 @@ impl From<LedgerEntryChangeType> for i32 {
 }
 
 impl ReadXdr for LedgerEntryChangeType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -21736,7 +21950,7 @@ impl ReadXdr for LedgerEntryChangeType {
 }
 
 impl WriteXdr for LedgerEntryChangeType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -21837,7 +22051,7 @@ impl Variants<LedgerEntryChangeType> for LedgerEntryChange {
 impl Union<LedgerEntryChangeType> for LedgerEntryChange {}
 
 impl ReadXdr for LedgerEntryChange {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LedgerEntryChangeType = <LedgerEntryChangeType as ReadXdr>::read_xdr(r)?;
@@ -21856,7 +22070,7 @@ impl ReadXdr for LedgerEntryChange {
 }
 
 impl WriteXdr for LedgerEntryChange {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -21912,7 +22126,7 @@ impl AsRef<VecM<LedgerEntryChange>> for LedgerEntryChanges {
 }
 
 impl ReadXdr for LedgerEntryChanges {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<LedgerEntryChange>::read_xdr(r)?;
@@ -21923,7 +22137,7 @@ impl ReadXdr for LedgerEntryChanges {
 }
 
 impl WriteXdr for LedgerEntryChanges {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -22000,7 +22214,7 @@ pub struct OperationMeta {
 }
 
 impl ReadXdr for OperationMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -22011,7 +22225,7 @@ impl ReadXdr for OperationMeta {
 }
 
 impl WriteXdr for OperationMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.changes.write_xdr(w)?;
@@ -22044,7 +22258,7 @@ pub struct TransactionMetaV1 {
 }
 
 impl ReadXdr for TransactionMetaV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -22056,7 +22270,7 @@ impl ReadXdr for TransactionMetaV1 {
 }
 
 impl WriteXdr for TransactionMetaV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_changes.write_xdr(w)?;
@@ -22094,7 +22308,7 @@ pub struct TransactionMetaV2 {
 }
 
 impl ReadXdr for TransactionMetaV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -22107,7 +22321,7 @@ impl ReadXdr for TransactionMetaV2 {
 }
 
 impl WriteXdr for TransactionMetaV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_changes_before.write_xdr(w)?;
@@ -22212,7 +22426,7 @@ impl From<ContractEventType> for i32 {
 }
 
 impl ReadXdr for ContractEventType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -22223,7 +22437,7 @@ impl ReadXdr for ContractEventType {
 }
 
 impl WriteXdr for ContractEventType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -22256,7 +22470,7 @@ pub struct ContractEventV0 {
 }
 
 impl ReadXdr for ContractEventV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -22268,7 +22482,7 @@ impl ReadXdr for ContractEventV0 {
 }
 
 impl WriteXdr for ContractEventV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.topics.write_xdr(w)?;
@@ -22354,7 +22568,7 @@ impl Variants<i32> for ContractEventBody {
 impl Union<i32> for ContractEventBody {}
 
 impl ReadXdr for ContractEventBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -22370,7 +22584,7 @@ impl ReadXdr for ContractEventBody {
 }
 
 impl WriteXdr for ContractEventBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -22424,7 +22638,7 @@ pub struct ContractEvent {
 }
 
 impl ReadXdr for ContractEvent {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -22438,7 +22652,7 @@ impl ReadXdr for ContractEvent {
 }
 
 impl WriteXdr for ContractEvent {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -22474,7 +22688,7 @@ pub struct DiagnosticEvent {
 }
 
 impl ReadXdr for DiagnosticEvent {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -22486,7 +22700,7 @@ impl ReadXdr for DiagnosticEvent {
 }
 
 impl WriteXdr for DiagnosticEvent {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.in_successful_contract_call.write_xdr(w)?;
@@ -22536,7 +22750,7 @@ impl AsRef<VecM<DiagnosticEvent>> for DiagnosticEvents {
 }
 
 impl ReadXdr for DiagnosticEvents {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<DiagnosticEvent>::read_xdr(r)?;
@@ -22547,7 +22761,7 @@ impl ReadXdr for DiagnosticEvents {
 }
 
 impl WriteXdr for DiagnosticEvents {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -22656,7 +22870,7 @@ pub struct SorobanTransactionMetaExtV1 {
 }
 
 impl ReadXdr for SorobanTransactionMetaExtV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -22670,7 +22884,7 @@ impl ReadXdr for SorobanTransactionMetaExtV1 {
 }
 
 impl WriteXdr for SorobanTransactionMetaExtV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -22760,7 +22974,7 @@ impl Variants<i32> for SorobanTransactionMetaExt {
 impl Union<i32> for SorobanTransactionMetaExt {}
 
 impl ReadXdr for SorobanTransactionMetaExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -22777,7 +22991,7 @@ impl ReadXdr for SorobanTransactionMetaExt {
 }
 
 impl WriteXdr for SorobanTransactionMetaExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -22825,7 +23039,7 @@ pub struct SorobanTransactionMeta {
 }
 
 impl ReadXdr for SorobanTransactionMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -22839,7 +23053,7 @@ impl ReadXdr for SorobanTransactionMeta {
 }
 
 impl WriteXdr for SorobanTransactionMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -22885,7 +23099,7 @@ pub struct TransactionMetaV3 {
 }
 
 impl ReadXdr for TransactionMetaV3 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -22900,7 +23114,7 @@ impl ReadXdr for TransactionMetaV3 {
 }
 
 impl WriteXdr for TransactionMetaV3 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -22937,7 +23151,7 @@ pub struct InvokeHostFunctionSuccessPreImage {
 }
 
 impl ReadXdr for InvokeHostFunctionSuccessPreImage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -22949,7 +23163,7 @@ impl ReadXdr for InvokeHostFunctionSuccessPreImage {
 }
 
 impl WriteXdr for InvokeHostFunctionSuccessPreImage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.return_value.write_xdr(w)?;
@@ -23046,7 +23260,7 @@ impl Variants<i32> for TransactionMeta {
 impl Union<i32> for TransactionMeta {}
 
 impl ReadXdr for TransactionMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -23065,7 +23279,7 @@ impl ReadXdr for TransactionMeta {
 }
 
 impl WriteXdr for TransactionMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -23107,7 +23321,7 @@ pub struct TransactionResultMeta {
 }
 
 impl ReadXdr for TransactionResultMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -23120,7 +23334,7 @@ impl ReadXdr for TransactionResultMeta {
 }
 
 impl WriteXdr for TransactionResultMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.result.write_xdr(w)?;
@@ -23155,7 +23369,7 @@ pub struct UpgradeEntryMeta {
 }
 
 impl ReadXdr for UpgradeEntryMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -23167,7 +23381,7 @@ impl ReadXdr for UpgradeEntryMeta {
 }
 
 impl WriteXdr for UpgradeEntryMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.upgrade.write_xdr(w)?;
@@ -23216,7 +23430,7 @@ pub struct LedgerCloseMetaV0 {
 }
 
 impl ReadXdr for LedgerCloseMetaV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -23231,7 +23445,7 @@ impl ReadXdr for LedgerCloseMetaV0 {
 }
 
 impl WriteXdr for LedgerCloseMetaV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_header.write_xdr(w)?;
@@ -23268,7 +23482,7 @@ pub struct LedgerCloseMetaExtV1 {
 }
 
 impl ReadXdr for LedgerCloseMetaExtV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -23280,7 +23494,7 @@ impl ReadXdr for LedgerCloseMetaExtV1 {
 }
 
 impl WriteXdr for LedgerCloseMetaExtV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -23367,7 +23581,7 @@ impl Variants<i32> for LedgerCloseMetaExt {
 impl Union<i32> for LedgerCloseMetaExt {}
 
 impl ReadXdr for LedgerCloseMetaExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -23384,7 +23598,7 @@ impl ReadXdr for LedgerCloseMetaExt {
 }
 
 impl WriteXdr for LedgerCloseMetaExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -23454,7 +23668,7 @@ pub struct LedgerCloseMetaV1 {
 }
 
 impl ReadXdr for LedgerCloseMetaV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -23473,7 +23687,7 @@ impl ReadXdr for LedgerCloseMetaV1 {
 }
 
 impl WriteXdr for LedgerCloseMetaV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -23567,7 +23781,7 @@ impl Variants<i32> for LedgerCloseMeta {
 impl Union<i32> for LedgerCloseMeta {}
 
 impl ReadXdr for LedgerCloseMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -23584,7 +23798,7 @@ impl ReadXdr for LedgerCloseMeta {
 }
 
 impl WriteXdr for LedgerCloseMeta {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -23702,7 +23916,7 @@ impl From<ErrorCode> for i32 {
 }
 
 impl ReadXdr for ErrorCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -23713,7 +23927,7 @@ impl ReadXdr for ErrorCode {
 }
 
 impl WriteXdr for ErrorCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -23746,7 +23960,7 @@ pub struct SError {
 }
 
 impl ReadXdr for SError {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -23758,7 +23972,7 @@ impl ReadXdr for SError {
 }
 
 impl WriteXdr for SError {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.code.write_xdr(w)?;
@@ -23790,7 +24004,7 @@ pub struct SendMore {
 }
 
 impl ReadXdr for SendMore {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -23801,7 +24015,7 @@ impl ReadXdr for SendMore {
 }
 
 impl WriteXdr for SendMore {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.num_messages.write_xdr(w)?;
@@ -23834,7 +24048,7 @@ pub struct SendMoreExtended {
 }
 
 impl ReadXdr for SendMoreExtended {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -23846,7 +24060,7 @@ impl ReadXdr for SendMoreExtended {
 }
 
 impl WriteXdr for SendMoreExtended {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.num_messages.write_xdr(w)?;
@@ -23882,7 +24096,7 @@ pub struct AuthCert {
 }
 
 impl ReadXdr for AuthCert {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -23895,7 +24109,7 @@ impl ReadXdr for AuthCert {
 }
 
 impl WriteXdr for AuthCert {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.pubkey.write_xdr(w)?;
@@ -23944,7 +24158,7 @@ pub struct Hello {
 }
 
 impl ReadXdr for Hello {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -23963,7 +24177,7 @@ impl ReadXdr for Hello {
 }
 
 impl WriteXdr for Hello {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ledger_version.write_xdr(w)?;
@@ -24010,7 +24224,7 @@ pub struct Auth {
 }
 
 impl ReadXdr for Auth {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -24021,7 +24235,7 @@ impl ReadXdr for Auth {
 }
 
 impl WriteXdr for Auth {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.flags.write_xdr(w)?;
@@ -24116,7 +24330,7 @@ impl From<IpAddrType> for i32 {
 }
 
 impl ReadXdr for IpAddrType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -24127,7 +24341,7 @@ impl ReadXdr for IpAddrType {
 }
 
 impl WriteXdr for IpAddrType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -24213,7 +24427,7 @@ impl Variants<IpAddrType> for PeerAddressIp {
 impl Union<IpAddrType> for PeerAddressIp {}
 
 impl ReadXdr for PeerAddressIp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: IpAddrType = <IpAddrType as ReadXdr>::read_xdr(r)?;
@@ -24230,7 +24444,7 @@ impl ReadXdr for PeerAddressIp {
 }
 
 impl WriteXdr for PeerAddressIp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -24277,7 +24491,7 @@ pub struct PeerAddress {
 }
 
 impl ReadXdr for PeerAddress {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -24290,7 +24504,7 @@ impl ReadXdr for PeerAddress {
 }
 
 impl WriteXdr for PeerAddress {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ip.write_xdr(w)?;
@@ -24536,7 +24750,7 @@ impl From<MessageType> for i32 {
 }
 
 impl ReadXdr for MessageType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -24547,7 +24761,7 @@ impl ReadXdr for MessageType {
 }
 
 impl WriteXdr for MessageType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -24580,7 +24794,7 @@ pub struct DontHave {
 }
 
 impl ReadXdr for DontHave {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -24592,7 +24806,7 @@ impl ReadXdr for DontHave {
 }
 
 impl WriteXdr for DontHave {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.type_.write_xdr(w)?;
@@ -24691,7 +24905,7 @@ impl From<SurveyMessageCommandType> for i32 {
 }
 
 impl ReadXdr for SurveyMessageCommandType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -24702,7 +24916,7 @@ impl ReadXdr for SurveyMessageCommandType {
 }
 
 impl WriteXdr for SurveyMessageCommandType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -24805,7 +25019,7 @@ impl From<SurveyMessageResponseType> for i32 {
 }
 
 impl ReadXdr for SurveyMessageResponseType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -24816,7 +25030,7 @@ impl ReadXdr for SurveyMessageResponseType {
 }
 
 impl WriteXdr for SurveyMessageResponseType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -24851,7 +25065,7 @@ pub struct TimeSlicedSurveyStartCollectingMessage {
 }
 
 impl ReadXdr for TimeSlicedSurveyStartCollectingMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -24864,7 +25078,7 @@ impl ReadXdr for TimeSlicedSurveyStartCollectingMessage {
 }
 
 impl WriteXdr for TimeSlicedSurveyStartCollectingMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.surveyor_id.write_xdr(w)?;
@@ -24899,7 +25113,7 @@ pub struct SignedTimeSlicedSurveyStartCollectingMessage {
 }
 
 impl ReadXdr for SignedTimeSlicedSurveyStartCollectingMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -24911,7 +25125,7 @@ impl ReadXdr for SignedTimeSlicedSurveyStartCollectingMessage {
 }
 
 impl WriteXdr for SignedTimeSlicedSurveyStartCollectingMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.signature.write_xdr(w)?;
@@ -24947,7 +25161,7 @@ pub struct TimeSlicedSurveyStopCollectingMessage {
 }
 
 impl ReadXdr for TimeSlicedSurveyStopCollectingMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -24960,7 +25174,7 @@ impl ReadXdr for TimeSlicedSurveyStopCollectingMessage {
 }
 
 impl WriteXdr for TimeSlicedSurveyStopCollectingMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.surveyor_id.write_xdr(w)?;
@@ -24995,7 +25209,7 @@ pub struct SignedTimeSlicedSurveyStopCollectingMessage {
 }
 
 impl ReadXdr for SignedTimeSlicedSurveyStopCollectingMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25007,7 +25221,7 @@ impl ReadXdr for SignedTimeSlicedSurveyStopCollectingMessage {
 }
 
 impl WriteXdr for SignedTimeSlicedSurveyStopCollectingMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.signature.write_xdr(w)?;
@@ -25047,7 +25261,7 @@ pub struct SurveyRequestMessage {
 }
 
 impl ReadXdr for SurveyRequestMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25062,7 +25276,7 @@ impl ReadXdr for SurveyRequestMessage {
 }
 
 impl WriteXdr for SurveyRequestMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.surveyor_peer_id.write_xdr(w)?;
@@ -25103,7 +25317,7 @@ pub struct TimeSlicedSurveyRequestMessage {
 }
 
 impl ReadXdr for TimeSlicedSurveyRequestMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25117,7 +25331,7 @@ impl ReadXdr for TimeSlicedSurveyRequestMessage {
 }
 
 impl WriteXdr for TimeSlicedSurveyRequestMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.request.write_xdr(w)?;
@@ -25153,7 +25367,7 @@ pub struct SignedSurveyRequestMessage {
 }
 
 impl ReadXdr for SignedSurveyRequestMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25165,7 +25379,7 @@ impl ReadXdr for SignedSurveyRequestMessage {
 }
 
 impl WriteXdr for SignedSurveyRequestMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.request_signature.write_xdr(w)?;
@@ -25199,7 +25413,7 @@ pub struct SignedTimeSlicedSurveyRequestMessage {
 }
 
 impl ReadXdr for SignedTimeSlicedSurveyRequestMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25211,7 +25425,7 @@ impl ReadXdr for SignedTimeSlicedSurveyRequestMessage {
 }
 
 impl WriteXdr for SignedTimeSlicedSurveyRequestMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.request_signature.write_xdr(w)?;
@@ -25261,7 +25475,7 @@ impl AsRef<BytesM<64000>> for EncryptedBody {
 }
 
 impl ReadXdr for EncryptedBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::<64000>::read_xdr(r)?;
@@ -25272,7 +25486,7 @@ impl ReadXdr for EncryptedBody {
 }
 
 impl WriteXdr for EncryptedBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -25357,7 +25571,7 @@ pub struct SurveyResponseMessage {
 }
 
 impl ReadXdr for SurveyResponseMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25372,7 +25586,7 @@ impl ReadXdr for SurveyResponseMessage {
 }
 
 impl WriteXdr for SurveyResponseMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.surveyor_peer_id.write_xdr(w)?;
@@ -25409,7 +25623,7 @@ pub struct TimeSlicedSurveyResponseMessage {
 }
 
 impl ReadXdr for TimeSlicedSurveyResponseMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25421,7 +25635,7 @@ impl ReadXdr for TimeSlicedSurveyResponseMessage {
 }
 
 impl WriteXdr for TimeSlicedSurveyResponseMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.response.write_xdr(w)?;
@@ -25455,7 +25669,7 @@ pub struct SignedSurveyResponseMessage {
 }
 
 impl ReadXdr for SignedSurveyResponseMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25467,7 +25681,7 @@ impl ReadXdr for SignedSurveyResponseMessage {
 }
 
 impl WriteXdr for SignedSurveyResponseMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.response_signature.write_xdr(w)?;
@@ -25501,7 +25715,7 @@ pub struct SignedTimeSlicedSurveyResponseMessage {
 }
 
 impl ReadXdr for SignedTimeSlicedSurveyResponseMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25513,7 +25727,7 @@ impl ReadXdr for SignedTimeSlicedSurveyResponseMessage {
 }
 
 impl WriteXdr for SignedTimeSlicedSurveyResponseMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.response_signature.write_xdr(w)?;
@@ -25575,7 +25789,7 @@ pub struct PeerStats {
 }
 
 impl ReadXdr for PeerStats {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25600,7 +25814,7 @@ impl ReadXdr for PeerStats {
 }
 
 impl WriteXdr for PeerStats {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.id.write_xdr(w)?;
@@ -25663,7 +25877,7 @@ impl AsRef<VecM<PeerStats, 25>> for PeerStatList {
 }
 
 impl ReadXdr for PeerStatList {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<PeerStats, 25>::read_xdr(r)?;
@@ -25674,7 +25888,7 @@ impl ReadXdr for PeerStatList {
 }
 
 impl WriteXdr for PeerStatList {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -25775,7 +25989,7 @@ pub struct TimeSlicedNodeData {
 }
 
 impl ReadXdr for TimeSlicedNodeData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25795,7 +26009,7 @@ impl ReadXdr for TimeSlicedNodeData {
 }
 
 impl WriteXdr for TimeSlicedNodeData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.added_authenticated_peers.write_xdr(w)?;
@@ -25837,7 +26051,7 @@ pub struct TimeSlicedPeerData {
 }
 
 impl ReadXdr for TimeSlicedPeerData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -25849,7 +26063,7 @@ impl ReadXdr for TimeSlicedPeerData {
 }
 
 impl WriteXdr for TimeSlicedPeerData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.peer_stats.write_xdr(w)?;
@@ -25899,7 +26113,7 @@ impl AsRef<VecM<TimeSlicedPeerData, 25>> for TimeSlicedPeerDataList {
 }
 
 impl ReadXdr for TimeSlicedPeerDataList {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<TimeSlicedPeerData, 25>::read_xdr(r)?;
@@ -25910,7 +26124,7 @@ impl ReadXdr for TimeSlicedPeerDataList {
 }
 
 impl WriteXdr for TimeSlicedPeerDataList {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -25994,7 +26208,7 @@ pub struct TopologyResponseBodyV0 {
 }
 
 impl ReadXdr for TopologyResponseBodyV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -26008,7 +26222,7 @@ impl ReadXdr for TopologyResponseBodyV0 {
 }
 
 impl WriteXdr for TopologyResponseBodyV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.inbound_peers.write_xdr(w)?;
@@ -26054,7 +26268,7 @@ pub struct TopologyResponseBodyV1 {
 }
 
 impl ReadXdr for TopologyResponseBodyV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -26070,7 +26284,7 @@ impl ReadXdr for TopologyResponseBodyV1 {
 }
 
 impl WriteXdr for TopologyResponseBodyV1 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.inbound_peers.write_xdr(w)?;
@@ -26110,7 +26324,7 @@ pub struct TopologyResponseBodyV2 {
 }
 
 impl ReadXdr for TopologyResponseBodyV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -26123,7 +26337,7 @@ impl ReadXdr for TopologyResponseBodyV2 {
 }
 
 impl WriteXdr for TopologyResponseBodyV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.inbound_peers.write_xdr(w)?;
@@ -26220,7 +26434,7 @@ impl Variants<SurveyMessageResponseType> for SurveyResponseBody {
 impl Union<SurveyMessageResponseType> for SurveyResponseBody {}
 
 impl ReadXdr for SurveyResponseBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SurveyMessageResponseType =
@@ -26239,7 +26453,7 @@ impl ReadXdr for SurveyResponseBody {
 }
 
 impl WriteXdr for SurveyResponseBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -26302,7 +26516,7 @@ impl AsRef<VecM<Hash, 1000>> for TxAdvertVector {
 }
 
 impl ReadXdr for TxAdvertVector {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<Hash, 1000>::read_xdr(r)?;
@@ -26313,7 +26527,7 @@ impl ReadXdr for TxAdvertVector {
 }
 
 impl WriteXdr for TxAdvertVector {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -26390,7 +26604,7 @@ pub struct FloodAdvert {
 }
 
 impl ReadXdr for FloodAdvert {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -26401,7 +26615,7 @@ impl ReadXdr for FloodAdvert {
 }
 
 impl WriteXdr for FloodAdvert {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_hashes.write_xdr(w)?;
@@ -26458,7 +26672,7 @@ impl AsRef<VecM<Hash, 1000>> for TxDemandVector {
 }
 
 impl ReadXdr for TxDemandVector {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<Hash, 1000>::read_xdr(r)?;
@@ -26469,7 +26683,7 @@ impl ReadXdr for TxDemandVector {
 }
 
 impl WriteXdr for TxDemandVector {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -26546,7 +26760,7 @@ pub struct FloodDemand {
 }
 
 impl ReadXdr for FloodDemand {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -26557,7 +26771,7 @@ impl ReadXdr for FloodDemand {
 }
 
 impl WriteXdr for FloodDemand {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_hashes.write_xdr(w)?;
@@ -26818,7 +27032,7 @@ impl Variants<MessageType> for StellarMessage {
 impl Union<MessageType> for StellarMessage {}
 
 impl ReadXdr for StellarMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: MessageType = <MessageType as ReadXdr>::read_xdr(r)?;
@@ -26877,7 +27091,7 @@ impl ReadXdr for StellarMessage {
 }
 
 impl WriteXdr for StellarMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -26939,7 +27153,7 @@ pub struct AuthenticatedMessageV0 {
 }
 
 impl ReadXdr for AuthenticatedMessageV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -26952,7 +27166,7 @@ impl ReadXdr for AuthenticatedMessageV0 {
 }
 
 impl WriteXdr for AuthenticatedMessageV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.sequence.write_xdr(w)?;
@@ -27040,7 +27254,7 @@ impl Variants<u32> for AuthenticatedMessage {
 impl Union<u32> for AuthenticatedMessage {}
 
 impl ReadXdr for AuthenticatedMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: u32 = <u32 as ReadXdr>::read_xdr(r)?;
@@ -27056,7 +27270,7 @@ impl ReadXdr for AuthenticatedMessage {
 }
 
 impl WriteXdr for AuthenticatedMessage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -27151,7 +27365,7 @@ impl Variants<LiquidityPoolType> for LiquidityPoolParameters {
 impl Union<LiquidityPoolType> for LiquidityPoolParameters {}
 
 impl ReadXdr for LiquidityPoolParameters {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolType = <LiquidityPoolType as ReadXdr>::read_xdr(r)?;
@@ -27171,7 +27385,7 @@ impl ReadXdr for LiquidityPoolParameters {
 }
 
 impl WriteXdr for LiquidityPoolParameters {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -27206,7 +27420,7 @@ pub struct MuxedAccountMed25519 {
 }
 
 impl ReadXdr for MuxedAccountMed25519 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -27218,7 +27432,7 @@ impl ReadXdr for MuxedAccountMed25519 {
 }
 
 impl WriteXdr for MuxedAccountMed25519 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.id.write_xdr(w)?;
@@ -27307,7 +27521,7 @@ impl Variants<CryptoKeyType> for MuxedAccount {
 impl Union<CryptoKeyType> for MuxedAccount {}
 
 impl ReadXdr for MuxedAccount {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: CryptoKeyType = <CryptoKeyType as ReadXdr>::read_xdr(r)?;
@@ -27326,7 +27540,7 @@ impl ReadXdr for MuxedAccount {
 }
 
 impl WriteXdr for MuxedAccount {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -27364,7 +27578,7 @@ pub struct DecoratedSignature {
 }
 
 impl ReadXdr for DecoratedSignature {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -27376,7 +27590,7 @@ impl ReadXdr for DecoratedSignature {
 }
 
 impl WriteXdr for DecoratedSignature {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.hint.write_xdr(w)?;
@@ -27628,7 +27842,7 @@ impl From<OperationType> for i32 {
 }
 
 impl ReadXdr for OperationType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -27639,7 +27853,7 @@ impl ReadXdr for OperationType {
 }
 
 impl WriteXdr for OperationType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -27672,7 +27886,7 @@ pub struct CreateAccountOp {
 }
 
 impl ReadXdr for CreateAccountOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -27684,7 +27898,7 @@ impl ReadXdr for CreateAccountOp {
 }
 
 impl WriteXdr for CreateAccountOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
@@ -27720,7 +27934,7 @@ pub struct PaymentOp {
 }
 
 impl ReadXdr for PaymentOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -27733,7 +27947,7 @@ impl ReadXdr for PaymentOp {
 }
 
 impl WriteXdr for PaymentOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
@@ -27780,7 +27994,7 @@ pub struct PathPaymentStrictReceiveOp {
 }
 
 impl ReadXdr for PathPaymentStrictReceiveOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -27796,7 +28010,7 @@ impl ReadXdr for PathPaymentStrictReceiveOp {
 }
 
 impl WriteXdr for PathPaymentStrictReceiveOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.send_asset.write_xdr(w)?;
@@ -27846,7 +28060,7 @@ pub struct PathPaymentStrictSendOp {
 }
 
 impl ReadXdr for PathPaymentStrictSendOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -27862,7 +28076,7 @@ impl ReadXdr for PathPaymentStrictSendOp {
 }
 
 impl WriteXdr for PathPaymentStrictSendOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.send_asset.write_xdr(w)?;
@@ -27908,7 +28122,7 @@ pub struct ManageSellOfferOp {
 }
 
 impl ReadXdr for ManageSellOfferOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -27923,7 +28137,7 @@ impl ReadXdr for ManageSellOfferOp {
 }
 
 impl WriteXdr for ManageSellOfferOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.selling.write_xdr(w)?;
@@ -27969,7 +28183,7 @@ pub struct ManageBuyOfferOp {
 }
 
 impl ReadXdr for ManageBuyOfferOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -27984,7 +28198,7 @@ impl ReadXdr for ManageBuyOfferOp {
 }
 
 impl WriteXdr for ManageBuyOfferOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.selling.write_xdr(w)?;
@@ -28025,7 +28239,7 @@ pub struct CreatePassiveSellOfferOp {
 }
 
 impl ReadXdr for CreatePassiveSellOfferOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28039,7 +28253,7 @@ impl ReadXdr for CreatePassiveSellOfferOp {
 }
 
 impl WriteXdr for CreatePassiveSellOfferOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.selling.write_xdr(w)?;
@@ -28096,7 +28310,7 @@ pub struct SetOptionsOp {
 }
 
 impl ReadXdr for SetOptionsOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28115,7 +28329,7 @@ impl ReadXdr for SetOptionsOp {
 }
 
 impl WriteXdr for SetOptionsOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.inflation_dest.write_xdr(w)?;
@@ -28230,7 +28444,7 @@ impl Variants<AssetType> for ChangeTrustAsset {
 impl Union<AssetType> for ChangeTrustAsset {}
 
 impl ReadXdr for ChangeTrustAsset {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AssetType = <AssetType as ReadXdr>::read_xdr(r)?;
@@ -28249,7 +28463,7 @@ impl ReadXdr for ChangeTrustAsset {
 }
 
 impl WriteXdr for ChangeTrustAsset {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -28291,7 +28505,7 @@ pub struct ChangeTrustOp {
 }
 
 impl ReadXdr for ChangeTrustOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28303,7 +28517,7 @@ impl ReadXdr for ChangeTrustOp {
 }
 
 impl WriteXdr for ChangeTrustOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.line.write_xdr(w)?;
@@ -28341,7 +28555,7 @@ pub struct AllowTrustOp {
 }
 
 impl ReadXdr for AllowTrustOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28354,7 +28568,7 @@ impl ReadXdr for AllowTrustOp {
 }
 
 impl WriteXdr for AllowTrustOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.trustor.write_xdr(w)?;
@@ -28389,7 +28603,7 @@ pub struct ManageDataOp {
 }
 
 impl ReadXdr for ManageDataOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28401,7 +28615,7 @@ impl ReadXdr for ManageDataOp {
 }
 
 impl WriteXdr for ManageDataOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.data_name.write_xdr(w)?;
@@ -28433,7 +28647,7 @@ pub struct BumpSequenceOp {
 }
 
 impl ReadXdr for BumpSequenceOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28444,7 +28658,7 @@ impl ReadXdr for BumpSequenceOp {
 }
 
 impl WriteXdr for BumpSequenceOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.bump_to.write_xdr(w)?;
@@ -28479,7 +28693,7 @@ pub struct CreateClaimableBalanceOp {
 }
 
 impl ReadXdr for CreateClaimableBalanceOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28492,7 +28706,7 @@ impl ReadXdr for CreateClaimableBalanceOp {
 }
 
 impl WriteXdr for CreateClaimableBalanceOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.asset.write_xdr(w)?;
@@ -28525,7 +28739,7 @@ pub struct ClaimClaimableBalanceOp {
 }
 
 impl ReadXdr for ClaimClaimableBalanceOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28536,7 +28750,7 @@ impl ReadXdr for ClaimClaimableBalanceOp {
 }
 
 impl WriteXdr for ClaimClaimableBalanceOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
@@ -28567,7 +28781,7 @@ pub struct BeginSponsoringFutureReservesOp {
 }
 
 impl ReadXdr for BeginSponsoringFutureReservesOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28578,7 +28792,7 @@ impl ReadXdr for BeginSponsoringFutureReservesOp {
 }
 
 impl WriteXdr for BeginSponsoringFutureReservesOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.sponsored_id.write_xdr(w)?;
@@ -28676,7 +28890,7 @@ impl From<RevokeSponsorshipType> for i32 {
 }
 
 impl ReadXdr for RevokeSponsorshipType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -28687,7 +28901,7 @@ impl ReadXdr for RevokeSponsorshipType {
 }
 
 impl WriteXdr for RevokeSponsorshipType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -28720,7 +28934,7 @@ pub struct RevokeSponsorshipOpSigner {
 }
 
 impl ReadXdr for RevokeSponsorshipOpSigner {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28732,7 +28946,7 @@ impl ReadXdr for RevokeSponsorshipOpSigner {
 }
 
 impl WriteXdr for RevokeSponsorshipOpSigner {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.account_id.write_xdr(w)?;
@@ -28826,7 +29040,7 @@ impl Variants<RevokeSponsorshipType> for RevokeSponsorshipOp {
 impl Union<RevokeSponsorshipType> for RevokeSponsorshipOp {}
 
 impl ReadXdr for RevokeSponsorshipOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: RevokeSponsorshipType = <RevokeSponsorshipType as ReadXdr>::read_xdr(r)?;
@@ -28845,7 +29059,7 @@ impl ReadXdr for RevokeSponsorshipOp {
 }
 
 impl WriteXdr for RevokeSponsorshipOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -28885,7 +29099,7 @@ pub struct ClawbackOp {
 }
 
 impl ReadXdr for ClawbackOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28898,7 +29112,7 @@ impl ReadXdr for ClawbackOp {
 }
 
 impl WriteXdr for ClawbackOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.asset.write_xdr(w)?;
@@ -28931,7 +29145,7 @@ pub struct ClawbackClaimableBalanceOp {
 }
 
 impl ReadXdr for ClawbackClaimableBalanceOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28942,7 +29156,7 @@ impl ReadXdr for ClawbackClaimableBalanceOp {
 }
 
 impl WriteXdr for ClawbackClaimableBalanceOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.balance_id.write_xdr(w)?;
@@ -28980,7 +29194,7 @@ pub struct SetTrustLineFlagsOp {
 }
 
 impl ReadXdr for SetTrustLineFlagsOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -28994,7 +29208,7 @@ impl ReadXdr for SetTrustLineFlagsOp {
 }
 
 impl WriteXdr for SetTrustLineFlagsOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.trustor.write_xdr(w)?;
@@ -29044,7 +29258,7 @@ pub struct LiquidityPoolDepositOp {
 }
 
 impl ReadXdr for LiquidityPoolDepositOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -29059,7 +29273,7 @@ impl ReadXdr for LiquidityPoolDepositOp {
 }
 
 impl WriteXdr for LiquidityPoolDepositOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
@@ -29100,7 +29314,7 @@ pub struct LiquidityPoolWithdrawOp {
 }
 
 impl ReadXdr for LiquidityPoolWithdrawOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -29114,7 +29328,7 @@ impl ReadXdr for LiquidityPoolWithdrawOp {
 }
 
 impl WriteXdr for LiquidityPoolWithdrawOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
@@ -29230,7 +29444,7 @@ impl From<HostFunctionType> for i32 {
 }
 
 impl ReadXdr for HostFunctionType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -29241,7 +29455,7 @@ impl ReadXdr for HostFunctionType {
 }
 
 impl WriteXdr for HostFunctionType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -29339,7 +29553,7 @@ impl From<ContractIdPreimageType> for i32 {
 }
 
 impl ReadXdr for ContractIdPreimageType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -29350,7 +29564,7 @@ impl ReadXdr for ContractIdPreimageType {
 }
 
 impl WriteXdr for ContractIdPreimageType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -29383,7 +29597,7 @@ pub struct ContractIdPreimageFromAddress {
 }
 
 impl ReadXdr for ContractIdPreimageFromAddress {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -29395,7 +29609,7 @@ impl ReadXdr for ContractIdPreimageFromAddress {
 }
 
 impl WriteXdr for ContractIdPreimageFromAddress {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.address.write_xdr(w)?;
@@ -29489,7 +29703,7 @@ impl Variants<ContractIdPreimageType> for ContractIdPreimage {
 impl Union<ContractIdPreimageType> for ContractIdPreimage {}
 
 impl ReadXdr for ContractIdPreimage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ContractIdPreimageType = <ContractIdPreimageType as ReadXdr>::read_xdr(r)?;
@@ -29508,7 +29722,7 @@ impl ReadXdr for ContractIdPreimage {
 }
 
 impl WriteXdr for ContractIdPreimage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -29546,7 +29760,7 @@ pub struct CreateContractArgs {
 }
 
 impl ReadXdr for CreateContractArgs {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -29558,7 +29772,7 @@ impl ReadXdr for CreateContractArgs {
 }
 
 impl WriteXdr for CreateContractArgs {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.contract_id_preimage.write_xdr(w)?;
@@ -29595,7 +29809,7 @@ pub struct CreateContractArgsV2 {
 }
 
 impl ReadXdr for CreateContractArgsV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -29608,7 +29822,7 @@ impl ReadXdr for CreateContractArgsV2 {
 }
 
 impl WriteXdr for CreateContractArgsV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.contract_id_preimage.write_xdr(w)?;
@@ -29644,7 +29858,7 @@ pub struct InvokeContractArgs {
 }
 
 impl ReadXdr for InvokeContractArgs {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -29657,7 +29871,7 @@ impl ReadXdr for InvokeContractArgs {
 }
 
 impl WriteXdr for InvokeContractArgs {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.contract_address.write_xdr(w)?;
@@ -29765,7 +29979,7 @@ impl Variants<HostFunctionType> for HostFunction {
 impl Union<HostFunctionType> for HostFunction {}
 
 impl ReadXdr for HostFunction {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: HostFunctionType = <HostFunctionType as ReadXdr>::read_xdr(r)?;
@@ -29792,7 +30006,7 @@ impl ReadXdr for HostFunction {
 }
 
 impl WriteXdr for HostFunction {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -29906,7 +30120,7 @@ impl From<SorobanAuthorizedFunctionType> for i32 {
 }
 
 impl ReadXdr for SorobanAuthorizedFunctionType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -29917,7 +30131,7 @@ impl ReadXdr for SorobanAuthorizedFunctionType {
 }
 
 impl WriteXdr for SorobanAuthorizedFunctionType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -30026,7 +30240,7 @@ impl Variants<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {
 impl Union<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {}
 
 impl ReadXdr for SorobanAuthorizedFunction {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SorobanAuthorizedFunctionType =
@@ -30051,7 +30265,7 @@ impl ReadXdr for SorobanAuthorizedFunction {
 }
 
 impl WriteXdr for SorobanAuthorizedFunction {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -30090,7 +30304,7 @@ pub struct SorobanAuthorizedInvocation {
 }
 
 impl ReadXdr for SorobanAuthorizedInvocation {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -30102,7 +30316,7 @@ impl ReadXdr for SorobanAuthorizedInvocation {
 }
 
 impl WriteXdr for SorobanAuthorizedInvocation {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.function.write_xdr(w)?;
@@ -30140,7 +30354,7 @@ pub struct SorobanAddressCredentials {
 }
 
 impl ReadXdr for SorobanAddressCredentials {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -30154,7 +30368,7 @@ impl ReadXdr for SorobanAddressCredentials {
 }
 
 impl WriteXdr for SorobanAddressCredentials {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.address.write_xdr(w)?;
@@ -30255,7 +30469,7 @@ impl From<SorobanCredentialsType> for i32 {
 }
 
 impl ReadXdr for SorobanCredentialsType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -30266,7 +30480,7 @@ impl ReadXdr for SorobanCredentialsType {
 }
 
 impl WriteXdr for SorobanCredentialsType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -30355,7 +30569,7 @@ impl Variants<SorobanCredentialsType> for SorobanCredentials {
 impl Union<SorobanCredentialsType> for SorobanCredentials {}
 
 impl ReadXdr for SorobanCredentials {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SorobanCredentialsType = <SorobanCredentialsType as ReadXdr>::read_xdr(r)?;
@@ -30374,7 +30588,7 @@ impl ReadXdr for SorobanCredentials {
 }
 
 impl WriteXdr for SorobanCredentials {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -30412,7 +30626,7 @@ pub struct SorobanAuthorizationEntry {
 }
 
 impl ReadXdr for SorobanAuthorizationEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -30424,7 +30638,7 @@ impl ReadXdr for SorobanAuthorizationEntry {
 }
 
 impl WriteXdr for SorobanAuthorizationEntry {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.credentials.write_xdr(w)?;
@@ -30460,7 +30674,7 @@ pub struct InvokeHostFunctionOp {
 }
 
 impl ReadXdr for InvokeHostFunctionOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -30472,7 +30686,7 @@ impl ReadXdr for InvokeHostFunctionOp {
 }
 
 impl WriteXdr for InvokeHostFunctionOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.host_function.write_xdr(w)?;
@@ -30506,7 +30720,7 @@ pub struct ExtendFootprintTtlOp {
 }
 
 impl ReadXdr for ExtendFootprintTtlOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -30518,7 +30732,7 @@ impl ReadXdr for ExtendFootprintTtlOp {
 }
 
 impl WriteXdr for ExtendFootprintTtlOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -30550,7 +30764,7 @@ pub struct RestoreFootprintOp {
 }
 
 impl ReadXdr for RestoreFootprintOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -30561,7 +30775,7 @@ impl ReadXdr for RestoreFootprintOp {
 }
 
 impl WriteXdr for RestoreFootprintOp {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -30828,7 +31042,7 @@ impl Variants<OperationType> for OperationBody {
 impl Union<OperationType> for OperationBody {}
 
 impl ReadXdr for OperationBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
@@ -30904,7 +31118,7 @@ impl ReadXdr for OperationBody {
 }
 
 impl WriteXdr for OperationBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -31028,7 +31242,7 @@ pub struct Operation {
 }
 
 impl ReadXdr for Operation {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -31040,7 +31254,7 @@ impl ReadXdr for Operation {
 }
 
 impl WriteXdr for Operation {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
@@ -31076,7 +31290,7 @@ pub struct HashIdPreimageOperationId {
 }
 
 impl ReadXdr for HashIdPreimageOperationId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -31089,7 +31303,7 @@ impl ReadXdr for HashIdPreimageOperationId {
 }
 
 impl WriteXdr for HashIdPreimageOperationId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
@@ -31130,7 +31344,7 @@ pub struct HashIdPreimageRevokeId {
 }
 
 impl ReadXdr for HashIdPreimageRevokeId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -31145,7 +31359,7 @@ impl ReadXdr for HashIdPreimageRevokeId {
 }
 
 impl WriteXdr for HashIdPreimageRevokeId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
@@ -31182,7 +31396,7 @@ pub struct HashIdPreimageContractId {
 }
 
 impl ReadXdr for HashIdPreimageContractId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -31194,7 +31408,7 @@ impl ReadXdr for HashIdPreimageContractId {
 }
 
 impl WriteXdr for HashIdPreimageContractId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.network_id.write_xdr(w)?;
@@ -31232,7 +31446,7 @@ pub struct HashIdPreimageSorobanAuthorization {
 }
 
 impl ReadXdr for HashIdPreimageSorobanAuthorization {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -31246,7 +31460,7 @@ impl ReadXdr for HashIdPreimageSorobanAuthorization {
 }
 
 impl WriteXdr for HashIdPreimageSorobanAuthorization {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.network_id.write_xdr(w)?;
@@ -31377,7 +31591,7 @@ impl Variants<EnvelopeType> for HashIdPreimage {
 impl Union<EnvelopeType> for HashIdPreimage {}
 
 impl ReadXdr for HashIdPreimage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
@@ -31402,7 +31616,7 @@ impl ReadXdr for HashIdPreimage {
 }
 
 impl WriteXdr for HashIdPreimage {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -31522,7 +31736,7 @@ impl From<MemoType> for i32 {
 }
 
 impl ReadXdr for MemoType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -31533,7 +31747,7 @@ impl ReadXdr for MemoType {
 }
 
 impl WriteXdr for MemoType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -31640,7 +31854,7 @@ impl Variants<MemoType> for Memo {
 impl Union<MemoType> for Memo {}
 
 impl ReadXdr for Memo {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: MemoType = <MemoType as ReadXdr>::read_xdr(r)?;
@@ -31660,7 +31874,7 @@ impl ReadXdr for Memo {
 }
 
 impl WriteXdr for Memo {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -31701,7 +31915,7 @@ pub struct TimeBounds {
 }
 
 impl ReadXdr for TimeBounds {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -31713,7 +31927,7 @@ impl ReadXdr for TimeBounds {
 }
 
 impl WriteXdr for TimeBounds {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.min_time.write_xdr(w)?;
@@ -31747,7 +31961,7 @@ pub struct LedgerBounds {
 }
 
 impl ReadXdr for LedgerBounds {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -31759,7 +31973,7 @@ impl ReadXdr for LedgerBounds {
 }
 
 impl WriteXdr for LedgerBounds {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.min_ledger.write_xdr(w)?;
@@ -31824,7 +32038,7 @@ pub struct PreconditionsV2 {
 }
 
 impl ReadXdr for PreconditionsV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -31840,7 +32054,7 @@ impl ReadXdr for PreconditionsV2 {
 }
 
 impl WriteXdr for PreconditionsV2 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.time_bounds.write_xdr(w)?;
@@ -31948,7 +32162,7 @@ impl From<PreconditionType> for i32 {
 }
 
 impl ReadXdr for PreconditionType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -31959,7 +32173,7 @@ impl ReadXdr for PreconditionType {
 }
 
 impl WriteXdr for PreconditionType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -32054,7 +32268,7 @@ impl Variants<PreconditionType> for Preconditions {
 impl Union<PreconditionType> for Preconditions {}
 
 impl ReadXdr for Preconditions {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: PreconditionType = <PreconditionType as ReadXdr>::read_xdr(r)?;
@@ -32072,7 +32286,7 @@ impl ReadXdr for Preconditions {
 }
 
 impl WriteXdr for Preconditions {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -32111,7 +32325,7 @@ pub struct LedgerFootprint {
 }
 
 impl ReadXdr for LedgerFootprint {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -32123,7 +32337,7 @@ impl ReadXdr for LedgerFootprint {
 }
 
 impl WriteXdr for LedgerFootprint {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.read_only.write_xdr(w)?;
@@ -32222,7 +32436,7 @@ impl From<ArchivalProofType> for i32 {
 }
 
 impl ReadXdr for ArchivalProofType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -32233,7 +32447,7 @@ impl ReadXdr for ArchivalProofType {
 }
 
 impl WriteXdr for ArchivalProofType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -32266,7 +32480,7 @@ pub struct ArchivalProofNode {
 }
 
 impl ReadXdr for ArchivalProofNode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -32278,7 +32492,7 @@ impl ReadXdr for ArchivalProofNode {
 }
 
 impl WriteXdr for ArchivalProofNode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.index.write_xdr(w)?;
@@ -32328,7 +32542,7 @@ impl AsRef<VecM<ArchivalProofNode>> for ProofLevel {
 }
 
 impl ReadXdr for ProofLevel {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<ArchivalProofNode>::read_xdr(r)?;
@@ -32339,7 +32553,7 @@ impl ReadXdr for ProofLevel {
 }
 
 impl WriteXdr for ProofLevel {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -32421,7 +32635,7 @@ pub struct NonexistenceProofBody {
 }
 
 impl ReadXdr for NonexistenceProofBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -32433,7 +32647,7 @@ impl ReadXdr for NonexistenceProofBody {
 }
 
 impl WriteXdr for NonexistenceProofBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.entries_to_prove.write_xdr(w)?;
@@ -32477,7 +32691,7 @@ pub struct ExistenceProofBody {
 }
 
 impl ReadXdr for ExistenceProofBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -32491,7 +32705,7 @@ impl ReadXdr for ExistenceProofBody {
 }
 
 impl WriteXdr for ExistenceProofBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.keys_to_prove.write_xdr(w)?;
@@ -32583,7 +32797,7 @@ impl Variants<ArchivalProofType> for ArchivalProofBody {
 impl Union<ArchivalProofType> for ArchivalProofBody {}
 
 impl ReadXdr for ArchivalProofBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ArchivalProofType = <ArchivalProofType as ReadXdr>::read_xdr(r)?;
@@ -32604,7 +32818,7 @@ impl ReadXdr for ArchivalProofBody {
 }
 
 impl WriteXdr for ArchivalProofBody {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -32649,7 +32863,7 @@ pub struct ArchivalProof {
 }
 
 impl ReadXdr for ArchivalProof {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -32661,7 +32875,7 @@ impl ReadXdr for ArchivalProof {
 }
 
 impl WriteXdr for ArchivalProof {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.epoch.write_xdr(w)?;
@@ -32704,7 +32918,7 @@ pub struct SorobanResources {
 }
 
 impl ReadXdr for SorobanResources {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -32718,7 +32932,7 @@ impl ReadXdr for SorobanResources {
 }
 
 impl WriteXdr for SorobanResources {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.footprint.write_xdr(w)?;
@@ -32765,7 +32979,7 @@ pub struct SorobanTransactionData {
 }
 
 impl ReadXdr for SorobanTransactionData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -32778,7 +32992,7 @@ impl ReadXdr for SorobanTransactionData {
 }
 
 impl WriteXdr for SorobanTransactionData {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ext.write_xdr(w)?;
@@ -32861,7 +33075,7 @@ impl Variants<i32> for TransactionV0Ext {
 impl Union<i32> for TransactionV0Ext {}
 
 impl ReadXdr for TransactionV0Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -32877,7 +33091,7 @@ impl ReadXdr for TransactionV0Ext {
 }
 
 impl WriteXdr for TransactionV0Ext {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -32929,7 +33143,7 @@ pub struct TransactionV0 {
 }
 
 impl ReadXdr for TransactionV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -32946,7 +33160,7 @@ impl ReadXdr for TransactionV0 {
 }
 
 impl WriteXdr for TransactionV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.source_account_ed25519.write_xdr(w)?;
@@ -32987,7 +33201,7 @@ pub struct TransactionV0Envelope {
 }
 
 impl ReadXdr for TransactionV0Envelope {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -32999,7 +33213,7 @@ impl ReadXdr for TransactionV0Envelope {
 }
 
 impl WriteXdr for TransactionV0Envelope {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
@@ -33086,7 +33300,7 @@ impl Variants<i32> for TransactionExt {
 impl Union<i32> for TransactionExt {}
 
 impl ReadXdr for TransactionExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -33103,7 +33317,7 @@ impl ReadXdr for TransactionExt {
 }
 
 impl WriteXdr for TransactionExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -33169,7 +33383,7 @@ pub struct Transaction {
 }
 
 impl ReadXdr for Transaction {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -33186,7 +33400,7 @@ impl ReadXdr for Transaction {
 }
 
 impl WriteXdr for Transaction {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.source_account.write_xdr(w)?;
@@ -33227,7 +33441,7 @@ pub struct TransactionV1Envelope {
 }
 
 impl ReadXdr for TransactionV1Envelope {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -33239,7 +33453,7 @@ impl ReadXdr for TransactionV1Envelope {
 }
 
 impl WriteXdr for TransactionV1Envelope {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
@@ -33321,7 +33535,7 @@ impl Variants<EnvelopeType> for FeeBumpTransactionInnerTx {
 impl Union<EnvelopeType> for FeeBumpTransactionInnerTx {}
 
 impl ReadXdr for FeeBumpTransactionInnerTx {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
@@ -33337,7 +33551,7 @@ impl ReadXdr for FeeBumpTransactionInnerTx {
 }
 
 impl WriteXdr for FeeBumpTransactionInnerTx {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -33422,7 +33636,7 @@ impl Variants<i32> for FeeBumpTransactionExt {
 impl Union<i32> for FeeBumpTransactionExt {}
 
 impl ReadXdr for FeeBumpTransactionExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -33438,7 +33652,7 @@ impl ReadXdr for FeeBumpTransactionExt {
 }
 
 impl WriteXdr for FeeBumpTransactionExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -33489,7 +33703,7 @@ pub struct FeeBumpTransaction {
 }
 
 impl ReadXdr for FeeBumpTransaction {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -33503,7 +33717,7 @@ impl ReadXdr for FeeBumpTransaction {
 }
 
 impl WriteXdr for FeeBumpTransaction {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.fee_source.write_xdr(w)?;
@@ -33541,7 +33755,7 @@ pub struct FeeBumpTransactionEnvelope {
 }
 
 impl ReadXdr for FeeBumpTransactionEnvelope {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -33553,7 +33767,7 @@ impl ReadXdr for FeeBumpTransactionEnvelope {
 }
 
 impl WriteXdr for FeeBumpTransactionEnvelope {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx.write_xdr(w)?;
@@ -33649,7 +33863,7 @@ impl Variants<EnvelopeType> for TransactionEnvelope {
 impl Union<EnvelopeType> for TransactionEnvelope {}
 
 impl ReadXdr for TransactionEnvelope {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
@@ -33669,7 +33883,7 @@ impl ReadXdr for TransactionEnvelope {
 }
 
 impl WriteXdr for TransactionEnvelope {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -33762,7 +33976,7 @@ impl Variants<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {
 impl Union<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {}
 
 impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: EnvelopeType = <EnvelopeType as ReadXdr>::read_xdr(r)?;
@@ -33779,7 +33993,7 @@ impl ReadXdr for TransactionSignaturePayloadTaggedTransaction {
 }
 
 impl WriteXdr for TransactionSignaturePayloadTaggedTransaction {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -33825,7 +34039,7 @@ pub struct TransactionSignaturePayload {
 }
 
 impl ReadXdr for TransactionSignaturePayload {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -33837,7 +34051,7 @@ impl ReadXdr for TransactionSignaturePayload {
 }
 
 impl WriteXdr for TransactionSignaturePayload {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.network_id.write_xdr(w)?;
@@ -33941,7 +34155,7 @@ impl From<ClaimAtomType> for i32 {
 }
 
 impl ReadXdr for ClaimAtomType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -33952,7 +34166,7 @@ impl ReadXdr for ClaimAtomType {
 }
 
 impl WriteXdr for ClaimAtomType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -33998,7 +34212,7 @@ pub struct ClaimOfferAtomV0 {
 }
 
 impl ReadXdr for ClaimOfferAtomV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -34014,7 +34228,7 @@ impl ReadXdr for ClaimOfferAtomV0 {
 }
 
 impl WriteXdr for ClaimOfferAtomV0 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.seller_ed25519.write_xdr(w)?;
@@ -34065,7 +34279,7 @@ pub struct ClaimOfferAtom {
 }
 
 impl ReadXdr for ClaimOfferAtom {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -34081,7 +34295,7 @@ impl ReadXdr for ClaimOfferAtom {
 }
 
 impl WriteXdr for ClaimOfferAtom {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.seller_id.write_xdr(w)?;
@@ -34129,7 +34343,7 @@ pub struct ClaimLiquidityAtom {
 }
 
 impl ReadXdr for ClaimLiquidityAtom {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -34144,7 +34358,7 @@ impl ReadXdr for ClaimLiquidityAtom {
 }
 
 impl WriteXdr for ClaimLiquidityAtom {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.liquidity_pool_id.write_xdr(w)?;
@@ -34243,7 +34457,7 @@ impl Variants<ClaimAtomType> for ClaimAtom {
 impl Union<ClaimAtomType> for ClaimAtom {}
 
 impl ReadXdr for ClaimAtom {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClaimAtomType = <ClaimAtomType as ReadXdr>::read_xdr(r)?;
@@ -34263,7 +34477,7 @@ impl ReadXdr for ClaimAtom {
 }
 
 impl WriteXdr for ClaimAtom {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -34392,7 +34606,7 @@ impl From<CreateAccountResultCode> for i32 {
 }
 
 impl ReadXdr for CreateAccountResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -34403,7 +34617,7 @@ impl ReadXdr for CreateAccountResultCode {
 }
 
 impl WriteXdr for CreateAccountResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -34513,7 +34727,7 @@ impl Variants<CreateAccountResultCode> for CreateAccountResult {
 impl Union<CreateAccountResultCode> for CreateAccountResult {}
 
 impl ReadXdr for CreateAccountResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: CreateAccountResultCode = <CreateAccountResultCode as ReadXdr>::read_xdr(r)?;
@@ -34533,7 +34747,7 @@ impl ReadXdr for CreateAccountResult {
 }
 
 impl WriteXdr for CreateAccountResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -34693,7 +34907,7 @@ impl From<PaymentResultCode> for i32 {
 }
 
 impl ReadXdr for PaymentResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -34704,7 +34918,7 @@ impl ReadXdr for PaymentResultCode {
 }
 
 impl WriteXdr for PaymentResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -34844,7 +35058,7 @@ impl Variants<PaymentResultCode> for PaymentResult {
 impl Union<PaymentResultCode> for PaymentResult {}
 
 impl ReadXdr for PaymentResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: PaymentResultCode = <PaymentResultCode as ReadXdr>::read_xdr(r)?;
@@ -34869,7 +35083,7 @@ impl ReadXdr for PaymentResult {
 }
 
 impl WriteXdr for PaymentResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -35061,7 +35275,7 @@ impl From<PathPaymentStrictReceiveResultCode> for i32 {
 }
 
 impl ReadXdr for PathPaymentStrictReceiveResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -35072,7 +35286,7 @@ impl ReadXdr for PathPaymentStrictReceiveResultCode {
 }
 
 impl WriteXdr for PathPaymentStrictReceiveResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -35107,7 +35321,7 @@ pub struct SimplePaymentResult {
 }
 
 impl ReadXdr for SimplePaymentResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -35120,7 +35334,7 @@ impl ReadXdr for SimplePaymentResult {
 }
 
 impl WriteXdr for SimplePaymentResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
@@ -35155,7 +35369,7 @@ pub struct PathPaymentStrictReceiveResultSuccess {
 }
 
 impl ReadXdr for PathPaymentStrictReceiveResultSuccess {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -35167,7 +35381,7 @@ impl ReadXdr for PathPaymentStrictReceiveResultSuccess {
 }
 
 impl WriteXdr for PathPaymentStrictReceiveResultSuccess {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.offers.write_xdr(w)?;
@@ -35333,7 +35547,7 @@ impl Variants<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveRe
 impl Union<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResult {}
 
 impl ReadXdr for PathPaymentStrictReceiveResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: PathPaymentStrictReceiveResultCode =
@@ -35364,7 +35578,7 @@ impl ReadXdr for PathPaymentStrictReceiveResult {
 }
 
 impl WriteXdr for PathPaymentStrictReceiveResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -35558,7 +35772,7 @@ impl From<PathPaymentStrictSendResultCode> for i32 {
 }
 
 impl ReadXdr for PathPaymentStrictSendResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -35569,7 +35783,7 @@ impl ReadXdr for PathPaymentStrictSendResultCode {
 }
 
 impl WriteXdr for PathPaymentStrictSendResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -35602,7 +35816,7 @@ pub struct PathPaymentStrictSendResultSuccess {
 }
 
 impl ReadXdr for PathPaymentStrictSendResultSuccess {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -35614,7 +35828,7 @@ impl ReadXdr for PathPaymentStrictSendResultSuccess {
 }
 
 impl WriteXdr for PathPaymentStrictSendResultSuccess {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.offers.write_xdr(w)?;
@@ -35779,7 +35993,7 @@ impl Variants<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {
 impl Union<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {}
 
 impl ReadXdr for PathPaymentStrictSendResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: PathPaymentStrictSendResultCode =
@@ -35810,7 +36024,7 @@ impl ReadXdr for PathPaymentStrictSendResult {
 }
 
 impl WriteXdr for PathPaymentStrictSendResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -36003,7 +36217,7 @@ impl From<ManageSellOfferResultCode> for i32 {
 }
 
 impl ReadXdr for ManageSellOfferResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -36014,7 +36228,7 @@ impl ReadXdr for ManageSellOfferResultCode {
 }
 
 impl WriteXdr for ManageSellOfferResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -36117,7 +36331,7 @@ impl From<ManageOfferEffect> for i32 {
 }
 
 impl ReadXdr for ManageOfferEffect {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -36128,7 +36342,7 @@ impl ReadXdr for ManageOfferEffect {
 }
 
 impl WriteXdr for ManageOfferEffect {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -36222,7 +36436,7 @@ impl Variants<ManageOfferEffect> for ManageOfferSuccessResultOffer {
 impl Union<ManageOfferEffect> for ManageOfferSuccessResultOffer {}
 
 impl ReadXdr for ManageOfferSuccessResultOffer {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ManageOfferEffect = <ManageOfferEffect as ReadXdr>::read_xdr(r)?;
@@ -36240,7 +36454,7 @@ impl ReadXdr for ManageOfferSuccessResultOffer {
 }
 
 impl WriteXdr for ManageOfferSuccessResultOffer {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -36289,7 +36503,7 @@ pub struct ManageOfferSuccessResult {
 }
 
 impl ReadXdr for ManageOfferSuccessResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -36301,7 +36515,7 @@ impl ReadXdr for ManageOfferSuccessResult {
 }
 
 impl WriteXdr for ManageOfferSuccessResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.offers_claimed.write_xdr(w)?;
@@ -36460,7 +36674,7 @@ impl Variants<ManageSellOfferResultCode> for ManageSellOfferResult {
 impl Union<ManageSellOfferResultCode> for ManageSellOfferResult {}
 
 impl ReadXdr for ManageSellOfferResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ManageSellOfferResultCode =
@@ -36491,7 +36705,7 @@ impl ReadXdr for ManageSellOfferResult {
 }
 
 impl WriteXdr for ManageSellOfferResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -36681,7 +36895,7 @@ impl From<ManageBuyOfferResultCode> for i32 {
 }
 
 impl ReadXdr for ManageBuyOfferResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -36692,7 +36906,7 @@ impl ReadXdr for ManageBuyOfferResultCode {
 }
 
 impl WriteXdr for ManageBuyOfferResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -36850,7 +37064,7 @@ impl Variants<ManageBuyOfferResultCode> for ManageBuyOfferResult {
 impl Union<ManageBuyOfferResultCode> for ManageBuyOfferResult {}
 
 impl ReadXdr for ManageBuyOfferResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ManageBuyOfferResultCode = <ManageBuyOfferResultCode as ReadXdr>::read_xdr(r)?;
@@ -36880,7 +37094,7 @@ impl ReadXdr for ManageBuyOfferResult {
 }
 
 impl WriteXdr for ManageBuyOfferResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -37054,7 +37268,7 @@ impl From<SetOptionsResultCode> for i32 {
 }
 
 impl ReadXdr for SetOptionsResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -37065,7 +37279,7 @@ impl ReadXdr for SetOptionsResultCode {
 }
 
 impl WriteXdr for SetOptionsResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -37211,7 +37425,7 @@ impl Variants<SetOptionsResultCode> for SetOptionsResult {
 impl Union<SetOptionsResultCode> for SetOptionsResult {}
 
 impl ReadXdr for SetOptionsResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SetOptionsResultCode = <SetOptionsResultCode as ReadXdr>::read_xdr(r)?;
@@ -37237,7 +37451,7 @@ impl ReadXdr for SetOptionsResult {
 }
 
 impl WriteXdr for SetOptionsResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -37400,7 +37614,7 @@ impl From<ChangeTrustResultCode> for i32 {
 }
 
 impl ReadXdr for ChangeTrustResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -37411,7 +37625,7 @@ impl ReadXdr for ChangeTrustResultCode {
 }
 
 impl WriteXdr for ChangeTrustResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -37545,7 +37759,7 @@ impl Variants<ChangeTrustResultCode> for ChangeTrustResult {
 impl Union<ChangeTrustResultCode> for ChangeTrustResult {}
 
 impl ReadXdr for ChangeTrustResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ChangeTrustResultCode = <ChangeTrustResultCode as ReadXdr>::read_xdr(r)?;
@@ -37571,7 +37785,7 @@ impl ReadXdr for ChangeTrustResult {
 }
 
 impl WriteXdr for ChangeTrustResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -37718,7 +37932,7 @@ impl From<AllowTrustResultCode> for i32 {
 }
 
 impl ReadXdr for AllowTrustResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -37729,7 +37943,7 @@ impl ReadXdr for AllowTrustResultCode {
 }
 
 impl WriteXdr for AllowTrustResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -37851,7 +38065,7 @@ impl Variants<AllowTrustResultCode> for AllowTrustResult {
 impl Union<AllowTrustResultCode> for AllowTrustResult {}
 
 impl ReadXdr for AllowTrustResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AllowTrustResultCode = <AllowTrustResultCode as ReadXdr>::read_xdr(r)?;
@@ -37873,7 +38087,7 @@ impl ReadXdr for AllowTrustResult {
 }
 
 impl WriteXdr for AllowTrustResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -38023,7 +38237,7 @@ impl From<AccountMergeResultCode> for i32 {
 }
 
 impl ReadXdr for AccountMergeResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -38034,7 +38248,7 @@ impl ReadXdr for AccountMergeResultCode {
 }
 
 impl WriteXdr for AccountMergeResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -38162,7 +38376,7 @@ impl Variants<AccountMergeResultCode> for AccountMergeResult {
 impl Union<AccountMergeResultCode> for AccountMergeResult {}
 
 impl ReadXdr for AccountMergeResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: AccountMergeResultCode = <AccountMergeResultCode as ReadXdr>::read_xdr(r)?;
@@ -38185,7 +38399,7 @@ impl ReadXdr for AccountMergeResult {
 }
 
 impl WriteXdr for AccountMergeResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -38294,7 +38508,7 @@ impl From<InflationResultCode> for i32 {
 }
 
 impl ReadXdr for InflationResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -38305,7 +38519,7 @@ impl ReadXdr for InflationResultCode {
 }
 
 impl WriteXdr for InflationResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -38338,7 +38552,7 @@ pub struct InflationPayout {
 }
 
 impl ReadXdr for InflationPayout {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -38350,7 +38564,7 @@ impl ReadXdr for InflationPayout {
 }
 
 impl WriteXdr for InflationPayout {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.destination.write_xdr(w)?;
@@ -38438,7 +38652,7 @@ impl Variants<InflationResultCode> for InflationResult {
 impl Union<InflationResultCode> for InflationResult {}
 
 impl ReadXdr for InflationResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: InflationResultCode = <InflationResultCode as ReadXdr>::read_xdr(r)?;
@@ -38457,7 +38671,7 @@ impl ReadXdr for InflationResult {
 }
 
 impl WriteXdr for InflationResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -38585,7 +38799,7 @@ impl From<ManageDataResultCode> for i32 {
 }
 
 impl ReadXdr for ManageDataResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -38596,7 +38810,7 @@ impl ReadXdr for ManageDataResultCode {
 }
 
 impl WriteXdr for ManageDataResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -38706,7 +38920,7 @@ impl Variants<ManageDataResultCode> for ManageDataResult {
 impl Union<ManageDataResultCode> for ManageDataResult {}
 
 impl ReadXdr for ManageDataResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ManageDataResultCode = <ManageDataResultCode as ReadXdr>::read_xdr(r)?;
@@ -38726,7 +38940,7 @@ impl ReadXdr for ManageDataResult {
 }
 
 impl WriteXdr for ManageDataResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -38834,7 +39048,7 @@ impl From<BumpSequenceResultCode> for i32 {
 }
 
 impl ReadXdr for BumpSequenceResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -38845,7 +39059,7 @@ impl ReadXdr for BumpSequenceResultCode {
 }
 
 impl WriteXdr for BumpSequenceResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -38934,7 +39148,7 @@ impl Variants<BumpSequenceResultCode> for BumpSequenceResult {
 impl Union<BumpSequenceResultCode> for BumpSequenceResult {}
 
 impl ReadXdr for BumpSequenceResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: BumpSequenceResultCode = <BumpSequenceResultCode as ReadXdr>::read_xdr(r)?;
@@ -38951,7 +39165,7 @@ impl ReadXdr for BumpSequenceResult {
 }
 
 impl WriteXdr for BumpSequenceResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -39081,7 +39295,7 @@ impl From<CreateClaimableBalanceResultCode> for i32 {
 }
 
 impl ReadXdr for CreateClaimableBalanceResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -39092,7 +39306,7 @@ impl ReadXdr for CreateClaimableBalanceResultCode {
 }
 
 impl WriteXdr for CreateClaimableBalanceResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -39209,7 +39423,7 @@ impl Variants<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResult
 impl Union<CreateClaimableBalanceResultCode> for CreateClaimableBalanceResult {}
 
 impl ReadXdr for CreateClaimableBalanceResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: CreateClaimableBalanceResultCode =
@@ -39233,7 +39447,7 @@ impl ReadXdr for CreateClaimableBalanceResult {
 }
 
 impl WriteXdr for CreateClaimableBalanceResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -39367,7 +39581,7 @@ impl From<ClaimClaimableBalanceResultCode> for i32 {
 }
 
 impl ReadXdr for ClaimClaimableBalanceResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -39378,7 +39592,7 @@ impl ReadXdr for ClaimClaimableBalanceResultCode {
 }
 
 impl WriteXdr for ClaimClaimableBalanceResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -39494,7 +39708,7 @@ impl Variants<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {
 impl Union<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {}
 
 impl ReadXdr for ClaimClaimableBalanceResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClaimClaimableBalanceResultCode =
@@ -39516,7 +39730,7 @@ impl ReadXdr for ClaimClaimableBalanceResult {
 }
 
 impl WriteXdr for ClaimClaimableBalanceResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -39637,7 +39851,7 @@ impl From<BeginSponsoringFutureReservesResultCode> for i32 {
 }
 
 impl ReadXdr for BeginSponsoringFutureReservesResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -39648,7 +39862,7 @@ impl ReadXdr for BeginSponsoringFutureReservesResultCode {
 }
 
 impl WriteXdr for BeginSponsoringFutureReservesResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -39749,7 +39963,7 @@ impl Variants<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFuture
 impl Union<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureReservesResult {}
 
 impl ReadXdr for BeginSponsoringFutureReservesResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: BeginSponsoringFutureReservesResultCode =
@@ -39769,7 +39983,7 @@ impl ReadXdr for BeginSponsoringFutureReservesResult {
 }
 
 impl WriteXdr for BeginSponsoringFutureReservesResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -39877,7 +40091,7 @@ impl From<EndSponsoringFutureReservesResultCode> for i32 {
 }
 
 impl ReadXdr for EndSponsoringFutureReservesResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -39888,7 +40102,7 @@ impl ReadXdr for EndSponsoringFutureReservesResultCode {
 }
 
 impl WriteXdr for EndSponsoringFutureReservesResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -39978,7 +40192,7 @@ impl Variants<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureRese
 impl Union<EndSponsoringFutureReservesResultCode> for EndSponsoringFutureReservesResult {}
 
 impl ReadXdr for EndSponsoringFutureReservesResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: EndSponsoringFutureReservesResultCode =
@@ -39996,7 +40210,7 @@ impl ReadXdr for EndSponsoringFutureReservesResult {
 }
 
 impl WriteXdr for EndSponsoringFutureReservesResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -40129,7 +40343,7 @@ impl From<RevokeSponsorshipResultCode> for i32 {
 }
 
 impl ReadXdr for RevokeSponsorshipResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -40140,7 +40354,7 @@ impl ReadXdr for RevokeSponsorshipResultCode {
 }
 
 impl WriteXdr for RevokeSponsorshipResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -40256,7 +40470,7 @@ impl Variants<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {
 impl Union<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {}
 
 impl ReadXdr for RevokeSponsorshipResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: RevokeSponsorshipResultCode =
@@ -40278,7 +40492,7 @@ impl ReadXdr for RevokeSponsorshipResult {
 }
 
 impl WriteXdr for RevokeSponsorshipResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -40409,7 +40623,7 @@ impl From<ClawbackResultCode> for i32 {
 }
 
 impl ReadXdr for ClawbackResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -40420,7 +40634,7 @@ impl ReadXdr for ClawbackResultCode {
 }
 
 impl WriteXdr for ClawbackResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -40530,7 +40744,7 @@ impl Variants<ClawbackResultCode> for ClawbackResult {
 impl Union<ClawbackResultCode> for ClawbackResult {}
 
 impl ReadXdr for ClawbackResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClawbackResultCode = <ClawbackResultCode as ReadXdr>::read_xdr(r)?;
@@ -40550,7 +40764,7 @@ impl ReadXdr for ClawbackResult {
 }
 
 impl WriteXdr for ClawbackResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -40670,7 +40884,7 @@ impl From<ClawbackClaimableBalanceResultCode> for i32 {
 }
 
 impl ReadXdr for ClawbackClaimableBalanceResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -40681,7 +40895,7 @@ impl ReadXdr for ClawbackClaimableBalanceResultCode {
 }
 
 impl WriteXdr for ClawbackClaimableBalanceResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -40782,7 +40996,7 @@ impl Variants<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceRe
 impl Union<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResult {}
 
 impl ReadXdr for ClawbackClaimableBalanceResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ClawbackClaimableBalanceResultCode =
@@ -40802,7 +41016,7 @@ impl ReadXdr for ClawbackClaimableBalanceResult {
 }
 
 impl WriteXdr for ClawbackClaimableBalanceResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -40938,7 +41152,7 @@ impl From<SetTrustLineFlagsResultCode> for i32 {
 }
 
 impl ReadXdr for SetTrustLineFlagsResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -40949,7 +41163,7 @@ impl ReadXdr for SetTrustLineFlagsResultCode {
 }
 
 impl WriteXdr for SetTrustLineFlagsResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -41065,7 +41279,7 @@ impl Variants<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {
 impl Union<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {}
 
 impl ReadXdr for SetTrustLineFlagsResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SetTrustLineFlagsResultCode =
@@ -41087,7 +41301,7 @@ impl ReadXdr for SetTrustLineFlagsResult {
 }
 
 impl WriteXdr for SetTrustLineFlagsResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -41240,7 +41454,7 @@ impl From<LiquidityPoolDepositResultCode> for i32 {
 }
 
 impl ReadXdr for LiquidityPoolDepositResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -41251,7 +41465,7 @@ impl ReadXdr for LiquidityPoolDepositResultCode {
 }
 
 impl WriteXdr for LiquidityPoolDepositResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -41379,7 +41593,7 @@ impl Variants<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {
 impl Union<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {}
 
 impl ReadXdr for LiquidityPoolDepositResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolDepositResultCode =
@@ -41403,7 +41617,7 @@ impl ReadXdr for LiquidityPoolDepositResult {
 }
 
 impl WriteXdr for LiquidityPoolDepositResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -41545,7 +41759,7 @@ impl From<LiquidityPoolWithdrawResultCode> for i32 {
 }
 
 impl ReadXdr for LiquidityPoolWithdrawResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -41556,7 +41770,7 @@ impl ReadXdr for LiquidityPoolWithdrawResultCode {
 }
 
 impl WriteXdr for LiquidityPoolWithdrawResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -41672,7 +41886,7 @@ impl Variants<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {
 impl Union<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {}
 
 impl ReadXdr for LiquidityPoolWithdrawResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: LiquidityPoolWithdrawResultCode =
@@ -41694,7 +41908,7 @@ impl ReadXdr for LiquidityPoolWithdrawResult {
 }
 
 impl WriteXdr for LiquidityPoolWithdrawResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -41831,7 +42045,7 @@ impl From<InvokeHostFunctionResultCode> for i32 {
 }
 
 impl ReadXdr for InvokeHostFunctionResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -41842,7 +42056,7 @@ impl ReadXdr for InvokeHostFunctionResultCode {
 }
 
 impl WriteXdr for InvokeHostFunctionResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -41960,7 +42174,7 @@ impl Variants<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {
 impl Union<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {}
 
 impl ReadXdr for InvokeHostFunctionResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: InvokeHostFunctionResultCode =
@@ -41984,7 +42198,7 @@ impl ReadXdr for InvokeHostFunctionResult {
 }
 
 impl WriteXdr for InvokeHostFunctionResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -42109,7 +42323,7 @@ impl From<ExtendFootprintTtlResultCode> for i32 {
 }
 
 impl ReadXdr for ExtendFootprintTtlResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -42120,7 +42334,7 @@ impl ReadXdr for ExtendFootprintTtlResultCode {
 }
 
 impl WriteXdr for ExtendFootprintTtlResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -42226,7 +42440,7 @@ impl Variants<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResult {
 impl Union<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResult {}
 
 impl ReadXdr for ExtendFootprintTtlResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: ExtendFootprintTtlResultCode =
@@ -42248,7 +42462,7 @@ impl ReadXdr for ExtendFootprintTtlResult {
 }
 
 impl WriteXdr for ExtendFootprintTtlResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -42371,7 +42585,7 @@ impl From<RestoreFootprintResultCode> for i32 {
 }
 
 impl ReadXdr for RestoreFootprintResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -42382,7 +42596,7 @@ impl ReadXdr for RestoreFootprintResultCode {
 }
 
 impl WriteXdr for RestoreFootprintResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -42488,7 +42702,7 @@ impl Variants<RestoreFootprintResultCode> for RestoreFootprintResult {
 impl Union<RestoreFootprintResultCode> for RestoreFootprintResult {}
 
 impl ReadXdr for RestoreFootprintResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: RestoreFootprintResultCode =
@@ -42510,7 +42724,7 @@ impl ReadXdr for RestoreFootprintResult {
 }
 
 impl WriteXdr for RestoreFootprintResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -42649,7 +42863,7 @@ impl From<OperationResultCode> for i32 {
 }
 
 impl ReadXdr for OperationResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -42660,7 +42874,7 @@ impl ReadXdr for OperationResultCode {
 }
 
 impl WriteXdr for OperationResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -42927,7 +43141,7 @@ impl Variants<OperationType> for OperationResultTr {
 impl Union<OperationType> for OperationResultTr {}
 
 impl ReadXdr for OperationResultTr {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: OperationType = <OperationType as ReadXdr>::read_xdr(r)?;
@@ -43007,7 +43221,7 @@ impl ReadXdr for OperationResultTr {
 }
 
 impl WriteXdr for OperationResultTr {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -43216,7 +43430,7 @@ impl Variants<OperationResultCode> for OperationResult {
 impl Union<OperationResultCode> for OperationResult {}
 
 impl ReadXdr for OperationResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: OperationResultCode = <OperationResultCode as ReadXdr>::read_xdr(r)?;
@@ -43238,7 +43452,7 @@ impl ReadXdr for OperationResult {
 }
 
 impl WriteXdr for OperationResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -43455,7 +43669,7 @@ impl From<TransactionResultCode> for i32 {
 }
 
 impl ReadXdr for TransactionResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -43466,7 +43680,7 @@ impl ReadXdr for TransactionResultCode {
 }
 
 impl WriteXdr for TransactionResultCode {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -43650,7 +43864,7 @@ impl Variants<TransactionResultCode> for InnerTransactionResultResult {
 impl Union<TransactionResultCode> for InnerTransactionResultResult {}
 
 impl ReadXdr for InnerTransactionResultResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
@@ -43686,7 +43900,7 @@ impl ReadXdr for InnerTransactionResultResult {
 }
 
 impl WriteXdr for InnerTransactionResultResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -43787,7 +44001,7 @@ impl Variants<i32> for InnerTransactionResultExt {
 impl Union<i32> for InnerTransactionResultExt {}
 
 impl ReadXdr for InnerTransactionResultExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -43803,7 +44017,7 @@ impl ReadXdr for InnerTransactionResultExt {
 }
 
 impl WriteXdr for InnerTransactionResultExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -43875,7 +44089,7 @@ pub struct InnerTransactionResult {
 }
 
 impl ReadXdr for InnerTransactionResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -43888,7 +44102,7 @@ impl ReadXdr for InnerTransactionResult {
 }
 
 impl WriteXdr for InnerTransactionResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.fee_charged.write_xdr(w)?;
@@ -43923,7 +44137,7 @@ pub struct InnerTransactionResultPair {
 }
 
 impl ReadXdr for InnerTransactionResultPair {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -43935,7 +44149,7 @@ impl ReadXdr for InnerTransactionResultPair {
 }
 
 impl WriteXdr for InnerTransactionResultPair {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.transaction_hash.write_xdr(w)?;
@@ -44132,7 +44346,7 @@ impl Variants<TransactionResultCode> for TransactionResultResult {
 impl Union<TransactionResultCode> for TransactionResultResult {}
 
 impl ReadXdr for TransactionResultResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: TransactionResultCode = <TransactionResultCode as ReadXdr>::read_xdr(r)?;
@@ -44174,7 +44388,7 @@ impl ReadXdr for TransactionResultResult {
 }
 
 impl WriteXdr for TransactionResultResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -44277,7 +44491,7 @@ impl Variants<i32> for TransactionResultExt {
 impl Union<i32> for TransactionResultExt {}
 
 impl ReadXdr for TransactionResultExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -44293,7 +44507,7 @@ impl ReadXdr for TransactionResultExt {
 }
 
 impl WriteXdr for TransactionResultExt {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -44366,7 +44580,7 @@ pub struct TransactionResult {
 }
 
 impl ReadXdr for TransactionResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -44379,7 +44593,7 @@ impl ReadXdr for TransactionResult {
 }
 
 impl WriteXdr for TransactionResult {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.fee_charged.write_xdr(w)?;
@@ -44487,7 +44701,7 @@ impl AsRef<[u8; 32]> for Hash {
 }
 
 impl ReadXdr for Hash {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 32]>::read_xdr(r)?;
@@ -44498,7 +44712,7 @@ impl ReadXdr for Hash {
 }
 
 impl WriteXdr for Hash {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -44638,7 +44852,7 @@ impl AsRef<[u8; 32]> for Uint256 {
 }
 
 impl ReadXdr for Uint256 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 32]>::read_xdr(r)?;
@@ -44649,7 +44863,7 @@ impl ReadXdr for Uint256 {
 }
 
 impl WriteXdr for Uint256 {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -44763,7 +44977,7 @@ impl AsRef<u64> for TimePoint {
 }
 
 impl ReadXdr for TimePoint {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = u64::read_xdr(r)?;
@@ -44774,7 +44988,7 @@ impl ReadXdr for TimePoint {
 }
 
 impl WriteXdr for TimePoint {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -44819,7 +45033,7 @@ impl AsRef<u64> for Duration {
 }
 
 impl ReadXdr for Duration {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = u64::read_xdr(r)?;
@@ -44830,7 +45044,7 @@ impl ReadXdr for Duration {
 }
 
 impl WriteXdr for Duration {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -44908,7 +45122,7 @@ impl Variants<i32> for ExtensionPoint {
 impl Union<i32> for ExtensionPoint {}
 
 impl ReadXdr for ExtensionPoint {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
@@ -44924,7 +45138,7 @@ impl ReadXdr for ExtensionPoint {
 }
 
 impl WriteXdr for ExtensionPoint {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -45049,7 +45263,7 @@ impl From<CryptoKeyType> for i32 {
 }
 
 impl ReadXdr for CryptoKeyType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -45060,7 +45274,7 @@ impl ReadXdr for CryptoKeyType {
 }
 
 impl WriteXdr for CryptoKeyType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -45151,7 +45365,7 @@ impl From<PublicKeyType> for i32 {
 }
 
 impl ReadXdr for PublicKeyType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -45162,7 +45376,7 @@ impl ReadXdr for PublicKeyType {
 }
 
 impl WriteXdr for PublicKeyType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -45271,7 +45485,7 @@ impl From<SignerKeyType> for i32 {
 }
 
 impl ReadXdr for SignerKeyType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -45282,7 +45496,7 @@ impl ReadXdr for SignerKeyType {
 }
 
 impl WriteXdr for SignerKeyType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -45361,7 +45575,7 @@ impl Variants<PublicKeyType> for PublicKey {
 impl Union<PublicKeyType> for PublicKey {}
 
 impl ReadXdr for PublicKey {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: PublicKeyType = <PublicKeyType as ReadXdr>::read_xdr(r)?;
@@ -45379,7 +45593,7 @@ impl ReadXdr for PublicKey {
 }
 
 impl WriteXdr for PublicKey {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -45416,7 +45630,7 @@ pub struct SignerKeyEd25519SignedPayload {
 }
 
 impl ReadXdr for SignerKeyEd25519SignedPayload {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -45428,7 +45642,7 @@ impl ReadXdr for SignerKeyEd25519SignedPayload {
 }
 
 impl WriteXdr for SignerKeyEd25519SignedPayload {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.ed25519.write_xdr(w)?;
@@ -45537,7 +45751,7 @@ impl Variants<SignerKeyType> for SignerKey {
 impl Union<SignerKeyType> for SignerKey {}
 
 impl ReadXdr for SignerKey {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let dv: SignerKeyType = <SignerKeyType as ReadXdr>::read_xdr(r)?;
@@ -45558,7 +45772,7 @@ impl ReadXdr for SignerKey {
 }
 
 impl WriteXdr for SignerKey {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.discriminant().write_xdr(w)?;
@@ -45614,7 +45828,7 @@ impl AsRef<BytesM<64>> for Signature {
 }
 
 impl ReadXdr for Signature {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = BytesM::<64>::read_xdr(r)?;
@@ -45625,7 +45839,7 @@ impl ReadXdr for Signature {
 }
 
 impl WriteXdr for Signature {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -45777,7 +45991,7 @@ impl AsRef<[u8; 4]> for SignatureHint {
 }
 
 impl ReadXdr for SignatureHint {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = <[u8; 4]>::read_xdr(r)?;
@@ -45788,7 +46002,7 @@ impl ReadXdr for SignatureHint {
 }
 
 impl WriteXdr for SignatureHint {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -45868,7 +46082,7 @@ impl AsRef<PublicKey> for NodeId {
 }
 
 impl ReadXdr for NodeId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = PublicKey::read_xdr(r)?;
@@ -45879,7 +46093,7 @@ impl ReadXdr for NodeId {
 }
 
 impl WriteXdr for NodeId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -45922,7 +46136,7 @@ impl AsRef<PublicKey> for AccountId {
 }
 
 impl ReadXdr for AccountId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = PublicKey::read_xdr(r)?;
@@ -45933,7 +46147,7 @@ impl ReadXdr for AccountId {
 }
 
 impl WriteXdr for AccountId {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
@@ -45961,7 +46175,7 @@ pub struct Curve25519Secret {
 }
 
 impl ReadXdr for Curve25519Secret {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -45972,7 +46186,7 @@ impl ReadXdr for Curve25519Secret {
 }
 
 impl WriteXdr for Curve25519Secret {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
@@ -46003,7 +46217,7 @@ pub struct Curve25519Public {
 }
 
 impl ReadXdr for Curve25519Public {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -46014,7 +46228,7 @@ impl ReadXdr for Curve25519Public {
 }
 
 impl WriteXdr for Curve25519Public {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
@@ -46045,7 +46259,7 @@ pub struct HmacSha256Key {
 }
 
 impl ReadXdr for HmacSha256Key {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -46056,7 +46270,7 @@ impl ReadXdr for HmacSha256Key {
 }
 
 impl WriteXdr for HmacSha256Key {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.key.write_xdr(w)?;
@@ -46087,7 +46301,7 @@ pub struct HmacSha256Mac {
 }
 
 impl ReadXdr for HmacSha256Mac {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -46098,7 +46312,7 @@ impl ReadXdr for HmacSha256Mac {
 }
 
 impl WriteXdr for HmacSha256Mac {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.mac.write_xdr(w)?;
@@ -46129,7 +46343,7 @@ pub struct ShortHashSeed {
 }
 
 impl ReadXdr for ShortHashSeed {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -46140,7 +46354,7 @@ impl ReadXdr for ShortHashSeed {
 }
 
 impl WriteXdr for ShortHashSeed {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.seed.write_xdr(w)?;
@@ -46243,7 +46457,7 @@ impl From<BinaryFuseFilterType> for i32 {
 }
 
 impl ReadXdr for BinaryFuseFilterType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let e = i32::read_xdr(r)?;
@@ -46254,7 +46468,7 @@ impl ReadXdr for BinaryFuseFilterType {
 }
 
 impl WriteXdr for BinaryFuseFilterType {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             let i: i32 = (*self).into();
@@ -46307,7 +46521,7 @@ pub struct SerializedBinaryFuseFilter {
 }
 
 impl ReadXdr for SerializedBinaryFuseFilter {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
@@ -46326,7 +46540,7 @@ impl ReadXdr for SerializedBinaryFuseFilter {
 }
 
 impl WriteXdr for SerializedBinaryFuseFilter {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.type_.write_xdr(w)?;
@@ -50798,7 +51012,7 @@ impl Type {
         "SerializedBinaryFuseFilter",
     ];
 
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     #[allow(clippy::too_many_lines)]
     pub fn read_xdr<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
         match v {
@@ -52812,7 +53026,7 @@ impl Type {
         Ok(t)
     }
 
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     pub fn read_xdr_to_end<R: Read>(v: TypeVariant, r: &mut Limited<R>) -> Result<Self> {
         let s = Self::read_xdr(v, r)?;
         // Check that any further reads, such as this read of one byte, read no
@@ -58981,7 +59195,7 @@ impl Type {
         }
     }
 
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     pub fn from_xdr<B: AsRef<[u8]>>(v: TypeVariant, bytes: B, limits: Limits) -> Result<Self> {
         let mut cursor = Limited::new(Cursor::new(bytes.as_ref()), limits);
         let t = Self::read_xdr_to_end(v, &mut cursor)?;
@@ -63243,7 +63457,7 @@ impl Variants<TypeVariant> for Type {
 }
 
 impl WriteXdr for Type {
-    #[cfg(feature = "alloc")]
+    #[cfg(any(feature = "std", feature = "embedded_io"))]
     #[allow(clippy::too_many_lines)]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         match self {

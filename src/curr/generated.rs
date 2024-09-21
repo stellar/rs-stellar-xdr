@@ -97,7 +97,6 @@ use alloc::{
     borrow::ToOwned,
     boxed::Box,
     string::{FromUtf8Error, String},
-    vec,
     vec::Vec,
 };
 #[cfg(feature = "std")]
@@ -112,6 +111,8 @@ use std::{
     io::{BufRead, BufReader, Cursor, Read, Write},
 };
 
+#[cfg(feature = "embedded_io")]
+use alloc::vec;
 #[cfg(feature = "embedded_io")]
 use embedded_io_extras::{Cursor, Error as _, ErrorType, Read, Write};
 

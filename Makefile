@@ -5,7 +5,7 @@ CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features b
 CARGO_DOC_ARGS?=--open
 
 # TODO: Update this after https://github.com/stellar/xdrgen/pull/205 is merged
-XDRGEN_VERSION=d7b6f935e7c026901a7d9958e5700a8caca344f8
+XDRGEN_VERSION=cd72b3f1c17b34b92e3de10b44efe7290b95695d
 # XDRGEN_LOCAL=1
 XDRGEN_TYPES_CUSTOM_STR_IMPL_CURR=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId
 XDRGEN_TYPES_CUSTOM_STR_IMPL_NEXT=PublicKey,AccountId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId

@@ -4,13 +4,12 @@
 ))]
 #![cfg(feature = "std")]
 
-use ::stellar_xdr::curr::{MuxedAccountMed25519, Uint256};
 #[cfg(feature = "curr")]
 use stellar_xdr::curr as stellar_xdr;
 #[cfg(feature = "next")]
 use stellar_xdr::next as stellar_xdr;
 
-use stellar_xdr::{AccountId, MuxedAccount, PublicKey};
+use stellar_xdr::{AccountId, MuxedAccount, MuxedAccountMed25519, PublicKey, Uint256};
 
 #[test]
 fn from_account_id_to_muxed_account() {

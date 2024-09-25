@@ -13,3 +13,12 @@ impl From<PublicKey> for MuxedAccount {
         }
     }
 }
+
+impl MuxedAccount {
+    pub fn account_id(self) -> AccountId {
+        match self {
+            MuxedAccount::Ed25519(k) => AccountId(PublicKey::PublicKeyTypeEd25519(k)),
+            MuxedAccount::MuxedEd25519(m) => AccountId(PublicKey::PublicKeyTypeEd25519(m.ed25519)),
+        }
+    }
+}

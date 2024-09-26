@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "79692619a21814327f00560b47742f0074c9d9712051bbdc135d851ffe3fcfed",
+        "f1a71a10f83e9f010a35b00b6eb9c88ed373c1aa66b5a01d4dd32f661b504b10",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "767dd9690d219a84e03f3fec48c0e5dddd3178cd052f0e313b6fab95c03914a2",
+        "c48c3ed9267b2919bba9c424bdd138d25c3e96fd082afe35cd3184ef11dc86d5",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -21920,10 +21920,11 @@ impl WriteXdr for ScpHistoryEntry {
 /// ```text
 /// enum LedgerEntryChangeType
 /// {
-///     LEDGER_ENTRY_CREATED = 0, // entry was added to the ledger
-///     LEDGER_ENTRY_UPDATED = 1, // entry was modified in the ledger
-///     LEDGER_ENTRY_REMOVED = 2, // entry was removed from the ledger
-///     LEDGER_ENTRY_STATE = 3    // value of the entry
+///     LEDGER_ENTRY_CREATED  = 0, // entry was added to the ledger
+///     LEDGER_ENTRY_UPDATED  = 1, // entry was modified in the ledger
+///     LEDGER_ENTRY_REMOVED  = 2, // entry was removed from the ledger
+///     LEDGER_ENTRY_STATE    = 3, // value of the entry
+///     LEDGER_ENTRY_RESTORED = 4  // archived entry was restored in the ledger
 /// };
 /// ```
 ///
@@ -21942,16 +21943,19 @@ pub enum LedgerEntryChangeType {
     Updated = 1,
     Removed = 2,
     State = 3,
+    Restored = 4,
 }
 
 impl LedgerEntryChangeType {
-    pub const VARIANTS: [LedgerEntryChangeType; 4] = [
+    pub const VARIANTS: [LedgerEntryChangeType; 5] = [
         LedgerEntryChangeType::Created,
         LedgerEntryChangeType::Updated,
         LedgerEntryChangeType::Removed,
         LedgerEntryChangeType::State,
+        LedgerEntryChangeType::Restored,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["Created", "Updated", "Removed", "State"];
+    pub const VARIANTS_STR: [&'static str; 5] =
+        ["Created", "Updated", "Removed", "State", "Restored"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -21960,11 +21964,12 @@ impl LedgerEntryChangeType {
             Self::Updated => "Updated",
             Self::Removed => "Removed",
             Self::State => "State",
+            Self::Restored => "Restored",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryChangeType; 4] {
+    pub const fn variants() -> [LedgerEntryChangeType; 5] {
         Self::VARIANTS
     }
 }
@@ -21999,6 +22004,7 @@ impl TryFrom<i32> for LedgerEntryChangeType {
             1 => LedgerEntryChangeType::Updated,
             2 => LedgerEntryChangeType::Removed,
             3 => LedgerEntryChangeType::State,
+            4 => LedgerEntryChangeType::Restored,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -22047,6 +22053,8 @@ impl WriteXdr for LedgerEntryChangeType {
 ///     LedgerKey removed;
 /// case LEDGER_ENTRY_STATE:
 ///     LedgerEntry state;
+/// case LEDGER_ENTRY_RESTORED:
+///     LedgerEntry restored;
 /// };
 /// ```
 ///
@@ -22065,16 +22073,19 @@ pub enum LedgerEntryChange {
     Updated(LedgerEntry),
     Removed(LedgerKey),
     State(LedgerEntry),
+    Restored(LedgerEntry),
 }
 
 impl LedgerEntryChange {
-    pub const VARIANTS: [LedgerEntryChangeType; 4] = [
+    pub const VARIANTS: [LedgerEntryChangeType; 5] = [
         LedgerEntryChangeType::Created,
         LedgerEntryChangeType::Updated,
         LedgerEntryChangeType::Removed,
         LedgerEntryChangeType::State,
+        LedgerEntryChangeType::Restored,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["Created", "Updated", "Removed", "State"];
+    pub const VARIANTS_STR: [&'static str; 5] =
+        ["Created", "Updated", "Removed", "State", "Restored"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -22083,6 +22094,7 @@ impl LedgerEntryChange {
             Self::Updated(_) => "Updated",
             Self::Removed(_) => "Removed",
             Self::State(_) => "State",
+            Self::Restored(_) => "Restored",
         }
     }
 
@@ -22094,11 +22106,12 @@ impl LedgerEntryChange {
             Self::Updated(_) => LedgerEntryChangeType::Updated,
             Self::Removed(_) => LedgerEntryChangeType::Removed,
             Self::State(_) => LedgerEntryChangeType::State,
+            Self::Restored(_) => LedgerEntryChangeType::Restored,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryChangeType; 4] {
+    pub const fn variants() -> [LedgerEntryChangeType; 5] {
         Self::VARIANTS
     }
 }
@@ -22136,6 +22149,7 @@ impl ReadXdr for LedgerEntryChange {
                 LedgerEntryChangeType::Updated => Self::Updated(LedgerEntry::read_xdr(r)?),
                 LedgerEntryChangeType::Removed => Self::Removed(LedgerKey::read_xdr(r)?),
                 LedgerEntryChangeType::State => Self::State(LedgerEntry::read_xdr(r)?),
+                LedgerEntryChangeType::Restored => Self::Restored(LedgerEntry::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -22155,6 +22169,7 @@ impl WriteXdr for LedgerEntryChange {
                 Self::Updated(v) => v.write_xdr(w)?,
                 Self::Removed(v) => v.write_xdr(w)?,
                 Self::State(v) => v.write_xdr(w)?,
+                Self::Restored(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -23473,6 +23488,65 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
     }
 }
 
+/// LedgerCloseMetaExtV2 is an XDR Struct defines as:
+///
+/// ```text
+/// struct LedgerCloseMetaExtV2
+/// {
+///     ExtensionPoint ext;
+///     int64 sorobanFeeWrite1KB;
+///
+///     uint32 currentArchivalEpoch;
+///
+///     // The last epoch currently stored by validators
+///     // Any entry restored from an epoch older than this will
+///     // require a proof.
+///     uint32 lastArchivalEpochPersisted;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct LedgerCloseMetaExtV2 {
+    pub ext: ExtensionPoint,
+    pub soroban_fee_write1_kb: i64,
+    pub current_archival_epoch: u32,
+    pub last_archival_epoch_persisted: u32,
+}
+
+impl ReadXdr for LedgerCloseMetaExtV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                soroban_fee_write1_kb: i64::read_xdr(r)?,
+                current_archival_epoch: u32::read_xdr(r)?,
+                last_archival_epoch_persisted: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerCloseMetaExtV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.soroban_fee_write1_kb.write_xdr(w)?;
+            self.current_archival_epoch.write_xdr(w)?;
+            self.last_archival_epoch_persisted.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerCloseMetaExt is an XDR Union defines as:
 ///
 /// ```text
@@ -23482,6 +23556,8 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
 ///     void;
 /// case 1:
 ///     LedgerCloseMetaExtV1 v1;
+/// case 2:
+///     LedgerCloseMetaExtV2 v2;
 /// };
 /// ```
 ///
@@ -23498,17 +23574,19 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
 pub enum LedgerCloseMetaExt {
     V0,
     V1(LedgerCloseMetaExtV1),
+    V2(LedgerCloseMetaExtV2),
 }
 
 impl LedgerCloseMetaExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: [i32; 3] = [0, 1, 2];
+    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
+            Self::V2(_) => "V2",
         }
     }
 
@@ -23518,11 +23596,12 @@ impl LedgerCloseMetaExt {
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
+            Self::V2(_) => 2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> [i32; 3] {
         Self::VARIANTS
     }
 }
@@ -23558,6 +23637,7 @@ impl ReadXdr for LedgerCloseMetaExt {
             let v = match dv {
                 0 => Self::V0,
                 1 => Self::V1(LedgerCloseMetaExtV1::read_xdr(r)?),
+                2 => Self::V2(LedgerCloseMetaExtV2::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -23575,6 +23655,7 @@ impl WriteXdr for LedgerCloseMetaExt {
             match self {
                 Self::V0 => ().write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
+                Self::V2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -23607,10 +23688,12 @@ impl WriteXdr for LedgerCloseMetaExt {
 ///     // systems calculating storage fees correctly.
 ///     uint64 totalByteSizeOfBucketList;
 ///
-///     // Temp keys that are being evicted at this ledger.
+///     // Temp keys and all TTL keys that are being evicted at this ledger.
+///     // Note that this can contain TTL keys for both persistent and temporary
+///     // entries, but the name is kept for legacy reasons.
 ///     LedgerKey evictedTemporaryLedgerKeys<>;
 ///
-///     // Archived restorable ledger entries that are being
+///     // Archived persistent ledger entries that are being
 ///     // evicted at this ledger.
 ///     LedgerEntry evictedPersistentLedgerEntries<>;
 /// };
@@ -32577,10 +32660,10 @@ impl AsRef<[ArchivalProofNode]> for ProofLevel {
     }
 }
 
-/// NonexistenceProofBody is an XDR Struct defines as:
+/// ExistenceProofBody is an XDR Struct defines as:
 ///
 /// ```text
-/// struct NonexistenceProofBody
+/// struct ExistenceProofBody
 /// {
 ///     ColdArchiveBucketEntry entriesToProve<>;
 ///
@@ -32598,12 +32681,12 @@ impl AsRef<[ArchivalProofNode]> for ProofLevel {
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct NonexistenceProofBody {
+pub struct ExistenceProofBody {
     pub entries_to_prove: VecM<ColdArchiveBucketEntry>,
     pub proof_levels: VecM<ProofLevel>,
 }
 
-impl ReadXdr for NonexistenceProofBody {
+impl ReadXdr for ExistenceProofBody {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
@@ -32615,7 +32698,7 @@ impl ReadXdr for NonexistenceProofBody {
     }
 }
 
-impl WriteXdr for NonexistenceProofBody {
+impl WriteXdr for ExistenceProofBody {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -32626,10 +32709,10 @@ impl WriteXdr for NonexistenceProofBody {
     }
 }
 
-/// ExistenceProofBody is an XDR Struct defines as:
+/// NonexistenceProofBody is an XDR Struct defines as:
 ///
 /// ```text
-/// struct ExistenceProofBody
+/// struct NonexistenceProofBody
 /// {
 ///     LedgerKey keysToProve<>;
 ///
@@ -32652,14 +32735,14 @@ impl WriteXdr for NonexistenceProofBody {
     serde(rename_all = "snake_case")
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ExistenceProofBody {
+pub struct NonexistenceProofBody {
     pub keys_to_prove: VecM<LedgerKey>,
     pub low_bound_entries: VecM<ColdArchiveBucketEntry>,
     pub high_bound_entries: VecM<ColdArchiveBucketEntry>,
     pub proof_levels: VecM<ProofLevel>,
 }
 
-impl ReadXdr for ExistenceProofBody {
+impl ReadXdr for NonexistenceProofBody {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
@@ -32673,7 +32756,7 @@ impl ReadXdr for ExistenceProofBody {
     }
 }
 
-impl WriteXdr for ExistenceProofBody {
+impl WriteXdr for NonexistenceProofBody {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -32691,9 +32774,9 @@ impl WriteXdr for ExistenceProofBody {
 /// ```text
 /// union switch (ArchivalProofType t)
 ///     {
-///     case EXISTENCE:
-///         NonexistenceProofBody nonexistenceProof;
 ///     case NONEXISTENCE:
+///         NonexistenceProofBody nonexistenceProof;
+///     case EXISTENCE:
 ///         ExistenceProofBody existenceProof;
 ///     }
 /// ```
@@ -32709,22 +32792,22 @@ impl WriteXdr for ExistenceProofBody {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum ArchivalProofBody {
-    Existence(NonexistenceProofBody),
-    Nonexistence(ExistenceProofBody),
+    Nonexistence(NonexistenceProofBody),
+    Existence(ExistenceProofBody),
 }
 
 impl ArchivalProofBody {
     pub const VARIANTS: [ArchivalProofType; 2] = [
-        ArchivalProofType::Existence,
         ArchivalProofType::Nonexistence,
+        ArchivalProofType::Existence,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Existence", "Nonexistence"];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Nonexistence", "Existence"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::Existence(_) => "Existence",
             Self::Nonexistence(_) => "Nonexistence",
+            Self::Existence(_) => "Existence",
         }
     }
 
@@ -32732,8 +32815,8 @@ impl ArchivalProofBody {
     pub const fn discriminant(&self) -> ArchivalProofType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::Existence(_) => ArchivalProofType::Existence,
             Self::Nonexistence(_) => ArchivalProofType::Nonexistence,
+            Self::Existence(_) => ArchivalProofType::Existence,
         }
     }
 
@@ -32772,12 +32855,10 @@ impl ReadXdr for ArchivalProofBody {
             let dv: ArchivalProofType = <ArchivalProofType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                ArchivalProofType::Existence => {
-                    Self::Existence(NonexistenceProofBody::read_xdr(r)?)
-                }
                 ArchivalProofType::Nonexistence => {
-                    Self::Nonexistence(ExistenceProofBody::read_xdr(r)?)
+                    Self::Nonexistence(NonexistenceProofBody::read_xdr(r)?)
                 }
+                ArchivalProofType::Existence => Self::Existence(ExistenceProofBody::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -32793,8 +32874,8 @@ impl WriteXdr for ArchivalProofBody {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
             match self {
-                Self::Existence(v) => v.write_xdr(w)?,
                 Self::Nonexistence(v) => v.write_xdr(w)?,
+                Self::Existence(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -32810,9 +32891,9 @@ impl WriteXdr for ArchivalProofBody {
 ///
 ///     union switch (ArchivalProofType t)
 ///     {
-///     case EXISTENCE:
-///         NonexistenceProofBody nonexistenceProof;
 ///     case NONEXISTENCE:
+///         NonexistenceProofBody nonexistenceProof;
+///     case EXISTENCE:
 ///         ExistenceProofBody existenceProof;
 ///     } body;
 /// };
@@ -42022,7 +42103,8 @@ impl WriteXdr for LiquidityPoolWithdrawResult {
 ///     INVOKE_HOST_FUNCTION_TRAPPED = -2,
 ///     INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3,
 ///     INVOKE_HOST_FUNCTION_ENTRY_ARCHIVED = -4,
-///     INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE = -5
+///     INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE = -5,
+///     INVOKE_HOST_FUNCTION_INVALID_CREATION_PROOF = -6
 /// };
 /// ```
 ///
@@ -42043,24 +42125,27 @@ pub enum InvokeHostFunctionResultCode {
     ResourceLimitExceeded = -3,
     EntryArchived = -4,
     InsufficientRefundableFee = -5,
+    InvalidCreationProof = -6,
 }
 
 impl InvokeHostFunctionResultCode {
-    pub const VARIANTS: [InvokeHostFunctionResultCode; 6] = [
+    pub const VARIANTS: [InvokeHostFunctionResultCode; 7] = [
         InvokeHostFunctionResultCode::Success,
         InvokeHostFunctionResultCode::Malformed,
         InvokeHostFunctionResultCode::Trapped,
         InvokeHostFunctionResultCode::ResourceLimitExceeded,
         InvokeHostFunctionResultCode::EntryArchived,
         InvokeHostFunctionResultCode::InsufficientRefundableFee,
+        InvokeHostFunctionResultCode::InvalidCreationProof,
     ];
-    pub const VARIANTS_STR: [&'static str; 6] = [
+    pub const VARIANTS_STR: [&'static str; 7] = [
         "Success",
         "Malformed",
         "Trapped",
         "ResourceLimitExceeded",
         "EntryArchived",
         "InsufficientRefundableFee",
+        "InvalidCreationProof",
     ];
 
     #[must_use]
@@ -42072,11 +42157,12 @@ impl InvokeHostFunctionResultCode {
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
             Self::EntryArchived => "EntryArchived",
             Self::InsufficientRefundableFee => "InsufficientRefundableFee",
+            Self::InvalidCreationProof => "InvalidCreationProof",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [InvokeHostFunctionResultCode; 6] {
+    pub const fn variants() -> [InvokeHostFunctionResultCode; 7] {
         Self::VARIANTS
     }
 }
@@ -42113,6 +42199,7 @@ impl TryFrom<i32> for InvokeHostFunctionResultCode {
             -3 => InvokeHostFunctionResultCode::ResourceLimitExceeded,
             -4 => InvokeHostFunctionResultCode::EntryArchived,
             -5 => InvokeHostFunctionResultCode::InsufficientRefundableFee,
+            -6 => InvokeHostFunctionResultCode::InvalidCreationProof,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -42572,7 +42659,8 @@ impl WriteXdr for ExtendFootprintTtlResult {
 ///     // codes considered as "failure" for the operation
 ///     RESTORE_FOOTPRINT_MALFORMED = -1,
 ///     RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED = -2,
-///     RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE = -3
+///     RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE = -3,
+///     RESTORE_FOOTPRINT_INVALID_PROOF = -4
 /// };
 /// ```
 ///
@@ -42591,20 +42679,23 @@ pub enum RestoreFootprintResultCode {
     Malformed = -1,
     ResourceLimitExceeded = -2,
     InsufficientRefundableFee = -3,
+    InvalidProof = -4,
 }
 
 impl RestoreFootprintResultCode {
-    pub const VARIANTS: [RestoreFootprintResultCode; 4] = [
+    pub const VARIANTS: [RestoreFootprintResultCode; 5] = [
         RestoreFootprintResultCode::Success,
         RestoreFootprintResultCode::Malformed,
         RestoreFootprintResultCode::ResourceLimitExceeded,
         RestoreFootprintResultCode::InsufficientRefundableFee,
+        RestoreFootprintResultCode::InvalidProof,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = [
+    pub const VARIANTS_STR: [&'static str; 5] = [
         "Success",
         "Malformed",
         "ResourceLimitExceeded",
         "InsufficientRefundableFee",
+        "InvalidProof",
     ];
 
     #[must_use]
@@ -42614,11 +42705,12 @@ impl RestoreFootprintResultCode {
             Self::Malformed => "Malformed",
             Self::ResourceLimitExceeded => "ResourceLimitExceeded",
             Self::InsufficientRefundableFee => "InsufficientRefundableFee",
+            Self::InvalidProof => "InvalidProof",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [RestoreFootprintResultCode; 4] {
+    pub const fn variants() -> [RestoreFootprintResultCode; 5] {
         Self::VARIANTS
     }
 }
@@ -42653,6 +42745,7 @@ impl TryFrom<i32> for RestoreFootprintResultCode {
             -1 => RestoreFootprintResultCode::Malformed,
             -2 => RestoreFootprintResultCode::ResourceLimitExceeded,
             -3 => RestoreFootprintResultCode::InsufficientRefundableFee,
+            -4 => RestoreFootprintResultCode::InvalidProof,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -46879,6 +46972,7 @@ pub enum TypeVariant {
     UpgradeEntryMeta,
     LedgerCloseMetaV0,
     LedgerCloseMetaExtV1,
+    LedgerCloseMetaExtV2,
     LedgerCloseMetaExt,
     LedgerCloseMetaV1,
     LedgerCloseMeta,
@@ -46990,8 +47084,8 @@ pub enum TypeVariant {
     ArchivalProofType,
     ArchivalProofNode,
     ProofLevel,
-    NonexistenceProofBody,
     ExistenceProofBody,
+    NonexistenceProofBody,
     ArchivalProof,
     ArchivalProofBody,
     SorobanResources,
@@ -47114,7 +47208,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 463] = [
+    pub const VARIANTS: [TypeVariant; 464] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -47346,6 +47440,7 @@ impl TypeVariant {
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaExtV1,
+        TypeVariant::LedgerCloseMetaExtV2,
         TypeVariant::LedgerCloseMetaExt,
         TypeVariant::LedgerCloseMetaV1,
         TypeVariant::LedgerCloseMeta,
@@ -47457,8 +47552,8 @@ impl TypeVariant {
         TypeVariant::ArchivalProofType,
         TypeVariant::ArchivalProofNode,
         TypeVariant::ProofLevel,
-        TypeVariant::NonexistenceProofBody,
         TypeVariant::ExistenceProofBody,
+        TypeVariant::NonexistenceProofBody,
         TypeVariant::ArchivalProof,
         TypeVariant::ArchivalProofBody,
         TypeVariant::SorobanResources,
@@ -47579,7 +47674,7 @@ impl TypeVariant {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 463] = [
+    pub const VARIANTS_STR: [&'static str; 464] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47811,6 +47906,7 @@ impl TypeVariant {
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaExtV1",
+        "LedgerCloseMetaExtV2",
         "LedgerCloseMetaExt",
         "LedgerCloseMetaV1",
         "LedgerCloseMeta",
@@ -47922,8 +48018,8 @@ impl TypeVariant {
         "ArchivalProofType",
         "ArchivalProofNode",
         "ProofLevel",
-        "NonexistenceProofBody",
         "ExistenceProofBody",
+        "NonexistenceProofBody",
         "ArchivalProof",
         "ArchivalProofBody",
         "SorobanResources",
@@ -48284,6 +48380,7 @@ impl TypeVariant {
             Self::UpgradeEntryMeta => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0 => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaExtV1 => "LedgerCloseMetaExtV1",
+            Self::LedgerCloseMetaExtV2 => "LedgerCloseMetaExtV2",
             Self::LedgerCloseMetaExt => "LedgerCloseMetaExt",
             Self::LedgerCloseMetaV1 => "LedgerCloseMetaV1",
             Self::LedgerCloseMeta => "LedgerCloseMeta",
@@ -48401,8 +48498,8 @@ impl TypeVariant {
             Self::ArchivalProofType => "ArchivalProofType",
             Self::ArchivalProofNode => "ArchivalProofNode",
             Self::ProofLevel => "ProofLevel",
-            Self::NonexistenceProofBody => "NonexistenceProofBody",
             Self::ExistenceProofBody => "ExistenceProofBody",
+            Self::NonexistenceProofBody => "NonexistenceProofBody",
             Self::ArchivalProof => "ArchivalProof",
             Self::ArchivalProofBody => "ArchivalProofBody",
             Self::SorobanResources => "SorobanResources",
@@ -48531,7 +48628,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 463] {
+    pub const fn variants() -> [TypeVariant; 464] {
         Self::VARIANTS
     }
 
@@ -48849,6 +48946,7 @@ impl TypeVariant {
             Self::UpgradeEntryMeta => gen.into_root_schema_for::<UpgradeEntryMeta>(),
             Self::LedgerCloseMetaV0 => gen.into_root_schema_for::<LedgerCloseMetaV0>(),
             Self::LedgerCloseMetaExtV1 => gen.into_root_schema_for::<LedgerCloseMetaExtV1>(),
+            Self::LedgerCloseMetaExtV2 => gen.into_root_schema_for::<LedgerCloseMetaExtV2>(),
             Self::LedgerCloseMetaExt => gen.into_root_schema_for::<LedgerCloseMetaExt>(),
             Self::LedgerCloseMetaV1 => gen.into_root_schema_for::<LedgerCloseMetaV1>(),
             Self::LedgerCloseMeta => gen.into_root_schema_for::<LedgerCloseMeta>(),
@@ -49014,8 +49112,8 @@ impl TypeVariant {
             Self::ArchivalProofType => gen.into_root_schema_for::<ArchivalProofType>(),
             Self::ArchivalProofNode => gen.into_root_schema_for::<ArchivalProofNode>(),
             Self::ProofLevel => gen.into_root_schema_for::<ProofLevel>(),
-            Self::NonexistenceProofBody => gen.into_root_schema_for::<NonexistenceProofBody>(),
             Self::ExistenceProofBody => gen.into_root_schema_for::<ExistenceProofBody>(),
+            Self::NonexistenceProofBody => gen.into_root_schema_for::<NonexistenceProofBody>(),
             Self::ArchivalProof => gen.into_root_schema_for::<ArchivalProof>(),
             Self::ArchivalProofBody => gen.into_root_schema_for::<ArchivalProofBody>(),
             Self::SorobanResources => gen.into_root_schema_for::<SorobanResources>(),
@@ -49478,6 +49576,7 @@ impl core::str::FromStr for TypeVariant {
             "UpgradeEntryMeta" => Ok(Self::UpgradeEntryMeta),
             "LedgerCloseMetaV0" => Ok(Self::LedgerCloseMetaV0),
             "LedgerCloseMetaExtV1" => Ok(Self::LedgerCloseMetaExtV1),
+            "LedgerCloseMetaExtV2" => Ok(Self::LedgerCloseMetaExtV2),
             "LedgerCloseMetaExt" => Ok(Self::LedgerCloseMetaExt),
             "LedgerCloseMetaV1" => Ok(Self::LedgerCloseMetaV1),
             "LedgerCloseMeta" => Ok(Self::LedgerCloseMeta),
@@ -49601,8 +49700,8 @@ impl core::str::FromStr for TypeVariant {
             "ArchivalProofType" => Ok(Self::ArchivalProofType),
             "ArchivalProofNode" => Ok(Self::ArchivalProofNode),
             "ProofLevel" => Ok(Self::ProofLevel),
-            "NonexistenceProofBody" => Ok(Self::NonexistenceProofBody),
             "ExistenceProofBody" => Ok(Self::ExistenceProofBody),
+            "NonexistenceProofBody" => Ok(Self::NonexistenceProofBody),
             "ArchivalProof" => Ok(Self::ArchivalProof),
             "ArchivalProofBody" => Ok(Self::ArchivalProofBody),
             "SorobanResources" => Ok(Self::SorobanResources),
@@ -49975,6 +50074,7 @@ pub enum Type {
     UpgradeEntryMeta(Box<UpgradeEntryMeta>),
     LedgerCloseMetaV0(Box<LedgerCloseMetaV0>),
     LedgerCloseMetaExtV1(Box<LedgerCloseMetaExtV1>),
+    LedgerCloseMetaExtV2(Box<LedgerCloseMetaExtV2>),
     LedgerCloseMetaExt(Box<LedgerCloseMetaExt>),
     LedgerCloseMetaV1(Box<LedgerCloseMetaV1>),
     LedgerCloseMeta(Box<LedgerCloseMeta>),
@@ -50086,8 +50186,8 @@ pub enum Type {
     ArchivalProofType(Box<ArchivalProofType>),
     ArchivalProofNode(Box<ArchivalProofNode>),
     ProofLevel(Box<ProofLevel>),
-    NonexistenceProofBody(Box<NonexistenceProofBody>),
     ExistenceProofBody(Box<ExistenceProofBody>),
+    NonexistenceProofBody(Box<NonexistenceProofBody>),
     ArchivalProof(Box<ArchivalProof>),
     ArchivalProofBody(Box<ArchivalProofBody>),
     SorobanResources(Box<SorobanResources>),
@@ -50210,7 +50310,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 463] = [
+    pub const VARIANTS: [TypeVariant; 464] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -50442,6 +50542,7 @@ impl Type {
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaExtV1,
+        TypeVariant::LedgerCloseMetaExtV2,
         TypeVariant::LedgerCloseMetaExt,
         TypeVariant::LedgerCloseMetaV1,
         TypeVariant::LedgerCloseMeta,
@@ -50553,8 +50654,8 @@ impl Type {
         TypeVariant::ArchivalProofType,
         TypeVariant::ArchivalProofNode,
         TypeVariant::ProofLevel,
-        TypeVariant::NonexistenceProofBody,
         TypeVariant::ExistenceProofBody,
+        TypeVariant::NonexistenceProofBody,
         TypeVariant::ArchivalProof,
         TypeVariant::ArchivalProofBody,
         TypeVariant::SorobanResources,
@@ -50675,7 +50776,7 @@ impl Type {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 463] = [
+    pub const VARIANTS_STR: [&'static str; 464] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50907,6 +51008,7 @@ impl Type {
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaExtV1",
+        "LedgerCloseMetaExtV2",
         "LedgerCloseMetaExt",
         "LedgerCloseMetaV1",
         "LedgerCloseMeta",
@@ -51018,8 +51120,8 @@ impl Type {
         "ArchivalProofType",
         "ArchivalProofNode",
         "ProofLevel",
-        "NonexistenceProofBody",
         "ExistenceProofBody",
+        "NonexistenceProofBody",
         "ArchivalProof",
         "ArchivalProofBody",
         "SorobanResources",
@@ -52134,6 +52236,11 @@ impl Type {
                     LedgerCloseMetaExtV1::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::LedgerCloseMetaExtV2 => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaExtV2(Box::new(
+                    LedgerCloseMetaExtV2::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::LedgerCloseMetaExt => r.with_limited_depth(|r| {
                 Ok(Self::LedgerCloseMetaExt(Box::new(
                     LedgerCloseMetaExt::read_xdr(r)?,
@@ -52615,14 +52722,14 @@ impl Type {
             TypeVariant::ProofLevel => {
                 r.with_limited_depth(|r| Ok(Self::ProofLevel(Box::new(ProofLevel::read_xdr(r)?))))
             }
-            TypeVariant::NonexistenceProofBody => r.with_limited_depth(|r| {
-                Ok(Self::NonexistenceProofBody(Box::new(
-                    NonexistenceProofBody::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::ExistenceProofBody => r.with_limited_depth(|r| {
                 Ok(Self::ExistenceProofBody(Box::new(
                     ExistenceProofBody::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::NonexistenceProofBody => r.with_limited_depth(|r| {
+                Ok(Self::NonexistenceProofBody(Box::new(
+                    NonexistenceProofBody::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ArchivalProof => r.with_limited_depth(|r| {
@@ -54176,6 +54283,10 @@ impl Type {
                 ReadXdrIter::<_, LedgerCloseMetaExtV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExtV1(Box::new(t)))),
             ),
+            TypeVariant::LedgerCloseMetaExtV2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaExtV2>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaExtV2(Box::new(t)))),
+            ),
             TypeVariant::LedgerCloseMetaExt => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExt(Box::new(t)))),
@@ -54658,13 +54769,13 @@ impl Type {
                 ReadXdrIter::<_, ProofLevel>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ProofLevel(Box::new(t)))),
             ),
-            TypeVariant::NonexistenceProofBody => Box::new(
-                ReadXdrIter::<_, NonexistenceProofBody>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
-            ),
             TypeVariant::ExistenceProofBody => Box::new(
                 ReadXdrIter::<_, ExistenceProofBody>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t)))),
+            ),
+            TypeVariant::NonexistenceProofBody => Box::new(
+                ReadXdrIter::<_, NonexistenceProofBody>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
             ),
             TypeVariant::ArchivalProof => Box::new(
                 ReadXdrIter::<_, ArchivalProof>::new(&mut r.inner, r.limits.clone())
@@ -56312,6 +56423,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<LedgerCloseMetaExtV1>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExtV1(Box::new(t.0)))),
             ),
+            TypeVariant::LedgerCloseMetaExtV2 => Box::new(
+                ReadXdrIter::<_, Frame<LedgerCloseMetaExtV2>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaExtV2(Box::new(t.0)))),
+            ),
             TypeVariant::LedgerCloseMetaExt => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMetaExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExt(Box::new(t.0)))),
@@ -56880,13 +56995,13 @@ impl Type {
                 ReadXdrIter::<_, Frame<ProofLevel>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ProofLevel(Box::new(t.0)))),
             ),
-            TypeVariant::NonexistenceProofBody => Box::new(
-                ReadXdrIter::<_, Frame<NonexistenceProofBody>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t.0)))),
-            ),
             TypeVariant::ExistenceProofBody => Box::new(
                 ReadXdrIter::<_, Frame<ExistenceProofBody>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t.0)))),
+            ),
+            TypeVariant::NonexistenceProofBody => Box::new(
+                ReadXdrIter::<_, Frame<NonexistenceProofBody>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t.0)))),
             ),
             TypeVariant::ArchivalProof => Box::new(
                 ReadXdrIter::<_, Frame<ArchivalProof>>::new(&mut r.inner, r.limits.clone())
@@ -58457,6 +58572,10 @@ impl Type {
                 ReadXdrIter::<_, LedgerCloseMetaExtV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExtV1(Box::new(t)))),
             ),
+            TypeVariant::LedgerCloseMetaExtV2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaExtV2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaExtV2(Box::new(t)))),
+            ),
             TypeVariant::LedgerCloseMetaExt => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExt(Box::new(t)))),
@@ -58912,13 +59031,13 @@ impl Type {
                 ReadXdrIter::<_, ProofLevel>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ProofLevel(Box::new(t)))),
             ),
-            TypeVariant::NonexistenceProofBody => Box::new(
-                ReadXdrIter::<_, NonexistenceProofBody>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
-            ),
             TypeVariant::ExistenceProofBody => Box::new(
                 ReadXdrIter::<_, ExistenceProofBody>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t)))),
+            ),
+            TypeVariant::NonexistenceProofBody => Box::new(
+                ReadXdrIter::<_, NonexistenceProofBody>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
             ),
             TypeVariant::ArchivalProof => Box::new(
                 ReadXdrIter::<_, ArchivalProof>::new(dec, r.limits.clone())
@@ -60058,6 +60177,9 @@ impl Type {
             TypeVariant::LedgerCloseMetaExtV1 => Ok(Self::LedgerCloseMetaExtV1(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::LedgerCloseMetaExtV2 => Ok(Self::LedgerCloseMetaExtV2(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::LedgerCloseMetaExt => Ok(Self::LedgerCloseMetaExt(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -60363,10 +60485,10 @@ impl Type {
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::ProofLevel => Ok(Self::ProofLevel(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
+            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
                 serde_json::from_reader(r)?,
             ))),
-            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
+            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::ArchivalProof => {
@@ -61433,6 +61555,9 @@ impl Type {
             TypeVariant::LedgerCloseMetaExtV1 => Ok(Self::LedgerCloseMetaExtV1(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::LedgerCloseMetaExtV2 => Ok(Self::LedgerCloseMetaExtV2(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::LedgerCloseMetaExt => Ok(Self::LedgerCloseMetaExt(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61786,10 +61911,10 @@ impl Type {
             TypeVariant::ProofLevel => Ok(Self::ProofLevel(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
+            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
+            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ArchivalProof => Ok(Self::ArchivalProof(Box::new(
@@ -62421,6 +62546,7 @@ impl Type {
             Self::UpgradeEntryMeta(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV0(ref v) => v.as_ref(),
             Self::LedgerCloseMetaExtV1(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaExtV2(ref v) => v.as_ref(),
             Self::LedgerCloseMetaExt(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV1(ref v) => v.as_ref(),
             Self::LedgerCloseMeta(ref v) => v.as_ref(),
@@ -62532,8 +62658,8 @@ impl Type {
             Self::ArchivalProofType(ref v) => v.as_ref(),
             Self::ArchivalProofNode(ref v) => v.as_ref(),
             Self::ProofLevel(ref v) => v.as_ref(),
-            Self::NonexistenceProofBody(ref v) => v.as_ref(),
             Self::ExistenceProofBody(ref v) => v.as_ref(),
+            Self::NonexistenceProofBody(ref v) => v.as_ref(),
             Self::ArchivalProof(ref v) => v.as_ref(),
             Self::ArchivalProofBody(ref v) => v.as_ref(),
             Self::SorobanResources(ref v) => v.as_ref(),
@@ -62899,6 +63025,7 @@ impl Type {
             Self::UpgradeEntryMeta(_) => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0(_) => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaExtV1(_) => "LedgerCloseMetaExtV1",
+            Self::LedgerCloseMetaExtV2(_) => "LedgerCloseMetaExtV2",
             Self::LedgerCloseMetaExt(_) => "LedgerCloseMetaExt",
             Self::LedgerCloseMetaV1(_) => "LedgerCloseMetaV1",
             Self::LedgerCloseMeta(_) => "LedgerCloseMeta",
@@ -63020,8 +63147,8 @@ impl Type {
             Self::ArchivalProofType(_) => "ArchivalProofType",
             Self::ArchivalProofNode(_) => "ArchivalProofNode",
             Self::ProofLevel(_) => "ProofLevel",
-            Self::NonexistenceProofBody(_) => "NonexistenceProofBody",
             Self::ExistenceProofBody(_) => "ExistenceProofBody",
+            Self::NonexistenceProofBody(_) => "NonexistenceProofBody",
             Self::ArchivalProof(_) => "ArchivalProof",
             Self::ArchivalProofBody(_) => "ArchivalProofBody",
             Self::SorobanResources(_) => "SorobanResources",
@@ -63154,7 +63281,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 463] {
+    pub const fn variants() -> [TypeVariant; 464] {
         Self::VARIANTS
     }
 
@@ -63417,6 +63544,7 @@ impl Type {
             Self::UpgradeEntryMeta(_) => TypeVariant::UpgradeEntryMeta,
             Self::LedgerCloseMetaV0(_) => TypeVariant::LedgerCloseMetaV0,
             Self::LedgerCloseMetaExtV1(_) => TypeVariant::LedgerCloseMetaExtV1,
+            Self::LedgerCloseMetaExtV2(_) => TypeVariant::LedgerCloseMetaExtV2,
             Self::LedgerCloseMetaExt(_) => TypeVariant::LedgerCloseMetaExt,
             Self::LedgerCloseMetaV1(_) => TypeVariant::LedgerCloseMetaV1,
             Self::LedgerCloseMeta(_) => TypeVariant::LedgerCloseMeta,
@@ -63546,8 +63674,8 @@ impl Type {
             Self::ArchivalProofType(_) => TypeVariant::ArchivalProofType,
             Self::ArchivalProofNode(_) => TypeVariant::ArchivalProofNode,
             Self::ProofLevel(_) => TypeVariant::ProofLevel,
-            Self::NonexistenceProofBody(_) => TypeVariant::NonexistenceProofBody,
             Self::ExistenceProofBody(_) => TypeVariant::ExistenceProofBody,
+            Self::NonexistenceProofBody(_) => TypeVariant::NonexistenceProofBody,
             Self::ArchivalProof(_) => TypeVariant::ArchivalProof,
             Self::ArchivalProofBody(_) => TypeVariant::ArchivalProofBody,
             Self::SorobanResources(_) => TypeVariant::SorobanResources,
@@ -63946,6 +64074,7 @@ impl WriteXdr for Type {
             Self::UpgradeEntryMeta(v) => v.write_xdr(w),
             Self::LedgerCloseMetaV0(v) => v.write_xdr(w),
             Self::LedgerCloseMetaExtV1(v) => v.write_xdr(w),
+            Self::LedgerCloseMetaExtV2(v) => v.write_xdr(w),
             Self::LedgerCloseMetaExt(v) => v.write_xdr(w),
             Self::LedgerCloseMetaV1(v) => v.write_xdr(w),
             Self::LedgerCloseMeta(v) => v.write_xdr(w),
@@ -64057,8 +64186,8 @@ impl WriteXdr for Type {
             Self::ArchivalProofType(v) => v.write_xdr(w),
             Self::ArchivalProofNode(v) => v.write_xdr(w),
             Self::ProofLevel(v) => v.write_xdr(w),
-            Self::NonexistenceProofBody(v) => v.write_xdr(w),
             Self::ExistenceProofBody(v) => v.write_xdr(w),
+            Self::NonexistenceProofBody(v) => v.write_xdr(w),
             Self::ArchivalProof(v) => v.write_xdr(w),
             Self::ArchivalProofBody(v) => v.write_xdr(w),
             Self::SorobanResources(v) => v.write_xdr(w),

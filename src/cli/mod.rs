@@ -1,3 +1,4 @@
+pub mod compare;
 pub mod decode;
 pub mod encode;
 pub mod guess;
@@ -39,6 +40,7 @@ impl Root {
             Cmd::Guess(c) => c.run(&self.channel)?,
             Cmd::Decode(c) => c.run(&self.channel)?,
             Cmd::Encode(c) => c.run(&self.channel)?,
+            Cmd::Compare(c) => c.run(&self.channel)?,
             Cmd::Version => version::Cmd::run(),
         }
         Ok(())
@@ -69,6 +71,8 @@ pub enum Cmd {
     Decode(decode::Cmd),
     /// Encode XDR
     Encode(encode::Cmd),
+    /// Compare XDR
+    Compare(compare::Cmd),
     /// Print version information
     Version,
 }
@@ -86,6 +90,8 @@ pub enum Error {
     Decode(#[from] decode::Error),
     #[error("error reading file: {0}")]
     Encode(#[from] encode::Error),
+    #[error(transparent)]
+    Compare(#[from] compare::Error),
 }
 
 /// Run the CLI with the given args.

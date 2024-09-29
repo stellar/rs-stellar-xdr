@@ -71,7 +71,6 @@ pub enum Cmd {
     Decode(decode::Cmd),
     /// Encode XDR
     Encode(encode::Cmd),
-    /// Compare XDR
     Compare(compare::Cmd),
     /// Print version information
     Version,

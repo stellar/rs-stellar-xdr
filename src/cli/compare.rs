@@ -16,16 +16,22 @@ pub enum Error {
     ReadFile(#[from] std::io::Error),
 }
 
+/// Compare two XDR values with each other
+///
+/// Outputs:
+/// - `-1` when the left XDR value is less than the right XDR value
+/// - `0` when the left XDR value is equal to the right XDR value
+/// - `1` when the left XDR value is greater than the right XDR value
 #[derive(Args, Debug, Clone)]
 #[command()]
 pub struct Cmd {
-    /// First XDR to decode and compare with the second file
+    /// XDR file to decode and compare with the right value
     #[arg()]
-    file1: PathBuf,
+    left: PathBuf,
 
-    /// Second XDR to decode and compare with the second file
+    /// XDR file to decode and compare with the left value
     #[arg()]
-    file2: PathBuf,
+    right: PathBuf,
 
     /// XDR type of both inputs
     #[arg(long)]
@@ -51,8 +57,8 @@ impl Default for InputFormat {
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let f1 = File::open(&self.file1)?;
-            let f2 = File::open(&self.file2)?;
+            let f1 = File::open(&self.left)?;
+            let f2 = File::open(&self.right)?;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;

@@ -19,9 +19,9 @@ pub enum Error {
 /// Compare two XDR values with each other
 ///
 /// Outputs:
-/// - `-1` when the left XDR value is less than the right XDR value
-/// - `0` when the left XDR value is equal to the right XDR value
-/// - `1` when the left XDR value is greater than the right XDR value
+///   `-1` when the left XDR value is less than the right XDR value,
+///   `0` when the left XDR value is equal to the right XDR value,
+///   `1` when the left XDR value is greater than the right XDR value
 #[derive(Args, Debug, Clone)]
 #[command()]
 pub struct Cmd {

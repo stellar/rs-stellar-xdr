@@ -9,7 +9,8 @@ fn main() {
             cli::Error::Types(_)
             | cli::Error::Guess(_)
             | cli::Error::Decode(_)
-            | cli::Error::Encode(_) => {
+            | cli::Error::Encode(_)
+            | cli::Error::Compare(_) => {
                 Error::raw(clap::error::ErrorKind::ValueValidation, e).exit()
             }
         }

@@ -534,7 +534,7 @@ dependencies = [
 
 [[package]]
 name = "stellar-xdr"
-version = "22.0.0-rc.1"
+version = "22.0.0-rc.1.1"
 dependencies = [
  "arbitrary",
  "base64 0.13.0",

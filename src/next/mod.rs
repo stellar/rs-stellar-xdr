@@ -4,6 +4,7 @@ pub use generated::*;
 mod jsonschema;
 mod str;
 
+mod contract_conversions;
 mod scval_conversions;
 pub use scval_conversions::*;
 mod account_conversions;

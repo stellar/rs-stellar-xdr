@@ -24,9 +24,9 @@
 #![cfg(feature = "alloc")]
 
 use super::{
-    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, Error, Hash, MuxedAccount,
-    MuxedAccountMed25519, NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload,
-    Uint256,
+    AccountId, AlphaNum12, AlphaNum4, Asset, AssetCode, AssetCode12, AssetCode4,
+    ClaimableBalanceId, Error, Hash, MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey,
+    ScAddress, SignerKey, SignerKeyEd25519SignedPayload, Uint256,
 };
 
 impl From<stellar_strkey::DecodeError> for Error {
@@ -327,6 +327,29 @@ impl core::fmt::Display for AssetCode {
             AssetCode::CreditAlphanum4(c) => c.fmt(f),
             AssetCode::CreditAlphanum12(c) => c.fmt(f),
         }
+    }
+}
+
+impl core::str::FromStr for Asset {
+    type Err = Error;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        if value == "native" {
+            return Ok(Asset::Native);
+        }
+        let mut iter = value.splitn(2, ':');
+        let (Some(code), Some(issuer), None) = (iter.next(), iter.next(), iter.next()) else {
+            return Err(Error::Invalid);
+        };
+        let issuer = issuer.parse()?;
+        Ok(match code.parse()? {
+            AssetCode::CreditAlphanum4(asset_code) => {
+                Asset::CreditAlphanum4(AlphaNum4 { asset_code, issuer })
+            }
+            AssetCode::CreditAlphanum12(asset_code) => {
+                Asset::CreditAlphanum12(AlphaNum12 { asset_code, issuer })
+            }
+        })
     }
 }
 

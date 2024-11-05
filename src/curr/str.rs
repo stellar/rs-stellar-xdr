@@ -14,7 +14,8 @@
 //# - SignerKeyEd25519SignedPayload
 //# - NodeId
 //#
-//# ## Asset Codes
+//# ## Asset Types
+//# - Asset
 //# - AssetCode
 //# - AssetCode4
 //# - AssetCode12
@@ -400,4 +401,3 @@ impl core::fmt::Display for ClaimableBalanceId {
         Ok(())
     }
 }
-

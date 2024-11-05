@@ -31,7 +31,7 @@ readme:
 	cargo +nightly rustdoc -- -Zunstable-options -wjson \
 		&& echo '# stellar-xdr' \
 		| cat target/doc/stellar_xdr.json \
-		| jq -r '"# stellar-xdr\n\n" + .index[.root].docs' \
+		| jq -r '"# stellar-xdr\n\n" + .index[.root|tostring].docs' \
 		> README.md
 
 watch:

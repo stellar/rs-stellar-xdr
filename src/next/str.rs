@@ -14,7 +14,8 @@
 //# - SignerKeyEd25519SignedPayload
 //# - NodeId
 //#
-//# ## Asset Codes
+//# ## Asset Types
+//# - Asset
 //# - AssetCode
 //# - AssetCode4
 //# - AssetCode12
@@ -24,9 +25,9 @@
 #![cfg(feature = "alloc")]
 
 use super::{
-    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, Error, Hash, MuxedAccount,
-    MuxedAccountMed25519, NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload,
-    Uint256,
+    AccountId, AlphaNum12, AlphaNum4, Asset, AssetCode, AssetCode12, AssetCode4,
+    ClaimableBalanceId, Error, Hash, MuxedAccount, MuxedAccountMed25519, NodeId, PublicKey,
+    ScAddress, SignerKey, SignerKeyEd25519SignedPayload, Uint256,
 };
 
 impl From<stellar_strkey::DecodeError> for Error {
@@ -295,10 +296,21 @@ impl core::str::FromStr for AssetCode12 {
 
 impl core::fmt::Display for AssetCode12 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        if let Some(last_idx) = self.0.iter().rposition(|c| *c != 0) {
-            for b in escape_bytes::Escape::new(&self.0[..=last_idx]) {
-                write!(f, "{}", b as char)?;
-            }
+        // AssetCode12's are always rendered as at least 5 characters, because
+        // any asset code shorter than 5 characters is an AssetCode4.
+        // AssetCode12 contains a fixed length 12-byte array, and the constant
+        // and slices in this function never operate out-of-bounds because of
+        // that.
+        const MIN_LENGTH: usize = 5;
+        let len = MIN_LENGTH
+            + self
+                .0
+                .iter()
+                .skip(MIN_LENGTH)
+                .rposition(|c| *c != 0)
+                .map_or(0, |last_idx| last_idx + 1);
+        for b in escape_bytes::Escape::new(&self.0[..len]) {
+            write!(f, "{}", b as char)?;
         }
         Ok(())
     }
@@ -327,6 +339,29 @@ impl core::fmt::Display for AssetCode {
             AssetCode::CreditAlphanum4(c) => c.fmt(f),
             AssetCode::CreditAlphanum12(c) => c.fmt(f),
         }
+    }
+}
+
+impl core::str::FromStr for Asset {
+    type Err = Error;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        if value == "native" {
+            return Ok(Asset::Native);
+        }
+        let mut iter = value.splitn(2, ':');
+        let (Some(code), Some(issuer), None) = (iter.next(), iter.next(), iter.next()) else {
+            return Err(Error::Invalid);
+        };
+        let issuer = issuer.parse()?;
+        Ok(match code.parse()? {
+            AssetCode::CreditAlphanum4(asset_code) => {
+                Asset::CreditAlphanum4(AlphaNum4 { asset_code, issuer })
+            }
+            AssetCode::CreditAlphanum12(asset_code) => {
+                Asset::CreditAlphanum12(AlphaNum12 { asset_code, issuer })
+            }
+        })
     }
 }
 

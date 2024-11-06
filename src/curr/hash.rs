@@ -4,6 +4,6 @@ mod bytes;
 #[cfg(feature = "hex")]
 impl super::Hash {
     pub fn from_hex(s: &str) -> Result<Self, hex::FromHexError> {
-        Ok(super::Hash(create::hex::padded_hex_from_str(s)?))
+        Ok(super::Hash(crate::hex::padded_hex_from_str(s)?))
     }
 }

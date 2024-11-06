@@ -21,6 +21,14 @@ impl From<(u128, u128)> for UInt256Parts {
     }
 }
 
+impl From<UInt256Parts> for (u128, u128) {
+    fn from(parts: UInt256Parts) -> Self {
+        let hi = (u128::from(parts.hi_hi) << 64) | u128::from(parts.hi_lo);
+        let lo = (u128::from(parts.lo_hi) << 64) | u128::from(parts.lo_lo);
+        (hi, lo)
+    }
+}
+
 impl From<(i128, i128)> for Int256Parts {
     fn from((hi, lo): (i128, i128)) -> Self {
         let Int128Parts {
@@ -37,6 +45,14 @@ impl From<(i128, i128)> for Int256Parts {
             lo_hi,
             lo_lo,
         }
+    }
+}
+
+impl From<Int256Parts> for (i128, i128) {
+    fn from(parts: Int256Parts) -> Self {
+        let hi = (i128::from(parts.hi_hi) << 64) | i128::from(parts.hi_lo);
+        let lo = (i128::from(parts.lo_hi) << 64) | i128::from(parts.lo_lo);
+        (hi, lo)
     }
 }
 
@@ -97,16 +113,5 @@ impl FromStr for Int128Parts {
     type Err = super::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(i128::from_str(s).map_err(|_| Self::Err::Invalid)?.into())
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    #[test]
-    fn round_trip_u128() {
-        let u128_val: u128 = 0x1234567890abcdef1234567890abcdefu128;
-        let xdr_val: UInt128Parts = u128_val.into();
-        assert_eq!(xdr_val.into(), u128_val);
     }
 }

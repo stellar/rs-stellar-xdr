@@ -15,6 +15,7 @@ impl TryFrom<HashIdPreimage> for Hash {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl TryFrom<HashIdPreimage> for stellar_strkey::Contract {
     type Error = super::super::Error;
     fn try_from(value: HashIdPreimage) -> Result<Self, Self::Error> {

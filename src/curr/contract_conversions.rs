@@ -1,11 +1,11 @@
 use super::{
     Hash, HostFunction, InvokeContractArgs, InvokeHostFunctionOp, Operation, OperationBody,
-    ScAddress, ScVal, VecM,
+    ScAddress, VecM,
 };
 
 #[cfg(feature = "alloc")]
 mod stellar_strkey_contract {
-    use super::super::Error;
+    use super::super::{Error, ScVal};
     use super::*;
     impl From<Hash> for stellar_strkey::Contract {
         fn from(v: Hash) -> Self {
@@ -61,12 +61,6 @@ mod stellar_strkey_contract {
             ScVal::Address(contract.into())
         }
     }
-    impl TryFrom<Vec<u8>> for HostFunction {
-        type Error = Error;
-        fn try_from(bytes: Vec<u8>) -> Result<Self, Self::Error> {
-            bytes.as_slice().try_into()
-        }
-    }
 }
 
 impl From<&Hash> for [u8; 32] {
@@ -120,12 +114,5 @@ impl From<HostFunction> for Operation {
                 auth: VecM::default(),
             }),
         }
-    }
-}
-
-impl TryFrom<&[u8]> for HostFunction {
-    type Error = super::Error;
-    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        Ok(HostFunction::UploadContractWasm(bytes.try_into()?))
     }
 }

@@ -1,16 +1,18 @@
 use super::{
-    FeeBumpTransaction, FeeBumpTransactionEnvelope, Memo, MuxedAccount, Operation, Preconditions,
-    SequenceNumber, Transaction, TransactionEnvelope, TransactionExt, TransactionV1Envelope, VecM,
+    FeeBumpTransaction, FeeBumpTransactionEnvelope, Transaction, TransactionEnvelope,
+    TransactionV1Envelope, VecM,
 };
+
+#[cfg(feature = "alloc")]
+use super::{Error, Memo, MuxedAccount, Operation, Preconditions, SequenceNumber, TransactionExt};
 #[cfg(feature = "sha2")]
 use super::{
     Hash, Limits, TransactionSignaturePayload, TransactionSignaturePayloadTaggedTransaction,
     WriteXdr,
 };
 
-use super::Error;
-
 impl Transaction {
+    #[cfg(feature = "alloc")]
     pub fn new_tx(
         source_account: impl Into<MuxedAccount>,
         fee: u32,
@@ -27,7 +29,7 @@ impl Transaction {
             ext: TransactionExt::V0,
         }
     }
-
+    #[cfg(feature = "alloc")]
     pub fn add_operation(mut self, operation: Operation) -> Result<Self, Error> {
         let mut ops = self.operations.to_vec();
         ops.push(operation);

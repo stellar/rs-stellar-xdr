@@ -1,10 +1,10 @@
 use super::{
-    AccountId, Error, Hash, MuxedAccount, MuxedAccountMed25519, PublicKey, ScAddress, ScVal,
-    Uint256,
+    AccountId, Hash, MuxedAccount, MuxedAccountMed25519, PublicKey, ScAddress, ScVal, Uint256,
 };
 
 #[cfg(feature = "alloc")]
 mod strkey {
+    use super::super::Error;
     use super::*;
     impl From<stellar_strkey::ed25519::PublicKey> for PublicKey {
         fn from(k: stellar_strkey::ed25519::PublicKey) -> Self {
@@ -97,13 +97,13 @@ mod strkey {
     }
 
     impl TryFrom<&stellar_strkey::Strkey> for ScAddress {
-        type Error = super::Error;
+        type Error = Error;
         fn try_from(strkey: &stellar_strkey::Strkey) -> Result<Self, Self::Error> {
             match strkey {
                 stellar_strkey::Strkey::PublicKeyEd25519(k) => Ok(ScAddress::Account(k.into())),
                 stellar_strkey::Strkey::MuxedAccountEd25519(m) => Ok(ScAddress::Account(m.into())),
                 stellar_strkey::Strkey::Contract(k) => Ok(ScAddress::Contract(k.into())),
-                _ => Err(super::Error::Invalid),
+                _ => Err(Error::Invalid),
             }
         }
     }
@@ -139,6 +139,20 @@ mod strkey {
                 ScAddress::Contract(Hash(h)) => {
                     stellar_strkey::Strkey::Contract(stellar_strkey::Contract(*h))
                 }
+            }
+        }
+    }
+    impl From<AccountId> for stellar_strkey::ed25519::PublicKey {
+        fn from(value: AccountId) -> Self {
+            match value {
+                AccountId(key) => key.into(),
+            }
+        }
+    }
+    impl From<&AccountId> for stellar_strkey::ed25519::PublicKey {
+        fn from(value: &AccountId) -> Self {
+            match value {
+                AccountId(key) => key.into(),
             }
         }
     }
@@ -214,21 +228,6 @@ impl From<AccountId> for MuxedAccount {
 impl From<&AccountId> for MuxedAccount {
     fn from(AccountId(public_key): &AccountId) -> Self {
         public_key.into()
-    }
-}
-
-impl From<AccountId> for stellar_strkey::ed25519::PublicKey {
-    fn from(value: AccountId) -> Self {
-        match value {
-            AccountId(key) => key.into(),
-        }
-    }
-}
-impl From<&AccountId> for stellar_strkey::ed25519::PublicKey {
-    fn from(value: &AccountId) -> Self {
-        match value {
-            AccountId(key) => key.into(),
-        }
     }
 }
 

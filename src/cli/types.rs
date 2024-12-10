@@ -19,7 +19,7 @@ pub struct Cmd {
 }
 
 #[derive(Subcommand, Clone, Debug)]
-enum Sub {
+pub enum Sub {
     List(list::Cmd),
     Schema(schema::Cmd),
 }

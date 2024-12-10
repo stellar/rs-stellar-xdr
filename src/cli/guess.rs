@@ -25,19 +25,19 @@ pub enum Error {
 pub struct Cmd {
     /// File to decode, or stdin if omitted
     #[arg()]
-    file: Option<PathBuf>,
+    pub file: Option<PathBuf>,
 
     // Input format of the XDR
     #[arg(long, value_enum, default_value_t)]
-    input: InputFormat,
+    pub input: InputFormat,
 
     // Output format
     #[arg(long, value_enum, default_value_t)]
-    output: OutputFormat,
+    pub output: OutputFormat,
 
     /// Certainty as an arbitrary value
     #[arg(long, default_value = "2")]
-    certainty: usize,
+    pub certainty: usize,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]

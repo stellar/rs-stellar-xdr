@@ -15,7 +15,7 @@ pub enum Error {
 #[command()]
 pub struct Cmd {
     #[command(subcommand)]
-    sub: Sub,
+    pub sub: Sub,
 }
 
 #[derive(Subcommand, Clone, Debug)]

@@ -27,19 +27,19 @@ pub enum Error {
 pub struct Cmd {
     /// XDR file to decode and compare with the right value
     #[arg()]
-    left: PathBuf,
+    pub left: PathBuf,
 
     /// XDR file to decode and compare with the left value
     #[arg()]
-    right: PathBuf,
+    pub right: PathBuf,
 
     /// XDR type of both inputs
     #[arg(long)]
-    r#type: String,
+    pub r#type: String,
 
     // Input format of the XDR
     #[arg(long, value_enum, default_value_t)]
-    input: InputFormat,
+    pub input: InputFormat,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]

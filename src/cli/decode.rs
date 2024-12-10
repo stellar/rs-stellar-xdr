@@ -30,19 +30,19 @@ pub enum Error {
 pub struct Cmd {
     /// Files to decode, or stdin if omitted
     #[arg()]
-    files: Vec<PathBuf>,
+    pub files: Vec<PathBuf>,
 
     /// XDR type to decode
     #[arg(long)]
-    r#type: String,
+    pub r#type: String,
 
     // Input format of the XDR
     #[arg(long, value_enum, default_value_t)]
-    input: InputFormat,
+    pub input: InputFormat,
 
     // Output format
     #[arg(long, value_enum, default_value_t)]
-    output: OutputFormat,
+    pub output: OutputFormat,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]

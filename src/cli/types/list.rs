@@ -7,7 +7,7 @@ use crate::cli::Channel;
 pub struct Cmd {
     // Output format
     #[arg(long, value_enum, default_value_t)]
-    output: OutputFormat,
+    pub output: OutputFormat,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]

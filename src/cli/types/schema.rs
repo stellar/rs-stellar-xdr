@@ -16,11 +16,11 @@ pub enum Error {
 pub struct Cmd {
     /// XDR type to decode
     #[arg(long)]
-    r#type: String,
+    pub r#type: String,
 
     // Output format
     #[arg(long, value_enum, default_value_t)]
-    output: OutputFormat,
+    pub output: OutputFormat,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]

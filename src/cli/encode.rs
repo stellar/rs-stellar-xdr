@@ -66,19 +66,19 @@ impl From<crate::next::Error> for Error {
 pub struct Cmd {
     /// Files to encode, or stdin if omitted
     #[arg()]
-    files: Vec<PathBuf>,
+    pub files: Vec<PathBuf>,
 
     /// XDR type to encode
     #[arg(long)]
-    r#type: String,
+    pub r#type: String,
 
     // Input format
     #[arg(long, value_enum, default_value_t)]
-    input: InputFormat,
+    pub input: InputFormat,
 
     // Output format to encode to
     #[arg(long, value_enum, default_value_t)]
-    output: OutputFormat,
+    pub output: OutputFormat,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]

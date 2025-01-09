@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "c1fabe60eac9eaa4e60897d4e6476434fc5fbda81c5e4c2c65081fce9793bc49",
+        "907745b98a8c9d78bf409bb30641ad4f73d32be28da4719fcf6a5fe676ca33ef",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -50,11 +50,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "f1a71a10f83e9f010a35b00b6eb9c88ed373c1aa66b5a01d4dd32f661b504b10",
+        "020bd2606a355880a1a53480df906a6a93d37d34bef30168aba5f04880b269d5",
     ),
     (
         "xdr/next/Stellar-overlay.x",
-        "8c73b7c3ad974e7fc4aa4fdf34f7ad50053406254efbd7406c96657cf41691d3",
+        "25d52fd28c91d2377796c6c1ee05b0731f47648751e2b5a33481d64ef4eb7322",
     ),
     (
         "xdr/next/Stellar-transaction.x",
@@ -3762,13 +3762,11 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
 /// ```text
 /// struct ConfigSettingContractParallelComputeV0
 /// {
-///     // Maximum number of threads that can be used to apply a
-///     // transaction set to close the ledger.
-///     // This doesn't limit or defined the actual number of
-///     // threads used and instead only defines the minimum number
-///     // of physical threads that a tier-1 validator has to support
-///     // in order to not fall out of sync with the network.
-///     uint32 ledgerMaxParallelThreads;
+///     // Maximum number of clusters with dependent transactions allowed in a
+///     // stage of parallel tx set component.
+///     // This effectively sets the lower bound on the number of physical threads
+///     // necessary to effectively apply transaction sets in parallel.
+///     uint32 ledgerMaxDependentTxClusters;
 /// };
 /// ```
 ///
@@ -3781,7 +3779,7 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractParallelComputeV0 {
-    pub ledger_max_parallel_threads: u32,
+    pub ledger_max_dependent_tx_clusters: u32,
 }
 
 impl ReadXdr for ConfigSettingContractParallelComputeV0 {
@@ -3789,7 +3787,7 @@ impl ReadXdr for ConfigSettingContractParallelComputeV0 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                ledger_max_parallel_threads: u32::read_xdr(r)?,
+                ledger_max_dependent_tx_clusters: u32::read_xdr(r)?,
             })
         })
     }
@@ -3799,7 +3797,7 @@ impl WriteXdr for ConfigSettingContractParallelComputeV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
-            self.ledger_max_parallel_threads.write_xdr(w)?;
+            self.ledger_max_dependent_tx_clusters.write_xdr(w)?;
             Ok(())
         })
     }
@@ -20433,10 +20431,10 @@ impl WriteXdr for TxSetComponentType {
     }
 }
 
-/// TxExecutionThread is an XDR Typedef defines as:
+/// DependentTxCluster is an XDR Typedef defines as:
 ///
 /// ```text
-/// typedef TransactionEnvelope TxExecutionThread<>;
+/// typedef TransactionEnvelope DependentTxCluster<>;
 /// ```
 ///
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -20449,84 +20447,84 @@ impl WriteXdr for TxSetComponentType {
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
-pub struct TxExecutionThread(pub VecM<TransactionEnvelope>);
+pub struct DependentTxCluster(pub VecM<TransactionEnvelope>);
 
-impl From<TxExecutionThread> for VecM<TransactionEnvelope> {
+impl From<DependentTxCluster> for VecM<TransactionEnvelope> {
     #[must_use]
-    fn from(x: TxExecutionThread) -> Self {
+    fn from(x: DependentTxCluster) -> Self {
         x.0
     }
 }
 
-impl From<VecM<TransactionEnvelope>> for TxExecutionThread {
+impl From<VecM<TransactionEnvelope>> for DependentTxCluster {
     #[must_use]
     fn from(x: VecM<TransactionEnvelope>) -> Self {
-        TxExecutionThread(x)
+        DependentTxCluster(x)
     }
 }
 
-impl AsRef<VecM<TransactionEnvelope>> for TxExecutionThread {
+impl AsRef<VecM<TransactionEnvelope>> for DependentTxCluster {
     #[must_use]
     fn as_ref(&self) -> &VecM<TransactionEnvelope> {
         &self.0
     }
 }
 
-impl ReadXdr for TxExecutionThread {
+impl ReadXdr for DependentTxCluster {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             let i = VecM::<TransactionEnvelope>::read_xdr(r)?;
-            let v = TxExecutionThread(i);
+            let v = DependentTxCluster(i);
             Ok(v)
         })
     }
 }
 
-impl WriteXdr for TxExecutionThread {
+impl WriteXdr for DependentTxCluster {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
-impl Deref for TxExecutionThread {
+impl Deref for DependentTxCluster {
     type Target = VecM<TransactionEnvelope>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl From<TxExecutionThread> for Vec<TransactionEnvelope> {
+impl From<DependentTxCluster> for Vec<TransactionEnvelope> {
     #[must_use]
-    fn from(x: TxExecutionThread) -> Self {
+    fn from(x: DependentTxCluster) -> Self {
         x.0 .0
     }
 }
 
-impl TryFrom<Vec<TransactionEnvelope>> for TxExecutionThread {
+impl TryFrom<Vec<TransactionEnvelope>> for DependentTxCluster {
     type Error = Error;
     fn try_from(x: Vec<TransactionEnvelope>) -> Result<Self> {
-        Ok(TxExecutionThread(x.try_into()?))
+        Ok(DependentTxCluster(x.try_into()?))
     }
 }
 
 #[cfg(feature = "alloc")]
-impl TryFrom<&Vec<TransactionEnvelope>> for TxExecutionThread {
+impl TryFrom<&Vec<TransactionEnvelope>> for DependentTxCluster {
     type Error = Error;
     fn try_from(x: &Vec<TransactionEnvelope>) -> Result<Self> {
-        Ok(TxExecutionThread(x.try_into()?))
+        Ok(DependentTxCluster(x.try_into()?))
     }
 }
 
-impl AsRef<Vec<TransactionEnvelope>> for TxExecutionThread {
+impl AsRef<Vec<TransactionEnvelope>> for DependentTxCluster {
     #[must_use]
     fn as_ref(&self) -> &Vec<TransactionEnvelope> {
         &self.0 .0
     }
 }
 
-impl AsRef<[TransactionEnvelope]> for TxExecutionThread {
+impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[TransactionEnvelope] {
@@ -20542,7 +20540,7 @@ impl AsRef<[TransactionEnvelope]> for TxExecutionThread {
 /// ParallelTxExecutionStage is an XDR Typedef defines as:
 ///
 /// ```text
-/// typedef TxExecutionThread ParallelTxExecutionStage<>;
+/// typedef DependentTxCluster ParallelTxExecutionStage<>;
 /// ```
 ///
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -20555,25 +20553,25 @@ impl AsRef<[TransactionEnvelope]> for TxExecutionThread {
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
-pub struct ParallelTxExecutionStage(pub VecM<TxExecutionThread>);
+pub struct ParallelTxExecutionStage(pub VecM<DependentTxCluster>);
 
-impl From<ParallelTxExecutionStage> for VecM<TxExecutionThread> {
+impl From<ParallelTxExecutionStage> for VecM<DependentTxCluster> {
     #[must_use]
     fn from(x: ParallelTxExecutionStage) -> Self {
         x.0
     }
 }
 
-impl From<VecM<TxExecutionThread>> for ParallelTxExecutionStage {
+impl From<VecM<DependentTxCluster>> for ParallelTxExecutionStage {
     #[must_use]
-    fn from(x: VecM<TxExecutionThread>) -> Self {
+    fn from(x: VecM<DependentTxCluster>) -> Self {
         ParallelTxExecutionStage(x)
     }
 }
 
-impl AsRef<VecM<TxExecutionThread>> for ParallelTxExecutionStage {
+impl AsRef<VecM<DependentTxCluster>> for ParallelTxExecutionStage {
     #[must_use]
-    fn as_ref(&self) -> &VecM<TxExecutionThread> {
+    fn as_ref(&self) -> &VecM<DependentTxCluster> {
         &self.0
     }
 }
@@ -20582,7 +20580,7 @@ impl ReadXdr for ParallelTxExecutionStage {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
-            let i = VecM::<TxExecutionThread>::read_xdr(r)?;
+            let i = VecM::<DependentTxCluster>::read_xdr(r)?;
             let v = ParallelTxExecutionStage(i);
             Ok(v)
         })
@@ -20597,50 +20595,50 @@ impl WriteXdr for ParallelTxExecutionStage {
 }
 
 impl Deref for ParallelTxExecutionStage {
-    type Target = VecM<TxExecutionThread>;
+    type Target = VecM<DependentTxCluster>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl From<ParallelTxExecutionStage> for Vec<TxExecutionThread> {
+impl From<ParallelTxExecutionStage> for Vec<DependentTxCluster> {
     #[must_use]
     fn from(x: ParallelTxExecutionStage) -> Self {
         x.0 .0
     }
 }
 
-impl TryFrom<Vec<TxExecutionThread>> for ParallelTxExecutionStage {
+impl TryFrom<Vec<DependentTxCluster>> for ParallelTxExecutionStage {
     type Error = Error;
-    fn try_from(x: Vec<TxExecutionThread>) -> Result<Self> {
+    fn try_from(x: Vec<DependentTxCluster>) -> Result<Self> {
         Ok(ParallelTxExecutionStage(x.try_into()?))
     }
 }
 
 #[cfg(feature = "alloc")]
-impl TryFrom<&Vec<TxExecutionThread>> for ParallelTxExecutionStage {
+impl TryFrom<&Vec<DependentTxCluster>> for ParallelTxExecutionStage {
     type Error = Error;
-    fn try_from(x: &Vec<TxExecutionThread>) -> Result<Self> {
+    fn try_from(x: &Vec<DependentTxCluster>) -> Result<Self> {
         Ok(ParallelTxExecutionStage(x.try_into()?))
     }
 }
 
-impl AsRef<Vec<TxExecutionThread>> for ParallelTxExecutionStage {
+impl AsRef<Vec<DependentTxCluster>> for ParallelTxExecutionStage {
     #[must_use]
-    fn as_ref(&self) -> &Vec<TxExecutionThread> {
+    fn as_ref(&self) -> &Vec<DependentTxCluster> {
         &self.0 .0
     }
 }
 
-impl AsRef<[TxExecutionThread]> for ParallelTxExecutionStage {
+impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
     #[cfg(feature = "alloc")]
     #[must_use]
-    fn as_ref(&self) -> &[TxExecutionThread] {
+    fn as_ref(&self) -> &[DependentTxCluster] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
     #[must_use]
-    fn as_ref(&self) -> &[TxExecutionThread] {
+    fn as_ref(&self) -> &[DependentTxCluster] {
         self.0 .0
     }
 }
@@ -20651,6 +20649,9 @@ impl AsRef<[TxExecutionThread]> for ParallelTxExecutionStage {
 /// struct ParallelTxsComponent
 /// {
 ///   int64* baseFee;
+///   // A sequence of stages that *may* have arbitrary data dependencies between
+///   // each other, i.e. in a general case the stage execution order may not be
+///   // arbitrarily shuffled without affecting the end result.
 ///   ParallelTxExecutionStage executionStages<>;
 /// };
 /// ```
@@ -24575,8 +24576,8 @@ impl WriteXdr for PeerAddress {
 ///     ERROR_MSG = 0,
 ///     AUTH = 2,
 ///     DONT_HAVE = 3,
+///     // GET_PEERS (4) is deprecated
 ///
-///     GET_PEERS = 4, // gets a list of peers this guy knows about
 ///     PEERS = 5,
 ///
 ///     GET_TX_SET = 6, // gets a particular txset by hash
@@ -24624,7 +24625,6 @@ pub enum MessageType {
     ErrorMsg = 0,
     Auth = 2,
     DontHave = 3,
-    GetPeers = 4,
     Peers = 5,
     GetTxSet = 6,
     TxSet = 7,
@@ -24648,11 +24648,10 @@ pub enum MessageType {
 }
 
 impl MessageType {
-    pub const VARIANTS: [MessageType; 24] = [
+    pub const VARIANTS: [MessageType; 23] = [
         MessageType::ErrorMsg,
         MessageType::Auth,
         MessageType::DontHave,
-        MessageType::GetPeers,
         MessageType::Peers,
         MessageType::GetTxSet,
         MessageType::TxSet,
@@ -24674,11 +24673,10 @@ impl MessageType {
         MessageType::TimeSlicedSurveyStartCollecting,
         MessageType::TimeSlicedSurveyStopCollecting,
     ];
-    pub const VARIANTS_STR: [&'static str; 24] = [
+    pub const VARIANTS_STR: [&'static str; 23] = [
         "ErrorMsg",
         "Auth",
         "DontHave",
-        "GetPeers",
         "Peers",
         "GetTxSet",
         "TxSet",
@@ -24707,7 +24705,6 @@ impl MessageType {
             Self::ErrorMsg => "ErrorMsg",
             Self::Auth => "Auth",
             Self::DontHave => "DontHave",
-            Self::GetPeers => "GetPeers",
             Self::Peers => "Peers",
             Self::GetTxSet => "GetTxSet",
             Self::TxSet => "TxSet",
@@ -24732,7 +24729,7 @@ impl MessageType {
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 24] {
+    pub const fn variants() -> [MessageType; 23] {
         Self::VARIANTS
     }
 }
@@ -24766,7 +24763,6 @@ impl TryFrom<i32> for MessageType {
             0 => MessageType::ErrorMsg,
             2 => MessageType::Auth,
             3 => MessageType::DontHave,
-            4 => MessageType::GetPeers,
             5 => MessageType::Peers,
             6 => MessageType::GetTxSet,
             7 => MessageType::TxSet,
@@ -26845,8 +26841,6 @@ impl WriteXdr for FloodDemand {
 ///     Auth auth;
 /// case DONT_HAVE:
 ///     DontHave dontHave;
-/// case GET_PEERS:
-///     void;
 /// case PEERS:
 ///     PeerAddress peers<100>;
 ///
@@ -26916,7 +26910,6 @@ pub enum StellarMessage {
     Hello(Hello),
     Auth(Auth),
     DontHave(DontHave),
-    GetPeers,
     Peers(VecM<PeerAddress, 100>),
     GetTxSet(Uint256),
     TxSet(TransactionSet),
@@ -26939,12 +26932,11 @@ pub enum StellarMessage {
 }
 
 impl StellarMessage {
-    pub const VARIANTS: [MessageType; 24] = [
+    pub const VARIANTS: [MessageType; 23] = [
         MessageType::ErrorMsg,
         MessageType::Hello,
         MessageType::Auth,
         MessageType::DontHave,
-        MessageType::GetPeers,
         MessageType::Peers,
         MessageType::GetTxSet,
         MessageType::TxSet,
@@ -26965,12 +26957,11 @@ impl StellarMessage {
         MessageType::FloodAdvert,
         MessageType::FloodDemand,
     ];
-    pub const VARIANTS_STR: [&'static str; 24] = [
+    pub const VARIANTS_STR: [&'static str; 23] = [
         "ErrorMsg",
         "Hello",
         "Auth",
         "DontHave",
-        "GetPeers",
         "Peers",
         "GetTxSet",
         "TxSet",
@@ -26999,7 +26990,6 @@ impl StellarMessage {
             Self::Hello(_) => "Hello",
             Self::Auth(_) => "Auth",
             Self::DontHave(_) => "DontHave",
-            Self::GetPeers => "GetPeers",
             Self::Peers(_) => "Peers",
             Self::GetTxSet(_) => "GetTxSet",
             Self::TxSet(_) => "TxSet",
@@ -27030,7 +27020,6 @@ impl StellarMessage {
             Self::Hello(_) => MessageType::Hello,
             Self::Auth(_) => MessageType::Auth,
             Self::DontHave(_) => MessageType::DontHave,
-            Self::GetPeers => MessageType::GetPeers,
             Self::Peers(_) => MessageType::Peers,
             Self::GetTxSet(_) => MessageType::GetTxSet,
             Self::TxSet(_) => MessageType::TxSet,
@@ -27056,7 +27045,7 @@ impl StellarMessage {
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 24] {
+    pub const fn variants() -> [MessageType; 23] {
         Self::VARIANTS
     }
 }
@@ -27094,7 +27083,6 @@ impl ReadXdr for StellarMessage {
                 MessageType::Hello => Self::Hello(Hello::read_xdr(r)?),
                 MessageType::Auth => Self::Auth(Auth::read_xdr(r)?),
                 MessageType::DontHave => Self::DontHave(DontHave::read_xdr(r)?),
-                MessageType::GetPeers => Self::GetPeers,
                 MessageType::Peers => Self::Peers(VecM::<PeerAddress, 100>::read_xdr(r)?),
                 MessageType::GetTxSet => Self::GetTxSet(Uint256::read_xdr(r)?),
                 MessageType::TxSet => Self::TxSet(TransactionSet::read_xdr(r)?),
@@ -27153,7 +27141,6 @@ impl WriteXdr for StellarMessage {
                 Self::Hello(v) => v.write_xdr(w)?,
                 Self::Auth(v) => v.write_xdr(w)?,
                 Self::DontHave(v) => v.write_xdr(w)?,
-                Self::GetPeers => ().write_xdr(w)?,
                 Self::Peers(v) => v.write_xdr(w)?,
                 Self::GetTxSet(v) => v.write_xdr(w)?,
                 Self::TxSet(v) => v.write_xdr(w)?,
@@ -46931,7 +46918,7 @@ pub enum TypeVariant {
     LedgerUpgrade,
     ConfigUpgradeSet,
     TxSetComponentType,
-    TxExecutionThread,
+    DependentTxCluster,
     ParallelTxExecutionStage,
     ParallelTxsComponent,
     TxSetComponent,
@@ -47399,7 +47386,7 @@ impl TypeVariant {
         TypeVariant::LedgerUpgrade,
         TypeVariant::ConfigUpgradeSet,
         TypeVariant::TxSetComponentType,
-        TypeVariant::TxExecutionThread,
+        TypeVariant::DependentTxCluster,
         TypeVariant::ParallelTxExecutionStage,
         TypeVariant::ParallelTxsComponent,
         TypeVariant::TxSetComponent,
@@ -47865,7 +47852,7 @@ impl TypeVariant {
         "LedgerUpgrade",
         "ConfigUpgradeSet",
         "TxSetComponentType",
-        "TxExecutionThread",
+        "DependentTxCluster",
         "ParallelTxExecutionStage",
         "ParallelTxsComponent",
         "TxSetComponent",
@@ -48339,7 +48326,7 @@ impl TypeVariant {
             Self::LedgerUpgrade => "LedgerUpgrade",
             Self::ConfigUpgradeSet => "ConfigUpgradeSet",
             Self::TxSetComponentType => "TxSetComponentType",
-            Self::TxExecutionThread => "TxExecutionThread",
+            Self::DependentTxCluster => "DependentTxCluster",
             Self::ParallelTxExecutionStage => "ParallelTxExecutionStage",
             Self::ParallelTxsComponent => "ParallelTxsComponent",
             Self::TxSetComponent => "TxSetComponent",
@@ -48883,7 +48870,7 @@ impl TypeVariant {
             Self::LedgerUpgrade => gen.into_root_schema_for::<LedgerUpgrade>(),
             Self::ConfigUpgradeSet => gen.into_root_schema_for::<ConfigUpgradeSet>(),
             Self::TxSetComponentType => gen.into_root_schema_for::<TxSetComponentType>(),
-            Self::TxExecutionThread => gen.into_root_schema_for::<TxExecutionThread>(),
+            Self::DependentTxCluster => gen.into_root_schema_for::<DependentTxCluster>(),
             Self::ParallelTxExecutionStage => {
                 gen.into_root_schema_for::<ParallelTxExecutionStage>()
             }
@@ -49535,7 +49522,7 @@ impl core::str::FromStr for TypeVariant {
             "LedgerUpgrade" => Ok(Self::LedgerUpgrade),
             "ConfigUpgradeSet" => Ok(Self::ConfigUpgradeSet),
             "TxSetComponentType" => Ok(Self::TxSetComponentType),
-            "TxExecutionThread" => Ok(Self::TxExecutionThread),
+            "DependentTxCluster" => Ok(Self::DependentTxCluster),
             "ParallelTxExecutionStage" => Ok(Self::ParallelTxExecutionStage),
             "ParallelTxsComponent" => Ok(Self::ParallelTxsComponent),
             "TxSetComponent" => Ok(Self::TxSetComponent),
@@ -50033,7 +50020,7 @@ pub enum Type {
     LedgerUpgrade(Box<LedgerUpgrade>),
     ConfigUpgradeSet(Box<ConfigUpgradeSet>),
     TxSetComponentType(Box<TxSetComponentType>),
-    TxExecutionThread(Box<TxExecutionThread>),
+    DependentTxCluster(Box<DependentTxCluster>),
     ParallelTxExecutionStage(Box<ParallelTxExecutionStage>),
     ParallelTxsComponent(Box<ParallelTxsComponent>),
     TxSetComponent(Box<TxSetComponent>),
@@ -50501,7 +50488,7 @@ impl Type {
         TypeVariant::LedgerUpgrade,
         TypeVariant::ConfigUpgradeSet,
         TypeVariant::TxSetComponentType,
-        TypeVariant::TxExecutionThread,
+        TypeVariant::DependentTxCluster,
         TypeVariant::ParallelTxExecutionStage,
         TypeVariant::ParallelTxsComponent,
         TypeVariant::TxSetComponent,
@@ -50967,7 +50954,7 @@ impl Type {
         "LedgerUpgrade",
         "ConfigUpgradeSet",
         "TxSetComponentType",
-        "TxExecutionThread",
+        "DependentTxCluster",
         "ParallelTxExecutionStage",
         "ParallelTxsComponent",
         "TxSetComponent",
@@ -52039,9 +52026,9 @@ impl Type {
                     TxSetComponentType::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::TxExecutionThread => r.with_limited_depth(|r| {
-                Ok(Self::TxExecutionThread(Box::new(
-                    TxExecutionThread::read_xdr(r)?,
+            TypeVariant::DependentTxCluster => r.with_limited_depth(|r| {
+                Ok(Self::DependentTxCluster(Box::new(
+                    DependentTxCluster::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ParallelTxExecutionStage => r.with_limited_depth(|r| {
@@ -54107,9 +54094,9 @@ impl Type {
                 ReadXdrIter::<_, TxSetComponentType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
             ),
-            TypeVariant::TxExecutionThread => Box::new(
-                ReadXdrIter::<_, TxExecutionThread>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TxExecutionThread(Box::new(t)))),
+            TypeVariant::DependentTxCluster => Box::new(
+                ReadXdrIter::<_, DependentTxCluster>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::DependentTxCluster(Box::new(t)))),
             ),
             TypeVariant::ParallelTxExecutionStage => Box::new(
                 ReadXdrIter::<_, ParallelTxExecutionStage>::new(&mut r.inner, r.limits.clone())
@@ -56220,9 +56207,9 @@ impl Type {
                 ReadXdrIter::<_, Frame<TxSetComponentType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t.0)))),
             ),
-            TypeVariant::TxExecutionThread => Box::new(
-                ReadXdrIter::<_, Frame<TxExecutionThread>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TxExecutionThread(Box::new(t.0)))),
+            TypeVariant::DependentTxCluster => Box::new(
+                ReadXdrIter::<_, Frame<DependentTxCluster>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::DependentTxCluster(Box::new(t.0)))),
             ),
             TypeVariant::ParallelTxExecutionStage => Box::new(
                 ReadXdrIter::<_, Frame<ParallelTxExecutionStage>>::new(
@@ -58408,9 +58395,9 @@ impl Type {
                 ReadXdrIter::<_, TxSetComponentType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
             ),
-            TypeVariant::TxExecutionThread => Box::new(
-                ReadXdrIter::<_, TxExecutionThread>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TxExecutionThread(Box::new(t)))),
+            TypeVariant::DependentTxCluster => Box::new(
+                ReadXdrIter::<_, DependentTxCluster>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::DependentTxCluster(Box::new(t)))),
             ),
             TypeVariant::ParallelTxExecutionStage => Box::new(
                 ReadXdrIter::<_, ParallelTxExecutionStage>::new(dec, r.limits.clone())
@@ -60054,7 +60041,7 @@ impl Type {
             TypeVariant::TxSetComponentType => Ok(Self::TxSetComponentType(Box::new(
                 serde_json::from_reader(r)?,
             ))),
-            TypeVariant::TxExecutionThread => Ok(Self::TxExecutionThread(Box::new(
+            TypeVariant::DependentTxCluster => Ok(Self::DependentTxCluster(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::ParallelTxExecutionStage => Ok(Self::ParallelTxExecutionStage(Box::new(
@@ -61426,7 +61413,7 @@ impl Type {
             TypeVariant::TxSetComponentType => Ok(Self::TxSetComponentType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::TxExecutionThread => Ok(Self::TxExecutionThread(Box::new(
+            TypeVariant::DependentTxCluster => Ok(Self::DependentTxCluster(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ParallelTxExecutionStage => Ok(Self::ParallelTxExecutionStage(Box::new(
@@ -62505,7 +62492,7 @@ impl Type {
             Self::LedgerUpgrade(ref v) => v.as_ref(),
             Self::ConfigUpgradeSet(ref v) => v.as_ref(),
             Self::TxSetComponentType(ref v) => v.as_ref(),
-            Self::TxExecutionThread(ref v) => v.as_ref(),
+            Self::DependentTxCluster(ref v) => v.as_ref(),
             Self::ParallelTxExecutionStage(ref v) => v.as_ref(),
             Self::ParallelTxsComponent(ref v) => v.as_ref(),
             Self::TxSetComponent(ref v) => v.as_ref(),
@@ -62984,7 +62971,7 @@ impl Type {
             Self::LedgerUpgrade(_) => "LedgerUpgrade",
             Self::ConfigUpgradeSet(_) => "ConfigUpgradeSet",
             Self::TxSetComponentType(_) => "TxSetComponentType",
-            Self::TxExecutionThread(_) => "TxExecutionThread",
+            Self::DependentTxCluster(_) => "DependentTxCluster",
             Self::ParallelTxExecutionStage(_) => "ParallelTxExecutionStage",
             Self::ParallelTxsComponent(_) => "ParallelTxsComponent",
             Self::TxSetComponent(_) => "TxSetComponent",
@@ -63497,7 +63484,7 @@ impl Type {
             Self::LedgerUpgrade(_) => TypeVariant::LedgerUpgrade,
             Self::ConfigUpgradeSet(_) => TypeVariant::ConfigUpgradeSet,
             Self::TxSetComponentType(_) => TypeVariant::TxSetComponentType,
-            Self::TxExecutionThread(_) => TypeVariant::TxExecutionThread,
+            Self::DependentTxCluster(_) => TypeVariant::DependentTxCluster,
             Self::ParallelTxExecutionStage(_) => TypeVariant::ParallelTxExecutionStage,
             Self::ParallelTxsComponent(_) => TypeVariant::ParallelTxsComponent,
             Self::TxSetComponent(_) => TypeVariant::TxSetComponent,
@@ -64033,7 +64020,7 @@ impl WriteXdr for Type {
             Self::LedgerUpgrade(v) => v.write_xdr(w),
             Self::ConfigUpgradeSet(v) => v.write_xdr(w),
             Self::TxSetComponentType(v) => v.write_xdr(w),
-            Self::TxExecutionThread(v) => v.write_xdr(w),
+            Self::DependentTxCluster(v) => v.write_xdr(w),
             Self::ParallelTxExecutionStage(v) => v.write_xdr(w),
             Self::ParallelTxsComponent(v) => v.write_xdr(w),
             Self::TxSetComponent(v) => v.write_xdr(w),

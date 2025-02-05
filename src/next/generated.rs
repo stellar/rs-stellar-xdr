@@ -46,7 +46,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "5dea4f695f01aeb57ad97b97646f3da7dcf5ec35748e5065b19de429fb762cbc",
+        "714ae0167b11855405c999957a715a5fbcc64f6317dee4eaa0f0a363d62df351",
     ),
     (
         "xdr/next/Stellar-ledger.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "c48c3ed9267b2919bba9c424bdd138d25c3e96fd082afe35cd3184ef11dc86d5",
+        "3f2843afa96c2d10f70ac90865e04d50bb47616707305c5d8d479dce9b264bc9",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -17604,7 +17604,8 @@ impl WriteXdr for LedgerKey {
 ///     ENVELOPE_TYPE_OP_ID = 6,
 ///     ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7,
 ///     ENVELOPE_TYPE_CONTRACT_ID = 8,
-///     ENVELOPE_TYPE_SOROBAN_AUTHORIZATION = 9
+///     ENVELOPE_TYPE_SOROBAN_AUTHORIZATION = 9,
+///     ENVELOPE_TYPE_SOROBAN_AUTHORIZATION_V2 = 10
 /// };
 /// ```
 ///
@@ -17629,10 +17630,11 @@ pub enum EnvelopeType {
     PoolRevokeOpId = 7,
     ContractId = 8,
     SorobanAuthorization = 9,
+    SorobanAuthorizationV2 = 10,
 }
 
 impl EnvelopeType {
-    pub const VARIANTS: [EnvelopeType; 10] = [
+    pub const VARIANTS: [EnvelopeType; 11] = [
         EnvelopeType::TxV0,
         EnvelopeType::Scp,
         EnvelopeType::Tx,
@@ -17643,8 +17645,9 @@ impl EnvelopeType {
         EnvelopeType::PoolRevokeOpId,
         EnvelopeType::ContractId,
         EnvelopeType::SorobanAuthorization,
+        EnvelopeType::SorobanAuthorizationV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 10] = [
+    pub const VARIANTS_STR: [&'static str; 11] = [
         "TxV0",
         "Scp",
         "Tx",
@@ -17655,6 +17658,7 @@ impl EnvelopeType {
         "PoolRevokeOpId",
         "ContractId",
         "SorobanAuthorization",
+        "SorobanAuthorizationV2",
     ];
 
     #[must_use]
@@ -17670,11 +17674,12 @@ impl EnvelopeType {
             Self::PoolRevokeOpId => "PoolRevokeOpId",
             Self::ContractId => "ContractId",
             Self::SorobanAuthorization => "SorobanAuthorization",
+            Self::SorobanAuthorizationV2 => "SorobanAuthorizationV2",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 10] {
+    pub const fn variants() -> [EnvelopeType; 11] {
         Self::VARIANTS
     }
 }
@@ -17715,6 +17720,7 @@ impl TryFrom<i32> for EnvelopeType {
             7 => EnvelopeType::PoolRevokeOpId,
             8 => EnvelopeType::ContractId,
             9 => EnvelopeType::SorobanAuthorization,
+            10 => EnvelopeType::SorobanAuthorizationV2,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -30419,13 +30425,77 @@ impl WriteXdr for SorobanAddressCredentials {
     }
 }
 
+/// SorobanAddressCredentialsV2 is an XDR Struct defines as:
+///
+/// ```text
+/// struct SorobanAddressCredentialsV2
+/// {
+///     ExtensionPoint ext;
+///
+///     SCAddress address;
+///     int64 nonce;
+///     uint32 signatureExpirationLedger;
+///     Memo txMemo;
+///     SCVal signature;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct SorobanAddressCredentialsV2 {
+    pub ext: ExtensionPoint,
+    pub address: ScAddress,
+    pub nonce: i64,
+    pub signature_expiration_ledger: u32,
+    pub tx_memo: Memo,
+    pub signature: ScVal,
+}
+
+impl ReadXdr for SorobanAddressCredentialsV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                address: ScAddress::read_xdr(r)?,
+                nonce: i64::read_xdr(r)?,
+                signature_expiration_ledger: u32::read_xdr(r)?,
+                tx_memo: Memo::read_xdr(r)?,
+                signature: ScVal::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SorobanAddressCredentialsV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.address.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            self.signature_expiration_ledger.write_xdr(w)?;
+            self.tx_memo.write_xdr(w)?;
+            self.signature.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// SorobanCredentialsType is an XDR Enum defines as:
 ///
 /// ```text
 /// enum SorobanCredentialsType
 /// {
 ///     SOROBAN_CREDENTIALS_SOURCE_ACCOUNT = 0,
-///     SOROBAN_CREDENTIALS_ADDRESS = 1
+///     SOROBAN_CREDENTIALS_ADDRESS = 1,
+///     SOROBAN_CREDENTIALS_ADDRESS_V2 = 2
 /// };
 /// ```
 ///
@@ -30442,25 +30512,28 @@ impl WriteXdr for SorobanAddressCredentials {
 pub enum SorobanCredentialsType {
     SourceAccount = 0,
     Address = 1,
+    AddressV2 = 2,
 }
 
 impl SorobanCredentialsType {
-    pub const VARIANTS: [SorobanCredentialsType; 2] = [
+    pub const VARIANTS: [SorobanCredentialsType; 3] = [
         SorobanCredentialsType::SourceAccount,
         SorobanCredentialsType::Address,
+        SorobanCredentialsType::AddressV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
+    pub const VARIANTS_STR: [&'static str; 3] = ["SourceAccount", "Address", "AddressV2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::SourceAccount => "SourceAccount",
             Self::Address => "Address",
+            Self::AddressV2 => "AddressV2",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SorobanCredentialsType; 2] {
+    pub const fn variants() -> [SorobanCredentialsType; 3] {
         Self::VARIANTS
     }
 }
@@ -30493,6 +30566,7 @@ impl TryFrom<i32> for SorobanCredentialsType {
         let e = match i {
             0 => SorobanCredentialsType::SourceAccount,
             1 => SorobanCredentialsType::Address,
+            2 => SorobanCredentialsType::AddressV2,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -30537,6 +30611,8 @@ impl WriteXdr for SorobanCredentialsType {
 ///     void;
 /// case SOROBAN_CREDENTIALS_ADDRESS:
 ///     SorobanAddressCredentials address;
+/// case SOROBAN_CREDENTIALS_ADDRESS_V2:
+///     SorobanAddressCredentialsV2 addressV2;
 /// };
 /// ```
 ///
@@ -30553,20 +30629,23 @@ impl WriteXdr for SorobanCredentialsType {
 pub enum SorobanCredentials {
     SourceAccount,
     Address(SorobanAddressCredentials),
+    AddressV2(SorobanAddressCredentialsV2),
 }
 
 impl SorobanCredentials {
-    pub const VARIANTS: [SorobanCredentialsType; 2] = [
+    pub const VARIANTS: [SorobanCredentialsType; 3] = [
         SorobanCredentialsType::SourceAccount,
         SorobanCredentialsType::Address,
+        SorobanCredentialsType::AddressV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
+    pub const VARIANTS_STR: [&'static str; 3] = ["SourceAccount", "Address", "AddressV2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::SourceAccount => "SourceAccount",
             Self::Address(_) => "Address",
+            Self::AddressV2(_) => "AddressV2",
         }
     }
 
@@ -30576,11 +30655,12 @@ impl SorobanCredentials {
         match self {
             Self::SourceAccount => SorobanCredentialsType::SourceAccount,
             Self::Address(_) => SorobanCredentialsType::Address,
+            Self::AddressV2(_) => SorobanCredentialsType::AddressV2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SorobanCredentialsType; 2] {
+    pub const fn variants() -> [SorobanCredentialsType; 3] {
         Self::VARIANTS
     }
 }
@@ -30618,6 +30698,9 @@ impl ReadXdr for SorobanCredentials {
                 SorobanCredentialsType::Address => {
                     Self::Address(SorobanAddressCredentials::read_xdr(r)?)
                 }
+                SorobanCredentialsType::AddressV2 => {
+                    Self::AddressV2(SorobanAddressCredentialsV2::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -30635,6 +30718,7 @@ impl WriteXdr for SorobanCredentials {
             match self {
                 Self::SourceAccount => ().write_xdr(w)?,
                 Self::Address(v) => v.write_xdr(w)?,
+                Self::AddressV2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -31511,6 +31595,69 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
     }
 }
 
+/// HashIdPreimageSorobanAuthorizationV2 is an XDR NestedStruct defines as:
+///
+/// ```text
+/// struct
+///     {
+///         ExtensionPoint ext;
+///
+///         Hash networkID;
+///         int64 nonce;
+///         uint32 signatureExpirationLedger;
+///         Memo txMemo;
+///         SorobanAuthorizedInvocation invocation;
+///     }
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct HashIdPreimageSorobanAuthorizationV2 {
+    pub ext: ExtensionPoint,
+    pub network_id: Hash,
+    pub nonce: i64,
+    pub signature_expiration_ledger: u32,
+    pub tx_memo: Memo,
+    pub invocation: SorobanAuthorizedInvocation,
+}
+
+impl ReadXdr for HashIdPreimageSorobanAuthorizationV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                network_id: Hash::read_xdr(r)?,
+                nonce: i64::read_xdr(r)?,
+                signature_expiration_ledger: u32::read_xdr(r)?,
+                tx_memo: Memo::read_xdr(r)?,
+                invocation: SorobanAuthorizedInvocation::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for HashIdPreimageSorobanAuthorizationV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.network_id.write_xdr(w)?;
+            self.nonce.write_xdr(w)?;
+            self.signature_expiration_ledger.write_xdr(w)?;
+            self.tx_memo.write_xdr(w)?;
+            self.invocation.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// HashIdPreimage is an XDR Union defines as:
 ///
 /// ```text
@@ -31546,6 +31693,17 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
 ///         uint32 signatureExpirationLedger;
 ///         SorobanAuthorizedInvocation invocation;
 ///     } sorobanAuthorization;
+/// case ENVELOPE_TYPE_SOROBAN_AUTHORIZATION_V2:
+///     struct
+///     {
+///         ExtensionPoint ext;
+///
+///         Hash networkID;
+///         int64 nonce;
+///         uint32 signatureExpirationLedger;
+///         Memo txMemo;
+///         SorobanAuthorizedInvocation invocation;
+///     } sorobanAuthorizationV2;
 /// };
 /// ```
 ///
@@ -31564,20 +31722,23 @@ pub enum HashIdPreimage {
     PoolRevokeOpId(HashIdPreimageRevokeId),
     ContractId(HashIdPreimageContractId),
     SorobanAuthorization(HashIdPreimageSorobanAuthorization),
+    SorobanAuthorizationV2(HashIdPreimageSorobanAuthorizationV2),
 }
 
 impl HashIdPreimage {
-    pub const VARIANTS: [EnvelopeType; 4] = [
+    pub const VARIANTS: [EnvelopeType; 5] = [
         EnvelopeType::OpId,
         EnvelopeType::PoolRevokeOpId,
         EnvelopeType::ContractId,
         EnvelopeType::SorobanAuthorization,
+        EnvelopeType::SorobanAuthorizationV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = [
+    pub const VARIANTS_STR: [&'static str; 5] = [
         "OpId",
         "PoolRevokeOpId",
         "ContractId",
         "SorobanAuthorization",
+        "SorobanAuthorizationV2",
     ];
 
     #[must_use]
@@ -31587,6 +31748,7 @@ impl HashIdPreimage {
             Self::PoolRevokeOpId(_) => "PoolRevokeOpId",
             Self::ContractId(_) => "ContractId",
             Self::SorobanAuthorization(_) => "SorobanAuthorization",
+            Self::SorobanAuthorizationV2(_) => "SorobanAuthorizationV2",
         }
     }
 
@@ -31598,11 +31760,12 @@ impl HashIdPreimage {
             Self::PoolRevokeOpId(_) => EnvelopeType::PoolRevokeOpId,
             Self::ContractId(_) => EnvelopeType::ContractId,
             Self::SorobanAuthorization(_) => EnvelopeType::SorobanAuthorization,
+            Self::SorobanAuthorizationV2(_) => EnvelopeType::SorobanAuthorizationV2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 4] {
+    pub const fn variants() -> [EnvelopeType; 5] {
         Self::VARIANTS
     }
 }
@@ -31646,6 +31809,9 @@ impl ReadXdr for HashIdPreimage {
                 EnvelopeType::SorobanAuthorization => {
                     Self::SorobanAuthorization(HashIdPreimageSorobanAuthorization::read_xdr(r)?)
                 }
+                EnvelopeType::SorobanAuthorizationV2 => {
+                    Self::SorobanAuthorizationV2(HashIdPreimageSorobanAuthorizationV2::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -31665,6 +31831,7 @@ impl WriteXdr for HashIdPreimage {
                 Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
                 Self::ContractId(v) => v.write_xdr(w)?,
                 Self::SorobanAuthorization(v) => v.write_xdr(w)?,
+                Self::SorobanAuthorizationV2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -47047,6 +47214,7 @@ pub enum TypeVariant {
     SorobanAuthorizedFunction,
     SorobanAuthorizedInvocation,
     SorobanAddressCredentials,
+    SorobanAddressCredentialsV2,
     SorobanCredentialsType,
     SorobanCredentials,
     SorobanAuthorizationEntry,
@@ -47060,6 +47228,7 @@ pub enum TypeVariant {
     HashIdPreimageRevokeId,
     HashIdPreimageContractId,
     HashIdPreimageSorobanAuthorization,
+    HashIdPreimageSorobanAuthorizationV2,
     MemoType,
     Memo,
     TimeBounds,
@@ -47195,7 +47364,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 464] = [
+    pub const VARIANTS: [TypeVariant; 466] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -47515,6 +47684,7 @@ impl TypeVariant {
         TypeVariant::SorobanAuthorizedFunction,
         TypeVariant::SorobanAuthorizedInvocation,
         TypeVariant::SorobanAddressCredentials,
+        TypeVariant::SorobanAddressCredentialsV2,
         TypeVariant::SorobanCredentialsType,
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
@@ -47528,6 +47698,7 @@ impl TypeVariant {
         TypeVariant::HashIdPreimageRevokeId,
         TypeVariant::HashIdPreimageContractId,
         TypeVariant::HashIdPreimageSorobanAuthorization,
+        TypeVariant::HashIdPreimageSorobanAuthorizationV2,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -47661,7 +47832,7 @@ impl TypeVariant {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 464] = [
+    pub const VARIANTS_STR: [&'static str; 466] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47981,6 +48152,7 @@ impl TypeVariant {
         "SorobanAuthorizedFunction",
         "SorobanAuthorizedInvocation",
         "SorobanAddressCredentials",
+        "SorobanAddressCredentialsV2",
         "SorobanCredentialsType",
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
@@ -47994,6 +48166,7 @@ impl TypeVariant {
         "HashIdPreimageRevokeId",
         "HashIdPreimageContractId",
         "HashIdPreimageSorobanAuthorization",
+        "HashIdPreimageSorobanAuthorizationV2",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -48461,6 +48634,7 @@ impl TypeVariant {
             Self::SorobanAuthorizedFunction => "SorobanAuthorizedFunction",
             Self::SorobanAuthorizedInvocation => "SorobanAuthorizedInvocation",
             Self::SorobanAddressCredentials => "SorobanAddressCredentials",
+            Self::SorobanAddressCredentialsV2 => "SorobanAddressCredentialsV2",
             Self::SorobanCredentialsType => "SorobanCredentialsType",
             Self::SorobanCredentials => "SorobanCredentials",
             Self::SorobanAuthorizationEntry => "SorobanAuthorizationEntry",
@@ -48474,6 +48648,7 @@ impl TypeVariant {
             Self::HashIdPreimageRevokeId => "HashIdPreimageRevokeId",
             Self::HashIdPreimageContractId => "HashIdPreimageContractId",
             Self::HashIdPreimageSorobanAuthorization => "HashIdPreimageSorobanAuthorization",
+            Self::HashIdPreimageSorobanAuthorizationV2 => "HashIdPreimageSorobanAuthorizationV2",
             Self::MemoType => "MemoType",
             Self::Memo => "Memo",
             Self::TimeBounds => "TimeBounds",
@@ -48615,7 +48790,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 464] {
+    pub const fn variants() -> [TypeVariant; 466] {
         Self::VARIANTS
     }
 
@@ -49067,6 +49242,9 @@ impl TypeVariant {
             Self::SorobanAddressCredentials => {
                 gen.into_root_schema_for::<SorobanAddressCredentials>()
             }
+            Self::SorobanAddressCredentialsV2 => {
+                gen.into_root_schema_for::<SorobanAddressCredentialsV2>()
+            }
             Self::SorobanCredentialsType => gen.into_root_schema_for::<SorobanCredentialsType>(),
             Self::SorobanCredentials => gen.into_root_schema_for::<SorobanCredentials>(),
             Self::SorobanAuthorizationEntry => {
@@ -49087,6 +49265,9 @@ impl TypeVariant {
             }
             Self::HashIdPreimageSorobanAuthorization => {
                 gen.into_root_schema_for::<HashIdPreimageSorobanAuthorization>()
+            }
+            Self::HashIdPreimageSorobanAuthorizationV2 => {
+                gen.into_root_schema_for::<HashIdPreimageSorobanAuthorizationV2>()
             }
             Self::MemoType => gen.into_root_schema_for::<MemoType>(),
             Self::Memo => gen.into_root_schema_for::<Memo>(),
@@ -49663,6 +49844,7 @@ impl core::str::FromStr for TypeVariant {
             "SorobanAuthorizedFunction" => Ok(Self::SorobanAuthorizedFunction),
             "SorobanAuthorizedInvocation" => Ok(Self::SorobanAuthorizedInvocation),
             "SorobanAddressCredentials" => Ok(Self::SorobanAddressCredentials),
+            "SorobanAddressCredentialsV2" => Ok(Self::SorobanAddressCredentialsV2),
             "SorobanCredentialsType" => Ok(Self::SorobanCredentialsType),
             "SorobanCredentials" => Ok(Self::SorobanCredentials),
             "SorobanAuthorizationEntry" => Ok(Self::SorobanAuthorizationEntry),
@@ -49676,6 +49858,9 @@ impl core::str::FromStr for TypeVariant {
             "HashIdPreimageRevokeId" => Ok(Self::HashIdPreimageRevokeId),
             "HashIdPreimageContractId" => Ok(Self::HashIdPreimageContractId),
             "HashIdPreimageSorobanAuthorization" => Ok(Self::HashIdPreimageSorobanAuthorization),
+            "HashIdPreimageSorobanAuthorizationV2" => {
+                Ok(Self::HashIdPreimageSorobanAuthorizationV2)
+            }
             "MemoType" => Ok(Self::MemoType),
             "Memo" => Ok(Self::Memo),
             "TimeBounds" => Ok(Self::TimeBounds),
@@ -50149,6 +50334,7 @@ pub enum Type {
     SorobanAuthorizedFunction(Box<SorobanAuthorizedFunction>),
     SorobanAuthorizedInvocation(Box<SorobanAuthorizedInvocation>),
     SorobanAddressCredentials(Box<SorobanAddressCredentials>),
+    SorobanAddressCredentialsV2(Box<SorobanAddressCredentialsV2>),
     SorobanCredentialsType(Box<SorobanCredentialsType>),
     SorobanCredentials(Box<SorobanCredentials>),
     SorobanAuthorizationEntry(Box<SorobanAuthorizationEntry>),
@@ -50162,6 +50348,7 @@ pub enum Type {
     HashIdPreimageRevokeId(Box<HashIdPreimageRevokeId>),
     HashIdPreimageContractId(Box<HashIdPreimageContractId>),
     HashIdPreimageSorobanAuthorization(Box<HashIdPreimageSorobanAuthorization>),
+    HashIdPreimageSorobanAuthorizationV2(Box<HashIdPreimageSorobanAuthorizationV2>),
     MemoType(Box<MemoType>),
     Memo(Box<Memo>),
     TimeBounds(Box<TimeBounds>),
@@ -50297,7 +50484,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 464] = [
+    pub const VARIANTS: [TypeVariant; 466] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -50617,6 +50804,7 @@ impl Type {
         TypeVariant::SorobanAuthorizedFunction,
         TypeVariant::SorobanAuthorizedInvocation,
         TypeVariant::SorobanAddressCredentials,
+        TypeVariant::SorobanAddressCredentialsV2,
         TypeVariant::SorobanCredentialsType,
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
@@ -50630,6 +50818,7 @@ impl Type {
         TypeVariant::HashIdPreimageRevokeId,
         TypeVariant::HashIdPreimageContractId,
         TypeVariant::HashIdPreimageSorobanAuthorization,
+        TypeVariant::HashIdPreimageSorobanAuthorizationV2,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -50763,7 +50952,7 @@ impl Type {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 464] = [
+    pub const VARIANTS_STR: [&'static str; 466] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -51083,6 +51272,7 @@ impl Type {
         "SorobanAuthorizedFunction",
         "SorobanAuthorizedInvocation",
         "SorobanAddressCredentials",
+        "SorobanAddressCredentialsV2",
         "SorobanCredentialsType",
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
@@ -51096,6 +51286,7 @@ impl Type {
         "HashIdPreimageRevokeId",
         "HashIdPreimageContractId",
         "HashIdPreimageSorobanAuthorization",
+        "HashIdPreimageSorobanAuthorizationV2",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -52607,6 +52798,11 @@ impl Type {
                     SorobanAddressCredentials::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::SorobanAddressCredentialsV2 => r.with_limited_depth(|r| {
+                Ok(Self::SorobanAddressCredentialsV2(Box::new(
+                    SorobanAddressCredentialsV2::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::SorobanCredentialsType => r.with_limited_depth(|r| {
                 Ok(Self::SorobanCredentialsType(Box::new(
                     SorobanCredentialsType::read_xdr(r)?,
@@ -52664,6 +52860,11 @@ impl Type {
             TypeVariant::HashIdPreimageSorobanAuthorization => r.with_limited_depth(|r| {
                 Ok(Self::HashIdPreimageSorobanAuthorization(Box::new(
                     HashIdPreimageSorobanAuthorization::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => r.with_limited_depth(|r| {
+                Ok(Self::HashIdPreimageSorobanAuthorizationV2(Box::new(
+                    HashIdPreimageSorobanAuthorizationV2::read_xdr(r)?,
                 )))
             }),
             TypeVariant::MemoType => {
@@ -54657,6 +54858,10 @@ impl Type {
                 ReadXdrIter::<_, SorobanAddressCredentials>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
             ),
+            TypeVariant::SorobanAddressCredentialsV2 => Box::new(
+                ReadXdrIter::<_, SorobanAddressCredentialsV2>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanAddressCredentialsV2(Box::new(t)))),
+            ),
             TypeVariant::SorobanCredentialsType => Box::new(
                 ReadXdrIter::<_, SorobanCredentialsType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
@@ -54711,6 +54916,13 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => Box::new(
+                ReadXdrIter::<_, HashIdPreimageSorobanAuthorizationV2>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorizationV2(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(&mut r.inner, r.limits.clone())
@@ -56868,6 +57080,13 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t.0)))),
             ),
+            TypeVariant::SorobanAddressCredentialsV2 => Box::new(
+                ReadXdrIter::<_, Frame<SorobanAddressCredentialsV2>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SorobanAddressCredentialsV2(Box::new(t.0)))),
+            ),
             TypeVariant::SorobanCredentialsType => Box::new(
                 ReadXdrIter::<_, Frame<SorobanCredentialsType>>::new(
                     &mut r.inner,
@@ -56937,6 +57156,13 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t.0)))),
+            ),
+            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => Box::new(
+                ReadXdrIter::<_, Frame<HashIdPreimageSorobanAuthorizationV2>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorizationV2(Box::new(t.0)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, Frame<MemoType>>::new(&mut r.inner, r.limits.clone())
@@ -58922,6 +59148,10 @@ impl Type {
                 ReadXdrIter::<_, SorobanAddressCredentials>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
             ),
+            TypeVariant::SorobanAddressCredentialsV2 => Box::new(
+                ReadXdrIter::<_, SorobanAddressCredentialsV2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanAddressCredentialsV2(Box::new(t)))),
+            ),
             TypeVariant::SorobanCredentialsType => Box::new(
                 ReadXdrIter::<_, SorobanCredentialsType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
@@ -58973,6 +59203,10 @@ impl Type {
             TypeVariant::HashIdPreimageSorobanAuthorization => Box::new(
                 ReadXdrIter::<_, HashIdPreimageSorobanAuthorization>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
+            ),
+            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => Box::new(
+                ReadXdrIter::<_, HashIdPreimageSorobanAuthorizationV2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorizationV2(Box::new(t)))),
             ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(dec, r.limits.clone())
@@ -60410,6 +60644,9 @@ impl Type {
             TypeVariant::SorobanAddressCredentials => Ok(Self::SorobanAddressCredentials(
                 Box::new(serde_json::from_reader(r)?),
             )),
+            TypeVariant::SorobanAddressCredentialsV2 => Ok(Self::SorobanAddressCredentialsV2(
+                Box::new(serde_json::from_reader(r)?),
+            )),
             TypeVariant::SorobanCredentialsType => Ok(Self::SorobanCredentialsType(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -60446,6 +60683,9 @@ impl Type {
             ))),
             TypeVariant::HashIdPreimageSorobanAuthorization => Ok(
                 Self::HashIdPreimageSorobanAuthorization(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => Ok(
+                Self::HashIdPreimageSorobanAuthorizationV2(Box::new(serde_json::from_reader(r)?)),
             ),
             TypeVariant::MemoType => Ok(Self::MemoType(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::Memo => Ok(Self::Memo(Box::new(serde_json::from_reader(r)?))),
@@ -61824,6 +62064,9 @@ impl Type {
             TypeVariant::SorobanAddressCredentials => Ok(Self::SorobanAddressCredentials(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
+            TypeVariant::SorobanAddressCredentialsV2 => Ok(Self::SorobanAddressCredentialsV2(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
             TypeVariant::SorobanCredentialsType => Ok(Self::SorobanCredentialsType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61862,6 +62105,11 @@ impl Type {
             ))),
             TypeVariant::HashIdPreimageSorobanAuthorization => {
                 Ok(Self::HashIdPreimageSorobanAuthorization(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )))
+            }
+            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => {
+                Ok(Self::HashIdPreimageSorobanAuthorizationV2(Box::new(
                     serde::de::Deserialize::deserialize(r)?,
                 )))
             }
@@ -62621,6 +62869,7 @@ impl Type {
             Self::SorobanAuthorizedFunction(ref v) => v.as_ref(),
             Self::SorobanAuthorizedInvocation(ref v) => v.as_ref(),
             Self::SorobanAddressCredentials(ref v) => v.as_ref(),
+            Self::SorobanAddressCredentialsV2(ref v) => v.as_ref(),
             Self::SorobanCredentialsType(ref v) => v.as_ref(),
             Self::SorobanCredentials(ref v) => v.as_ref(),
             Self::SorobanAuthorizationEntry(ref v) => v.as_ref(),
@@ -62634,6 +62883,7 @@ impl Type {
             Self::HashIdPreimageRevokeId(ref v) => v.as_ref(),
             Self::HashIdPreimageContractId(ref v) => v.as_ref(),
             Self::HashIdPreimageSorobanAuthorization(ref v) => v.as_ref(),
+            Self::HashIdPreimageSorobanAuthorizationV2(ref v) => v.as_ref(),
             Self::MemoType(ref v) => v.as_ref(),
             Self::Memo(ref v) => v.as_ref(),
             Self::TimeBounds(ref v) => v.as_ref(),
@@ -63110,6 +63360,7 @@ impl Type {
             Self::SorobanAuthorizedFunction(_) => "SorobanAuthorizedFunction",
             Self::SorobanAuthorizedInvocation(_) => "SorobanAuthorizedInvocation",
             Self::SorobanAddressCredentials(_) => "SorobanAddressCredentials",
+            Self::SorobanAddressCredentialsV2(_) => "SorobanAddressCredentialsV2",
             Self::SorobanCredentialsType(_) => "SorobanCredentialsType",
             Self::SorobanCredentials(_) => "SorobanCredentials",
             Self::SorobanAuthorizationEntry(_) => "SorobanAuthorizationEntry",
@@ -63123,6 +63374,7 @@ impl Type {
             Self::HashIdPreimageRevokeId(_) => "HashIdPreimageRevokeId",
             Self::HashIdPreimageContractId(_) => "HashIdPreimageContractId",
             Self::HashIdPreimageSorobanAuthorization(_) => "HashIdPreimageSorobanAuthorization",
+            Self::HashIdPreimageSorobanAuthorizationV2(_) => "HashIdPreimageSorobanAuthorizationV2",
             Self::MemoType(_) => "MemoType",
             Self::Memo(_) => "Memo",
             Self::TimeBounds(_) => "TimeBounds",
@@ -63268,7 +63520,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 464] {
+    pub const fn variants() -> [TypeVariant; 466] {
         Self::VARIANTS
     }
 
@@ -63635,6 +63887,7 @@ impl Type {
             Self::SorobanAuthorizedFunction(_) => TypeVariant::SorobanAuthorizedFunction,
             Self::SorobanAuthorizedInvocation(_) => TypeVariant::SorobanAuthorizedInvocation,
             Self::SorobanAddressCredentials(_) => TypeVariant::SorobanAddressCredentials,
+            Self::SorobanAddressCredentialsV2(_) => TypeVariant::SorobanAddressCredentialsV2,
             Self::SorobanCredentialsType(_) => TypeVariant::SorobanCredentialsType,
             Self::SorobanCredentials(_) => TypeVariant::SorobanCredentials,
             Self::SorobanAuthorizationEntry(_) => TypeVariant::SorobanAuthorizationEntry,
@@ -63649,6 +63902,9 @@ impl Type {
             Self::HashIdPreimageContractId(_) => TypeVariant::HashIdPreimageContractId,
             Self::HashIdPreimageSorobanAuthorization(_) => {
                 TypeVariant::HashIdPreimageSorobanAuthorization
+            }
+            Self::HashIdPreimageSorobanAuthorizationV2(_) => {
+                TypeVariant::HashIdPreimageSorobanAuthorizationV2
             }
             Self::MemoType(_) => TypeVariant::MemoType,
             Self::Memo(_) => TypeVariant::Memo,
@@ -64149,6 +64405,7 @@ impl WriteXdr for Type {
             Self::SorobanAuthorizedFunction(v) => v.write_xdr(w),
             Self::SorobanAuthorizedInvocation(v) => v.write_xdr(w),
             Self::SorobanAddressCredentials(v) => v.write_xdr(w),
+            Self::SorobanAddressCredentialsV2(v) => v.write_xdr(w),
             Self::SorobanCredentialsType(v) => v.write_xdr(w),
             Self::SorobanCredentials(v) => v.write_xdr(w),
             Self::SorobanAuthorizationEntry(v) => v.write_xdr(w),
@@ -64162,6 +64419,7 @@ impl WriteXdr for Type {
             Self::HashIdPreimageRevokeId(v) => v.write_xdr(w),
             Self::HashIdPreimageContractId(v) => v.write_xdr(w),
             Self::HashIdPreimageSorobanAuthorization(v) => v.write_xdr(w),
+            Self::HashIdPreimageSorobanAuthorizationV2(v) => v.write_xdr(w),
             Self::MemoType(v) => v.write_xdr(w),
             Self::Memo(v) => v.write_xdr(w),
             Self::TimeBounds(v) => v.write_xdr(w),

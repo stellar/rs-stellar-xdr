@@ -1,5 +1,5 @@
 pub mod list;
-mod schema;
+pub mod schema;
 
 use clap::{Args, Subcommand};
 

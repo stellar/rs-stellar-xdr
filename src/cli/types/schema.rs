@@ -55,6 +55,8 @@ macro_rules! run_x {
 }
 
 impl Cmd {
+    /// # Errors
+    /// Fails if the type is unknown or if the JSON generation fails.
     pub fn run(&self, channel: &Channel) -> Result<(), Error> {
         match channel {
             Channel::Curr => self.run_curr()?,

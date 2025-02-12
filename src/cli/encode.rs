@@ -1,11 +1,11 @@
+use clap::{Args, ValueEnum};
+use std::ffi::OsString;
+use std::io::{Cursor, ErrorKind};
 use std::{
     fs::File,
     io::{stdin, stdout, Read, Write},
     str::FromStr,
 };
-use std::ffi::OsString;
-use std::io::{Cursor, ErrorKind};
-use clap::{Args, ValueEnum};
 
 use crate::cli::Channel;
 
@@ -172,7 +172,8 @@ impl Cmd {
         if self.input.is_empty() {
             Ok(vec![Box::new(stdin())])
         } else {
-            Ok(self.input
+            Ok(self
+                .input
                 .iter()
                 .map(|input| match File::open(input) {
                     Ok(file) => Ok::<Box<dyn Read>, Error>(Box::new(file) as Box<dyn Read>),

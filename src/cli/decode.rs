@@ -1,13 +1,13 @@
+use clap::{Args, ValueEnum};
+use serde::Serialize;
+use std::ffi::OsString;
+use std::io::{Cursor, ErrorKind};
 use std::{
     fmt::Debug,
     fs::File,
     io::{stdin, Read},
     str::FromStr,
 };
-use std::ffi::OsString;
-use std::io::{Cursor, ErrorKind};
-use clap::{Args, ValueEnum};
-use serde::Serialize;
 
 use crate::cli::{skip_whitespace::SkipWhitespace, Channel};
 
@@ -141,7 +141,8 @@ impl Cmd {
         if self.input.is_empty() {
             Ok(vec![Box::new(stdin())])
         } else {
-            Ok(self.input
+            Ok(self
+                .input
                 .iter()
                 .map(|input| match File::open(input) {
                     Ok(file) => Ok::<Box<dyn Read>, Error>(Box::new(file) as Box<dyn Read>),

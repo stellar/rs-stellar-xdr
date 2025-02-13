@@ -46,7 +46,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-ledger-entries.x",
-        "03e8be938bace784410b0e837ed6496ff66dc0d1e70fc6e4f0d006566a344879",
+        "008deaa72ebaae56ba02a740230e5abfe475c5fff52f68eb086deb1fb6f91d1e",
     ),
     (
         "xdr/curr/Stellar-ledger.x",
@@ -54,11 +54,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-overlay.x",
-        "8c73b7c3ad974e7fc4aa4fdf34f7ad50053406254efbd7406c96657cf41691d3",
+        "25d52fd28c91d2377796c6c1ee05b0731f47648751e2b5a33481d64ef4eb7322",
     ),
     (
         "xdr/curr/Stellar-transaction.x",
-        "fdd854ea6ce450500c331a6613d714d9b2f00d2adc86210a8f709e8a9ef4c641",
+        "2f6b1dbab1cc0e01c5f1f7fca2e0a14e6d7ad56e6f04449a7123080ed40e3dbc",
     ),
     (
         "xdr/curr/Stellar-types.x",
@@ -17693,8 +17693,7 @@ impl WriteXdr for EnvelopeType {
 /// enum BucketListType
 /// {
 ///     LIVE = 0,
-///     HOT_ARCHIVE = 1,
-///     COLD_ARCHIVE = 2
+///     HOT_ARCHIVE = 1
 /// };
 /// ```
 ///
@@ -17711,28 +17710,22 @@ impl WriteXdr for EnvelopeType {
 pub enum BucketListType {
     Live = 0,
     HotArchive = 1,
-    ColdArchive = 2,
 }
 
 impl BucketListType {
-    pub const VARIANTS: [BucketListType; 3] = [
-        BucketListType::Live,
-        BucketListType::HotArchive,
-        BucketListType::ColdArchive,
-    ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Live", "HotArchive", "ColdArchive"];
+    pub const VARIANTS: [BucketListType; 2] = [BucketListType::Live, BucketListType::HotArchive];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Live", "HotArchive"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Live => "Live",
             Self::HotArchive => "HotArchive",
-            Self::ColdArchive => "ColdArchive",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [BucketListType; 3] {
+    pub const fn variants() -> [BucketListType; 2] {
         Self::VARIANTS
     }
 }
@@ -17765,7 +17758,6 @@ impl TryFrom<i32> for BucketListType {
         let e = match i {
             0 => BucketListType::Live,
             1 => BucketListType::HotArchive,
-            2 => BucketListType::ColdArchive,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -24268,8 +24260,8 @@ impl WriteXdr for PeerAddress {
 ///     ERROR_MSG = 0,
 ///     AUTH = 2,
 ///     DONT_HAVE = 3,
+///     // GET_PEERS (4) is deprecated
 ///
-///     GET_PEERS = 4, // gets a list of peers this guy knows about
 ///     PEERS = 5,
 ///
 ///     GET_TX_SET = 6, // gets a particular txset by hash
@@ -24317,7 +24309,6 @@ pub enum MessageType {
     ErrorMsg = 0,
     Auth = 2,
     DontHave = 3,
-    GetPeers = 4,
     Peers = 5,
     GetTxSet = 6,
     TxSet = 7,
@@ -24341,11 +24332,10 @@ pub enum MessageType {
 }
 
 impl MessageType {
-    pub const VARIANTS: [MessageType; 24] = [
+    pub const VARIANTS: [MessageType; 23] = [
         MessageType::ErrorMsg,
         MessageType::Auth,
         MessageType::DontHave,
-        MessageType::GetPeers,
         MessageType::Peers,
         MessageType::GetTxSet,
         MessageType::TxSet,
@@ -24367,11 +24357,10 @@ impl MessageType {
         MessageType::TimeSlicedSurveyStartCollecting,
         MessageType::TimeSlicedSurveyStopCollecting,
     ];
-    pub const VARIANTS_STR: [&'static str; 24] = [
+    pub const VARIANTS_STR: [&'static str; 23] = [
         "ErrorMsg",
         "Auth",
         "DontHave",
-        "GetPeers",
         "Peers",
         "GetTxSet",
         "TxSet",
@@ -24400,7 +24389,6 @@ impl MessageType {
             Self::ErrorMsg => "ErrorMsg",
             Self::Auth => "Auth",
             Self::DontHave => "DontHave",
-            Self::GetPeers => "GetPeers",
             Self::Peers => "Peers",
             Self::GetTxSet => "GetTxSet",
             Self::TxSet => "TxSet",
@@ -24425,7 +24413,7 @@ impl MessageType {
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 24] {
+    pub const fn variants() -> [MessageType; 23] {
         Self::VARIANTS
     }
 }
@@ -24459,7 +24447,6 @@ impl TryFrom<i32> for MessageType {
             0 => MessageType::ErrorMsg,
             2 => MessageType::Auth,
             3 => MessageType::DontHave,
-            4 => MessageType::GetPeers,
             5 => MessageType::Peers,
             6 => MessageType::GetTxSet,
             7 => MessageType::TxSet,
@@ -26538,8 +26525,6 @@ impl WriteXdr for FloodDemand {
 ///     Auth auth;
 /// case DONT_HAVE:
 ///     DontHave dontHave;
-/// case GET_PEERS:
-///     void;
 /// case PEERS:
 ///     PeerAddress peers<100>;
 ///
@@ -26609,7 +26594,6 @@ pub enum StellarMessage {
     Hello(Hello),
     Auth(Auth),
     DontHave(DontHave),
-    GetPeers,
     Peers(VecM<PeerAddress, 100>),
     GetTxSet(Uint256),
     TxSet(TransactionSet),
@@ -26632,12 +26616,11 @@ pub enum StellarMessage {
 }
 
 impl StellarMessage {
-    pub const VARIANTS: [MessageType; 24] = [
+    pub const VARIANTS: [MessageType; 23] = [
         MessageType::ErrorMsg,
         MessageType::Hello,
         MessageType::Auth,
         MessageType::DontHave,
-        MessageType::GetPeers,
         MessageType::Peers,
         MessageType::GetTxSet,
         MessageType::TxSet,
@@ -26658,12 +26641,11 @@ impl StellarMessage {
         MessageType::FloodAdvert,
         MessageType::FloodDemand,
     ];
-    pub const VARIANTS_STR: [&'static str; 24] = [
+    pub const VARIANTS_STR: [&'static str; 23] = [
         "ErrorMsg",
         "Hello",
         "Auth",
         "DontHave",
-        "GetPeers",
         "Peers",
         "GetTxSet",
         "TxSet",
@@ -26692,7 +26674,6 @@ impl StellarMessage {
             Self::Hello(_) => "Hello",
             Self::Auth(_) => "Auth",
             Self::DontHave(_) => "DontHave",
-            Self::GetPeers => "GetPeers",
             Self::Peers(_) => "Peers",
             Self::GetTxSet(_) => "GetTxSet",
             Self::TxSet(_) => "TxSet",
@@ -26723,7 +26704,6 @@ impl StellarMessage {
             Self::Hello(_) => MessageType::Hello,
             Self::Auth(_) => MessageType::Auth,
             Self::DontHave(_) => MessageType::DontHave,
-            Self::GetPeers => MessageType::GetPeers,
             Self::Peers(_) => MessageType::Peers,
             Self::GetTxSet(_) => MessageType::GetTxSet,
             Self::TxSet(_) => MessageType::TxSet,
@@ -26749,7 +26729,7 @@ impl StellarMessage {
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 24] {
+    pub const fn variants() -> [MessageType; 23] {
         Self::VARIANTS
     }
 }
@@ -26787,7 +26767,6 @@ impl ReadXdr for StellarMessage {
                 MessageType::Hello => Self::Hello(Hello::read_xdr(r)?),
                 MessageType::Auth => Self::Auth(Auth::read_xdr(r)?),
                 MessageType::DontHave => Self::DontHave(DontHave::read_xdr(r)?),
-                MessageType::GetPeers => Self::GetPeers,
                 MessageType::Peers => Self::Peers(VecM::<PeerAddress, 100>::read_xdr(r)?),
                 MessageType::GetTxSet => Self::GetTxSet(Uint256::read_xdr(r)?),
                 MessageType::TxSet => Self::TxSet(TransactionSet::read_xdr(r)?),
@@ -26846,7 +26825,6 @@ impl WriteXdr for StellarMessage {
                 Self::Hello(v) => v.write_xdr(w)?,
                 Self::Auth(v) => v.write_xdr(w)?,
                 Self::DontHave(v) => v.write_xdr(w)?,
-                Self::GetPeers => ().write_xdr(w)?,
                 Self::Peers(v) => v.write_xdr(w)?,
                 Self::GetTxSet(v) => v.write_xdr(w)?,
                 Self::TxSet(v) => v.write_xdr(w)?,
@@ -32087,544 +32065,6 @@ impl WriteXdr for LedgerFootprint {
         w.with_limited_depth(|w| {
             self.read_only.write_xdr(w)?;
             self.read_write.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ArchivalProofType is an XDR Enum defines as:
-///
-/// ```text
-/// enum ArchivalProofType
-/// {
-///     EXISTENCE = 0,
-///     NONEXISTENCE = 1
-/// };
-/// ```
-///
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[repr(i32)]
-pub enum ArchivalProofType {
-    Existence = 0,
-    Nonexistence = 1,
-}
-
-impl ArchivalProofType {
-    pub const VARIANTS: [ArchivalProofType; 2] = [
-        ArchivalProofType::Existence,
-        ArchivalProofType::Nonexistence,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Existence", "Nonexistence"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Existence => "Existence",
-            Self::Nonexistence => "Nonexistence",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ArchivalProofType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ArchivalProofType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ArchivalProofType> for ArchivalProofType {
-    fn variants() -> slice::Iter<'static, ArchivalProofType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ArchivalProofType {}
-
-impl fmt::Display for ArchivalProofType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ArchivalProofType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ArchivalProofType::Existence,
-            1 => ArchivalProofType::Nonexistence,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ArchivalProofType> for i32 {
-    #[must_use]
-    fn from(e: ArchivalProofType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ArchivalProofType {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let e = i32::read_xdr(r)?;
-            let v: Self = e.try_into()?;
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ArchivalProofType {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            let i: i32 = (*self).into();
-            i.write_xdr(w)
-        })
-    }
-}
-
-/// ArchivalProofNode is an XDR Struct defines as:
-///
-/// ```text
-/// struct ArchivalProofNode
-/// {
-///     uint32 index;
-///     Hash hash;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ArchivalProofNode {
-    pub index: u32,
-    pub hash: Hash,
-}
-
-impl ReadXdr for ArchivalProofNode {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                index: u32::read_xdr(r)?,
-                hash: Hash::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ArchivalProofNode {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.index.write_xdr(w)?;
-            self.hash.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ProofLevel is an XDR Typedef defines as:
-///
-/// ```text
-/// typedef ArchivalProofNode ProofLevel<>;
-/// ```
-///
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[derive(Debug)]
-pub struct ProofLevel(pub VecM<ArchivalProofNode>);
-
-impl From<ProofLevel> for VecM<ArchivalProofNode> {
-    #[must_use]
-    fn from(x: ProofLevel) -> Self {
-        x.0
-    }
-}
-
-impl From<VecM<ArchivalProofNode>> for ProofLevel {
-    #[must_use]
-    fn from(x: VecM<ArchivalProofNode>) -> Self {
-        ProofLevel(x)
-    }
-}
-
-impl AsRef<VecM<ArchivalProofNode>> for ProofLevel {
-    #[must_use]
-    fn as_ref(&self) -> &VecM<ArchivalProofNode> {
-        &self.0
-    }
-}
-
-impl ReadXdr for ProofLevel {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let i = VecM::<ArchivalProofNode>::read_xdr(r)?;
-            let v = ProofLevel(i);
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ProofLevel {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
-
-impl Deref for ProofLevel {
-    type Target = VecM<ArchivalProofNode>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<ProofLevel> for Vec<ArchivalProofNode> {
-    #[must_use]
-    fn from(x: ProofLevel) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<ArchivalProofNode>> for ProofLevel {
-    type Error = Error;
-    fn try_from(x: Vec<ArchivalProofNode>) -> Result<Self> {
-        Ok(ProofLevel(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<ArchivalProofNode>> for ProofLevel {
-    type Error = Error;
-    fn try_from(x: &Vec<ArchivalProofNode>) -> Result<Self> {
-        Ok(ProofLevel(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<ArchivalProofNode>> for ProofLevel {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<ArchivalProofNode> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[ArchivalProofNode]> for ProofLevel {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[ArchivalProofNode] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[ArchivalProofNode] {
-        self.0 .0
-    }
-}
-
-/// NonexistenceProofBody is an XDR Struct defines as:
-///
-/// ```text
-/// struct NonexistenceProofBody
-/// {
-///     ColdArchiveBucketEntry entriesToProve<>;
-///
-///     // Vector of vectors, where proofLevels[level]
-///     // contains all HashNodes that correspond with that level
-///     ProofLevel proofLevels<>;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct NonexistenceProofBody {
-    pub entries_to_prove: VecM<ColdArchiveBucketEntry>,
-    pub proof_levels: VecM<ProofLevel>,
-}
-
-impl ReadXdr for NonexistenceProofBody {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                entries_to_prove: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
-                proof_levels: VecM::<ProofLevel>::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for NonexistenceProofBody {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.entries_to_prove.write_xdr(w)?;
-            self.proof_levels.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ExistenceProofBody is an XDR Struct defines as:
-///
-/// ```text
-/// struct ExistenceProofBody
-/// {
-///     LedgerKey keysToProve<>;
-///
-///     // Bounds for each key being proved, where bound[n]
-///     // corresponds to keysToProve[n]
-///     ColdArchiveBucketEntry lowBoundEntries<>;
-///     ColdArchiveBucketEntry highBoundEntries<>;
-///
-///     // Vector of vectors, where proofLevels[level]
-///     // contains all HashNodes that correspond with that level
-///     ProofLevel proofLevels<>;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ExistenceProofBody {
-    pub keys_to_prove: VecM<LedgerKey>,
-    pub low_bound_entries: VecM<ColdArchiveBucketEntry>,
-    pub high_bound_entries: VecM<ColdArchiveBucketEntry>,
-    pub proof_levels: VecM<ProofLevel>,
-}
-
-impl ReadXdr for ExistenceProofBody {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                keys_to_prove: VecM::<LedgerKey>::read_xdr(r)?,
-                low_bound_entries: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
-                high_bound_entries: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
-                proof_levels: VecM::<ProofLevel>::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ExistenceProofBody {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.keys_to_prove.write_xdr(w)?;
-            self.low_bound_entries.write_xdr(w)?;
-            self.high_bound_entries.write_xdr(w)?;
-            self.proof_levels.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ArchivalProofBody is an XDR NestedUnion defines as:
-///
-/// ```text
-/// union switch (ArchivalProofType t)
-///     {
-///     case EXISTENCE:
-///         NonexistenceProofBody nonexistenceProof;
-///     case NONEXISTENCE:
-///         ExistenceProofBody existenceProof;
-///     }
-/// ```
-///
-// union with discriminant ArchivalProofType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[allow(clippy::large_enum_variant)]
-pub enum ArchivalProofBody {
-    Existence(NonexistenceProofBody),
-    Nonexistence(ExistenceProofBody),
-}
-
-impl ArchivalProofBody {
-    pub const VARIANTS: [ArchivalProofType; 2] = [
-        ArchivalProofType::Existence,
-        ArchivalProofType::Nonexistence,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Existence", "Nonexistence"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Existence(_) => "Existence",
-            Self::Nonexistence(_) => "Nonexistence",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ArchivalProofType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Existence(_) => ArchivalProofType::Existence,
-            Self::Nonexistence(_) => ArchivalProofType::Nonexistence,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ArchivalProofType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ArchivalProofBody {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ArchivalProofType> for ArchivalProofBody {
-    #[must_use]
-    fn discriminant(&self) -> ArchivalProofType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ArchivalProofType> for ArchivalProofBody {
-    fn variants() -> slice::Iter<'static, ArchivalProofType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ArchivalProofType> for ArchivalProofBody {}
-
-impl ReadXdr for ArchivalProofBody {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let dv: ArchivalProofType = <ArchivalProofType as ReadXdr>::read_xdr(r)?;
-            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-            let v = match dv {
-                ArchivalProofType::Existence => {
-                    Self::Existence(NonexistenceProofBody::read_xdr(r)?)
-                }
-                ArchivalProofType::Nonexistence => {
-                    Self::Nonexistence(ExistenceProofBody::read_xdr(r)?)
-                }
-                #[allow(unreachable_patterns)]
-                _ => return Err(Error::Invalid),
-            };
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ArchivalProofBody {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Existence(v) => v.write_xdr(w)?,
-                Self::Nonexistence(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
-/// ArchivalProof is an XDR Struct defines as:
-///
-/// ```text
-/// struct ArchivalProof
-/// {
-///     uint32 epoch; // AST Subtree for this proof
-///
-///     union switch (ArchivalProofType t)
-///     {
-///     case EXISTENCE:
-///         NonexistenceProofBody nonexistenceProof;
-///     case NONEXISTENCE:
-///         ExistenceProofBody existenceProof;
-///     } body;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ArchivalProof {
-    pub epoch: u32,
-    pub body: ArchivalProofBody,
-}
-
-impl ReadXdr for ArchivalProof {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                epoch: u32::read_xdr(r)?,
-                body: ArchivalProofBody::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ArchivalProof {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.epoch.write_xdr(w)?;
-            self.body.write_xdr(w)?;
             Ok(())
         })
     }
@@ -46646,13 +46086,6 @@ pub enum TypeVariant {
     PreconditionType,
     Preconditions,
     LedgerFootprint,
-    ArchivalProofType,
-    ArchivalProofNode,
-    ProofLevel,
-    NonexistenceProofBody,
-    ExistenceProofBody,
-    ArchivalProof,
-    ArchivalProofBody,
     SorobanResources,
     SorobanTransactionData,
     TransactionV0,
@@ -46772,7 +46205,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 459] = [
+    pub const VARIANTS: [TypeVariant; 452] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -47109,13 +46542,6 @@ impl TypeVariant {
         TypeVariant::PreconditionType,
         TypeVariant::Preconditions,
         TypeVariant::LedgerFootprint,
-        TypeVariant::ArchivalProofType,
-        TypeVariant::ArchivalProofNode,
-        TypeVariant::ProofLevel,
-        TypeVariant::NonexistenceProofBody,
-        TypeVariant::ExistenceProofBody,
-        TypeVariant::ArchivalProof,
-        TypeVariant::ArchivalProofBody,
         TypeVariant::SorobanResources,
         TypeVariant::SorobanTransactionData,
         TypeVariant::TransactionV0,
@@ -47233,7 +46659,7 @@ impl TypeVariant {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 459] = [
+    pub const VARIANTS_STR: [&'static str; 452] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47570,13 +46996,6 @@ impl TypeVariant {
         "PreconditionType",
         "Preconditions",
         "LedgerFootprint",
-        "ArchivalProofType",
-        "ArchivalProofNode",
-        "ProofLevel",
-        "NonexistenceProofBody",
-        "ExistenceProofBody",
-        "ArchivalProof",
-        "ArchivalProofBody",
         "SorobanResources",
         "SorobanTransactionData",
         "TransactionV0",
@@ -48043,13 +47462,6 @@ impl TypeVariant {
             Self::PreconditionType => "PreconditionType",
             Self::Preconditions => "Preconditions",
             Self::LedgerFootprint => "LedgerFootprint",
-            Self::ArchivalProofType => "ArchivalProofType",
-            Self::ArchivalProofNode => "ArchivalProofNode",
-            Self::ProofLevel => "ProofLevel",
-            Self::NonexistenceProofBody => "NonexistenceProofBody",
-            Self::ExistenceProofBody => "ExistenceProofBody",
-            Self::ArchivalProof => "ArchivalProof",
-            Self::ArchivalProofBody => "ArchivalProofBody",
             Self::SorobanResources => "SorobanResources",
             Self::SorobanTransactionData => "SorobanTransactionData",
             Self::TransactionV0 => "TransactionV0",
@@ -48175,7 +47587,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 459] {
+    pub const fn variants() -> [TypeVariant; 452] {
         Self::VARIANTS
     }
 
@@ -48648,13 +48060,6 @@ impl TypeVariant {
             Self::PreconditionType => gen.into_root_schema_for::<PreconditionType>(),
             Self::Preconditions => gen.into_root_schema_for::<Preconditions>(),
             Self::LedgerFootprint => gen.into_root_schema_for::<LedgerFootprint>(),
-            Self::ArchivalProofType => gen.into_root_schema_for::<ArchivalProofType>(),
-            Self::ArchivalProofNode => gen.into_root_schema_for::<ArchivalProofNode>(),
-            Self::ProofLevel => gen.into_root_schema_for::<ProofLevel>(),
-            Self::NonexistenceProofBody => gen.into_root_schema_for::<NonexistenceProofBody>(),
-            Self::ExistenceProofBody => gen.into_root_schema_for::<ExistenceProofBody>(),
-            Self::ArchivalProof => gen.into_root_schema_for::<ArchivalProof>(),
-            Self::ArchivalProofBody => gen.into_root_schema_for::<ArchivalProofBody>(),
             Self::SorobanResources => gen.into_root_schema_for::<SorobanResources>(),
             Self::SorobanTransactionData => gen.into_root_schema_for::<SorobanTransactionData>(),
             Self::TransactionV0 => gen.into_root_schema_for::<TransactionV0>(),
@@ -49227,13 +48632,6 @@ impl core::str::FromStr for TypeVariant {
             "PreconditionType" => Ok(Self::PreconditionType),
             "Preconditions" => Ok(Self::Preconditions),
             "LedgerFootprint" => Ok(Self::LedgerFootprint),
-            "ArchivalProofType" => Ok(Self::ArchivalProofType),
-            "ArchivalProofNode" => Ok(Self::ArchivalProofNode),
-            "ProofLevel" => Ok(Self::ProofLevel),
-            "NonexistenceProofBody" => Ok(Self::NonexistenceProofBody),
-            "ExistenceProofBody" => Ok(Self::ExistenceProofBody),
-            "ArchivalProof" => Ok(Self::ArchivalProof),
-            "ArchivalProofBody" => Ok(Self::ArchivalProofBody),
             "SorobanResources" => Ok(Self::SorobanResources),
             "SorobanTransactionData" => Ok(Self::SorobanTransactionData),
             "TransactionV0" => Ok(Self::TransactionV0),
@@ -49708,13 +49106,6 @@ pub enum Type {
     PreconditionType(Box<PreconditionType>),
     Preconditions(Box<Preconditions>),
     LedgerFootprint(Box<LedgerFootprint>),
-    ArchivalProofType(Box<ArchivalProofType>),
-    ArchivalProofNode(Box<ArchivalProofNode>),
-    ProofLevel(Box<ProofLevel>),
-    NonexistenceProofBody(Box<NonexistenceProofBody>),
-    ExistenceProofBody(Box<ExistenceProofBody>),
-    ArchivalProof(Box<ArchivalProof>),
-    ArchivalProofBody(Box<ArchivalProofBody>),
     SorobanResources(Box<SorobanResources>),
     SorobanTransactionData(Box<SorobanTransactionData>),
     TransactionV0(Box<TransactionV0>),
@@ -49834,7 +49225,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 459] = [
+    pub const VARIANTS: [TypeVariant; 452] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -50171,13 +49562,6 @@ impl Type {
         TypeVariant::PreconditionType,
         TypeVariant::Preconditions,
         TypeVariant::LedgerFootprint,
-        TypeVariant::ArchivalProofType,
-        TypeVariant::ArchivalProofNode,
-        TypeVariant::ProofLevel,
-        TypeVariant::NonexistenceProofBody,
-        TypeVariant::ExistenceProofBody,
-        TypeVariant::ArchivalProof,
-        TypeVariant::ArchivalProofBody,
         TypeVariant::SorobanResources,
         TypeVariant::SorobanTransactionData,
         TypeVariant::TransactionV0,
@@ -50295,7 +49679,7 @@ impl Type {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 459] = [
+    pub const VARIANTS_STR: [&'static str; 452] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50632,13 +50016,6 @@ impl Type {
         "PreconditionType",
         "Preconditions",
         "LedgerFootprint",
-        "ArchivalProofType",
-        "ArchivalProofNode",
-        "ProofLevel",
-        "NonexistenceProofBody",
-        "ExistenceProofBody",
-        "ArchivalProof",
-        "ArchivalProofBody",
         "SorobanResources",
         "SorobanTransactionData",
         "TransactionV0",
@@ -52202,37 +51579,6 @@ impl Type {
                 Ok(Self::LedgerFootprint(Box::new(LedgerFootprint::read_xdr(
                     r,
                 )?)))
-            }),
-            TypeVariant::ArchivalProofType => r.with_limited_depth(|r| {
-                Ok(Self::ArchivalProofType(Box::new(
-                    ArchivalProofType::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ArchivalProofNode => r.with_limited_depth(|r| {
-                Ok(Self::ArchivalProofNode(Box::new(
-                    ArchivalProofNode::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ProofLevel => {
-                r.with_limited_depth(|r| Ok(Self::ProofLevel(Box::new(ProofLevel::read_xdr(r)?))))
-            }
-            TypeVariant::NonexistenceProofBody => r.with_limited_depth(|r| {
-                Ok(Self::NonexistenceProofBody(Box::new(
-                    NonexistenceProofBody::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ExistenceProofBody => r.with_limited_depth(|r| {
-                Ok(Self::ExistenceProofBody(Box::new(
-                    ExistenceProofBody::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ArchivalProof => r.with_limited_depth(|r| {
-                Ok(Self::ArchivalProof(Box::new(ArchivalProof::read_xdr(r)?)))
-            }),
-            TypeVariant::ArchivalProofBody => r.with_limited_depth(|r| {
-                Ok(Self::ArchivalProofBody(Box::new(
-                    ArchivalProofBody::read_xdr(r)?,
-                )))
             }),
             TypeVariant::SorobanResources => r.with_limited_depth(|r| {
                 Ok(Self::SorobanResources(Box::new(
@@ -54226,34 +53572,6 @@ impl Type {
             TypeVariant::LedgerFootprint => Box::new(
                 ReadXdrIter::<_, LedgerFootprint>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProofType => Box::new(
-                ReadXdrIter::<_, ArchivalProofType>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProofNode => Box::new(
-                ReadXdrIter::<_, ArchivalProofNode>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t)))),
-            ),
-            TypeVariant::ProofLevel => Box::new(
-                ReadXdrIter::<_, ProofLevel>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t)))),
-            ),
-            TypeVariant::NonexistenceProofBody => Box::new(
-                ReadXdrIter::<_, NonexistenceProofBody>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
-            ),
-            TypeVariant::ExistenceProofBody => Box::new(
-                ReadXdrIter::<_, ExistenceProofBody>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProof => Box::new(
-                ReadXdrIter::<_, ArchivalProof>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProofBody => Box::new(
-                ReadXdrIter::<_, ArchivalProofBody>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t)))),
             ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, SorobanResources>::new(&mut r.inner, r.limits.clone())
@@ -56427,34 +55745,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<LedgerFootprint>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t.0)))),
             ),
-            TypeVariant::ArchivalProofType => Box::new(
-                ReadXdrIter::<_, Frame<ArchivalProofType>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t.0)))),
-            ),
-            TypeVariant::ArchivalProofNode => Box::new(
-                ReadXdrIter::<_, Frame<ArchivalProofNode>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t.0)))),
-            ),
-            TypeVariant::ProofLevel => Box::new(
-                ReadXdrIter::<_, Frame<ProofLevel>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t.0)))),
-            ),
-            TypeVariant::NonexistenceProofBody => Box::new(
-                ReadXdrIter::<_, Frame<NonexistenceProofBody>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t.0)))),
-            ),
-            TypeVariant::ExistenceProofBody => Box::new(
-                ReadXdrIter::<_, Frame<ExistenceProofBody>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t.0)))),
-            ),
-            TypeVariant::ArchivalProof => Box::new(
-                ReadXdrIter::<_, Frame<ArchivalProof>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t.0)))),
-            ),
-            TypeVariant::ArchivalProofBody => Box::new(
-                ReadXdrIter::<_, Frame<ArchivalProofBody>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t.0)))),
-            ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, Frame<SorobanResources>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanResources(Box::new(t.0)))),
@@ -58437,34 +57727,6 @@ impl Type {
                 ReadXdrIter::<_, LedgerFootprint>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
             ),
-            TypeVariant::ArchivalProofType => Box::new(
-                ReadXdrIter::<_, ArchivalProofType>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProofNode => Box::new(
-                ReadXdrIter::<_, ArchivalProofNode>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t)))),
-            ),
-            TypeVariant::ProofLevel => Box::new(
-                ReadXdrIter::<_, ProofLevel>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t)))),
-            ),
-            TypeVariant::NonexistenceProofBody => Box::new(
-                ReadXdrIter::<_, NonexistenceProofBody>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
-            ),
-            TypeVariant::ExistenceProofBody => Box::new(
-                ReadXdrIter::<_, ExistenceProofBody>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProof => Box::new(
-                ReadXdrIter::<_, ArchivalProof>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProofBody => Box::new(
-                ReadXdrIter::<_, ArchivalProofBody>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t)))),
-            ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, SorobanResources>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanResources(Box::new(t)))),
@@ -59880,25 +59142,6 @@ impl Type {
             TypeVariant::LedgerFootprint => {
                 Ok(Self::LedgerFootprint(Box::new(serde_json::from_reader(r)?)))
             }
-            TypeVariant::ArchivalProofType => Ok(Self::ArchivalProofType(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ArchivalProofNode => Ok(Self::ArchivalProofNode(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ProofLevel => Ok(Self::ProofLevel(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ArchivalProof => {
-                Ok(Self::ArchivalProof(Box::new(serde_json::from_reader(r)?)))
-            }
-            TypeVariant::ArchivalProofBody => Ok(Self::ArchivalProofBody(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
             TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -61287,27 +60530,6 @@ impl Type {
             TypeVariant::LedgerFootprint => Ok(Self::LedgerFootprint(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::ArchivalProofType => Ok(Self::ArchivalProofType(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ArchivalProofNode => Ok(Self::ArchivalProofNode(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ProofLevel => Ok(Self::ProofLevel(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ArchivalProof => Ok(Self::ArchivalProof(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ArchivalProofBody => Ok(Self::ArchivalProofBody(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
             TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -62033,13 +61255,6 @@ impl Type {
             Self::PreconditionType(ref v) => v.as_ref(),
             Self::Preconditions(ref v) => v.as_ref(),
             Self::LedgerFootprint(ref v) => v.as_ref(),
-            Self::ArchivalProofType(ref v) => v.as_ref(),
-            Self::ArchivalProofNode(ref v) => v.as_ref(),
-            Self::ProofLevel(ref v) => v.as_ref(),
-            Self::NonexistenceProofBody(ref v) => v.as_ref(),
-            Self::ExistenceProofBody(ref v) => v.as_ref(),
-            Self::ArchivalProof(ref v) => v.as_ref(),
-            Self::ArchivalProofBody(ref v) => v.as_ref(),
             Self::SorobanResources(ref v) => v.as_ref(),
             Self::SorobanTransactionData(ref v) => v.as_ref(),
             Self::TransactionV0(ref v) => v.as_ref(),
@@ -62515,13 +61730,6 @@ impl Type {
             Self::PreconditionType(_) => "PreconditionType",
             Self::Preconditions(_) => "Preconditions",
             Self::LedgerFootprint(_) => "LedgerFootprint",
-            Self::ArchivalProofType(_) => "ArchivalProofType",
-            Self::ArchivalProofNode(_) => "ArchivalProofNode",
-            Self::ProofLevel(_) => "ProofLevel",
-            Self::NonexistenceProofBody(_) => "NonexistenceProofBody",
-            Self::ExistenceProofBody(_) => "ExistenceProofBody",
-            Self::ArchivalProof(_) => "ArchivalProof",
-            Self::ArchivalProofBody(_) => "ArchivalProofBody",
             Self::SorobanResources(_) => "SorobanResources",
             Self::SorobanTransactionData(_) => "SorobanTransactionData",
             Self::TransactionV0(_) => "TransactionV0",
@@ -62651,7 +61859,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 459] {
+    pub const fn variants() -> [TypeVariant; 452] {
         Self::VARIANTS
     }
 
@@ -63035,13 +62243,6 @@ impl Type {
             Self::PreconditionType(_) => TypeVariant::PreconditionType,
             Self::Preconditions(_) => TypeVariant::Preconditions,
             Self::LedgerFootprint(_) => TypeVariant::LedgerFootprint,
-            Self::ArchivalProofType(_) => TypeVariant::ArchivalProofType,
-            Self::ArchivalProofNode(_) => TypeVariant::ArchivalProofNode,
-            Self::ProofLevel(_) => TypeVariant::ProofLevel,
-            Self::NonexistenceProofBody(_) => TypeVariant::NonexistenceProofBody,
-            Self::ExistenceProofBody(_) => TypeVariant::ExistenceProofBody,
-            Self::ArchivalProof(_) => TypeVariant::ArchivalProof,
-            Self::ArchivalProofBody(_) => TypeVariant::ArchivalProofBody,
             Self::SorobanResources(_) => TypeVariant::SorobanResources,
             Self::SorobanTransactionData(_) => TypeVariant::SorobanTransactionData,
             Self::TransactionV0(_) => TypeVariant::TransactionV0,
@@ -63542,13 +62743,6 @@ impl WriteXdr for Type {
             Self::PreconditionType(v) => v.write_xdr(w),
             Self::Preconditions(v) => v.write_xdr(w),
             Self::LedgerFootprint(v) => v.write_xdr(w),
-            Self::ArchivalProofType(v) => v.write_xdr(w),
-            Self::ArchivalProofNode(v) => v.write_xdr(w),
-            Self::ProofLevel(v) => v.write_xdr(w),
-            Self::NonexistenceProofBody(v) => v.write_xdr(w),
-            Self::ExistenceProofBody(v) => v.write_xdr(w),
-            Self::ArchivalProof(v) => v.write_xdr(w),
-            Self::ArchivalProofBody(v) => v.write_xdr(w),
             Self::SorobanResources(v) => v.write_xdr(w),
             Self::SorobanTransactionData(v) => v.write_xdr(w),
             Self::TransactionV0(v) => v.write_xdr(w),

@@ -1,6 +1,6 @@
 export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
-CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex
+CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex,sha2
 
 CARGO_DOC_ARGS?=--open
 

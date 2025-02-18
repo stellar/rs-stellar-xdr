@@ -1,13 +1,13 @@
+use crate::cli::Channel;
 use clap::{Args, ValueEnum};
 use std::ffi::OsString;
-use std::io::{Cursor, ErrorKind};
+use std::io::Cursor;
+use std::path::Path;
 use std::{
     fs::File,
     io::{stdin, stdout, Read, Write},
     str::FromStr,
 };
-
-use crate::cli::Channel;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -175,13 +175,15 @@ impl Cmd {
             Ok(self
                 .input
                 .iter()
-                .map(|input| match File::open(input) {
-                    Ok(file) => Ok::<Box<dyn Read>, Error>(Box::new(file) as Box<dyn Read>),
-                    Err(e) if e.kind() == ErrorKind::NotFound => {
+                .map(|input| {
+                    let exist = Path::new(input).try_exists();
+                    if let Ok(true) = exist {
+                        let file = File::open(input)?;
+                        Ok::<Box<dyn Read>, Error>(Box::new(file) as Box<dyn Read>)
+                    } else {
                         Ok(Box::new(Cursor::new(input.clone().into_encoded_bytes()))
                             as Box<dyn Read>)
                     }
-                    Err(e) => Err(e.into()),
                 })
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()

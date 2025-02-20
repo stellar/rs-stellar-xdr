@@ -28,7 +28,7 @@ pub enum Error {
 #[derive(Args, Debug, Clone)]
 #[command()]
 pub struct Cmd {
-    /// Input that could either be strings or files to decode, or stdin if empty
+    /// XDR or files containing XDR to decode, or stdin if empty
     #[arg()]
     pub input: Vec<OsString>,
 

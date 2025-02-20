@@ -1,15 +1,10 @@
-use crate::cli::{skip_whitespace::SkipWhitespace, util, Channel};
+use std::ffi::OsString;
+use std::{fmt::Debug, str::FromStr};
+
 use clap::{Args, ValueEnum};
 use serde::Serialize;
-use std::ffi::OsString;
-use std::io::Cursor;
-use std::path::Path;
-use std::{
-    fmt::Debug,
-    fs::File,
-    io::{stdin, Read},
-    str::FromStr,
-};
+
+use crate::cli::{skip_whitespace::SkipWhitespace, util, Channel};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

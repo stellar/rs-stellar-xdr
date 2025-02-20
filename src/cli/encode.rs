@@ -1,13 +1,12 @@
-use crate::cli::{util, Channel};
-use clap::{Args, ValueEnum};
 use std::ffi::OsString;
-use std::io::Cursor;
-use std::path::Path;
 use std::{
-    fs::File,
-    io::{stdin, stdout, Read, Write},
+    io::{stdout, Write},
     str::FromStr,
 };
+
+use clap::{Args, ValueEnum};
+
+use crate::cli::{util, Channel};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

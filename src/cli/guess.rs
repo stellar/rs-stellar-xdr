@@ -1,11 +1,10 @@
-use clap::{Args, ValueEnum};
 use std::ffi::OsString;
 use std::{
     cmp,
-    fs::File,
-    io::{self, stdin, Read},
-    path::PathBuf,
+    io::{self, Read},
 };
+
+use clap::{Args, ValueEnum};
 
 use crate::cli::{skip_whitespace::SkipWhitespace, util, Channel};
 

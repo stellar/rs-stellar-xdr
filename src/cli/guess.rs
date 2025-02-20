@@ -1,3 +1,5 @@
+use clap::{Args, ValueEnum};
+use std::ffi::OsString;
 use std::{
     cmp,
     fs::File,
@@ -5,9 +7,7 @@ use std::{
     path::PathBuf,
 };
 
-use clap::{Args, ValueEnum};
-
-use crate::cli::{skip_whitespace::SkipWhitespace, Channel};
+use crate::cli::{skip_whitespace::SkipWhitespace, util, Channel};
 
 #[derive(thiserror::Error, Debug)]
 #[allow(clippy::enum_variant_names)]
@@ -18,22 +18,24 @@ pub enum Error {
     ReadXdrNext(#[from] crate::next::Error),
     #[error("error reading file: {0}")]
     ReadFile(#[from] std::io::Error),
+    #[error("couldn't guess XDR type")]
+    InvalidType,
 }
 
 #[derive(Args, Debug, Clone)]
 #[command()]
 pub struct Cmd {
-    /// File to decode, or stdin if omitted
+    /// XDR or files containing XDR to decode, or stdin if empty
     #[arg()]
-    pub file: Option<PathBuf>,
+    pub input: Vec<OsString>,
 
-    // Input format of the XDR
-    #[arg(long, value_enum, default_value_t)]
-    pub input: InputFormat,
+    // Input format
+    #[arg(long = "input", value_enum, default_value_t)]
+    pub input_format: InputFormat,
 
     // Output format
-    #[arg(long, value_enum, default_value_t)]
-    pub output: OutputFormat,
+    #[arg(long = "output", value_enum, default_value_t)]
+    pub output_format: OutputFormat,
 
     /// Certainty as an arbitrary value
     #[arg(long, default_value = "2")]
@@ -69,68 +71,80 @@ impl Default for OutputFormat {
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let mut rr = ResetRead::new(self.file()?);
-            'variants: for v in crate::$m::TypeVariant::VARIANTS {
-                rr.reset();
-                let count: usize = match self.input {
-                    InputFormat::Single => {
-                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
-                        crate::$m::Type::read_xdr_to_end(v, &mut l)
-                            .ok()
-                            .map(|_| 1)
-                            .unwrap_or_default()
-                    }
-                    InputFormat::SingleBase64 => {
-                        let sw = SkipWhitespace::new(&mut rr);
-                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
-                        crate::$m::Type::read_xdr_base64_to_end(v, &mut l)
-                            .ok()
-                            .map(|_| 1)
-                            .unwrap_or_default()
-                    }
-                    InputFormat::Stream => {
-                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
-                        let iter = crate::$m::Type::read_xdr_iter(v, &mut l);
-                        let iter = iter.take(self.certainty);
-                        let mut count = 0;
-                        for v in iter {
-                            match v {
-                                Ok(_) => count += 1,
-                                Err(_) => continue 'variants,
-                            }
+            let mut input = util::parse_input::<Error>(&self.input)?;
+            let len = input.len();
+            for (i, read) in &mut input.iter_mut().enumerate() {
+                let mut rr = ResetRead::new(read);
+                let mut guessed = false;
+                'variants: for v in crate::$m::TypeVariant::VARIANTS {
+                    rr.reset();
+                    let count: usize = match self.input_format {
+                        InputFormat::Single => {
+                            let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
+                            crate::$m::Type::read_xdr_to_end(v, &mut l)
+                                .ok()
+                                .map(|_| 1)
+                                .unwrap_or_default()
                         }
-                        count
-                    }
-                    InputFormat::StreamBase64 => {
-                        let sw = SkipWhitespace::new(&mut rr);
-                        let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
-                        let iter = crate::$m::Type::read_xdr_base64_iter(v, &mut l);
-                        let iter = iter.take(self.certainty);
-                        let mut count = 0;
-                        for v in iter {
-                            match v {
-                                Ok(_) => count += 1,
-                                Err(_) => continue 'variants,
-                            }
+                        InputFormat::SingleBase64 => {
+                            let sw = SkipWhitespace::new(&mut rr);
+                            let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                            crate::$m::Type::read_xdr_base64_to_end(v, &mut l)
+                                .ok()
+                                .map(|_| 1)
+                                .unwrap_or_default()
                         }
-                        count
-                    }
-                    InputFormat::StreamFramed => {
-                        let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
-                        let iter = crate::$m::Type::read_xdr_framed_iter(v, &mut l);
-                        let iter = iter.take(self.certainty);
-                        let mut count = 0;
-                        for v in iter {
-                            match v {
-                                Ok(_) => count += 1,
-                                Err(_) => continue 'variants,
+                        InputFormat::Stream => {
+                            let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
+                            let iter = crate::$m::Type::read_xdr_iter(v, &mut l);
+                            let iter = iter.take(self.certainty);
+                            let mut count = 0;
+                            for v in iter {
+                                match v {
+                                    Ok(_) => count += 1,
+                                    Err(_) => continue 'variants,
+                                }
                             }
+                            count
                         }
-                        count
+                        InputFormat::StreamBase64 => {
+                            let sw = SkipWhitespace::new(&mut rr);
+                            let mut l = crate::$m::Limited::new(sw, crate::$m::Limits::none());
+                            let iter = crate::$m::Type::read_xdr_base64_iter(v, &mut l);
+                            let iter = iter.take(self.certainty);
+                            let mut count = 0;
+                            for v in iter {
+                                match v {
+                                    Ok(_) => count += 1,
+                                    Err(_) => continue 'variants,
+                                }
+                            }
+                            count
+                        }
+                        InputFormat::StreamFramed => {
+                            let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
+                            let iter = crate::$m::Type::read_xdr_framed_iter(v, &mut l);
+                            let iter = iter.take(self.certainty);
+                            let mut count = 0;
+                            for v in iter {
+                                match v {
+                                    Ok(_) => count += 1,
+                                    Err(_) => continue 'variants,
+                                }
+                            }
+                            count
+                        }
+                    };
+                    if count > 0 {
+                        println!("{}", v.name());
+                        guessed = true;
                     }
-                };
-                if count > 0 {
-                    println!("{}", v.name());
+                }
+                if (!guessed) {
+                    return Err(Error::InvalidType);
+                }
+                if (i != len - 1) {
+                    println!("");
                 }
             }
             Ok(())
@@ -154,14 +168,6 @@ impl Cmd {
 
     run_x!(run_curr, curr);
     run_x!(run_next, next);
-
-    fn file(&self) -> Result<Box<dyn Read>, Error> {
-        if let Some(f) = &self.file {
-            Ok(Box::new(File::open(f)?))
-        } else {
-            Ok(Box::new(stdin()))
-        }
-    }
 }
 
 struct ResetRead<R: Read> {

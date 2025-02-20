@@ -4,6 +4,7 @@ pub mod encode;
 pub mod guess;
 mod skip_whitespace;
 pub mod types;
+mod util;
 mod version;
 
 use clap::{Parser, Subcommand, ValueEnum};
@@ -65,7 +66,9 @@ impl Default for Channel {
 pub enum Cmd {
     /// View information about types
     Types(types::Cmd),
-    /// Guess the XDR type
+    /// Guesses the XDR type. All possible types are be printed for given XDR using given output format
+    /// (list views with each item on a new line by default).
+    /// For multiple inputs results are separated by an empty line for each input.
     Guess(guess::Cmd),
     /// Decode XDR
     Decode(decode::Cmd),

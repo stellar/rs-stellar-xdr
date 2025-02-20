@@ -1,4 +1,4 @@
-use crate::cli::{skip_whitespace::SkipWhitespace, Channel};
+use crate::cli::{skip_whitespace::SkipWhitespace, util, Channel};
 use clap::{Args, ValueEnum};
 use serde::Serialize;
 use std::ffi::OsString;
@@ -77,7 +77,7 @@ impl Default for OutputFormat {
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let mut input = self.parse_input()?;
+            let mut input = util::parse_input::<Error>(&self.input)?;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
@@ -136,27 +136,6 @@ impl Cmd {
 
     run_x!(run_curr, curr);
     run_x!(run_next, next);
-
-    fn parse_input(&self) -> Result<Vec<Box<dyn Read>>, Error> {
-        if self.input.is_empty() {
-            Ok(vec![Box::new(stdin())])
-        } else {
-            Ok(self
-                .input
-                .iter()
-                .map(|input| {
-                    let exist = Path::new(input).try_exists();
-                    if let Ok(true) = exist {
-                        let file = File::open(input)?;
-                        Ok::<Box<dyn Read>, Error>(Box::new(file) as Box<dyn Read>)
-                    } else {
-                        Ok(Box::new(Cursor::new(input.clone().into_encoded_bytes()))
-                            as Box<dyn Read>)
-                    }
-                })
-                .collect::<Result<Vec<_>, _>>()?)
-        }
-    }
 
     fn out(&self, v: &(impl Serialize + Debug)) -> Result<(), Error> {
         match self.output_format {

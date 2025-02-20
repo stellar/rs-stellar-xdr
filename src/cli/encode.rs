@@ -185,9 +185,7 @@ impl Cmd {
                             as Box<dyn Read>)
                     }
                 })
-                .collect::<Result<Vec<_>, _>>()?
-                .into_iter()
-                .collect())
+                .collect::<Result<Vec<_>, _>>()?)
         }
     }
 }

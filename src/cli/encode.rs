@@ -1,13 +1,13 @@
+use crate::cli::Channel;
+use clap::{Args, ValueEnum};
+use std::ffi::OsString;
+use std::io::Cursor;
+use std::path::Path;
 use std::{
     fs::File,
     io::{stdin, stdout, Read, Write},
-    path::PathBuf,
     str::FromStr,
 };
-
-use clap::{Args, ValueEnum};
-
-use crate::cli::Channel;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -64,21 +64,21 @@ impl From<crate::next::Error> for Error {
 #[derive(Args, Debug, Clone)]
 #[command()]
 pub struct Cmd {
-    /// Files to encode, or stdin if omitted
+    /// XDR or files containing XDR to decode, or stdin if empty
     #[arg()]
-    pub files: Vec<PathBuf>,
+    pub input: Vec<OsString>,
 
     /// XDR type to encode
     #[arg(long)]
     pub r#type: String,
 
     // Input format
-    #[arg(long, value_enum, default_value_t)]
-    pub input: InputFormat,
+    #[arg(long = "input", value_enum, default_value_t)]
+    pub input_format: InputFormat,
 
     // Output format to encode to
-    #[arg(long, value_enum, default_value_t)]
-    pub output: OutputFormat,
+    #[arg(long = "output", value_enum, default_value_t)]
+    pub output_format: OutputFormat,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
@@ -111,13 +111,13 @@ macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
             use crate::$m::WriteXdr;
-            let mut files = self.files()?;
+            let mut input = self.parse_input()?;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
-            for f in &mut files {
-                match self.input {
-                    InputFormat::Json => match self.output {
+            for f in &mut input {
+                match self.input_format {
+                    InputFormat::Json => match self.output_format {
                         OutputFormat::Single => {
                             let t = crate::$m::Type::from_json(r#type, f)?;
                             let l = crate::$m::Limits::none();
@@ -168,18 +168,24 @@ impl Cmd {
     run_x!(run_curr, curr);
     run_x!(run_next, next);
 
-    fn files(&self) -> Result<Vec<Box<dyn Read>>, Error> {
-        if self.files.is_empty() {
+    fn parse_input(&self) -> Result<Vec<Box<dyn Read>>, Error> {
+        if self.input.is_empty() {
             Ok(vec![Box::new(stdin())])
         } else {
             Ok(self
-                .files
+                .input
                 .iter()
-                .map(File::open)
-                .collect::<Result<Vec<_>, _>>()?
-                .into_iter()
-                .map(|f| -> Box<dyn Read> { Box::new(f) })
-                .collect())
+                .map(|input| {
+                    let exist = Path::new(input).try_exists();
+                    if let Ok(true) = exist {
+                        let file = File::open(input)?;
+                        Ok::<Box<dyn Read>, Error>(Box::new(file) as Box<dyn Read>)
+                    } else {
+                        Ok(Box::new(Cursor::new(input.clone().into_encoded_bytes()))
+                            as Box<dyn Read>)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()?)
         }
     }
 }

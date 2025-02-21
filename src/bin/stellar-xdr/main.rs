@@ -10,7 +10,8 @@ fn main() {
             | cli::Error::Guess(_)
             | cli::Error::Decode(_)
             | cli::Error::Encode(_)
-            | cli::Error::Compare(_) => {
+            | cli::Error::Compare(_)
+            | cli::Error::Random(_) => {
                 Error::raw(clap::error::ErrorKind::ValueValidation, e).exit()
             }
         }

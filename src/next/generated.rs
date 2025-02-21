@@ -128,6 +128,8 @@ pub enum Error {
     #[cfg(feature = "serde_json")]
     Json(serde_json::Error),
     LengthLimitExceeded,
+    #[cfg(feature = "arbitrary")]
+    Arbitrary(arbitrary::Error),
 }
 
 impl PartialEq for Error {
@@ -155,6 +157,8 @@ impl error::Error for Error {
             Self::Io(e) => Some(e),
             #[cfg(feature = "serde_json")]
             Self::Json(e) => Some(e),
+            #[cfg(feature = "arbitrary")]
+            Self::Arbitrary(e) => Some(e),
             _ => None,
         }
     }
@@ -177,6 +181,8 @@ impl fmt::Display for Error {
             #[cfg(feature = "serde_json")]
             Error::Json(e) => write!(f, "{e}"),
             Error::LengthLimitExceeded => write!(f, "length limit exceeded"),
+            #[cfg(feature = "arbitrary")]
+            Error::Arbitrary(e) => write!(f, "{e}"),
         }
     }
 }
@@ -215,6 +221,14 @@ impl From<serde_json::Error> for Error {
     #[must_use]
     fn from(e: serde_json::Error) -> Self {
         Error::Json(e)
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl From<arbitrary::Error> for Error {
+    #[must_use]
+    fn from(e: arbitrary::Error) -> Self {
+        Error::Arbitrary(e)
     }
 }
 
@@ -50865,6 +50879,17 @@ impl Type {
         "BinaryFuseFilterType",
         "SerializedBinaryFuseFilter",
     ];
+
+    #[cfg(feature = "arbitrary")]
+    #[allow(clippy::too_many_lines)]
+    pub fn arbitrary<'a>(v: TypeVariant, u: &mut arbitrary::Unstructured<'a>) -> Result<Self> {
+        match v {
+            TypeVariant::Hash => {
+                Ok(Self::Hash(Box::new(Hash::arbitrary(u)?)))
+            }
+            _ => Err(Error::Invalid),
+        }
+    }
 
     #[cfg(feature = "std")]
     #[allow(clippy::too_many_lines)]

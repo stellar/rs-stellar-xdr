@@ -50,7 +50,7 @@ arbitrary = ["std", "dep:arbitrary"]
 hex = []
 
 # Features for the CLI.
-cli = ["std", "curr", "next", "base64", "serde", "serde_json", "schemars", "dep:clap", "dep:thiserror"]
+cli = ["std", "curr", "next", "base64", "serde", "serde_json", "schemars", "arbitrary", "dep:clap", "dep:thiserror"]
 
 [package.metadata.docs.rs]
 all-features = true

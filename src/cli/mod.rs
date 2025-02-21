@@ -68,7 +68,6 @@ pub enum Cmd {
     Types(types::Cmd),
     /// Guesses the XDR type. All possible types are be printed for given XDR using given output format
     /// (list views with each item on a new line by default).
-    /// For multiple inputs results are separated by an empty line for each input.
     Guess(guess::Cmd),
     /// Decode XDR
     Decode(decode::Cmd),

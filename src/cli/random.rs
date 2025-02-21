@@ -101,7 +101,8 @@ macro_rules! run_x {
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
-            let mut u = Unstructured::new(&[0u8; 1024]);
+            let r = rand::random::<[u8; 10_240]>();
+            let mut u = Unstructured::new(&r);
             match self.output_format {
                 OutputFormat::Single => {
                     let v = crate::$m::Type::arbitrary(r#type, &mut u)?;

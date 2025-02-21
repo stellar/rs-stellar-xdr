@@ -50153,6 +50153,9 @@ impl Type {
             TypeVariant::Hash => {
                 Ok(Self::Hash(Box::new(Hash::arbitrary(u)?)))
             }
+            TypeVariant::TransactionEnvelope => {
+                Ok(Self::TransactionEnvelope(Box::new(TransactionEnvelope::arbitrary(u)?)))
+            }
             _ => Err(Error::Invalid),
         }
     }

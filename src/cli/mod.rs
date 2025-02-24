@@ -66,7 +66,7 @@ impl Default for Channel {
 pub enum Cmd {
     /// View information about types
     Types(types::Cmd),
-    /// Guesses the XDR type.
+    /// Guess the XDR type.
     ///
     /// Prints a list of types that the XDR values can be decoded into.
     Guess(guess::Cmd),

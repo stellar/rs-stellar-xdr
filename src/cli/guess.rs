@@ -1,11 +1,12 @@
+use clap::{Args, ValueEnum};
+use std::ffi::OsString;
+use std::fs::File;
+use std::io::{stdin, Cursor};
+use std::path::Path;
 use std::{
     cmp,
-    fs::File,
-    io::{self, stdin, Read},
-    path::PathBuf,
+    io::{self, Read},
 };
-
-use clap::{Args, ValueEnum};
 
 use crate::cli::{skip_whitespace::SkipWhitespace, Channel};
 
@@ -23,17 +24,17 @@ pub enum Error {
 #[derive(Args, Debug, Clone)]
 #[command()]
 pub struct Cmd {
-    /// File to decode, or stdin if omitted
+    /// XDR or file containing XDR to decode, or stdin if empty
     #[arg()]
-    pub file: Option<PathBuf>,
+    pub input: Option<OsString>,
 
-    // Input format of the XDR
-    #[arg(long, value_enum, default_value_t)]
-    pub input: InputFormat,
+    // Input format
+    #[arg(long = "input", value_enum, default_value_t)]
+    pub input_format: InputFormat,
 
     // Output format
-    #[arg(long, value_enum, default_value_t)]
-    pub output: OutputFormat,
+    #[arg(long = "output", value_enum, default_value_t)]
+    pub output_format: OutputFormat,
 
     /// Certainty as an arbitrary value
     #[arg(long, default_value = "2")]
@@ -69,10 +70,10 @@ impl Default for OutputFormat {
 macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let mut rr = ResetRead::new(self.file()?);
+            let mut rr = ResetRead::new(self.input()?);
             'variants: for v in crate::$m::TypeVariant::VARIANTS {
                 rr.reset();
-                let count: usize = match self.input {
+                let count: usize = match self.input_format {
                     InputFormat::Single => {
                         let mut l = crate::$m::Limited::new(&mut rr, crate::$m::Limits::none());
                         crate::$m::Type::read_xdr_to_end(v, &mut l)
@@ -155,9 +156,14 @@ impl Cmd {
     run_x!(run_curr, curr);
     run_x!(run_next, next);
 
-    fn file(&self) -> Result<Box<dyn Read>, Error> {
-        if let Some(f) = &self.file {
-            Ok(Box::new(File::open(f)?))
+    fn input(&self) -> Result<Box<dyn Read>, Error> {
+        if let Some(input) = &self.input {
+            let exist = Path::new(input).try_exists();
+            if let Ok(true) = exist {
+                Ok(Box::new(File::open(input)?))
+            } else {
+                Ok(Box::new(Cursor::new(input.clone().into_encoded_bytes())))
+            }
         } else {
             Ok(Box::new(stdin()))
         }

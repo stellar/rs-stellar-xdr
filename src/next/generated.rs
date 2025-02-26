@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "e6230c4a3ed5ca778b559397fa9e612a66ebd3d31e71bd85347eae9ab5e38780",
+        "56b9548877088a1c7bc6c49089cb1cc1813bfb498ee096c10d5891177ce2ef87",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "138f798965bbade5cbbd5b2e1164d997cf0aad5abbc964d194dfb77cdac26850",
+        "b2b3a0cf744435d08f385ca5ae5129fd1c16fd4cd34823719ec8e177dc7bda2e",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -3925,6 +3925,10 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
 /// {
 ///     // Maximum number of in-memory ledger entry read operations per transaction
 ///     uint32 txMaxInMemoryReadEntries;
+///     // Fee per 1 KB of data written to the ledger.
+///     // Unlike the rent fee, this is a flat fee that is charged for any ledger
+///     // write, independent of the type of the entry being written.
+///     int64 feeWrite1KB;
 /// };
 /// ```
 ///
@@ -3938,6 +3942,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractLedgerCostExtV0 {
     pub tx_max_in_memory_read_entries: u32,
+    pub fee_write1_kb: i64,
 }
 
 impl ReadXdr for ConfigSettingContractLedgerCostExtV0 {
@@ -3946,6 +3951,7 @@ impl ReadXdr for ConfigSettingContractLedgerCostExtV0 {
         r.with_limited_depth(|r| {
             Ok(Self {
                 tx_max_in_memory_read_entries: u32::read_xdr(r)?,
+                fee_write1_kb: i64::read_xdr(r)?,
             })
         })
     }
@@ -3956,6 +3962,7 @@ impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
             self.tx_max_in_memory_read_entries.write_xdr(w)?;
+            self.fee_write1_kb.write_xdr(w)?;
             Ok(())
         })
     }
@@ -33165,7 +33172,6 @@ impl WriteXdr for TransactionExt {
 ///
 ///     Operation operations<MAX_OPS_PER_TX>;
 ///
-///     // reserved for future use
 ///     union switch (int v)
 ///     {
 ///     case 0:

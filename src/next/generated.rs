@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-config-setting.x",
-        "e6230c4a3ed5ca778b559397fa9e612a66ebd3d31e71bd85347eae9ab5e38780",
+        "907745b98a8c9d78bf409bb30641ad4f73d32be28da4719fcf6a5fe676ca33ef",
     ),
     (
         "xdr/next/Stellar-contract-env-meta.x",
@@ -34,11 +34,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "c7ffa21d2e91afb8e666b33524d307955426ff553a486d670c29217ed9888d49",
+        "fa373f76d51ed39b7d0a09ee7811831a464b4f9a980f3139ea544214f789bcf5",
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "7f665e4103e146a88fcdabce879aaaacd3bf9283feb194cc47ff986264c1e315",
+        "60a2f0d97385ead9088d4566a9773e790bdae41d79823317f8bb3705f1a7ad36",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -46,11 +46,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger-entries.x",
-        "5de9a795f120556ee5a418f7550a31b391ccf4c91dd6debde45cf3547b0d7d43",
+        "5dea4f695f01aeb57ad97b97646f3da7dcf5ec35748e5065b19de429fb762cbc",
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "e7d06f732f440f07b92ad7f730e4a7a5ea1f8a5a3ee9d8ba437573d3d5351b08",
+        "020bd2606a355880a1a53480df906a6a93d37d34bef30168aba5f04880b269d5",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-transaction.x",
-        "138f798965bbade5cbbd5b2e1164d997cf0aad5abbc964d194dfb77cdac26850",
+        "118ab3081836077ecf24fdce3136e027ac23828d50370cea51c97a9db8f169cc",
     ),
     (
         "xdr/next/Stellar-types.x",
@@ -3918,49 +3918,6 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
     }
 }
 
-/// ConfigSettingContractLedgerCostExtV0 is an XDR Struct defines as:
-///
-/// ```text
-/// struct ConfigSettingContractLedgerCostExtV0
-/// {
-///     // Maximum number of in-memory ledger entry read operations per transaction
-///     uint32 txMaxInMemoryReadEntries;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ConfigSettingContractLedgerCostExtV0 {
-    pub tx_max_in_memory_read_entries: u32,
-}
-
-impl ReadXdr for ConfigSettingContractLedgerCostExtV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                tx_max_in_memory_read_entries: u32::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.tx_max_in_memory_read_entries.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 /// ConfigSettingContractHistoricalDataV0 is an XDR Struct defines as:
 ///
 /// ```text
@@ -5026,8 +4983,7 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 ///     CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11,
 ///     CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12,
 ///     CONFIG_SETTING_EVICTION_ITERATOR = 13,
-///     CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14,
-///     CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15
+///     CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14
 /// };
 /// ```
 ///
@@ -5057,11 +5013,10 @@ pub enum ConfigSettingId {
     BucketlistSizeWindow = 12,
     EvictionIterator = 13,
     ContractParallelComputeV0 = 14,
-    ContractLedgerCostExtV0 = 15,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 16] = [
+    pub const VARIANTS: [ConfigSettingId; 15] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -5077,9 +5032,8 @@ impl ConfigSettingId {
         ConfigSettingId::BucketlistSizeWindow,
         ConfigSettingId::EvictionIterator,
         ConfigSettingId::ContractParallelComputeV0,
-        ConfigSettingId::ContractLedgerCostExtV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 16] = [
+    pub const VARIANTS_STR: [&'static str; 15] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -5095,7 +5049,6 @@ impl ConfigSettingId {
         "BucketlistSizeWindow",
         "EvictionIterator",
         "ContractParallelComputeV0",
-        "ContractLedgerCostExtV0",
     ];
 
     #[must_use]
@@ -5116,12 +5069,11 @@ impl ConfigSettingId {
             Self::BucketlistSizeWindow => "BucketlistSizeWindow",
             Self::EvictionIterator => "EvictionIterator",
             Self::ContractParallelComputeV0 => "ContractParallelComputeV0",
-            Self::ContractLedgerCostExtV0 => "ContractLedgerCostExtV0",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 16] {
+    pub const fn variants() -> [ConfigSettingId; 15] {
         Self::VARIANTS
     }
 }
@@ -5167,7 +5119,6 @@ impl TryFrom<i32> for ConfigSettingId {
             12 => ConfigSettingId::BucketlistSizeWindow,
             13 => ConfigSettingId::EvictionIterator,
             14 => ConfigSettingId::ContractParallelComputeV0,
-            15 => ConfigSettingId::ContractLedgerCostExtV0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5238,8 +5189,6 @@ impl WriteXdr for ConfigSettingId {
 ///     EvictionIterator evictionIterator;
 /// case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0:
 ///     ConfigSettingContractParallelComputeV0 contractParallelCompute;
-/// case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0:
-///     ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt;
 /// };
 /// ```
 ///
@@ -5269,11 +5218,10 @@ pub enum ConfigSettingEntry {
     BucketlistSizeWindow(VecM<u64>),
     EvictionIterator(EvictionIterator),
     ContractParallelComputeV0(ConfigSettingContractParallelComputeV0),
-    ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 16] = [
+    pub const VARIANTS: [ConfigSettingId; 15] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -5289,9 +5237,8 @@ impl ConfigSettingEntry {
         ConfigSettingId::BucketlistSizeWindow,
         ConfigSettingId::EvictionIterator,
         ConfigSettingId::ContractParallelComputeV0,
-        ConfigSettingId::ContractLedgerCostExtV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 16] = [
+    pub const VARIANTS_STR: [&'static str; 15] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -5307,7 +5254,6 @@ impl ConfigSettingEntry {
         "BucketlistSizeWindow",
         "EvictionIterator",
         "ContractParallelComputeV0",
-        "ContractLedgerCostExtV0",
     ];
 
     #[must_use]
@@ -5328,7 +5274,6 @@ impl ConfigSettingEntry {
             Self::BucketlistSizeWindow(_) => "BucketlistSizeWindow",
             Self::EvictionIterator(_) => "EvictionIterator",
             Self::ContractParallelComputeV0(_) => "ContractParallelComputeV0",
-            Self::ContractLedgerCostExtV0(_) => "ContractLedgerCostExtV0",
         }
     }
 
@@ -5355,12 +5300,11 @@ impl ConfigSettingEntry {
             Self::BucketlistSizeWindow(_) => ConfigSettingId::BucketlistSizeWindow,
             Self::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
             Self::ContractParallelComputeV0(_) => ConfigSettingId::ContractParallelComputeV0,
-            Self::ContractLedgerCostExtV0(_) => ConfigSettingId::ContractLedgerCostExtV0,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 16] {
+    pub const fn variants() -> [ConfigSettingId; 15] {
         Self::VARIANTS
     }
 }
@@ -5439,9 +5383,6 @@ impl ReadXdr for ConfigSettingEntry {
                 ConfigSettingId::ContractParallelComputeV0 => Self::ContractParallelComputeV0(
                     ConfigSettingContractParallelComputeV0::read_xdr(r)?,
                 ),
-                ConfigSettingId::ContractLedgerCostExtV0 => Self::ContractLedgerCostExtV0(
-                    ConfigSettingContractLedgerCostExtV0::read_xdr(r)?,
-                ),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -5472,7 +5413,6 @@ impl WriteXdr for ConfigSettingEntry {
                 Self::BucketlistSizeWindow(v) => v.write_xdr(w)?,
                 Self::EvictionIterator(v) => v.write_xdr(w)?,
                 Self::ContractParallelComputeV0(v) => v.write_xdr(w)?,
-                Self::ContractLedgerCostExtV0(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -6016,6 +5956,7 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 ///     SC_SPEC_TYPE_STRING = 16,
 ///     SC_SPEC_TYPE_SYMBOL = 17,
 ///     SC_SPEC_TYPE_ADDRESS = 19,
+///     SC_SPEC_TYPE_ADDRESS_V2 = 20,
 ///
 ///     // Types with parameters.
 ///     SC_SPEC_TYPE_OPTION = 1000,
@@ -6059,6 +6000,7 @@ pub enum ScSpecType {
     String = 16,
     Symbol = 17,
     Address = 19,
+    AddressV2 = 20,
     Option = 1000,
     Result = 1001,
     Vec = 1002,
@@ -6069,7 +6011,7 @@ pub enum ScSpecType {
 }
 
 impl ScSpecType {
-    pub const VARIANTS: [ScSpecType; 25] = [
+    pub const VARIANTS: [ScSpecType; 26] = [
         ScSpecType::Val,
         ScSpecType::Bool,
         ScSpecType::Void,
@@ -6088,6 +6030,7 @@ impl ScSpecType {
         ScSpecType::String,
         ScSpecType::Symbol,
         ScSpecType::Address,
+        ScSpecType::AddressV2,
         ScSpecType::Option,
         ScSpecType::Result,
         ScSpecType::Vec,
@@ -6096,7 +6039,7 @@ impl ScSpecType {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 25] = [
+    pub const VARIANTS_STR: [&'static str; 26] = [
         "Val",
         "Bool",
         "Void",
@@ -6115,6 +6058,7 @@ impl ScSpecType {
         "String",
         "Symbol",
         "Address",
+        "AddressV2",
         "Option",
         "Result",
         "Vec",
@@ -6145,6 +6089,7 @@ impl ScSpecType {
             Self::String => "String",
             Self::Symbol => "Symbol",
             Self::Address => "Address",
+            Self::AddressV2 => "AddressV2",
             Self::Option => "Option",
             Self::Result => "Result",
             Self::Vec => "Vec",
@@ -6156,7 +6101,7 @@ impl ScSpecType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 25] {
+    pub const fn variants() -> [ScSpecType; 26] {
         Self::VARIANTS
     }
 }
@@ -6205,6 +6150,7 @@ impl TryFrom<i32> for ScSpecType {
             16 => ScSpecType::String,
             17 => ScSpecType::Symbol,
             19 => ScSpecType::Address,
+            20 => ScSpecType::AddressV2,
             1000 => ScSpecType::Option,
             1001 => ScSpecType::Result,
             1002 => ScSpecType::Vec,
@@ -6573,6 +6519,8 @@ impl WriteXdr for ScSpecTypeUdt {
 /// case SC_SPEC_TYPE_SYMBOL:
 /// case SC_SPEC_TYPE_ADDRESS:
 ///     void;
+/// case SC_SPEC_TYPE_ADDRESS_V2:
+///     bool supportMultiplexing;
 /// case SC_SPEC_TYPE_OPTION:
 ///     SCSpecTypeOption option;
 /// case SC_SPEC_TYPE_RESULT:
@@ -6619,6 +6567,7 @@ pub enum ScSpecTypeDef {
     String,
     Symbol,
     Address,
+    AddressV2(bool),
     Option(Box<ScSpecTypeOption>),
     Result(Box<ScSpecTypeResult>),
     Vec(Box<ScSpecTypeVec>),
@@ -6629,7 +6578,7 @@ pub enum ScSpecTypeDef {
 }
 
 impl ScSpecTypeDef {
-    pub const VARIANTS: [ScSpecType; 25] = [
+    pub const VARIANTS: [ScSpecType; 26] = [
         ScSpecType::Val,
         ScSpecType::Bool,
         ScSpecType::Void,
@@ -6648,6 +6597,7 @@ impl ScSpecTypeDef {
         ScSpecType::String,
         ScSpecType::Symbol,
         ScSpecType::Address,
+        ScSpecType::AddressV2,
         ScSpecType::Option,
         ScSpecType::Result,
         ScSpecType::Vec,
@@ -6656,7 +6606,7 @@ impl ScSpecTypeDef {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 25] = [
+    pub const VARIANTS_STR: [&'static str; 26] = [
         "Val",
         "Bool",
         "Void",
@@ -6675,6 +6625,7 @@ impl ScSpecTypeDef {
         "String",
         "Symbol",
         "Address",
+        "AddressV2",
         "Option",
         "Result",
         "Vec",
@@ -6705,6 +6656,7 @@ impl ScSpecTypeDef {
             Self::String => "String",
             Self::Symbol => "Symbol",
             Self::Address => "Address",
+            Self::AddressV2(_) => "AddressV2",
             Self::Option(_) => "Option",
             Self::Result(_) => "Result",
             Self::Vec(_) => "Vec",
@@ -6737,6 +6689,7 @@ impl ScSpecTypeDef {
             Self::String => ScSpecType::String,
             Self::Symbol => ScSpecType::Symbol,
             Self::Address => ScSpecType::Address,
+            Self::AddressV2(_) => ScSpecType::AddressV2,
             Self::Option(_) => ScSpecType::Option,
             Self::Result(_) => ScSpecType::Result,
             Self::Vec(_) => ScSpecType::Vec,
@@ -6748,7 +6701,7 @@ impl ScSpecTypeDef {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 25] {
+    pub const fn variants() -> [ScSpecType; 26] {
         Self::VARIANTS
     }
 }
@@ -6800,6 +6753,7 @@ impl ReadXdr for ScSpecTypeDef {
                 ScSpecType::String => Self::String,
                 ScSpecType::Symbol => Self::Symbol,
                 ScSpecType::Address => Self::Address,
+                ScSpecType::AddressV2 => Self::AddressV2(bool::read_xdr(r)?),
                 ScSpecType::Option => Self::Option(Box::<ScSpecTypeOption>::read_xdr(r)?),
                 ScSpecType::Result => Self::Result(Box::<ScSpecTypeResult>::read_xdr(r)?),
                 ScSpecType::Vec => Self::Vec(Box::<ScSpecTypeVec>::read_xdr(r)?),
@@ -6840,6 +6794,7 @@ impl WriteXdr for ScSpecTypeDef {
                 Self::String => ().write_xdr(w)?,
                 Self::Symbol => ().write_xdr(w)?,
                 Self::Address => ().write_xdr(w)?,
+                Self::AddressV2(v) => v.write_xdr(w)?,
                 Self::Option(v) => v.write_xdr(w)?,
                 Self::Result(v) => v.write_xdr(w)?,
                 Self::Vec(v) => v.write_xdr(w)?,
@@ -9081,7 +9036,9 @@ impl WriteXdr for ContractExecutable {
 /// enum SCAddressType
 /// {
 ///     SC_ADDRESS_TYPE_ACCOUNT = 0,
-///     SC_ADDRESS_TYPE_CONTRACT = 1
+///     SC_ADDRESS_TYPE_CONTRACT = 1,
+///     SC_ADDRESS_TYPE_MUXED_ACCOUNT = 2,
+///     SC_ADDRESS_TYPE_LEGACY_MEMO_MUXED_ACCOUNT = 3
 /// };
 /// ```
 ///
@@ -9098,22 +9055,36 @@ impl WriteXdr for ContractExecutable {
 pub enum ScAddressType {
     Account = 0,
     Contract = 1,
+    MuxedAccount = 2,
+    LegacyMemoMuxedAccount = 3,
 }
 
 impl ScAddressType {
-    pub const VARIANTS: [ScAddressType; 2] = [ScAddressType::Account, ScAddressType::Contract];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Account", "Contract"];
+    pub const VARIANTS: [ScAddressType; 4] = [
+        ScAddressType::Account,
+        ScAddressType::Contract,
+        ScAddressType::MuxedAccount,
+        ScAddressType::LegacyMemoMuxedAccount,
+    ];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "Account",
+        "Contract",
+        "MuxedAccount",
+        "LegacyMemoMuxedAccount",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Account => "Account",
             Self::Contract => "Contract",
+            Self::MuxedAccount => "MuxedAccount",
+            Self::LegacyMemoMuxedAccount => "LegacyMemoMuxedAccount",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScAddressType; 2] {
+    pub const fn variants() -> [ScAddressType; 4] {
         Self::VARIANTS
     }
 }
@@ -9146,6 +9117,8 @@ impl TryFrom<i32> for ScAddressType {
         let e = match i {
             0 => ScAddressType::Account,
             1 => ScAddressType::Contract,
+            2 => ScAddressType::MuxedAccount,
+            3 => ScAddressType::LegacyMemoMuxedAccount,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -9181,6 +9154,51 @@ impl WriteXdr for ScAddressType {
     }
 }
 
+/// LegacyMemoMuxedAccount is an XDR Struct defines as:
+///
+/// ```text
+/// struct LegacyMemoMuxedAccount {
+///     uint256 ed25519;
+///     Memo memo;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct LegacyMemoMuxedAccount {
+    pub ed25519: Uint256,
+    pub memo: Memo,
+}
+
+impl ReadXdr for LegacyMemoMuxedAccount {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ed25519: Uint256::read_xdr(r)?,
+                memo: Memo::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LegacyMemoMuxedAccount {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ed25519.write_xdr(w)?;
+            self.memo.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScAddress is an XDR Union defines as:
 ///
 /// ```text
@@ -9190,6 +9208,10 @@ impl WriteXdr for ScAddressType {
 ///     AccountID accountId;
 /// case SC_ADDRESS_TYPE_CONTRACT:
 ///     Hash contractId;
+/// case SC_ADDRESS_TYPE_MUXED_ACCOUNT:
+///     MuxedAccount muxedAccount;
+/// case SC_ADDRESS_TYPE_LEGACY_MEMO_MUXED_ACCOUNT:
+///     LegacyMemoMuxedAccount legacyMemoMuxedAccount;
 /// };
 /// ```
 ///
@@ -9204,17 +9226,31 @@ impl WriteXdr for ScAddressType {
 pub enum ScAddress {
     Account(AccountId),
     Contract(Hash),
+    MuxedAccount(MuxedAccount),
+    LegacyMemoMuxedAccount(LegacyMemoMuxedAccount),
 }
 
 impl ScAddress {
-    pub const VARIANTS: [ScAddressType; 2] = [ScAddressType::Account, ScAddressType::Contract];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Account", "Contract"];
+    pub const VARIANTS: [ScAddressType; 4] = [
+        ScAddressType::Account,
+        ScAddressType::Contract,
+        ScAddressType::MuxedAccount,
+        ScAddressType::LegacyMemoMuxedAccount,
+    ];
+    pub const VARIANTS_STR: [&'static str; 4] = [
+        "Account",
+        "Contract",
+        "MuxedAccount",
+        "LegacyMemoMuxedAccount",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Account(_) => "Account",
             Self::Contract(_) => "Contract",
+            Self::MuxedAccount(_) => "MuxedAccount",
+            Self::LegacyMemoMuxedAccount(_) => "LegacyMemoMuxedAccount",
         }
     }
 
@@ -9224,11 +9260,13 @@ impl ScAddress {
         match self {
             Self::Account(_) => ScAddressType::Account,
             Self::Contract(_) => ScAddressType::Contract,
+            Self::MuxedAccount(_) => ScAddressType::MuxedAccount,
+            Self::LegacyMemoMuxedAccount(_) => ScAddressType::LegacyMemoMuxedAccount,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScAddressType; 2] {
+    pub const fn variants() -> [ScAddressType; 4] {
         Self::VARIANTS
     }
 }
@@ -9264,6 +9302,10 @@ impl ReadXdr for ScAddress {
             let v = match dv {
                 ScAddressType::Account => Self::Account(AccountId::read_xdr(r)?),
                 ScAddressType::Contract => Self::Contract(Hash::read_xdr(r)?),
+                ScAddressType::MuxedAccount => Self::MuxedAccount(MuxedAccount::read_xdr(r)?),
+                ScAddressType::LegacyMemoMuxedAccount => {
+                    Self::LegacyMemoMuxedAccount(LegacyMemoMuxedAccount::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -9281,6 +9323,8 @@ impl WriteXdr for ScAddress {
             match self {
                 Self::Account(v) => v.write_xdr(w)?,
                 Self::Contract(v) => v.write_xdr(w)?,
+                Self::MuxedAccount(v) => v.write_xdr(w)?,
+                Self::LegacyMemoMuxedAccount(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -17664,8 +17708,7 @@ impl WriteXdr for LedgerKey {
 ///     ENVELOPE_TYPE_OP_ID = 6,
 ///     ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7,
 ///     ENVELOPE_TYPE_CONTRACT_ID = 8,
-///     ENVELOPE_TYPE_SOROBAN_AUTHORIZATION = 9,
-///     ENVELOPE_TYPE_SOROBAN_AUTHORIZATION_V2 = 10
+///     ENVELOPE_TYPE_SOROBAN_AUTHORIZATION = 9
 /// };
 /// ```
 ///
@@ -17690,11 +17733,10 @@ pub enum EnvelopeType {
     PoolRevokeOpId = 7,
     ContractId = 8,
     SorobanAuthorization = 9,
-    SorobanAuthorizationV2 = 10,
 }
 
 impl EnvelopeType {
-    pub const VARIANTS: [EnvelopeType; 11] = [
+    pub const VARIANTS: [EnvelopeType; 10] = [
         EnvelopeType::TxV0,
         EnvelopeType::Scp,
         EnvelopeType::Tx,
@@ -17705,9 +17747,8 @@ impl EnvelopeType {
         EnvelopeType::PoolRevokeOpId,
         EnvelopeType::ContractId,
         EnvelopeType::SorobanAuthorization,
-        EnvelopeType::SorobanAuthorizationV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 11] = [
+    pub const VARIANTS_STR: [&'static str; 10] = [
         "TxV0",
         "Scp",
         "Tx",
@@ -17718,7 +17759,6 @@ impl EnvelopeType {
         "PoolRevokeOpId",
         "ContractId",
         "SorobanAuthorization",
-        "SorobanAuthorizationV2",
     ];
 
     #[must_use]
@@ -17734,12 +17774,11 @@ impl EnvelopeType {
             Self::PoolRevokeOpId => "PoolRevokeOpId",
             Self::ContractId => "ContractId",
             Self::SorobanAuthorization => "SorobanAuthorization",
-            Self::SorobanAuthorizationV2 => "SorobanAuthorizationV2",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 11] {
+    pub const fn variants() -> [EnvelopeType; 10] {
         Self::VARIANTS
     }
 }
@@ -17780,7 +17819,6 @@ impl TryFrom<i32> for EnvelopeType {
             7 => EnvelopeType::PoolRevokeOpId,
             8 => EnvelopeType::ContractId,
             9 => EnvelopeType::SorobanAuthorization,
-            10 => EnvelopeType::SorobanAuthorizationV2,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17822,7 +17860,8 @@ impl WriteXdr for EnvelopeType {
 /// enum BucketListType
 /// {
 ///     LIVE = 0,
-///     HOT_ARCHIVE = 1
+///     HOT_ARCHIVE = 1,
+///     COLD_ARCHIVE = 2
 /// };
 /// ```
 ///
@@ -17839,22 +17878,28 @@ impl WriteXdr for EnvelopeType {
 pub enum BucketListType {
     Live = 0,
     HotArchive = 1,
+    ColdArchive = 2,
 }
 
 impl BucketListType {
-    pub const VARIANTS: [BucketListType; 2] = [BucketListType::Live, BucketListType::HotArchive];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Live", "HotArchive"];
+    pub const VARIANTS: [BucketListType; 3] = [
+        BucketListType::Live,
+        BucketListType::HotArchive,
+        BucketListType::ColdArchive,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["Live", "HotArchive", "ColdArchive"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Live => "Live",
             Self::HotArchive => "HotArchive",
+            Self::ColdArchive => "ColdArchive",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [BucketListType; 2] {
+    pub const fn variants() -> [BucketListType; 3] {
         Self::VARIANTS
     }
 }
@@ -17887,6 +17932,7 @@ impl TryFrom<i32> for BucketListType {
         let e = match i {
             0 => BucketListType::Live,
             1 => BucketListType::HotArchive,
+            2 => BucketListType::ColdArchive,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -23547,6 +23593,65 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
     }
 }
 
+/// LedgerCloseMetaExtV2 is an XDR Struct defines as:
+///
+/// ```text
+/// struct LedgerCloseMetaExtV2
+/// {
+///     ExtensionPoint ext;
+///     int64 sorobanFeeWrite1KB;
+///
+///     uint32 currentArchivalEpoch;
+///
+///     // The last epoch currently stored by validators
+///     // Any entry restored from an epoch older than this will
+///     // require a proof.
+///     uint32 lastArchivalEpochPersisted;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct LedgerCloseMetaExtV2 {
+    pub ext: ExtensionPoint,
+    pub soroban_fee_write1_kb: i64,
+    pub current_archival_epoch: u32,
+    pub last_archival_epoch_persisted: u32,
+}
+
+impl ReadXdr for LedgerCloseMetaExtV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                soroban_fee_write1_kb: i64::read_xdr(r)?,
+                current_archival_epoch: u32::read_xdr(r)?,
+                last_archival_epoch_persisted: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for LedgerCloseMetaExtV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.soroban_fee_write1_kb.write_xdr(w)?;
+            self.current_archival_epoch.write_xdr(w)?;
+            self.last_archival_epoch_persisted.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// LedgerCloseMetaExt is an XDR Union defines as:
 ///
 /// ```text
@@ -23556,6 +23661,8 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
 ///     void;
 /// case 1:
 ///     LedgerCloseMetaExtV1 v1;
+/// case 2:
+///     LedgerCloseMetaExtV2 v2;
 /// };
 /// ```
 ///
@@ -23572,17 +23679,19 @@ impl WriteXdr for LedgerCloseMetaExtV1 {
 pub enum LedgerCloseMetaExt {
     V0,
     V1(LedgerCloseMetaExtV1),
+    V2(LedgerCloseMetaExtV2),
 }
 
 impl LedgerCloseMetaExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+    pub const VARIANTS: [i32; 3] = [0, 1, 2];
+    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0 => "V0",
             Self::V1(_) => "V1",
+            Self::V2(_) => "V2",
         }
     }
 
@@ -23592,11 +23701,12 @@ impl LedgerCloseMetaExt {
         match self {
             Self::V0 => 0,
             Self::V1(_) => 1,
+            Self::V2(_) => 2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 2] {
+    pub const fn variants() -> [i32; 3] {
         Self::VARIANTS
     }
 }
@@ -23632,6 +23742,7 @@ impl ReadXdr for LedgerCloseMetaExt {
             let v = match dv {
                 0 => Self::V0,
                 1 => Self::V1(LedgerCloseMetaExtV1::read_xdr(r)?),
+                2 => Self::V2(LedgerCloseMetaExtV2::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -23649,6 +23760,7 @@ impl WriteXdr for LedgerCloseMetaExt {
             match self {
                 Self::V0 => ().write_xdr(w)?,
                 Self::V1(v) => v.write_xdr(w)?,
+                Self::V2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -30411,77 +30523,13 @@ impl WriteXdr for SorobanAddressCredentials {
     }
 }
 
-/// SorobanAddressCredentialsV2 is an XDR Struct defines as:
-///
-/// ```text
-/// struct SorobanAddressCredentialsV2
-/// {
-///     ExtensionPoint ext;
-///
-///     SCAddress address;
-///     int64 nonce;
-///     uint32 signatureExpirationLedger;
-///     Memo txMemo;
-///     SCVal signature;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct SorobanAddressCredentialsV2 {
-    pub ext: ExtensionPoint,
-    pub address: ScAddress,
-    pub nonce: i64,
-    pub signature_expiration_ledger: u32,
-    pub tx_memo: Memo,
-    pub signature: ScVal,
-}
-
-impl ReadXdr for SorobanAddressCredentialsV2 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                ext: ExtensionPoint::read_xdr(r)?,
-                address: ScAddress::read_xdr(r)?,
-                nonce: i64::read_xdr(r)?,
-                signature_expiration_ledger: u32::read_xdr(r)?,
-                tx_memo: Memo::read_xdr(r)?,
-                signature: ScVal::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for SorobanAddressCredentialsV2 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.address.write_xdr(w)?;
-            self.nonce.write_xdr(w)?;
-            self.signature_expiration_ledger.write_xdr(w)?;
-            self.tx_memo.write_xdr(w)?;
-            self.signature.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 /// SorobanCredentialsType is an XDR Enum defines as:
 ///
 /// ```text
 /// enum SorobanCredentialsType
 /// {
 ///     SOROBAN_CREDENTIALS_SOURCE_ACCOUNT = 0,
-///     SOROBAN_CREDENTIALS_ADDRESS = 1,
-///     SOROBAN_CREDENTIALS_ADDRESS_V2 = 2
+///     SOROBAN_CREDENTIALS_ADDRESS = 1
 /// };
 /// ```
 ///
@@ -30498,28 +30546,25 @@ impl WriteXdr for SorobanAddressCredentialsV2 {
 pub enum SorobanCredentialsType {
     SourceAccount = 0,
     Address = 1,
-    AddressV2 = 2,
 }
 
 impl SorobanCredentialsType {
-    pub const VARIANTS: [SorobanCredentialsType; 3] = [
+    pub const VARIANTS: [SorobanCredentialsType; 2] = [
         SorobanCredentialsType::SourceAccount,
         SorobanCredentialsType::Address,
-        SorobanCredentialsType::AddressV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["SourceAccount", "Address", "AddressV2"];
+    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::SourceAccount => "SourceAccount",
             Self::Address => "Address",
-            Self::AddressV2 => "AddressV2",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SorobanCredentialsType; 3] {
+    pub const fn variants() -> [SorobanCredentialsType; 2] {
         Self::VARIANTS
     }
 }
@@ -30552,7 +30597,6 @@ impl TryFrom<i32> for SorobanCredentialsType {
         let e = match i {
             0 => SorobanCredentialsType::SourceAccount,
             1 => SorobanCredentialsType::Address,
-            2 => SorobanCredentialsType::AddressV2,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -30597,8 +30641,6 @@ impl WriteXdr for SorobanCredentialsType {
 ///     void;
 /// case SOROBAN_CREDENTIALS_ADDRESS:
 ///     SorobanAddressCredentials address;
-/// case SOROBAN_CREDENTIALS_ADDRESS_V2:
-///     SorobanAddressCredentialsV2 addressV2;
 /// };
 /// ```
 ///
@@ -30615,23 +30657,20 @@ impl WriteXdr for SorobanCredentialsType {
 pub enum SorobanCredentials {
     SourceAccount,
     Address(SorobanAddressCredentials),
-    AddressV2(SorobanAddressCredentialsV2),
 }
 
 impl SorobanCredentials {
-    pub const VARIANTS: [SorobanCredentialsType; 3] = [
+    pub const VARIANTS: [SorobanCredentialsType; 2] = [
         SorobanCredentialsType::SourceAccount,
         SorobanCredentialsType::Address,
-        SorobanCredentialsType::AddressV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["SourceAccount", "Address", "AddressV2"];
+    pub const VARIANTS_STR: [&'static str; 2] = ["SourceAccount", "Address"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::SourceAccount => "SourceAccount",
             Self::Address(_) => "Address",
-            Self::AddressV2(_) => "AddressV2",
         }
     }
 
@@ -30641,12 +30680,11 @@ impl SorobanCredentials {
         match self {
             Self::SourceAccount => SorobanCredentialsType::SourceAccount,
             Self::Address(_) => SorobanCredentialsType::Address,
-            Self::AddressV2(_) => SorobanCredentialsType::AddressV2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SorobanCredentialsType; 3] {
+    pub const fn variants() -> [SorobanCredentialsType; 2] {
         Self::VARIANTS
     }
 }
@@ -30684,9 +30722,6 @@ impl ReadXdr for SorobanCredentials {
                 SorobanCredentialsType::Address => {
                     Self::Address(SorobanAddressCredentials::read_xdr(r)?)
                 }
-                SorobanCredentialsType::AddressV2 => {
-                    Self::AddressV2(SorobanAddressCredentialsV2::read_xdr(r)?)
-                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -30704,7 +30739,6 @@ impl WriteXdr for SorobanCredentials {
             match self {
                 Self::SourceAccount => ().write_xdr(w)?,
                 Self::Address(v) => v.write_xdr(w)?,
-                Self::AddressV2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -31581,69 +31615,6 @@ impl WriteXdr for HashIdPreimageSorobanAuthorization {
     }
 }
 
-/// HashIdPreimageSorobanAuthorizationV2 is an XDR NestedStruct defines as:
-///
-/// ```text
-/// struct
-///     {
-///         ExtensionPoint ext;
-///
-///         Hash networkID;
-///         int64 nonce;
-///         uint32 signatureExpirationLedger;
-///         Memo txMemo;
-///         SorobanAuthorizedInvocation invocation;
-///     }
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct HashIdPreimageSorobanAuthorizationV2 {
-    pub ext: ExtensionPoint,
-    pub network_id: Hash,
-    pub nonce: i64,
-    pub signature_expiration_ledger: u32,
-    pub tx_memo: Memo,
-    pub invocation: SorobanAuthorizedInvocation,
-}
-
-impl ReadXdr for HashIdPreimageSorobanAuthorizationV2 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                ext: ExtensionPoint::read_xdr(r)?,
-                network_id: Hash::read_xdr(r)?,
-                nonce: i64::read_xdr(r)?,
-                signature_expiration_ledger: u32::read_xdr(r)?,
-                tx_memo: Memo::read_xdr(r)?,
-                invocation: SorobanAuthorizedInvocation::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for HashIdPreimageSorobanAuthorizationV2 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.ext.write_xdr(w)?;
-            self.network_id.write_xdr(w)?;
-            self.nonce.write_xdr(w)?;
-            self.signature_expiration_ledger.write_xdr(w)?;
-            self.tx_memo.write_xdr(w)?;
-            self.invocation.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 /// HashIdPreimage is an XDR Union defines as:
 ///
 /// ```text
@@ -31679,17 +31650,6 @@ impl WriteXdr for HashIdPreimageSorobanAuthorizationV2 {
 ///         uint32 signatureExpirationLedger;
 ///         SorobanAuthorizedInvocation invocation;
 ///     } sorobanAuthorization;
-/// case ENVELOPE_TYPE_SOROBAN_AUTHORIZATION_V2:
-///     struct
-///     {
-///         ExtensionPoint ext;
-///
-///         Hash networkID;
-///         int64 nonce;
-///         uint32 signatureExpirationLedger;
-///         Memo txMemo;
-///         SorobanAuthorizedInvocation invocation;
-///     } sorobanAuthorizationV2;
 /// };
 /// ```
 ///
@@ -31708,23 +31668,20 @@ pub enum HashIdPreimage {
     PoolRevokeOpId(HashIdPreimageRevokeId),
     ContractId(HashIdPreimageContractId),
     SorobanAuthorization(HashIdPreimageSorobanAuthorization),
-    SorobanAuthorizationV2(HashIdPreimageSorobanAuthorizationV2),
 }
 
 impl HashIdPreimage {
-    pub const VARIANTS: [EnvelopeType; 5] = [
+    pub const VARIANTS: [EnvelopeType; 4] = [
         EnvelopeType::OpId,
         EnvelopeType::PoolRevokeOpId,
         EnvelopeType::ContractId,
         EnvelopeType::SorobanAuthorization,
-        EnvelopeType::SorobanAuthorizationV2,
     ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
+    pub const VARIANTS_STR: [&'static str; 4] = [
         "OpId",
         "PoolRevokeOpId",
         "ContractId",
         "SorobanAuthorization",
-        "SorobanAuthorizationV2",
     ];
 
     #[must_use]
@@ -31734,7 +31691,6 @@ impl HashIdPreimage {
             Self::PoolRevokeOpId(_) => "PoolRevokeOpId",
             Self::ContractId(_) => "ContractId",
             Self::SorobanAuthorization(_) => "SorobanAuthorization",
-            Self::SorobanAuthorizationV2(_) => "SorobanAuthorizationV2",
         }
     }
 
@@ -31746,12 +31702,11 @@ impl HashIdPreimage {
             Self::PoolRevokeOpId(_) => EnvelopeType::PoolRevokeOpId,
             Self::ContractId(_) => EnvelopeType::ContractId,
             Self::SorobanAuthorization(_) => EnvelopeType::SorobanAuthorization,
-            Self::SorobanAuthorizationV2(_) => EnvelopeType::SorobanAuthorizationV2,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [EnvelopeType; 5] {
+    pub const fn variants() -> [EnvelopeType; 4] {
         Self::VARIANTS
     }
 }
@@ -31795,9 +31750,6 @@ impl ReadXdr for HashIdPreimage {
                 EnvelopeType::SorobanAuthorization => {
                     Self::SorobanAuthorization(HashIdPreimageSorobanAuthorization::read_xdr(r)?)
                 }
-                EnvelopeType::SorobanAuthorizationV2 => {
-                    Self::SorobanAuthorizationV2(HashIdPreimageSorobanAuthorizationV2::read_xdr(r)?)
-                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -31817,7 +31769,6 @@ impl WriteXdr for HashIdPreimage {
                 Self::PoolRevokeOpId(v) => v.write_xdr(w)?,
                 Self::ContractId(v) => v.write_xdr(w)?,
                 Self::SorobanAuthorization(v) => v.write_xdr(w)?,
-                Self::SorobanAuthorizationV2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -32539,6 +32490,542 @@ impl WriteXdr for LedgerFootprint {
     }
 }
 
+/// ArchivalProofType is an XDR Enum defines as:
+///
+/// ```text
+/// enum ArchivalProofType
+/// {
+///     EXISTENCE = 0,
+///     NONEXISTENCE = 1
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum ArchivalProofType {
+    Existence = 0,
+    Nonexistence = 1,
+}
+
+impl ArchivalProofType {
+    pub const VARIANTS: [ArchivalProofType; 2] = [
+        ArchivalProofType::Existence,
+        ArchivalProofType::Nonexistence,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Existence", "Nonexistence"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Existence => "Existence",
+            Self::Nonexistence => "Nonexistence",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ArchivalProofType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ArchivalProofType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ArchivalProofType> for ArchivalProofType {
+    fn variants() -> slice::Iter<'static, ArchivalProofType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ArchivalProofType {}
+
+impl fmt::Display for ArchivalProofType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ArchivalProofType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ArchivalProofType::Existence,
+            1 => ArchivalProofType::Nonexistence,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ArchivalProofType> for i32 {
+    #[must_use]
+    fn from(e: ArchivalProofType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ArchivalProofType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ArchivalProofType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+/// ArchivalProofNode is an XDR Struct defines as:
+///
+/// ```text
+/// struct ArchivalProofNode
+/// {
+///     uint32 index;
+///     Hash hash;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ArchivalProofNode {
+    pub index: u32,
+    pub hash: Hash,
+}
+
+impl ReadXdr for ArchivalProofNode {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                index: u32::read_xdr(r)?,
+                hash: Hash::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ArchivalProofNode {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.index.write_xdr(w)?;
+            self.hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ProofLevel is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef ArchivalProofNode ProofLevel<>;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Debug)]
+pub struct ProofLevel(pub VecM<ArchivalProofNode>);
+
+impl From<ProofLevel> for VecM<ArchivalProofNode> {
+    #[must_use]
+    fn from(x: ProofLevel) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<ArchivalProofNode>> for ProofLevel {
+    #[must_use]
+    fn from(x: VecM<ArchivalProofNode>) -> Self {
+        ProofLevel(x)
+    }
+}
+
+impl AsRef<VecM<ArchivalProofNode>> for ProofLevel {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<ArchivalProofNode> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ProofLevel {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<ArchivalProofNode>::read_xdr(r)?;
+            let v = ProofLevel(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ProofLevel {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for ProofLevel {
+    type Target = VecM<ArchivalProofNode>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ProofLevel> for Vec<ArchivalProofNode> {
+    #[must_use]
+    fn from(x: ProofLevel) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ArchivalProofNode>> for ProofLevel {
+    type Error = Error;
+    fn try_from(x: Vec<ArchivalProofNode>) -> Result<Self> {
+        Ok(ProofLevel(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<ArchivalProofNode>> for ProofLevel {
+    type Error = Error;
+    fn try_from(x: &Vec<ArchivalProofNode>) -> Result<Self> {
+        Ok(ProofLevel(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ArchivalProofNode>> for ProofLevel {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<ArchivalProofNode> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ArchivalProofNode]> for ProofLevel {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[ArchivalProofNode] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ArchivalProofNode] {
+        self.0 .0
+    }
+}
+
+/// ExistenceProofBody is an XDR Struct defines as:
+///
+/// ```text
+/// struct ExistenceProofBody
+/// {
+///     ColdArchiveBucketEntry entriesToProve<>;
+///
+///     // Vector of vectors, where proofLevels[level]
+///     // contains all HashNodes that correspond with that level
+///     ProofLevel proofLevels<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ExistenceProofBody {
+    pub entries_to_prove: VecM<ColdArchiveBucketEntry>,
+    pub proof_levels: VecM<ProofLevel>,
+}
+
+impl ReadXdr for ExistenceProofBody {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                entries_to_prove: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
+                proof_levels: VecM::<ProofLevel>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ExistenceProofBody {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.entries_to_prove.write_xdr(w)?;
+            self.proof_levels.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// NonexistenceProofBody is an XDR Struct defines as:
+///
+/// ```text
+/// struct NonexistenceProofBody
+/// {
+///     LedgerKey keysToProve<>;
+///
+///     // Bounds for each key being proved, where bound[n]
+///     // corresponds to keysToProve[n]
+///     ColdArchiveBucketEntry lowBoundEntries<>;
+///     ColdArchiveBucketEntry highBoundEntries<>;
+///
+///     // Vector of vectors, where proofLevels[level]
+///     // contains all HashNodes that correspond with that level
+///     ProofLevel proofLevels<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct NonexistenceProofBody {
+    pub keys_to_prove: VecM<LedgerKey>,
+    pub low_bound_entries: VecM<ColdArchiveBucketEntry>,
+    pub high_bound_entries: VecM<ColdArchiveBucketEntry>,
+    pub proof_levels: VecM<ProofLevel>,
+}
+
+impl ReadXdr for NonexistenceProofBody {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                keys_to_prove: VecM::<LedgerKey>::read_xdr(r)?,
+                low_bound_entries: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
+                high_bound_entries: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
+                proof_levels: VecM::<ProofLevel>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for NonexistenceProofBody {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.keys_to_prove.write_xdr(w)?;
+            self.low_bound_entries.write_xdr(w)?;
+            self.high_bound_entries.write_xdr(w)?;
+            self.proof_levels.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ArchivalProofBody is an XDR NestedUnion defines as:
+///
+/// ```text
+/// union switch (ArchivalProofType t)
+///     {
+///     case NONEXISTENCE:
+///         NonexistenceProofBody nonexistenceProof;
+///     case EXISTENCE:
+///         ExistenceProofBody existenceProof;
+///     }
+/// ```
+///
+// union with discriminant ArchivalProofType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[allow(clippy::large_enum_variant)]
+pub enum ArchivalProofBody {
+    Nonexistence(NonexistenceProofBody),
+    Existence(ExistenceProofBody),
+}
+
+impl ArchivalProofBody {
+    pub const VARIANTS: [ArchivalProofType; 2] = [
+        ArchivalProofType::Nonexistence,
+        ArchivalProofType::Existence,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Nonexistence", "Existence"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Nonexistence(_) => "Nonexistence",
+            Self::Existence(_) => "Existence",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ArchivalProofType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Nonexistence(_) => ArchivalProofType::Nonexistence,
+            Self::Existence(_) => ArchivalProofType::Existence,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ArchivalProofType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ArchivalProofBody {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ArchivalProofType> for ArchivalProofBody {
+    #[must_use]
+    fn discriminant(&self) -> ArchivalProofType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ArchivalProofType> for ArchivalProofBody {
+    fn variants() -> slice::Iter<'static, ArchivalProofType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ArchivalProofType> for ArchivalProofBody {}
+
+impl ReadXdr for ArchivalProofBody {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ArchivalProofType = <ArchivalProofType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ArchivalProofType::Nonexistence => {
+                    Self::Nonexistence(NonexistenceProofBody::read_xdr(r)?)
+                }
+                ArchivalProofType::Existence => Self::Existence(ExistenceProofBody::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ArchivalProofBody {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Nonexistence(v) => v.write_xdr(w)?,
+                Self::Existence(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+/// ArchivalProof is an XDR Struct defines as:
+///
+/// ```text
+/// struct ArchivalProof
+/// {
+///     uint32 epoch; // AST Subtree for this proof
+///
+///     union switch (ArchivalProofType t)
+///     {
+///     case NONEXISTENCE:
+///         NonexistenceProofBody nonexistenceProof;
+///     case EXISTENCE:
+///         ExistenceProofBody existenceProof;
+///     } body;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ArchivalProof {
+    pub epoch: u32,
+    pub body: ArchivalProofBody,
+}
+
+impl ReadXdr for ArchivalProof {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                epoch: u32::read_xdr(r)?,
+                body: ArchivalProofBody::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ArchivalProof {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.epoch.write_xdr(w)?;
+            self.body.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// SorobanResources is an XDR Struct defines as:
 ///
 /// ```text
@@ -32598,171 +33085,12 @@ impl WriteXdr for SorobanResources {
     }
 }
 
-/// SorobanResourcesExtV0 is an XDR Struct defines as:
-///
-/// ```text
-/// struct SorobanResourcesExtV0
-/// {
-///     // Vector of indices representing what Soroban
-///     // entries in the footprint are archived, based on the
-///     // order of keys provided in the readWrite footprint.
-///     uint32 archivedSorobanEntries<>;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct SorobanResourcesExtV0 {
-    pub archived_soroban_entries: VecM<u32>,
-}
-
-impl ReadXdr for SorobanResourcesExtV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                archived_soroban_entries: VecM::<u32>::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for SorobanResourcesExtV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.archived_soroban_entries.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// SorobanTransactionDataExt is an XDR NestedUnion defines as:
-///
-/// ```text
-/// union switch (int v)
-///     {
-///     case 0:
-///         void;
-///     case 1:
-///         SorobanResourcesExtV0 resourceExt;
-///     }
-/// ```
-///
-// union with discriminant i32
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[allow(clippy::large_enum_variant)]
-pub enum SorobanTransactionDataExt {
-    V0,
-    V1(SorobanResourcesExtV0),
-}
-
-impl SorobanTransactionDataExt {
-    pub const VARIANTS: [i32; 2] = [0, 1];
-    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::V0 => "V0",
-            Self::V1(_) => "V1",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> i32 {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::V0 => 0,
-            Self::V1(_) => 1,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [i32; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for SorobanTransactionDataExt {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<i32> for SorobanTransactionDataExt {
-    #[must_use]
-    fn discriminant(&self) -> i32 {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<i32> for SorobanTransactionDataExt {
-    fn variants() -> slice::Iter<'static, i32> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<i32> for SorobanTransactionDataExt {}
-
-impl ReadXdr for SorobanTransactionDataExt {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
-            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-            let v = match dv {
-                0 => Self::V0,
-                1 => Self::V1(SorobanResourcesExtV0::read_xdr(r)?),
-                #[allow(unreachable_patterns)]
-                _ => return Err(Error::Invalid),
-            };
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for SorobanTransactionDataExt {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::V0 => ().write_xdr(w)?,
-                Self::V1(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 /// SorobanTransactionData is an XDR Struct defines as:
 ///
 /// ```text
 /// struct SorobanTransactionData
 /// {
-///     union switch (int v)
-///     {
-///     case 0:
-///         void;
-///     case 1:
-///         SorobanResourcesExtV0 resourceExt;
-///     } ext;
+///     ExtensionPoint ext;
 ///     SorobanResources resources;
 ///     // Amount of the transaction `fee` allocated to the Soroban resource fees.
 ///     // The fraction of `resourceFee` corresponding to `resources` specified
@@ -32786,7 +33114,7 @@ impl WriteXdr for SorobanTransactionDataExt {
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanTransactionData {
-    pub ext: SorobanTransactionDataExt,
+    pub ext: ExtensionPoint,
     pub resources: SorobanResources,
     pub resource_fee: i64,
 }
@@ -32796,7 +33124,7 @@ impl ReadXdr for SorobanTransactionData {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                ext: SorobanTransactionDataExt::read_xdr(r)?,
+                ext: ExtensionPoint::read_xdr(r)?,
                 resources: SorobanResources::read_xdr(r)?,
                 resource_fee: i64::read_xdr(r)?,
             })
@@ -46405,7 +46733,6 @@ pub enum TypeVariant {
     ConfigSettingContractComputeV0,
     ConfigSettingContractParallelComputeV0,
     ConfigSettingContractLedgerCostV0,
-    ConfigSettingContractLedgerCostExtV0,
     ConfigSettingContractHistoricalDataV0,
     ConfigSettingContractEventsV0,
     ConfigSettingContractBandwidthV0,
@@ -46457,6 +46784,7 @@ pub enum TypeVariant {
     ContractExecutableType,
     ContractExecutable,
     ScAddressType,
+    LegacyMemoMuxedAccount,
     ScAddress,
     ScVec,
     ScMap,
@@ -46622,6 +46950,7 @@ pub enum TypeVariant {
     UpgradeEntryMeta,
     LedgerCloseMetaV0,
     LedgerCloseMetaExtV1,
+    LedgerCloseMetaExtV2,
     LedgerCloseMetaExt,
     LedgerCloseMetaV1,
     LedgerCloseMeta,
@@ -46709,7 +47038,6 @@ pub enum TypeVariant {
     SorobanAuthorizedFunction,
     SorobanAuthorizedInvocation,
     SorobanAddressCredentials,
-    SorobanAddressCredentialsV2,
     SorobanCredentialsType,
     SorobanCredentials,
     SorobanAuthorizationEntry,
@@ -46723,7 +47051,6 @@ pub enum TypeVariant {
     HashIdPreimageRevokeId,
     HashIdPreimageContractId,
     HashIdPreimageSorobanAuthorization,
-    HashIdPreimageSorobanAuthorizationV2,
     MemoType,
     Memo,
     TimeBounds,
@@ -46732,10 +47059,15 @@ pub enum TypeVariant {
     PreconditionType,
     Preconditions,
     LedgerFootprint,
+    ArchivalProofType,
+    ArchivalProofNode,
+    ProofLevel,
+    ExistenceProofBody,
+    NonexistenceProofBody,
+    ArchivalProof,
+    ArchivalProofBody,
     SorobanResources,
-    SorobanResourcesExtV0,
     SorobanTransactionData,
-    SorobanTransactionDataExt,
     TransactionV0,
     TransactionV0Ext,
     TransactionV0Envelope,
@@ -46853,7 +47185,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 460] = [
+    pub const VARIANTS: [TypeVariant; 464] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -46869,7 +47201,6 @@ impl TypeVariant {
         TypeVariant::ConfigSettingContractComputeV0,
         TypeVariant::ConfigSettingContractParallelComputeV0,
         TypeVariant::ConfigSettingContractLedgerCostV0,
-        TypeVariant::ConfigSettingContractLedgerCostExtV0,
         TypeVariant::ConfigSettingContractHistoricalDataV0,
         TypeVariant::ConfigSettingContractEventsV0,
         TypeVariant::ConfigSettingContractBandwidthV0,
@@ -46921,6 +47252,7 @@ impl TypeVariant {
         TypeVariant::ContractExecutableType,
         TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
+        TypeVariant::LegacyMemoMuxedAccount,
         TypeVariant::ScAddress,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
@@ -47086,6 +47418,7 @@ impl TypeVariant {
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaExtV1,
+        TypeVariant::LedgerCloseMetaExtV2,
         TypeVariant::LedgerCloseMetaExt,
         TypeVariant::LedgerCloseMetaV1,
         TypeVariant::LedgerCloseMeta,
@@ -47173,7 +47506,6 @@ impl TypeVariant {
         TypeVariant::SorobanAuthorizedFunction,
         TypeVariant::SorobanAuthorizedInvocation,
         TypeVariant::SorobanAddressCredentials,
-        TypeVariant::SorobanAddressCredentialsV2,
         TypeVariant::SorobanCredentialsType,
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
@@ -47187,7 +47519,6 @@ impl TypeVariant {
         TypeVariant::HashIdPreimageRevokeId,
         TypeVariant::HashIdPreimageContractId,
         TypeVariant::HashIdPreimageSorobanAuthorization,
-        TypeVariant::HashIdPreimageSorobanAuthorizationV2,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -47196,10 +47527,15 @@ impl TypeVariant {
         TypeVariant::PreconditionType,
         TypeVariant::Preconditions,
         TypeVariant::LedgerFootprint,
+        TypeVariant::ArchivalProofType,
+        TypeVariant::ArchivalProofNode,
+        TypeVariant::ProofLevel,
+        TypeVariant::ExistenceProofBody,
+        TypeVariant::NonexistenceProofBody,
+        TypeVariant::ArchivalProof,
+        TypeVariant::ArchivalProofBody,
         TypeVariant::SorobanResources,
-        TypeVariant::SorobanResourcesExtV0,
         TypeVariant::SorobanTransactionData,
-        TypeVariant::SorobanTransactionDataExt,
         TypeVariant::TransactionV0,
         TypeVariant::TransactionV0Ext,
         TypeVariant::TransactionV0Envelope,
@@ -47315,7 +47651,7 @@ impl TypeVariant {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 460] = [
+    pub const VARIANTS_STR: [&'static str; 464] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47331,7 +47667,6 @@ impl TypeVariant {
         "ConfigSettingContractComputeV0",
         "ConfigSettingContractParallelComputeV0",
         "ConfigSettingContractLedgerCostV0",
-        "ConfigSettingContractLedgerCostExtV0",
         "ConfigSettingContractHistoricalDataV0",
         "ConfigSettingContractEventsV0",
         "ConfigSettingContractBandwidthV0",
@@ -47383,6 +47718,7 @@ impl TypeVariant {
         "ContractExecutableType",
         "ContractExecutable",
         "ScAddressType",
+        "LegacyMemoMuxedAccount",
         "ScAddress",
         "ScVec",
         "ScMap",
@@ -47548,6 +47884,7 @@ impl TypeVariant {
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaExtV1",
+        "LedgerCloseMetaExtV2",
         "LedgerCloseMetaExt",
         "LedgerCloseMetaV1",
         "LedgerCloseMeta",
@@ -47635,7 +47972,6 @@ impl TypeVariant {
         "SorobanAuthorizedFunction",
         "SorobanAuthorizedInvocation",
         "SorobanAddressCredentials",
-        "SorobanAddressCredentialsV2",
         "SorobanCredentialsType",
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
@@ -47649,7 +47985,6 @@ impl TypeVariant {
         "HashIdPreimageRevokeId",
         "HashIdPreimageContractId",
         "HashIdPreimageSorobanAuthorization",
-        "HashIdPreimageSorobanAuthorizationV2",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -47658,10 +47993,15 @@ impl TypeVariant {
         "PreconditionType",
         "Preconditions",
         "LedgerFootprint",
+        "ArchivalProofType",
+        "ArchivalProofNode",
+        "ProofLevel",
+        "ExistenceProofBody",
+        "NonexistenceProofBody",
+        "ArchivalProof",
+        "ArchivalProofBody",
         "SorobanResources",
-        "SorobanResourcesExtV0",
         "SorobanTransactionData",
-        "SorobanTransactionDataExt",
         "TransactionV0",
         "TransactionV0Ext",
         "TransactionV0Envelope",
@@ -47799,7 +48139,6 @@ impl TypeVariant {
                 "ConfigSettingContractParallelComputeV0"
             }
             Self::ConfigSettingContractLedgerCostV0 => "ConfigSettingContractLedgerCostV0",
-            Self::ConfigSettingContractLedgerCostExtV0 => "ConfigSettingContractLedgerCostExtV0",
             Self::ConfigSettingContractHistoricalDataV0 => "ConfigSettingContractHistoricalDataV0",
             Self::ConfigSettingContractEventsV0 => "ConfigSettingContractEventsV0",
             Self::ConfigSettingContractBandwidthV0 => "ConfigSettingContractBandwidthV0",
@@ -47851,6 +48190,7 @@ impl TypeVariant {
             Self::ContractExecutableType => "ContractExecutableType",
             Self::ContractExecutable => "ContractExecutable",
             Self::ScAddressType => "ScAddressType",
+            Self::LegacyMemoMuxedAccount => "LegacyMemoMuxedAccount",
             Self::ScAddress => "ScAddress",
             Self::ScVec => "ScVec",
             Self::ScMap => "ScMap",
@@ -48018,6 +48358,7 @@ impl TypeVariant {
             Self::UpgradeEntryMeta => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0 => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaExtV1 => "LedgerCloseMetaExtV1",
+            Self::LedgerCloseMetaExtV2 => "LedgerCloseMetaExtV2",
             Self::LedgerCloseMetaExt => "LedgerCloseMetaExt",
             Self::LedgerCloseMetaV1 => "LedgerCloseMetaV1",
             Self::LedgerCloseMeta => "LedgerCloseMeta",
@@ -48111,7 +48452,6 @@ impl TypeVariant {
             Self::SorobanAuthorizedFunction => "SorobanAuthorizedFunction",
             Self::SorobanAuthorizedInvocation => "SorobanAuthorizedInvocation",
             Self::SorobanAddressCredentials => "SorobanAddressCredentials",
-            Self::SorobanAddressCredentialsV2 => "SorobanAddressCredentialsV2",
             Self::SorobanCredentialsType => "SorobanCredentialsType",
             Self::SorobanCredentials => "SorobanCredentials",
             Self::SorobanAuthorizationEntry => "SorobanAuthorizationEntry",
@@ -48125,7 +48465,6 @@ impl TypeVariant {
             Self::HashIdPreimageRevokeId => "HashIdPreimageRevokeId",
             Self::HashIdPreimageContractId => "HashIdPreimageContractId",
             Self::HashIdPreimageSorobanAuthorization => "HashIdPreimageSorobanAuthorization",
-            Self::HashIdPreimageSorobanAuthorizationV2 => "HashIdPreimageSorobanAuthorizationV2",
             Self::MemoType => "MemoType",
             Self::Memo => "Memo",
             Self::TimeBounds => "TimeBounds",
@@ -48134,10 +48473,15 @@ impl TypeVariant {
             Self::PreconditionType => "PreconditionType",
             Self::Preconditions => "Preconditions",
             Self::LedgerFootprint => "LedgerFootprint",
+            Self::ArchivalProofType => "ArchivalProofType",
+            Self::ArchivalProofNode => "ArchivalProofNode",
+            Self::ProofLevel => "ProofLevel",
+            Self::ExistenceProofBody => "ExistenceProofBody",
+            Self::NonexistenceProofBody => "NonexistenceProofBody",
+            Self::ArchivalProof => "ArchivalProof",
+            Self::ArchivalProofBody => "ArchivalProofBody",
             Self::SorobanResources => "SorobanResources",
-            Self::SorobanResourcesExtV0 => "SorobanResourcesExtV0",
             Self::SorobanTransactionData => "SorobanTransactionData",
-            Self::SorobanTransactionDataExt => "SorobanTransactionDataExt",
             Self::TransactionV0 => "TransactionV0",
             Self::TransactionV0Ext => "TransactionV0Ext",
             Self::TransactionV0Envelope => "TransactionV0Envelope",
@@ -48261,7 +48605,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 460] {
+    pub const fn variants() -> [TypeVariant; 464] {
         Self::VARIANTS
     }
 
@@ -48292,9 +48636,6 @@ impl TypeVariant {
             }
             Self::ConfigSettingContractLedgerCostV0 => {
                 gen.into_root_schema_for::<ConfigSettingContractLedgerCostV0>()
-            }
-            Self::ConfigSettingContractLedgerCostExtV0 => {
-                gen.into_root_schema_for::<ConfigSettingContractLedgerCostExtV0>()
             }
             Self::ConfigSettingContractHistoricalDataV0 => {
                 gen.into_root_schema_for::<ConfigSettingContractHistoricalDataV0>()
@@ -48363,6 +48704,7 @@ impl TypeVariant {
             Self::ContractExecutableType => gen.into_root_schema_for::<ContractExecutableType>(),
             Self::ContractExecutable => gen.into_root_schema_for::<ContractExecutable>(),
             Self::ScAddressType => gen.into_root_schema_for::<ScAddressType>(),
+            Self::LegacyMemoMuxedAccount => gen.into_root_schema_for::<LegacyMemoMuxedAccount>(),
             Self::ScAddress => gen.into_root_schema_for::<ScAddress>(),
             Self::ScVec => gen.into_root_schema_for::<ScVec>(),
             Self::ScMap => gen.into_root_schema_for::<ScMap>(),
@@ -48582,6 +48924,7 @@ impl TypeVariant {
             Self::UpgradeEntryMeta => gen.into_root_schema_for::<UpgradeEntryMeta>(),
             Self::LedgerCloseMetaV0 => gen.into_root_schema_for::<LedgerCloseMetaV0>(),
             Self::LedgerCloseMetaExtV1 => gen.into_root_schema_for::<LedgerCloseMetaExtV1>(),
+            Self::LedgerCloseMetaExtV2 => gen.into_root_schema_for::<LedgerCloseMetaExtV2>(),
             Self::LedgerCloseMetaExt => gen.into_root_schema_for::<LedgerCloseMetaExt>(),
             Self::LedgerCloseMetaV1 => gen.into_root_schema_for::<LedgerCloseMetaV1>(),
             Self::LedgerCloseMeta => gen.into_root_schema_for::<LedgerCloseMeta>(),
@@ -48715,9 +49058,6 @@ impl TypeVariant {
             Self::SorobanAddressCredentials => {
                 gen.into_root_schema_for::<SorobanAddressCredentials>()
             }
-            Self::SorobanAddressCredentialsV2 => {
-                gen.into_root_schema_for::<SorobanAddressCredentialsV2>()
-            }
             Self::SorobanCredentialsType => gen.into_root_schema_for::<SorobanCredentialsType>(),
             Self::SorobanCredentials => gen.into_root_schema_for::<SorobanCredentials>(),
             Self::SorobanAuthorizationEntry => {
@@ -48739,9 +49079,6 @@ impl TypeVariant {
             Self::HashIdPreimageSorobanAuthorization => {
                 gen.into_root_schema_for::<HashIdPreimageSorobanAuthorization>()
             }
-            Self::HashIdPreimageSorobanAuthorizationV2 => {
-                gen.into_root_schema_for::<HashIdPreimageSorobanAuthorizationV2>()
-            }
             Self::MemoType => gen.into_root_schema_for::<MemoType>(),
             Self::Memo => gen.into_root_schema_for::<Memo>(),
             Self::TimeBounds => gen.into_root_schema_for::<TimeBounds>(),
@@ -48750,12 +49087,15 @@ impl TypeVariant {
             Self::PreconditionType => gen.into_root_schema_for::<PreconditionType>(),
             Self::Preconditions => gen.into_root_schema_for::<Preconditions>(),
             Self::LedgerFootprint => gen.into_root_schema_for::<LedgerFootprint>(),
+            Self::ArchivalProofType => gen.into_root_schema_for::<ArchivalProofType>(),
+            Self::ArchivalProofNode => gen.into_root_schema_for::<ArchivalProofNode>(),
+            Self::ProofLevel => gen.into_root_schema_for::<ProofLevel>(),
+            Self::ExistenceProofBody => gen.into_root_schema_for::<ExistenceProofBody>(),
+            Self::NonexistenceProofBody => gen.into_root_schema_for::<NonexistenceProofBody>(),
+            Self::ArchivalProof => gen.into_root_schema_for::<ArchivalProof>(),
+            Self::ArchivalProofBody => gen.into_root_schema_for::<ArchivalProofBody>(),
             Self::SorobanResources => gen.into_root_schema_for::<SorobanResources>(),
-            Self::SorobanResourcesExtV0 => gen.into_root_schema_for::<SorobanResourcesExtV0>(),
             Self::SorobanTransactionData => gen.into_root_schema_for::<SorobanTransactionData>(),
-            Self::SorobanTransactionDataExt => {
-                gen.into_root_schema_for::<SorobanTransactionDataExt>()
-            }
             Self::TransactionV0 => gen.into_root_schema_for::<TransactionV0>(),
             Self::TransactionV0Ext => gen.into_root_schema_for::<TransactionV0Ext>(),
             Self::TransactionV0Envelope => gen.into_root_schema_for::<TransactionV0Envelope>(),
@@ -48991,9 +49331,6 @@ impl core::str::FromStr for TypeVariant {
                 Ok(Self::ConfigSettingContractParallelComputeV0)
             }
             "ConfigSettingContractLedgerCostV0" => Ok(Self::ConfigSettingContractLedgerCostV0),
-            "ConfigSettingContractLedgerCostExtV0" => {
-                Ok(Self::ConfigSettingContractLedgerCostExtV0)
-            }
             "ConfigSettingContractHistoricalDataV0" => {
                 Ok(Self::ConfigSettingContractHistoricalDataV0)
             }
@@ -49047,6 +49384,7 @@ impl core::str::FromStr for TypeVariant {
             "ContractExecutableType" => Ok(Self::ContractExecutableType),
             "ContractExecutable" => Ok(Self::ContractExecutable),
             "ScAddressType" => Ok(Self::ScAddressType),
+            "LegacyMemoMuxedAccount" => Ok(Self::LegacyMemoMuxedAccount),
             "ScAddress" => Ok(Self::ScAddress),
             "ScVec" => Ok(Self::ScVec),
             "ScMap" => Ok(Self::ScMap),
@@ -49214,6 +49552,7 @@ impl core::str::FromStr for TypeVariant {
             "UpgradeEntryMeta" => Ok(Self::UpgradeEntryMeta),
             "LedgerCloseMetaV0" => Ok(Self::LedgerCloseMetaV0),
             "LedgerCloseMetaExtV1" => Ok(Self::LedgerCloseMetaExtV1),
+            "LedgerCloseMetaExtV2" => Ok(Self::LedgerCloseMetaExtV2),
             "LedgerCloseMetaExt" => Ok(Self::LedgerCloseMetaExt),
             "LedgerCloseMetaV1" => Ok(Self::LedgerCloseMetaV1),
             "LedgerCloseMeta" => Ok(Self::LedgerCloseMeta),
@@ -49313,7 +49652,6 @@ impl core::str::FromStr for TypeVariant {
             "SorobanAuthorizedFunction" => Ok(Self::SorobanAuthorizedFunction),
             "SorobanAuthorizedInvocation" => Ok(Self::SorobanAuthorizedInvocation),
             "SorobanAddressCredentials" => Ok(Self::SorobanAddressCredentials),
-            "SorobanAddressCredentialsV2" => Ok(Self::SorobanAddressCredentialsV2),
             "SorobanCredentialsType" => Ok(Self::SorobanCredentialsType),
             "SorobanCredentials" => Ok(Self::SorobanCredentials),
             "SorobanAuthorizationEntry" => Ok(Self::SorobanAuthorizationEntry),
@@ -49327,9 +49665,6 @@ impl core::str::FromStr for TypeVariant {
             "HashIdPreimageRevokeId" => Ok(Self::HashIdPreimageRevokeId),
             "HashIdPreimageContractId" => Ok(Self::HashIdPreimageContractId),
             "HashIdPreimageSorobanAuthorization" => Ok(Self::HashIdPreimageSorobanAuthorization),
-            "HashIdPreimageSorobanAuthorizationV2" => {
-                Ok(Self::HashIdPreimageSorobanAuthorizationV2)
-            }
             "MemoType" => Ok(Self::MemoType),
             "Memo" => Ok(Self::Memo),
             "TimeBounds" => Ok(Self::TimeBounds),
@@ -49338,10 +49673,15 @@ impl core::str::FromStr for TypeVariant {
             "PreconditionType" => Ok(Self::PreconditionType),
             "Preconditions" => Ok(Self::Preconditions),
             "LedgerFootprint" => Ok(Self::LedgerFootprint),
+            "ArchivalProofType" => Ok(Self::ArchivalProofType),
+            "ArchivalProofNode" => Ok(Self::ArchivalProofNode),
+            "ProofLevel" => Ok(Self::ProofLevel),
+            "ExistenceProofBody" => Ok(Self::ExistenceProofBody),
+            "NonexistenceProofBody" => Ok(Self::NonexistenceProofBody),
+            "ArchivalProof" => Ok(Self::ArchivalProof),
+            "ArchivalProofBody" => Ok(Self::ArchivalProofBody),
             "SorobanResources" => Ok(Self::SorobanResources),
-            "SorobanResourcesExtV0" => Ok(Self::SorobanResourcesExtV0),
             "SorobanTransactionData" => Ok(Self::SorobanTransactionData),
-            "SorobanTransactionDataExt" => Ok(Self::SorobanTransactionDataExt),
             "TransactionV0" => Ok(Self::TransactionV0),
             "TransactionV0Ext" => Ok(Self::TransactionV0Ext),
             "TransactionV0Envelope" => Ok(Self::TransactionV0Envelope),
@@ -49493,7 +49833,6 @@ pub enum Type {
     ConfigSettingContractComputeV0(Box<ConfigSettingContractComputeV0>),
     ConfigSettingContractParallelComputeV0(Box<ConfigSettingContractParallelComputeV0>),
     ConfigSettingContractLedgerCostV0(Box<ConfigSettingContractLedgerCostV0>),
-    ConfigSettingContractLedgerCostExtV0(Box<ConfigSettingContractLedgerCostExtV0>),
     ConfigSettingContractHistoricalDataV0(Box<ConfigSettingContractHistoricalDataV0>),
     ConfigSettingContractEventsV0(Box<ConfigSettingContractEventsV0>),
     ConfigSettingContractBandwidthV0(Box<ConfigSettingContractBandwidthV0>),
@@ -49545,6 +49884,7 @@ pub enum Type {
     ContractExecutableType(Box<ContractExecutableType>),
     ContractExecutable(Box<ContractExecutable>),
     ScAddressType(Box<ScAddressType>),
+    LegacyMemoMuxedAccount(Box<LegacyMemoMuxedAccount>),
     ScAddress(Box<ScAddress>),
     ScVec(Box<ScVec>),
     ScMap(Box<ScMap>),
@@ -49710,6 +50050,7 @@ pub enum Type {
     UpgradeEntryMeta(Box<UpgradeEntryMeta>),
     LedgerCloseMetaV0(Box<LedgerCloseMetaV0>),
     LedgerCloseMetaExtV1(Box<LedgerCloseMetaExtV1>),
+    LedgerCloseMetaExtV2(Box<LedgerCloseMetaExtV2>),
     LedgerCloseMetaExt(Box<LedgerCloseMetaExt>),
     LedgerCloseMetaV1(Box<LedgerCloseMetaV1>),
     LedgerCloseMeta(Box<LedgerCloseMeta>),
@@ -49797,7 +50138,6 @@ pub enum Type {
     SorobanAuthorizedFunction(Box<SorobanAuthorizedFunction>),
     SorobanAuthorizedInvocation(Box<SorobanAuthorizedInvocation>),
     SorobanAddressCredentials(Box<SorobanAddressCredentials>),
-    SorobanAddressCredentialsV2(Box<SorobanAddressCredentialsV2>),
     SorobanCredentialsType(Box<SorobanCredentialsType>),
     SorobanCredentials(Box<SorobanCredentials>),
     SorobanAuthorizationEntry(Box<SorobanAuthorizationEntry>),
@@ -49811,7 +50151,6 @@ pub enum Type {
     HashIdPreimageRevokeId(Box<HashIdPreimageRevokeId>),
     HashIdPreimageContractId(Box<HashIdPreimageContractId>),
     HashIdPreimageSorobanAuthorization(Box<HashIdPreimageSorobanAuthorization>),
-    HashIdPreimageSorobanAuthorizationV2(Box<HashIdPreimageSorobanAuthorizationV2>),
     MemoType(Box<MemoType>),
     Memo(Box<Memo>),
     TimeBounds(Box<TimeBounds>),
@@ -49820,10 +50159,15 @@ pub enum Type {
     PreconditionType(Box<PreconditionType>),
     Preconditions(Box<Preconditions>),
     LedgerFootprint(Box<LedgerFootprint>),
+    ArchivalProofType(Box<ArchivalProofType>),
+    ArchivalProofNode(Box<ArchivalProofNode>),
+    ProofLevel(Box<ProofLevel>),
+    ExistenceProofBody(Box<ExistenceProofBody>),
+    NonexistenceProofBody(Box<NonexistenceProofBody>),
+    ArchivalProof(Box<ArchivalProof>),
+    ArchivalProofBody(Box<ArchivalProofBody>),
     SorobanResources(Box<SorobanResources>),
-    SorobanResourcesExtV0(Box<SorobanResourcesExtV0>),
     SorobanTransactionData(Box<SorobanTransactionData>),
-    SorobanTransactionDataExt(Box<SorobanTransactionDataExt>),
     TransactionV0(Box<TransactionV0>),
     TransactionV0Ext(Box<TransactionV0Ext>),
     TransactionV0Envelope(Box<TransactionV0Envelope>),
@@ -49941,7 +50285,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 460] = [
+    pub const VARIANTS: [TypeVariant; 464] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -49957,7 +50301,6 @@ impl Type {
         TypeVariant::ConfigSettingContractComputeV0,
         TypeVariant::ConfigSettingContractParallelComputeV0,
         TypeVariant::ConfigSettingContractLedgerCostV0,
-        TypeVariant::ConfigSettingContractLedgerCostExtV0,
         TypeVariant::ConfigSettingContractHistoricalDataV0,
         TypeVariant::ConfigSettingContractEventsV0,
         TypeVariant::ConfigSettingContractBandwidthV0,
@@ -50009,6 +50352,7 @@ impl Type {
         TypeVariant::ContractExecutableType,
         TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
+        TypeVariant::LegacyMemoMuxedAccount,
         TypeVariant::ScAddress,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
@@ -50174,6 +50518,7 @@ impl Type {
         TypeVariant::UpgradeEntryMeta,
         TypeVariant::LedgerCloseMetaV0,
         TypeVariant::LedgerCloseMetaExtV1,
+        TypeVariant::LedgerCloseMetaExtV2,
         TypeVariant::LedgerCloseMetaExt,
         TypeVariant::LedgerCloseMetaV1,
         TypeVariant::LedgerCloseMeta,
@@ -50261,7 +50606,6 @@ impl Type {
         TypeVariant::SorobanAuthorizedFunction,
         TypeVariant::SorobanAuthorizedInvocation,
         TypeVariant::SorobanAddressCredentials,
-        TypeVariant::SorobanAddressCredentialsV2,
         TypeVariant::SorobanCredentialsType,
         TypeVariant::SorobanCredentials,
         TypeVariant::SorobanAuthorizationEntry,
@@ -50275,7 +50619,6 @@ impl Type {
         TypeVariant::HashIdPreimageRevokeId,
         TypeVariant::HashIdPreimageContractId,
         TypeVariant::HashIdPreimageSorobanAuthorization,
-        TypeVariant::HashIdPreimageSorobanAuthorizationV2,
         TypeVariant::MemoType,
         TypeVariant::Memo,
         TypeVariant::TimeBounds,
@@ -50284,10 +50627,15 @@ impl Type {
         TypeVariant::PreconditionType,
         TypeVariant::Preconditions,
         TypeVariant::LedgerFootprint,
+        TypeVariant::ArchivalProofType,
+        TypeVariant::ArchivalProofNode,
+        TypeVariant::ProofLevel,
+        TypeVariant::ExistenceProofBody,
+        TypeVariant::NonexistenceProofBody,
+        TypeVariant::ArchivalProof,
+        TypeVariant::ArchivalProofBody,
         TypeVariant::SorobanResources,
-        TypeVariant::SorobanResourcesExtV0,
         TypeVariant::SorobanTransactionData,
-        TypeVariant::SorobanTransactionDataExt,
         TypeVariant::TransactionV0,
         TypeVariant::TransactionV0Ext,
         TypeVariant::TransactionV0Envelope,
@@ -50403,7 +50751,7 @@ impl Type {
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
     ];
-    pub const VARIANTS_STR: [&'static str; 460] = [
+    pub const VARIANTS_STR: [&'static str; 464] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50419,7 +50767,6 @@ impl Type {
         "ConfigSettingContractComputeV0",
         "ConfigSettingContractParallelComputeV0",
         "ConfigSettingContractLedgerCostV0",
-        "ConfigSettingContractLedgerCostExtV0",
         "ConfigSettingContractHistoricalDataV0",
         "ConfigSettingContractEventsV0",
         "ConfigSettingContractBandwidthV0",
@@ -50471,6 +50818,7 @@ impl Type {
         "ContractExecutableType",
         "ContractExecutable",
         "ScAddressType",
+        "LegacyMemoMuxedAccount",
         "ScAddress",
         "ScVec",
         "ScMap",
@@ -50636,6 +50984,7 @@ impl Type {
         "UpgradeEntryMeta",
         "LedgerCloseMetaV0",
         "LedgerCloseMetaExtV1",
+        "LedgerCloseMetaExtV2",
         "LedgerCloseMetaExt",
         "LedgerCloseMetaV1",
         "LedgerCloseMeta",
@@ -50723,7 +51072,6 @@ impl Type {
         "SorobanAuthorizedFunction",
         "SorobanAuthorizedInvocation",
         "SorobanAddressCredentials",
-        "SorobanAddressCredentialsV2",
         "SorobanCredentialsType",
         "SorobanCredentials",
         "SorobanAuthorizationEntry",
@@ -50737,7 +51085,6 @@ impl Type {
         "HashIdPreimageRevokeId",
         "HashIdPreimageContractId",
         "HashIdPreimageSorobanAuthorization",
-        "HashIdPreimageSorobanAuthorizationV2",
         "MemoType",
         "Memo",
         "TimeBounds",
@@ -50746,10 +51093,15 @@ impl Type {
         "PreconditionType",
         "Preconditions",
         "LedgerFootprint",
+        "ArchivalProofType",
+        "ArchivalProofNode",
+        "ProofLevel",
+        "ExistenceProofBody",
+        "NonexistenceProofBody",
+        "ArchivalProof",
+        "ArchivalProofBody",
         "SorobanResources",
-        "SorobanResourcesExtV0",
         "SorobanTransactionData",
-        "SorobanTransactionDataExt",
         "TransactionV0",
         "TransactionV0Ext",
         "TransactionV0Envelope",
@@ -50931,11 +51283,6 @@ impl Type {
             TypeVariant::ConfigSettingContractLedgerCostV0 => r.with_limited_depth(|r| {
                 Ok(Self::ConfigSettingContractLedgerCostV0(Box::new(
                     ConfigSettingContractLedgerCostV0::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ConfigSettingContractLedgerCostExtV0 => r.with_limited_depth(|r| {
-                Ok(Self::ConfigSettingContractLedgerCostExtV0(Box::new(
-                    ConfigSettingContractLedgerCostExtV0::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => r.with_limited_depth(|r| {
@@ -51152,6 +51499,11 @@ impl Type {
             }),
             TypeVariant::ScAddressType => r.with_limited_depth(|r| {
                 Ok(Self::ScAddressType(Box::new(ScAddressType::read_xdr(r)?)))
+            }),
+            TypeVariant::LegacyMemoMuxedAccount => r.with_limited_depth(|r| {
+                Ok(Self::LegacyMemoMuxedAccount(Box::new(
+                    LegacyMemoMuxedAccount::read_xdr(r)?,
+                )))
             }),
             TypeVariant::ScAddress => {
                 r.with_limited_depth(|r| Ok(Self::ScAddress(Box::new(ScAddress::read_xdr(r)?))))
@@ -51864,6 +52216,11 @@ impl Type {
                     LedgerCloseMetaExtV1::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::LedgerCloseMetaExtV2 => r.with_limited_depth(|r| {
+                Ok(Self::LedgerCloseMetaExtV2(Box::new(
+                    LedgerCloseMetaExtV2::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::LedgerCloseMetaExt => r.with_limited_depth(|r| {
                 Ok(Self::LedgerCloseMetaExt(Box::new(
                     LedgerCloseMetaExt::read_xdr(r)?,
@@ -52243,11 +52600,6 @@ impl Type {
                     SorobanAddressCredentials::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::SorobanAddressCredentialsV2 => r.with_limited_depth(|r| {
-                Ok(Self::SorobanAddressCredentialsV2(Box::new(
-                    SorobanAddressCredentialsV2::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::SorobanCredentialsType => r.with_limited_depth(|r| {
                 Ok(Self::SorobanCredentialsType(Box::new(
                     SorobanCredentialsType::read_xdr(r)?,
@@ -52307,11 +52659,6 @@ impl Type {
                     HashIdPreimageSorobanAuthorization::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => r.with_limited_depth(|r| {
-                Ok(Self::HashIdPreimageSorobanAuthorizationV2(Box::new(
-                    HashIdPreimageSorobanAuthorizationV2::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::MemoType => {
                 r.with_limited_depth(|r| Ok(Self::MemoType(Box::new(MemoType::read_xdr(r)?))))
             }
@@ -52342,24 +52689,45 @@ impl Type {
                     r,
                 )?)))
             }),
+            TypeVariant::ArchivalProofType => r.with_limited_depth(|r| {
+                Ok(Self::ArchivalProofType(Box::new(
+                    ArchivalProofType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ArchivalProofNode => r.with_limited_depth(|r| {
+                Ok(Self::ArchivalProofNode(Box::new(
+                    ArchivalProofNode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ProofLevel => {
+                r.with_limited_depth(|r| Ok(Self::ProofLevel(Box::new(ProofLevel::read_xdr(r)?))))
+            }
+            TypeVariant::ExistenceProofBody => r.with_limited_depth(|r| {
+                Ok(Self::ExistenceProofBody(Box::new(
+                    ExistenceProofBody::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::NonexistenceProofBody => r.with_limited_depth(|r| {
+                Ok(Self::NonexistenceProofBody(Box::new(
+                    NonexistenceProofBody::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ArchivalProof => r.with_limited_depth(|r| {
+                Ok(Self::ArchivalProof(Box::new(ArchivalProof::read_xdr(r)?)))
+            }),
+            TypeVariant::ArchivalProofBody => r.with_limited_depth(|r| {
+                Ok(Self::ArchivalProofBody(Box::new(
+                    ArchivalProofBody::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::SorobanResources => r.with_limited_depth(|r| {
                 Ok(Self::SorobanResources(Box::new(
                     SorobanResources::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::SorobanResourcesExtV0 => r.with_limited_depth(|r| {
-                Ok(Self::SorobanResourcesExtV0(Box::new(
-                    SorobanResourcesExtV0::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::SorobanTransactionData => r.with_limited_depth(|r| {
                 Ok(Self::SorobanTransactionData(Box::new(
                     SorobanTransactionData::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::SorobanTransactionDataExt => r.with_limited_depth(|r| {
-                Ok(Self::SorobanTransactionDataExt(Box::new(
-                    SorobanTransactionDataExt::read_xdr(r)?,
                 )))
             }),
             TypeVariant::TransactionV0 => r.with_limited_depth(|r| {
@@ -52990,13 +53358,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
             ),
-            TypeVariant::ConfigSettingContractLedgerCostExtV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractLedgerCostExtV0>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostExtV0(Box::new(t)))),
-            ),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(
                     &mut r.inner,
@@ -53212,6 +53573,10 @@ impl Type {
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, ScAddressType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
+            ),
+            TypeVariant::LegacyMemoMuxedAccount => Box::new(
+                ReadXdrIter::<_, LegacyMemoMuxedAccount>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LegacyMemoMuxedAccount(Box::new(t)))),
             ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, ScAddress>::new(&mut r.inner, r.limits.clone())
@@ -53897,6 +54262,10 @@ impl Type {
                 ReadXdrIter::<_, LedgerCloseMetaExtV1>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExtV1(Box::new(t)))),
             ),
+            TypeVariant::LedgerCloseMetaExtV2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaExtV2>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaExtV2(Box::new(t)))),
+            ),
             TypeVariant::LedgerCloseMetaExt => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExt(Box::new(t)))),
@@ -54280,10 +54649,6 @@ impl Type {
                 ReadXdrIter::<_, SorobanAddressCredentials>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
             ),
-            TypeVariant::SorobanAddressCredentialsV2 => Box::new(
-                ReadXdrIter::<_, SorobanAddressCredentialsV2>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::SorobanAddressCredentialsV2(Box::new(t)))),
-            ),
             TypeVariant::SorobanCredentialsType => Box::new(
                 ReadXdrIter::<_, SorobanCredentialsType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
@@ -54339,13 +54704,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
             ),
-            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => Box::new(
-                ReadXdrIter::<_, HashIdPreimageSorobanAuthorizationV2>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorizationV2(Box::new(t)))),
-            ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
@@ -54378,21 +54736,41 @@ impl Type {
                 ReadXdrIter::<_, LedgerFootprint>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
             ),
+            TypeVariant::ArchivalProofType => Box::new(
+                ReadXdrIter::<_, ArchivalProofType>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProofNode => Box::new(
+                ReadXdrIter::<_, ArchivalProofNode>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t)))),
+            ),
+            TypeVariant::ProofLevel => Box::new(
+                ReadXdrIter::<_, ProofLevel>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t)))),
+            ),
+            TypeVariant::ExistenceProofBody => Box::new(
+                ReadXdrIter::<_, ExistenceProofBody>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t)))),
+            ),
+            TypeVariant::NonexistenceProofBody => Box::new(
+                ReadXdrIter::<_, NonexistenceProofBody>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProof => Box::new(
+                ReadXdrIter::<_, ArchivalProof>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProofBody => Box::new(
+                ReadXdrIter::<_, ArchivalProofBody>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t)))),
+            ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, SorobanResources>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanResources(Box::new(t)))),
             ),
-            TypeVariant::SorobanResourcesExtV0 => Box::new(
-                ReadXdrIter::<_, SorobanResourcesExtV0>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::SorobanResourcesExtV0(Box::new(t)))),
-            ),
             TypeVariant::SorobanTransactionData => Box::new(
                 ReadXdrIter::<_, SorobanTransactionData>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t)))),
-            ),
-            TypeVariant::SorobanTransactionDataExt => Box::new(
-                ReadXdrIter::<_, SorobanTransactionDataExt>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::SorobanTransactionDataExt(Box::new(t)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
                 ReadXdrIter::<_, TransactionV0>::new(&mut r.inner, r.limits.clone())
@@ -54991,13 +55369,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t.0)))),
             ),
-            TypeVariant::ConfigSettingContractLedgerCostExtV0 => Box::new(
-                ReadXdrIter::<_, Frame<ConfigSettingContractLedgerCostExtV0>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostExtV0(Box::new(t.0)))),
-            ),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractHistoricalDataV0>>::new(
                     &mut r.inner,
@@ -55234,6 +55605,13 @@ impl Type {
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, Frame<ScAddressType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t.0)))),
+            ),
+            TypeVariant::LegacyMemoMuxedAccount => Box::new(
+                ReadXdrIter::<_, Frame<LegacyMemoMuxedAccount>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::LegacyMemoMuxedAccount(Box::new(t.0)))),
             ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, Frame<ScAddress>>::new(&mut r.inner, r.limits.clone())
@@ -56027,6 +56405,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<LedgerCloseMetaExtV1>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExtV1(Box::new(t.0)))),
             ),
+            TypeVariant::LedgerCloseMetaExtV2 => Box::new(
+                ReadXdrIter::<_, Frame<LedgerCloseMetaExtV2>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaExtV2(Box::new(t.0)))),
+            ),
             TypeVariant::LedgerCloseMetaExt => Box::new(
                 ReadXdrIter::<_, Frame<LedgerCloseMetaExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExt(Box::new(t.0)))),
@@ -56481,13 +56863,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t.0)))),
             ),
-            TypeVariant::SorobanAddressCredentialsV2 => Box::new(
-                ReadXdrIter::<_, Frame<SorobanAddressCredentialsV2>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::SorobanAddressCredentialsV2(Box::new(t.0)))),
-            ),
             TypeVariant::SorobanCredentialsType => Box::new(
                 ReadXdrIter::<_, Frame<SorobanCredentialsType>>::new(
                     &mut r.inner,
@@ -56558,13 +56933,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t.0)))),
             ),
-            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => Box::new(
-                ReadXdrIter::<_, Frame<HashIdPreimageSorobanAuthorizationV2>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorizationV2(Box::new(t.0)))),
-            ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, Frame<MemoType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MemoType(Box::new(t.0)))),
@@ -56597,13 +56965,37 @@ impl Type {
                 ReadXdrIter::<_, Frame<LedgerFootprint>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t.0)))),
             ),
+            TypeVariant::ArchivalProofType => Box::new(
+                ReadXdrIter::<_, Frame<ArchivalProofType>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t.0)))),
+            ),
+            TypeVariant::ArchivalProofNode => Box::new(
+                ReadXdrIter::<_, Frame<ArchivalProofNode>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t.0)))),
+            ),
+            TypeVariant::ProofLevel => Box::new(
+                ReadXdrIter::<_, Frame<ProofLevel>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t.0)))),
+            ),
+            TypeVariant::ExistenceProofBody => Box::new(
+                ReadXdrIter::<_, Frame<ExistenceProofBody>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t.0)))),
+            ),
+            TypeVariant::NonexistenceProofBody => Box::new(
+                ReadXdrIter::<_, Frame<NonexistenceProofBody>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t.0)))),
+            ),
+            TypeVariant::ArchivalProof => Box::new(
+                ReadXdrIter::<_, Frame<ArchivalProof>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t.0)))),
+            ),
+            TypeVariant::ArchivalProofBody => Box::new(
+                ReadXdrIter::<_, Frame<ArchivalProofBody>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t.0)))),
+            ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, Frame<SorobanResources>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanResources(Box::new(t.0)))),
-            ),
-            TypeVariant::SorobanResourcesExtV0 => Box::new(
-                ReadXdrIter::<_, Frame<SorobanResourcesExtV0>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::SorobanResourcesExtV0(Box::new(t.0)))),
             ),
             TypeVariant::SorobanTransactionData => Box::new(
                 ReadXdrIter::<_, Frame<SorobanTransactionData>>::new(
@@ -56611,13 +57003,6 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t.0)))),
-            ),
-            TypeVariant::SorobanTransactionDataExt => Box::new(
-                ReadXdrIter::<_, Frame<SorobanTransactionDataExt>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::SorobanTransactionDataExt(Box::new(t.0)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
                 ReadXdrIter::<_, Frame<TransactionV0>>::new(&mut r.inner, r.limits.clone())
@@ -57295,10 +57680,6 @@ impl Type {
                 ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
             ),
-            TypeVariant::ConfigSettingContractLedgerCostExtV0 => Box::new(
-                ReadXdrIter::<_, ConfigSettingContractLedgerCostExtV0>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostExtV0(Box::new(t)))),
-            ),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))),
@@ -57502,6 +57883,10 @@ impl Type {
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, ScAddressType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
+            ),
+            TypeVariant::LegacyMemoMuxedAccount => Box::new(
+                ReadXdrIter::<_, LegacyMemoMuxedAccount>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LegacyMemoMuxedAccount(Box::new(t)))),
             ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, ScAddress>::new(dec, r.limits.clone())
@@ -58166,6 +58551,10 @@ impl Type {
                 ReadXdrIter::<_, LedgerCloseMetaExtV1>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExtV1(Box::new(t)))),
             ),
+            TypeVariant::LedgerCloseMetaExtV2 => Box::new(
+                ReadXdrIter::<_, LedgerCloseMetaExtV2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::LedgerCloseMetaExtV2(Box::new(t)))),
+            ),
             TypeVariant::LedgerCloseMetaExt => Box::new(
                 ReadXdrIter::<_, LedgerCloseMetaExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerCloseMetaExt(Box::new(t)))),
@@ -58525,10 +58914,6 @@ impl Type {
                 ReadXdrIter::<_, SorobanAddressCredentials>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanAddressCredentials(Box::new(t)))),
             ),
-            TypeVariant::SorobanAddressCredentialsV2 => Box::new(
-                ReadXdrIter::<_, SorobanAddressCredentialsV2>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::SorobanAddressCredentialsV2(Box::new(t)))),
-            ),
             TypeVariant::SorobanCredentialsType => Box::new(
                 ReadXdrIter::<_, SorobanCredentialsType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanCredentialsType(Box::new(t)))),
@@ -58581,10 +58966,6 @@ impl Type {
                 ReadXdrIter::<_, HashIdPreimageSorobanAuthorization>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))),
             ),
-            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => Box::new(
-                ReadXdrIter::<_, HashIdPreimageSorobanAuthorizationV2>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::HashIdPreimageSorobanAuthorizationV2(Box::new(t)))),
-            ),
             TypeVariant::MemoType => Box::new(
                 ReadXdrIter::<_, MemoType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::MemoType(Box::new(t)))),
@@ -58617,21 +58998,41 @@ impl Type {
                 ReadXdrIter::<_, LedgerFootprint>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
             ),
+            TypeVariant::ArchivalProofType => Box::new(
+                ReadXdrIter::<_, ArchivalProofType>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProofNode => Box::new(
+                ReadXdrIter::<_, ArchivalProofNode>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t)))),
+            ),
+            TypeVariant::ProofLevel => Box::new(
+                ReadXdrIter::<_, ProofLevel>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t)))),
+            ),
+            TypeVariant::ExistenceProofBody => Box::new(
+                ReadXdrIter::<_, ExistenceProofBody>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t)))),
+            ),
+            TypeVariant::NonexistenceProofBody => Box::new(
+                ReadXdrIter::<_, NonexistenceProofBody>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProof => Box::new(
+                ReadXdrIter::<_, ArchivalProof>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProofBody => Box::new(
+                ReadXdrIter::<_, ArchivalProofBody>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t)))),
+            ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, SorobanResources>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanResources(Box::new(t)))),
             ),
-            TypeVariant::SorobanResourcesExtV0 => Box::new(
-                ReadXdrIter::<_, SorobanResourcesExtV0>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::SorobanResourcesExtV0(Box::new(t)))),
-            ),
             TypeVariant::SorobanTransactionData => Box::new(
                 ReadXdrIter::<_, SorobanTransactionData>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t)))),
-            ),
-            TypeVariant::SorobanTransactionDataExt => Box::new(
-                ReadXdrIter::<_, SorobanTransactionDataExt>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::SorobanTransactionDataExt(Box::new(t)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
                 ReadXdrIter::<_, TransactionV0>::new(dec, r.limits.clone())
@@ -59169,9 +59570,6 @@ impl Type {
             TypeVariant::ConfigSettingContractLedgerCostV0 => Ok(
                 Self::ConfigSettingContractLedgerCostV0(Box::new(serde_json::from_reader(r)?)),
             ),
-            TypeVariant::ConfigSettingContractLedgerCostExtV0 => Ok(
-                Self::ConfigSettingContractLedgerCostExtV0(Box::new(serde_json::from_reader(r)?)),
-            ),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => Ok(
                 Self::ConfigSettingContractHistoricalDataV0(Box::new(serde_json::from_reader(r)?)),
             ),
@@ -59315,6 +59713,9 @@ impl Type {
             TypeVariant::ScAddressType => {
                 Ok(Self::ScAddressType(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::LegacyMemoMuxedAccount => Ok(Self::LegacyMemoMuxedAccount(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(serde_json::from_reader(r)?))),
@@ -59754,6 +60155,9 @@ impl Type {
             TypeVariant::LedgerCloseMetaExtV1 => Ok(Self::LedgerCloseMetaExtV1(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::LedgerCloseMetaExtV2 => Ok(Self::LedgerCloseMetaExtV2(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::LedgerCloseMetaExt => Ok(Self::LedgerCloseMetaExt(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -59997,9 +60401,6 @@ impl Type {
             TypeVariant::SorobanAddressCredentials => Ok(Self::SorobanAddressCredentials(
                 Box::new(serde_json::from_reader(r)?),
             )),
-            TypeVariant::SorobanAddressCredentialsV2 => Ok(Self::SorobanAddressCredentialsV2(
-                Box::new(serde_json::from_reader(r)?),
-            )),
             TypeVariant::SorobanCredentialsType => Ok(Self::SorobanCredentialsType(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -60037,9 +60438,6 @@ impl Type {
             TypeVariant::HashIdPreimageSorobanAuthorization => Ok(
                 Self::HashIdPreimageSorobanAuthorization(Box::new(serde_json::from_reader(r)?)),
             ),
-            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => Ok(
-                Self::HashIdPreimageSorobanAuthorizationV2(Box::new(serde_json::from_reader(r)?)),
-            ),
             TypeVariant::MemoType => Ok(Self::MemoType(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::Memo => Ok(Self::Memo(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::TimeBounds => Ok(Self::TimeBounds(Box::new(serde_json::from_reader(r)?))),
@@ -60058,18 +60456,31 @@ impl Type {
             TypeVariant::LedgerFootprint => {
                 Ok(Self::LedgerFootprint(Box::new(serde_json::from_reader(r)?)))
             }
-            TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
+            TypeVariant::ArchivalProofType => Ok(Self::ArchivalProofType(Box::new(
                 serde_json::from_reader(r)?,
             ))),
-            TypeVariant::SorobanResourcesExtV0 => Ok(Self::SorobanResourcesExtV0(Box::new(
+            TypeVariant::ArchivalProofNode => Ok(Self::ArchivalProofNode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ProofLevel => Ok(Self::ProofLevel(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ArchivalProof => {
+                Ok(Self::ArchivalProof(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ArchivalProofBody => Ok(Self::ArchivalProofBody(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::SorobanTransactionData => Ok(Self::SorobanTransactionData(Box::new(
                 serde_json::from_reader(r)?,
             ))),
-            TypeVariant::SorobanTransactionDataExt => Ok(Self::SorobanTransactionDataExt(
-                Box::new(serde_json::from_reader(r)?),
-            )),
             TypeVariant::TransactionV0 => {
                 Ok(Self::TransactionV0(Box::new(serde_json::from_reader(r)?)))
             }
@@ -60451,11 +60862,6 @@ impl Type {
                     serde::de::Deserialize::deserialize(r)?,
                 )))
             }
-            TypeVariant::ConfigSettingContractLedgerCostExtV0 => {
-                Ok(Self::ConfigSettingContractLedgerCostExtV0(Box::new(
-                    serde::de::Deserialize::deserialize(r)?,
-                )))
-            }
             TypeVariant::ConfigSettingContractHistoricalDataV0 => {
                 Ok(Self::ConfigSettingContractHistoricalDataV0(Box::new(
                     serde::de::Deserialize::deserialize(r)?,
@@ -60613,6 +61019,9 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScAddressType => Ok(Self::ScAddressType(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::LegacyMemoMuxedAccount => Ok(Self::LegacyMemoMuxedAccount(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(
@@ -61124,6 +61533,9 @@ impl Type {
             TypeVariant::LedgerCloseMetaExtV1 => Ok(Self::LedgerCloseMetaExtV1(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::LedgerCloseMetaExtV2 => Ok(Self::LedgerCloseMetaExtV2(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::LedgerCloseMetaExt => Ok(Self::LedgerCloseMetaExt(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61403,9 +61815,6 @@ impl Type {
             TypeVariant::SorobanAddressCredentials => Ok(Self::SorobanAddressCredentials(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
-            TypeVariant::SorobanAddressCredentialsV2 => Ok(Self::SorobanAddressCredentialsV2(
-                Box::new(serde::de::Deserialize::deserialize(r)?),
-            )),
             TypeVariant::SorobanCredentialsType => Ok(Self::SorobanCredentialsType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61447,11 +61856,6 @@ impl Type {
                     serde::de::Deserialize::deserialize(r)?,
                 )))
             }
-            TypeVariant::HashIdPreimageSorobanAuthorizationV2 => {
-                Ok(Self::HashIdPreimageSorobanAuthorizationV2(Box::new(
-                    serde::de::Deserialize::deserialize(r)?,
-                )))
-            }
             TypeVariant::MemoType => Ok(Self::MemoType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61476,18 +61880,33 @@ impl Type {
             TypeVariant::LedgerFootprint => Ok(Self::LedgerFootprint(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
+            TypeVariant::ArchivalProofType => Ok(Self::ArchivalProofType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::SorobanResourcesExtV0 => Ok(Self::SorobanResourcesExtV0(Box::new(
+            TypeVariant::ArchivalProofNode => Ok(Self::ArchivalProofNode(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ProofLevel => Ok(Self::ProofLevel(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ArchivalProof => Ok(Self::ArchivalProof(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ArchivalProofBody => Ok(Self::ArchivalProofBody(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::SorobanTransactionData => Ok(Self::SorobanTransactionData(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::SorobanTransactionDataExt => Ok(Self::SorobanTransactionDataExt(
-                Box::new(serde::de::Deserialize::deserialize(r)?),
-            )),
             TypeVariant::TransactionV0 => Ok(Self::TransactionV0(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61886,7 +62305,6 @@ impl Type {
             Self::ConfigSettingContractComputeV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractParallelComputeV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractLedgerCostV0(ref v) => v.as_ref(),
-            Self::ConfigSettingContractLedgerCostExtV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractHistoricalDataV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractEventsV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractBandwidthV0(ref v) => v.as_ref(),
@@ -61938,6 +62356,7 @@ impl Type {
             Self::ContractExecutableType(ref v) => v.as_ref(),
             Self::ContractExecutable(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
+            Self::LegacyMemoMuxedAccount(ref v) => v.as_ref(),
             Self::ScAddress(ref v) => v.as_ref(),
             Self::ScVec(ref v) => v.as_ref(),
             Self::ScMap(ref v) => v.as_ref(),
@@ -62103,6 +62522,7 @@ impl Type {
             Self::UpgradeEntryMeta(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV0(ref v) => v.as_ref(),
             Self::LedgerCloseMetaExtV1(ref v) => v.as_ref(),
+            Self::LedgerCloseMetaExtV2(ref v) => v.as_ref(),
             Self::LedgerCloseMetaExt(ref v) => v.as_ref(),
             Self::LedgerCloseMetaV1(ref v) => v.as_ref(),
             Self::LedgerCloseMeta(ref v) => v.as_ref(),
@@ -62190,7 +62610,6 @@ impl Type {
             Self::SorobanAuthorizedFunction(ref v) => v.as_ref(),
             Self::SorobanAuthorizedInvocation(ref v) => v.as_ref(),
             Self::SorobanAddressCredentials(ref v) => v.as_ref(),
-            Self::SorobanAddressCredentialsV2(ref v) => v.as_ref(),
             Self::SorobanCredentialsType(ref v) => v.as_ref(),
             Self::SorobanCredentials(ref v) => v.as_ref(),
             Self::SorobanAuthorizationEntry(ref v) => v.as_ref(),
@@ -62204,7 +62623,6 @@ impl Type {
             Self::HashIdPreimageRevokeId(ref v) => v.as_ref(),
             Self::HashIdPreimageContractId(ref v) => v.as_ref(),
             Self::HashIdPreimageSorobanAuthorization(ref v) => v.as_ref(),
-            Self::HashIdPreimageSorobanAuthorizationV2(ref v) => v.as_ref(),
             Self::MemoType(ref v) => v.as_ref(),
             Self::Memo(ref v) => v.as_ref(),
             Self::TimeBounds(ref v) => v.as_ref(),
@@ -62213,10 +62631,15 @@ impl Type {
             Self::PreconditionType(ref v) => v.as_ref(),
             Self::Preconditions(ref v) => v.as_ref(),
             Self::LedgerFootprint(ref v) => v.as_ref(),
+            Self::ArchivalProofType(ref v) => v.as_ref(),
+            Self::ArchivalProofNode(ref v) => v.as_ref(),
+            Self::ProofLevel(ref v) => v.as_ref(),
+            Self::ExistenceProofBody(ref v) => v.as_ref(),
+            Self::NonexistenceProofBody(ref v) => v.as_ref(),
+            Self::ArchivalProof(ref v) => v.as_ref(),
+            Self::ArchivalProofBody(ref v) => v.as_ref(),
             Self::SorobanResources(ref v) => v.as_ref(),
-            Self::SorobanResourcesExtV0(ref v) => v.as_ref(),
             Self::SorobanTransactionData(ref v) => v.as_ref(),
-            Self::SorobanTransactionDataExt(ref v) => v.as_ref(),
             Self::TransactionV0(ref v) => v.as_ref(),
             Self::TransactionV0Ext(ref v) => v.as_ref(),
             Self::TransactionV0Envelope(ref v) => v.as_ref(),
@@ -62357,7 +62780,6 @@ impl Type {
                 "ConfigSettingContractParallelComputeV0"
             }
             Self::ConfigSettingContractLedgerCostV0(_) => "ConfigSettingContractLedgerCostV0",
-            Self::ConfigSettingContractLedgerCostExtV0(_) => "ConfigSettingContractLedgerCostExtV0",
             Self::ConfigSettingContractHistoricalDataV0(_) => {
                 "ConfigSettingContractHistoricalDataV0"
             }
@@ -62411,6 +62833,7 @@ impl Type {
             Self::ContractExecutableType(_) => "ContractExecutableType",
             Self::ContractExecutable(_) => "ContractExecutable",
             Self::ScAddressType(_) => "ScAddressType",
+            Self::LegacyMemoMuxedAccount(_) => "LegacyMemoMuxedAccount",
             Self::ScAddress(_) => "ScAddress",
             Self::ScVec(_) => "ScVec",
             Self::ScMap(_) => "ScMap",
@@ -62578,6 +63001,7 @@ impl Type {
             Self::UpgradeEntryMeta(_) => "UpgradeEntryMeta",
             Self::LedgerCloseMetaV0(_) => "LedgerCloseMetaV0",
             Self::LedgerCloseMetaExtV1(_) => "LedgerCloseMetaExtV1",
+            Self::LedgerCloseMetaExtV2(_) => "LedgerCloseMetaExtV2",
             Self::LedgerCloseMetaExt(_) => "LedgerCloseMetaExt",
             Self::LedgerCloseMetaV1(_) => "LedgerCloseMetaV1",
             Self::LedgerCloseMeta(_) => "LedgerCloseMeta",
@@ -62675,7 +63099,6 @@ impl Type {
             Self::SorobanAuthorizedFunction(_) => "SorobanAuthorizedFunction",
             Self::SorobanAuthorizedInvocation(_) => "SorobanAuthorizedInvocation",
             Self::SorobanAddressCredentials(_) => "SorobanAddressCredentials",
-            Self::SorobanAddressCredentialsV2(_) => "SorobanAddressCredentialsV2",
             Self::SorobanCredentialsType(_) => "SorobanCredentialsType",
             Self::SorobanCredentials(_) => "SorobanCredentials",
             Self::SorobanAuthorizationEntry(_) => "SorobanAuthorizationEntry",
@@ -62689,7 +63112,6 @@ impl Type {
             Self::HashIdPreimageRevokeId(_) => "HashIdPreimageRevokeId",
             Self::HashIdPreimageContractId(_) => "HashIdPreimageContractId",
             Self::HashIdPreimageSorobanAuthorization(_) => "HashIdPreimageSorobanAuthorization",
-            Self::HashIdPreimageSorobanAuthorizationV2(_) => "HashIdPreimageSorobanAuthorizationV2",
             Self::MemoType(_) => "MemoType",
             Self::Memo(_) => "Memo",
             Self::TimeBounds(_) => "TimeBounds",
@@ -62698,10 +63120,15 @@ impl Type {
             Self::PreconditionType(_) => "PreconditionType",
             Self::Preconditions(_) => "Preconditions",
             Self::LedgerFootprint(_) => "LedgerFootprint",
+            Self::ArchivalProofType(_) => "ArchivalProofType",
+            Self::ArchivalProofNode(_) => "ArchivalProofNode",
+            Self::ProofLevel(_) => "ProofLevel",
+            Self::ExistenceProofBody(_) => "ExistenceProofBody",
+            Self::NonexistenceProofBody(_) => "NonexistenceProofBody",
+            Self::ArchivalProof(_) => "ArchivalProof",
+            Self::ArchivalProofBody(_) => "ArchivalProofBody",
             Self::SorobanResources(_) => "SorobanResources",
-            Self::SorobanResourcesExtV0(_) => "SorobanResourcesExtV0",
             Self::SorobanTransactionData(_) => "SorobanTransactionData",
-            Self::SorobanTransactionDataExt(_) => "SorobanTransactionDataExt",
             Self::TransactionV0(_) => "TransactionV0",
             Self::TransactionV0Ext(_) => "TransactionV0Ext",
             Self::TransactionV0Envelope(_) => "TransactionV0Envelope",
@@ -62829,7 +63256,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 460] {
+    pub const fn variants() -> [TypeVariant; 464] {
         Self::VARIANTS
     }
 
@@ -62857,9 +63284,6 @@ impl Type {
             }
             Self::ConfigSettingContractLedgerCostV0(_) => {
                 TypeVariant::ConfigSettingContractLedgerCostV0
-            }
-            Self::ConfigSettingContractLedgerCostExtV0(_) => {
-                TypeVariant::ConfigSettingContractLedgerCostExtV0
             }
             Self::ConfigSettingContractHistoricalDataV0(_) => {
                 TypeVariant::ConfigSettingContractHistoricalDataV0
@@ -62916,6 +63340,7 @@ impl Type {
             Self::ContractExecutableType(_) => TypeVariant::ContractExecutableType,
             Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,
+            Self::LegacyMemoMuxedAccount(_) => TypeVariant::LegacyMemoMuxedAccount,
             Self::ScAddress(_) => TypeVariant::ScAddress,
             Self::ScVec(_) => TypeVariant::ScVec,
             Self::ScMap(_) => TypeVariant::ScMap,
@@ -63095,6 +63520,7 @@ impl Type {
             Self::UpgradeEntryMeta(_) => TypeVariant::UpgradeEntryMeta,
             Self::LedgerCloseMetaV0(_) => TypeVariant::LedgerCloseMetaV0,
             Self::LedgerCloseMetaExtV1(_) => TypeVariant::LedgerCloseMetaExtV1,
+            Self::LedgerCloseMetaExtV2(_) => TypeVariant::LedgerCloseMetaExtV2,
             Self::LedgerCloseMetaExt(_) => TypeVariant::LedgerCloseMetaExt,
             Self::LedgerCloseMetaV1(_) => TypeVariant::LedgerCloseMetaV1,
             Self::LedgerCloseMeta(_) => TypeVariant::LedgerCloseMeta,
@@ -63198,7 +63624,6 @@ impl Type {
             Self::SorobanAuthorizedFunction(_) => TypeVariant::SorobanAuthorizedFunction,
             Self::SorobanAuthorizedInvocation(_) => TypeVariant::SorobanAuthorizedInvocation,
             Self::SorobanAddressCredentials(_) => TypeVariant::SorobanAddressCredentials,
-            Self::SorobanAddressCredentialsV2(_) => TypeVariant::SorobanAddressCredentialsV2,
             Self::SorobanCredentialsType(_) => TypeVariant::SorobanCredentialsType,
             Self::SorobanCredentials(_) => TypeVariant::SorobanCredentials,
             Self::SorobanAuthorizationEntry(_) => TypeVariant::SorobanAuthorizationEntry,
@@ -63214,9 +63639,6 @@ impl Type {
             Self::HashIdPreimageSorobanAuthorization(_) => {
                 TypeVariant::HashIdPreimageSorobanAuthorization
             }
-            Self::HashIdPreimageSorobanAuthorizationV2(_) => {
-                TypeVariant::HashIdPreimageSorobanAuthorizationV2
-            }
             Self::MemoType(_) => TypeVariant::MemoType,
             Self::Memo(_) => TypeVariant::Memo,
             Self::TimeBounds(_) => TypeVariant::TimeBounds,
@@ -63225,10 +63647,15 @@ impl Type {
             Self::PreconditionType(_) => TypeVariant::PreconditionType,
             Self::Preconditions(_) => TypeVariant::Preconditions,
             Self::LedgerFootprint(_) => TypeVariant::LedgerFootprint,
+            Self::ArchivalProofType(_) => TypeVariant::ArchivalProofType,
+            Self::ArchivalProofNode(_) => TypeVariant::ArchivalProofNode,
+            Self::ProofLevel(_) => TypeVariant::ProofLevel,
+            Self::ExistenceProofBody(_) => TypeVariant::ExistenceProofBody,
+            Self::NonexistenceProofBody(_) => TypeVariant::NonexistenceProofBody,
+            Self::ArchivalProof(_) => TypeVariant::ArchivalProof,
+            Self::ArchivalProofBody(_) => TypeVariant::ArchivalProofBody,
             Self::SorobanResources(_) => TypeVariant::SorobanResources,
-            Self::SorobanResourcesExtV0(_) => TypeVariant::SorobanResourcesExtV0,
             Self::SorobanTransactionData(_) => TypeVariant::SorobanTransactionData,
-            Self::SorobanTransactionDataExt(_) => TypeVariant::SorobanTransactionDataExt,
             Self::TransactionV0(_) => TypeVariant::TransactionV0,
             Self::TransactionV0Ext(_) => TypeVariant::TransactionV0Ext,
             Self::TransactionV0Envelope(_) => TypeVariant::TransactionV0Envelope,
@@ -63406,7 +63833,6 @@ impl WriteXdr for Type {
             Self::ConfigSettingContractComputeV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractParallelComputeV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractLedgerCostV0(v) => v.write_xdr(w),
-            Self::ConfigSettingContractLedgerCostExtV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractHistoricalDataV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractEventsV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractBandwidthV0(v) => v.write_xdr(w),
@@ -63458,6 +63884,7 @@ impl WriteXdr for Type {
             Self::ContractExecutableType(v) => v.write_xdr(w),
             Self::ContractExecutable(v) => v.write_xdr(w),
             Self::ScAddressType(v) => v.write_xdr(w),
+            Self::LegacyMemoMuxedAccount(v) => v.write_xdr(w),
             Self::ScAddress(v) => v.write_xdr(w),
             Self::ScVec(v) => v.write_xdr(w),
             Self::ScMap(v) => v.write_xdr(w),
@@ -63623,6 +64050,7 @@ impl WriteXdr for Type {
             Self::UpgradeEntryMeta(v) => v.write_xdr(w),
             Self::LedgerCloseMetaV0(v) => v.write_xdr(w),
             Self::LedgerCloseMetaExtV1(v) => v.write_xdr(w),
+            Self::LedgerCloseMetaExtV2(v) => v.write_xdr(w),
             Self::LedgerCloseMetaExt(v) => v.write_xdr(w),
             Self::LedgerCloseMetaV1(v) => v.write_xdr(w),
             Self::LedgerCloseMeta(v) => v.write_xdr(w),
@@ -63710,7 +64138,6 @@ impl WriteXdr for Type {
             Self::SorobanAuthorizedFunction(v) => v.write_xdr(w),
             Self::SorobanAuthorizedInvocation(v) => v.write_xdr(w),
             Self::SorobanAddressCredentials(v) => v.write_xdr(w),
-            Self::SorobanAddressCredentialsV2(v) => v.write_xdr(w),
             Self::SorobanCredentialsType(v) => v.write_xdr(w),
             Self::SorobanCredentials(v) => v.write_xdr(w),
             Self::SorobanAuthorizationEntry(v) => v.write_xdr(w),
@@ -63724,7 +64151,6 @@ impl WriteXdr for Type {
             Self::HashIdPreimageRevokeId(v) => v.write_xdr(w),
             Self::HashIdPreimageContractId(v) => v.write_xdr(w),
             Self::HashIdPreimageSorobanAuthorization(v) => v.write_xdr(w),
-            Self::HashIdPreimageSorobanAuthorizationV2(v) => v.write_xdr(w),
             Self::MemoType(v) => v.write_xdr(w),
             Self::Memo(v) => v.write_xdr(w),
             Self::TimeBounds(v) => v.write_xdr(w),
@@ -63733,10 +64159,15 @@ impl WriteXdr for Type {
             Self::PreconditionType(v) => v.write_xdr(w),
             Self::Preconditions(v) => v.write_xdr(w),
             Self::LedgerFootprint(v) => v.write_xdr(w),
+            Self::ArchivalProofType(v) => v.write_xdr(w),
+            Self::ArchivalProofNode(v) => v.write_xdr(w),
+            Self::ProofLevel(v) => v.write_xdr(w),
+            Self::ExistenceProofBody(v) => v.write_xdr(w),
+            Self::NonexistenceProofBody(v) => v.write_xdr(w),
+            Self::ArchivalProof(v) => v.write_xdr(w),
+            Self::ArchivalProofBody(v) => v.write_xdr(w),
             Self::SorobanResources(v) => v.write_xdr(w),
-            Self::SorobanResourcesExtV0(v) => v.write_xdr(w),
             Self::SorobanTransactionData(v) => v.write_xdr(w),
-            Self::SorobanTransactionDataExt(v) => v.write_xdr(w),
             Self::TransactionV0(v) => v.write_xdr(w),
             Self::TransactionV0Ext(v) => v.write_xdr(w),
             Self::TransactionV0Envelope(v) => v.write_xdr(w),

@@ -259,6 +259,8 @@ impl core::fmt::Display for ScAddress {
                 let s = k.to_string();
                 f.write_str(&s)?;
             }
+            ScAddress::MuxedAccount(a) => a.fmt(f)?,
+            ScAddress::LegacyMemoMuxedAccount(a) => a.fmt(f)?,
         }
         Ok(())
     }

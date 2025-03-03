@@ -135,3 +135,6 @@ pub mod next;
 
 #[cfg(feature = "cli")]
 pub mod cli;
+
+#[cfg(feature = "hex")]
+pub mod hex;

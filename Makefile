@@ -37,7 +37,7 @@ readme:
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 
-generate: src/curr/generated.rs xdr/curr-version xdr-json/curr src/next/generated.rs xdr/next-version xdr-json/next
+generate: src/curr/generated.rs xdr/curr-version src/next/generated.rs xdr/next-version xdr-json/curr xdr-json/next
 
 src/curr/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@

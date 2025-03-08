@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ContractCodeCostInputs",
+  "description": "ContractCodeCostInputs is an XDR Struct defines as:\n\n```text struct ContractCodeCostInputs { ExtensionPoint ext; uint32 nInstructions; uint32 nFunctions; uint32 nGlobals; uint32 nTableEntries; uint32 nTypes; uint32 nDataSegments; uint32 nElemSegments; uint32 nImports; uint32 nExports; uint32 nDataSegmentBytes; }; ```",
+  "type": "object",
+  "required": [
+    "ext",
+    "n_data_segment_bytes",
+    "n_data_segments",
+    "n_elem_segments",
+    "n_exports",
+    "n_functions",
+    "n_globals",
+    "n_imports",
+    "n_instructions",
+    "n_table_entries",
+    "n_types"
+  ],
+  "properties": {
+    "ext": {
+      "$ref": "#/definitions/ExtensionPoint"
+    },
+    "n_data_segment_bytes": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_data_segments": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_elem_segments": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_exports": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_functions": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_globals": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_imports": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_instructions": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_table_entries": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_types": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  },
+  "definitions": {
+    "ExtensionPoint": {
+      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    }
+  }
+}

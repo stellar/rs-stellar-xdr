@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LiquidityPoolType",
+  "description": "LiquidityPoolType is an XDR Enum defines as:\n\n```text enum LiquidityPoolType { LIQUIDITY_POOL_CONSTANT_PRODUCT = 0 }; ```",
+  "type": "string",
+  "enum": [
+    "liquidity_pool_constant_product"
+  ]
+}

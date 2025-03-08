@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ConfigSettingContractExecutionLanesV0",
+  "description": "ConfigSettingContractExecutionLanesV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractExecutionLanesV0 { // maximum number of Soroban transactions per ledger uint32 ledgerMaxTxCount; }; ```",
+  "type": "object",
+  "required": [
+    "ledger_max_tx_count"
+  ],
+  "properties": {
+    "ledger_max_tx_count": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  }
+}

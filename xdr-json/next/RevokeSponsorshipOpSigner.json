@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "RevokeSponsorshipOpSigner",
+  "description": "RevokeSponsorshipOpSigner is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; SignerKey signerKey; } ```",
+  "type": "object",
+  "required": [
+    "account_id",
+    "signer_key"
+  ],
+  "properties": {
+    "account_id": {
+      "$ref": "#/definitions/AccountId"
+    },
+    "signer_key": {
+      "$ref": "#/definitions/SignerKey"
+    }
+  },
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    },
+    "SignerKey": {
+      "type": "string"
+    }
+  }
+}

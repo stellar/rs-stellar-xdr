@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "SignerKeyType",
+  "description": "SignerKeyType is an XDR Enum defines as:\n\n```text enum SignerKeyType { SIGNER_KEY_TYPE_ED25519 = KEY_TYPE_ED25519, SIGNER_KEY_TYPE_PRE_AUTH_TX = KEY_TYPE_PRE_AUTH_TX, SIGNER_KEY_TYPE_HASH_X = KEY_TYPE_HASH_X, SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD = KEY_TYPE_ED25519_SIGNED_PAYLOAD }; ```",
+  "type": "string",
+  "enum": [
+    "ed25519",
+    "pre_auth_tx",
+    "hash_x",
+    "ed25519_signed_payload"
+  ]
+}

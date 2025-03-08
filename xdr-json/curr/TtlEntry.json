@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "TtlEntry",
+  "description": "TtlEntry is an XDR Struct defines as:\n\n```text struct TTLEntry { // Hash of the LedgerKey that is associated with this TTLEntry Hash keyHash; uint32 liveUntilLedgerSeq; }; ```",
+  "type": "object",
+  "required": [
+    "key_hash",
+    "live_until_ledger_seq"
+  ],
+  "properties": {
+    "key_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "live_until_ledger_seq": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  }
+}

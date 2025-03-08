@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "CreateClaimableBalanceResult",
+  "description": "CreateClaimableBalanceResult is an XDR Union defines as:\n\n```text union CreateClaimableBalanceResult switch ( CreateClaimableBalanceResultCode code) { case CREATE_CLAIMABLE_BALANCE_SUCCESS: ClaimableBalanceID balanceID; case CREATE_CLAIMABLE_BALANCE_MALFORMED: case CREATE_CLAIMABLE_BALANCE_LOW_RESERVE: case CREATE_CLAIMABLE_BALANCE_NO_TRUST: case CREATE_CLAIMABLE_BALANCE_NOT_AUTHORIZED: case CREATE_CLAIMABLE_BALANCE_UNDERFUNDED: void; }; ```",
+  "oneOf": [
+    {
+      "type": "string",
+      "enum": [
+        "malformed",
+        "low_reserve",
+        "no_trust",
+        "not_authorized",
+        "underfunded"
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "success"
+      ],
+      "properties": {
+        "success": {
+          "$ref": "#/definitions/ClaimableBalanceId"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "ClaimableBalanceId": {
+      "type": "string"
+    }
+  }
+}

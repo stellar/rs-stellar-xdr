@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "TrustLineEntryExt",
+  "description": "TrustLineEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: struct { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ext; } v1; } ```",
+  "oneOf": [
+    {
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "v1"
+      ],
+      "properties": {
+        "v1": {
+          "$ref": "#/definitions/TrustLineEntryV1"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "Liabilities": {
+      "description": "Liabilities is an XDR Struct defines as:\n\n```text struct Liabilities { int64 buying; int64 selling; }; ```",
+      "type": "object",
+      "required": [
+        "buying",
+        "selling"
+      ],
+      "properties": {
+        "buying": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "selling": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "TrustLineEntryExtensionV2": {
+      "description": "TrustLineEntryExtensionV2 is an XDR Struct defines as:\n\n```text struct TrustLineEntryExtensionV2 { int32 liquidityPoolUseCount;\n\nunion switch (int v) { case 0: void; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "liquidity_pool_use_count"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/TrustLineEntryExtensionV2Ext"
+        },
+        "liquidity_pool_use_count": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "TrustLineEntryExtensionV2Ext": {
+      "description": "TrustLineEntryExtensionV2Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    "TrustLineEntryV1": {
+      "description": "TrustLineEntryV1 is an XDR NestedStruct defines as:\n\n```text struct { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ext; } ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "liabilities"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/TrustLineEntryV1Ext"
+        },
+        "liabilities": {
+          "$ref": "#/definitions/Liabilities"
+        }
+      }
+    },
+    "TrustLineEntryV1Ext": {
+      "description": "TrustLineEntryV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v2"
+          ],
+          "properties": {
+            "v2": {
+              "$ref": "#/definitions/TrustLineEntryExtensionV2"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerKeyClaimableBalance",
+  "description": "LedgerKeyClaimableBalance is an XDR NestedStruct defines as:\n\n```text struct { ClaimableBalanceID balanceID; } ```",
+  "type": "object",
+  "required": [
+    "balance_id"
+  ],
+  "properties": {
+    "balance_id": {
+      "$ref": "#/definitions/ClaimableBalanceId"
+    }
+  },
+  "definitions": {
+    "ClaimableBalanceId": {
+      "type": "string"
+    }
+  }
+}

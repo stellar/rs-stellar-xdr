@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ConfigSettingContractComputeV0",
+  "description": "ConfigSettingContractComputeV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractComputeV0 { // Maximum instructions per ledger int64 ledgerMaxInstructions; // Maximum instructions per transaction int64 txMaxInstructions; // Cost of 10000 instructions int64 feeRatePerInstructionsIncrement;\n\n// Memory limit per transaction. Unlike instructions, there is no fee // for memory, just the limit. uint32 txMemoryLimit; }; ```",
+  "type": "object",
+  "required": [
+    "fee_rate_per_instructions_increment",
+    "ledger_max_instructions",
+    "tx_max_instructions",
+    "tx_memory_limit"
+  ],
+  "properties": {
+    "fee_rate_per_instructions_increment": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "ledger_max_instructions": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "tx_max_instructions": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "tx_memory_limit": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  }
+}

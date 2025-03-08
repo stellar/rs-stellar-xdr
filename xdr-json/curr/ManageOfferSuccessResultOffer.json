@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ManageOfferSuccessResultOffer",
+  "description": "ManageOfferSuccessResultOffer is an XDR NestedUnion defines as:\n\n```text union switch (ManageOfferEffect effect) { case MANAGE_OFFER_CREATED: case MANAGE_OFFER_UPDATED: OfferEntry offer; case MANAGE_OFFER_DELETED: void; } ```",
+  "oneOf": [
+    {
+      "type": "string",
+      "enum": [
+        "deleted"
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "created"
+      ],
+      "properties": {
+        "created": {
+          "$ref": "#/definitions/OfferEntry"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "updated"
+      ],
+      "properties": {
+        "updated": {
+          "$ref": "#/definitions/OfferEntry"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    },
+    "AlphaNum12": {
+      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "type": "object",
+      "required": [
+        "asset_code",
+        "issuer"
+      ],
+      "properties": {
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode12"
+        },
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    },
+    "AlphaNum4": {
+      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "type": "object",
+      "required": [
+        "asset_code",
+        "issuer"
+      ],
+      "properties": {
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode4"
+        },
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    },
+    "Asset": {
+      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "native"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "credit_alphanum4"
+          ],
+          "properties": {
+            "credit_alphanum4": {
+              "$ref": "#/definitions/AlphaNum4"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "credit_alphanum12"
+          ],
+          "properties": {
+            "credit_alphanum12": {
+              "$ref": "#/definitions/AlphaNum12"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AssetCode12": {
+      "type": "string"
+    },
+    "AssetCode4": {
+      "type": "string"
+    },
+    "OfferEntry": {
+      "description": "OfferEntry is an XDR Struct defines as:\n\n```text struct OfferEntry { AccountID sellerID; int64 offerID; Asset selling; // A Asset buying;  // B int64 amount;  // amount of A\n\n/* price for this offer: price of A in terms of B price=AmountB/AmountA=priceNumerator/priceDenominator price is after fees */ Price price; uint32 flags; // see OfferEntryFlags\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "amount",
+        "buying",
+        "ext",
+        "flags",
+        "offer_id",
+        "price",
+        "seller_id",
+        "selling"
+      ],
+      "properties": {
+        "amount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "buying": {
+          "$ref": "#/definitions/Asset"
+        },
+        "ext": {
+          "$ref": "#/definitions/OfferEntryExt"
+        },
+        "flags": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "offer_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "price": {
+          "$ref": "#/definitions/Price"
+        },
+        "seller_id": {
+          "$ref": "#/definitions/AccountId"
+        },
+        "selling": {
+          "$ref": "#/definitions/Asset"
+        }
+      }
+    },
+    "OfferEntryExt": {
+      "description": "OfferEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    "Price": {
+      "description": "Price is an XDR Struct defines as:\n\n```text struct Price { int32 n; // numerator int32 d; // denominator }; ```",
+      "type": "object",
+      "required": [
+        "d",
+        "n"
+      ],
+      "properties": {
+        "d": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "n": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    }
+  }
+}

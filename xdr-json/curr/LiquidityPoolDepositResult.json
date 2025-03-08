@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LiquidityPoolDepositResult",
+  "description": "LiquidityPoolDepositResult is an XDR Union defines as:\n\n```text union LiquidityPoolDepositResult switch (LiquidityPoolDepositResultCode code) { case LIQUIDITY_POOL_DEPOSIT_SUCCESS: void; case LIQUIDITY_POOL_DEPOSIT_MALFORMED: case LIQUIDITY_POOL_DEPOSIT_NO_TRUST: case LIQUIDITY_POOL_DEPOSIT_NOT_AUTHORIZED: case LIQUIDITY_POOL_DEPOSIT_UNDERFUNDED: case LIQUIDITY_POOL_DEPOSIT_LINE_FULL: case LIQUIDITY_POOL_DEPOSIT_BAD_PRICE: case LIQUIDITY_POOL_DEPOSIT_POOL_FULL: void; }; ```",
+  "type": "string",
+  "enum": [
+    "success",
+    "malformed",
+    "no_trust",
+    "not_authorized",
+    "underfunded",
+    "line_full",
+    "bad_price",
+    "pool_full"
+  ]
+}

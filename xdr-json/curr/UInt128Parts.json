@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "UInt128Parts",
+  "description": "UInt128Parts is an XDR Struct defines as:\n\n```text struct UInt128Parts { uint64 hi; uint64 lo; }; ```",
+  "type": "object",
+  "required": [
+    "hi",
+    "lo"
+  ],
+  "properties": {
+    "hi": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "lo": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    }
+  }
+}

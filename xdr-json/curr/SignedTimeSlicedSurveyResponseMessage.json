@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "SignedTimeSlicedSurveyResponseMessage",
+  "description": "SignedTimeSlicedSurveyResponseMessage is an XDR Struct defines as:\n\n```text struct SignedTimeSlicedSurveyResponseMessage { Signature responseSignature; TimeSlicedSurveyResponseMessage response; }; ```",
+  "type": "object",
+  "required": [
+    "response",
+    "response_signature"
+  ],
+  "properties": {
+    "response": {
+      "$ref": "#/definitions/TimeSlicedSurveyResponseMessage"
+    },
+    "response_signature": {
+      "$ref": "#/definitions/Signature"
+    }
+  },
+  "definitions": {
+    "EncryptedBody": {
+      "description": "EncryptedBody is an XDR Typedef defines as:\n\n```text typedef opaque EncryptedBody<64000>; ```",
+      "type": "string",
+      "maxLength": 128000,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "NodeId": {
+      "type": "string"
+    },
+    "Signature": {
+      "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
+      "type": "string",
+      "maxLength": 128,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "SurveyMessageCommandType": {
+      "description": "SurveyMessageCommandType is an XDR Enum defines as:\n\n```text enum SurveyMessageCommandType { SURVEY_TOPOLOGY = 0, TIME_SLICED_SURVEY_TOPOLOGY = 1 }; ```",
+      "type": "string",
+      "enum": [
+        "survey_topology",
+        "time_sliced_survey_topology"
+      ]
+    },
+    "SurveyResponseMessage": {
+      "description": "SurveyResponseMessage is an XDR Struct defines as:\n\n```text struct SurveyResponseMessage { NodeID surveyorPeerID; NodeID surveyedPeerID; uint32 ledgerNum; SurveyMessageCommandType commandType; EncryptedBody encryptedBody; }; ```",
+      "type": "object",
+      "required": [
+        "command_type",
+        "encrypted_body",
+        "ledger_num",
+        "surveyed_peer_id",
+        "surveyor_peer_id"
+      ],
+      "properties": {
+        "command_type": {
+          "$ref": "#/definitions/SurveyMessageCommandType"
+        },
+        "encrypted_body": {
+          "$ref": "#/definitions/EncryptedBody"
+        },
+        "ledger_num": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "surveyed_peer_id": {
+          "$ref": "#/definitions/NodeId"
+        },
+        "surveyor_peer_id": {
+          "$ref": "#/definitions/NodeId"
+        }
+      }
+    },
+    "TimeSlicedSurveyResponseMessage": {
+      "description": "TimeSlicedSurveyResponseMessage is an XDR Struct defines as:\n\n```text struct TimeSlicedSurveyResponseMessage { SurveyResponseMessage response; uint32 nonce; }; ```",
+      "type": "object",
+      "required": [
+        "nonce",
+        "response"
+      ],
+      "properties": {
+        "nonce": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "response": {
+          "$ref": "#/definitions/SurveyResponseMessage"
+        }
+      }
+    }
+  }
+}

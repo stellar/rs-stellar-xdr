@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ColdArchiveBoundaryLeaf",
+  "description": "ColdArchiveBoundaryLeaf is an XDR Struct defines as:\n\n```text struct ColdArchiveBoundaryLeaf { uint32 index; bool isLowerBound; }; ```",
+  "type": "object",
+  "required": [
+    "index",
+    "is_lower_bound"
+  ],
+  "properties": {
+    "index": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "is_lower_bound": {
+      "type": "boolean"
+    }
+  }
+}

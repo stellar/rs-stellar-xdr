@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ClaimableBalanceEntryExtensionV1",
+  "description": "ClaimableBalanceEntryExtensionV1 is an XDR Struct defines as:\n\n```text struct ClaimableBalanceEntryExtensionV1 { union switch (int v) { case 0: void; } ext;\n\nuint32 flags; // see ClaimableBalanceFlags }; ```",
+  "type": "object",
+  "required": [
+    "ext",
+    "flags"
+  ],
+  "properties": {
+    "ext": {
+      "$ref": "#/definitions/ClaimableBalanceEntryExtensionV1Ext"
+    },
+    "flags": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  },
+  "definitions": {
+    "ClaimableBalanceEntryExtensionV1Ext": {
+      "description": "ClaimableBalanceEntryExtensionV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    }
+  }
+}

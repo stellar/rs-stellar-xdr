@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LiquidityPoolWithdrawResultCode",
+  "description": "LiquidityPoolWithdrawResultCode is an XDR Enum defines as:\n\n```text enum LiquidityPoolWithdrawResultCode { // codes considered as \"success\" for the operation LIQUIDITY_POOL_WITHDRAW_SUCCESS = 0,\n\n// codes considered as \"failure\" for the operation LIQUIDITY_POOL_WITHDRAW_MALFORMED = -1,    // bad input LIQUIDITY_POOL_WITHDRAW_NO_TRUST = -2,     // no trust line for one of the // assets LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED = -3,  // not enough balance of the // pool share LIQUIDITY_POOL_WITHDRAW_LINE_FULL = -4,    // would go above limit for one // of the assets LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM = -5 // didn't withdraw enough }; ```",
+  "type": "string",
+  "enum": [
+    "success",
+    "malformed",
+    "no_trust",
+    "underfunded",
+    "line_full",
+    "under_minimum"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "SurveyMessageCommandType",
+  "description": "SurveyMessageCommandType is an XDR Enum defines as:\n\n```text enum SurveyMessageCommandType { SURVEY_TOPOLOGY = 0, TIME_SLICED_SURVEY_TOPOLOGY = 1 }; ```",
+  "type": "string",
+  "enum": [
+    "survey_topology",
+    "time_sliced_survey_topology"
+  ]
+}

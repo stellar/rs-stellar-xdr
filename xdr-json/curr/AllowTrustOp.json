@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "AllowTrustOp",
+  "description": "AllowTrustOp is an XDR Struct defines as:\n\n```text struct AllowTrustOp { AccountID trustor; AssetCode asset;\n\n// One of 0, AUTHORIZED_FLAG, or AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG uint32 authorize; }; ```",
+  "type": "object",
+  "required": [
+    "asset",
+    "authorize",
+    "trustor"
+  ],
+  "properties": {
+    "asset": {
+      "$ref": "#/definitions/AssetCode"
+    },
+    "authorize": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "trustor": {
+      "$ref": "#/definitions/AccountId"
+    }
+  },
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    },
+    "AssetCode": {
+      "type": "string"
+    }
+  }
+}

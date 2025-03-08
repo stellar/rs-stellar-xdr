@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ClaimableBalanceIdType",
+  "description": "ClaimableBalanceIdType is an XDR Enum defines as:\n\n```text enum ClaimableBalanceIDType { CLAIMABLE_BALANCE_ID_TYPE_V0 = 0 }; ```",
+  "type": "string",
+  "enum": [
+    "claimable_balance_id_type_v0"
+  ]
+}

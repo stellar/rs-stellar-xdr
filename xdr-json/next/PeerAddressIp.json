@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "PeerAddressIp",
+  "description": "PeerAddressIp is an XDR NestedUnion defines as:\n\n```text union switch (IPAddrType type) { case IPv4: opaque ipv4[4]; case IPv6: opaque ipv6[16]; } ```",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "i_pv4"
+      ],
+      "properties": {
+        "i_pv4": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          },
+          "maxItems": 4,
+          "minItems": 4
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "i_pv6"
+      ],
+      "properties": {
+        "i_pv6": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          },
+          "maxItems": 16,
+          "minItems": 16
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

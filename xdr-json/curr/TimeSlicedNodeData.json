@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "TimeSlicedNodeData",
+  "description": "TimeSlicedNodeData is an XDR Struct defines as:\n\n```text struct TimeSlicedNodeData { uint32 addedAuthenticatedPeers; uint32 droppedAuthenticatedPeers; uint32 totalInboundPeerCount; uint32 totalOutboundPeerCount;\n\n// SCP stats uint32 p75SCPFirstToSelfLatencyMs; uint32 p75SCPSelfToOtherLatencyMs;\n\n// How many times the node lost sync in the time slice uint32 lostSyncCount;\n\n// Config data bool isValidator; uint32 maxInboundPeerCount; uint32 maxOutboundPeerCount; }; ```",
+  "type": "object",
+  "required": [
+    "added_authenticated_peers",
+    "dropped_authenticated_peers",
+    "is_validator",
+    "lost_sync_count",
+    "max_inbound_peer_count",
+    "max_outbound_peer_count",
+    "p75_scp_first_to_self_latency_ms",
+    "p75_scp_self_to_other_latency_ms",
+    "total_inbound_peer_count",
+    "total_outbound_peer_count"
+  ],
+  "properties": {
+    "added_authenticated_peers": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "dropped_authenticated_peers": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "is_validator": {
+      "type": "boolean"
+    },
+    "lost_sync_count": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "max_inbound_peer_count": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "max_outbound_peer_count": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "p75_scp_first_to_self_latency_ms": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "p75_scp_self_to_other_latency_ms": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "total_inbound_peer_count": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "total_outbound_peer_count": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  }
+}

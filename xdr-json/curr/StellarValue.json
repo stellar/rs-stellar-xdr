@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "StellarValue",
+  "description": "StellarValue is an XDR Struct defines as:\n\n```text struct StellarValue { Hash txSetHash;      // transaction set to apply to previous ledger TimePoint closeTime; // network close time\n\n// upgrades to apply to the previous ledger (usually empty) // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop // unknown steps during consensus if needed. // see notes below on 'LedgerUpgrade' for more detail // max size is dictated by number of upgrade types (+ room for future) UpgradeType upgrades<6>;\n\n// reserved for future use union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; } ext; }; ```",
+  "type": "object",
+  "required": [
+    "close_time",
+    "ext",
+    "tx_set_hash",
+    "upgrades"
+  ],
+  "properties": {
+    "close_time": {
+      "$ref": "#/definitions/TimePoint"
+    },
+    "ext": {
+      "$ref": "#/definitions/StellarValueExt"
+    },
+    "tx_set_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "upgrades": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/UpgradeType"
+      },
+      "maxItems": 6
+    }
+  },
+  "definitions": {
+    "LedgerCloseValueSignature": {
+      "description": "LedgerCloseValueSignature is an XDR Struct defines as:\n\n```text struct LedgerCloseValueSignature { NodeID nodeID;       // which node introduced the value Signature signature; // nodeID's signature }; ```",
+      "type": "object",
+      "required": [
+        "node_id",
+        "signature"
+      ],
+      "properties": {
+        "node_id": {
+          "$ref": "#/definitions/NodeId"
+        },
+        "signature": {
+          "$ref": "#/definitions/Signature"
+        }
+      }
+    },
+    "NodeId": {
+      "type": "string"
+    },
+    "Signature": {
+      "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
+      "type": "string",
+      "maxLength": 128,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "StellarValueExt": {
+      "description": "StellarValueExt is an XDR NestedUnion defines as:\n\n```text union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "basic"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "signed"
+          ],
+          "properties": {
+            "signed": {
+              "$ref": "#/definitions/LedgerCloseValueSignature"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "TimePoint": {
+      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "UpgradeType": {
+      "description": "UpgradeType is an XDR Typedef defines as:\n\n```text typedef opaque UpgradeType<128>; ```",
+      "type": "string",
+      "maxLength": 256,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

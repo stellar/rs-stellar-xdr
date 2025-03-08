@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "BucketListType",
+  "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1 }; ```",
+  "type": "string",
+  "enum": [
+    "live",
+    "hot_archive"
+  ]
+}

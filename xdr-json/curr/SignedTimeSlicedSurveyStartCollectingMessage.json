@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "SignedTimeSlicedSurveyStartCollectingMessage",
+  "description": "SignedTimeSlicedSurveyStartCollectingMessage is an XDR Struct defines as:\n\n```text struct SignedTimeSlicedSurveyStartCollectingMessage { Signature signature; TimeSlicedSurveyStartCollectingMessage startCollecting; }; ```",
+  "type": "object",
+  "required": [
+    "signature",
+    "start_collecting"
+  ],
+  "properties": {
+    "signature": {
+      "$ref": "#/definitions/Signature"
+    },
+    "start_collecting": {
+      "$ref": "#/definitions/TimeSlicedSurveyStartCollectingMessage"
+    }
+  },
+  "definitions": {
+    "NodeId": {
+      "type": "string"
+    },
+    "Signature": {
+      "description": "Signature is an XDR Typedef defines as:\n\n```text typedef opaque Signature<64>; ```",
+      "type": "string",
+      "maxLength": 128,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "TimeSlicedSurveyStartCollectingMessage": {
+      "description": "TimeSlicedSurveyStartCollectingMessage is an XDR Struct defines as:\n\n```text struct TimeSlicedSurveyStartCollectingMessage { NodeID surveyorID; uint32 nonce; uint32 ledgerNum; }; ```",
+      "type": "object",
+      "required": [
+        "ledger_num",
+        "nonce",
+        "surveyor_id"
+      ],
+      "properties": {
+        "ledger_num": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "nonce": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "surveyor_id": {
+          "$ref": "#/definitions/NodeId"
+        }
+      }
+    }
+  }
+}

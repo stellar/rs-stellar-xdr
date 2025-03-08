@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ClaimAtomType",
+  "description": "ClaimAtomType is an XDR Enum defines as:\n\n```text enum ClaimAtomType { CLAIM_ATOM_TYPE_V0 = 0, CLAIM_ATOM_TYPE_ORDER_BOOK = 1, CLAIM_ATOM_TYPE_LIQUIDITY_POOL = 2 }; ```",
+  "type": "string",
+  "enum": [
+    "v0",
+    "order_book",
+    "liquidity_pool"
+  ]
+}

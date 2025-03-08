@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "RevokeSponsorshipResult",
+  "description": "RevokeSponsorshipResult is an XDR Union defines as:\n\n```text union RevokeSponsorshipResult switch (RevokeSponsorshipResultCode code) { case REVOKE_SPONSORSHIP_SUCCESS: void; case REVOKE_SPONSORSHIP_DOES_NOT_EXIST: case REVOKE_SPONSORSHIP_NOT_SPONSOR: case REVOKE_SPONSORSHIP_LOW_RESERVE: case REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE: case REVOKE_SPONSORSHIP_MALFORMED: void; }; ```",
+  "type": "string",
+  "enum": [
+    "success",
+    "does_not_exist",
+    "not_sponsor",
+    "low_reserve",
+    "only_transferable",
+    "malformed"
+  ]
+}

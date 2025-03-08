@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScMetaKind",
+  "description": "ScMetaKind is an XDR Enum defines as:\n\n```text enum SCMetaKind { SC_META_V0 = 0 }; ```",
+  "type": "string",
+  "enum": [
+    "sc_meta_v0"
+  ]
+}

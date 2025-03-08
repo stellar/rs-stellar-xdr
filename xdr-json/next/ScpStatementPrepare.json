@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScpStatementPrepare",
+  "description": "ScpStatementPrepare is an XDR NestedStruct defines as:\n\n```text struct { Hash quorumSetHash;       // D SCPBallot ballot;         // b SCPBallot* prepared;      // p SCPBallot* preparedPrime; // p' uint32 nC;                // c.n uint32 nH;                // h.n } ```",
+  "type": "object",
+  "required": [
+    "ballot",
+    "n_c",
+    "n_h",
+    "quorum_set_hash"
+  ],
+  "properties": {
+    "ballot": {
+      "$ref": "#/definitions/ScpBallot"
+    },
+    "n_c": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_h": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "prepared": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ScpBallot"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "prepared_prime": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ScpBallot"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "quorum_set_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  },
+  "definitions": {
+    "ScpBallot": {
+      "description": "ScpBallot is an XDR Struct defines as:\n\n```text struct SCPBallot { uint32 counter; // n Value value;    // x }; ```",
+      "type": "object",
+      "required": [
+        "counter",
+        "value"
+      ],
+      "properties": {
+        "counter": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "value": {
+          "$ref": "#/definitions/Value"
+        }
+      }
+    },
+    "Value": {
+      "description": "Value is an XDR Typedef defines as:\n\n```text typedef opaque Value<>; ```",
+      "type": "string",
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerEntryType",
+  "description": "LedgerEntryType is an XDR Enum defines as:\n\n```text enum LedgerEntryType { ACCOUNT = 0, TRUSTLINE = 1, OFFER = 2, DATA = 3, CLAIMABLE_BALANCE = 4, LIQUIDITY_POOL = 5, CONTRACT_DATA = 6, CONTRACT_CODE = 7, CONFIG_SETTING = 8, TTL = 9 }; ```",
+  "type": "string",
+  "enum": [
+    "account",
+    "trustline",
+    "offer",
+    "data",
+    "claimable_balance",
+    "liquidity_pool",
+    "contract_data",
+    "contract_code",
+    "config_setting",
+    "ttl"
+  ]
+}

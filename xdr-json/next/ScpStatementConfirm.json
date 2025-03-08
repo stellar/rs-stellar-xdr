@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScpStatementConfirm",
+  "description": "ScpStatementConfirm is an XDR NestedStruct defines as:\n\n```text struct { SCPBallot ballot;   // b uint32 nPrepared;   // p.n uint32 nCommit;     // c.n uint32 nH;          // h.n Hash quorumSetHash; // D } ```",
+  "type": "object",
+  "required": [
+    "ballot",
+    "n_commit",
+    "n_h",
+    "n_prepared",
+    "quorum_set_hash"
+  ],
+  "properties": {
+    "ballot": {
+      "$ref": "#/definitions/ScpBallot"
+    },
+    "n_commit": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_h": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "n_prepared": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "quorum_set_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  },
+  "definitions": {
+    "ScpBallot": {
+      "description": "ScpBallot is an XDR Struct defines as:\n\n```text struct SCPBallot { uint32 counter; // n Value value;    // x }; ```",
+      "type": "object",
+      "required": [
+        "counter",
+        "value"
+      ],
+      "properties": {
+        "counter": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "value": {
+          "$ref": "#/definitions/Value"
+        }
+      }
+    },
+    "Value": {
+      "description": "Value is an XDR Typedef defines as:\n\n```text typedef opaque Value<>; ```",
+      "type": "string",
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

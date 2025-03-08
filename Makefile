@@ -37,7 +37,7 @@ readme:
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 
-generate: src/curr/generated.rs xdr/curr-version src/next/generated.rs xdr/next-version
+generate: src/curr/generated.rs xdr/curr-version xdr-json/curr src/next/generated.rs xdr/next-version xdr-json/next
 
 src/curr/generated.rs: $(sort $(wildcard xdr/curr/*.x))
 	> $@
@@ -89,9 +89,17 @@ endif
 xdr/next-version: $(wildcard .git/modules/xdr/next/**/*) $(wildcard xdr/next/*.x)
 	git submodule status -- xdr/next | sed 's/^ *//g' | cut -f 1 -d " " | tr -d '\n' | tr -d '+' > xdr/next-version
 
+xdr-json/curr: src/curr/generated.rs
+	cargo run --features cli -- +curr types schema-files --out-dir xdr-json/curr
+
+xdr-json/next: src/next/generated.rs
+	cargo run --features cli -- +next types schema-files --out-dir xdr-json/next
+
 clean:
 	rm -f src/*/generated.rs
 	rm -f xdr/*-version
+	rm -f xdr-json/curr/*.json
+	rm -f xdr-json/next/*.json
 	cargo clean
 
 fmt:

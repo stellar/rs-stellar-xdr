@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "TrustLineEntryExtensionV2",
+  "description": "TrustLineEntryExtensionV2 is an XDR Struct defines as:\n\n```text struct TrustLineEntryExtensionV2 { int32 liquidityPoolUseCount;\n\nunion switch (int v) { case 0: void; } ext; }; ```",
+  "type": "object",
+  "required": [
+    "ext",
+    "liquidity_pool_use_count"
+  ],
+  "properties": {
+    "ext": {
+      "$ref": "#/definitions/TrustLineEntryExtensionV2Ext"
+    },
+    "liquidity_pool_use_count": {
+      "type": "integer",
+      "format": "int32"
+    }
+  },
+  "definitions": {
+    "TrustLineEntryExtensionV2Ext": {
+      "description": "TrustLineEntryExtensionV2Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    }
+  }
+}

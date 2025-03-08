@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "SurveyRequestMessage",
+  "description": "SurveyRequestMessage is an XDR Struct defines as:\n\n```text struct SurveyRequestMessage { NodeID surveyorPeerID; NodeID surveyedPeerID; uint32 ledgerNum; Curve25519Public encryptionKey; SurveyMessageCommandType commandType; }; ```",
+  "type": "object",
+  "required": [
+    "command_type",
+    "encryption_key",
+    "ledger_num",
+    "surveyed_peer_id",
+    "surveyor_peer_id"
+  ],
+  "properties": {
+    "command_type": {
+      "$ref": "#/definitions/SurveyMessageCommandType"
+    },
+    "encryption_key": {
+      "$ref": "#/definitions/Curve25519Public"
+    },
+    "ledger_num": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "surveyed_peer_id": {
+      "$ref": "#/definitions/NodeId"
+    },
+    "surveyor_peer_id": {
+      "$ref": "#/definitions/NodeId"
+    }
+  },
+  "definitions": {
+    "Curve25519Public": {
+      "description": "Curve25519Public is an XDR Struct defines as:\n\n```text struct Curve25519Public { opaque key[32]; }; ```",
+      "type": "object",
+      "required": [
+        "key"
+      ],
+      "properties": {
+        "key": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          },
+          "maxItems": 32,
+          "minItems": 32
+        }
+      }
+    },
+    "NodeId": {
+      "type": "string"
+    },
+    "SurveyMessageCommandType": {
+      "description": "SurveyMessageCommandType is an XDR Enum defines as:\n\n```text enum SurveyMessageCommandType { SURVEY_TOPOLOGY = 0, TIME_SLICED_SURVEY_TOPOLOGY = 1 }; ```",
+      "type": "string",
+      "enum": [
+        "survey_topology",
+        "time_sliced_survey_topology"
+      ]
+    }
+  }
+}

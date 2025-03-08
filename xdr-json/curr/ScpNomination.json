@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScpNomination",
+  "description": "ScpNomination is an XDR Struct defines as:\n\n```text struct SCPNomination { Hash quorumSetHash; // D Value votes<>;      // X Value accepted<>;   // Y }; ```",
+  "type": "object",
+  "required": [
+    "accepted",
+    "quorum_set_hash",
+    "votes"
+  ],
+  "properties": {
+    "accepted": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Value"
+      },
+      "maxItems": 4294967295
+    },
+    "quorum_set_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "votes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Value"
+      },
+      "maxItems": 4294967295
+    }
+  },
+  "definitions": {
+    "Value": {
+      "description": "Value is an XDR Typedef defines as:\n\n```text typedef opaque Value<>; ```",
+      "type": "string",
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

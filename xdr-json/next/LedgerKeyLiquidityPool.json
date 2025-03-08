@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerKeyLiquidityPool",
+  "description": "LedgerKeyLiquidityPool is an XDR NestedStruct defines as:\n\n```text struct { PoolID liquidityPoolID; } ```",
+  "type": "object",
+  "required": [
+    "liquidity_pool_id"
+  ],
+  "properties": {
+    "liquidity_pool_id": {
+      "$ref": "#/definitions/PoolId"
+    }
+  },
+  "definitions": {
+    "PoolId": {
+      "description": "PoolId is an XDR Typedef defines as:\n\n```text typedef Hash PoolID; ```",
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

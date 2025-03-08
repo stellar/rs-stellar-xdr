@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScSpecTypeTuple",
+  "description": "ScSpecTypeTuple is an XDR Struct defines as:\n\n```text struct SCSpecTypeTuple { SCSpecTypeDef valueTypes<12>; }; ```",
+  "type": "object",
+  "required": [
+    "value_types"
+  ],
+  "properties": {
+    "value_types": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ScSpecTypeDef"
+      },
+      "maxItems": 12
+    }
+  },
+  "definitions": {
+    "ScSpecTypeBytesN": {
+      "description": "ScSpecTypeBytesN is an XDR Struct defines as:\n\n```text struct SCSpecTypeBytesN { uint32 n; }; ```",
+      "type": "object",
+      "required": [
+        "n"
+      ],
+      "properties": {
+        "n": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ScSpecTypeDef": {
+      "description": "ScSpecTypeDef is an XDR Union defines as:\n\n```text union SCSpecTypeDef switch (SCSpecType type) { case SC_SPEC_TYPE_VAL: case SC_SPEC_TYPE_BOOL: case SC_SPEC_TYPE_VOID: case SC_SPEC_TYPE_ERROR: case SC_SPEC_TYPE_U32: case SC_SPEC_TYPE_I32: case SC_SPEC_TYPE_U64: case SC_SPEC_TYPE_I64: case SC_SPEC_TYPE_TIMEPOINT: case SC_SPEC_TYPE_DURATION: case SC_SPEC_TYPE_U128: case SC_SPEC_TYPE_I128: case SC_SPEC_TYPE_U256: case SC_SPEC_TYPE_I256: case SC_SPEC_TYPE_BYTES: case SC_SPEC_TYPE_STRING: case SC_SPEC_TYPE_SYMBOL: case SC_SPEC_TYPE_ADDRESS: void; case SC_SPEC_TYPE_OPTION: SCSpecTypeOption option; case SC_SPEC_TYPE_RESULT: SCSpecTypeResult result; case SC_SPEC_TYPE_VEC: SCSpecTypeVec vec; case SC_SPEC_TYPE_MAP: SCSpecTypeMap map; case SC_SPEC_TYPE_TUPLE: SCSpecTypeTuple tuple; case SC_SPEC_TYPE_BYTES_N: SCSpecTypeBytesN bytesN; case SC_SPEC_TYPE_UDT: SCSpecTypeUDT udt; }; ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "val",
+            "bool",
+            "void",
+            "error",
+            "u32",
+            "i32",
+            "u64",
+            "i64",
+            "timepoint",
+            "duration",
+            "u128",
+            "i128",
+            "u256",
+            "i256",
+            "bytes",
+            "string",
+            "symbol",
+            "address"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "option"
+          ],
+          "properties": {
+            "option": {
+              "$ref": "#/definitions/ScSpecTypeOption"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "result"
+          ],
+          "properties": {
+            "result": {
+              "$ref": "#/definitions/ScSpecTypeResult"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "vec"
+          ],
+          "properties": {
+            "vec": {
+              "$ref": "#/definitions/ScSpecTypeVec"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "map"
+          ],
+          "properties": {
+            "map": {
+              "$ref": "#/definitions/ScSpecTypeMap"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "tuple"
+          ],
+          "properties": {
+            "tuple": {
+              "$ref": "#/definitions/ScSpecTypeTuple"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "bytes_n"
+          ],
+          "properties": {
+            "bytes_n": {
+              "$ref": "#/definitions/ScSpecTypeBytesN"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "udt"
+          ],
+          "properties": {
+            "udt": {
+              "$ref": "#/definitions/ScSpecTypeUdt"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ScSpecTypeMap": {
+      "description": "ScSpecTypeMap is an XDR Struct defines as:\n\n```text struct SCSpecTypeMap { SCSpecTypeDef keyType; SCSpecTypeDef valueType; }; ```",
+      "type": "object",
+      "required": [
+        "key_type",
+        "value_type"
+      ],
+      "properties": {
+        "key_type": {
+          "$ref": "#/definitions/ScSpecTypeDef"
+        },
+        "value_type": {
+          "$ref": "#/definitions/ScSpecTypeDef"
+        }
+      }
+    },
+    "ScSpecTypeOption": {
+      "description": "ScSpecTypeOption is an XDR Struct defines as:\n\n```text struct SCSpecTypeOption { SCSpecTypeDef valueType; }; ```",
+      "type": "object",
+      "required": [
+        "value_type"
+      ],
+      "properties": {
+        "value_type": {
+          "$ref": "#/definitions/ScSpecTypeDef"
+        }
+      }
+    },
+    "ScSpecTypeResult": {
+      "description": "ScSpecTypeResult is an XDR Struct defines as:\n\n```text struct SCSpecTypeResult { SCSpecTypeDef okType; SCSpecTypeDef errorType; }; ```",
+      "type": "object",
+      "required": [
+        "error_type",
+        "ok_type"
+      ],
+      "properties": {
+        "error_type": {
+          "$ref": "#/definitions/ScSpecTypeDef"
+        },
+        "ok_type": {
+          "$ref": "#/definitions/ScSpecTypeDef"
+        }
+      }
+    },
+    "ScSpecTypeTuple": {
+      "description": "ScSpecTypeTuple is an XDR Struct defines as:\n\n```text struct SCSpecTypeTuple { SCSpecTypeDef valueTypes<12>; }; ```",
+      "type": "object",
+      "required": [
+        "value_types"
+      ],
+      "properties": {
+        "value_types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScSpecTypeDef"
+          },
+          "maxItems": 12
+        }
+      }
+    },
+    "ScSpecTypeUdt": {
+      "description": "ScSpecTypeUdt is an XDR Struct defines as:\n\n```text struct SCSpecTypeUDT { string name<60>; }; ```",
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/StringM<60>"
+        }
+      }
+    },
+    "ScSpecTypeVec": {
+      "description": "ScSpecTypeVec is an XDR Struct defines as:\n\n```text struct SCSpecTypeVec { SCSpecTypeDef elementType; }; ```",
+      "type": "object",
+      "required": [
+        "element_type"
+      ],
+      "properties": {
+        "element_type": {
+          "$ref": "#/definitions/ScSpecTypeDef"
+        }
+      }
+    },
+    "StringM<60>": {
+      "type": "string",
+      "maxLength": 60
+    }
+  }
+}

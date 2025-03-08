@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ManageOfferEffect",
+  "description": "ManageOfferEffect is an XDR Enum defines as:\n\n```text enum ManageOfferEffect { MANAGE_OFFER_CREATED = 0, MANAGE_OFFER_UPDATED = 1, MANAGE_OFFER_DELETED = 2 }; ```",
+  "type": "string",
+  "enum": [
+    "created",
+    "updated",
+    "deleted"
+  ]
+}

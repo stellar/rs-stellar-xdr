@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "String64",
+  "description": "String64 is an XDR Typedef defines as:\n\n```text typedef string string64<64>; ```",
+  "$ref": "#/definitions/StringM<64>",
+  "definitions": {
+    "StringM<64>": {
+      "type": "string",
+      "maxLength": 64
+    }
+  }
+}

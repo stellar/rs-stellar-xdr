@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ColdArchiveHashEntry",
+  "description": "ColdArchiveHashEntry is an XDR Struct defines as:\n\n```text struct ColdArchiveHashEntry { uint32 index; uint32 level; Hash hash; }; ```",
+  "type": "object",
+  "required": [
+    "hash",
+    "index",
+    "level"
+  ],
+  "properties": {
+    "hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "index": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "level": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ContractCostParams",
+  "description": "ContractCostParams is an XDR Typedef defines as:\n\n```text typedef ContractCostParamEntry ContractCostParams<CONTRACT_COST_COUNT_LIMIT>; ```",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/ContractCostParamEntry"
+  },
+  "maxItems": 1024,
+  "definitions": {
+    "ContractCostParamEntry": {
+      "description": "ContractCostParamEntry is an XDR Struct defines as:\n\n```text struct ContractCostParamEntry { // use `ext` to add more terms (e.g. higher order polynomials) in the future ExtensionPoint ext;\n\nint64 constTerm; int64 linearTerm; }; ```",
+      "type": "object",
+      "required": [
+        "const_term",
+        "ext",
+        "linear_term"
+      ],
+      "properties": {
+        "const_term": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "linear_term": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ExtensionPoint": {
+      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    }
+  }
+}

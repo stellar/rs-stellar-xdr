@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerHeaderExtensionV1",
+  "description": "LedgerHeaderExtensionV1 is an XDR Struct defines as:\n\n```text struct LedgerHeaderExtensionV1 { uint32 flags; // LedgerHeaderFlags\n\nunion switch (int v) { case 0: void; } ext; }; ```",
+  "type": "object",
+  "required": [
+    "ext",
+    "flags"
+  ],
+  "properties": {
+    "ext": {
+      "$ref": "#/definitions/LedgerHeaderExtensionV1Ext"
+    },
+    "flags": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  },
+  "definitions": {
+    "LedgerHeaderExtensionV1Ext": {
+      "description": "LedgerHeaderExtensionV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    }
+  }
+}

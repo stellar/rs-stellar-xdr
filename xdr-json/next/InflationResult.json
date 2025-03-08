@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "InflationResult",
+  "description": "InflationResult is an XDR Union defines as:\n\n```text union InflationResult switch (InflationResultCode code) { case INFLATION_SUCCESS: InflationPayout payouts<>; case INFLATION_NOT_TIME: void; }; ```",
+  "oneOf": [
+    {
+      "type": "string",
+      "enum": [
+        "not_time"
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "success"
+      ],
+      "properties": {
+        "success": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InflationPayout"
+          },
+          "maxItems": 4294967295
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    },
+    "InflationPayout": {
+      "description": "InflationPayout is an XDR Struct defines as:\n\n```text struct InflationPayout // or use PaymentResultAtom to limit types? { AccountID destination; int64 amount; }; ```",
+      "type": "object",
+      "required": [
+        "amount",
+        "destination"
+      ],
+      "properties": {
+        "amount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "destination": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    }
+  }
+}

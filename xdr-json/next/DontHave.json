@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "DontHave",
+  "description": "DontHave is an XDR Struct defines as:\n\n```text struct DontHave { MessageType type; uint256 reqHash; }; ```",
+  "type": "object",
+  "required": [
+    "req_hash",
+    "type_"
+  ],
+  "properties": {
+    "req_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "type_": {
+      "$ref": "#/definitions/MessageType"
+    }
+  },
+  "definitions": {
+    "MessageType": {
+      "description": "MessageType is an XDR Enum defines as:\n\n```text enum MessageType { ERROR_MSG = 0, AUTH = 2, DONT_HAVE = 3, // GET_PEERS (4) is deprecated\n\nPEERS = 5,\n\nGET_TX_SET = 6, // gets a particular txset by hash TX_SET = 7, GENERALIZED_TX_SET = 17,\n\nTRANSACTION = 8, // pass on a tx you have heard about\n\n// SCP GET_SCP_QUORUMSET = 9, SCP_QUORUMSET = 10, SCP_MESSAGE = 11, GET_SCP_STATE = 12,\n\n// new messages HELLO = 13,\n\nSURVEY_REQUEST = 14, SURVEY_RESPONSE = 15,\n\nSEND_MORE = 16, SEND_MORE_EXTENDED = 20,\n\nFLOOD_ADVERT = 18, FLOOD_DEMAND = 19,\n\nTIME_SLICED_SURVEY_REQUEST = 21, TIME_SLICED_SURVEY_RESPONSE = 22, TIME_SLICED_SURVEY_START_COLLECTING = 23, TIME_SLICED_SURVEY_STOP_COLLECTING = 24 }; ```",
+      "type": "string",
+      "enum": [
+        "error_msg",
+        "auth",
+        "dont_have",
+        "peers",
+        "get_tx_set",
+        "tx_set",
+        "generalized_tx_set",
+        "transaction",
+        "get_scp_quorumset",
+        "scp_quorumset",
+        "scp_message",
+        "get_scp_state",
+        "hello",
+        "survey_request",
+        "survey_response",
+        "send_more",
+        "send_more_extended",
+        "flood_advert",
+        "flood_demand",
+        "time_sliced_survey_request",
+        "time_sliced_survey_response",
+        "time_sliced_survey_start_collecting",
+        "time_sliced_survey_stop_collecting"
+      ]
+    }
+  }
+}

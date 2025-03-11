@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScErrorCode",
+  "description": "ScErrorCode is an XDR Enum defines as:\n\n```text enum SCErrorCode { SCEC_ARITH_DOMAIN = 0,      // Some arithmetic was undefined (overflow, divide-by-zero). SCEC_INDEX_BOUNDS = 1,      // Something was indexed beyond its bounds. SCEC_INVALID_INPUT = 2,     // User provided some otherwise-bad data. SCEC_MISSING_VALUE = 3,     // Some value was required but not provided. SCEC_EXISTING_VALUE = 4,    // Some value was provided where not allowed. SCEC_EXCEEDED_LIMIT = 5,    // Some arbitrary limit -- gas or otherwise -- was hit. SCEC_INVALID_ACTION = 6,    // Data was valid but action requested was not. SCEC_INTERNAL_ERROR = 7,    // The host detected an error in its own logic. SCEC_UNEXPECTED_TYPE = 8,   // Some type wasn't as expected. SCEC_UNEXPECTED_SIZE = 9    // Something's size wasn't as expected. }; ```",
+  "type": "string",
+  "enum": [
+    "arith_domain",
+    "index_bounds",
+    "invalid_input",
+    "missing_value",
+    "existing_value",
+    "exceeded_limit",
+    "invalid_action",
+    "internal_error",
+    "unexpected_type",
+    "unexpected_size"
+  ]
+}

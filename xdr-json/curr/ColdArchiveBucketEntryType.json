@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ColdArchiveBucketEntryType",
+  "description": "ColdArchiveBucketEntryType is an XDR Enum defines as:\n\n```text enum ColdArchiveBucketEntryType { COLD_ARCHIVE_METAENTRY     = -1,  // Bucket metadata, should come first. COLD_ARCHIVE_ARCHIVED_LEAF = 0,   // Full LedgerEntry that was archived during the epoch COLD_ARCHIVE_DELETED_LEAF  = 1,   // LedgerKey that was deleted during the epoch COLD_ARCHIVE_BOUNDARY_LEAF = 2,   // Dummy leaf representing low/high bound COLD_ARCHIVE_HASH          = 3    // Intermediary Merkle hash entry }; ```",
+  "type": "string",
+  "enum": [
+    "metaentry",
+    "archived_leaf",
+    "deleted_leaf",
+    "boundary_leaf",
+    "hash"
+  ]
+}

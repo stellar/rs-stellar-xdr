@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ClawbackResult",
+  "description": "ClawbackResult is an XDR Union defines as:\n\n```text union ClawbackResult switch (ClawbackResultCode code) { case CLAWBACK_SUCCESS: void; case CLAWBACK_MALFORMED: case CLAWBACK_NOT_CLAWBACK_ENABLED: case CLAWBACK_NO_TRUST: case CLAWBACK_UNDERFUNDED: void; }; ```",
+  "type": "string",
+  "enum": [
+    "success",
+    "malformed",
+    "not_clawback_enabled",
+    "no_trust",
+    "underfunded"
+  ]
+}

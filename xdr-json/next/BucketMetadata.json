@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "BucketMetadata",
+  "description": "BucketMetadata is an XDR Struct defines as:\n\n```text struct BucketMetadata { // Indicates the protocol version used to create / merge this bucket. uint32 ledgerVersion;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: BucketListType bucketListType; } ext; }; ```",
+  "type": "object",
+  "required": [
+    "ext",
+    "ledger_version"
+  ],
+  "properties": {
+    "ext": {
+      "$ref": "#/definitions/BucketMetadataExt"
+    },
+    "ledger_version": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  },
+  "definitions": {
+    "BucketListType": {
+      "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1 }; ```",
+      "type": "string",
+      "enum": [
+        "live",
+        "hot_archive"
+      ]
+    },
+    "BucketMetadataExt": {
+      "description": "BucketMetadataExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: BucketListType bucketListType; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/BucketListType"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

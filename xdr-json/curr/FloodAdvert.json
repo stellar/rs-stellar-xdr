@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "FloodAdvert",
+  "description": "FloodAdvert is an XDR Struct defines as:\n\n```text struct FloodAdvert { TxAdvertVector txHashes; }; ```",
+  "type": "object",
+  "required": [
+    "tx_hashes"
+  ],
+  "properties": {
+    "tx_hashes": {
+      "$ref": "#/definitions/TxAdvertVector"
+    }
+  },
+  "definitions": {
+    "TxAdvertVector": {
+      "description": "TxAdvertVector is an XDR Typedef defines as:\n\n```text typedef Hash TxAdvertVector<TX_ADVERT_VECTOR_MAX_SIZE>; ```",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 64,
+        "minLength": 64,
+        "contentEncoding": "hex",
+        "contentMediaType": "application/binary"
+      },
+      "maxItems": 1000
+    }
+  }
+}

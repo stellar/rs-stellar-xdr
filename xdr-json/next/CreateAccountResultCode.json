@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "CreateAccountResultCode",
+  "description": "CreateAccountResultCode is an XDR Enum defines as:\n\n```text enum CreateAccountResultCode { // codes considered as \"success\" for the operation CREATE_ACCOUNT_SUCCESS = 0, // account was created\n\n// codes considered as \"failure\" for the operation CREATE_ACCOUNT_MALFORMED = -1,   // invalid destination CREATE_ACCOUNT_UNDERFUNDED = -2, // not enough funds in source account CREATE_ACCOUNT_LOW_RESERVE = -3, // would create an account below the min reserve CREATE_ACCOUNT_ALREADY_EXIST = -4 // account already exists }; ```",
+  "type": "string",
+  "enum": [
+    "success",
+    "malformed",
+    "underfunded",
+    "low_reserve",
+    "already_exist"
+  ]
+}

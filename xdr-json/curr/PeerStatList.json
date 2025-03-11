@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "PeerStatList",
+  "description": "PeerStatList is an XDR Typedef defines as:\n\n```text typedef PeerStats PeerStatList<25>; ```",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/PeerStats"
+  },
+  "maxItems": 25,
+  "definitions": {
+    "NodeId": {
+      "type": "string"
+    },
+    "PeerStats": {
+      "description": "PeerStats is an XDR Struct defines as:\n\n```text struct PeerStats { NodeID id; string versionStr<100>; uint64 messagesRead; uint64 messagesWritten; uint64 bytesRead; uint64 bytesWritten; uint64 secondsConnected;\n\nuint64 uniqueFloodBytesRecv; uint64 duplicateFloodBytesRecv; uint64 uniqueFetchBytesRecv; uint64 duplicateFetchBytesRecv;\n\nuint64 uniqueFloodMessageRecv; uint64 duplicateFloodMessageRecv; uint64 uniqueFetchMessageRecv; uint64 duplicateFetchMessageRecv; }; ```",
+      "type": "object",
+      "required": [
+        "bytes_read",
+        "bytes_written",
+        "duplicate_fetch_bytes_recv",
+        "duplicate_fetch_message_recv",
+        "duplicate_flood_bytes_recv",
+        "duplicate_flood_message_recv",
+        "id",
+        "messages_read",
+        "messages_written",
+        "seconds_connected",
+        "unique_fetch_bytes_recv",
+        "unique_fetch_message_recv",
+        "unique_flood_bytes_recv",
+        "unique_flood_message_recv",
+        "version_str"
+      ],
+      "properties": {
+        "bytes_read": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "bytes_written": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "duplicate_fetch_bytes_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "duplicate_fetch_message_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "duplicate_flood_bytes_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "duplicate_flood_message_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "id": {
+          "$ref": "#/definitions/NodeId"
+        },
+        "messages_read": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "messages_written": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "seconds_connected": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "unique_fetch_bytes_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "unique_fetch_message_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "unique_flood_bytes_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "unique_flood_message_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "version_str": {
+          "$ref": "#/definitions/StringM<100>"
+        }
+      }
+    },
+    "StringM<100>": {
+      "type": "string",
+      "maxLength": 100
+    }
+  }
+}

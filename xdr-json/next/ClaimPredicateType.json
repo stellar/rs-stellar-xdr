@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ClaimPredicateType",
+  "description": "ClaimPredicateType is an XDR Enum defines as:\n\n```text enum ClaimPredicateType { CLAIM_PREDICATE_UNCONDITIONAL = 0, CLAIM_PREDICATE_AND = 1, CLAIM_PREDICATE_OR = 2, CLAIM_PREDICATE_NOT = 3, CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME = 4, CLAIM_PREDICATE_BEFORE_RELATIVE_TIME = 5 }; ```",
+  "type": "string",
+  "enum": [
+    "unconditional",
+    "and",
+    "or",
+    "not",
+    "before_absolute_time",
+    "before_relative_time"
+  ]
+}

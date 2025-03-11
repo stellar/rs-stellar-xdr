@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScpBallot",
+  "description": "ScpBallot is an XDR Struct defines as:\n\n```text struct SCPBallot { uint32 counter; // n Value value;    // x }; ```",
+  "type": "object",
+  "required": [
+    "counter",
+    "value"
+  ],
+  "properties": {
+    "counter": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "value": {
+      "$ref": "#/definitions/Value"
+    }
+  },
+  "definitions": {
+    "Value": {
+      "description": "Value is an XDR Typedef defines as:\n\n```text typedef opaque Value<>; ```",
+      "type": "string",
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

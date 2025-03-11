@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerKeyAccount",
+  "description": "LedgerKeyAccount is an XDR NestedStruct defines as:\n\n```text struct { AccountID accountID; } ```",
+  "type": "object",
+  "required": [
+    "account_id"
+  ],
+  "properties": {
+    "account_id": {
+      "$ref": "#/definitions/AccountId"
+    }
+  },
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    }
+  }
+}

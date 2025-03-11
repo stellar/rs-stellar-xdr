@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "CreateClaimableBalanceOp",
+  "description": "CreateClaimableBalanceOp is an XDR Struct defines as:\n\n```text struct CreateClaimableBalanceOp { Asset asset; int64 amount; Claimant claimants<10>; }; ```",
+  "type": "object",
+  "required": [
+    "amount",
+    "asset",
+    "claimants"
+  ],
+  "properties": {
+    "amount": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "asset": {
+      "$ref": "#/definitions/Asset"
+    },
+    "claimants": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Claimant"
+      },
+      "maxItems": 10
+    }
+  },
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    },
+    "AlphaNum12": {
+      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "type": "object",
+      "required": [
+        "asset_code",
+        "issuer"
+      ],
+      "properties": {
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode12"
+        },
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    },
+    "AlphaNum4": {
+      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "type": "object",
+      "required": [
+        "asset_code",
+        "issuer"
+      ],
+      "properties": {
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode4"
+        },
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    },
+    "Asset": {
+      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "native"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "credit_alphanum4"
+          ],
+          "properties": {
+            "credit_alphanum4": {
+              "$ref": "#/definitions/AlphaNum4"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "credit_alphanum12"
+          ],
+          "properties": {
+            "credit_alphanum12": {
+              "$ref": "#/definitions/AlphaNum12"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AssetCode12": {
+      "type": "string"
+    },
+    "AssetCode4": {
+      "type": "string"
+    },
+    "ClaimPredicate": {
+      "description": "ClaimPredicate is an XDR Union defines as:\n\n```text union ClaimPredicate switch (ClaimPredicateType type) { case CLAIM_PREDICATE_UNCONDITIONAL: void; case CLAIM_PREDICATE_AND: ClaimPredicate andPredicates<2>; case CLAIM_PREDICATE_OR: ClaimPredicate orPredicates<2>; case CLAIM_PREDICATE_NOT: ClaimPredicate* notPredicate; case CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME: int64 absBefore; // Predicate will be true if closeTime < absBefore case CLAIM_PREDICATE_BEFORE_RELATIVE_TIME: int64 relBefore; // Seconds since closeTime of the ledger in which the // ClaimableBalanceEntry was created }; ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "unconditional"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "and"
+          ],
+          "properties": {
+            "and": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimPredicate"
+              },
+              "maxItems": 2
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "or"
+          ],
+          "properties": {
+            "or": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimPredicate"
+              },
+              "maxItems": 2
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "not"
+          ],
+          "properties": {
+            "not": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ClaimPredicate"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "before_absolute_time"
+          ],
+          "properties": {
+            "before_absolute_time": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "before_relative_time"
+          ],
+          "properties": {
+            "before_relative_time": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Claimant": {
+      "description": "Claimant is an XDR Union defines as:\n\n```text union Claimant switch (ClaimantType type) { case CLAIMANT_TYPE_V0: struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } v0; }; ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "claimant_type_v0"
+          ],
+          "properties": {
+            "claimant_type_v0": {
+              "$ref": "#/definitions/ClaimantV0"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ClaimantV0": {
+      "description": "ClaimantV0 is an XDR NestedStruct defines as:\n\n```text struct { AccountID destination;    // The account that can use this condition ClaimPredicate predicate; // Claimable if predicate is true } ```",
+      "type": "object",
+      "required": [
+        "destination",
+        "predicate"
+      ],
+      "properties": {
+        "destination": {
+          "$ref": "#/definitions/AccountId"
+        },
+        "predicate": {
+          "$ref": "#/definitions/ClaimPredicate"
+        }
+      }
+    }
+  }
+}

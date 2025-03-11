@@ -1,5 +1,6 @@
 pub mod list;
 pub mod schema;
+pub mod schema_files;
 
 use clap::{Args, Subcommand};
 
@@ -9,6 +10,8 @@ use crate::cli::Channel;
 pub enum Error {
     #[error("{0}")]
     SchemaError(#[from] schema::Error),
+    #[error("{0}")]
+    SchemaFilesError(#[from] schema_files::Error),
 }
 
 #[derive(Args, Debug, Clone)]
@@ -22,6 +25,7 @@ pub struct Cmd {
 pub enum Sub {
     List(list::Cmd),
     Schema(schema::Cmd),
+    SchemaFiles(schema_files::Cmd),
 }
 
 impl Cmd {
@@ -38,6 +42,7 @@ impl Cmd {
         match &self.sub {
             Sub::List(c) => c.run(channel),
             Sub::Schema(c) => c.run(channel)?,
+            Sub::SchemaFiles(c) => c.run(channel)?,
         }
         Ok(())
     }

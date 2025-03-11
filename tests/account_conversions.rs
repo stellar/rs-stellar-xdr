@@ -28,7 +28,7 @@ fn from_public_key_to_muxed_account() {
 #[test]
 fn from_muxed_account_ed_to_account_id() {
     let muxed_account: MuxedAccount = MuxedAccount::Ed25519(Uint256([1u8; 32]));
-    let account_id = muxed_account.account_id();
+    let account_id: AccountId = muxed_account.into();
     assert_eq!(
         account_id,
         AccountId(PublicKey::PublicKeyTypeEd25519(Uint256([1u8; 32])))
@@ -41,7 +41,7 @@ fn from_muxed_account_med_to_account_id() {
         id: 2,
         ed25519: Uint256([1u8; 32]),
     });
-    let account_id = muxed_account.account_id();
+    let account_id: AccountId = muxed_account.into();
     assert_eq!(
         account_id,
         AccountId(PublicKey::PublicKeyTypeEd25519(Uint256([1u8; 32])))

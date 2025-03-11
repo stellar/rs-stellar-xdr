@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerKeyContractCode",
+  "description": "LedgerKeyContractCode is an XDR NestedStruct defines as:\n\n```text struct { Hash hash; } ```",
+  "type": "object",
+  "required": [
+    "hash"
+  ],
+  "properties": {
+    "hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

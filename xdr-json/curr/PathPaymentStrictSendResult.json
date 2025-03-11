@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "PathPaymentStrictSendResult",
+  "description": "PathPaymentStrictSendResult is an XDR Union defines as:\n\n```text union PathPaymentStrictSendResult switch (PathPaymentStrictSendResultCode code) { case PATH_PAYMENT_STRICT_SEND_SUCCESS: struct { ClaimAtom offers<>; SimplePaymentResult last; } success; case PATH_PAYMENT_STRICT_SEND_MALFORMED: case PATH_PAYMENT_STRICT_SEND_UNDERFUNDED: case PATH_PAYMENT_STRICT_SEND_SRC_NO_TRUST: case PATH_PAYMENT_STRICT_SEND_SRC_NOT_AUTHORIZED: case PATH_PAYMENT_STRICT_SEND_NO_DESTINATION: case PATH_PAYMENT_STRICT_SEND_NO_TRUST: case PATH_PAYMENT_STRICT_SEND_NOT_AUTHORIZED: case PATH_PAYMENT_STRICT_SEND_LINE_FULL: void; case PATH_PAYMENT_STRICT_SEND_NO_ISSUER: Asset noIssuer; // the asset that caused the error case PATH_PAYMENT_STRICT_SEND_TOO_FEW_OFFERS: case PATH_PAYMENT_STRICT_SEND_OFFER_CROSS_SELF: case PATH_PAYMENT_STRICT_SEND_UNDER_DESTMIN: void; }; ```",
+  "oneOf": [
+    {
+      "type": "string",
+      "enum": [
+        "malformed",
+        "underfunded",
+        "src_no_trust",
+        "src_not_authorized",
+        "no_destination",
+        "no_trust",
+        "not_authorized",
+        "line_full",
+        "too_few_offers",
+        "offer_cross_self",
+        "under_destmin"
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "success"
+      ],
+      "properties": {
+        "success": {
+          "$ref": "#/definitions/PathPaymentStrictSendResultSuccess"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "no_issuer"
+      ],
+      "properties": {
+        "no_issuer": {
+          "$ref": "#/definitions/Asset"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    },
+    "AlphaNum12": {
+      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "type": "object",
+      "required": [
+        "asset_code",
+        "issuer"
+      ],
+      "properties": {
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode12"
+        },
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    },
+    "AlphaNum4": {
+      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "type": "object",
+      "required": [
+        "asset_code",
+        "issuer"
+      ],
+      "properties": {
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode4"
+        },
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    },
+    "Asset": {
+      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "native"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "credit_alphanum4"
+          ],
+          "properties": {
+            "credit_alphanum4": {
+              "$ref": "#/definitions/AlphaNum4"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "credit_alphanum12"
+          ],
+          "properties": {
+            "credit_alphanum12": {
+              "$ref": "#/definitions/AlphaNum12"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AssetCode12": {
+      "type": "string"
+    },
+    "AssetCode4": {
+      "type": "string"
+    },
+    "ClaimAtom": {
+      "description": "ClaimAtom is an XDR Union defines as:\n\n```text union ClaimAtom switch (ClaimAtomType type) { case CLAIM_ATOM_TYPE_V0: ClaimOfferAtomV0 v0; case CLAIM_ATOM_TYPE_ORDER_BOOK: ClaimOfferAtom orderBook; case CLAIM_ATOM_TYPE_LIQUIDITY_POOL: ClaimLiquidityAtom liquidityPool; }; ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "v0"
+          ],
+          "properties": {
+            "v0": {
+              "$ref": "#/definitions/ClaimOfferAtomV0"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "order_book"
+          ],
+          "properties": {
+            "order_book": {
+              "$ref": "#/definitions/ClaimOfferAtom"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "liquidity_pool"
+          ],
+          "properties": {
+            "liquidity_pool": {
+              "$ref": "#/definitions/ClaimLiquidityAtom"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ClaimLiquidityAtom": {
+      "description": "ClaimLiquidityAtom is an XDR Struct defines as:\n\n```text struct ClaimLiquidityAtom { PoolID liquidityPoolID;\n\n// amount and asset taken from the pool Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the pool Asset assetBought; int64 amountBought; }; ```",
+      "type": "object",
+      "required": [
+        "amount_bought",
+        "amount_sold",
+        "asset_bought",
+        "asset_sold",
+        "liquidity_pool_id"
+      ],
+      "properties": {
+        "amount_bought": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount_sold": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "asset_bought": {
+          "$ref": "#/definitions/Asset"
+        },
+        "asset_sold": {
+          "$ref": "#/definitions/Asset"
+        },
+        "liquidity_pool_id": {
+          "$ref": "#/definitions/PoolId"
+        }
+      }
+    },
+    "ClaimOfferAtom": {
+      "description": "ClaimOfferAtom is an XDR Struct defines as:\n\n```text struct ClaimOfferAtom { // emitted to identify the offer AccountID sellerID; // Account that owns the offer int64 offerID;\n\n// amount and asset taken from the owner Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the owner Asset assetBought; int64 amountBought; }; ```",
+      "type": "object",
+      "required": [
+        "amount_bought",
+        "amount_sold",
+        "asset_bought",
+        "asset_sold",
+        "offer_id",
+        "seller_id"
+      ],
+      "properties": {
+        "amount_bought": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount_sold": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "asset_bought": {
+          "$ref": "#/definitions/Asset"
+        },
+        "asset_sold": {
+          "$ref": "#/definitions/Asset"
+        },
+        "offer_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "seller_id": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    },
+    "ClaimOfferAtomV0": {
+      "description": "ClaimOfferAtomV0 is an XDR Struct defines as:\n\n```text struct ClaimOfferAtomV0 { // emitted to identify the offer uint256 sellerEd25519; // Account that owns the offer int64 offerID;\n\n// amount and asset taken from the owner Asset assetSold; int64 amountSold;\n\n// amount and asset sent to the owner Asset assetBought; int64 amountBought; }; ```",
+      "type": "object",
+      "required": [
+        "amount_bought",
+        "amount_sold",
+        "asset_bought",
+        "asset_sold",
+        "offer_id",
+        "seller_ed25519"
+      ],
+      "properties": {
+        "amount_bought": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount_sold": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "asset_bought": {
+          "$ref": "#/definitions/Asset"
+        },
+        "asset_sold": {
+          "$ref": "#/definitions/Asset"
+        },
+        "offer_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "seller_ed25519": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
+    },
+    "PathPaymentStrictSendResultSuccess": {
+      "description": "PathPaymentStrictSendResultSuccess is an XDR NestedStruct defines as:\n\n```text struct { ClaimAtom offers<>; SimplePaymentResult last; } ```",
+      "type": "object",
+      "required": [
+        "last",
+        "offers"
+      ],
+      "properties": {
+        "last": {
+          "$ref": "#/definitions/SimplePaymentResult"
+        },
+        "offers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ClaimAtom"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
+    "PoolId": {
+      "description": "PoolId is an XDR Typedef defines as:\n\n```text typedef Hash PoolID; ```",
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "SimplePaymentResult": {
+      "description": "SimplePaymentResult is an XDR Struct defines as:\n\n```text struct SimplePaymentResult { AccountID destination; Asset asset; int64 amount; }; ```",
+      "type": "object",
+      "required": [
+        "amount",
+        "asset",
+        "destination"
+      ],
+      "properties": {
+        "amount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "asset": {
+          "$ref": "#/definitions/Asset"
+        },
+        "destination": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LiquidityPoolWithdrawResult",
+  "description": "LiquidityPoolWithdrawResult is an XDR Union defines as:\n\n```text union LiquidityPoolWithdrawResult switch (LiquidityPoolWithdrawResultCode code) { case LIQUIDITY_POOL_WITHDRAW_SUCCESS: void; case LIQUIDITY_POOL_WITHDRAW_MALFORMED: case LIQUIDITY_POOL_WITHDRAW_NO_TRUST: case LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED: case LIQUIDITY_POOL_WITHDRAW_LINE_FULL: case LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM: void; }; ```",
+  "type": "string",
+  "enum": [
+    "success",
+    "malformed",
+    "no_trust",
+    "underfunded",
+    "line_full",
+    "under_minimum"
+  ]
+}

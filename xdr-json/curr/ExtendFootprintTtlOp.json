@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ExtendFootprintTtlOp",
+  "description": "ExtendFootprintTtlOp is an XDR Struct defines as:\n\n```text struct ExtendFootprintTTLOp { ExtensionPoint ext; uint32 extendTo; }; ```",
+  "type": "object",
+  "required": [
+    "ext",
+    "extend_to"
+  ],
+  "properties": {
+    "ext": {
+      "$ref": "#/definitions/ExtensionPoint"
+    },
+    "extend_to": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  },
+  "definitions": {
+    "ExtensionPoint": {
+      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "MemoType",
+  "description": "MemoType is an XDR Enum defines as:\n\n```text enum MemoType { MEMO_NONE = 0, MEMO_TEXT = 1, MEMO_ID = 2, MEMO_HASH = 3, MEMO_RETURN = 4 }; ```",
+  "type": "string",
+  "enum": [
+    "none",
+    "text",
+    "id",
+    "hash",
+    "return"
+  ]
+}

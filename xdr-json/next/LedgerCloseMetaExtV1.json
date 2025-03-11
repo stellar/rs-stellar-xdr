@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerCloseMetaExtV1",
+  "description": "LedgerCloseMetaExtV1 is an XDR Struct defines as:\n\n```text struct LedgerCloseMetaExtV1 { ExtensionPoint ext; int64 sorobanFeeWrite1KB; }; ```",
+  "type": "object",
+  "required": [
+    "ext",
+    "soroban_fee_write1_kb"
+  ],
+  "properties": {
+    "ext": {
+      "$ref": "#/definitions/ExtensionPoint"
+    },
+    "soroban_fee_write1_kb": {
+      "type": "integer",
+      "format": "int64"
+    }
+  },
+  "definitions": {
+    "ExtensionPoint": {
+      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ClawbackClaimableBalanceOp",
+  "description": "ClawbackClaimableBalanceOp is an XDR Struct defines as:\n\n```text struct ClawbackClaimableBalanceOp { ClaimableBalanceID balanceID; }; ```",
+  "type": "object",
+  "required": [
+    "balance_id"
+  ],
+  "properties": {
+    "balance_id": {
+      "$ref": "#/definitions/ClaimableBalanceId"
+    }
+  },
+  "definitions": {
+    "ClaimableBalanceId": {
+      "type": "string"
+    }
+  }
+}

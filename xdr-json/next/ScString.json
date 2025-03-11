@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScString",
+  "description": "ScString is an XDR Typedef defines as:\n\n```text typedef string SCString<>; ```",
+  "$ref": "#/definitions/StringM<4294967295>",
+  "definitions": {
+    "StringM<4294967295>": {
+      "type": "string",
+      "maxLength": 4294967295
+    }
+  }
+}

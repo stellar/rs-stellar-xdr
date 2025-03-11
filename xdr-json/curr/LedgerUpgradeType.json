@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerUpgradeType",
+  "description": "LedgerUpgradeType is an XDR Enum defines as:\n\n```text enum LedgerUpgradeType { LEDGER_UPGRADE_VERSION = 1, LEDGER_UPGRADE_BASE_FEE = 2, LEDGER_UPGRADE_MAX_TX_SET_SIZE = 3, LEDGER_UPGRADE_BASE_RESERVE = 4, LEDGER_UPGRADE_FLAGS = 5, LEDGER_UPGRADE_CONFIG = 6, LEDGER_UPGRADE_MAX_SOROBAN_TX_SET_SIZE = 7 }; ```",
+  "type": "string",
+  "enum": [
+    "version",
+    "base_fee",
+    "max_tx_set_size",
+    "base_reserve",
+    "flags",
+    "config",
+    "max_soroban_tx_set_size"
+  ]
+}

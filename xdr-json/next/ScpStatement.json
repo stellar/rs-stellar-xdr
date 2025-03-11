@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScpStatement",
+  "description": "ScpStatement is an XDR Struct defines as:\n\n```text struct SCPStatement { NodeID nodeID;    // v uint64 slotIndex; // i\n\nunion switch (SCPStatementType type) { case SCP_ST_PREPARE: struct { Hash quorumSetHash;       // D SCPBallot ballot;         // b SCPBallot* prepared;      // p SCPBallot* preparedPrime; // p' uint32 nC;                // c.n uint32 nH;                // h.n } prepare; case SCP_ST_CONFIRM: struct { SCPBallot ballot;   // b uint32 nPrepared;   // p.n uint32 nCommit;     // c.n uint32 nH;          // h.n Hash quorumSetHash; // D } confirm; case SCP_ST_EXTERNALIZE: struct { SCPBallot commit;         // c uint32 nH;                // h.n Hash commitQuorumSetHash; // D used before EXTERNALIZE } externalize; case SCP_ST_NOMINATE: SCPNomination nominate; } pledges; }; ```",
+  "type": "object",
+  "required": [
+    "node_id",
+    "pledges",
+    "slot_index"
+  ],
+  "properties": {
+    "node_id": {
+      "$ref": "#/definitions/NodeId"
+    },
+    "pledges": {
+      "$ref": "#/definitions/ScpStatementPledges"
+    },
+    "slot_index": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    }
+  },
+  "definitions": {
+    "NodeId": {
+      "type": "string"
+    },
+    "ScpBallot": {
+      "description": "ScpBallot is an XDR Struct defines as:\n\n```text struct SCPBallot { uint32 counter; // n Value value;    // x }; ```",
+      "type": "object",
+      "required": [
+        "counter",
+        "value"
+      ],
+      "properties": {
+        "counter": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "value": {
+          "$ref": "#/definitions/Value"
+        }
+      }
+    },
+    "ScpNomination": {
+      "description": "ScpNomination is an XDR Struct defines as:\n\n```text struct SCPNomination { Hash quorumSetHash; // D Value votes<>;      // X Value accepted<>;   // Y }; ```",
+      "type": "object",
+      "required": [
+        "accepted",
+        "quorum_set_hash",
+        "votes"
+      ],
+      "properties": {
+        "accepted": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Value"
+          },
+          "maxItems": 4294967295
+        },
+        "quorum_set_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "votes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Value"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
+    "ScpStatementConfirm": {
+      "description": "ScpStatementConfirm is an XDR NestedStruct defines as:\n\n```text struct { SCPBallot ballot;   // b uint32 nPrepared;   // p.n uint32 nCommit;     // c.n uint32 nH;          // h.n Hash quorumSetHash; // D } ```",
+      "type": "object",
+      "required": [
+        "ballot",
+        "n_commit",
+        "n_h",
+        "n_prepared",
+        "quorum_set_hash"
+      ],
+      "properties": {
+        "ballot": {
+          "$ref": "#/definitions/ScpBallot"
+        },
+        "n_commit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_h": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_prepared": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "quorum_set_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
+    },
+    "ScpStatementExternalize": {
+      "description": "ScpStatementExternalize is an XDR NestedStruct defines as:\n\n```text struct { SCPBallot commit;         // c uint32 nH;                // h.n Hash commitQuorumSetHash; // D used before EXTERNALIZE } ```",
+      "type": "object",
+      "required": [
+        "commit",
+        "commit_quorum_set_hash",
+        "n_h"
+      ],
+      "properties": {
+        "commit": {
+          "$ref": "#/definitions/ScpBallot"
+        },
+        "commit_quorum_set_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "n_h": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ScpStatementPledges": {
+      "description": "ScpStatementPledges is an XDR NestedUnion defines as:\n\n```text union switch (SCPStatementType type) { case SCP_ST_PREPARE: struct { Hash quorumSetHash;       // D SCPBallot ballot;         // b SCPBallot* prepared;      // p SCPBallot* preparedPrime; // p' uint32 nC;                // c.n uint32 nH;                // h.n } prepare; case SCP_ST_CONFIRM: struct { SCPBallot ballot;   // b uint32 nPrepared;   // p.n uint32 nCommit;     // c.n uint32 nH;          // h.n Hash quorumSetHash; // D } confirm; case SCP_ST_EXTERNALIZE: struct { SCPBallot commit;         // c uint32 nH;                // h.n Hash commitQuorumSetHash; // D used before EXTERNALIZE } externalize; case SCP_ST_NOMINATE: SCPNomination nominate; } ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "prepare"
+          ],
+          "properties": {
+            "prepare": {
+              "$ref": "#/definitions/ScpStatementPrepare"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "confirm"
+          ],
+          "properties": {
+            "confirm": {
+              "$ref": "#/definitions/ScpStatementConfirm"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "externalize"
+          ],
+          "properties": {
+            "externalize": {
+              "$ref": "#/definitions/ScpStatementExternalize"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "nominate"
+          ],
+          "properties": {
+            "nominate": {
+              "$ref": "#/definitions/ScpNomination"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ScpStatementPrepare": {
+      "description": "ScpStatementPrepare is an XDR NestedStruct defines as:\n\n```text struct { Hash quorumSetHash;       // D SCPBallot ballot;         // b SCPBallot* prepared;      // p SCPBallot* preparedPrime; // p' uint32 nC;                // c.n uint32 nH;                // h.n } ```",
+      "type": "object",
+      "required": [
+        "ballot",
+        "n_c",
+        "n_h",
+        "quorum_set_hash"
+      ],
+      "properties": {
+        "ballot": {
+          "$ref": "#/definitions/ScpBallot"
+        },
+        "n_c": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_h": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "prepared": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ScpBallot"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "prepared_prime": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ScpBallot"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quorum_set_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
+    },
+    "Value": {
+      "description": "Value is an XDR Typedef defines as:\n\n```text typedef opaque Value<>; ```",
+      "type": "string",
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

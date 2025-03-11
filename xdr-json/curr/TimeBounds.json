@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "TimeBounds",
+  "description": "TimeBounds is an XDR Struct defines as:\n\n```text struct TimeBounds { TimePoint minTime; TimePoint maxTime; // 0 here means no maxTime }; ```",
+  "type": "object",
+  "required": [
+    "max_time",
+    "min_time"
+  ],
+  "properties": {
+    "max_time": {
+      "$ref": "#/definitions/TimePoint"
+    },
+    "min_time": {
+      "$ref": "#/definitions/TimePoint"
+    }
+  },
+  "definitions": {
+    "TimePoint": {
+      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    }
+  }
+}

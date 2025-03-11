@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ContractCodeEntryExt",
+  "description": "ContractCodeEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: struct { ExtensionPoint ext; ContractCodeCostInputs costInputs; } v1; } ```",
+  "oneOf": [
+    {
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "v1"
+      ],
+      "properties": {
+        "v1": {
+          "$ref": "#/definitions/ContractCodeEntryV1"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "ContractCodeCostInputs": {
+      "description": "ContractCodeCostInputs is an XDR Struct defines as:\n\n```text struct ContractCodeCostInputs { ExtensionPoint ext; uint32 nInstructions; uint32 nFunctions; uint32 nGlobals; uint32 nTableEntries; uint32 nTypes; uint32 nDataSegments; uint32 nElemSegments; uint32 nImports; uint32 nExports; uint32 nDataSegmentBytes; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "n_data_segment_bytes",
+        "n_data_segments",
+        "n_elem_segments",
+        "n_exports",
+        "n_functions",
+        "n_globals",
+        "n_imports",
+        "n_instructions",
+        "n_table_entries",
+        "n_types"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "n_data_segment_bytes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_data_segments": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_elem_segments": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_exports": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_functions": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_globals": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_imports": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_instructions": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_table_entries": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_types": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ContractCodeEntryV1": {
+      "description": "ContractCodeEntryV1 is an XDR NestedStruct defines as:\n\n```text struct { ExtensionPoint ext; ContractCodeCostInputs costInputs; } ```",
+      "type": "object",
+      "required": [
+        "cost_inputs",
+        "ext"
+      ],
+      "properties": {
+        "cost_inputs": {
+          "$ref": "#/definitions/ContractCodeCostInputs"
+        },
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      }
+    },
+    "ExtensionPoint": {
+      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    }
+  }
+}

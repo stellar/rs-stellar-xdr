@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScSpecUdtUnionCaseVoidV0",
+  "description": "ScSpecUdtUnionCaseVoidV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTUnionCaseVoidV0 { string doc<SC_SPEC_DOC_LIMIT>; string name<60>; }; ```",
+  "type": "object",
+  "required": [
+    "doc",
+    "name"
+  ],
+  "properties": {
+    "doc": {
+      "$ref": "#/definitions/StringM<1024>"
+    },
+    "name": {
+      "$ref": "#/definitions/StringM<60>"
+    }
+  },
+  "definitions": {
+    "StringM<1024>": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "StringM<60>": {
+      "type": "string",
+      "maxLength": 60
+    }
+  }
+}

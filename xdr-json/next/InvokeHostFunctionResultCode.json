@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "InvokeHostFunctionResultCode",
+  "description": "InvokeHostFunctionResultCode is an XDR Enum defines as:\n\n```text enum InvokeHostFunctionResultCode { // codes considered as \"success\" for the operation INVOKE_HOST_FUNCTION_SUCCESS = 0,\n\n// codes considered as \"failure\" for the operation INVOKE_HOST_FUNCTION_MALFORMED = -1, INVOKE_HOST_FUNCTION_TRAPPED = -2, INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3, INVOKE_HOST_FUNCTION_ENTRY_ARCHIVED = -4, INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE = -5, INVOKE_HOST_FUNCTION_INVALID_CREATION_PROOF = -6 }; ```",
+  "type": "string",
+  "enum": [
+    "success",
+    "malformed",
+    "trapped",
+    "resource_limit_exceeded",
+    "entry_archived",
+    "insufficient_refundable_fee",
+    "invalid_creation_proof"
+  ]
+}

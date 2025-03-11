@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "BucketEntryType",
+  "description": "BucketEntryType is an XDR Enum defines as:\n\n```text enum BucketEntryType { METAENTRY = -1, // At-and-after protocol 11: bucket metadata, should come first. LIVEENTRY = 0, // Before protocol 11: created-or-updated; // At-and-after protocol 11: only updated. DEADENTRY = 1, INITENTRY = 2 // At-and-after protocol 11: only created. }; ```",
+  "type": "string",
+  "enum": [
+    "metaentry",
+    "liveentry",
+    "deadentry",
+    "initentry"
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerEntryExt",
+  "description": "LedgerEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: LedgerEntryExtensionV1 v1; } ```",
+  "oneOf": [
+    {
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "v1"
+      ],
+      "properties": {
+        "v1": {
+          "$ref": "#/definitions/LedgerEntryExtensionV1"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    },
+    "LedgerEntryExtensionV1": {
+      "description": "LedgerEntryExtensionV1 is an XDR Struct defines as:\n\n```text struct LedgerEntryExtensionV1 { SponsorshipDescriptor sponsoringID;\n\nunion switch (int v) { case 0: void; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "sponsoring_id"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/LedgerEntryExtensionV1Ext"
+        },
+        "sponsoring_id": {
+          "$ref": "#/definitions/SponsorshipDescriptor"
+        }
+      }
+    },
+    "LedgerEntryExtensionV1Ext": {
+      "description": "LedgerEntryExtensionV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    "SponsorshipDescriptor": {
+      "description": "SponsorshipDescriptor is an XDR Typedef defines as:\n\n```text typedef AccountID* SponsorshipDescriptor; ```",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AccountId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

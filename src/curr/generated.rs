@@ -9096,10 +9096,8 @@ impl WriteXdr for ScAddressType {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct MuxedEd25519Account {
     pub id: u64,
     pub ed25519: Uint256,
@@ -45945,10 +45943,8 @@ impl WriteXdr for SerializedBinaryFuseFilter {
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
 pub struct PoolId(pub Hash);
 

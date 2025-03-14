@@ -1,10 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "PoolId",
-  "description": "PoolId is an XDR Typedef defines as:\n\n```text typedef Hash PoolID; ```",
-  "type": "string",
-  "maxLength": 64,
-  "minLength": 64,
-  "contentEncoding": "hex",
-  "contentMediaType": "application/binary"
+  "type": "string"
 }

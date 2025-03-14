@@ -1300,12 +1300,7 @@
       ]
     },
     "PoolId": {
-      "description": "PoolId is an XDR Typedef defines as:\n\n```text typedef Hash PoolID; ```",
-      "type": "string",
-      "maxLength": 64,
-      "minLength": 64,
-      "contentEncoding": "hex",
-      "contentMediaType": "application/binary"
+      "type": "string"
     },
     "Price": {
       "description": "Price is an XDR Struct defines as:\n\n```text struct Price { int32 n; // numerator int32 d; // denominator }; ```",

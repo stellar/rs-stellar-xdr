@@ -96,12 +96,7 @@
       }
     },
     "PoolId": {
-      "description": "PoolId is an XDR Typedef defines as:\n\n```text typedef Hash PoolID; ```",
-      "type": "string",
-      "maxLength": 64,
-      "minLength": 64,
-      "contentEncoding": "hex",
-      "contentMediaType": "application/binary"
+      "type": "string"
     },
     "TrustLineAsset": {
       "description": "TrustLineAsset is an XDR Union defines as:\n\n```text union TrustLineAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: PoolID liquidityPoolID;\n\n// add other asset types here in the future }; ```",

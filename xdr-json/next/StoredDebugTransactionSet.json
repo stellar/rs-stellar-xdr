@@ -1943,12 +1943,7 @@
       }
     },
     "PoolId": {
-      "description": "PoolId is an XDR Typedef defines as:\n\n```text typedef Hash PoolID; ```",
-      "type": "string",
-      "maxLength": 64,
-      "minLength": 64,
-      "contentEncoding": "hex",
-      "contentMediaType": "application/binary"
+      "type": "string"
     },
     "Preconditions": {
       "description": "Preconditions is an XDR Union defines as:\n\n```text union Preconditions switch (PreconditionType type) { case PRECOND_NONE: void; case PRECOND_TIME: TimeBounds timeBounds; case PRECOND_V2: PreconditionsV2 v2; }; ```",

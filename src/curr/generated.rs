@@ -38,7 +38,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract.x",
-        "7f665e4103e146a88fcdabce879aaaacd3bf9283feb194cc47ff986264c1e315",
+        "0511d486382c966a0006fc3e05ad1315c7a4f900421150fa4a40a331302473df",
     ),
     (
         "xdr/curr/Stellar-internal.x",
@@ -46,23 +46,23 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-ledger-entries.x",
-        "008deaa72ebaae56ba02a740230e5abfe475c5fff52f68eb086deb1fb6f91d1e",
+        "201b736d88f35a58c7a3071fe50d951fbdad2c8fb0f0a2e40e86304247f33f85",
     ),
     (
         "xdr/curr/Stellar-ledger.x",
-        "c2ac5bde5da28d4d02e2ea455f3bc5d5133adf271d374010cebe4e314c8504e8",
+        "74485d73a0eb1868940ac491410497fee8ea57b1778029e494c82b329002dadf",
     ),
     (
         "xdr/curr/Stellar-overlay.x",
-        "25d52fd28c91d2377796c6c1ee05b0731f47648751e2b5a33481d64ef4eb7322",
+        "8c9b9c13c86fa4672f03d741705b41e7221be0fc48e1ea6eeb1ba07d31ec0723",
     ),
     (
         "xdr/curr/Stellar-transaction.x",
-        "2f6b1dbab1cc0e01c5f1f7fca2e0a14e6d7ad56e6f04449a7123080ed40e3dbc",
+        "fdd854ea6ce450500c331a6613d714d9b2f00d2adc86210a8f709e8a9ef4c641",
     ),
     (
         "xdr/curr/Stellar-types.x",
-        "253f515fc5e06bc938105e92a4c7f562251d4ebc178d39d6e6751e6b85fe1064",
+        "20bfd8e2ed1f2935b292615334fa88bf74c3bc4e6dc4fb7daefd8e47ef6f6c08",
     ),
 ];
 
@@ -8958,7 +8958,10 @@ impl WriteXdr for ContractExecutable {
 /// enum SCAddressType
 /// {
 ///     SC_ADDRESS_TYPE_ACCOUNT = 0,
-///     SC_ADDRESS_TYPE_CONTRACT = 1
+///     SC_ADDRESS_TYPE_CONTRACT = 1,
+///     SC_ADDRESS_TYPE_MUXED_ACCOUNT = 2,
+///     SC_ADDRESS_TYPE_CLAIMABLE_BALANCE = 3,
+///     SC_ADDRESS_TYPE_LIQUIDITY_POOL = 4
 /// };
 /// ```
 ///
@@ -8975,22 +8978,40 @@ impl WriteXdr for ContractExecutable {
 pub enum ScAddressType {
     Account = 0,
     Contract = 1,
+    MuxedAccount = 2,
+    ClaimableBalance = 3,
+    LiquidityPool = 4,
 }
 
 impl ScAddressType {
-    pub const VARIANTS: [ScAddressType; 2] = [ScAddressType::Account, ScAddressType::Contract];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Account", "Contract"];
+    pub const VARIANTS: [ScAddressType; 5] = [
+        ScAddressType::Account,
+        ScAddressType::Contract,
+        ScAddressType::MuxedAccount,
+        ScAddressType::ClaimableBalance,
+        ScAddressType::LiquidityPool,
+    ];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "Account",
+        "Contract",
+        "MuxedAccount",
+        "ClaimableBalance",
+        "LiquidityPool",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Account => "Account",
             Self::Contract => "Contract",
+            Self::MuxedAccount => "MuxedAccount",
+            Self::ClaimableBalance => "ClaimableBalance",
+            Self::LiquidityPool => "LiquidityPool",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScAddressType; 2] {
+    pub const fn variants() -> [ScAddressType; 5] {
         Self::VARIANTS
     }
 }
@@ -9023,6 +9044,9 @@ impl TryFrom<i32> for ScAddressType {
         let e = match i {
             0 => ScAddressType::Account,
             1 => ScAddressType::Contract,
+            2 => ScAddressType::MuxedAccount,
+            3 => ScAddressType::ClaimableBalance,
+            4 => ScAddressType::LiquidityPool,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -9058,6 +9082,50 @@ impl WriteXdr for ScAddressType {
     }
 }
 
+/// MuxedEd25519Account is an XDR Struct defines as:
+///
+/// ```text
+/// struct MuxedEd25519Account
+/// {
+///     uint64 id;
+///     uint256 ed25519;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+pub struct MuxedEd25519Account {
+    pub id: u64,
+    pub ed25519: Uint256,
+}
+
+impl ReadXdr for MuxedEd25519Account {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                id: u64::read_xdr(r)?,
+                ed25519: Uint256::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for MuxedEd25519Account {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.id.write_xdr(w)?;
+            self.ed25519.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// ScAddress is an XDR Union defines as:
 ///
 /// ```text
@@ -9067,6 +9135,12 @@ impl WriteXdr for ScAddressType {
 ///     AccountID accountId;
 /// case SC_ADDRESS_TYPE_CONTRACT:
 ///     Hash contractId;
+/// case SC_ADDRESS_TYPE_MUXED_ACCOUNT:
+///     MuxedEd25519Account muxedAccount;
+/// case SC_ADDRESS_TYPE_CLAIMABLE_BALANCE:
+///     ClaimableBalanceID claimableBalanceId;
+/// case SC_ADDRESS_TYPE_LIQUIDITY_POOL:
+///     PoolID liquidityPoolId;
 /// };
 /// ```
 ///
@@ -9081,17 +9155,35 @@ impl WriteXdr for ScAddressType {
 pub enum ScAddress {
     Account(AccountId),
     Contract(Hash),
+    MuxedAccount(MuxedEd25519Account),
+    ClaimableBalance(ClaimableBalanceId),
+    LiquidityPool(PoolId),
 }
 
 impl ScAddress {
-    pub const VARIANTS: [ScAddressType; 2] = [ScAddressType::Account, ScAddressType::Contract];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Account", "Contract"];
+    pub const VARIANTS: [ScAddressType; 5] = [
+        ScAddressType::Account,
+        ScAddressType::Contract,
+        ScAddressType::MuxedAccount,
+        ScAddressType::ClaimableBalance,
+        ScAddressType::LiquidityPool,
+    ];
+    pub const VARIANTS_STR: [&'static str; 5] = [
+        "Account",
+        "Contract",
+        "MuxedAccount",
+        "ClaimableBalance",
+        "LiquidityPool",
+    ];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Account(_) => "Account",
             Self::Contract(_) => "Contract",
+            Self::MuxedAccount(_) => "MuxedAccount",
+            Self::ClaimableBalance(_) => "ClaimableBalance",
+            Self::LiquidityPool(_) => "LiquidityPool",
         }
     }
 
@@ -9101,11 +9193,14 @@ impl ScAddress {
         match self {
             Self::Account(_) => ScAddressType::Account,
             Self::Contract(_) => ScAddressType::Contract,
+            Self::MuxedAccount(_) => ScAddressType::MuxedAccount,
+            Self::ClaimableBalance(_) => ScAddressType::ClaimableBalance,
+            Self::LiquidityPool(_) => ScAddressType::LiquidityPool,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ScAddressType; 2] {
+    pub const fn variants() -> [ScAddressType; 5] {
         Self::VARIANTS
     }
 }
@@ -9141,6 +9236,13 @@ impl ReadXdr for ScAddress {
             let v = match dv {
                 ScAddressType::Account => Self::Account(AccountId::read_xdr(r)?),
                 ScAddressType::Contract => Self::Contract(Hash::read_xdr(r)?),
+                ScAddressType::MuxedAccount => {
+                    Self::MuxedAccount(MuxedEd25519Account::read_xdr(r)?)
+                }
+                ScAddressType::ClaimableBalance => {
+                    Self::ClaimableBalance(ClaimableBalanceId::read_xdr(r)?)
+                }
+                ScAddressType::LiquidityPool => Self::LiquidityPool(PoolId::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -9158,6 +9260,9 @@ impl WriteXdr for ScAddress {
             match self {
                 Self::Account(v) => v.write_xdr(w)?,
                 Self::Contract(v) => v.write_xdr(w)?,
+                Self::MuxedAccount(v) => v.write_xdr(w)?,
+                Self::ClaimableBalance(v) => v.write_xdr(w)?,
+                Self::LiquidityPool(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -11029,62 +11134,6 @@ impl AsRef<[u8]> for DataValue {
     #[must_use]
     fn as_ref(&self) -> &[u8] {
         self.0 .0
-    }
-}
-
-/// PoolId is an XDR Typedef defines as:
-///
-/// ```text
-/// typedef Hash PoolID;
-/// ```
-///
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[derive(Debug)]
-pub struct PoolId(pub Hash);
-
-impl From<PoolId> for Hash {
-    #[must_use]
-    fn from(x: PoolId) -> Self {
-        x.0
-    }
-}
-
-impl From<Hash> for PoolId {
-    #[must_use]
-    fn from(x: Hash) -> Self {
-        PoolId(x)
-    }
-}
-
-impl AsRef<Hash> for PoolId {
-    #[must_use]
-    fn as_ref(&self) -> &Hash {
-        &self.0
-    }
-}
-
-impl ReadXdr for PoolId {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let i = Hash::read_xdr(r)?;
-            let v = PoolId(i);
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for PoolId {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
     }
 }
 
@@ -14858,211 +14907,6 @@ impl WriteXdr for Claimant {
     }
 }
 
-/// ClaimableBalanceIdType is an XDR Enum defines as:
-///
-/// ```text
-/// enum ClaimableBalanceIDType
-/// {
-///     CLAIMABLE_BALANCE_ID_TYPE_V0 = 0
-/// };
-/// ```
-///
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[repr(i32)]
-pub enum ClaimableBalanceIdType {
-    ClaimableBalanceIdTypeV0 = 0,
-}
-
-impl ClaimableBalanceIdType {
-    pub const VARIANTS: [ClaimableBalanceIdType; 1] =
-        [ClaimableBalanceIdType::ClaimableBalanceIdTypeV0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ClaimableBalanceIdTypeV0"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::ClaimableBalanceIdTypeV0 => "ClaimableBalanceIdTypeV0",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ClaimableBalanceIdType; 1] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ClaimableBalanceIdType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ClaimableBalanceIdType> for ClaimableBalanceIdType {
-    fn variants() -> slice::Iter<'static, ClaimableBalanceIdType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ClaimableBalanceIdType {}
-
-impl fmt::Display for ClaimableBalanceIdType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ClaimableBalanceIdType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ClaimableBalanceIdType::ClaimableBalanceIdTypeV0,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ClaimableBalanceIdType> for i32 {
-    #[must_use]
-    fn from(e: ClaimableBalanceIdType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ClaimableBalanceIdType {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let e = i32::read_xdr(r)?;
-            let v: Self = e.try_into()?;
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ClaimableBalanceIdType {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            let i: i32 = (*self).into();
-            i.write_xdr(w)
-        })
-    }
-}
-
-/// ClaimableBalanceId is an XDR Union defines as:
-///
-/// ```text
-/// union ClaimableBalanceID switch (ClaimableBalanceIDType type)
-/// {
-/// case CLAIMABLE_BALANCE_ID_TYPE_V0:
-///     Hash v0;
-/// };
-/// ```
-///
-// union with discriminant ClaimableBalanceIdType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
-)]
-#[allow(clippy::large_enum_variant)]
-pub enum ClaimableBalanceId {
-    ClaimableBalanceIdTypeV0(Hash),
-}
-
-impl ClaimableBalanceId {
-    pub const VARIANTS: [ClaimableBalanceIdType; 1] =
-        [ClaimableBalanceIdType::ClaimableBalanceIdTypeV0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["ClaimableBalanceIdTypeV0"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::ClaimableBalanceIdTypeV0(_) => "ClaimableBalanceIdTypeV0",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ClaimableBalanceIdType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::ClaimableBalanceIdTypeV0(_) => ClaimableBalanceIdType::ClaimableBalanceIdTypeV0,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ClaimableBalanceIdType; 1] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ClaimableBalanceId {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ClaimableBalanceIdType> for ClaimableBalanceId {
-    #[must_use]
-    fn discriminant(&self) -> ClaimableBalanceIdType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ClaimableBalanceIdType> for ClaimableBalanceId {
-    fn variants() -> slice::Iter<'static, ClaimableBalanceIdType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ClaimableBalanceIdType> for ClaimableBalanceId {}
-
-impl ReadXdr for ClaimableBalanceId {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXdr>::read_xdr(r)?;
-            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-            let v = match dv {
-                ClaimableBalanceIdType::ClaimableBalanceIdTypeV0 => {
-                    Self::ClaimableBalanceIdTypeV0(Hash::read_xdr(r)?)
-                }
-                #[allow(unreachable_patterns)]
-                _ => return Err(Error::Invalid),
-            };
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ClaimableBalanceId {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::ClaimableBalanceIdTypeV0(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
 /// ClaimableBalanceFlags is an XDR Enum defines as:
 ///
 /// ```text
@@ -17693,7 +17537,8 @@ impl WriteXdr for EnvelopeType {
 /// enum BucketListType
 /// {
 ///     LIVE = 0,
-///     HOT_ARCHIVE = 1
+///     HOT_ARCHIVE = 1,
+///     COLD_ARCHIVE = 2
 /// };
 /// ```
 ///
@@ -17710,22 +17555,28 @@ impl WriteXdr for EnvelopeType {
 pub enum BucketListType {
     Live = 0,
     HotArchive = 1,
+    ColdArchive = 2,
 }
 
 impl BucketListType {
-    pub const VARIANTS: [BucketListType; 2] = [BucketListType::Live, BucketListType::HotArchive];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Live", "HotArchive"];
+    pub const VARIANTS: [BucketListType; 3] = [
+        BucketListType::Live,
+        BucketListType::HotArchive,
+        BucketListType::ColdArchive,
+    ];
+    pub const VARIANTS_STR: [&'static str; 3] = ["Live", "HotArchive", "ColdArchive"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Live => "Live",
             Self::HotArchive => "HotArchive",
+            Self::ColdArchive => "ColdArchive",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [BucketListType; 2] {
+    pub const fn variants() -> [BucketListType; 3] {
         Self::VARIANTS
     }
 }
@@ -17758,6 +17609,7 @@ impl TryFrom<i32> for BucketListType {
         let e = match i {
             0 => BucketListType::Live,
             1 => BucketListType::HotArchive,
+            2 => BucketListType::ColdArchive,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -22864,6 +22716,181 @@ impl WriteXdr for TransactionMetaV3 {
     }
 }
 
+/// OperationMetaV2 is an XDR Struct defines as:
+///
+/// ```text
+/// struct OperationMetaV2
+/// {
+///     ExtensionPoint ext;
+///
+///     LedgerEntryChanges changes;
+///
+///     ContractEvent events<>;
+///     DiagnosticEvent diagnosticEvents<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct OperationMetaV2 {
+    pub ext: ExtensionPoint,
+    pub changes: LedgerEntryChanges,
+    pub events: VecM<ContractEvent>,
+    pub diagnostic_events: VecM<DiagnosticEvent>,
+}
+
+impl ReadXdr for OperationMetaV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                changes: LedgerEntryChanges::read_xdr(r)?,
+                events: VecM::<ContractEvent>::read_xdr(r)?,
+                diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for OperationMetaV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.changes.write_xdr(w)?;
+            self.events.write_xdr(w)?;
+            self.diagnostic_events.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// SorobanTransactionMetaV2 is an XDR Struct defines as:
+///
+/// ```text
+/// struct SorobanTransactionMetaV2
+/// {
+///     SorobanTransactionMetaExt ext;
+///
+///     SCVal returnValue;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct SorobanTransactionMetaV2 {
+    pub ext: SorobanTransactionMetaExt,
+    pub return_value: ScVal,
+}
+
+impl ReadXdr for SorobanTransactionMetaV2 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: SorobanTransactionMetaExt::read_xdr(r)?,
+                return_value: ScVal::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SorobanTransactionMetaV2 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.return_value.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// TransactionMetaV4 is an XDR Struct defines as:
+///
+/// ```text
+/// struct TransactionMetaV4
+/// {
+///     ExtensionPoint ext;
+///
+///     LedgerEntryChanges txChangesBefore;  // tx level changes before operations
+///                                          // are applied if any
+///     OperationMetaV2 operations<>;        // meta for each operation
+///     LedgerEntryChanges txChangesAfter;   // tx level changes after operations are
+///                                          // applied if any
+///     SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for
+///                                            // Soroban transactions).
+///
+///     ContractEvent events<>; // Used for transaction-level events (like fee payment)
+///     DiagnosticEvent txDiagnosticEvents<>; // Used for transaction-level diagnostic
+///                                           //  information
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct TransactionMetaV4 {
+    pub ext: ExtensionPoint,
+    pub tx_changes_before: LedgerEntryChanges,
+    pub operations: VecM<OperationMetaV2>,
+    pub tx_changes_after: LedgerEntryChanges,
+    pub soroban_meta: Option<SorobanTransactionMetaV2>,
+    pub events: VecM<ContractEvent>,
+    pub tx_diagnostic_events: VecM<DiagnosticEvent>,
+}
+
+impl ReadXdr for TransactionMetaV4 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ext: ExtensionPoint::read_xdr(r)?,
+                tx_changes_before: LedgerEntryChanges::read_xdr(r)?,
+                operations: VecM::<OperationMetaV2>::read_xdr(r)?,
+                tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
+                soroban_meta: Option::<SorobanTransactionMetaV2>::read_xdr(r)?,
+                events: VecM::<ContractEvent>::read_xdr(r)?,
+                tx_diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for TransactionMetaV4 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ext.write_xdr(w)?;
+            self.tx_changes_before.write_xdr(w)?;
+            self.operations.write_xdr(w)?;
+            self.tx_changes_after.write_xdr(w)?;
+            self.soroban_meta.write_xdr(w)?;
+            self.events.write_xdr(w)?;
+            self.tx_diagnostic_events.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// InvokeHostFunctionSuccessPreImage is an XDR Struct defines as:
 ///
 /// ```text
@@ -22923,6 +22950,8 @@ impl WriteXdr for InvokeHostFunctionSuccessPreImage {
 ///     TransactionMetaV2 v2;
 /// case 3:
 ///     TransactionMetaV3 v3;
+/// case 4:
+///     TransactionMetaV4 v4;
 /// };
 /// ```
 ///
@@ -22941,11 +22970,12 @@ pub enum TransactionMeta {
     V1(TransactionMetaV1),
     V2(TransactionMetaV2),
     V3(TransactionMetaV3),
+    V4(TransactionMetaV4),
 }
 
 impl TransactionMeta {
-    pub const VARIANTS: [i32; 4] = [0, 1, 2, 3];
-    pub const VARIANTS_STR: [&'static str; 4] = ["V0", "V1", "V2", "V3"];
+    pub const VARIANTS: [i32; 5] = [0, 1, 2, 3, 4];
+    pub const VARIANTS_STR: [&'static str; 5] = ["V0", "V1", "V2", "V3", "V4"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -22954,6 +22984,7 @@ impl TransactionMeta {
             Self::V1(_) => "V1",
             Self::V2(_) => "V2",
             Self::V3(_) => "V3",
+            Self::V4(_) => "V4",
         }
     }
 
@@ -22965,11 +22996,12 @@ impl TransactionMeta {
             Self::V1(_) => 1,
             Self::V2(_) => 2,
             Self::V3(_) => 3,
+            Self::V4(_) => 4,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 4] {
+    pub const fn variants() -> [i32; 5] {
         Self::VARIANTS
     }
 }
@@ -23007,6 +23039,7 @@ impl ReadXdr for TransactionMeta {
                 1 => Self::V1(TransactionMetaV1::read_xdr(r)?),
                 2 => Self::V2(TransactionMetaV2::read_xdr(r)?),
                 3 => Self::V3(TransactionMetaV3::read_xdr(r)?),
+                4 => Self::V4(TransactionMetaV4::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -23026,6 +23059,7 @@ impl WriteXdr for TransactionMeta {
                 Self::V1(v) => v.write_xdr(w)?,
                 Self::V2(v) => v.write_xdr(w)?,
                 Self::V3(v) => v.write_xdr(w)?,
+                Self::V4(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -24279,8 +24313,8 @@ impl WriteXdr for PeerAddress {
 ///     // new messages
 ///     HELLO = 13,
 ///
-///     SURVEY_REQUEST = 14,
-///     SURVEY_RESPONSE = 15,
+///     // SURVEY_REQUEST (14) removed and replaced by TIME_SLICED_SURVEY_REQUEST
+///     // SURVEY_RESPONSE (15) removed and replaced by TIME_SLICED_SURVEY_RESPONSE
 ///
 ///     SEND_MORE = 16,
 ///     SEND_MORE_EXTENDED = 20,
@@ -24319,8 +24353,6 @@ pub enum MessageType {
     ScpMessage = 11,
     GetScpState = 12,
     Hello = 13,
-    SurveyRequest = 14,
-    SurveyResponse = 15,
     SendMore = 16,
     SendMoreExtended = 20,
     FloodAdvert = 18,
@@ -24332,7 +24364,7 @@ pub enum MessageType {
 }
 
 impl MessageType {
-    pub const VARIANTS: [MessageType; 23] = [
+    pub const VARIANTS: [MessageType; 21] = [
         MessageType::ErrorMsg,
         MessageType::Auth,
         MessageType::DontHave,
@@ -24346,8 +24378,6 @@ impl MessageType {
         MessageType::ScpMessage,
         MessageType::GetScpState,
         MessageType::Hello,
-        MessageType::SurveyRequest,
-        MessageType::SurveyResponse,
         MessageType::SendMore,
         MessageType::SendMoreExtended,
         MessageType::FloodAdvert,
@@ -24357,7 +24387,7 @@ impl MessageType {
         MessageType::TimeSlicedSurveyStartCollecting,
         MessageType::TimeSlicedSurveyStopCollecting,
     ];
-    pub const VARIANTS_STR: [&'static str; 23] = [
+    pub const VARIANTS_STR: [&'static str; 21] = [
         "ErrorMsg",
         "Auth",
         "DontHave",
@@ -24371,8 +24401,6 @@ impl MessageType {
         "ScpMessage",
         "GetScpState",
         "Hello",
-        "SurveyRequest",
-        "SurveyResponse",
         "SendMore",
         "SendMoreExtended",
         "FloodAdvert",
@@ -24399,8 +24427,6 @@ impl MessageType {
             Self::ScpMessage => "ScpMessage",
             Self::GetScpState => "GetScpState",
             Self::Hello => "Hello",
-            Self::SurveyRequest => "SurveyRequest",
-            Self::SurveyResponse => "SurveyResponse",
             Self::SendMore => "SendMore",
             Self::SendMoreExtended => "SendMoreExtended",
             Self::FloodAdvert => "FloodAdvert",
@@ -24413,7 +24439,7 @@ impl MessageType {
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 23] {
+    pub const fn variants() -> [MessageType; 21] {
         Self::VARIANTS
     }
 }
@@ -24457,8 +24483,6 @@ impl TryFrom<i32> for MessageType {
             11 => MessageType::ScpMessage,
             12 => MessageType::GetScpState,
             13 => MessageType::Hello,
-            14 => MessageType::SurveyRequest,
-            15 => MessageType::SurveyResponse,
             16 => MessageType::SendMore,
             20 => MessageType::SendMoreExtended,
             18 => MessageType::FloodAdvert,
@@ -24553,7 +24577,6 @@ impl WriteXdr for DontHave {
 /// ```text
 /// enum SurveyMessageCommandType
 /// {
-///     SURVEY_TOPOLOGY = 0,
 ///     TIME_SLICED_SURVEY_TOPOLOGY = 1
 /// };
 /// ```
@@ -24569,27 +24592,23 @@ impl WriteXdr for DontHave {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SurveyMessageCommandType {
-    SurveyTopology = 0,
     TimeSlicedSurveyTopology = 1,
 }
 
 impl SurveyMessageCommandType {
-    pub const VARIANTS: [SurveyMessageCommandType; 2] = [
-        SurveyMessageCommandType::SurveyTopology,
-        SurveyMessageCommandType::TimeSlicedSurveyTopology,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["SurveyTopology", "TimeSlicedSurveyTopology"];
+    pub const VARIANTS: [SurveyMessageCommandType; 1] =
+        [SurveyMessageCommandType::TimeSlicedSurveyTopology];
+    pub const VARIANTS_STR: [&'static str; 1] = ["TimeSlicedSurveyTopology"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::SurveyTopology => "SurveyTopology",
             Self::TimeSlicedSurveyTopology => "TimeSlicedSurveyTopology",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SurveyMessageCommandType; 2] {
+    pub const fn variants() -> [SurveyMessageCommandType; 1] {
         Self::VARIANTS
     }
 }
@@ -24620,7 +24639,6 @@ impl TryFrom<i32> for SurveyMessageCommandType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => SurveyMessageCommandType::SurveyTopology,
             1 => SurveyMessageCommandType::TimeSlicedSurveyTopology,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
@@ -24662,8 +24680,6 @@ impl WriteXdr for SurveyMessageCommandType {
 /// ```text
 /// enum SurveyMessageResponseType
 /// {
-///     SURVEY_TOPOLOGY_RESPONSE_V0 = 0,
-///     SURVEY_TOPOLOGY_RESPONSE_V1 = 1,
 ///     SURVEY_TOPOLOGY_RESPONSE_V2 = 2
 /// };
 /// ```
@@ -24679,30 +24695,23 @@ impl WriteXdr for SurveyMessageCommandType {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(i32)]
 pub enum SurveyMessageResponseType {
-    V0 = 0,
-    V1 = 1,
-    V2 = 2,
+    SurveyTopologyResponseV2 = 2,
 }
 
 impl SurveyMessageResponseType {
-    pub const VARIANTS: [SurveyMessageResponseType; 3] = [
-        SurveyMessageResponseType::V0,
-        SurveyMessageResponseType::V1,
-        SurveyMessageResponseType::V2,
-    ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
+    pub const VARIANTS: [SurveyMessageResponseType; 1] =
+        [SurveyMessageResponseType::SurveyTopologyResponseV2];
+    pub const VARIANTS_STR: [&'static str; 1] = ["SurveyTopologyResponseV2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::V0 => "V0",
-            Self::V1 => "V1",
-            Self::V2 => "V2",
+            Self::SurveyTopologyResponseV2 => "SurveyTopologyResponseV2",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SurveyMessageResponseType; 3] {
+    pub const fn variants() -> [SurveyMessageResponseType; 1] {
         Self::VARIANTS
     }
 }
@@ -24733,9 +24742,7 @@ impl TryFrom<i32> for SurveyMessageResponseType {
 
     fn try_from(i: i32) -> Result<Self> {
         let e = match i {
-            0 => SurveyMessageResponseType::V0,
-            1 => SurveyMessageResponseType::V1,
-            2 => SurveyMessageResponseType::V2,
+            2 => SurveyMessageResponseType::SurveyTopologyResponseV2,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -25075,52 +25082,6 @@ impl WriteXdr for TimeSlicedSurveyRequestMessage {
     }
 }
 
-/// SignedSurveyRequestMessage is an XDR Struct defines as:
-///
-/// ```text
-/// struct SignedSurveyRequestMessage
-/// {
-///     Signature requestSignature;
-///     SurveyRequestMessage request;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct SignedSurveyRequestMessage {
-    pub request_signature: Signature,
-    pub request: SurveyRequestMessage,
-}
-
-impl ReadXdr for SignedSurveyRequestMessage {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                request_signature: Signature::read_xdr(r)?,
-                request: SurveyRequestMessage::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for SignedSurveyRequestMessage {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.request_signature.write_xdr(w)?;
-            self.request.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 /// SignedTimeSlicedSurveyRequestMessage is an XDR Struct defines as:
 ///
 /// ```text
@@ -25377,52 +25338,6 @@ impl WriteXdr for TimeSlicedSurveyResponseMessage {
     }
 }
 
-/// SignedSurveyResponseMessage is an XDR Struct defines as:
-///
-/// ```text
-/// struct SignedSurveyResponseMessage
-/// {
-///     Signature responseSignature;
-///     SurveyResponseMessage response;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct SignedSurveyResponseMessage {
-    pub response_signature: Signature,
-    pub response: SurveyResponseMessage,
-}
-
-impl ReadXdr for SignedSurveyResponseMessage {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                response_signature: Signature::read_xdr(r)?,
-                response: SurveyResponseMessage::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for SignedSurveyResponseMessage {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.response_signature.write_xdr(w)?;
-            self.response.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 /// SignedTimeSlicedSurveyResponseMessage is an XDR Struct defines as:
 ///
 /// ```text
@@ -25566,112 +25481,6 @@ impl WriteXdr for PeerStats {
             self.duplicate_fetch_message_recv.write_xdr(w)?;
             Ok(())
         })
-    }
-}
-
-/// PeerStatList is an XDR Typedef defines as:
-///
-/// ```text
-/// typedef PeerStats PeerStatList<25>;
-/// ```
-///
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[derive(Debug)]
-pub struct PeerStatList(pub VecM<PeerStats, 25>);
-
-impl From<PeerStatList> for VecM<PeerStats, 25> {
-    #[must_use]
-    fn from(x: PeerStatList) -> Self {
-        x.0
-    }
-}
-
-impl From<VecM<PeerStats, 25>> for PeerStatList {
-    #[must_use]
-    fn from(x: VecM<PeerStats, 25>) -> Self {
-        PeerStatList(x)
-    }
-}
-
-impl AsRef<VecM<PeerStats, 25>> for PeerStatList {
-    #[must_use]
-    fn as_ref(&self) -> &VecM<PeerStats, 25> {
-        &self.0
-    }
-}
-
-impl ReadXdr for PeerStatList {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let i = VecM::<PeerStats, 25>::read_xdr(r)?;
-            let v = PeerStatList(i);
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for PeerStatList {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
-
-impl Deref for PeerStatList {
-    type Target = VecM<PeerStats, 25>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<PeerStatList> for Vec<PeerStats> {
-    #[must_use]
-    fn from(x: PeerStatList) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<PeerStats>> for PeerStatList {
-    type Error = Error;
-    fn try_from(x: Vec<PeerStats>) -> Result<Self> {
-        Ok(PeerStatList(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<PeerStats>> for PeerStatList {
-    type Error = Error;
-    fn try_from(x: &Vec<PeerStats>) -> Result<Self> {
-        Ok(PeerStatList(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<PeerStats>> for PeerStatList {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<PeerStats> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[PeerStats]> for PeerStatList {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[PeerStats] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[PeerStats] {
-        self.0 .0
     }
 }
 
@@ -25911,125 +25720,6 @@ impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
     }
 }
 
-/// TopologyResponseBodyV0 is an XDR Struct defines as:
-///
-/// ```text
-/// struct TopologyResponseBodyV0
-/// {
-///     PeerStatList inboundPeers;
-///     PeerStatList outboundPeers;
-///
-///     uint32 totalInboundPeerCount;
-///     uint32 totalOutboundPeerCount;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct TopologyResponseBodyV0 {
-    pub inbound_peers: PeerStatList,
-    pub outbound_peers: PeerStatList,
-    pub total_inbound_peer_count: u32,
-    pub total_outbound_peer_count: u32,
-}
-
-impl ReadXdr for TopologyResponseBodyV0 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                inbound_peers: PeerStatList::read_xdr(r)?,
-                outbound_peers: PeerStatList::read_xdr(r)?,
-                total_inbound_peer_count: u32::read_xdr(r)?,
-                total_outbound_peer_count: u32::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for TopologyResponseBodyV0 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.inbound_peers.write_xdr(w)?;
-            self.outbound_peers.write_xdr(w)?;
-            self.total_inbound_peer_count.write_xdr(w)?;
-            self.total_outbound_peer_count.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// TopologyResponseBodyV1 is an XDR Struct defines as:
-///
-/// ```text
-/// struct TopologyResponseBodyV1
-/// {
-///     PeerStatList inboundPeers;
-///     PeerStatList outboundPeers;
-///
-///     uint32 totalInboundPeerCount;
-///     uint32 totalOutboundPeerCount;
-///
-///     uint32 maxInboundPeerCount;
-///     uint32 maxOutboundPeerCount;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct TopologyResponseBodyV1 {
-    pub inbound_peers: PeerStatList,
-    pub outbound_peers: PeerStatList,
-    pub total_inbound_peer_count: u32,
-    pub total_outbound_peer_count: u32,
-    pub max_inbound_peer_count: u32,
-    pub max_outbound_peer_count: u32,
-}
-
-impl ReadXdr for TopologyResponseBodyV1 {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                inbound_peers: PeerStatList::read_xdr(r)?,
-                outbound_peers: PeerStatList::read_xdr(r)?,
-                total_inbound_peer_count: u32::read_xdr(r)?,
-                total_outbound_peer_count: u32::read_xdr(r)?,
-                max_inbound_peer_count: u32::read_xdr(r)?,
-                max_outbound_peer_count: u32::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for TopologyResponseBodyV1 {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.inbound_peers.write_xdr(w)?;
-            self.outbound_peers.write_xdr(w)?;
-            self.total_inbound_peer_count.write_xdr(w)?;
-            self.total_outbound_peer_count.write_xdr(w)?;
-            self.max_inbound_peer_count.write_xdr(w)?;
-            self.max_outbound_peer_count.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 /// TopologyResponseBodyV2 is an XDR Struct defines as:
 ///
 /// ```text
@@ -26085,10 +25775,6 @@ impl WriteXdr for TopologyResponseBodyV2 {
 /// ```text
 /// union SurveyResponseBody switch (SurveyMessageResponseType type)
 /// {
-/// case SURVEY_TOPOLOGY_RESPONSE_V0:
-///     TopologyResponseBodyV0 topologyResponseBodyV0;
-/// case SURVEY_TOPOLOGY_RESPONSE_V1:
-///     TopologyResponseBodyV1 topologyResponseBodyV1;
 /// case SURVEY_TOPOLOGY_RESPONSE_V2:
 ///     TopologyResponseBodyV2 topologyResponseBodyV2;
 /// };
@@ -26105,25 +25791,18 @@ impl WriteXdr for TopologyResponseBodyV2 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum SurveyResponseBody {
-    V0(TopologyResponseBodyV0),
-    V1(TopologyResponseBodyV1),
-    V2(TopologyResponseBodyV2),
+    SurveyTopologyResponseV2(TopologyResponseBodyV2),
 }
 
 impl SurveyResponseBody {
-    pub const VARIANTS: [SurveyMessageResponseType; 3] = [
-        SurveyMessageResponseType::V0,
-        SurveyMessageResponseType::V1,
-        SurveyMessageResponseType::V2,
-    ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["V0", "V1", "V2"];
+    pub const VARIANTS: [SurveyMessageResponseType; 1] =
+        [SurveyMessageResponseType::SurveyTopologyResponseV2];
+    pub const VARIANTS_STR: [&'static str; 1] = ["SurveyTopologyResponseV2"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::V0(_) => "V0",
-            Self::V1(_) => "V1",
-            Self::V2(_) => "V2",
+            Self::SurveyTopologyResponseV2(_) => "SurveyTopologyResponseV2",
         }
     }
 
@@ -26131,14 +25810,14 @@ impl SurveyResponseBody {
     pub const fn discriminant(&self) -> SurveyMessageResponseType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::V0(_) => SurveyMessageResponseType::V0,
-            Self::V1(_) => SurveyMessageResponseType::V1,
-            Self::V2(_) => SurveyMessageResponseType::V2,
+            Self::SurveyTopologyResponseV2(_) => {
+                SurveyMessageResponseType::SurveyTopologyResponseV2
+            }
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [SurveyMessageResponseType; 3] {
+    pub const fn variants() -> [SurveyMessageResponseType; 1] {
         Self::VARIANTS
     }
 }
@@ -26173,9 +25852,9 @@ impl ReadXdr for SurveyResponseBody {
                 <SurveyMessageResponseType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                SurveyMessageResponseType::V0 => Self::V0(TopologyResponseBodyV0::read_xdr(r)?),
-                SurveyMessageResponseType::V1 => Self::V1(TopologyResponseBodyV1::read_xdr(r)?),
-                SurveyMessageResponseType::V2 => Self::V2(TopologyResponseBodyV2::read_xdr(r)?),
+                SurveyMessageResponseType::SurveyTopologyResponseV2 => {
+                    Self::SurveyTopologyResponseV2(TopologyResponseBodyV2::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -26191,9 +25870,7 @@ impl WriteXdr for SurveyResponseBody {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
             match self {
-                Self::V0(v) => v.write_xdr(w)?,
-                Self::V1(v) => v.write_xdr(w)?,
-                Self::V2(v) => v.write_xdr(w)?,
+                Self::SurveyTopologyResponseV2(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -26538,12 +26215,6 @@ impl WriteXdr for FloodDemand {
 /// case TRANSACTION:
 ///     TransactionEnvelope transaction;
 ///
-/// case SURVEY_REQUEST:
-///     SignedSurveyRequestMessage signedSurveyRequestMessage;
-///
-/// case SURVEY_RESPONSE:
-///     SignedSurveyResponseMessage signedSurveyResponseMessage;
-///
 /// case TIME_SLICED_SURVEY_REQUEST:
 ///     SignedTimeSlicedSurveyRequestMessage signedTimeSlicedSurveyRequestMessage;
 ///
@@ -26599,8 +26270,6 @@ pub enum StellarMessage {
     TxSet(TransactionSet),
     GeneralizedTxSet(GeneralizedTransactionSet),
     Transaction(TransactionEnvelope),
-    SurveyRequest(SignedSurveyRequestMessage),
-    SurveyResponse(SignedSurveyResponseMessage),
     TimeSlicedSurveyRequest(SignedTimeSlicedSurveyRequestMessage),
     TimeSlicedSurveyResponse(SignedTimeSlicedSurveyResponseMessage),
     TimeSlicedSurveyStartCollecting(SignedTimeSlicedSurveyStartCollectingMessage),
@@ -26616,7 +26285,7 @@ pub enum StellarMessage {
 }
 
 impl StellarMessage {
-    pub const VARIANTS: [MessageType; 23] = [
+    pub const VARIANTS: [MessageType; 21] = [
         MessageType::ErrorMsg,
         MessageType::Hello,
         MessageType::Auth,
@@ -26626,8 +26295,6 @@ impl StellarMessage {
         MessageType::TxSet,
         MessageType::GeneralizedTxSet,
         MessageType::Transaction,
-        MessageType::SurveyRequest,
-        MessageType::SurveyResponse,
         MessageType::TimeSlicedSurveyRequest,
         MessageType::TimeSlicedSurveyResponse,
         MessageType::TimeSlicedSurveyStartCollecting,
@@ -26641,7 +26308,7 @@ impl StellarMessage {
         MessageType::FloodAdvert,
         MessageType::FloodDemand,
     ];
-    pub const VARIANTS_STR: [&'static str; 23] = [
+    pub const VARIANTS_STR: [&'static str; 21] = [
         "ErrorMsg",
         "Hello",
         "Auth",
@@ -26651,8 +26318,6 @@ impl StellarMessage {
         "TxSet",
         "GeneralizedTxSet",
         "Transaction",
-        "SurveyRequest",
-        "SurveyResponse",
         "TimeSlicedSurveyRequest",
         "TimeSlicedSurveyResponse",
         "TimeSlicedSurveyStartCollecting",
@@ -26679,8 +26344,6 @@ impl StellarMessage {
             Self::TxSet(_) => "TxSet",
             Self::GeneralizedTxSet(_) => "GeneralizedTxSet",
             Self::Transaction(_) => "Transaction",
-            Self::SurveyRequest(_) => "SurveyRequest",
-            Self::SurveyResponse(_) => "SurveyResponse",
             Self::TimeSlicedSurveyRequest(_) => "TimeSlicedSurveyRequest",
             Self::TimeSlicedSurveyResponse(_) => "TimeSlicedSurveyResponse",
             Self::TimeSlicedSurveyStartCollecting(_) => "TimeSlicedSurveyStartCollecting",
@@ -26709,8 +26372,6 @@ impl StellarMessage {
             Self::TxSet(_) => MessageType::TxSet,
             Self::GeneralizedTxSet(_) => MessageType::GeneralizedTxSet,
             Self::Transaction(_) => MessageType::Transaction,
-            Self::SurveyRequest(_) => MessageType::SurveyRequest,
-            Self::SurveyResponse(_) => MessageType::SurveyResponse,
             Self::TimeSlicedSurveyRequest(_) => MessageType::TimeSlicedSurveyRequest,
             Self::TimeSlicedSurveyResponse(_) => MessageType::TimeSlicedSurveyResponse,
             Self::TimeSlicedSurveyStartCollecting(_) => {
@@ -26729,7 +26390,7 @@ impl StellarMessage {
     }
 
     #[must_use]
-    pub const fn variants() -> [MessageType; 23] {
+    pub const fn variants() -> [MessageType; 21] {
         Self::VARIANTS
     }
 }
@@ -26774,12 +26435,6 @@ impl ReadXdr for StellarMessage {
                     Self::GeneralizedTxSet(GeneralizedTransactionSet::read_xdr(r)?)
                 }
                 MessageType::Transaction => Self::Transaction(TransactionEnvelope::read_xdr(r)?),
-                MessageType::SurveyRequest => {
-                    Self::SurveyRequest(SignedSurveyRequestMessage::read_xdr(r)?)
-                }
-                MessageType::SurveyResponse => {
-                    Self::SurveyResponse(SignedSurveyResponseMessage::read_xdr(r)?)
-                }
                 MessageType::TimeSlicedSurveyRequest => Self::TimeSlicedSurveyRequest(
                     SignedTimeSlicedSurveyRequestMessage::read_xdr(r)?,
                 ),
@@ -26830,8 +26485,6 @@ impl WriteXdr for StellarMessage {
                 Self::TxSet(v) => v.write_xdr(w)?,
                 Self::GeneralizedTxSet(v) => v.write_xdr(w)?,
                 Self::Transaction(v) => v.write_xdr(w)?,
-                Self::SurveyRequest(v) => v.write_xdr(w)?,
-                Self::SurveyResponse(v) => v.write_xdr(w)?,
                 Self::TimeSlicedSurveyRequest(v) => v.write_xdr(w)?,
                 Self::TimeSlicedSurveyResponse(v) => v.write_xdr(w)?,
                 Self::TimeSlicedSurveyStartCollecting(v) => v.write_xdr(w)?,
@@ -32065,6 +31718,544 @@ impl WriteXdr for LedgerFootprint {
         w.with_limited_depth(|w| {
             self.read_only.write_xdr(w)?;
             self.read_write.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ArchivalProofType is an XDR Enum defines as:
+///
+/// ```text
+/// enum ArchivalProofType
+/// {
+///     EXISTENCE = 0,
+///     NONEXISTENCE = 1
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum ArchivalProofType {
+    Existence = 0,
+    Nonexistence = 1,
+}
+
+impl ArchivalProofType {
+    pub const VARIANTS: [ArchivalProofType; 2] = [
+        ArchivalProofType::Existence,
+        ArchivalProofType::Nonexistence,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Existence", "Nonexistence"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Existence => "Existence",
+            Self::Nonexistence => "Nonexistence",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ArchivalProofType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ArchivalProofType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ArchivalProofType> for ArchivalProofType {
+    fn variants() -> slice::Iter<'static, ArchivalProofType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ArchivalProofType {}
+
+impl fmt::Display for ArchivalProofType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ArchivalProofType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ArchivalProofType::Existence,
+            1 => ArchivalProofType::Nonexistence,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ArchivalProofType> for i32 {
+    #[must_use]
+    fn from(e: ArchivalProofType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ArchivalProofType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ArchivalProofType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+/// ArchivalProofNode is an XDR Struct defines as:
+///
+/// ```text
+/// struct ArchivalProofNode
+/// {
+///     uint32 index;
+///     Hash hash;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ArchivalProofNode {
+    pub index: u32,
+    pub hash: Hash,
+}
+
+impl ReadXdr for ArchivalProofNode {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                index: u32::read_xdr(r)?,
+                hash: Hash::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ArchivalProofNode {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.index.write_xdr(w)?;
+            self.hash.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ProofLevel is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef ArchivalProofNode ProofLevel<>;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Debug)]
+pub struct ProofLevel(pub VecM<ArchivalProofNode>);
+
+impl From<ProofLevel> for VecM<ArchivalProofNode> {
+    #[must_use]
+    fn from(x: ProofLevel) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<ArchivalProofNode>> for ProofLevel {
+    #[must_use]
+    fn from(x: VecM<ArchivalProofNode>) -> Self {
+        ProofLevel(x)
+    }
+}
+
+impl AsRef<VecM<ArchivalProofNode>> for ProofLevel {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<ArchivalProofNode> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ProofLevel {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<ArchivalProofNode>::read_xdr(r)?;
+            let v = ProofLevel(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ProofLevel {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for ProofLevel {
+    type Target = VecM<ArchivalProofNode>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ProofLevel> for Vec<ArchivalProofNode> {
+    #[must_use]
+    fn from(x: ProofLevel) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<ArchivalProofNode>> for ProofLevel {
+    type Error = Error;
+    fn try_from(x: Vec<ArchivalProofNode>) -> Result<Self> {
+        Ok(ProofLevel(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<ArchivalProofNode>> for ProofLevel {
+    type Error = Error;
+    fn try_from(x: &Vec<ArchivalProofNode>) -> Result<Self> {
+        Ok(ProofLevel(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<ArchivalProofNode>> for ProofLevel {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<ArchivalProofNode> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[ArchivalProofNode]> for ProofLevel {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[ArchivalProofNode] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[ArchivalProofNode] {
+        self.0 .0
+    }
+}
+
+/// NonexistenceProofBody is an XDR Struct defines as:
+///
+/// ```text
+/// struct NonexistenceProofBody
+/// {
+///     ColdArchiveBucketEntry entriesToProve<>;
+///
+///     // Vector of vectors, where proofLevels[level]
+///     // contains all HashNodes that correspond with that level
+///     ProofLevel proofLevels<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct NonexistenceProofBody {
+    pub entries_to_prove: VecM<ColdArchiveBucketEntry>,
+    pub proof_levels: VecM<ProofLevel>,
+}
+
+impl ReadXdr for NonexistenceProofBody {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                entries_to_prove: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
+                proof_levels: VecM::<ProofLevel>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for NonexistenceProofBody {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.entries_to_prove.write_xdr(w)?;
+            self.proof_levels.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ExistenceProofBody is an XDR Struct defines as:
+///
+/// ```text
+/// struct ExistenceProofBody
+/// {
+///     LedgerKey keysToProve<>;
+///
+///     // Bounds for each key being proved, where bound[n]
+///     // corresponds to keysToProve[n]
+///     ColdArchiveBucketEntry lowBoundEntries<>;
+///     ColdArchiveBucketEntry highBoundEntries<>;
+///
+///     // Vector of vectors, where proofLevels[level]
+///     // contains all HashNodes that correspond with that level
+///     ProofLevel proofLevels<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ExistenceProofBody {
+    pub keys_to_prove: VecM<LedgerKey>,
+    pub low_bound_entries: VecM<ColdArchiveBucketEntry>,
+    pub high_bound_entries: VecM<ColdArchiveBucketEntry>,
+    pub proof_levels: VecM<ProofLevel>,
+}
+
+impl ReadXdr for ExistenceProofBody {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                keys_to_prove: VecM::<LedgerKey>::read_xdr(r)?,
+                low_bound_entries: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
+                high_bound_entries: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
+                proof_levels: VecM::<ProofLevel>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ExistenceProofBody {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.keys_to_prove.write_xdr(w)?;
+            self.low_bound_entries.write_xdr(w)?;
+            self.high_bound_entries.write_xdr(w)?;
+            self.proof_levels.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ArchivalProofBody is an XDR NestedUnion defines as:
+///
+/// ```text
+/// union switch (ArchivalProofType t)
+///     {
+///     case EXISTENCE:
+///         NonexistenceProofBody nonexistenceProof;
+///     case NONEXISTENCE:
+///         ExistenceProofBody existenceProof;
+///     }
+/// ```
+///
+// union with discriminant ArchivalProofType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[allow(clippy::large_enum_variant)]
+pub enum ArchivalProofBody {
+    Existence(NonexistenceProofBody),
+    Nonexistence(ExistenceProofBody),
+}
+
+impl ArchivalProofBody {
+    pub const VARIANTS: [ArchivalProofType; 2] = [
+        ArchivalProofType::Existence,
+        ArchivalProofType::Nonexistence,
+    ];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Existence", "Nonexistence"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Existence(_) => "Existence",
+            Self::Nonexistence(_) => "Nonexistence",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ArchivalProofType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::Existence(_) => ArchivalProofType::Existence,
+            Self::Nonexistence(_) => ArchivalProofType::Nonexistence,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ArchivalProofType; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ArchivalProofBody {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ArchivalProofType> for ArchivalProofBody {
+    #[must_use]
+    fn discriminant(&self) -> ArchivalProofType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ArchivalProofType> for ArchivalProofBody {
+    fn variants() -> slice::Iter<'static, ArchivalProofType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ArchivalProofType> for ArchivalProofBody {}
+
+impl ReadXdr for ArchivalProofBody {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ArchivalProofType = <ArchivalProofType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ArchivalProofType::Existence => {
+                    Self::Existence(NonexistenceProofBody::read_xdr(r)?)
+                }
+                ArchivalProofType::Nonexistence => {
+                    Self::Nonexistence(ExistenceProofBody::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ArchivalProofBody {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::Existence(v) => v.write_xdr(w)?,
+                Self::Nonexistence(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
+/// ArchivalProof is an XDR Struct defines as:
+///
+/// ```text
+/// struct ArchivalProof
+/// {
+///     uint32 epoch; // AST Subtree for this proof
+///
+///     union switch (ArchivalProofType t)
+///     {
+///     case EXISTENCE:
+///         NonexistenceProofBody nonexistenceProof;
+///     case NONEXISTENCE:
+///         ExistenceProofBody existenceProof;
+///     } body;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ArchivalProof {
+    pub epoch: u32,
+    pub body: ArchivalProofBody,
+}
+
+impl ReadXdr for ArchivalProof {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                epoch: u32::read_xdr(r)?,
+                body: ArchivalProofBody::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ArchivalProof {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.epoch.write_xdr(w)?;
+            self.body.write_xdr(w)?;
             Ok(())
         })
     }
@@ -45742,6 +45933,265 @@ impl WriteXdr for SerializedBinaryFuseFilter {
     }
 }
 
+/// PoolId is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef Hash PoolID;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+#[derive(Debug)]
+pub struct PoolId(pub Hash);
+
+impl From<PoolId> for Hash {
+    #[must_use]
+    fn from(x: PoolId) -> Self {
+        x.0
+    }
+}
+
+impl From<Hash> for PoolId {
+    #[must_use]
+    fn from(x: Hash) -> Self {
+        PoolId(x)
+    }
+}
+
+impl AsRef<Hash> for PoolId {
+    #[must_use]
+    fn as_ref(&self) -> &Hash {
+        &self.0
+    }
+}
+
+impl ReadXdr for PoolId {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = Hash::read_xdr(r)?;
+            let v = PoolId(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for PoolId {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+/// ClaimableBalanceIdType is an XDR Enum defines as:
+///
+/// ```text
+/// enum ClaimableBalanceIDType
+/// {
+///     CLAIMABLE_BALANCE_ID_TYPE_V0 = 0
+/// };
+/// ```
+///
+// enum
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(i32)]
+pub enum ClaimableBalanceIdType {
+    ClaimableBalanceIdTypeV0 = 0,
+}
+
+impl ClaimableBalanceIdType {
+    pub const VARIANTS: [ClaimableBalanceIdType; 1] =
+        [ClaimableBalanceIdType::ClaimableBalanceIdTypeV0];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ClaimableBalanceIdTypeV0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ClaimableBalanceIdTypeV0 => "ClaimableBalanceIdTypeV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimableBalanceIdType; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ClaimableBalanceIdType {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Variants<ClaimableBalanceIdType> for ClaimableBalanceIdType {
+    fn variants() -> slice::Iter<'static, ClaimableBalanceIdType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Enum for ClaimableBalanceIdType {}
+
+impl fmt::Display for ClaimableBalanceIdType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl TryFrom<i32> for ClaimableBalanceIdType {
+    type Error = Error;
+
+    fn try_from(i: i32) -> Result<Self> {
+        let e = match i {
+            0 => ClaimableBalanceIdType::ClaimableBalanceIdTypeV0,
+            #[allow(unreachable_patterns)]
+            _ => return Err(Error::Invalid),
+        };
+        Ok(e)
+    }
+}
+
+impl From<ClaimableBalanceIdType> for i32 {
+    #[must_use]
+    fn from(e: ClaimableBalanceIdType) -> Self {
+        e as Self
+    }
+}
+
+impl ReadXdr for ClaimableBalanceIdType {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let e = i32::read_xdr(r)?;
+            let v: Self = e.try_into()?;
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ClaimableBalanceIdType {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            let i: i32 = (*self).into();
+            i.write_xdr(w)
+        })
+    }
+}
+
+/// ClaimableBalanceId is an XDR Union defines as:
+///
+/// ```text
+/// union ClaimableBalanceID switch (ClaimableBalanceIDType type)
+/// {
+/// case CLAIMABLE_BALANCE_ID_TYPE_V0:
+///     Hash v0;
+/// };
+/// ```
+///
+// union with discriminant ClaimableBalanceIdType
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+#[allow(clippy::large_enum_variant)]
+pub enum ClaimableBalanceId {
+    ClaimableBalanceIdTypeV0(Hash),
+}
+
+impl ClaimableBalanceId {
+    pub const VARIANTS: [ClaimableBalanceIdType; 1] =
+        [ClaimableBalanceIdType::ClaimableBalanceIdTypeV0];
+    pub const VARIANTS_STR: [&'static str; 1] = ["ClaimableBalanceIdTypeV0"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::ClaimableBalanceIdTypeV0(_) => "ClaimableBalanceIdTypeV0",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> ClaimableBalanceIdType {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::ClaimableBalanceIdTypeV0(_) => ClaimableBalanceIdType::ClaimableBalanceIdTypeV0,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [ClaimableBalanceIdType; 1] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for ClaimableBalanceId {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<ClaimableBalanceIdType> for ClaimableBalanceId {
+    #[must_use]
+    fn discriminant(&self) -> ClaimableBalanceIdType {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<ClaimableBalanceIdType> for ClaimableBalanceId {
+    fn variants() -> slice::Iter<'static, ClaimableBalanceIdType> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<ClaimableBalanceIdType> for ClaimableBalanceId {}
+
+impl ReadXdr for ClaimableBalanceId {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: ClaimableBalanceIdType = <ClaimableBalanceIdType as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                ClaimableBalanceIdType::ClaimableBalanceIdTypeV0 => {
+                    Self::ClaimableBalanceIdTypeV0(Hash::read_xdr(r)?)
+                }
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ClaimableBalanceId {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::ClaimableBalanceIdTypeV0(v) => v.write_xdr(w)?,
+            };
+            Ok(())
+        })
+    }
+}
+
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
@@ -45815,6 +46265,7 @@ pub enum TypeVariant {
     ContractExecutableType,
     ContractExecutable,
     ScAddressType,
+    MuxedEd25519Account,
     ScAddress,
     ScVec,
     ScMap,
@@ -45835,7 +46286,6 @@ pub enum TypeVariant {
     String64,
     SequenceNumber,
     DataValue,
-    PoolId,
     AssetCode4,
     AssetCode12,
     AssetType,
@@ -45876,8 +46326,6 @@ pub enum TypeVariant {
     ClaimantType,
     Claimant,
     ClaimantV0,
-    ClaimableBalanceIdType,
-    ClaimableBalanceId,
     ClaimableBalanceFlags,
     ClaimableBalanceEntryExtensionV1,
     ClaimableBalanceEntryExtensionV1Ext,
@@ -45972,6 +46420,9 @@ pub enum TypeVariant {
     SorobanTransactionMetaExt,
     SorobanTransactionMeta,
     TransactionMetaV3,
+    OperationMetaV2,
+    SorobanTransactionMetaV2,
+    TransactionMetaV4,
     InvokeHostFunctionSuccessPreImage,
     TransactionMeta,
     TransactionResultMeta,
@@ -46001,20 +46452,15 @@ pub enum TypeVariant {
     SignedTimeSlicedSurveyStopCollectingMessage,
     SurveyRequestMessage,
     TimeSlicedSurveyRequestMessage,
-    SignedSurveyRequestMessage,
     SignedTimeSlicedSurveyRequestMessage,
     EncryptedBody,
     SurveyResponseMessage,
     TimeSlicedSurveyResponseMessage,
-    SignedSurveyResponseMessage,
     SignedTimeSlicedSurveyResponseMessage,
     PeerStats,
-    PeerStatList,
     TimeSlicedNodeData,
     TimeSlicedPeerData,
     TimeSlicedPeerDataList,
-    TopologyResponseBodyV0,
-    TopologyResponseBodyV1,
     TopologyResponseBodyV2,
     SurveyResponseBody,
     TxAdvertVector,
@@ -46086,6 +46532,13 @@ pub enum TypeVariant {
     PreconditionType,
     Preconditions,
     LedgerFootprint,
+    ArchivalProofType,
+    ArchivalProofNode,
+    ProofLevel,
+    NonexistenceProofBody,
+    ExistenceProofBody,
+    ArchivalProof,
+    ArchivalProofBody,
     SorobanResources,
     SorobanTransactionData,
     TransactionV0,
@@ -46202,10 +46655,13 @@ pub enum TypeVariant {
     ShortHashSeed,
     BinaryFuseFilterType,
     SerializedBinaryFuseFilter,
+    PoolId,
+    ClaimableBalanceIdType,
+    ClaimableBalanceId,
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 452] = [
+    pub const VARIANTS: [TypeVariant; 458] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -46271,6 +46727,7 @@ impl TypeVariant {
         TypeVariant::ContractExecutableType,
         TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
+        TypeVariant::MuxedEd25519Account,
         TypeVariant::ScAddress,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
@@ -46291,7 +46748,6 @@ impl TypeVariant {
         TypeVariant::String64,
         TypeVariant::SequenceNumber,
         TypeVariant::DataValue,
-        TypeVariant::PoolId,
         TypeVariant::AssetCode4,
         TypeVariant::AssetCode12,
         TypeVariant::AssetType,
@@ -46332,8 +46788,6 @@ impl TypeVariant {
         TypeVariant::ClaimantType,
         TypeVariant::Claimant,
         TypeVariant::ClaimantV0,
-        TypeVariant::ClaimableBalanceIdType,
-        TypeVariant::ClaimableBalanceId,
         TypeVariant::ClaimableBalanceFlags,
         TypeVariant::ClaimableBalanceEntryExtensionV1,
         TypeVariant::ClaimableBalanceEntryExtensionV1Ext,
@@ -46428,6 +46882,9 @@ impl TypeVariant {
         TypeVariant::SorobanTransactionMetaExt,
         TypeVariant::SorobanTransactionMeta,
         TypeVariant::TransactionMetaV3,
+        TypeVariant::OperationMetaV2,
+        TypeVariant::SorobanTransactionMetaV2,
+        TypeVariant::TransactionMetaV4,
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
@@ -46457,20 +46914,15 @@ impl TypeVariant {
         TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage,
         TypeVariant::SurveyRequestMessage,
         TypeVariant::TimeSlicedSurveyRequestMessage,
-        TypeVariant::SignedSurveyRequestMessage,
         TypeVariant::SignedTimeSlicedSurveyRequestMessage,
         TypeVariant::EncryptedBody,
         TypeVariant::SurveyResponseMessage,
         TypeVariant::TimeSlicedSurveyResponseMessage,
-        TypeVariant::SignedSurveyResponseMessage,
         TypeVariant::SignedTimeSlicedSurveyResponseMessage,
         TypeVariant::PeerStats,
-        TypeVariant::PeerStatList,
         TypeVariant::TimeSlicedNodeData,
         TypeVariant::TimeSlicedPeerData,
         TypeVariant::TimeSlicedPeerDataList,
-        TypeVariant::TopologyResponseBodyV0,
-        TypeVariant::TopologyResponseBodyV1,
         TypeVariant::TopologyResponseBodyV2,
         TypeVariant::SurveyResponseBody,
         TypeVariant::TxAdvertVector,
@@ -46542,6 +46994,13 @@ impl TypeVariant {
         TypeVariant::PreconditionType,
         TypeVariant::Preconditions,
         TypeVariant::LedgerFootprint,
+        TypeVariant::ArchivalProofType,
+        TypeVariant::ArchivalProofNode,
+        TypeVariant::ProofLevel,
+        TypeVariant::NonexistenceProofBody,
+        TypeVariant::ExistenceProofBody,
+        TypeVariant::ArchivalProof,
+        TypeVariant::ArchivalProofBody,
         TypeVariant::SorobanResources,
         TypeVariant::SorobanTransactionData,
         TypeVariant::TransactionV0,
@@ -46658,8 +47117,11 @@ impl TypeVariant {
         TypeVariant::ShortHashSeed,
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
+        TypeVariant::PoolId,
+        TypeVariant::ClaimableBalanceIdType,
+        TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 452] = [
+    pub const VARIANTS_STR: [&'static str; 458] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -46725,6 +47187,7 @@ impl TypeVariant {
         "ContractExecutableType",
         "ContractExecutable",
         "ScAddressType",
+        "MuxedEd25519Account",
         "ScAddress",
         "ScVec",
         "ScMap",
@@ -46745,7 +47208,6 @@ impl TypeVariant {
         "String64",
         "SequenceNumber",
         "DataValue",
-        "PoolId",
         "AssetCode4",
         "AssetCode12",
         "AssetType",
@@ -46786,8 +47248,6 @@ impl TypeVariant {
         "ClaimantType",
         "Claimant",
         "ClaimantV0",
-        "ClaimableBalanceIdType",
-        "ClaimableBalanceId",
         "ClaimableBalanceFlags",
         "ClaimableBalanceEntryExtensionV1",
         "ClaimableBalanceEntryExtensionV1Ext",
@@ -46882,6 +47342,9 @@ impl TypeVariant {
         "SorobanTransactionMetaExt",
         "SorobanTransactionMeta",
         "TransactionMetaV3",
+        "OperationMetaV2",
+        "SorobanTransactionMetaV2",
+        "TransactionMetaV4",
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
@@ -46911,20 +47374,15 @@ impl TypeVariant {
         "SignedTimeSlicedSurveyStopCollectingMessage",
         "SurveyRequestMessage",
         "TimeSlicedSurveyRequestMessage",
-        "SignedSurveyRequestMessage",
         "SignedTimeSlicedSurveyRequestMessage",
         "EncryptedBody",
         "SurveyResponseMessage",
         "TimeSlicedSurveyResponseMessage",
-        "SignedSurveyResponseMessage",
         "SignedTimeSlicedSurveyResponseMessage",
         "PeerStats",
-        "PeerStatList",
         "TimeSlicedNodeData",
         "TimeSlicedPeerData",
         "TimeSlicedPeerDataList",
-        "TopologyResponseBodyV0",
-        "TopologyResponseBodyV1",
         "TopologyResponseBodyV2",
         "SurveyResponseBody",
         "TxAdvertVector",
@@ -46996,6 +47454,13 @@ impl TypeVariant {
         "PreconditionType",
         "Preconditions",
         "LedgerFootprint",
+        "ArchivalProofType",
+        "ArchivalProofNode",
+        "ProofLevel",
+        "NonexistenceProofBody",
+        "ExistenceProofBody",
+        "ArchivalProof",
+        "ArchivalProofBody",
         "SorobanResources",
         "SorobanTransactionData",
         "TransactionV0",
@@ -47112,6 +47577,9 @@ impl TypeVariant {
         "ShortHashSeed",
         "BinaryFuseFilterType",
         "SerializedBinaryFuseFilter",
+        "PoolId",
+        "ClaimableBalanceIdType",
+        "ClaimableBalanceId",
     ];
 
     #[must_use]
@@ -47183,6 +47651,7 @@ impl TypeVariant {
             Self::ContractExecutableType => "ContractExecutableType",
             Self::ContractExecutable => "ContractExecutable",
             Self::ScAddressType => "ScAddressType",
+            Self::MuxedEd25519Account => "MuxedEd25519Account",
             Self::ScAddress => "ScAddress",
             Self::ScVec => "ScVec",
             Self::ScMap => "ScMap",
@@ -47203,7 +47672,6 @@ impl TypeVariant {
             Self::String64 => "String64",
             Self::SequenceNumber => "SequenceNumber",
             Self::DataValue => "DataValue",
-            Self::PoolId => "PoolId",
             Self::AssetCode4 => "AssetCode4",
             Self::AssetCode12 => "AssetCode12",
             Self::AssetType => "AssetType",
@@ -47244,8 +47712,6 @@ impl TypeVariant {
             Self::ClaimantType => "ClaimantType",
             Self::Claimant => "Claimant",
             Self::ClaimantV0 => "ClaimantV0",
-            Self::ClaimableBalanceIdType => "ClaimableBalanceIdType",
-            Self::ClaimableBalanceId => "ClaimableBalanceId",
             Self::ClaimableBalanceFlags => "ClaimableBalanceFlags",
             Self::ClaimableBalanceEntryExtensionV1 => "ClaimableBalanceEntryExtensionV1",
             Self::ClaimableBalanceEntryExtensionV1Ext => "ClaimableBalanceEntryExtensionV1Ext",
@@ -47342,6 +47808,9 @@ impl TypeVariant {
             Self::SorobanTransactionMetaExt => "SorobanTransactionMetaExt",
             Self::SorobanTransactionMeta => "SorobanTransactionMeta",
             Self::TransactionMetaV3 => "TransactionMetaV3",
+            Self::OperationMetaV2 => "OperationMetaV2",
+            Self::SorobanTransactionMetaV2 => "SorobanTransactionMetaV2",
+            Self::TransactionMetaV4 => "TransactionMetaV4",
             Self::InvokeHostFunctionSuccessPreImage => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta => "TransactionMeta",
             Self::TransactionResultMeta => "TransactionResultMeta",
@@ -47377,20 +47846,15 @@ impl TypeVariant {
             }
             Self::SurveyRequestMessage => "SurveyRequestMessage",
             Self::TimeSlicedSurveyRequestMessage => "TimeSlicedSurveyRequestMessage",
-            Self::SignedSurveyRequestMessage => "SignedSurveyRequestMessage",
             Self::SignedTimeSlicedSurveyRequestMessage => "SignedTimeSlicedSurveyRequestMessage",
             Self::EncryptedBody => "EncryptedBody",
             Self::SurveyResponseMessage => "SurveyResponseMessage",
             Self::TimeSlicedSurveyResponseMessage => "TimeSlicedSurveyResponseMessage",
-            Self::SignedSurveyResponseMessage => "SignedSurveyResponseMessage",
             Self::SignedTimeSlicedSurveyResponseMessage => "SignedTimeSlicedSurveyResponseMessage",
             Self::PeerStats => "PeerStats",
-            Self::PeerStatList => "PeerStatList",
             Self::TimeSlicedNodeData => "TimeSlicedNodeData",
             Self::TimeSlicedPeerData => "TimeSlicedPeerData",
             Self::TimeSlicedPeerDataList => "TimeSlicedPeerDataList",
-            Self::TopologyResponseBodyV0 => "TopologyResponseBodyV0",
-            Self::TopologyResponseBodyV1 => "TopologyResponseBodyV1",
             Self::TopologyResponseBodyV2 => "TopologyResponseBodyV2",
             Self::SurveyResponseBody => "SurveyResponseBody",
             Self::TxAdvertVector => "TxAdvertVector",
@@ -47462,6 +47926,13 @@ impl TypeVariant {
             Self::PreconditionType => "PreconditionType",
             Self::Preconditions => "Preconditions",
             Self::LedgerFootprint => "LedgerFootprint",
+            Self::ArchivalProofType => "ArchivalProofType",
+            Self::ArchivalProofNode => "ArchivalProofNode",
+            Self::ProofLevel => "ProofLevel",
+            Self::NonexistenceProofBody => "NonexistenceProofBody",
+            Self::ExistenceProofBody => "ExistenceProofBody",
+            Self::ArchivalProof => "ArchivalProof",
+            Self::ArchivalProofBody => "ArchivalProofBody",
             Self::SorobanResources => "SorobanResources",
             Self::SorobanTransactionData => "SorobanTransactionData",
             Self::TransactionV0 => "TransactionV0",
@@ -47582,12 +48053,15 @@ impl TypeVariant {
             Self::ShortHashSeed => "ShortHashSeed",
             Self::BinaryFuseFilterType => "BinaryFuseFilterType",
             Self::SerializedBinaryFuseFilter => "SerializedBinaryFuseFilter",
+            Self::PoolId => "PoolId",
+            Self::ClaimableBalanceIdType => "ClaimableBalanceIdType",
+            Self::ClaimableBalanceId => "ClaimableBalanceId",
         }
     }
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 452] {
+    pub const fn variants() -> [TypeVariant; 458] {
         Self::VARIANTS
     }
 
@@ -47683,6 +48157,7 @@ impl TypeVariant {
             Self::ContractExecutableType => gen.into_root_schema_for::<ContractExecutableType>(),
             Self::ContractExecutable => gen.into_root_schema_for::<ContractExecutable>(),
             Self::ScAddressType => gen.into_root_schema_for::<ScAddressType>(),
+            Self::MuxedEd25519Account => gen.into_root_schema_for::<MuxedEd25519Account>(),
             Self::ScAddress => gen.into_root_schema_for::<ScAddress>(),
             Self::ScVec => gen.into_root_schema_for::<ScVec>(),
             Self::ScMap => gen.into_root_schema_for::<ScMap>(),
@@ -47705,7 +48180,6 @@ impl TypeVariant {
             Self::String64 => gen.into_root_schema_for::<String64>(),
             Self::SequenceNumber => gen.into_root_schema_for::<SequenceNumber>(),
             Self::DataValue => gen.into_root_schema_for::<DataValue>(),
-            Self::PoolId => gen.into_root_schema_for::<PoolId>(),
             Self::AssetCode4 => gen.into_root_schema_for::<AssetCode4>(),
             Self::AssetCode12 => gen.into_root_schema_for::<AssetCode12>(),
             Self::AssetType => gen.into_root_schema_for::<AssetType>(),
@@ -47754,8 +48228,6 @@ impl TypeVariant {
             Self::ClaimantType => gen.into_root_schema_for::<ClaimantType>(),
             Self::Claimant => gen.into_root_schema_for::<Claimant>(),
             Self::ClaimantV0 => gen.into_root_schema_for::<ClaimantV0>(),
-            Self::ClaimableBalanceIdType => gen.into_root_schema_for::<ClaimableBalanceIdType>(),
-            Self::ClaimableBalanceId => gen.into_root_schema_for::<ClaimableBalanceId>(),
             Self::ClaimableBalanceFlags => gen.into_root_schema_for::<ClaimableBalanceFlags>(),
             Self::ClaimableBalanceEntryExtensionV1 => {
                 gen.into_root_schema_for::<ClaimableBalanceEntryExtensionV1>()
@@ -47890,6 +48362,11 @@ impl TypeVariant {
             }
             Self::SorobanTransactionMeta => gen.into_root_schema_for::<SorobanTransactionMeta>(),
             Self::TransactionMetaV3 => gen.into_root_schema_for::<TransactionMetaV3>(),
+            Self::OperationMetaV2 => gen.into_root_schema_for::<OperationMetaV2>(),
+            Self::SorobanTransactionMetaV2 => {
+                gen.into_root_schema_for::<SorobanTransactionMetaV2>()
+            }
+            Self::TransactionMetaV4 => gen.into_root_schema_for::<TransactionMetaV4>(),
             Self::InvokeHostFunctionSuccessPreImage => {
                 gen.into_root_schema_for::<InvokeHostFunctionSuccessPreImage>()
             }
@@ -47935,9 +48412,6 @@ impl TypeVariant {
             Self::TimeSlicedSurveyRequestMessage => {
                 gen.into_root_schema_for::<TimeSlicedSurveyRequestMessage>()
             }
-            Self::SignedSurveyRequestMessage => {
-                gen.into_root_schema_for::<SignedSurveyRequestMessage>()
-            }
             Self::SignedTimeSlicedSurveyRequestMessage => {
                 gen.into_root_schema_for::<SignedTimeSlicedSurveyRequestMessage>()
             }
@@ -47946,19 +48420,13 @@ impl TypeVariant {
             Self::TimeSlicedSurveyResponseMessage => {
                 gen.into_root_schema_for::<TimeSlicedSurveyResponseMessage>()
             }
-            Self::SignedSurveyResponseMessage => {
-                gen.into_root_schema_for::<SignedSurveyResponseMessage>()
-            }
             Self::SignedTimeSlicedSurveyResponseMessage => {
                 gen.into_root_schema_for::<SignedTimeSlicedSurveyResponseMessage>()
             }
             Self::PeerStats => gen.into_root_schema_for::<PeerStats>(),
-            Self::PeerStatList => gen.into_root_schema_for::<PeerStatList>(),
             Self::TimeSlicedNodeData => gen.into_root_schema_for::<TimeSlicedNodeData>(),
             Self::TimeSlicedPeerData => gen.into_root_schema_for::<TimeSlicedPeerData>(),
             Self::TimeSlicedPeerDataList => gen.into_root_schema_for::<TimeSlicedPeerDataList>(),
-            Self::TopologyResponseBodyV0 => gen.into_root_schema_for::<TopologyResponseBodyV0>(),
-            Self::TopologyResponseBodyV1 => gen.into_root_schema_for::<TopologyResponseBodyV1>(),
             Self::TopologyResponseBodyV2 => gen.into_root_schema_for::<TopologyResponseBodyV2>(),
             Self::SurveyResponseBody => gen.into_root_schema_for::<SurveyResponseBody>(),
             Self::TxAdvertVector => gen.into_root_schema_for::<TxAdvertVector>(),
@@ -48060,6 +48528,13 @@ impl TypeVariant {
             Self::PreconditionType => gen.into_root_schema_for::<PreconditionType>(),
             Self::Preconditions => gen.into_root_schema_for::<Preconditions>(),
             Self::LedgerFootprint => gen.into_root_schema_for::<LedgerFootprint>(),
+            Self::ArchivalProofType => gen.into_root_schema_for::<ArchivalProofType>(),
+            Self::ArchivalProofNode => gen.into_root_schema_for::<ArchivalProofNode>(),
+            Self::ProofLevel => gen.into_root_schema_for::<ProofLevel>(),
+            Self::NonexistenceProofBody => gen.into_root_schema_for::<NonexistenceProofBody>(),
+            Self::ExistenceProofBody => gen.into_root_schema_for::<ExistenceProofBody>(),
+            Self::ArchivalProof => gen.into_root_schema_for::<ArchivalProof>(),
+            Self::ArchivalProofBody => gen.into_root_schema_for::<ArchivalProofBody>(),
             Self::SorobanResources => gen.into_root_schema_for::<SorobanResources>(),
             Self::SorobanTransactionData => gen.into_root_schema_for::<SorobanTransactionData>(),
             Self::TransactionV0 => gen.into_root_schema_for::<TransactionV0>(),
@@ -48256,6 +48731,9 @@ impl TypeVariant {
             Self::SerializedBinaryFuseFilter => {
                 gen.into_root_schema_for::<SerializedBinaryFuseFilter>()
             }
+            Self::PoolId => gen.into_root_schema_for::<PoolId>(),
+            Self::ClaimableBalanceIdType => gen.into_root_schema_for::<ClaimableBalanceIdType>(),
+            Self::ClaimableBalanceId => gen.into_root_schema_for::<ClaimableBalanceId>(),
         }
     }
 }
@@ -48347,6 +48825,7 @@ impl core::str::FromStr for TypeVariant {
             "ContractExecutableType" => Ok(Self::ContractExecutableType),
             "ContractExecutable" => Ok(Self::ContractExecutable),
             "ScAddressType" => Ok(Self::ScAddressType),
+            "MuxedEd25519Account" => Ok(Self::MuxedEd25519Account),
             "ScAddress" => Ok(Self::ScAddress),
             "ScVec" => Ok(Self::ScVec),
             "ScMap" => Ok(Self::ScMap),
@@ -48367,7 +48846,6 @@ impl core::str::FromStr for TypeVariant {
             "String64" => Ok(Self::String64),
             "SequenceNumber" => Ok(Self::SequenceNumber),
             "DataValue" => Ok(Self::DataValue),
-            "PoolId" => Ok(Self::PoolId),
             "AssetCode4" => Ok(Self::AssetCode4),
             "AssetCode12" => Ok(Self::AssetCode12),
             "AssetType" => Ok(Self::AssetType),
@@ -48408,8 +48886,6 @@ impl core::str::FromStr for TypeVariant {
             "ClaimantType" => Ok(Self::ClaimantType),
             "Claimant" => Ok(Self::Claimant),
             "ClaimantV0" => Ok(Self::ClaimantV0),
-            "ClaimableBalanceIdType" => Ok(Self::ClaimableBalanceIdType),
-            "ClaimableBalanceId" => Ok(Self::ClaimableBalanceId),
             "ClaimableBalanceFlags" => Ok(Self::ClaimableBalanceFlags),
             "ClaimableBalanceEntryExtensionV1" => Ok(Self::ClaimableBalanceEntryExtensionV1),
             "ClaimableBalanceEntryExtensionV1Ext" => Ok(Self::ClaimableBalanceEntryExtensionV1Ext),
@@ -48506,6 +48982,9 @@ impl core::str::FromStr for TypeVariant {
             "SorobanTransactionMetaExt" => Ok(Self::SorobanTransactionMetaExt),
             "SorobanTransactionMeta" => Ok(Self::SorobanTransactionMeta),
             "TransactionMetaV3" => Ok(Self::TransactionMetaV3),
+            "OperationMetaV2" => Ok(Self::OperationMetaV2),
+            "SorobanTransactionMetaV2" => Ok(Self::SorobanTransactionMetaV2),
+            "TransactionMetaV4" => Ok(Self::TransactionMetaV4),
             "InvokeHostFunctionSuccessPreImage" => Ok(Self::InvokeHostFunctionSuccessPreImage),
             "TransactionMeta" => Ok(Self::TransactionMeta),
             "TransactionResultMeta" => Ok(Self::TransactionResultMeta),
@@ -48543,24 +49022,19 @@ impl core::str::FromStr for TypeVariant {
             }
             "SurveyRequestMessage" => Ok(Self::SurveyRequestMessage),
             "TimeSlicedSurveyRequestMessage" => Ok(Self::TimeSlicedSurveyRequestMessage),
-            "SignedSurveyRequestMessage" => Ok(Self::SignedSurveyRequestMessage),
             "SignedTimeSlicedSurveyRequestMessage" => {
                 Ok(Self::SignedTimeSlicedSurveyRequestMessage)
             }
             "EncryptedBody" => Ok(Self::EncryptedBody),
             "SurveyResponseMessage" => Ok(Self::SurveyResponseMessage),
             "TimeSlicedSurveyResponseMessage" => Ok(Self::TimeSlicedSurveyResponseMessage),
-            "SignedSurveyResponseMessage" => Ok(Self::SignedSurveyResponseMessage),
             "SignedTimeSlicedSurveyResponseMessage" => {
                 Ok(Self::SignedTimeSlicedSurveyResponseMessage)
             }
             "PeerStats" => Ok(Self::PeerStats),
-            "PeerStatList" => Ok(Self::PeerStatList),
             "TimeSlicedNodeData" => Ok(Self::TimeSlicedNodeData),
             "TimeSlicedPeerData" => Ok(Self::TimeSlicedPeerData),
             "TimeSlicedPeerDataList" => Ok(Self::TimeSlicedPeerDataList),
-            "TopologyResponseBodyV0" => Ok(Self::TopologyResponseBodyV0),
-            "TopologyResponseBodyV1" => Ok(Self::TopologyResponseBodyV1),
             "TopologyResponseBodyV2" => Ok(Self::TopologyResponseBodyV2),
             "SurveyResponseBody" => Ok(Self::SurveyResponseBody),
             "TxAdvertVector" => Ok(Self::TxAdvertVector),
@@ -48632,6 +49106,13 @@ impl core::str::FromStr for TypeVariant {
             "PreconditionType" => Ok(Self::PreconditionType),
             "Preconditions" => Ok(Self::Preconditions),
             "LedgerFootprint" => Ok(Self::LedgerFootprint),
+            "ArchivalProofType" => Ok(Self::ArchivalProofType),
+            "ArchivalProofNode" => Ok(Self::ArchivalProofNode),
+            "ProofLevel" => Ok(Self::ProofLevel),
+            "NonexistenceProofBody" => Ok(Self::NonexistenceProofBody),
+            "ExistenceProofBody" => Ok(Self::ExistenceProofBody),
+            "ArchivalProof" => Ok(Self::ArchivalProof),
+            "ArchivalProofBody" => Ok(Self::ArchivalProofBody),
             "SorobanResources" => Ok(Self::SorobanResources),
             "SorobanTransactionData" => Ok(Self::SorobanTransactionData),
             "TransactionV0" => Ok(Self::TransactionV0),
@@ -48756,6 +49237,9 @@ impl core::str::FromStr for TypeVariant {
             "ShortHashSeed" => Ok(Self::ShortHashSeed),
             "BinaryFuseFilterType" => Ok(Self::BinaryFuseFilterType),
             "SerializedBinaryFuseFilter" => Ok(Self::SerializedBinaryFuseFilter),
+            "PoolId" => Ok(Self::PoolId),
+            "ClaimableBalanceIdType" => Ok(Self::ClaimableBalanceIdType),
+            "ClaimableBalanceId" => Ok(Self::ClaimableBalanceId),
             _ => Err(Error::Invalid),
         }
     }
@@ -48835,6 +49319,7 @@ pub enum Type {
     ContractExecutableType(Box<ContractExecutableType>),
     ContractExecutable(Box<ContractExecutable>),
     ScAddressType(Box<ScAddressType>),
+    MuxedEd25519Account(Box<MuxedEd25519Account>),
     ScAddress(Box<ScAddress>),
     ScVec(Box<ScVec>),
     ScMap(Box<ScMap>),
@@ -48855,7 +49340,6 @@ pub enum Type {
     String64(Box<String64>),
     SequenceNumber(Box<SequenceNumber>),
     DataValue(Box<DataValue>),
-    PoolId(Box<PoolId>),
     AssetCode4(Box<AssetCode4>),
     AssetCode12(Box<AssetCode12>),
     AssetType(Box<AssetType>),
@@ -48896,8 +49380,6 @@ pub enum Type {
     ClaimantType(Box<ClaimantType>),
     Claimant(Box<Claimant>),
     ClaimantV0(Box<ClaimantV0>),
-    ClaimableBalanceIdType(Box<ClaimableBalanceIdType>),
-    ClaimableBalanceId(Box<ClaimableBalanceId>),
     ClaimableBalanceFlags(Box<ClaimableBalanceFlags>),
     ClaimableBalanceEntryExtensionV1(Box<ClaimableBalanceEntryExtensionV1>),
     ClaimableBalanceEntryExtensionV1Ext(Box<ClaimableBalanceEntryExtensionV1Ext>),
@@ -48992,6 +49474,9 @@ pub enum Type {
     SorobanTransactionMetaExt(Box<SorobanTransactionMetaExt>),
     SorobanTransactionMeta(Box<SorobanTransactionMeta>),
     TransactionMetaV3(Box<TransactionMetaV3>),
+    OperationMetaV2(Box<OperationMetaV2>),
+    SorobanTransactionMetaV2(Box<SorobanTransactionMetaV2>),
+    TransactionMetaV4(Box<TransactionMetaV4>),
     InvokeHostFunctionSuccessPreImage(Box<InvokeHostFunctionSuccessPreImage>),
     TransactionMeta(Box<TransactionMeta>),
     TransactionResultMeta(Box<TransactionResultMeta>),
@@ -49021,20 +49506,15 @@ pub enum Type {
     SignedTimeSlicedSurveyStopCollectingMessage(Box<SignedTimeSlicedSurveyStopCollectingMessage>),
     SurveyRequestMessage(Box<SurveyRequestMessage>),
     TimeSlicedSurveyRequestMessage(Box<TimeSlicedSurveyRequestMessage>),
-    SignedSurveyRequestMessage(Box<SignedSurveyRequestMessage>),
     SignedTimeSlicedSurveyRequestMessage(Box<SignedTimeSlicedSurveyRequestMessage>),
     EncryptedBody(Box<EncryptedBody>),
     SurveyResponseMessage(Box<SurveyResponseMessage>),
     TimeSlicedSurveyResponseMessage(Box<TimeSlicedSurveyResponseMessage>),
-    SignedSurveyResponseMessage(Box<SignedSurveyResponseMessage>),
     SignedTimeSlicedSurveyResponseMessage(Box<SignedTimeSlicedSurveyResponseMessage>),
     PeerStats(Box<PeerStats>),
-    PeerStatList(Box<PeerStatList>),
     TimeSlicedNodeData(Box<TimeSlicedNodeData>),
     TimeSlicedPeerData(Box<TimeSlicedPeerData>),
     TimeSlicedPeerDataList(Box<TimeSlicedPeerDataList>),
-    TopologyResponseBodyV0(Box<TopologyResponseBodyV0>),
-    TopologyResponseBodyV1(Box<TopologyResponseBodyV1>),
     TopologyResponseBodyV2(Box<TopologyResponseBodyV2>),
     SurveyResponseBody(Box<SurveyResponseBody>),
     TxAdvertVector(Box<TxAdvertVector>),
@@ -49106,6 +49586,13 @@ pub enum Type {
     PreconditionType(Box<PreconditionType>),
     Preconditions(Box<Preconditions>),
     LedgerFootprint(Box<LedgerFootprint>),
+    ArchivalProofType(Box<ArchivalProofType>),
+    ArchivalProofNode(Box<ArchivalProofNode>),
+    ProofLevel(Box<ProofLevel>),
+    NonexistenceProofBody(Box<NonexistenceProofBody>),
+    ExistenceProofBody(Box<ExistenceProofBody>),
+    ArchivalProof(Box<ArchivalProof>),
+    ArchivalProofBody(Box<ArchivalProofBody>),
     SorobanResources(Box<SorobanResources>),
     SorobanTransactionData(Box<SorobanTransactionData>),
     TransactionV0(Box<TransactionV0>),
@@ -49222,10 +49709,13 @@ pub enum Type {
     ShortHashSeed(Box<ShortHashSeed>),
     BinaryFuseFilterType(Box<BinaryFuseFilterType>),
     SerializedBinaryFuseFilter(Box<SerializedBinaryFuseFilter>),
+    PoolId(Box<PoolId>),
+    ClaimableBalanceIdType(Box<ClaimableBalanceIdType>),
+    ClaimableBalanceId(Box<ClaimableBalanceId>),
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 452] = [
+    pub const VARIANTS: [TypeVariant; 458] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -49291,6 +49781,7 @@ impl Type {
         TypeVariant::ContractExecutableType,
         TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
+        TypeVariant::MuxedEd25519Account,
         TypeVariant::ScAddress,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
@@ -49311,7 +49802,6 @@ impl Type {
         TypeVariant::String64,
         TypeVariant::SequenceNumber,
         TypeVariant::DataValue,
-        TypeVariant::PoolId,
         TypeVariant::AssetCode4,
         TypeVariant::AssetCode12,
         TypeVariant::AssetType,
@@ -49352,8 +49842,6 @@ impl Type {
         TypeVariant::ClaimantType,
         TypeVariant::Claimant,
         TypeVariant::ClaimantV0,
-        TypeVariant::ClaimableBalanceIdType,
-        TypeVariant::ClaimableBalanceId,
         TypeVariant::ClaimableBalanceFlags,
         TypeVariant::ClaimableBalanceEntryExtensionV1,
         TypeVariant::ClaimableBalanceEntryExtensionV1Ext,
@@ -49448,6 +49936,9 @@ impl Type {
         TypeVariant::SorobanTransactionMetaExt,
         TypeVariant::SorobanTransactionMeta,
         TypeVariant::TransactionMetaV3,
+        TypeVariant::OperationMetaV2,
+        TypeVariant::SorobanTransactionMetaV2,
+        TypeVariant::TransactionMetaV4,
         TypeVariant::InvokeHostFunctionSuccessPreImage,
         TypeVariant::TransactionMeta,
         TypeVariant::TransactionResultMeta,
@@ -49477,20 +49968,15 @@ impl Type {
         TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage,
         TypeVariant::SurveyRequestMessage,
         TypeVariant::TimeSlicedSurveyRequestMessage,
-        TypeVariant::SignedSurveyRequestMessage,
         TypeVariant::SignedTimeSlicedSurveyRequestMessage,
         TypeVariant::EncryptedBody,
         TypeVariant::SurveyResponseMessage,
         TypeVariant::TimeSlicedSurveyResponseMessage,
-        TypeVariant::SignedSurveyResponseMessage,
         TypeVariant::SignedTimeSlicedSurveyResponseMessage,
         TypeVariant::PeerStats,
-        TypeVariant::PeerStatList,
         TypeVariant::TimeSlicedNodeData,
         TypeVariant::TimeSlicedPeerData,
         TypeVariant::TimeSlicedPeerDataList,
-        TypeVariant::TopologyResponseBodyV0,
-        TypeVariant::TopologyResponseBodyV1,
         TypeVariant::TopologyResponseBodyV2,
         TypeVariant::SurveyResponseBody,
         TypeVariant::TxAdvertVector,
@@ -49562,6 +50048,13 @@ impl Type {
         TypeVariant::PreconditionType,
         TypeVariant::Preconditions,
         TypeVariant::LedgerFootprint,
+        TypeVariant::ArchivalProofType,
+        TypeVariant::ArchivalProofNode,
+        TypeVariant::ProofLevel,
+        TypeVariant::NonexistenceProofBody,
+        TypeVariant::ExistenceProofBody,
+        TypeVariant::ArchivalProof,
+        TypeVariant::ArchivalProofBody,
         TypeVariant::SorobanResources,
         TypeVariant::SorobanTransactionData,
         TypeVariant::TransactionV0,
@@ -49678,8 +50171,11 @@ impl Type {
         TypeVariant::ShortHashSeed,
         TypeVariant::BinaryFuseFilterType,
         TypeVariant::SerializedBinaryFuseFilter,
+        TypeVariant::PoolId,
+        TypeVariant::ClaimableBalanceIdType,
+        TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 452] = [
+    pub const VARIANTS_STR: [&'static str; 458] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -49745,6 +50241,7 @@ impl Type {
         "ContractExecutableType",
         "ContractExecutable",
         "ScAddressType",
+        "MuxedEd25519Account",
         "ScAddress",
         "ScVec",
         "ScMap",
@@ -49765,7 +50262,6 @@ impl Type {
         "String64",
         "SequenceNumber",
         "DataValue",
-        "PoolId",
         "AssetCode4",
         "AssetCode12",
         "AssetType",
@@ -49806,8 +50302,6 @@ impl Type {
         "ClaimantType",
         "Claimant",
         "ClaimantV0",
-        "ClaimableBalanceIdType",
-        "ClaimableBalanceId",
         "ClaimableBalanceFlags",
         "ClaimableBalanceEntryExtensionV1",
         "ClaimableBalanceEntryExtensionV1Ext",
@@ -49902,6 +50396,9 @@ impl Type {
         "SorobanTransactionMetaExt",
         "SorobanTransactionMeta",
         "TransactionMetaV3",
+        "OperationMetaV2",
+        "SorobanTransactionMetaV2",
+        "TransactionMetaV4",
         "InvokeHostFunctionSuccessPreImage",
         "TransactionMeta",
         "TransactionResultMeta",
@@ -49931,20 +50428,15 @@ impl Type {
         "SignedTimeSlicedSurveyStopCollectingMessage",
         "SurveyRequestMessage",
         "TimeSlicedSurveyRequestMessage",
-        "SignedSurveyRequestMessage",
         "SignedTimeSlicedSurveyRequestMessage",
         "EncryptedBody",
         "SurveyResponseMessage",
         "TimeSlicedSurveyResponseMessage",
-        "SignedSurveyResponseMessage",
         "SignedTimeSlicedSurveyResponseMessage",
         "PeerStats",
-        "PeerStatList",
         "TimeSlicedNodeData",
         "TimeSlicedPeerData",
         "TimeSlicedPeerDataList",
-        "TopologyResponseBodyV0",
-        "TopologyResponseBodyV1",
         "TopologyResponseBodyV2",
         "SurveyResponseBody",
         "TxAdvertVector",
@@ -50016,6 +50508,13 @@ impl Type {
         "PreconditionType",
         "Preconditions",
         "LedgerFootprint",
+        "ArchivalProofType",
+        "ArchivalProofNode",
+        "ProofLevel",
+        "NonexistenceProofBody",
+        "ExistenceProofBody",
+        "ArchivalProof",
+        "ArchivalProofBody",
         "SorobanResources",
         "SorobanTransactionData",
         "TransactionV0",
@@ -50132,6 +50631,9 @@ impl Type {
         "ShortHashSeed",
         "BinaryFuseFilterType",
         "SerializedBinaryFuseFilter",
+        "PoolId",
+        "ClaimableBalanceIdType",
+        "ClaimableBalanceId",
     ];
 
     #[cfg(feature = "std")]
@@ -50411,6 +50913,11 @@ impl Type {
             TypeVariant::ScAddressType => r.with_limited_depth(|r| {
                 Ok(Self::ScAddressType(Box::new(ScAddressType::read_xdr(r)?)))
             }),
+            TypeVariant::MuxedEd25519Account => r.with_limited_depth(|r| {
+                Ok(Self::MuxedEd25519Account(Box::new(
+                    MuxedEd25519Account::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::ScAddress => {
                 r.with_limited_depth(|r| Ok(Self::ScAddress(Box::new(ScAddress::read_xdr(r)?))))
             }
@@ -50482,9 +50989,6 @@ impl Type {
             }),
             TypeVariant::DataValue => {
                 r.with_limited_depth(|r| Ok(Self::DataValue(Box::new(DataValue::read_xdr(r)?))))
-            }
-            TypeVariant::PoolId => {
-                r.with_limited_depth(|r| Ok(Self::PoolId(Box::new(PoolId::read_xdr(r)?))))
             }
             TypeVariant::AssetCode4 => {
                 r.with_limited_depth(|r| Ok(Self::AssetCode4(Box::new(AssetCode4::read_xdr(r)?))))
@@ -50640,16 +51144,6 @@ impl Type {
             TypeVariant::ClaimantV0 => {
                 r.with_limited_depth(|r| Ok(Self::ClaimantV0(Box::new(ClaimantV0::read_xdr(r)?))))
             }
-            TypeVariant::ClaimableBalanceIdType => r.with_limited_depth(|r| {
-                Ok(Self::ClaimableBalanceIdType(Box::new(
-                    ClaimableBalanceIdType::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ClaimableBalanceId => r.with_limited_depth(|r| {
-                Ok(Self::ClaimableBalanceId(Box::new(
-                    ClaimableBalanceId::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::ClaimableBalanceFlags => r.with_limited_depth(|r| {
                 Ok(Self::ClaimableBalanceFlags(Box::new(
                     ClaimableBalanceFlags::read_xdr(r)?,
@@ -51082,6 +51576,21 @@ impl Type {
                     TransactionMetaV3::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::OperationMetaV2 => r.with_limited_depth(|r| {
+                Ok(Self::OperationMetaV2(Box::new(OperationMetaV2::read_xdr(
+                    r,
+                )?)))
+            }),
+            TypeVariant::SorobanTransactionMetaV2 => r.with_limited_depth(|r| {
+                Ok(Self::SorobanTransactionMetaV2(Box::new(
+                    SorobanTransactionMetaV2::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::TransactionMetaV4 => r.with_limited_depth(|r| {
+                Ok(Self::TransactionMetaV4(Box::new(
+                    TransactionMetaV4::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::InvokeHostFunctionSuccessPreImage => r.with_limited_depth(|r| {
                 Ok(Self::InvokeHostFunctionSuccessPreImage(Box::new(
                     InvokeHostFunctionSuccessPreImage::read_xdr(r)?,
@@ -51207,11 +51716,6 @@ impl Type {
                     TimeSlicedSurveyRequestMessage::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::SignedSurveyRequestMessage => r.with_limited_depth(|r| {
-                Ok(Self::SignedSurveyRequestMessage(Box::new(
-                    SignedSurveyRequestMessage::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::SignedTimeSlicedSurveyRequestMessage => r.with_limited_depth(|r| {
                 Ok(Self::SignedTimeSlicedSurveyRequestMessage(Box::new(
                     SignedTimeSlicedSurveyRequestMessage::read_xdr(r)?,
@@ -51230,11 +51734,6 @@ impl Type {
                     TimeSlicedSurveyResponseMessage::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::SignedSurveyResponseMessage => r.with_limited_depth(|r| {
-                Ok(Self::SignedSurveyResponseMessage(Box::new(
-                    SignedSurveyResponseMessage::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::SignedTimeSlicedSurveyResponseMessage => r.with_limited_depth(|r| {
                 Ok(Self::SignedTimeSlicedSurveyResponseMessage(Box::new(
                     SignedTimeSlicedSurveyResponseMessage::read_xdr(r)?,
@@ -51243,9 +51742,6 @@ impl Type {
             TypeVariant::PeerStats => {
                 r.with_limited_depth(|r| Ok(Self::PeerStats(Box::new(PeerStats::read_xdr(r)?))))
             }
-            TypeVariant::PeerStatList => r.with_limited_depth(|r| {
-                Ok(Self::PeerStatList(Box::new(PeerStatList::read_xdr(r)?)))
-            }),
             TypeVariant::TimeSlicedNodeData => r.with_limited_depth(|r| {
                 Ok(Self::TimeSlicedNodeData(Box::new(
                     TimeSlicedNodeData::read_xdr(r)?,
@@ -51259,16 +51755,6 @@ impl Type {
             TypeVariant::TimeSlicedPeerDataList => r.with_limited_depth(|r| {
                 Ok(Self::TimeSlicedPeerDataList(Box::new(
                     TimeSlicedPeerDataList::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::TopologyResponseBodyV0 => r.with_limited_depth(|r| {
-                Ok(Self::TopologyResponseBodyV0(Box::new(
-                    TopologyResponseBodyV0::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::TopologyResponseBodyV1 => r.with_limited_depth(|r| {
-                Ok(Self::TopologyResponseBodyV1(Box::new(
-                    TopologyResponseBodyV1::read_xdr(r)?,
                 )))
             }),
             TypeVariant::TopologyResponseBodyV2 => r.with_limited_depth(|r| {
@@ -51579,6 +52065,37 @@ impl Type {
                 Ok(Self::LedgerFootprint(Box::new(LedgerFootprint::read_xdr(
                     r,
                 )?)))
+            }),
+            TypeVariant::ArchivalProofType => r.with_limited_depth(|r| {
+                Ok(Self::ArchivalProofType(Box::new(
+                    ArchivalProofType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ArchivalProofNode => r.with_limited_depth(|r| {
+                Ok(Self::ArchivalProofNode(Box::new(
+                    ArchivalProofNode::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ProofLevel => {
+                r.with_limited_depth(|r| Ok(Self::ProofLevel(Box::new(ProofLevel::read_xdr(r)?))))
+            }
+            TypeVariant::NonexistenceProofBody => r.with_limited_depth(|r| {
+                Ok(Self::NonexistenceProofBody(Box::new(
+                    NonexistenceProofBody::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ExistenceProofBody => r.with_limited_depth(|r| {
+                Ok(Self::ExistenceProofBody(Box::new(
+                    ExistenceProofBody::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ArchivalProof => r.with_limited_depth(|r| {
+                Ok(Self::ArchivalProof(Box::new(ArchivalProof::read_xdr(r)?)))
+            }),
+            TypeVariant::ArchivalProofBody => r.with_limited_depth(|r| {
+                Ok(Self::ArchivalProofBody(Box::new(
+                    ArchivalProofBody::read_xdr(r)?,
+                )))
             }),
             TypeVariant::SorobanResources => r.with_limited_depth(|r| {
                 Ok(Self::SorobanResources(Box::new(
@@ -52104,6 +52621,19 @@ impl Type {
                     SerializedBinaryFuseFilter::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::PoolId => {
+                r.with_limited_depth(|r| Ok(Self::PoolId(Box::new(PoolId::read_xdr(r)?))))
+            }
+            TypeVariant::ClaimableBalanceIdType => r.with_limited_depth(|r| {
+                Ok(Self::ClaimableBalanceIdType(Box::new(
+                    ClaimableBalanceIdType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ClaimableBalanceId => r.with_limited_depth(|r| {
+                Ok(Self::ClaimableBalanceId(Box::new(
+                    ClaimableBalanceId::read_xdr(r)?,
+                )))
+            }),
         }
     }
 
@@ -52427,6 +52957,10 @@ impl Type {
                 ReadXdrIter::<_, ScAddressType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
             ),
+            TypeVariant::MuxedEd25519Account => Box::new(
+                ReadXdrIter::<_, MuxedEd25519Account>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t)))),
+            ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, ScAddress>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
@@ -52506,10 +53040,6 @@ impl Type {
             TypeVariant::DataValue => Box::new(
                 ReadXdrIter::<_, DataValue>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataValue(Box::new(t)))),
-            ),
-            TypeVariant::PoolId => Box::new(
-                ReadXdrIter::<_, PoolId>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
             ),
             TypeVariant::AssetCode4 => Box::new(
                 ReadXdrIter::<_, AssetCode4>::new(&mut r.inner, r.limits.clone())
@@ -52670,14 +53200,6 @@ impl Type {
             TypeVariant::ClaimantV0 => Box::new(
                 ReadXdrIter::<_, ClaimantV0>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t)))),
-            ),
-            TypeVariant::ClaimableBalanceIdType => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceIdType>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t)))),
-            ),
-            TypeVariant::ClaimableBalanceId => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceId>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceFlags => Box::new(
                 ReadXdrIter::<_, ClaimableBalanceFlags>::new(&mut r.inner, r.limits.clone())
@@ -53076,6 +53598,18 @@ impl Type {
                 ReadXdrIter::<_, TransactionMetaV3>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t)))),
             ),
+            TypeVariant::OperationMetaV2 => Box::new(
+                ReadXdrIter::<_, OperationMetaV2>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::OperationMetaV2(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionMetaV2 => Box::new(
+                ReadXdrIter::<_, SorobanTransactionMetaV2>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanTransactionMetaV2(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMetaV4 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV4>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionMetaV4(Box::new(t)))),
+            ),
             TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionSuccessPreImage>::new(
                     &mut r.inner,
@@ -53212,10 +53746,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::TimeSlicedSurveyRequestMessage(Box::new(t)))),
             ),
-            TypeVariant::SignedSurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t)))),
-            ),
             TypeVariant::SignedTimeSlicedSurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, SignedTimeSlicedSurveyRequestMessage>::new(
                     &mut r.inner,
@@ -53238,10 +53768,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::TimeSlicedSurveyResponseMessage(Box::new(t)))),
             ),
-            TypeVariant::SignedSurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t)))),
-            ),
             TypeVariant::SignedTimeSlicedSurveyResponseMessage => Box::new(
                 ReadXdrIter::<_, SignedTimeSlicedSurveyResponseMessage>::new(
                     &mut r.inner,
@@ -53252,10 +53778,6 @@ impl Type {
             TypeVariant::PeerStats => Box::new(
                 ReadXdrIter::<_, PeerStats>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStats(Box::new(t)))),
-            ),
-            TypeVariant::PeerStatList => Box::new(
-                ReadXdrIter::<_, PeerStatList>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
             TypeVariant::TimeSlicedNodeData => Box::new(
                 ReadXdrIter::<_, TimeSlicedNodeData>::new(&mut r.inner, r.limits.clone())
@@ -53268,14 +53790,6 @@ impl Type {
             TypeVariant::TimeSlicedPeerDataList => Box::new(
                 ReadXdrIter::<_, TimeSlicedPeerDataList>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimeSlicedPeerDataList(Box::new(t)))),
-            ),
-            TypeVariant::TopologyResponseBodyV0 => Box::new(
-                ReadXdrIter::<_, TopologyResponseBodyV0>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t)))),
-            ),
-            TypeVariant::TopologyResponseBodyV1 => Box::new(
-                ReadXdrIter::<_, TopologyResponseBodyV1>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t)))),
             ),
             TypeVariant::TopologyResponseBodyV2 => Box::new(
                 ReadXdrIter::<_, TopologyResponseBodyV2>::new(&mut r.inner, r.limits.clone())
@@ -53572,6 +54086,34 @@ impl Type {
             TypeVariant::LedgerFootprint => Box::new(
                 ReadXdrIter::<_, LedgerFootprint>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProofType => Box::new(
+                ReadXdrIter::<_, ArchivalProofType>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProofNode => Box::new(
+                ReadXdrIter::<_, ArchivalProofNode>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t)))),
+            ),
+            TypeVariant::ProofLevel => Box::new(
+                ReadXdrIter::<_, ProofLevel>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t)))),
+            ),
+            TypeVariant::NonexistenceProofBody => Box::new(
+                ReadXdrIter::<_, NonexistenceProofBody>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
+            ),
+            TypeVariant::ExistenceProofBody => Box::new(
+                ReadXdrIter::<_, ExistenceProofBody>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProof => Box::new(
+                ReadXdrIter::<_, ArchivalProof>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProofBody => Box::new(
+                ReadXdrIter::<_, ArchivalProofBody>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t)))),
             ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, SorobanResources>::new(&mut r.inner, r.limits.clone())
@@ -54093,6 +54635,18 @@ impl Type {
                 ReadXdrIter::<_, SerializedBinaryFuseFilter>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SerializedBinaryFuseFilter(Box::new(t)))),
             ),
+            TypeVariant::PoolId => Box::new(
+                ReadXdrIter::<_, PoolId>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceIdType => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceIdType>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceId => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceId>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
+            ),
         }
     }
 
@@ -54408,6 +54962,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScAddressType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t.0)))),
             ),
+            TypeVariant::MuxedEd25519Account => Box::new(
+                ReadXdrIter::<_, Frame<MuxedEd25519Account>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t.0)))),
+            ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, Frame<ScAddress>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t.0)))),
@@ -54490,10 +55048,6 @@ impl Type {
             TypeVariant::DataValue => Box::new(
                 ReadXdrIter::<_, Frame<DataValue>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataValue(Box::new(t.0)))),
-            ),
-            TypeVariant::PoolId => Box::new(
-                ReadXdrIter::<_, Frame<PoolId>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::PoolId(Box::new(t.0)))),
             ),
             TypeVariant::AssetCode4 => Box::new(
                 ReadXdrIter::<_, Frame<AssetCode4>>::new(&mut r.inner, r.limits.clone())
@@ -54675,17 +55229,6 @@ impl Type {
             TypeVariant::ClaimantV0 => Box::new(
                 ReadXdrIter::<_, Frame<ClaimantV0>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t.0)))),
-            ),
-            TypeVariant::ClaimableBalanceIdType => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceIdType>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t.0)))),
-            ),
-            TypeVariant::ClaimableBalanceId => Box::new(
-                ReadXdrIter::<_, Frame<ClaimableBalanceId>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t.0)))),
             ),
             TypeVariant::ClaimableBalanceFlags => Box::new(
                 ReadXdrIter::<_, Frame<ClaimableBalanceFlags>>::new(&mut r.inner, r.limits.clone())
@@ -55162,6 +55705,21 @@ impl Type {
                 ReadXdrIter::<_, Frame<TransactionMetaV3>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t.0)))),
             ),
+            TypeVariant::OperationMetaV2 => Box::new(
+                ReadXdrIter::<_, Frame<OperationMetaV2>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::OperationMetaV2(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanTransactionMetaV2 => Box::new(
+                ReadXdrIter::<_, Frame<SorobanTransactionMetaV2>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SorobanTransactionMetaV2(Box::new(t.0)))),
+            ),
+            TypeVariant::TransactionMetaV4 => Box::new(
+                ReadXdrIter::<_, Frame<TransactionMetaV4>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionMetaV4(Box::new(t.0)))),
+            ),
             TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
                 ReadXdrIter::<_, Frame<InvokeHostFunctionSuccessPreImage>>::new(
                     &mut r.inner,
@@ -55306,13 +55864,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::TimeSlicedSurveyRequestMessage(Box::new(t.0)))),
             ),
-            TypeVariant::SignedSurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, Frame<SignedSurveyRequestMessage>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t.0)))),
-            ),
             TypeVariant::SignedTimeSlicedSurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, Frame<SignedTimeSlicedSurveyRequestMessage>>::new(
                     &mut r.inner,
@@ -55335,13 +55886,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::TimeSlicedSurveyResponseMessage(Box::new(t.0)))),
             ),
-            TypeVariant::SignedSurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, Frame<SignedSurveyResponseMessage>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t.0)))),
-            ),
             TypeVariant::SignedTimeSlicedSurveyResponseMessage => Box::new(
                 ReadXdrIter::<_, Frame<SignedTimeSlicedSurveyResponseMessage>>::new(
                     &mut r.inner,
@@ -55352,10 +55896,6 @@ impl Type {
             TypeVariant::PeerStats => Box::new(
                 ReadXdrIter::<_, Frame<PeerStats>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStats(Box::new(t.0)))),
-            ),
-            TypeVariant::PeerStatList => Box::new(
-                ReadXdrIter::<_, Frame<PeerStatList>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::PeerStatList(Box::new(t.0)))),
             ),
             TypeVariant::TimeSlicedNodeData => Box::new(
                 ReadXdrIter::<_, Frame<TimeSlicedNodeData>>::new(&mut r.inner, r.limits.clone())
@@ -55371,20 +55911,6 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::TimeSlicedPeerDataList(Box::new(t.0)))),
-            ),
-            TypeVariant::TopologyResponseBodyV0 => Box::new(
-                ReadXdrIter::<_, Frame<TopologyResponseBodyV0>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t.0)))),
-            ),
-            TypeVariant::TopologyResponseBodyV1 => Box::new(
-                ReadXdrIter::<_, Frame<TopologyResponseBodyV1>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t.0)))),
             ),
             TypeVariant::TopologyResponseBodyV2 => Box::new(
                 ReadXdrIter::<_, Frame<TopologyResponseBodyV2>>::new(
@@ -55744,6 +56270,34 @@ impl Type {
             TypeVariant::LedgerFootprint => Box::new(
                 ReadXdrIter::<_, Frame<LedgerFootprint>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t.0)))),
+            ),
+            TypeVariant::ArchivalProofType => Box::new(
+                ReadXdrIter::<_, Frame<ArchivalProofType>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t.0)))),
+            ),
+            TypeVariant::ArchivalProofNode => Box::new(
+                ReadXdrIter::<_, Frame<ArchivalProofNode>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t.0)))),
+            ),
+            TypeVariant::ProofLevel => Box::new(
+                ReadXdrIter::<_, Frame<ProofLevel>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t.0)))),
+            ),
+            TypeVariant::NonexistenceProofBody => Box::new(
+                ReadXdrIter::<_, Frame<NonexistenceProofBody>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t.0)))),
+            ),
+            TypeVariant::ExistenceProofBody => Box::new(
+                ReadXdrIter::<_, Frame<ExistenceProofBody>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t.0)))),
+            ),
+            TypeVariant::ArchivalProof => Box::new(
+                ReadXdrIter::<_, Frame<ArchivalProof>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t.0)))),
+            ),
+            TypeVariant::ArchivalProofBody => Box::new(
+                ReadXdrIter::<_, Frame<ArchivalProofBody>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t.0)))),
             ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, Frame<SorobanResources>>::new(&mut r.inner, r.limits.clone())
@@ -56358,6 +56912,21 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::SerializedBinaryFuseFilter(Box::new(t.0)))),
             ),
+            TypeVariant::PoolId => Box::new(
+                ReadXdrIter::<_, Frame<PoolId>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::PoolId(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimableBalanceIdType => Box::new(
+                ReadXdrIter::<_, Frame<ClaimableBalanceIdType>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t.0)))),
+            ),
+            TypeVariant::ClaimableBalanceId => Box::new(
+                ReadXdrIter::<_, Frame<ClaimableBalanceId>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t.0)))),
+            ),
         }
     }
 
@@ -56629,6 +57198,10 @@ impl Type {
                 ReadXdrIter::<_, ScAddressType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
             ),
+            TypeVariant::MuxedEd25519Account => Box::new(
+                ReadXdrIter::<_, MuxedEd25519Account>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t)))),
+            ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, ScAddress>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
@@ -56708,10 +57281,6 @@ impl Type {
             TypeVariant::DataValue => Box::new(
                 ReadXdrIter::<_, DataValue>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::DataValue(Box::new(t)))),
-            ),
-            TypeVariant::PoolId => Box::new(
-                ReadXdrIter::<_, PoolId>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
             ),
             TypeVariant::AssetCode4 => Box::new(
                 ReadXdrIter::<_, AssetCode4>::new(dec, r.limits.clone())
@@ -56872,14 +57441,6 @@ impl Type {
             TypeVariant::ClaimantV0 => Box::new(
                 ReadXdrIter::<_, ClaimantV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ClaimantV0(Box::new(t)))),
-            ),
-            TypeVariant::ClaimableBalanceIdType => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceIdType>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t)))),
-            ),
-            TypeVariant::ClaimableBalanceId => Box::new(
-                ReadXdrIter::<_, ClaimableBalanceId>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
             ),
             TypeVariant::ClaimableBalanceFlags => Box::new(
                 ReadXdrIter::<_, ClaimableBalanceFlags>::new(dec, r.limits.clone())
@@ -57260,6 +57821,18 @@ impl Type {
                 ReadXdrIter::<_, TransactionMetaV3>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TransactionMetaV3(Box::new(t)))),
             ),
+            TypeVariant::OperationMetaV2 => Box::new(
+                ReadXdrIter::<_, OperationMetaV2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::OperationMetaV2(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionMetaV2 => Box::new(
+                ReadXdrIter::<_, SorobanTransactionMetaV2>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanTransactionMetaV2(Box::new(t)))),
+            ),
+            TypeVariant::TransactionMetaV4 => Box::new(
+                ReadXdrIter::<_, TransactionMetaV4>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TransactionMetaV4(Box::new(t)))),
+            ),
             TypeVariant::InvokeHostFunctionSuccessPreImage => Box::new(
                 ReadXdrIter::<_, InvokeHostFunctionSuccessPreImage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t)))),
@@ -57387,10 +57960,6 @@ impl Type {
                 ReadXdrIter::<_, TimeSlicedSurveyRequestMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimeSlicedSurveyRequestMessage(Box::new(t)))),
             ),
-            TypeVariant::SignedSurveyRequestMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyRequestMessage>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::SignedSurveyRequestMessage(Box::new(t)))),
-            ),
             TypeVariant::SignedTimeSlicedSurveyRequestMessage => Box::new(
                 ReadXdrIter::<_, SignedTimeSlicedSurveyRequestMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignedTimeSlicedSurveyRequestMessage(Box::new(t)))),
@@ -57407,10 +57976,6 @@ impl Type {
                 ReadXdrIter::<_, TimeSlicedSurveyResponseMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimeSlicedSurveyResponseMessage(Box::new(t)))),
             ),
-            TypeVariant::SignedSurveyResponseMessage => Box::new(
-                ReadXdrIter::<_, SignedSurveyResponseMessage>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::SignedSurveyResponseMessage(Box::new(t)))),
-            ),
             TypeVariant::SignedTimeSlicedSurveyResponseMessage => Box::new(
                 ReadXdrIter::<_, SignedTimeSlicedSurveyResponseMessage>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SignedTimeSlicedSurveyResponseMessage(Box::new(t)))),
@@ -57418,10 +57983,6 @@ impl Type {
             TypeVariant::PeerStats => Box::new(
                 ReadXdrIter::<_, PeerStats>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::PeerStats(Box::new(t)))),
-            ),
-            TypeVariant::PeerStatList => Box::new(
-                ReadXdrIter::<_, PeerStatList>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::PeerStatList(Box::new(t)))),
             ),
             TypeVariant::TimeSlicedNodeData => Box::new(
                 ReadXdrIter::<_, TimeSlicedNodeData>::new(dec, r.limits.clone())
@@ -57434,14 +57995,6 @@ impl Type {
             TypeVariant::TimeSlicedPeerDataList => Box::new(
                 ReadXdrIter::<_, TimeSlicedPeerDataList>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimeSlicedPeerDataList(Box::new(t)))),
-            ),
-            TypeVariant::TopologyResponseBodyV0 => Box::new(
-                ReadXdrIter::<_, TopologyResponseBodyV0>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TopologyResponseBodyV0(Box::new(t)))),
-            ),
-            TypeVariant::TopologyResponseBodyV1 => Box::new(
-                ReadXdrIter::<_, TopologyResponseBodyV1>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TopologyResponseBodyV1(Box::new(t)))),
             ),
             TypeVariant::TopologyResponseBodyV2 => Box::new(
                 ReadXdrIter::<_, TopologyResponseBodyV2>::new(dec, r.limits.clone())
@@ -57726,6 +58279,34 @@ impl Type {
             TypeVariant::LedgerFootprint => Box::new(
                 ReadXdrIter::<_, LedgerFootprint>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProofType => Box::new(
+                ReadXdrIter::<_, ArchivalProofType>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProofNode => Box::new(
+                ReadXdrIter::<_, ArchivalProofNode>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t)))),
+            ),
+            TypeVariant::ProofLevel => Box::new(
+                ReadXdrIter::<_, ProofLevel>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t)))),
+            ),
+            TypeVariant::NonexistenceProofBody => Box::new(
+                ReadXdrIter::<_, NonexistenceProofBody>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
+            ),
+            TypeVariant::ExistenceProofBody => Box::new(
+                ReadXdrIter::<_, ExistenceProofBody>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProof => Box::new(
+                ReadXdrIter::<_, ArchivalProof>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t)))),
+            ),
+            TypeVariant::ArchivalProofBody => Box::new(
+                ReadXdrIter::<_, ArchivalProofBody>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t)))),
             ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, SorobanResources>::new(dec, r.limits.clone())
@@ -58199,6 +58780,18 @@ impl Type {
                 ReadXdrIter::<_, SerializedBinaryFuseFilter>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SerializedBinaryFuseFilter(Box::new(t)))),
             ),
+            TypeVariant::PoolId => Box::new(
+                ReadXdrIter::<_, PoolId>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::PoolId(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceIdType => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceIdType>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ClaimableBalanceIdType(Box::new(t)))),
+            ),
+            TypeVariant::ClaimableBalanceId => Box::new(
+                ReadXdrIter::<_, ClaimableBalanceId>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ClaimableBalanceId(Box::new(t)))),
+            ),
         }
     }
 
@@ -58411,6 +59004,9 @@ impl Type {
             TypeVariant::ScAddressType => {
                 Ok(Self::ScAddressType(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(serde_json::from_reader(r)?))),
@@ -58445,7 +59041,6 @@ impl Type {
                 Ok(Self::SequenceNumber(Box::new(serde_json::from_reader(r)?)))
             }
             TypeVariant::DataValue => Ok(Self::DataValue(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::PoolId => Ok(Self::PoolId(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::AssetCode4 => Ok(Self::AssetCode4(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::AssetCode12 => {
                 Ok(Self::AssetCode12(Box::new(serde_json::from_reader(r)?)))
@@ -58542,12 +59137,6 @@ impl Type {
             }
             TypeVariant::Claimant => Ok(Self::Claimant(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ClaimantV0 => Ok(Self::ClaimantV0(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::ClaimableBalanceIdType => Ok(Self::ClaimableBalanceIdType(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
             TypeVariant::ClaimableBalanceFlags => Ok(Self::ClaimableBalanceFlags(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -58826,6 +59415,15 @@ impl Type {
             TypeVariant::TransactionMetaV3 => Ok(Self::TransactionMetaV3(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::OperationMetaV2 => {
+                Ok(Self::OperationMetaV2(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::SorobanTransactionMetaV2 => Ok(Self::SorobanTransactionMetaV2(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::TransactionMetaV4 => Ok(Self::TransactionMetaV4(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::InvokeHostFunctionSuccessPreImage => Ok(
                 Self::InvokeHostFunctionSuccessPreImage(Box::new(serde_json::from_reader(r)?)),
             ),
@@ -58901,9 +59499,6 @@ impl Type {
             TypeVariant::TimeSlicedSurveyRequestMessage => Ok(
                 Self::TimeSlicedSurveyRequestMessage(Box::new(serde_json::from_reader(r)?)),
             ),
-            TypeVariant::SignedSurveyRequestMessage => Ok(Self::SignedSurveyRequestMessage(
-                Box::new(serde_json::from_reader(r)?),
-            )),
             TypeVariant::SignedTimeSlicedSurveyRequestMessage => Ok(
                 Self::SignedTimeSlicedSurveyRequestMessage(Box::new(serde_json::from_reader(r)?)),
             ),
@@ -58916,16 +59511,10 @@ impl Type {
             TypeVariant::TimeSlicedSurveyResponseMessage => Ok(
                 Self::TimeSlicedSurveyResponseMessage(Box::new(serde_json::from_reader(r)?)),
             ),
-            TypeVariant::SignedSurveyResponseMessage => Ok(Self::SignedSurveyResponseMessage(
-                Box::new(serde_json::from_reader(r)?),
-            )),
             TypeVariant::SignedTimeSlicedSurveyResponseMessage => Ok(
                 Self::SignedTimeSlicedSurveyResponseMessage(Box::new(serde_json::from_reader(r)?)),
             ),
             TypeVariant::PeerStats => Ok(Self::PeerStats(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::PeerStatList => {
-                Ok(Self::PeerStatList(Box::new(serde_json::from_reader(r)?)))
-            }
             TypeVariant::TimeSlicedNodeData => Ok(Self::TimeSlicedNodeData(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -58933,12 +59522,6 @@ impl Type {
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::TimeSlicedPeerDataList => Ok(Self::TimeSlicedPeerDataList(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::TopologyResponseBodyV0 => Ok(Self::TopologyResponseBodyV0(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::TopologyResponseBodyV1 => Ok(Self::TopologyResponseBodyV1(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::TopologyResponseBodyV2 => Ok(Self::TopologyResponseBodyV2(Box::new(
@@ -59142,6 +59725,25 @@ impl Type {
             TypeVariant::LedgerFootprint => {
                 Ok(Self::LedgerFootprint(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::ArchivalProofType => Ok(Self::ArchivalProofType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ArchivalProofNode => Ok(Self::ArchivalProofNode(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ProofLevel => Ok(Self::ProofLevel(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ArchivalProof => {
+                Ok(Self::ArchivalProof(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::ArchivalProofBody => Ok(Self::ArchivalProofBody(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -59466,6 +60068,13 @@ impl Type {
             TypeVariant::SerializedBinaryFuseFilter => Ok(Self::SerializedBinaryFuseFilter(
                 Box::new(serde_json::from_reader(r)?),
             )),
+            TypeVariant::PoolId => Ok(Self::PoolId(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ClaimableBalanceIdType => Ok(Self::ClaimableBalanceIdType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
         }
     }
 
@@ -59683,6 +60292,9 @@ impl Type {
             TypeVariant::ScAddressType => Ok(Self::ScAddressType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -59743,9 +60355,6 @@ impl Type {
             TypeVariant::DataValue => Ok(Self::DataValue(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::PoolId => Ok(Self::PoolId(Box::new(serde::de::Deserialize::deserialize(
-                r,
-            )?))),
             TypeVariant::AssetCode4 => Ok(Self::AssetCode4(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -59864,12 +60473,6 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ClaimantV0 => Ok(Self::ClaimantV0(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ClaimableBalanceIdType => Ok(Self::ClaimableBalanceIdType(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ClaimableBalanceFlags => Ok(Self::ClaimableBalanceFlags(Box::new(
@@ -60166,6 +60769,15 @@ impl Type {
             TypeVariant::TransactionMetaV3 => Ok(Self::TransactionMetaV3(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::OperationMetaV2 => Ok(Self::OperationMetaV2(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::SorobanTransactionMetaV2 => Ok(Self::SorobanTransactionMetaV2(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::TransactionMetaV4 => Ok(Self::TransactionMetaV4(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::InvokeHostFunctionSuccessPreImage => {
                 Ok(Self::InvokeHostFunctionSuccessPreImage(Box::new(
                     serde::de::Deserialize::deserialize(r)?,
@@ -60265,9 +60877,6 @@ impl Type {
                     serde::de::Deserialize::deserialize(r)?,
                 )))
             }
-            TypeVariant::SignedSurveyRequestMessage => Ok(Self::SignedSurveyRequestMessage(
-                Box::new(serde::de::Deserialize::deserialize(r)?),
-            )),
             TypeVariant::SignedTimeSlicedSurveyRequestMessage => {
                 Ok(Self::SignedTimeSlicedSurveyRequestMessage(Box::new(
                     serde::de::Deserialize::deserialize(r)?,
@@ -60284,18 +60893,12 @@ impl Type {
                     serde::de::Deserialize::deserialize(r)?,
                 )))
             }
-            TypeVariant::SignedSurveyResponseMessage => Ok(Self::SignedSurveyResponseMessage(
-                Box::new(serde::de::Deserialize::deserialize(r)?),
-            )),
             TypeVariant::SignedTimeSlicedSurveyResponseMessage => {
                 Ok(Self::SignedTimeSlicedSurveyResponseMessage(Box::new(
                     serde::de::Deserialize::deserialize(r)?,
                 )))
             }
             TypeVariant::PeerStats => Ok(Self::PeerStats(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::PeerStatList => Ok(Self::PeerStatList(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::TimeSlicedNodeData => Ok(Self::TimeSlicedNodeData(Box::new(
@@ -60305,12 +60908,6 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::TimeSlicedPeerDataList => Ok(Self::TimeSlicedPeerDataList(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::TopologyResponseBodyV0 => Ok(Self::TopologyResponseBodyV0(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::TopologyResponseBodyV1 => Ok(Self::TopologyResponseBodyV1(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::TopologyResponseBodyV2 => Ok(Self::TopologyResponseBodyV2(Box::new(
@@ -60528,6 +61125,27 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::LedgerFootprint => Ok(Self::LedgerFootprint(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ArchivalProofType => Ok(Self::ArchivalProofType(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ArchivalProofNode => Ok(Self::ArchivalProofNode(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ProofLevel => Ok(Self::ProofLevel(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ArchivalProof => Ok(Self::ArchivalProof(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ArchivalProofBody => Ok(Self::ArchivalProofBody(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
@@ -60910,6 +61528,15 @@ impl Type {
             TypeVariant::SerializedBinaryFuseFilter => Ok(Self::SerializedBinaryFuseFilter(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
+            TypeVariant::PoolId => Ok(Self::PoolId(Box::new(serde::de::Deserialize::deserialize(
+                r,
+            )?))),
+            TypeVariant::ClaimableBalanceIdType => Ok(Self::ClaimableBalanceIdType(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ClaimableBalanceId => Ok(Self::ClaimableBalanceId(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
         }
     }
 
@@ -60984,6 +61611,7 @@ impl Type {
             Self::ContractExecutableType(ref v) => v.as_ref(),
             Self::ContractExecutable(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
+            Self::MuxedEd25519Account(ref v) => v.as_ref(),
             Self::ScAddress(ref v) => v.as_ref(),
             Self::ScVec(ref v) => v.as_ref(),
             Self::ScMap(ref v) => v.as_ref(),
@@ -61004,7 +61632,6 @@ impl Type {
             Self::String64(ref v) => v.as_ref(),
             Self::SequenceNumber(ref v) => v.as_ref(),
             Self::DataValue(ref v) => v.as_ref(),
-            Self::PoolId(ref v) => v.as_ref(),
             Self::AssetCode4(ref v) => v.as_ref(),
             Self::AssetCode12(ref v) => v.as_ref(),
             Self::AssetType(ref v) => v.as_ref(),
@@ -61045,8 +61672,6 @@ impl Type {
             Self::ClaimantType(ref v) => v.as_ref(),
             Self::Claimant(ref v) => v.as_ref(),
             Self::ClaimantV0(ref v) => v.as_ref(),
-            Self::ClaimableBalanceIdType(ref v) => v.as_ref(),
-            Self::ClaimableBalanceId(ref v) => v.as_ref(),
             Self::ClaimableBalanceFlags(ref v) => v.as_ref(),
             Self::ClaimableBalanceEntryExtensionV1(ref v) => v.as_ref(),
             Self::ClaimableBalanceEntryExtensionV1Ext(ref v) => v.as_ref(),
@@ -61141,6 +61766,9 @@ impl Type {
             Self::SorobanTransactionMetaExt(ref v) => v.as_ref(),
             Self::SorobanTransactionMeta(ref v) => v.as_ref(),
             Self::TransactionMetaV3(ref v) => v.as_ref(),
+            Self::OperationMetaV2(ref v) => v.as_ref(),
+            Self::SorobanTransactionMetaV2(ref v) => v.as_ref(),
+            Self::TransactionMetaV4(ref v) => v.as_ref(),
             Self::InvokeHostFunctionSuccessPreImage(ref v) => v.as_ref(),
             Self::TransactionMeta(ref v) => v.as_ref(),
             Self::TransactionResultMeta(ref v) => v.as_ref(),
@@ -61170,20 +61798,15 @@ impl Type {
             Self::SignedTimeSlicedSurveyStopCollectingMessage(ref v) => v.as_ref(),
             Self::SurveyRequestMessage(ref v) => v.as_ref(),
             Self::TimeSlicedSurveyRequestMessage(ref v) => v.as_ref(),
-            Self::SignedSurveyRequestMessage(ref v) => v.as_ref(),
             Self::SignedTimeSlicedSurveyRequestMessage(ref v) => v.as_ref(),
             Self::EncryptedBody(ref v) => v.as_ref(),
             Self::SurveyResponseMessage(ref v) => v.as_ref(),
             Self::TimeSlicedSurveyResponseMessage(ref v) => v.as_ref(),
-            Self::SignedSurveyResponseMessage(ref v) => v.as_ref(),
             Self::SignedTimeSlicedSurveyResponseMessage(ref v) => v.as_ref(),
             Self::PeerStats(ref v) => v.as_ref(),
-            Self::PeerStatList(ref v) => v.as_ref(),
             Self::TimeSlicedNodeData(ref v) => v.as_ref(),
             Self::TimeSlicedPeerData(ref v) => v.as_ref(),
             Self::TimeSlicedPeerDataList(ref v) => v.as_ref(),
-            Self::TopologyResponseBodyV0(ref v) => v.as_ref(),
-            Self::TopologyResponseBodyV1(ref v) => v.as_ref(),
             Self::TopologyResponseBodyV2(ref v) => v.as_ref(),
             Self::SurveyResponseBody(ref v) => v.as_ref(),
             Self::TxAdvertVector(ref v) => v.as_ref(),
@@ -61255,6 +61878,13 @@ impl Type {
             Self::PreconditionType(ref v) => v.as_ref(),
             Self::Preconditions(ref v) => v.as_ref(),
             Self::LedgerFootprint(ref v) => v.as_ref(),
+            Self::ArchivalProofType(ref v) => v.as_ref(),
+            Self::ArchivalProofNode(ref v) => v.as_ref(),
+            Self::ProofLevel(ref v) => v.as_ref(),
+            Self::NonexistenceProofBody(ref v) => v.as_ref(),
+            Self::ExistenceProofBody(ref v) => v.as_ref(),
+            Self::ArchivalProof(ref v) => v.as_ref(),
+            Self::ArchivalProofBody(ref v) => v.as_ref(),
             Self::SorobanResources(ref v) => v.as_ref(),
             Self::SorobanTransactionData(ref v) => v.as_ref(),
             Self::TransactionV0(ref v) => v.as_ref(),
@@ -61371,6 +62001,9 @@ impl Type {
             Self::ShortHashSeed(ref v) => v.as_ref(),
             Self::BinaryFuseFilterType(ref v) => v.as_ref(),
             Self::SerializedBinaryFuseFilter(ref v) => v.as_ref(),
+            Self::PoolId(ref v) => v.as_ref(),
+            Self::ClaimableBalanceIdType(ref v) => v.as_ref(),
+            Self::ClaimableBalanceId(ref v) => v.as_ref(),
         }
     }
 
@@ -61447,6 +62080,7 @@ impl Type {
             Self::ContractExecutableType(_) => "ContractExecutableType",
             Self::ContractExecutable(_) => "ContractExecutable",
             Self::ScAddressType(_) => "ScAddressType",
+            Self::MuxedEd25519Account(_) => "MuxedEd25519Account",
             Self::ScAddress(_) => "ScAddress",
             Self::ScVec(_) => "ScVec",
             Self::ScMap(_) => "ScMap",
@@ -61467,7 +62101,6 @@ impl Type {
             Self::String64(_) => "String64",
             Self::SequenceNumber(_) => "SequenceNumber",
             Self::DataValue(_) => "DataValue",
-            Self::PoolId(_) => "PoolId",
             Self::AssetCode4(_) => "AssetCode4",
             Self::AssetCode12(_) => "AssetCode12",
             Self::AssetType(_) => "AssetType",
@@ -61508,8 +62141,6 @@ impl Type {
             Self::ClaimantType(_) => "ClaimantType",
             Self::Claimant(_) => "Claimant",
             Self::ClaimantV0(_) => "ClaimantV0",
-            Self::ClaimableBalanceIdType(_) => "ClaimableBalanceIdType",
-            Self::ClaimableBalanceId(_) => "ClaimableBalanceId",
             Self::ClaimableBalanceFlags(_) => "ClaimableBalanceFlags",
             Self::ClaimableBalanceEntryExtensionV1(_) => "ClaimableBalanceEntryExtensionV1",
             Self::ClaimableBalanceEntryExtensionV1Ext(_) => "ClaimableBalanceEntryExtensionV1Ext",
@@ -61606,6 +62237,9 @@ impl Type {
             Self::SorobanTransactionMetaExt(_) => "SorobanTransactionMetaExt",
             Self::SorobanTransactionMeta(_) => "SorobanTransactionMeta",
             Self::TransactionMetaV3(_) => "TransactionMetaV3",
+            Self::OperationMetaV2(_) => "OperationMetaV2",
+            Self::SorobanTransactionMetaV2(_) => "SorobanTransactionMetaV2",
+            Self::TransactionMetaV4(_) => "TransactionMetaV4",
             Self::InvokeHostFunctionSuccessPreImage(_) => "InvokeHostFunctionSuccessPreImage",
             Self::TransactionMeta(_) => "TransactionMeta",
             Self::TransactionResultMeta(_) => "TransactionResultMeta",
@@ -61643,22 +62277,17 @@ impl Type {
             }
             Self::SurveyRequestMessage(_) => "SurveyRequestMessage",
             Self::TimeSlicedSurveyRequestMessage(_) => "TimeSlicedSurveyRequestMessage",
-            Self::SignedSurveyRequestMessage(_) => "SignedSurveyRequestMessage",
             Self::SignedTimeSlicedSurveyRequestMessage(_) => "SignedTimeSlicedSurveyRequestMessage",
             Self::EncryptedBody(_) => "EncryptedBody",
             Self::SurveyResponseMessage(_) => "SurveyResponseMessage",
             Self::TimeSlicedSurveyResponseMessage(_) => "TimeSlicedSurveyResponseMessage",
-            Self::SignedSurveyResponseMessage(_) => "SignedSurveyResponseMessage",
             Self::SignedTimeSlicedSurveyResponseMessage(_) => {
                 "SignedTimeSlicedSurveyResponseMessage"
             }
             Self::PeerStats(_) => "PeerStats",
-            Self::PeerStatList(_) => "PeerStatList",
             Self::TimeSlicedNodeData(_) => "TimeSlicedNodeData",
             Self::TimeSlicedPeerData(_) => "TimeSlicedPeerData",
             Self::TimeSlicedPeerDataList(_) => "TimeSlicedPeerDataList",
-            Self::TopologyResponseBodyV0(_) => "TopologyResponseBodyV0",
-            Self::TopologyResponseBodyV1(_) => "TopologyResponseBodyV1",
             Self::TopologyResponseBodyV2(_) => "TopologyResponseBodyV2",
             Self::SurveyResponseBody(_) => "SurveyResponseBody",
             Self::TxAdvertVector(_) => "TxAdvertVector",
@@ -61730,6 +62359,13 @@ impl Type {
             Self::PreconditionType(_) => "PreconditionType",
             Self::Preconditions(_) => "Preconditions",
             Self::LedgerFootprint(_) => "LedgerFootprint",
+            Self::ArchivalProofType(_) => "ArchivalProofType",
+            Self::ArchivalProofNode(_) => "ArchivalProofNode",
+            Self::ProofLevel(_) => "ProofLevel",
+            Self::NonexistenceProofBody(_) => "NonexistenceProofBody",
+            Self::ExistenceProofBody(_) => "ExistenceProofBody",
+            Self::ArchivalProof(_) => "ArchivalProof",
+            Self::ArchivalProofBody(_) => "ArchivalProofBody",
             Self::SorobanResources(_) => "SorobanResources",
             Self::SorobanTransactionData(_) => "SorobanTransactionData",
             Self::TransactionV0(_) => "TransactionV0",
@@ -61854,12 +62490,15 @@ impl Type {
             Self::ShortHashSeed(_) => "ShortHashSeed",
             Self::BinaryFuseFilterType(_) => "BinaryFuseFilterType",
             Self::SerializedBinaryFuseFilter(_) => "SerializedBinaryFuseFilter",
+            Self::PoolId(_) => "PoolId",
+            Self::ClaimableBalanceIdType(_) => "ClaimableBalanceIdType",
+            Self::ClaimableBalanceId(_) => "ClaimableBalanceId",
         }
     }
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 452] {
+    pub const fn variants() -> [TypeVariant; 458] {
         Self::VARIANTS
     }
 
@@ -61940,6 +62579,7 @@ impl Type {
             Self::ContractExecutableType(_) => TypeVariant::ContractExecutableType,
             Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,
+            Self::MuxedEd25519Account(_) => TypeVariant::MuxedEd25519Account,
             Self::ScAddress(_) => TypeVariant::ScAddress,
             Self::ScVec(_) => TypeVariant::ScVec,
             Self::ScMap(_) => TypeVariant::ScMap,
@@ -61960,7 +62600,6 @@ impl Type {
             Self::String64(_) => TypeVariant::String64,
             Self::SequenceNumber(_) => TypeVariant::SequenceNumber,
             Self::DataValue(_) => TypeVariant::DataValue,
-            Self::PoolId(_) => TypeVariant::PoolId,
             Self::AssetCode4(_) => TypeVariant::AssetCode4,
             Self::AssetCode12(_) => TypeVariant::AssetCode12,
             Self::AssetType(_) => TypeVariant::AssetType,
@@ -62001,8 +62640,6 @@ impl Type {
             Self::ClaimantType(_) => TypeVariant::ClaimantType,
             Self::Claimant(_) => TypeVariant::Claimant,
             Self::ClaimantV0(_) => TypeVariant::ClaimantV0,
-            Self::ClaimableBalanceIdType(_) => TypeVariant::ClaimableBalanceIdType,
-            Self::ClaimableBalanceId(_) => TypeVariant::ClaimableBalanceId,
             Self::ClaimableBalanceFlags(_) => TypeVariant::ClaimableBalanceFlags,
             Self::ClaimableBalanceEntryExtensionV1(_) => {
                 TypeVariant::ClaimableBalanceEntryExtensionV1
@@ -62109,6 +62746,9 @@ impl Type {
             Self::SorobanTransactionMetaExt(_) => TypeVariant::SorobanTransactionMetaExt,
             Self::SorobanTransactionMeta(_) => TypeVariant::SorobanTransactionMeta,
             Self::TransactionMetaV3(_) => TypeVariant::TransactionMetaV3,
+            Self::OperationMetaV2(_) => TypeVariant::OperationMetaV2,
+            Self::SorobanTransactionMetaV2(_) => TypeVariant::SorobanTransactionMetaV2,
+            Self::TransactionMetaV4(_) => TypeVariant::TransactionMetaV4,
             Self::InvokeHostFunctionSuccessPreImage(_) => {
                 TypeVariant::InvokeHostFunctionSuccessPreImage
             }
@@ -62148,7 +62788,6 @@ impl Type {
             }
             Self::SurveyRequestMessage(_) => TypeVariant::SurveyRequestMessage,
             Self::TimeSlicedSurveyRequestMessage(_) => TypeVariant::TimeSlicedSurveyRequestMessage,
-            Self::SignedSurveyRequestMessage(_) => TypeVariant::SignedSurveyRequestMessage,
             Self::SignedTimeSlicedSurveyRequestMessage(_) => {
                 TypeVariant::SignedTimeSlicedSurveyRequestMessage
             }
@@ -62157,17 +62796,13 @@ impl Type {
             Self::TimeSlicedSurveyResponseMessage(_) => {
                 TypeVariant::TimeSlicedSurveyResponseMessage
             }
-            Self::SignedSurveyResponseMessage(_) => TypeVariant::SignedSurveyResponseMessage,
             Self::SignedTimeSlicedSurveyResponseMessage(_) => {
                 TypeVariant::SignedTimeSlicedSurveyResponseMessage
             }
             Self::PeerStats(_) => TypeVariant::PeerStats,
-            Self::PeerStatList(_) => TypeVariant::PeerStatList,
             Self::TimeSlicedNodeData(_) => TypeVariant::TimeSlicedNodeData,
             Self::TimeSlicedPeerData(_) => TypeVariant::TimeSlicedPeerData,
             Self::TimeSlicedPeerDataList(_) => TypeVariant::TimeSlicedPeerDataList,
-            Self::TopologyResponseBodyV0(_) => TypeVariant::TopologyResponseBodyV0,
-            Self::TopologyResponseBodyV1(_) => TypeVariant::TopologyResponseBodyV1,
             Self::TopologyResponseBodyV2(_) => TypeVariant::TopologyResponseBodyV2,
             Self::SurveyResponseBody(_) => TypeVariant::SurveyResponseBody,
             Self::TxAdvertVector(_) => TypeVariant::TxAdvertVector,
@@ -62243,6 +62878,13 @@ impl Type {
             Self::PreconditionType(_) => TypeVariant::PreconditionType,
             Self::Preconditions(_) => TypeVariant::Preconditions,
             Self::LedgerFootprint(_) => TypeVariant::LedgerFootprint,
+            Self::ArchivalProofType(_) => TypeVariant::ArchivalProofType,
+            Self::ArchivalProofNode(_) => TypeVariant::ArchivalProofNode,
+            Self::ProofLevel(_) => TypeVariant::ProofLevel,
+            Self::NonexistenceProofBody(_) => TypeVariant::NonexistenceProofBody,
+            Self::ExistenceProofBody(_) => TypeVariant::ExistenceProofBody,
+            Self::ArchivalProof(_) => TypeVariant::ArchivalProof,
+            Self::ArchivalProofBody(_) => TypeVariant::ArchivalProofBody,
             Self::SorobanResources(_) => TypeVariant::SorobanResources,
             Self::SorobanTransactionData(_) => TypeVariant::SorobanTransactionData,
             Self::TransactionV0(_) => TypeVariant::TransactionV0,
@@ -62385,6 +63027,9 @@ impl Type {
             Self::ShortHashSeed(_) => TypeVariant::ShortHashSeed,
             Self::BinaryFuseFilterType(_) => TypeVariant::BinaryFuseFilterType,
             Self::SerializedBinaryFuseFilter(_) => TypeVariant::SerializedBinaryFuseFilter,
+            Self::PoolId(_) => TypeVariant::PoolId,
+            Self::ClaimableBalanceIdType(_) => TypeVariant::ClaimableBalanceIdType,
+            Self::ClaimableBalanceId(_) => TypeVariant::ClaimableBalanceId,
         }
     }
 }
@@ -62472,6 +63117,7 @@ impl WriteXdr for Type {
             Self::ContractExecutableType(v) => v.write_xdr(w),
             Self::ContractExecutable(v) => v.write_xdr(w),
             Self::ScAddressType(v) => v.write_xdr(w),
+            Self::MuxedEd25519Account(v) => v.write_xdr(w),
             Self::ScAddress(v) => v.write_xdr(w),
             Self::ScVec(v) => v.write_xdr(w),
             Self::ScMap(v) => v.write_xdr(w),
@@ -62492,7 +63138,6 @@ impl WriteXdr for Type {
             Self::String64(v) => v.write_xdr(w),
             Self::SequenceNumber(v) => v.write_xdr(w),
             Self::DataValue(v) => v.write_xdr(w),
-            Self::PoolId(v) => v.write_xdr(w),
             Self::AssetCode4(v) => v.write_xdr(w),
             Self::AssetCode12(v) => v.write_xdr(w),
             Self::AssetType(v) => v.write_xdr(w),
@@ -62533,8 +63178,6 @@ impl WriteXdr for Type {
             Self::ClaimantType(v) => v.write_xdr(w),
             Self::Claimant(v) => v.write_xdr(w),
             Self::ClaimantV0(v) => v.write_xdr(w),
-            Self::ClaimableBalanceIdType(v) => v.write_xdr(w),
-            Self::ClaimableBalanceId(v) => v.write_xdr(w),
             Self::ClaimableBalanceFlags(v) => v.write_xdr(w),
             Self::ClaimableBalanceEntryExtensionV1(v) => v.write_xdr(w),
             Self::ClaimableBalanceEntryExtensionV1Ext(v) => v.write_xdr(w),
@@ -62629,6 +63272,9 @@ impl WriteXdr for Type {
             Self::SorobanTransactionMetaExt(v) => v.write_xdr(w),
             Self::SorobanTransactionMeta(v) => v.write_xdr(w),
             Self::TransactionMetaV3(v) => v.write_xdr(w),
+            Self::OperationMetaV2(v) => v.write_xdr(w),
+            Self::SorobanTransactionMetaV2(v) => v.write_xdr(w),
+            Self::TransactionMetaV4(v) => v.write_xdr(w),
             Self::InvokeHostFunctionSuccessPreImage(v) => v.write_xdr(w),
             Self::TransactionMeta(v) => v.write_xdr(w),
             Self::TransactionResultMeta(v) => v.write_xdr(w),
@@ -62658,20 +63304,15 @@ impl WriteXdr for Type {
             Self::SignedTimeSlicedSurveyStopCollectingMessage(v) => v.write_xdr(w),
             Self::SurveyRequestMessage(v) => v.write_xdr(w),
             Self::TimeSlicedSurveyRequestMessage(v) => v.write_xdr(w),
-            Self::SignedSurveyRequestMessage(v) => v.write_xdr(w),
             Self::SignedTimeSlicedSurveyRequestMessage(v) => v.write_xdr(w),
             Self::EncryptedBody(v) => v.write_xdr(w),
             Self::SurveyResponseMessage(v) => v.write_xdr(w),
             Self::TimeSlicedSurveyResponseMessage(v) => v.write_xdr(w),
-            Self::SignedSurveyResponseMessage(v) => v.write_xdr(w),
             Self::SignedTimeSlicedSurveyResponseMessage(v) => v.write_xdr(w),
             Self::PeerStats(v) => v.write_xdr(w),
-            Self::PeerStatList(v) => v.write_xdr(w),
             Self::TimeSlicedNodeData(v) => v.write_xdr(w),
             Self::TimeSlicedPeerData(v) => v.write_xdr(w),
             Self::TimeSlicedPeerDataList(v) => v.write_xdr(w),
-            Self::TopologyResponseBodyV0(v) => v.write_xdr(w),
-            Self::TopologyResponseBodyV1(v) => v.write_xdr(w),
             Self::TopologyResponseBodyV2(v) => v.write_xdr(w),
             Self::SurveyResponseBody(v) => v.write_xdr(w),
             Self::TxAdvertVector(v) => v.write_xdr(w),
@@ -62743,6 +63384,13 @@ impl WriteXdr for Type {
             Self::PreconditionType(v) => v.write_xdr(w),
             Self::Preconditions(v) => v.write_xdr(w),
             Self::LedgerFootprint(v) => v.write_xdr(w),
+            Self::ArchivalProofType(v) => v.write_xdr(w),
+            Self::ArchivalProofNode(v) => v.write_xdr(w),
+            Self::ProofLevel(v) => v.write_xdr(w),
+            Self::NonexistenceProofBody(v) => v.write_xdr(w),
+            Self::ExistenceProofBody(v) => v.write_xdr(w),
+            Self::ArchivalProof(v) => v.write_xdr(w),
+            Self::ArchivalProofBody(v) => v.write_xdr(w),
             Self::SorobanResources(v) => v.write_xdr(w),
             Self::SorobanTransactionData(v) => v.write_xdr(w),
             Self::TransactionV0(v) => v.write_xdr(w),
@@ -62859,6 +63507,9 @@ impl WriteXdr for Type {
             Self::ShortHashSeed(v) => v.write_xdr(w),
             Self::BinaryFuseFilterType(v) => v.write_xdr(w),
             Self::SerializedBinaryFuseFilter(v) => v.write_xdr(w),
+            Self::PoolId(v) => v.write_xdr(w),
+            Self::ClaimableBalanceIdType(v) => v.write_xdr(w),
+            Self::ClaimableBalanceId(v) => v.write_xdr(w),
         }
     }
 }

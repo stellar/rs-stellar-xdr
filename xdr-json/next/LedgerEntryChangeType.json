@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "LedgerEntryChangeType",
-  "description": "LedgerEntryChangeType is an XDR Enum defines as:\n\n```text enum LedgerEntryChangeType { LEDGER_ENTRY_CREATED  = 0, // entry was added to the ledger LEDGER_ENTRY_UPDATED  = 1, // entry was modified in the ledger LEDGER_ENTRY_REMOVED  = 2, // entry was removed from the ledger LEDGER_ENTRY_STATE    = 3, // value of the entry LEDGER_ENTRY_RESTORED = 4  // archived entry was restored in the ledger }; ```",
+  "description": "LedgerEntryChangeType is an XDR Enum defines as:\n\n```text enum LedgerEntryChangeType { LEDGER_ENTRY_CREATED = 0, // entry was added to the ledger LEDGER_ENTRY_UPDATED = 1, // entry was modified in the ledger LEDGER_ENTRY_REMOVED = 2, // entry was removed from the ledger LEDGER_ENTRY_STATE    = 3, // value of the entry LEDGER_ENTRY_RESTORED = 4  // archived entry was restored in the ledger }; ```",
   "type": "string",
   "enum": [
     "created",

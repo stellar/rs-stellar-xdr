@@ -336,11 +336,12 @@
       "type": "string"
     },
     "BucketListType": {
-      "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1 }; ```",
+      "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1, COLD_ARCHIVE = 2 }; ```",
       "type": "string",
       "enum": [
         "live",
-        "hot_archive"
+        "hot_archive",
+        "cold_archive"
       ]
     },
     "BucketMetadata": {
@@ -1964,12 +1965,7 @@
       ]
     },
     "PoolId": {
-      "description": "PoolId is an XDR Typedef defines as:\n\n```text typedef Hash PoolID; ```",
-      "type": "string",
-      "maxLength": 64,
-      "minLength": 64,
-      "contentEncoding": "hex",
-      "contentMediaType": "application/binary"
+      "type": "string"
     },
     "Price": {
       "description": "Price is an XDR Struct defines as:\n\n```text struct Price { int32 n; // numerator int32 d; // denominator }; ```",

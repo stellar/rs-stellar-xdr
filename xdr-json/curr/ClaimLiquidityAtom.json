@@ -107,12 +107,7 @@
       "type": "string"
     },
     "PoolId": {
-      "description": "PoolId is an XDR Typedef defines as:\n\n```text typedef Hash PoolID; ```",
-      "type": "string",
-      "maxLength": 64,
-      "minLength": 64,
-      "contentEncoding": "hex",
-      "contentMediaType": "application/binary"
+      "type": "string"
     }
   }
 }

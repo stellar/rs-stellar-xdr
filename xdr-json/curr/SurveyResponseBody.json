@@ -1,39 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "SurveyResponseBody",
-  "description": "SurveyResponseBody is an XDR Union defines as:\n\n```text union SurveyResponseBody switch (SurveyMessageResponseType type) { case SURVEY_TOPOLOGY_RESPONSE_V0: TopologyResponseBodyV0 topologyResponseBodyV0; case SURVEY_TOPOLOGY_RESPONSE_V1: TopologyResponseBodyV1 topologyResponseBodyV1; case SURVEY_TOPOLOGY_RESPONSE_V2: TopologyResponseBodyV2 topologyResponseBodyV2; }; ```",
+  "description": "SurveyResponseBody is an XDR Union defines as:\n\n```text union SurveyResponseBody switch (SurveyMessageResponseType type) { case SURVEY_TOPOLOGY_RESPONSE_V2: TopologyResponseBodyV2 topologyResponseBodyV2; }; ```",
   "oneOf": [
     {
       "type": "object",
       "required": [
-        "v0"
+        "survey_topology_response_v2"
       ],
       "properties": {
-        "v0": {
-          "$ref": "#/definitions/TopologyResponseBodyV0"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "v1"
-      ],
-      "properties": {
-        "v1": {
-          "$ref": "#/definitions/TopologyResponseBodyV1"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "v2"
-      ],
-      "properties": {
-        "v2": {
+        "survey_topology_response_v2": {
           "$ref": "#/definitions/TopologyResponseBodyV2"
         }
       },
@@ -43,14 +19,6 @@
   "definitions": {
     "NodeId": {
       "type": "string"
-    },
-    "PeerStatList": {
-      "description": "PeerStatList is an XDR Typedef defines as:\n\n```text typedef PeerStats PeerStatList<25>; ```",
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/PeerStats"
-      },
-      "maxItems": 25
     },
     "PeerStats": {
       "description": "PeerStats is an XDR Struct defines as:\n\n```text struct PeerStats { NodeID id; string versionStr<100>; uint64 messagesRead; uint64 messagesWritten; uint64 bytesRead; uint64 bytesWritten; uint64 secondsConnected;\n\nuint64 uniqueFloodBytesRecv; uint64 duplicateFloodBytesRecv; uint64 uniqueFetchBytesRecv; uint64 duplicateFetchBytesRecv;\n\nuint64 uniqueFloodMessageRecv; uint64 duplicateFloodMessageRecv; uint64 uniqueFetchMessageRecv; uint64 duplicateFetchMessageRecv; }; ```",
@@ -241,74 +209,6 @@
         "$ref": "#/definitions/TimeSlicedPeerData"
       },
       "maxItems": 25
-    },
-    "TopologyResponseBodyV0": {
-      "description": "TopologyResponseBodyV0 is an XDR Struct defines as:\n\n```text struct TopologyResponseBodyV0 { PeerStatList inboundPeers; PeerStatList outboundPeers;\n\nuint32 totalInboundPeerCount; uint32 totalOutboundPeerCount; }; ```",
-      "type": "object",
-      "required": [
-        "inbound_peers",
-        "outbound_peers",
-        "total_inbound_peer_count",
-        "total_outbound_peer_count"
-      ],
-      "properties": {
-        "inbound_peers": {
-          "$ref": "#/definitions/PeerStatList"
-        },
-        "outbound_peers": {
-          "$ref": "#/definitions/PeerStatList"
-        },
-        "total_inbound_peer_count": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "total_outbound_peer_count": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        }
-      }
-    },
-    "TopologyResponseBodyV1": {
-      "description": "TopologyResponseBodyV1 is an XDR Struct defines as:\n\n```text struct TopologyResponseBodyV1 { PeerStatList inboundPeers; PeerStatList outboundPeers;\n\nuint32 totalInboundPeerCount; uint32 totalOutboundPeerCount;\n\nuint32 maxInboundPeerCount; uint32 maxOutboundPeerCount; }; ```",
-      "type": "object",
-      "required": [
-        "inbound_peers",
-        "max_inbound_peer_count",
-        "max_outbound_peer_count",
-        "outbound_peers",
-        "total_inbound_peer_count",
-        "total_outbound_peer_count"
-      ],
-      "properties": {
-        "inbound_peers": {
-          "$ref": "#/definitions/PeerStatList"
-        },
-        "max_inbound_peer_count": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "max_outbound_peer_count": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "outbound_peers": {
-          "$ref": "#/definitions/PeerStatList"
-        },
-        "total_inbound_peer_count": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "total_outbound_peer_count": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        }
-      }
     },
     "TopologyResponseBodyV2": {
       "description": "TopologyResponseBodyV2 is an XDR Struct defines as:\n\n```text struct TopologyResponseBodyV2 { TimeSlicedPeerDataList inboundPeers; TimeSlicedPeerDataList outboundPeers; TimeSlicedNodeData nodeData; }; ```",

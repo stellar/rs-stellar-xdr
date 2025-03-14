@@ -24,11 +24,12 @@
   ],
   "definitions": {
     "BucketListType": {
-      "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1 }; ```",
+      "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1, COLD_ARCHIVE = 2 }; ```",
       "type": "string",
       "enum": [
         "live",
-        "hot_archive"
+        "hot_archive",
+        "cold_archive"
       ]
     }
   }

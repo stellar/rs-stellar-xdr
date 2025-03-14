@@ -244,6 +244,32 @@ impl core::fmt::Display for SignerKey {
     }
 }
 
+impl core::str::FromStr for MuxedEd25519Account {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let strkey = stellar_strkey::Strkey::from_str(s)?;
+        match strkey {
+            stellar_strkey::Strkey::MuxedAccountEd25519(muxed_ed25519) => Ok(MuxedEd25519Account {
+                id: muxed_ed25519.id,
+                ed25519: Uint256(muxed_ed25519.ed25519),
+            }),
+            _ => Err(Error::Invalid),
+        }
+    }
+}
+
+impl core::fmt::Display for MuxedEd25519Account {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let k =
+            stellar_strkey::Strkey::MuxedAccountEd25519(stellar_strkey::ed25519::MuxedAccount {
+                ed25519: self.ed25519.0,
+                id: self.id,
+            });
+        let s = k.to_string();
+        f.write_str(&s)
+    }
+}
+
 impl core::str::FromStr for ScAddress {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {

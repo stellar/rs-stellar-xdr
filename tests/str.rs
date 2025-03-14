@@ -1,6 +1,7 @@
 #![cfg(feature = "curr")]
 #![cfg(feature = "std")]
 
+use ::stellar_xdr::curr::MuxedEd25519Account;
 use stellar_xdr::curr as stellar_xdr;
 
 use stellar_xdr::{
@@ -393,10 +394,60 @@ fn sc_address_from_str_with_contract() {
 }
 
 #[test]
-fn sc_address_from_str_with_invalid() {
-    let v = ScAddress::from_str(
-        "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAJLK",
+fn sc_address_to_string_with_muxed_account() {
+    let s = ScAddress::MuxedAccount(MuxedEd25519Account {
+        id: 123456,
+        ed25519: Uint256([
+            0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+            0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+            0x05, 0xc7, 0xb1, 0x03,
+        ]),
+    })
+    .to_string();
+    assert_eq!(
+        s,
+        "MA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCICBKU"
     );
+}
+
+#[test]
+fn muxed_ed25519_account_to_string_with_muxed_account() {
+    let s = MuxedEd25519Account {
+        id: 123456,
+        ed25519: Uint256([
+            0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+            0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+            0x05, 0xc7, 0xb1, 0x03,
+        ]),
+    }
+    .to_string();
+    assert_eq!(
+        s,
+        "MA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCICBKU"
+    );
+}
+
+#[test]
+fn muxed_ed25519_account_from_str_with_muxed_account() {
+    let v = MuxedEd25519Account::from_str(
+        "MA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCICBKU",
+    );
+    assert_eq!(
+        v,
+        Ok(MuxedEd25519Account {
+            id: 123456,
+            ed25519: Uint256([
+                0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+                0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+                0x05, 0xc7, 0xb1, 0x03,
+            ])
+        }),
+    );
+}
+
+#[test]
+fn sc_address_from_str_with_invalid() {
+    let v = ScAddress::from_str("XBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWGTOG");
     assert_eq!(v, Err(Error::Invalid));
 }
 

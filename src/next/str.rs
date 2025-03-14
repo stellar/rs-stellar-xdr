@@ -281,13 +281,14 @@ impl core::fmt::Display for ScAddress {
             ScAddress::MuxedAccount(muxed_ed25519_account) => {
                 let k = stellar_strkey::Strkey::MuxedAccountEd25519(
                     stellar_strkey::ed25519::MuxedAccount {
-                        ed25519: muxed_ed25519_account.ed25519.0.clone(),
+                        ed25519: muxed_ed25519_account.ed25519.0,
                         id: muxed_ed25519_account.id,
                     },
                 );
                 let s = k.to_string();
                 f.write_str(&s)
             }
+            // TODO: Use strkey (https://github.com/stellar/rs-stellar-xdr/issues/420)
             ScAddress::ClaimableBalance(claimable_balance_id) => claimable_balance_id.fmt(f),
             ScAddress::LiquidityPool(pool_id) => pool_id.fmt(f),
         }

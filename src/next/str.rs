@@ -21,12 +21,13 @@
 //#
 //# ## Other
 //# - ClaimableBalanceId
+//# - PoolId
 #![cfg(feature = "alloc")]
 
 use super::{
     AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, Error, Hash, MuxedAccount,
-    MuxedAccountMed25519, NodeId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload,
-    Uint256,
+    MuxedAccountMed25519, MuxedEd25519Account, NodeId, PoolId, PublicKey, ScAddress, SignerKey,
+    SignerKeyEd25519SignedPayload, Uint256,
 };
 
 impl From<stellar_strkey::DecodeError> for Error {
@@ -68,6 +69,19 @@ impl core::str::FromStr for AccountId {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         Ok(AccountId(PublicKey::from_str(s)?))
+    }
+}
+
+impl core::fmt::Display for PoolId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl core::str::FromStr for PoolId {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        Ok(PoolId(Hash::from_str(s)?))
     }
 }
 
@@ -230,6 +244,32 @@ impl core::fmt::Display for SignerKey {
     }
 }
 
+impl core::str::FromStr for MuxedEd25519Account {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let strkey = stellar_strkey::Strkey::from_str(s)?;
+        match strkey {
+            stellar_strkey::Strkey::MuxedAccountEd25519(muxed_ed25519) => Ok(MuxedEd25519Account {
+                id: muxed_ed25519.id,
+                ed25519: Uint256(muxed_ed25519.ed25519),
+            }),
+            _ => Err(Error::Invalid),
+        }
+    }
+}
+
+impl core::fmt::Display for MuxedEd25519Account {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let k =
+            stellar_strkey::Strkey::MuxedAccountEd25519(stellar_strkey::ed25519::MuxedAccount {
+                ed25519: self.ed25519.0,
+                id: self.id,
+            });
+        let s = k.to_string();
+        f.write_str(&s)
+    }
+}
+
 impl core::str::FromStr for ScAddress {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
@@ -241,8 +281,13 @@ impl core::str::FromStr for ScAddress {
             stellar_strkey::Strkey::Contract(stellar_strkey::Contract(h)) => {
                 Ok(ScAddress::Contract(Hash(h)))
             }
-            stellar_strkey::Strkey::MuxedAccountEd25519(_)
-            | stellar_strkey::Strkey::PrivateKeyEd25519(_)
+            stellar_strkey::Strkey::MuxedAccountEd25519(muxed_ed25519) => {
+                Ok(ScAddress::MuxedAccount(MuxedEd25519Account {
+                    id: muxed_ed25519.id,
+                    ed25519: Uint256(muxed_ed25519.ed25519),
+                }))
+            }
+            stellar_strkey::Strkey::PrivateKeyEd25519(_)
             | stellar_strkey::Strkey::PreAuthTx(_)
             | stellar_strkey::Strkey::HashX(_)
             | stellar_strkey::Strkey::SignedPayloadEd25519(_) => Err(Error::Invalid),
@@ -253,14 +298,26 @@ impl core::str::FromStr for ScAddress {
 impl core::fmt::Display for ScAddress {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            ScAddress::Account(a) => a.fmt(f)?,
+            ScAddress::Account(a) => a.fmt(f),
             ScAddress::Contract(Hash(h)) => {
                 let k = stellar_strkey::Contract(*h);
                 let s = k.to_string();
-                f.write_str(&s)?;
+                f.write_str(&s)
             }
+            ScAddress::MuxedAccount(muxed_ed25519_account) => {
+                let k = stellar_strkey::Strkey::MuxedAccountEd25519(
+                    stellar_strkey::ed25519::MuxedAccount {
+                        ed25519: muxed_ed25519_account.ed25519.0,
+                        id: muxed_ed25519_account.id,
+                    },
+                );
+                let s = k.to_string();
+                f.write_str(&s)
+            }
+            // TODO: Use strkey (https://github.com/stellar/rs-stellar-xdr/issues/420)
+            ScAddress::ClaimableBalance(claimable_balance_id) => claimable_balance_id.fmt(f),
+            ScAddress::LiquidityPool(pool_id) => pool_id.fmt(f),
         }
-        Ok(())
     }
 }
 

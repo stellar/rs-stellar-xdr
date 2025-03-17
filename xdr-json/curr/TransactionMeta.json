@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "TransactionMeta",
-  "description": "TransactionMeta is an XDR Union defines as:\n\n```text union TransactionMeta switch (int v) { case 0: OperationMeta operations<>; case 1: TransactionMetaV1 v1; case 2: TransactionMetaV2 v2; case 3: TransactionMetaV3 v3; }; ```",
+  "description": "TransactionMeta is an XDR Union defines as:\n\n```text union TransactionMeta switch (int v) { case 0: OperationMeta operations<>; case 1: TransactionMetaV1 v1; case 2: TransactionMetaV2 v2; case 3: TransactionMetaV3 v3; case 4: TransactionMetaV4 v4; }; ```",
   "oneOf": [
     {
       "type": "object",
@@ -51,6 +51,18 @@
       "properties": {
         "v3": {
           "$ref": "#/definitions/TransactionMetaV3"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "v4"
+      ],
+      "properties": {
+        "v4": {
+          "$ref": "#/definitions/TransactionMetaV4"
         }
       },
       "additionalProperties": false
@@ -2083,13 +2095,40 @@
         }
       }
     },
+    "OperationMetaV2": {
+      "description": "OperationMetaV2 is an XDR Struct defines as:\n\n```text struct OperationMetaV2 { ExtensionPoint ext;\n\nLedgerEntryChanges changes;\n\nContractEvent events<>; DiagnosticEvent diagnosticEvents<>; }; ```",
+      "type": "object",
+      "required": [
+        "changes",
+        "diagnostic_events",
+        "events",
+        "ext"
+      ],
+      "properties": {
+        "changes": {
+          "$ref": "#/definitions/LedgerEntryChanges"
+        },
+        "diagnostic_events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiagnosticEvent"
+          },
+          "maxItems": 4294967295
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContractEvent"
+          },
+          "maxItems": 4294967295
+        },
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      }
+    },
     "PoolId": {
-      "description": "PoolId is an XDR Typedef defines as:\n\n```text typedef Hash PoolID; ```",
-      "type": "string",
-      "maxLength": 64,
-      "minLength": 64,
-      "contentEncoding": "hex",
-      "contentMediaType": "application/binary"
+      "type": "string"
     },
     "Price": {
       "description": "Price is an XDR Struct defines as:\n\n```text struct Price { int32 n; // numerator int32 d; // denominator }; ```",
@@ -2716,6 +2755,22 @@
         }
       }
     },
+    "SorobanTransactionMetaV2": {
+      "description": "SorobanTransactionMetaV2 is an XDR Struct defines as:\n\n```text struct SorobanTransactionMetaV2 { SorobanTransactionMetaExt ext;\n\nSCVal returnValue; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "return_value"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/SorobanTransactionMetaExt"
+        },
+        "return_value": {
+          "$ref": "#/definitions/ScVal"
+        }
+      }
+    },
     "SponsorshipDescriptor": {
       "description": "SponsorshipDescriptor is an XDR Typedef defines as:\n\n```text typedef AccountID* SponsorshipDescriptor; ```",
       "anyOf": [
@@ -2898,6 +2953,60 @@
         },
         "tx_changes_before": {
           "$ref": "#/definitions/LedgerEntryChanges"
+        }
+      }
+    },
+    "TransactionMetaV4": {
+      "description": "TransactionMetaV4 is an XDR Struct defines as:\n\n```text struct TransactionMetaV4 { ExtensionPoint ext;\n\nLedgerEntryChanges txChangesBefore;  // tx level changes before operations // are applied if any OperationMetaV2 operations<>;        // meta for each operation LedgerEntryChanges txChangesAfter;   // tx level changes after operations are // applied if any SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for // Soroban transactions).\n\nContractEvent events<>; // Used for transaction-level events (like fee payment) DiagnosticEvent txDiagnosticEvents<>; // Used for transaction-level diagnostic //  information }; ```",
+      "type": "object",
+      "required": [
+        "events",
+        "ext",
+        "operations",
+        "tx_changes_after",
+        "tx_changes_before",
+        "tx_diagnostic_events"
+      ],
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContractEvent"
+          },
+          "maxItems": 4294967295
+        },
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OperationMetaV2"
+          },
+          "maxItems": 4294967295
+        },
+        "soroban_meta": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SorobanTransactionMetaV2"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tx_changes_after": {
+          "$ref": "#/definitions/LedgerEntryChanges"
+        },
+        "tx_changes_before": {
+          "$ref": "#/definitions/LedgerEntryChanges"
+        },
+        "tx_diagnostic_events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiagnosticEvent"
+          },
+          "maxItems": 4294967295
         }
       }
     },

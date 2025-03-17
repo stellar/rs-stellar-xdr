@@ -4275,6 +4275,38 @@
         }
       }
     },
+    "OperationMetaV2": {
+      "description": "OperationMetaV2 is an XDR Struct defines as:\n\n```text struct OperationMetaV2 { ExtensionPoint ext;\n\nLedgerEntryChanges changes;\n\nContractEvent events<>; DiagnosticEvent diagnosticEvents<>; }; ```",
+      "type": "object",
+      "required": [
+        "changes",
+        "diagnostic_events",
+        "events",
+        "ext"
+      ],
+      "properties": {
+        "changes": {
+          "$ref": "#/definitions/LedgerEntryChanges"
+        },
+        "diagnostic_events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiagnosticEvent"
+          },
+          "maxItems": 4294967295
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContractEvent"
+          },
+          "maxItems": 4294967295
+        },
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      }
+    },
     "OperationResult": {
       "description": "OperationResult is an XDR Union defines as:\n\n```text union OperationResult switch (OperationResultCode code) { case opINNER: union switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountResult createAccountResult; case PAYMENT: PaymentResult paymentResult; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveResult pathPaymentStrictReceiveResult; case MANAGE_SELL_OFFER: ManageSellOfferResult manageSellOfferResult; case CREATE_PASSIVE_SELL_OFFER: ManageSellOfferResult createPassiveSellOfferResult; case SET_OPTIONS: SetOptionsResult setOptionsResult; case CHANGE_TRUST: ChangeTrustResult changeTrustResult; case ALLOW_TRUST: AllowTrustResult allowTrustResult; case ACCOUNT_MERGE: AccountMergeResult accountMergeResult; case INFLATION: InflationResult inflationResult; case MANAGE_DATA: ManageDataResult manageDataResult; case BUMP_SEQUENCE: BumpSequenceResult bumpSeqResult; case MANAGE_BUY_OFFER: ManageBuyOfferResult manageBuyOfferResult; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendResult pathPaymentStrictSendResult; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceResult createClaimableBalanceResult; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceResult claimClaimableBalanceResult; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesResult beginSponsoringFutureReservesResult; case END_SPONSORING_FUTURE_RESERVES: EndSponsoringFutureReservesResult endSponsoringFutureReservesResult; case REVOKE_SPONSORSHIP: RevokeSponsorshipResult revokeSponsorshipResult; case CLAWBACK: ClawbackResult clawbackResult; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceResult clawbackClaimableBalanceResult; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsResult setTrustLineFlagsResult; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositResult liquidityPoolDepositResult; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawResult liquidityPoolWithdrawResult; case INVOKE_HOST_FUNCTION: InvokeHostFunctionResult invokeHostFunctionResult; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLResult extendFootprintTTLResult; case RESTORE_FOOTPRINT: RestoreFootprintResult restoreFootprintResult; } tr; case opBAD_AUTH: case opNO_ACCOUNT: case opNOT_SUPPORTED: case opTOO_MANY_SUBENTRIES: case opEXCEEDED_WORK_LIMIT: case opTOO_MANY_SPONSORING: void; }; ```",
       "oneOf": [
@@ -4876,12 +4908,7 @@
       ]
     },
     "PoolId": {
-      "description": "PoolId is an XDR Typedef defines as:\n\n```text typedef Hash PoolID; ```",
-      "type": "string",
-      "maxLength": 64,
-      "minLength": 64,
-      "contentEncoding": "hex",
-      "contentMediaType": "application/binary"
+      "type": "string"
     },
     "Preconditions": {
       "description": "Preconditions is an XDR Union defines as:\n\n```text union Preconditions switch (PreconditionType type) { case PRECOND_NONE: void; case PRECOND_TIME: TimeBounds timeBounds; case PRECOND_V2: PreconditionsV2 v2; }; ```",
@@ -6349,6 +6376,22 @@
         }
       }
     },
+    "SorobanTransactionMetaV2": {
+      "description": "SorobanTransactionMetaV2 is an XDR Struct defines as:\n\n```text struct SorobanTransactionMetaV2 { SorobanTransactionMetaExt ext;\n\nSCVal returnValue; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "return_value"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/SorobanTransactionMetaExt"
+        },
+        "return_value": {
+          "$ref": "#/definitions/ScVal"
+        }
+      }
+    },
     "SponsorshipDescriptor": {
       "description": "SponsorshipDescriptor is an XDR Typedef defines as:\n\n```text typedef AccountID* SponsorshipDescriptor; ```",
       "anyOf": [
@@ -6634,7 +6677,7 @@
       ]
     },
     "TransactionMeta": {
-      "description": "TransactionMeta is an XDR Union defines as:\n\n```text union TransactionMeta switch (int v) { case 0: OperationMeta operations<>; case 1: TransactionMetaV1 v1; case 2: TransactionMetaV2 v2; case 3: TransactionMetaV3 v3; }; ```",
+      "description": "TransactionMeta is an XDR Union defines as:\n\n```text union TransactionMeta switch (int v) { case 0: OperationMeta operations<>; case 1: TransactionMetaV1 v1; case 2: TransactionMetaV2 v2; case 3: TransactionMetaV3 v3; case 4: TransactionMetaV4 v4; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -6684,6 +6727,18 @@
           "properties": {
             "v3": {
               "$ref": "#/definitions/TransactionMetaV3"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "v4"
+          ],
+          "properties": {
+            "v4": {
+              "$ref": "#/definitions/TransactionMetaV4"
             }
           },
           "additionalProperties": false
@@ -6769,6 +6824,60 @@
         },
         "tx_changes_before": {
           "$ref": "#/definitions/LedgerEntryChanges"
+        }
+      }
+    },
+    "TransactionMetaV4": {
+      "description": "TransactionMetaV4 is an XDR Struct defines as:\n\n```text struct TransactionMetaV4 { ExtensionPoint ext;\n\nLedgerEntryChanges txChangesBefore;  // tx level changes before operations // are applied if any OperationMetaV2 operations<>;        // meta for each operation LedgerEntryChanges txChangesAfter;   // tx level changes after operations are // applied if any SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for // Soroban transactions).\n\nContractEvent events<>; // Used for transaction-level events (like fee payment) DiagnosticEvent txDiagnosticEvents<>; // Used for transaction-level diagnostic //  information }; ```",
+      "type": "object",
+      "required": [
+        "events",
+        "ext",
+        "operations",
+        "tx_changes_after",
+        "tx_changes_before",
+        "tx_diagnostic_events"
+      ],
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContractEvent"
+          },
+          "maxItems": 4294967295
+        },
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OperationMetaV2"
+          },
+          "maxItems": 4294967295
+        },
+        "soroban_meta": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SorobanTransactionMetaV2"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tx_changes_after": {
+          "$ref": "#/definitions/LedgerEntryChanges"
+        },
+        "tx_changes_before": {
+          "$ref": "#/definitions/LedgerEntryChanges"
+        },
+        "tx_diagnostic_events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiagnosticEvent"
+          },
+          "maxItems": 4294967295
         }
       }
     },

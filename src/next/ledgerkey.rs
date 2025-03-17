@@ -7,12 +7,14 @@ use super::{
 };
 
 impl LedgerEntry {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKey {
         self.data.to_key()
     }
 }
 
 impl LedgerEntryData {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKey {
         match &self {
             LedgerEntryData::Ttl(e) => e.to_key().into(),
@@ -30,6 +32,7 @@ impl LedgerEntryData {
 }
 
 impl TtlEntry {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKeyTtl {
         LedgerKeyTtl {
             key_hash: self.key_hash.clone(),
@@ -38,6 +41,7 @@ impl TtlEntry {
 }
 
 impl AccountEntry {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKeyAccount {
         LedgerKeyAccount {
             account_id: self.account_id.clone(),
@@ -46,6 +50,7 @@ impl AccountEntry {
 }
 
 impl TrustLineEntry {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKeyTrustLine {
         LedgerKeyTrustLine {
             account_id: self.account_id.clone(),
@@ -55,6 +60,7 @@ impl TrustLineEntry {
 }
 
 impl OfferEntry {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKeyOffer {
         LedgerKeyOffer {
             seller_id: self.seller_id.clone(),
@@ -64,6 +70,7 @@ impl OfferEntry {
 }
 
 impl DataEntry {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKeyData {
         LedgerKeyData {
             account_id: self.account_id.clone(),
@@ -73,6 +80,7 @@ impl DataEntry {
 }
 
 impl ClaimableBalanceEntry {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKeyClaimableBalance {
         LedgerKeyClaimableBalance {
             balance_id: self.balance_id.clone(),
@@ -81,6 +89,7 @@ impl ClaimableBalanceEntry {
 }
 
 impl LiquidityPoolEntry {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKeyLiquidityPool {
         LedgerKeyLiquidityPool {
             liquidity_pool_id: self.liquidity_pool_id.clone(),
@@ -89,6 +98,7 @@ impl LiquidityPoolEntry {
 }
 
 impl ContractDataEntry {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKeyContractData {
         LedgerKeyContractData {
             contract: self.contract.clone(),
@@ -99,6 +109,7 @@ impl ContractDataEntry {
 }
 
 impl ContractCodeEntry {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKeyContractCode {
         LedgerKeyContractCode {
             hash: self.hash.clone(),
@@ -107,6 +118,7 @@ impl ContractCodeEntry {
 }
 
 impl ConfigSettingEntry {
+    #[must_use]
     pub fn to_key(&self) -> LedgerKeyConfigSetting {
         let config_setting_id = match self {
             ConfigSettingEntry::ContractMaxSizeBytes(_) => ConfigSettingId::ContractMaxSizeBytes,

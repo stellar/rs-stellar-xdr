@@ -120,42 +120,9 @@ impl ContractCodeEntry {
 impl ConfigSettingEntry {
     #[must_use]
     pub fn to_key(&self) -> LedgerKeyConfigSetting {
-        let config_setting_id = match self {
-            ConfigSettingEntry::ContractMaxSizeBytes(_) => ConfigSettingId::ContractMaxSizeBytes,
-            ConfigSettingEntry::ContractComputeV0(_) => ConfigSettingId::ContractComputeV0,
-            ConfigSettingEntry::ContractLedgerCostV0(_) => ConfigSettingId::ContractLedgerCostV0,
-            ConfigSettingEntry::ContractHistoricalDataV0(_) => {
-                ConfigSettingId::ContractHistoricalDataV0
-            }
-            ConfigSettingEntry::ContractEventsV0(_) => ConfigSettingId::ContractEventsV0,
-            ConfigSettingEntry::ContractBandwidthV0(_) => ConfigSettingId::ContractBandwidthV0,
-            ConfigSettingEntry::ContractCostParamsCpuInstructions(_) => {
-                ConfigSettingId::ContractCostParamsCpuInstructions
-            }
-            ConfigSettingEntry::ContractCostParamsMemoryBytes(_) => {
-                ConfigSettingId::ContractCostParamsMemoryBytes
-            }
-            ConfigSettingEntry::ContractDataKeySizeBytes(_) => {
-                ConfigSettingId::ContractDataKeySizeBytes
-            }
-            ConfigSettingEntry::ContractDataEntrySizeBytes(_) => {
-                ConfigSettingId::ContractDataEntrySizeBytes
-            }
-            ConfigSettingEntry::ContractExecutionLanes(_) => {
-                ConfigSettingId::ContractExecutionLanes
-            }
-            ConfigSettingEntry::BucketlistSizeWindow(_) => ConfigSettingId::BucketlistSizeWindow,
-            ConfigSettingEntry::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
-            ConfigSettingEntry::StateArchival(_) => ConfigSettingId::StateArchival,
-            ConfigSettingEntry::ContractParallelComputeV0(_) => {
-                ConfigSettingId::ContractParallelComputeV0
-            }
-            ConfigSettingEntry::ContractLedgerCostExtV0(_) => {
-                ConfigSettingId::ContractLedgerCostExtV0
-            }
-        };
-
-        LedgerKeyConfigSetting { config_setting_id }
+        LedgerKeyConfigSetting {
+            config_setting_id: self.discriminant(),
+        }
     }
 }
 

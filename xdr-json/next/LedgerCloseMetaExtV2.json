@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "LedgerCloseMetaExtV2",
+  "description": "LedgerCloseMetaExtV2 is an XDR Struct defines as:\n\n```text struct LedgerCloseMetaExtV2 { ExtensionPoint ext; int64 sorobanFeeWrite1KB;\n\nuint32 currentArchivalEpoch;\n\n// The last epoch currently stored by validators // Any entry restored from an epoch older than this will // require a proof. uint32 lastArchivalEpochPersisted; }; ```",
+  "type": "object",
+  "required": [
+    "current_archival_epoch",
+    "ext",
+    "last_archival_epoch_persisted",
+    "soroban_fee_write1_kb"
+  ],
+  "properties": {
+    "current_archival_epoch": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "ext": {
+      "$ref": "#/definitions/ExtensionPoint"
+    },
+    "last_archival_epoch_persisted": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "soroban_fee_write1_kb": {
+      "type": "integer",
+      "format": "int64"
+    }
+  },
+  "definitions": {
+    "ExtensionPoint": {
+      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    }
+  }
+}

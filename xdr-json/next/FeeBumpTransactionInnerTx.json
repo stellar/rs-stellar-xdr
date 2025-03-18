@@ -17,6 +17,212 @@
     }
   ],
   "definitions": {
+    "AccountEntry": {
+      "description": "AccountEntry is an XDR Struct defines as:\n\n```text struct AccountEntry { AccountID accountID;      // master public key for this account int64 balance;            // in stroops SequenceNumber seqNum;    // last sequence number used for this account uint32 numSubEntries;     // number of sub-entries this account has // drives the reserve AccountID* inflationDest; // Account to vote for during inflation uint32 flags;             // see AccountFlags\n\nstring32 homeDomain; // can be used for reverse federation and memo lookup\n\n// fields used for signatures // thresholds stores unsigned bytes: [weight of master|low|medium|high] Thresholds thresholds;\n\nSigner signers<MAX_SIGNERS>; // possible signers for this account\n\n// reserved for future use union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "account_id",
+        "balance",
+        "ext",
+        "flags",
+        "home_domain",
+        "num_sub_entries",
+        "seq_num",
+        "signers",
+        "thresholds"
+      ],
+      "properties": {
+        "account_id": {
+          "$ref": "#/definitions/AccountId"
+        },
+        "balance": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ext": {
+          "$ref": "#/definitions/AccountEntryExt"
+        },
+        "flags": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "home_domain": {
+          "$ref": "#/definitions/String32"
+        },
+        "inflation_dest": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AccountId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "num_sub_entries": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "seq_num": {
+          "$ref": "#/definitions/SequenceNumber"
+        },
+        "signers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Signer"
+          },
+          "maxItems": 20
+        },
+        "thresholds": {
+          "type": "string",
+          "maxLength": 8,
+          "minLength": 8,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
+    },
+    "AccountEntryExt": {
+      "description": "AccountEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/AccountEntryExtensionV1"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AccountEntryExtensionV1": {
+      "description": "AccountEntryExtensionV1 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV1 { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: AccountEntryExtensionV2 v2; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "liabilities"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/AccountEntryExtensionV1Ext"
+        },
+        "liabilities": {
+          "$ref": "#/definitions/Liabilities"
+        }
+      }
+    },
+    "AccountEntryExtensionV1Ext": {
+      "description": "AccountEntryExtensionV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 2: AccountEntryExtensionV2 v2; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v2"
+          ],
+          "properties": {
+            "v2": {
+              "$ref": "#/definitions/AccountEntryExtensionV2"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AccountEntryExtensionV2": {
+      "description": "AccountEntryExtensionV2 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV2 { uint32 numSponsored; uint32 numSponsoring; SponsorshipDescriptor signerSponsoringIDs<MAX_SIGNERS>;\n\nunion switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "num_sponsored",
+        "num_sponsoring",
+        "signer_sponsoring_i_ds"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/AccountEntryExtensionV2Ext"
+        },
+        "num_sponsored": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "num_sponsoring": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "signer_sponsoring_i_ds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SponsorshipDescriptor"
+          },
+          "maxItems": 20
+        }
+      }
+    },
+    "AccountEntryExtensionV2Ext": {
+      "description": "AccountEntryExtensionV2Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v3"
+          ],
+          "properties": {
+            "v3": {
+              "$ref": "#/definitions/AccountEntryExtensionV3"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AccountEntryExtensionV3": {
+      "description": "AccountEntryExtensionV3 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV3 { // We can use this to add more fields, or because it is first, to // change AccountEntryExtensionV3 into a union. ExtensionPoint ext;\n\n// Ledger number at which `seqNum` took on its present value. uint32 seqLedger;\n\n// Time at which `seqNum` took on its present value. TimePoint seqTime; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "seq_ledger",
+        "seq_time"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "seq_ledger": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "seq_time": {
+          "$ref": "#/definitions/TimePoint"
+        }
+      }
+    },
     "AccountId": {
       "type": "string"
     },
@@ -71,6 +277,75 @@
         },
         "issuer": {
           "$ref": "#/definitions/AccountId"
+        }
+      }
+    },
+    "ArchivalProof": {
+      "description": "ArchivalProof is an XDR Struct defines as:\n\n```text struct ArchivalProof { uint32 epoch; // AST Subtree for this proof\n\nunion switch (ArchivalProofType t) { case NONEXISTENCE: NonexistenceProofBody nonexistenceProof; case EXISTENCE: ExistenceProofBody existenceProof; } body; }; ```",
+      "type": "object",
+      "required": [
+        "body",
+        "epoch"
+      ],
+      "properties": {
+        "body": {
+          "$ref": "#/definitions/ArchivalProofBody"
+        },
+        "epoch": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ArchivalProofBody": {
+      "description": "ArchivalProofBody is an XDR NestedUnion defines as:\n\n```text union switch (ArchivalProofType t) { case NONEXISTENCE: NonexistenceProofBody nonexistenceProof; case EXISTENCE: ExistenceProofBody existenceProof; } ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "nonexistence"
+          ],
+          "properties": {
+            "nonexistence": {
+              "$ref": "#/definitions/NonexistenceProofBody"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "existence"
+          ],
+          "properties": {
+            "existence": {
+              "$ref": "#/definitions/ExistenceProofBody"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ArchivalProofNode": {
+      "description": "ArchivalProofNode is an XDR Struct defines as:\n\n```text struct ArchivalProofNode { uint32 index; Hash hash; }; ```",
+      "type": "object",
+      "required": [
+        "hash",
+        "index"
+      ],
+      "properties": {
+        "hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
         }
       }
     },
@@ -129,6 +404,56 @@
           "$ref": "#/definitions/AccountId"
         }
       }
+    },
+    "BucketListType": {
+      "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1, COLD_ARCHIVE = 2 }; ```",
+      "type": "string",
+      "enum": [
+        "live",
+        "hot_archive",
+        "cold_archive"
+      ]
+    },
+    "BucketMetadata": {
+      "description": "BucketMetadata is an XDR Struct defines as:\n\n```text struct BucketMetadata { // Indicates the protocol version used to create / merge this bucket. uint32 ledgerVersion;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: BucketListType bucketListType; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "ledger_version"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/BucketMetadataExt"
+        },
+        "ledger_version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "BucketMetadataExt": {
+      "description": "BucketMetadataExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: BucketListType bucketListType; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/BucketListType"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     },
     "BumpSequenceOp": {
       "description": "BumpSequenceOp is an XDR Struct defines as:\n\n```text struct BumpSequenceOp { SequenceNumber bumpTo; }; ```",
@@ -306,6 +631,87 @@
         }
       ]
     },
+    "ClaimableBalanceEntry": {
+      "description": "ClaimableBalanceEntry is an XDR Struct defines as:\n\n```text struct ClaimableBalanceEntry { // Unique identifier for this ClaimableBalanceEntry ClaimableBalanceID balanceID;\n\n// List of claimants with associated predicate Claimant claimants<10>;\n\n// Any asset including native Asset asset;\n\n// Amount of asset int64 amount;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: ClaimableBalanceEntryExtensionV1 v1; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "amount",
+        "asset",
+        "balance_id",
+        "claimants",
+        "ext"
+      ],
+      "properties": {
+        "amount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "asset": {
+          "$ref": "#/definitions/Asset"
+        },
+        "balance_id": {
+          "$ref": "#/definitions/ClaimableBalanceId"
+        },
+        "claimants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Claimant"
+          },
+          "maxItems": 10
+        },
+        "ext": {
+          "$ref": "#/definitions/ClaimableBalanceEntryExt"
+        }
+      }
+    },
+    "ClaimableBalanceEntryExt": {
+      "description": "ClaimableBalanceEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: ClaimableBalanceEntryExtensionV1 v1; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/ClaimableBalanceEntryExtensionV1"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ClaimableBalanceEntryExtensionV1": {
+      "description": "ClaimableBalanceEntryExtensionV1 is an XDR Struct defines as:\n\n```text struct ClaimableBalanceEntryExtensionV1 { union switch (int v) { case 0: void; } ext;\n\nuint32 flags; // see ClaimableBalanceFlags }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "flags"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/ClaimableBalanceEntryExtensionV1Ext"
+        },
+        "flags": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ClaimableBalanceEntryExtensionV1Ext": {
+      "description": "ClaimableBalanceEntryExtensionV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
     "ClaimableBalanceId": {
       "type": "string"
     },
@@ -375,8 +781,558 @@
         }
       }
     },
+    "ColdArchiveArchivedLeaf": {
+      "description": "ColdArchiveArchivedLeaf is an XDR Struct defines as:\n\n```text struct ColdArchiveArchivedLeaf { uint32 index; LedgerEntry archivedEntry; }; ```",
+      "type": "object",
+      "required": [
+        "archived_entry",
+        "index"
+      ],
+      "properties": {
+        "archived_entry": {
+          "$ref": "#/definitions/LedgerEntry"
+        },
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ColdArchiveBoundaryLeaf": {
+      "description": "ColdArchiveBoundaryLeaf is an XDR Struct defines as:\n\n```text struct ColdArchiveBoundaryLeaf { uint32 index; bool isLowerBound; }; ```",
+      "type": "object",
+      "required": [
+        "index",
+        "is_lower_bound"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "is_lower_bound": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ColdArchiveBucketEntry": {
+      "description": "ColdArchiveBucketEntry is an XDR Union defines as:\n\n```text union ColdArchiveBucketEntry switch (ColdArchiveBucketEntryType type) { case COLD_ARCHIVE_METAENTRY: BucketMetadata metaEntry; case COLD_ARCHIVE_ARCHIVED_LEAF: ColdArchiveArchivedLeaf archivedLeaf; case COLD_ARCHIVE_DELETED_LEAF: ColdArchiveDeletedLeaf deletedLeaf; case COLD_ARCHIVE_BOUNDARY_LEAF: ColdArchiveBoundaryLeaf boundaryLeaf; case COLD_ARCHIVE_HASH: ColdArchiveHashEntry hashEntry; }; ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "metaentry"
+          ],
+          "properties": {
+            "metaentry": {
+              "$ref": "#/definitions/BucketMetadata"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "archived_leaf"
+          ],
+          "properties": {
+            "archived_leaf": {
+              "$ref": "#/definitions/ColdArchiveArchivedLeaf"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "deleted_leaf"
+          ],
+          "properties": {
+            "deleted_leaf": {
+              "$ref": "#/definitions/ColdArchiveDeletedLeaf"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "boundary_leaf"
+          ],
+          "properties": {
+            "boundary_leaf": {
+              "$ref": "#/definitions/ColdArchiveBoundaryLeaf"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "hash"
+          ],
+          "properties": {
+            "hash": {
+              "$ref": "#/definitions/ColdArchiveHashEntry"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ColdArchiveDeletedLeaf": {
+      "description": "ColdArchiveDeletedLeaf is an XDR Struct defines as:\n\n```text struct ColdArchiveDeletedLeaf { uint32 index; LedgerKey deletedKey; }; ```",
+      "type": "object",
+      "required": [
+        "deleted_key",
+        "index"
+      ],
+      "properties": {
+        "deleted_key": {
+          "$ref": "#/definitions/LedgerKey"
+        },
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ColdArchiveHashEntry": {
+      "description": "ColdArchiveHashEntry is an XDR Struct defines as:\n\n```text struct ColdArchiveHashEntry { uint32 index; uint32 level; Hash hash; }; ```",
+      "type": "object",
+      "required": [
+        "hash",
+        "index",
+        "level"
+      ],
+      "properties": {
+        "hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "level": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ConfigSettingContractBandwidthV0": {
+      "description": "ConfigSettingContractBandwidthV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractBandwidthV0 { // Maximum sum of all transaction sizes in the ledger in bytes uint32 ledgerMaxTxsSizeBytes; // Maximum size in bytes for a transaction uint32 txMaxSizeBytes;\n\n// Fee for 1 KB of transaction size int64 feeTxSize1KB; }; ```",
+      "type": "object",
+      "required": [
+        "fee_tx_size1_kb",
+        "ledger_max_txs_size_bytes",
+        "tx_max_size_bytes"
+      ],
+      "properties": {
+        "fee_tx_size1_kb": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ledger_max_txs_size_bytes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "tx_max_size_bytes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ConfigSettingContractComputeV0": {
+      "description": "ConfigSettingContractComputeV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractComputeV0 { // Maximum instructions per ledger int64 ledgerMaxInstructions; // Maximum instructions per transaction int64 txMaxInstructions; // Cost of 10000 instructions int64 feeRatePerInstructionsIncrement;\n\n// Memory limit per transaction. Unlike instructions, there is no fee // for memory, just the limit. uint32 txMemoryLimit; }; ```",
+      "type": "object",
+      "required": [
+        "fee_rate_per_instructions_increment",
+        "ledger_max_instructions",
+        "tx_max_instructions",
+        "tx_memory_limit"
+      ],
+      "properties": {
+        "fee_rate_per_instructions_increment": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ledger_max_instructions": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "tx_max_instructions": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "tx_memory_limit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ConfigSettingContractEventsV0": {
+      "description": "ConfigSettingContractEventsV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractEventsV0 { // Maximum size of events that a contract call can emit. uint32 txMaxContractEventsSizeBytes; // Fee for generating 1KB of contract events. int64 feeContractEvents1KB; }; ```",
+      "type": "object",
+      "required": [
+        "fee_contract_events1_kb",
+        "tx_max_contract_events_size_bytes"
+      ],
+      "properties": {
+        "fee_contract_events1_kb": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "tx_max_contract_events_size_bytes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ConfigSettingContractExecutionLanesV0": {
+      "description": "ConfigSettingContractExecutionLanesV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractExecutionLanesV0 { // maximum number of Soroban transactions per ledger uint32 ledgerMaxTxCount; }; ```",
+      "type": "object",
+      "required": [
+        "ledger_max_tx_count"
+      ],
+      "properties": {
+        "ledger_max_tx_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ConfigSettingContractHistoricalDataV0": {
+      "description": "ConfigSettingContractHistoricalDataV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractHistoricalDataV0 { int64 feeHistorical1KB; // Fee for storing 1KB in archives }; ```",
+      "type": "object",
+      "required": [
+        "fee_historical1_kb"
+      ],
+      "properties": {
+        "fee_historical1_kb": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ConfigSettingContractLedgerCostV0": {
+      "description": "ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostV0 { // Maximum number of ledger entry read operations per ledger uint32 ledgerMaxReadLedgerEntries; // Maximum number of bytes that can be read per ledger uint32 ledgerMaxReadBytes; // Maximum number of ledger entry write operations per ledger uint32 ledgerMaxWriteLedgerEntries; // Maximum number of bytes that can be written per ledger uint32 ledgerMaxWriteBytes;\n\n// Maximum number of ledger entry read operations per transaction uint32 txMaxReadLedgerEntries; // Maximum number of bytes that can be read per transaction uint32 txMaxReadBytes; // Maximum number of ledger entry write operations per transaction uint32 txMaxWriteLedgerEntries; // Maximum number of bytes that can be written per transaction uint32 txMaxWriteBytes;\n\nint64 feeReadLedgerEntry;  // Fee per ledger entry read int64 feeWriteLedgerEntry; // Fee per ledger entry write\n\nint64 feeRead1KB;  // Fee for reading 1KB\n\n// The following parameters determine the write fee per 1KB. // Write fee grows linearly until bucket list reaches this size int64 bucketListTargetSizeBytes; // Fee per 1KB write when the bucket list is empty int64 writeFee1KBBucketListLow; // Fee per 1KB write when the bucket list has reached `bucketListTargetSizeBytes` int64 writeFee1KBBucketListHigh; // Write fee multiplier for any additional data past the first `bucketListTargetSizeBytes` uint32 bucketListWriteFeeGrowthFactor; }; ```",
+      "type": "object",
+      "required": [
+        "bucket_list_target_size_bytes",
+        "bucket_list_write_fee_growth_factor",
+        "fee_read1_kb",
+        "fee_read_ledger_entry",
+        "fee_write_ledger_entry",
+        "ledger_max_read_bytes",
+        "ledger_max_read_ledger_entries",
+        "ledger_max_write_bytes",
+        "ledger_max_write_ledger_entries",
+        "tx_max_read_bytes",
+        "tx_max_read_ledger_entries",
+        "tx_max_write_bytes",
+        "tx_max_write_ledger_entries",
+        "write_fee1_kb_bucket_list_high",
+        "write_fee1_kb_bucket_list_low"
+      ],
+      "properties": {
+        "bucket_list_target_size_bytes": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "bucket_list_write_fee_growth_factor": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "fee_read1_kb": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "fee_read_ledger_entry": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "fee_write_ledger_entry": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ledger_max_read_bytes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "ledger_max_read_ledger_entries": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "ledger_max_write_bytes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "ledger_max_write_ledger_entries": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "tx_max_read_bytes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "tx_max_read_ledger_entries": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "tx_max_write_bytes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "tx_max_write_ledger_entries": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "write_fee1_kb_bucket_list_high": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "write_fee1_kb_bucket_list_low": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ConfigSettingContractParallelComputeV0": {
+      "description": "ConfigSettingContractParallelComputeV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractParallelComputeV0 { // Maximum number of threads that can be used to apply a // transaction set to close the ledger. // This doesn't limit or defined the actual number of // threads used and instead only defines the minimum number // of physical threads that a tier-1 validator has to support // in order to not fall out of sync with the network. uint32 ledgerMaxParallelThreads; }; ```",
+      "type": "object",
+      "required": [
+        "ledger_max_parallel_threads"
+      ],
+      "properties": {
+        "ledger_max_parallel_threads": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ConfigSettingEntry": {
+      "description": "ConfigSettingEntry is an XDR Union defines as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW: uint64 bucketListSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; }; ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "contract_max_size_bytes"
+          ],
+          "properties": {
+            "contract_max_size_bytes": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_compute_v0"
+          ],
+          "properties": {
+            "contract_compute_v0": {
+              "$ref": "#/definitions/ConfigSettingContractComputeV0"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_ledger_cost_v0"
+          ],
+          "properties": {
+            "contract_ledger_cost_v0": {
+              "$ref": "#/definitions/ConfigSettingContractLedgerCostV0"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_historical_data_v0"
+          ],
+          "properties": {
+            "contract_historical_data_v0": {
+              "$ref": "#/definitions/ConfigSettingContractHistoricalDataV0"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_events_v0"
+          ],
+          "properties": {
+            "contract_events_v0": {
+              "$ref": "#/definitions/ConfigSettingContractEventsV0"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_bandwidth_v0"
+          ],
+          "properties": {
+            "contract_bandwidth_v0": {
+              "$ref": "#/definitions/ConfigSettingContractBandwidthV0"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_cost_params_cpu_instructions"
+          ],
+          "properties": {
+            "contract_cost_params_cpu_instructions": {
+              "$ref": "#/definitions/ContractCostParams"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_cost_params_memory_bytes"
+          ],
+          "properties": {
+            "contract_cost_params_memory_bytes": {
+              "$ref": "#/definitions/ContractCostParams"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_data_key_size_bytes"
+          ],
+          "properties": {
+            "contract_data_key_size_bytes": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_data_entry_size_bytes"
+          ],
+          "properties": {
+            "contract_data_entry_size_bytes": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "state_archival"
+          ],
+          "properties": {
+            "state_archival": {
+              "$ref": "#/definitions/StateArchivalSettings"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_execution_lanes"
+          ],
+          "properties": {
+            "contract_execution_lanes": {
+              "$ref": "#/definitions/ConfigSettingContractExecutionLanesV0"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "bucketlist_size_window"
+          ],
+          "properties": {
+            "bucketlist_size_window": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "maxItems": 4294967295
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "eviction_iterator"
+          ],
+          "properties": {
+            "eviction_iterator": {
+              "$ref": "#/definitions/EvictionIterator"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_parallel_compute_v0"
+          ],
+          "properties": {
+            "contract_parallel_compute_v0": {
+              "$ref": "#/definitions/ConfigSettingContractParallelComputeV0"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
     "ConfigSettingId": {
-      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15 }; ```",
+      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14 }; ```",
       "type": "string",
       "enum": [
         "contract_max_size_bytes",
@@ -393,9 +1349,175 @@
         "contract_execution_lanes",
         "bucketlist_size_window",
         "eviction_iterator",
-        "contract_parallel_compute_v0",
-        "contract_ledger_cost_ext_v0"
+        "contract_parallel_compute_v0"
       ]
+    },
+    "ContractCodeCostInputs": {
+      "description": "ContractCodeCostInputs is an XDR Struct defines as:\n\n```text struct ContractCodeCostInputs { ExtensionPoint ext; uint32 nInstructions; uint32 nFunctions; uint32 nGlobals; uint32 nTableEntries; uint32 nTypes; uint32 nDataSegments; uint32 nElemSegments; uint32 nImports; uint32 nExports; uint32 nDataSegmentBytes; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "n_data_segment_bytes",
+        "n_data_segments",
+        "n_elem_segments",
+        "n_exports",
+        "n_functions",
+        "n_globals",
+        "n_imports",
+        "n_instructions",
+        "n_table_entries",
+        "n_types"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "n_data_segment_bytes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_data_segments": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_elem_segments": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_exports": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_functions": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_globals": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_imports": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_instructions": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_table_entries": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "n_types": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ContractCodeEntry": {
+      "description": "ContractCodeEntry is an XDR Struct defines as:\n\n```text struct ContractCodeEntry { union switch (int v) { case 0: void; case 1: struct { ExtensionPoint ext; ContractCodeCostInputs costInputs; } v1; } ext;\n\nHash hash; opaque code<>; }; ```",
+      "type": "object",
+      "required": [
+        "code",
+        "ext",
+        "hash"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "ext": {
+          "$ref": "#/definitions/ContractCodeEntryExt"
+        },
+        "hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
+    },
+    "ContractCodeEntryExt": {
+      "description": "ContractCodeEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: struct { ExtensionPoint ext; ContractCodeCostInputs costInputs; } v1; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/ContractCodeEntryV1"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ContractCodeEntryV1": {
+      "description": "ContractCodeEntryV1 is an XDR NestedStruct defines as:\n\n```text struct { ExtensionPoint ext; ContractCodeCostInputs costInputs; } ```",
+      "type": "object",
+      "required": [
+        "cost_inputs",
+        "ext"
+      ],
+      "properties": {
+        "cost_inputs": {
+          "$ref": "#/definitions/ContractCodeCostInputs"
+        },
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      }
+    },
+    "ContractCostParamEntry": {
+      "description": "ContractCostParamEntry is an XDR Struct defines as:\n\n```text struct ContractCostParamEntry { // use `ext` to add more terms (e.g. higher order polynomials) in the future ExtensionPoint ext;\n\nint64 constTerm; int64 linearTerm; }; ```",
+      "type": "object",
+      "required": [
+        "const_term",
+        "ext",
+        "linear_term"
+      ],
+      "properties": {
+        "const_term": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "linear_term": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ContractCostParams": {
+      "description": "ContractCostParams is an XDR Typedef defines as:\n\n```text typedef ContractCostParamEntry ContractCostParams<CONTRACT_COST_COUNT_LIMIT>; ```",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ContractCostParamEntry"
+      },
+      "maxItems": 1024
     },
     "ContractDataDurability": {
       "description": "ContractDataDurability is an XDR Enum defines as:\n\n```text enum ContractDataDurability { TEMPORARY = 0, PERSISTENT = 1 }; ```",
@@ -404,6 +1526,34 @@
         "temporary",
         "persistent"
       ]
+    },
+    "ContractDataEntry": {
+      "description": "ContractDataEntry is an XDR Struct defines as:\n\n```text struct ContractDataEntry { ExtensionPoint ext;\n\nSCAddress contract; SCVal key; ContractDataDurability durability; SCVal val; }; ```",
+      "type": "object",
+      "required": [
+        "contract",
+        "durability",
+        "ext",
+        "key",
+        "val"
+      ],
+      "properties": {
+        "contract": {
+          "$ref": "#/definitions/ScAddress"
+        },
+        "durability": {
+          "$ref": "#/definitions/ContractDataDurability"
+        },
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "key": {
+          "$ref": "#/definitions/ScVal"
+        },
+        "val": {
+          "$ref": "#/definitions/ScVal"
+        }
+      }
     },
     "ContractExecutable": {
       "description": "ContractExecutable is an XDR Union defines as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
@@ -588,6 +1738,37 @@
         }
       }
     },
+    "DataEntry": {
+      "description": "DataEntry is an XDR Struct defines as:\n\n```text struct DataEntry { AccountID accountID; // account this data belongs to string64 dataName; DataValue dataValue;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "account_id",
+        "data_name",
+        "data_value",
+        "ext"
+      ],
+      "properties": {
+        "account_id": {
+          "$ref": "#/definitions/AccountId"
+        },
+        "data_name": {
+          "$ref": "#/definitions/String64"
+        },
+        "data_value": {
+          "$ref": "#/definitions/DataValue"
+        },
+        "ext": {
+          "$ref": "#/definitions/DataEntryExt"
+        }
+      }
+    },
+    "DataEntryExt": {
+      "description": "DataEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
     "DataValue": {
       "description": "DataValue is an XDR Typedef defines as:\n\n```text typedef opaque DataValue<64>; ```",
       "type": "string",
@@ -620,6 +1801,54 @@
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
+    },
+    "EvictionIterator": {
+      "description": "EvictionIterator is an XDR Struct defines as:\n\n```text struct EvictionIterator { uint32 bucketListLevel; bool isCurrBucket; uint64 bucketFileOffset; }; ```",
+      "type": "object",
+      "required": [
+        "bucket_file_offset",
+        "bucket_list_level",
+        "is_curr_bucket"
+      ],
+      "properties": {
+        "bucket_file_offset": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "bucket_list_level": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "is_curr_bucket": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ExistenceProofBody": {
+      "description": "ExistenceProofBody is an XDR Struct defines as:\n\n```text struct ExistenceProofBody { ColdArchiveBucketEntry entriesToProve<>;\n\n// Vector of vectors, where proofLevels[level] // contains all HashNodes that correspond with that level ProofLevel proofLevels<>; }; ```",
+      "type": "object",
+      "required": [
+        "entries_to_prove",
+        "proof_levels"
+      ],
+      "properties": {
+        "entries_to_prove": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ColdArchiveBucketEntry"
+          },
+          "maxItems": 4294967295
+        },
+        "proof_levels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProofLevel"
+          },
+          "maxItems": 4294967295
+        }
+      }
     },
     "ExtendFootprintTtlOp": {
       "description": "ExtendFootprintTtlOp is an XDR Struct defines as:\n\n```text struct ExtendFootprintTTLOp { ExtensionPoint ext; uint32 extendTo; }; ```",
@@ -814,6 +2043,199 @@
           "minimum": 0.0
         }
       }
+    },
+    "LedgerEntry": {
+      "description": "LedgerEntry is an XDR Struct defines as:\n\n```text struct LedgerEntry { uint32 lastModifiedLedgerSeq; // ledger the LedgerEntry was last changed\n\nunion switch (LedgerEntryType type) { case ACCOUNT: AccountEntry account; case TRUSTLINE: TrustLineEntry trustLine; case OFFER: OfferEntry offer; case DATA: DataEntry data; case CLAIMABLE_BALANCE: ClaimableBalanceEntry claimableBalance; case LIQUIDITY_POOL: LiquidityPoolEntry liquidityPool; case CONTRACT_DATA: ContractDataEntry contractData; case CONTRACT_CODE: ContractCodeEntry contractCode; case CONFIG_SETTING: ConfigSettingEntry configSetting; case TTL: TTLEntry ttl; } data;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: LedgerEntryExtensionV1 v1; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "data",
+        "ext",
+        "last_modified_ledger_seq"
+      ],
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/LedgerEntryData"
+        },
+        "ext": {
+          "$ref": "#/definitions/LedgerEntryExt"
+        },
+        "last_modified_ledger_seq": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "LedgerEntryData": {
+      "description": "LedgerEntryData is an XDR NestedUnion defines as:\n\n```text union switch (LedgerEntryType type) { case ACCOUNT: AccountEntry account; case TRUSTLINE: TrustLineEntry trustLine; case OFFER: OfferEntry offer; case DATA: DataEntry data; case CLAIMABLE_BALANCE: ClaimableBalanceEntry claimableBalance; case LIQUIDITY_POOL: LiquidityPoolEntry liquidityPool; case CONTRACT_DATA: ContractDataEntry contractData; case CONTRACT_CODE: ContractCodeEntry contractCode; case CONFIG_SETTING: ConfigSettingEntry configSetting; case TTL: TTLEntry ttl; } ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "account"
+          ],
+          "properties": {
+            "account": {
+              "$ref": "#/definitions/AccountEntry"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "trustline"
+          ],
+          "properties": {
+            "trustline": {
+              "$ref": "#/definitions/TrustLineEntry"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "offer"
+          ],
+          "properties": {
+            "offer": {
+              "$ref": "#/definitions/OfferEntry"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "data"
+          ],
+          "properties": {
+            "data": {
+              "$ref": "#/definitions/DataEntry"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "claimable_balance"
+          ],
+          "properties": {
+            "claimable_balance": {
+              "$ref": "#/definitions/ClaimableBalanceEntry"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "liquidity_pool"
+          ],
+          "properties": {
+            "liquidity_pool": {
+              "$ref": "#/definitions/LiquidityPoolEntry"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_data"
+          ],
+          "properties": {
+            "contract_data": {
+              "$ref": "#/definitions/ContractDataEntry"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_code"
+          ],
+          "properties": {
+            "contract_code": {
+              "$ref": "#/definitions/ContractCodeEntry"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "config_setting"
+          ],
+          "properties": {
+            "config_setting": {
+              "$ref": "#/definitions/ConfigSettingEntry"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "ttl"
+          ],
+          "properties": {
+            "ttl": {
+              "$ref": "#/definitions/TtlEntry"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "LedgerEntryExt": {
+      "description": "LedgerEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: LedgerEntryExtensionV1 v1; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/LedgerEntryExtensionV1"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "LedgerEntryExtensionV1": {
+      "description": "LedgerEntryExtensionV1 is an XDR Struct defines as:\n\n```text struct LedgerEntryExtensionV1 { SponsorshipDescriptor sponsoringID;\n\nunion switch (int v) { case 0: void; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "sponsoring_id"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/LedgerEntryExtensionV1Ext"
+        },
+        "sponsoring_id": {
+          "$ref": "#/definitions/SponsorshipDescriptor"
+        }
+      }
+    },
+    "LedgerEntryExtensionV1Ext": {
+      "description": "LedgerEntryExtensionV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
     },
     "LedgerFootprint": {
       "description": "LedgerFootprint is an XDR Struct defines as:\n\n```text struct LedgerFootprint { LedgerKey readOnly<>; LedgerKey readWrite<>; }; ```",
@@ -1113,6 +2535,24 @@
         }
       }
     },
+    "Liabilities": {
+      "description": "Liabilities is an XDR Struct defines as:\n\n```text struct Liabilities { int64 buying; int64 selling; }; ```",
+      "type": "object",
+      "required": [
+        "buying",
+        "selling"
+      ],
+      "properties": {
+        "buying": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "selling": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "LiquidityPoolConstantProductParameters": {
       "description": "LiquidityPoolConstantProductParameters is an XDR Struct defines as:\n\n```text struct LiquidityPoolConstantProductParameters { Asset assetA; // assetA < assetB Asset assetB; int32 fee; // Fee is in basis points, so the actual rate is (fee/100)% }; ```",
       "type": "object",
@@ -1161,6 +2601,71 @@
         },
         "min_price": {
           "$ref": "#/definitions/Price"
+        }
+      }
+    },
+    "LiquidityPoolEntry": {
+      "description": "LiquidityPoolEntry is an XDR Struct defines as:\n\n```text struct LiquidityPoolEntry { PoolID liquidityPoolID;\n\nunion switch (LiquidityPoolType type) { case LIQUIDITY_POOL_CONSTANT_PRODUCT: struct { LiquidityPoolConstantProductParameters params;\n\nint64 reserveA;        // amount of A in the pool int64 reserveB;        // amount of B in the pool int64 totalPoolShares; // total number of pool shares issued int64 poolSharesTrustLineCount; // number of trust lines for the // associated pool shares } constantProduct; } body; }; ```",
+      "type": "object",
+      "required": [
+        "body",
+        "liquidity_pool_id"
+      ],
+      "properties": {
+        "body": {
+          "$ref": "#/definitions/LiquidityPoolEntryBody"
+        },
+        "liquidity_pool_id": {
+          "$ref": "#/definitions/PoolId"
+        }
+      }
+    },
+    "LiquidityPoolEntryBody": {
+      "description": "LiquidityPoolEntryBody is an XDR NestedUnion defines as:\n\n```text union switch (LiquidityPoolType type) { case LIQUIDITY_POOL_CONSTANT_PRODUCT: struct { LiquidityPoolConstantProductParameters params;\n\nint64 reserveA;        // amount of A in the pool int64 reserveB;        // amount of B in the pool int64 totalPoolShares; // total number of pool shares issued int64 poolSharesTrustLineCount; // number of trust lines for the // associated pool shares } constantProduct; } ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "liquidity_pool_constant_product"
+          ],
+          "properties": {
+            "liquidity_pool_constant_product": {
+              "$ref": "#/definitions/LiquidityPoolEntryConstantProduct"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "LiquidityPoolEntryConstantProduct": {
+      "description": "LiquidityPoolEntryConstantProduct is an XDR NestedStruct defines as:\n\n```text struct { LiquidityPoolConstantProductParameters params;\n\nint64 reserveA;        // amount of A in the pool int64 reserveB;        // amount of B in the pool int64 totalPoolShares; // total number of pool shares issued int64 poolSharesTrustLineCount; // number of trust lines for the // associated pool shares } ```",
+      "type": "object",
+      "required": [
+        "params",
+        "pool_shares_trust_line_count",
+        "reserve_a",
+        "reserve_b",
+        "total_pool_shares"
+      ],
+      "properties": {
+        "params": {
+          "$ref": "#/definitions/LiquidityPoolConstantProductParameters"
+        },
+        "pool_shares_trust_line_count": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "reserve_a": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "reserve_b": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "total_pool_shares": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -1361,6 +2866,97 @@
     },
     "MuxedAccount": {
       "type": "string"
+    },
+    "NonexistenceProofBody": {
+      "description": "NonexistenceProofBody is an XDR Struct defines as:\n\n```text struct NonexistenceProofBody { LedgerKey keysToProve<>;\n\n// Bounds for each key being proved, where bound[n] // corresponds to keysToProve[n] ColdArchiveBucketEntry lowBoundEntries<>; ColdArchiveBucketEntry highBoundEntries<>;\n\n// Vector of vectors, where proofLevels[level] // contains all HashNodes that correspond with that level ProofLevel proofLevels<>; }; ```",
+      "type": "object",
+      "required": [
+        "high_bound_entries",
+        "keys_to_prove",
+        "low_bound_entries",
+        "proof_levels"
+      ],
+      "properties": {
+        "high_bound_entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ColdArchiveBucketEntry"
+          },
+          "maxItems": 4294967295
+        },
+        "keys_to_prove": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LedgerKey"
+          },
+          "maxItems": 4294967295
+        },
+        "low_bound_entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ColdArchiveBucketEntry"
+          },
+          "maxItems": 4294967295
+        },
+        "proof_levels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProofLevel"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
+    "OfferEntry": {
+      "description": "OfferEntry is an XDR Struct defines as:\n\n```text struct OfferEntry { AccountID sellerID; int64 offerID; Asset selling; // A Asset buying;  // B int64 amount;  // amount of A\n\n/* price for this offer: price of A in terms of B price=AmountB/AmountA=priceNumerator/priceDenominator price is after fees */ Price price; uint32 flags; // see OfferEntryFlags\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "amount",
+        "buying",
+        "ext",
+        "flags",
+        "offer_id",
+        "price",
+        "seller_id",
+        "selling"
+      ],
+      "properties": {
+        "amount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "buying": {
+          "$ref": "#/definitions/Asset"
+        },
+        "ext": {
+          "$ref": "#/definitions/OfferEntryExt"
+        },
+        "flags": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "offer_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "price": {
+          "$ref": "#/definitions/Price"
+        },
+        "seller_id": {
+          "$ref": "#/definitions/AccountId"
+        },
+        "selling": {
+          "$ref": "#/definitions/Asset"
+        }
+      }
+    },
+    "OfferEntryExt": {
+      "description": "OfferEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
     },
     "Operation": {
       "description": "Operation is an XDR Struct defines as:\n\n```text struct Operation { // sourceAccount is the account used to run the operation // if not set, the runtime defaults to \"sourceAccount\" specified at // the transaction level MuxedAccount* sourceAccount;\n\nunion switch (OperationType type) { case CREATE_ACCOUNT: CreateAccountOp createAccountOp; case PAYMENT: PaymentOp paymentOp; case PATH_PAYMENT_STRICT_RECEIVE: PathPaymentStrictReceiveOp pathPaymentStrictReceiveOp; case MANAGE_SELL_OFFER: ManageSellOfferOp manageSellOfferOp; case CREATE_PASSIVE_SELL_OFFER: CreatePassiveSellOfferOp createPassiveSellOfferOp; case SET_OPTIONS: SetOptionsOp setOptionsOp; case CHANGE_TRUST: ChangeTrustOp changeTrustOp; case ALLOW_TRUST: AllowTrustOp allowTrustOp; case ACCOUNT_MERGE: MuxedAccount destination; case INFLATION: void; case MANAGE_DATA: ManageDataOp manageDataOp; case BUMP_SEQUENCE: BumpSequenceOp bumpSequenceOp; case MANAGE_BUY_OFFER: ManageBuyOfferOp manageBuyOfferOp; case PATH_PAYMENT_STRICT_SEND: PathPaymentStrictSendOp pathPaymentStrictSendOp; case CREATE_CLAIMABLE_BALANCE: CreateClaimableBalanceOp createClaimableBalanceOp; case CLAIM_CLAIMABLE_BALANCE: ClaimClaimableBalanceOp claimClaimableBalanceOp; case BEGIN_SPONSORING_FUTURE_RESERVES: BeginSponsoringFutureReservesOp beginSponsoringFutureReservesOp; case END_SPONSORING_FUTURE_RESERVES: void; case REVOKE_SPONSORSHIP: RevokeSponsorshipOp revokeSponsorshipOp; case CLAWBACK: ClawbackOp clawbackOp; case CLAWBACK_CLAIMABLE_BALANCE: ClawbackClaimableBalanceOp clawbackClaimableBalanceOp; case SET_TRUST_LINE_FLAGS: SetTrustLineFlagsOp setTrustLineFlagsOp; case LIQUIDITY_POOL_DEPOSIT: LiquidityPoolDepositOp liquidityPoolDepositOp; case LIQUIDITY_POOL_WITHDRAW: LiquidityPoolWithdrawOp liquidityPoolWithdrawOp; case INVOKE_HOST_FUNCTION: InvokeHostFunctionOp invokeHostFunctionOp; case EXTEND_FOOTPRINT_TTL: ExtendFootprintTTLOp extendFootprintTTLOp; case RESTORE_FOOTPRINT: RestoreFootprintOp restoreFootprintOp; } body; }; ```",
@@ -1909,6 +3505,14 @@
           "format": "int32"
         }
       }
+    },
+    "ProofLevel": {
+      "description": "ProofLevel is an XDR Typedef defines as:\n\n```text typedef ArchivalProofNode ProofLevel<>; ```",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ArchivalProofNode"
+      },
+      "maxItems": 4294967295
     },
     "RestoreFootprintOp": {
       "description": "RestoreFootprintOp is an XDR Struct defines as:\n\n```text struct RestoreFootprintOp { ExtensionPoint ext; }; ```",
@@ -2768,26 +4372,8 @@
         }
       }
     },
-    "SorobanResourcesExtV0": {
-      "description": "SorobanResourcesExtV0 is an XDR Struct defines as:\n\n```text struct SorobanResourcesExtV0 { // Vector of indices representing what Soroban // entries in the footprint are archived, based on the // order of keys provided in the readWrite footprint. uint32 archivedSorobanEntries<>; }; ```",
-      "type": "object",
-      "required": [
-        "archived_soroban_entries"
-      ],
-      "properties": {
-        "archived_soroban_entries": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0.0
-          },
-          "maxItems": 4294967295
-        }
-      }
-    },
     "SorobanTransactionData": {
-      "description": "SorobanTransactionData is an XDR Struct defines as:\n\n```text struct SorobanTransactionData { union switch (int v) { case 0: void; case 1: SorobanResourcesExtV0 resourceExt; } ext; SorobanResources resources; // Amount of the transaction `fee` allocated to the Soroban resource fees. // The fraction of `resourceFee` corresponding to `resources` specified // above is *not* refundable (i.e. fees for instructions, ledger I/O), as // well as fees for the transaction size. // The remaining part of the fee is refundable and the charged value is // based on the actual consumption of refundable resources (events, ledger // rent bumps). // The `inclusionFee` used for prioritization of the transaction is defined // as `tx.fee - resourceFee`. int64 resourceFee; }; ```",
+      "description": "SorobanTransactionData is an XDR Struct defines as:\n\n```text struct SorobanTransactionData { union switch (int v) { case 0: void; case 1: ArchivalProof proofs<>; } ext; SorobanResources resources; // Amount of the transaction `fee` allocated to the Soroban resource fees. // The fraction of `resourceFee` corresponding to `resources` specified // above is *not* refundable (i.e. fees for instructions, ledger I/O), as // well as fees for the transaction size. // The remaining part of the fee is refundable and the charged value is // based on the actual consumption of refundable resources (events, ledger // rent bumps). // The `inclusionFee` used for prioritization of the transaction is defined // as `tx.fee - resourceFee`. int64 resourceFee; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -2808,7 +4394,7 @@
       }
     },
     "SorobanTransactionDataExt": {
-      "description": "SorobanTransactionDataExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: SorobanResourcesExtV0 resourceExt; } ```",
+      "description": "SorobanTransactionDataExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: ArchivalProof proofs<>; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -2823,12 +4409,93 @@
           ],
           "properties": {
             "v1": {
-              "$ref": "#/definitions/SorobanResourcesExtV0"
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ArchivalProof"
+              },
+              "maxItems": 4294967295
             }
           },
           "additionalProperties": false
         }
       ]
+    },
+    "SponsorshipDescriptor": {
+      "description": "SponsorshipDescriptor is an XDR Typedef defines as:\n\n```text typedef AccountID* SponsorshipDescriptor; ```",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AccountId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "StateArchivalSettings": {
+      "description": "StateArchivalSettings is an XDR Struct defines as:\n\n```text struct StateArchivalSettings { uint32 maxEntryTTL; uint32 minTemporaryTTL; uint32 minPersistentTTL;\n\n// rent_fee = wfee_rate_average / rent_rate_denominator_for_type int64 persistentRentRateDenominator; int64 tempRentRateDenominator;\n\n// max number of entries that emit archival meta in a single ledger uint32 maxEntriesToArchive;\n\n// Number of snapshots to use when calculating average BucketList size uint32 bucketListSizeWindowSampleSize;\n\n// How often to sample the BucketList size for the average, in ledgers uint32 bucketListWindowSamplePeriod;\n\n// Maximum number of bytes that we scan for eviction per ledger uint32 evictionScanSize;\n\n// Lowest BucketList level to be scanned to evict entries uint32 startingEvictionScanLevel; }; ```",
+      "type": "object",
+      "required": [
+        "bucket_list_size_window_sample_size",
+        "bucket_list_window_sample_period",
+        "eviction_scan_size",
+        "max_entries_to_archive",
+        "max_entry_ttl",
+        "min_persistent_ttl",
+        "min_temporary_ttl",
+        "persistent_rent_rate_denominator",
+        "starting_eviction_scan_level",
+        "temp_rent_rate_denominator"
+      ],
+      "properties": {
+        "bucket_list_size_window_sample_size": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "bucket_list_window_sample_period": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "eviction_scan_size": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "max_entries_to_archive": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "max_entry_ttl": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "min_persistent_ttl": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "min_temporary_ttl": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "persistent_rent_rate_denominator": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "starting_eviction_scan_level": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "temp_rent_rate_denominator": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     },
     "String32": {
       "description": "String32 is an XDR Typedef defines as:\n\n```text typedef string string32<32>; ```",
@@ -2877,7 +4544,7 @@
       "minimum": 0.0
     },
     "Transaction": {
-      "description": "Transaction is an XDR Struct defines as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\nunion switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
+      "description": "Transaction is an XDR Struct defines as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
       "type": "object",
       "required": [
         "cond",
@@ -3007,6 +4674,150 @@
           "additionalProperties": false
         }
       ]
+    },
+    "TrustLineEntry": {
+      "description": "TrustLineEntry is an XDR Struct defines as:\n\n```text struct TrustLineEntry { AccountID accountID;  // account this trustline belongs to TrustLineAsset asset; // type of asset (with issuer) int64 balance;        // how much of this asset the user has. // Asset defines the unit for this;\n\nint64 limit;  // balance cannot be above this uint32 flags; // see TrustLineFlags\n\n// reserved for future use union switch (int v) { case 0: void; case 1: struct { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ext; } v1; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "account_id",
+        "asset",
+        "balance",
+        "ext",
+        "flags",
+        "limit"
+      ],
+      "properties": {
+        "account_id": {
+          "$ref": "#/definitions/AccountId"
+        },
+        "asset": {
+          "$ref": "#/definitions/TrustLineAsset"
+        },
+        "balance": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ext": {
+          "$ref": "#/definitions/TrustLineEntryExt"
+        },
+        "flags": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "TrustLineEntryExt": {
+      "description": "TrustLineEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: struct { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ext; } v1; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/TrustLineEntryV1"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "TrustLineEntryExtensionV2": {
+      "description": "TrustLineEntryExtensionV2 is an XDR Struct defines as:\n\n```text struct TrustLineEntryExtensionV2 { int32 liquidityPoolUseCount;\n\nunion switch (int v) { case 0: void; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "liquidity_pool_use_count"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/TrustLineEntryExtensionV2Ext"
+        },
+        "liquidity_pool_use_count": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "TrustLineEntryExtensionV2Ext": {
+      "description": "TrustLineEntryExtensionV2Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    "TrustLineEntryV1": {
+      "description": "TrustLineEntryV1 is an XDR NestedStruct defines as:\n\n```text struct { Liabilities liabilities;\n\nunion switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ext; } ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "liabilities"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/TrustLineEntryV1Ext"
+        },
+        "liabilities": {
+          "$ref": "#/definitions/Liabilities"
+        }
+      }
+    },
+    "TrustLineEntryV1Ext": {
+      "description": "TrustLineEntryV1Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 2: TrustLineEntryExtensionV2 v2; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v2"
+          ],
+          "properties": {
+            "v2": {
+              "$ref": "#/definitions/TrustLineEntryExtensionV2"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "TtlEntry": {
+      "description": "TtlEntry is an XDR Struct defines as:\n\n```text struct TTLEntry { // Hash of the LedgerKey that is associated with this TTLEntry Hash keyHash; uint32 liveUntilLedgerSeq; }; ```",
+      "type": "object",
+      "required": [
+        "key_hash",
+        "live_until_ledger_seq"
+      ],
+      "properties": {
+        "key_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "live_until_ledger_seq": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
     },
     "UInt128Parts": {
       "description": "UInt128Parts is an XDR Struct defines as:\n\n```text struct UInt128Parts { uint64 hi; uint64 lo; }; ```",

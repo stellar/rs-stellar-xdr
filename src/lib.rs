@@ -5,6 +5,7 @@
 // auto-generated docs.
 #![allow(clippy::tabs_in_doc_comments)]
 #![allow(clippy::doc_markdown)]
+#![allow(clippy::doc_lazy_continuation)]
 
 //! Library and CLI containing types and functionality for working with Stellar
 //! XDR.

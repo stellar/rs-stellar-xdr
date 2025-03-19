@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "SurveyResponseBody",
+  "description": "SurveyResponseBody is an XDR Union defines as:\n\n```text union SurveyResponseBody switch (SurveyMessageResponseType type) { case SURVEY_TOPOLOGY_RESPONSE_V2: TopologyResponseBodyV2 topologyResponseBodyV2; }; ```",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "survey_topology_response_v2"
+      ],
+      "properties": {
+        "survey_topology_response_v2": {
+          "$ref": "#/definitions/TopologyResponseBodyV2"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "NodeId": {
+      "type": "string"
+    },
+    "PeerStats": {
+      "description": "PeerStats is an XDR Struct defines as:\n\n```text struct PeerStats { NodeID id; string versionStr<100>; uint64 messagesRead; uint64 messagesWritten; uint64 bytesRead; uint64 bytesWritten; uint64 secondsConnected;\n\nuint64 uniqueFloodBytesRecv; uint64 duplicateFloodBytesRecv; uint64 uniqueFetchBytesRecv; uint64 duplicateFetchBytesRecv;\n\nuint64 uniqueFloodMessageRecv; uint64 duplicateFloodMessageRecv; uint64 uniqueFetchMessageRecv; uint64 duplicateFetchMessageRecv; }; ```",
+      "type": "object",
+      "required": [
+        "bytes_read",
+        "bytes_written",
+        "duplicate_fetch_bytes_recv",
+        "duplicate_fetch_message_recv",
+        "duplicate_flood_bytes_recv",
+        "duplicate_flood_message_recv",
+        "id",
+        "messages_read",
+        "messages_written",
+        "seconds_connected",
+        "unique_fetch_bytes_recv",
+        "unique_fetch_message_recv",
+        "unique_flood_bytes_recv",
+        "unique_flood_message_recv",
+        "version_str"
+      ],
+      "properties": {
+        "bytes_read": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "bytes_written": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "duplicate_fetch_bytes_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "duplicate_fetch_message_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "duplicate_flood_bytes_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "duplicate_flood_message_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "id": {
+          "$ref": "#/definitions/NodeId"
+        },
+        "messages_read": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "messages_written": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "seconds_connected": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "unique_fetch_bytes_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "unique_fetch_message_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "unique_flood_bytes_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "unique_flood_message_recv": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "version_str": {
+          "$ref": "#/definitions/StringM<100>"
+        }
+      }
+    },
+    "StringM<100>": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "TimeSlicedNodeData": {
+      "description": "TimeSlicedNodeData is an XDR Struct defines as:\n\n```text struct TimeSlicedNodeData { uint32 addedAuthenticatedPeers; uint32 droppedAuthenticatedPeers; uint32 totalInboundPeerCount; uint32 totalOutboundPeerCount;\n\n// SCP stats uint32 p75SCPFirstToSelfLatencyMs; uint32 p75SCPSelfToOtherLatencyMs;\n\n// How many times the node lost sync in the time slice uint32 lostSyncCount;\n\n// Config data bool isValidator; uint32 maxInboundPeerCount; uint32 maxOutboundPeerCount; }; ```",
+      "type": "object",
+      "required": [
+        "added_authenticated_peers",
+        "dropped_authenticated_peers",
+        "is_validator",
+        "lost_sync_count",
+        "max_inbound_peer_count",
+        "max_outbound_peer_count",
+        "p75_scp_first_to_self_latency_ms",
+        "p75_scp_self_to_other_latency_ms",
+        "total_inbound_peer_count",
+        "total_outbound_peer_count"
+      ],
+      "properties": {
+        "added_authenticated_peers": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "dropped_authenticated_peers": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "is_validator": {
+          "type": "boolean"
+        },
+        "lost_sync_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "max_inbound_peer_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "max_outbound_peer_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "p75_scp_first_to_self_latency_ms": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "p75_scp_self_to_other_latency_ms": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "total_inbound_peer_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "total_outbound_peer_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "TimeSlicedPeerData": {
+      "description": "TimeSlicedPeerData is an XDR Struct defines as:\n\n```text struct TimeSlicedPeerData { PeerStats peerStats; uint32 averageLatencyMs; }; ```",
+      "type": "object",
+      "required": [
+        "average_latency_ms",
+        "peer_stats"
+      ],
+      "properties": {
+        "average_latency_ms": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "peer_stats": {
+          "$ref": "#/definitions/PeerStats"
+        }
+      }
+    },
+    "TimeSlicedPeerDataList": {
+      "description": "TimeSlicedPeerDataList is an XDR Typedef defines as:\n\n```text typedef TimeSlicedPeerData TimeSlicedPeerDataList<25>; ```",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/TimeSlicedPeerData"
+      },
+      "maxItems": 25
+    },
+    "TopologyResponseBodyV2": {
+      "description": "TopologyResponseBodyV2 is an XDR Struct defines as:\n\n```text struct TopologyResponseBodyV2 { TimeSlicedPeerDataList inboundPeers; TimeSlicedPeerDataList outboundPeers; TimeSlicedNodeData nodeData; }; ```",
+      "type": "object",
+      "required": [
+        "inbound_peers",
+        "node_data",
+        "outbound_peers"
+      ],
+      "properties": {
+        "inbound_peers": {
+          "$ref": "#/definitions/TimeSlicedPeerDataList"
+        },
+        "node_data": {
+          "$ref": "#/definitions/TimeSlicedNodeData"
+        },
+        "outbound_peers": {
+          "$ref": "#/definitions/TimeSlicedPeerDataList"
+        }
+      }
+    }
+  }
+}

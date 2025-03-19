@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "AccountEntryExtensionV2Ext",
+  "description": "AccountEntryExtensionV2Ext is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 3: AccountEntryExtensionV3 v3; } ```",
+  "oneOf": [
+    {
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "v3"
+      ],
+      "properties": {
+        "v3": {
+          "$ref": "#/definitions/AccountEntryExtensionV3"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "AccountEntryExtensionV3": {
+      "description": "AccountEntryExtensionV3 is an XDR Struct defines as:\n\n```text struct AccountEntryExtensionV3 { // We can use this to add more fields, or because it is first, to // change AccountEntryExtensionV3 into a union. ExtensionPoint ext;\n\n// Ledger number at which `seqNum` took on its present value. uint32 seqLedger;\n\n// Time at which `seqNum` took on its present value. TimePoint seqTime; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "seq_ledger",
+        "seq_time"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/ExtensionPoint"
+        },
+        "seq_ledger": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "seq_time": {
+          "$ref": "#/definitions/TimePoint"
+        }
+      }
+    },
+    "ExtensionPoint": {
+      "description": "ExtensionPoint is an XDR Union defines as:\n\n```text union ExtensionPoint switch (int v) { case 0: void; }; ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    "TimePoint": {
+      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    }
+  }
+}

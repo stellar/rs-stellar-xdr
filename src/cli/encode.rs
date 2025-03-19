@@ -1,13 +1,12 @@
-use crate::cli::Channel;
-use clap::{Args, ValueEnum};
 use std::ffi::OsString;
-use std::io::Cursor;
-use std::path::Path;
 use std::{
-    fs::File,
-    io::{stdin, stdout, Read, Write},
+    io::{stdout, Write},
     str::FromStr,
 };
+
+use clap::{Args, ValueEnum};
+
+use crate::cli::{util, Channel};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -113,7 +112,7 @@ macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
             use crate::$m::WriteXdr;
-            let mut input = self.parse_input()?;
+            let mut input = util::parse_input::<Error>(&self.input)?;
             let r#type = crate::$m::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::$m::TypeVariant::VARIANTS_STR)
             })?;
@@ -169,25 +168,4 @@ impl Cmd {
 
     run_x!(run_curr, curr);
     run_x!(run_next, next);
-
-    fn parse_input(&self) -> Result<Vec<Box<dyn Read>>, Error> {
-        if self.input.is_empty() {
-            Ok(vec![Box::new(stdin())])
-        } else {
-            Ok(self
-                .input
-                .iter()
-                .map(|input| {
-                    let exist = Path::new(input).try_exists();
-                    if let Ok(true) = exist {
-                        let file = File::open(input)?;
-                        Ok::<Box<dyn Read>, Error>(Box::new(file) as Box<dyn Read>)
-                    } else {
-                        Ok(Box::new(Cursor::new(input.clone().into_encoded_bytes()))
-                            as Box<dyn Read>)
-                    }
-                })
-                .collect::<Result<Vec<_>, _>>()?)
-        }
-    }
 }

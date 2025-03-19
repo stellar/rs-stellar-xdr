@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScSpecUdtErrorEnumV0",
+  "description": "ScSpecUdtErrorEnumV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTErrorEnumV0 { string doc<SC_SPEC_DOC_LIMIT>; string lib<80>; string name<60>; SCSpecUDTErrorEnumCaseV0 cases<50>; }; ```",
+  "type": "object",
+  "required": [
+    "cases",
+    "doc",
+    "lib",
+    "name"
+  ],
+  "properties": {
+    "cases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ScSpecUdtErrorEnumCaseV0"
+      },
+      "maxItems": 50
+    },
+    "doc": {
+      "$ref": "#/definitions/StringM<1024>"
+    },
+    "lib": {
+      "$ref": "#/definitions/StringM<80>"
+    },
+    "name": {
+      "$ref": "#/definitions/StringM<60>"
+    }
+  },
+  "definitions": {
+    "ScSpecUdtErrorEnumCaseV0": {
+      "description": "ScSpecUdtErrorEnumCaseV0 is an XDR Struct defines as:\n\n```text struct SCSpecUDTErrorEnumCaseV0 { string doc<SC_SPEC_DOC_LIMIT>; string name<60>; uint32 value; }; ```",
+      "type": "object",
+      "required": [
+        "doc",
+        "name",
+        "value"
+      ],
+      "properties": {
+        "doc": {
+          "$ref": "#/definitions/StringM<1024>"
+        },
+        "name": {
+          "$ref": "#/definitions/StringM<60>"
+        },
+        "value": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "StringM<1024>": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "StringM<60>": {
+      "type": "string",
+      "maxLength": 60
+    },
+    "StringM<80>": {
+      "type": "string",
+      "maxLength": 80
+    }
+  }
+}

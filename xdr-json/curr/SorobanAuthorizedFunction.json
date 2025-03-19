@@ -1,0 +1,882 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "SorobanAuthorizedFunction",
+  "description": "SorobanAuthorizedFunction is an XDR Union defines as:\n\n```text union SorobanAuthorizedFunction switch (SorobanAuthorizedFunctionType type) { case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN: InvokeContractArgs contractFn; // This variant of auth payload for creating new contract instances // doesn't allow specifying the constructor arguments, creating contracts // with constructors that take arguments is only possible by authorizing // `SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN` // (protocol 22+). case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN: CreateContractArgs createContractHostFn; // This variant of auth payload for creating new contract instances // is only accepted in and after protocol 22. It allows authorizing the // contract constructor arguments. case SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN: CreateContractArgsV2 createContractV2HostFn; }; ```",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "contract_fn"
+      ],
+      "properties": {
+        "contract_fn": {
+          "$ref": "#/definitions/InvokeContractArgs"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "create_contract_host_fn"
+      ],
+      "properties": {
+        "create_contract_host_fn": {
+          "$ref": "#/definitions/CreateContractArgs"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "create_contract_v2_host_fn"
+      ],
+      "properties": {
+        "create_contract_v2_host_fn": {
+          "$ref": "#/definitions/CreateContractArgsV2"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    },
+    "AlphaNum12": {
+      "description": "AlphaNum12 is an XDR Struct defines as:\n\n```text struct AlphaNum12 { AssetCode12 assetCode; AccountID issuer; }; ```",
+      "type": "object",
+      "required": [
+        "asset_code",
+        "issuer"
+      ],
+      "properties": {
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode12"
+        },
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    },
+    "AlphaNum4": {
+      "description": "AlphaNum4 is an XDR Struct defines as:\n\n```text struct AlphaNum4 { AssetCode4 assetCode; AccountID issuer; }; ```",
+      "type": "object",
+      "required": [
+        "asset_code",
+        "issuer"
+      ],
+      "properties": {
+        "asset_code": {
+          "$ref": "#/definitions/AssetCode4"
+        },
+        "issuer": {
+          "$ref": "#/definitions/AccountId"
+        }
+      }
+    },
+    "Asset": {
+      "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "native"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "credit_alphanum4"
+          ],
+          "properties": {
+            "credit_alphanum4": {
+              "$ref": "#/definitions/AlphaNum4"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "credit_alphanum12"
+          ],
+          "properties": {
+            "credit_alphanum12": {
+              "$ref": "#/definitions/AlphaNum12"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AssetCode12": {
+      "type": "string"
+    },
+    "AssetCode4": {
+      "type": "string"
+    },
+    "ContractExecutable": {
+      "description": "ContractExecutable is an XDR Union defines as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "stellar_asset"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "wasm"
+          ],
+          "properties": {
+            "wasm": {
+              "type": "string",
+              "maxLength": 64,
+              "minLength": 64,
+              "contentEncoding": "hex",
+              "contentMediaType": "application/binary"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ContractIdPreimage": {
+      "description": "ContractIdPreimage is an XDR Union defines as:\n\n```text union ContractIDPreimage switch (ContractIDPreimageType type) { case CONTRACT_ID_PREIMAGE_FROM_ADDRESS: struct { SCAddress address; uint256 salt; } fromAddress; case CONTRACT_ID_PREIMAGE_FROM_ASSET: Asset fromAsset; }; ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/ContractIdPreimageFromAddress"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "asset"
+          ],
+          "properties": {
+            "asset": {
+              "$ref": "#/definitions/Asset"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ContractIdPreimageFromAddress": {
+      "description": "ContractIdPreimageFromAddress is an XDR NestedStruct defines as:\n\n```text struct { SCAddress address; uint256 salt; } ```",
+      "type": "object",
+      "required": [
+        "address",
+        "salt"
+      ],
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/ScAddress"
+        },
+        "salt": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
+    },
+    "CreateContractArgs": {
+      "description": "CreateContractArgs is an XDR Struct defines as:\n\n```text struct CreateContractArgs { ContractIDPreimage contractIDPreimage; ContractExecutable executable; }; ```",
+      "type": "object",
+      "required": [
+        "contract_id_preimage",
+        "executable"
+      ],
+      "properties": {
+        "contract_id_preimage": {
+          "$ref": "#/definitions/ContractIdPreimage"
+        },
+        "executable": {
+          "$ref": "#/definitions/ContractExecutable"
+        }
+      }
+    },
+    "CreateContractArgsV2": {
+      "description": "CreateContractArgsV2 is an XDR Struct defines as:\n\n```text struct CreateContractArgsV2 { ContractIDPreimage contractIDPreimage; ContractExecutable executable; // Arguments of the contract's constructor. SCVal constructorArgs<>; }; ```",
+      "type": "object",
+      "required": [
+        "constructor_args",
+        "contract_id_preimage",
+        "executable"
+      ],
+      "properties": {
+        "constructor_args": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScVal"
+          },
+          "maxItems": 4294967295
+        },
+        "contract_id_preimage": {
+          "$ref": "#/definitions/ContractIdPreimage"
+        },
+        "executable": {
+          "$ref": "#/definitions/ContractExecutable"
+        }
+      }
+    },
+    "Duration": {
+      "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "Int128Parts": {
+      "description": "Int128Parts is an XDR Struct defines as:\n\n```text struct Int128Parts { int64 hi; uint64 lo; }; ```",
+      "type": "object",
+      "required": [
+        "hi",
+        "lo"
+      ],
+      "properties": {
+        "hi": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "lo": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      }
+    },
+    "Int256Parts": {
+      "description": "Int256Parts is an XDR Struct defines as:\n\n```text struct Int256Parts { int64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
+      "type": "object",
+      "required": [
+        "hi_hi",
+        "hi_lo",
+        "lo_hi",
+        "lo_lo"
+      ],
+      "properties": {
+        "hi_hi": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "hi_lo": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "lo_hi": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "lo_lo": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      }
+    },
+    "InvokeContractArgs": {
+      "description": "InvokeContractArgs is an XDR Struct defines as:\n\n```text struct InvokeContractArgs { SCAddress contractAddress; SCSymbol functionName; SCVal args<>; }; ```",
+      "type": "object",
+      "required": [
+        "args",
+        "contract_address",
+        "function_name"
+      ],
+      "properties": {
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScVal"
+          },
+          "maxItems": 4294967295
+        },
+        "contract_address": {
+          "$ref": "#/definitions/ScAddress"
+        },
+        "function_name": {
+          "$ref": "#/definitions/ScSymbol"
+        }
+      }
+    },
+    "ScAddress": {
+      "type": "string"
+    },
+    "ScBytes": {
+      "description": "ScBytes is an XDR Typedef defines as:\n\n```text typedef opaque SCBytes<>; ```",
+      "type": "string",
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "ScContractInstance": {
+      "description": "ScContractInstance is an XDR Struct defines as:\n\n```text struct SCContractInstance { ContractExecutable executable; SCMap* storage; }; ```",
+      "type": "object",
+      "required": [
+        "executable"
+      ],
+      "properties": {
+        "executable": {
+          "$ref": "#/definitions/ContractExecutable"
+        },
+        "storage": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ScMap"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "ScError": {
+      "description": "ScError is an XDR Union defines as:\n\n```text union SCError switch (SCErrorType type) { case SCE_CONTRACT: uint32 contractCode; case SCE_WASM_VM: case SCE_CONTEXT: case SCE_STORAGE: case SCE_OBJECT: case SCE_CRYPTO: case SCE_EVENTS: case SCE_BUDGET: case SCE_VALUE: case SCE_AUTH: SCErrorCode code; }; ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "contract"
+          ],
+          "properties": {
+            "contract": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "wasm_vm"
+          ],
+          "properties": {
+            "wasm_vm": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "context"
+          ],
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "storage"
+          ],
+          "properties": {
+            "storage": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "object"
+          ],
+          "properties": {
+            "object": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "crypto"
+          ],
+          "properties": {
+            "crypto": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "events"
+          ],
+          "properties": {
+            "events": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "budget"
+          ],
+          "properties": {
+            "budget": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "auth"
+          ],
+          "properties": {
+            "auth": {
+              "$ref": "#/definitions/ScErrorCode"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ScErrorCode": {
+      "description": "ScErrorCode is an XDR Enum defines as:\n\n```text enum SCErrorCode { SCEC_ARITH_DOMAIN = 0,      // Some arithmetic was undefined (overflow, divide-by-zero). SCEC_INDEX_BOUNDS = 1,      // Something was indexed beyond its bounds. SCEC_INVALID_INPUT = 2,     // User provided some otherwise-bad data. SCEC_MISSING_VALUE = 3,     // Some value was required but not provided. SCEC_EXISTING_VALUE = 4,    // Some value was provided where not allowed. SCEC_EXCEEDED_LIMIT = 5,    // Some arbitrary limit -- gas or otherwise -- was hit. SCEC_INVALID_ACTION = 6,    // Data was valid but action requested was not. SCEC_INTERNAL_ERROR = 7,    // The host detected an error in its own logic. SCEC_UNEXPECTED_TYPE = 8,   // Some type wasn't as expected. SCEC_UNEXPECTED_SIZE = 9    // Something's size wasn't as expected. }; ```",
+      "type": "string",
+      "enum": [
+        "arith_domain",
+        "index_bounds",
+        "invalid_input",
+        "missing_value",
+        "existing_value",
+        "exceeded_limit",
+        "invalid_action",
+        "internal_error",
+        "unexpected_type",
+        "unexpected_size"
+      ]
+    },
+    "ScMap": {
+      "description": "ScMap is an XDR Typedef defines as:\n\n```text typedef SCMapEntry SCMap<>; ```",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ScMapEntry"
+      },
+      "maxItems": 4294967295
+    },
+    "ScMapEntry": {
+      "description": "ScMapEntry is an XDR Struct defines as:\n\n```text struct SCMapEntry { SCVal key; SCVal val; }; ```",
+      "type": "object",
+      "required": [
+        "key",
+        "val"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/definitions/ScVal"
+        },
+        "val": {
+          "$ref": "#/definitions/ScVal"
+        }
+      }
+    },
+    "ScNonceKey": {
+      "description": "ScNonceKey is an XDR Struct defines as:\n\n```text struct SCNonceKey { int64 nonce; }; ```",
+      "type": "object",
+      "required": [
+        "nonce"
+      ],
+      "properties": {
+        "nonce": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ScString": {
+      "description": "ScString is an XDR Typedef defines as:\n\n```text typedef string SCString<>; ```",
+      "$ref": "#/definitions/StringM<4294967295>"
+    },
+    "ScSymbol": {
+      "description": "ScSymbol is an XDR Typedef defines as:\n\n```text typedef string SCSymbol<SCSYMBOL_LIMIT>; ```",
+      "$ref": "#/definitions/StringM<32>"
+    },
+    "ScVal": {
+      "description": "ScVal is an XDR Union defines as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key;\n\ncase SCV_CONTRACT_INSTANCE: SCContractInstance instance; }; ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "void",
+            "ledger_key_contract_instance"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "bool"
+          ],
+          "properties": {
+            "bool": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "error"
+          ],
+          "properties": {
+            "error": {
+              "$ref": "#/definitions/ScError"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "u32"
+          ],
+          "properties": {
+            "u32": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "i32"
+          ],
+          "properties": {
+            "i32": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "u64"
+          ],
+          "properties": {
+            "u64": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "i64"
+          ],
+          "properties": {
+            "i64": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "timepoint"
+          ],
+          "properties": {
+            "timepoint": {
+              "$ref": "#/definitions/TimePoint"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "duration"
+          ],
+          "properties": {
+            "duration": {
+              "$ref": "#/definitions/Duration"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "u128"
+          ],
+          "properties": {
+            "u128": {
+              "$ref": "#/definitions/UInt128Parts"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "i128"
+          ],
+          "properties": {
+            "i128": {
+              "$ref": "#/definitions/Int128Parts"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "u256"
+          ],
+          "properties": {
+            "u256": {
+              "$ref": "#/definitions/UInt256Parts"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "i256"
+          ],
+          "properties": {
+            "i256": {
+              "$ref": "#/definitions/Int256Parts"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "bytes"
+          ],
+          "properties": {
+            "bytes": {
+              "$ref": "#/definitions/ScBytes"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "string"
+          ],
+          "properties": {
+            "string": {
+              "$ref": "#/definitions/ScString"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "symbol": {
+              "$ref": "#/definitions/ScSymbol"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "vec"
+          ],
+          "properties": {
+            "vec": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ScVec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "map"
+          ],
+          "properties": {
+            "map": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ScMap"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/ScAddress"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "ledger_key_nonce"
+          ],
+          "properties": {
+            "ledger_key_nonce": {
+              "$ref": "#/definitions/ScNonceKey"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_instance"
+          ],
+          "properties": {
+            "contract_instance": {
+              "$ref": "#/definitions/ScContractInstance"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ScVec": {
+      "description": "ScVec is an XDR Typedef defines as:\n\n```text typedef SCVal SCVec<>; ```",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ScVal"
+      },
+      "maxItems": 4294967295
+    },
+    "StringM<32>": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "StringM<4294967295>": {
+      "type": "string",
+      "maxLength": 4294967295
+    },
+    "TimePoint": {
+      "description": "TimePoint is an XDR Typedef defines as:\n\n```text typedef uint64 TimePoint; ```",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "UInt128Parts": {
+      "description": "UInt128Parts is an XDR Struct defines as:\n\n```text struct UInt128Parts { uint64 hi; uint64 lo; }; ```",
+      "type": "object",
+      "required": [
+        "hi",
+        "lo"
+      ],
+      "properties": {
+        "hi": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "lo": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      }
+    },
+    "UInt256Parts": {
+      "description": "UInt256Parts is an XDR Struct defines as:\n\n```text struct UInt256Parts { uint64 hi_hi; uint64 hi_lo; uint64 lo_hi; uint64 lo_lo; }; ```",
+      "type": "object",
+      "required": [
+        "hi_hi",
+        "hi_lo",
+        "lo_hi",
+        "lo_lo"
+      ],
+      "properties": {
+        "hi_hi": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "hi_lo": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "lo_hi": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "lo_lo": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      }
+    }
+  }
+}

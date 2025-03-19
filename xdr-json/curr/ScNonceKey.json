@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ScNonceKey",
+  "description": "ScNonceKey is an XDR Struct defines as:\n\n```text struct SCNonceKey { int64 nonce; }; ```",
+  "type": "object",
+  "required": [
+    "nonce"
+  ],
+  "properties": {
+    "nonce": {
+      "type": "integer",
+      "format": "int64"
+    }
+  }
+}

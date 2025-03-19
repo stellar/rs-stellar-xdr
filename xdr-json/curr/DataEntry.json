@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "DataEntry",
+  "description": "DataEntry is an XDR Struct defines as:\n\n```text struct DataEntry { AccountID accountID; // account this data belongs to string64 dataName; DataValue dataValue;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
+  "type": "object",
+  "required": [
+    "account_id",
+    "data_name",
+    "data_value",
+    "ext"
+  ],
+  "properties": {
+    "account_id": {
+      "$ref": "#/definitions/AccountId"
+    },
+    "data_name": {
+      "$ref": "#/definitions/String64"
+    },
+    "data_value": {
+      "$ref": "#/definitions/DataValue"
+    },
+    "ext": {
+      "$ref": "#/definitions/DataEntryExt"
+    }
+  },
+  "definitions": {
+    "AccountId": {
+      "type": "string"
+    },
+    "DataEntryExt": {
+      "description": "DataEntryExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; } ```",
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    "DataValue": {
+      "description": "DataValue is an XDR Typedef defines as:\n\n```text typedef opaque DataValue<64>; ```",
+      "type": "string",
+      "maxLength": 128,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "String64": {
+      "description": "String64 is an XDR Typedef defines as:\n\n```text typedef string string64<64>; ```",
+      "$ref": "#/definitions/StringM<64>"
+    },
+    "StringM<64>": {
+      "type": "string",
+      "maxLength": 64
+    }
+  }
+}

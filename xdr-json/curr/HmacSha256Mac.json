@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "HmacSha256Mac",
+  "description": "HmacSha256Mac is an XDR Struct defines as:\n\n```text struct HmacSha256Mac { opaque mac[32]; }; ```",
+  "type": "object",
+  "required": [
+    "mac"
+  ],
+  "properties": {
+    "mac": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
+      },
+      "maxItems": 32,
+      "minItems": 32
+    }
+  }
+}

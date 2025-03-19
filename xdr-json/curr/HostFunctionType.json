@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "HostFunctionType",
+  "description": "HostFunctionType is an XDR Enum defines as:\n\n```text enum HostFunctionType { HOST_FUNCTION_TYPE_INVOKE_CONTRACT = 0, HOST_FUNCTION_TYPE_CREATE_CONTRACT = 1, HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM = 2, HOST_FUNCTION_TYPE_CREATE_CONTRACT_V2 = 3 }; ```",
+  "type": "string",
+  "enum": [
+    "invoke_contract",
+    "create_contract",
+    "upload_contract_wasm",
+    "create_contract_v2"
+  ]
+}

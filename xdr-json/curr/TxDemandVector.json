@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "TxDemandVector",
+  "description": "TxDemandVector is an XDR Typedef defines as:\n\n```text typedef Hash TxDemandVector<TX_DEMAND_VECTOR_MAX_SIZE>; ```",
+  "type": "array",
+  "items": {
+    "type": "string",
+    "maxLength": 64,
+    "minLength": 64,
+    "contentEncoding": "hex",
+    "contentMediaType": "application/binary"
+  },
+  "maxItems": 1000
+}

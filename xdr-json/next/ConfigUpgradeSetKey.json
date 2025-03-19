@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "ConfigUpgradeSetKey",
+  "description": "ConfigUpgradeSetKey is an XDR Struct defines as:\n\n```text struct ConfigUpgradeSetKey { Hash contractID; Hash contentHash; }; ```",
+  "type": "object",
+  "required": [
+    "content_hash",
+    "contract_id"
+  ],
+  "properties": {
+    "content_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "contract_id": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    }
+  }
+}

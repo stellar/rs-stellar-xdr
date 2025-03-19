@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{stdin, Cursor, Read};
 use std::path::Path;
 
-pub fn parse_input<E>(input: &Vec<OsString>) -> Result<Vec<Box<dyn Read>>, E>
+pub fn parse_input<E>(input: &[OsString]) -> Result<Vec<Box<dyn Read>>, E>
 where
     E: From<std::io::Error>,
 {

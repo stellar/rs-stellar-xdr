@@ -71,6 +71,7 @@ macro_rules! run_x {
     ($f:ident, $m:ident) => {
         fn $f(&self) -> Result<(), Error> {
             let mut rr = ResetRead::new(self.input()?);
+            let mut guessed = false;
             'variants: for v in crate::$m::TypeVariant::VARIANTS {
                 rr.reset();
                 let count: usize = match self.input_format {
@@ -132,7 +133,11 @@ macro_rules! run_x {
                 };
                 if count > 0 {
                     println!("{}", v.name());
+                    guessed = true;
                 }
+            }
+            if (!guessed) {
+                std::process::exit(1);
             }
             Ok(())
         }

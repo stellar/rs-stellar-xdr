@@ -1,73 +1,58 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
-  "title": "TransactionMeta",
-  "description": "TransactionMeta is an XDR Union defines as:\n\n```text union TransactionMeta switch (int v) { case 0: OperationMeta operations<>; case 1: TransactionMetaV1 v1; case 2: TransactionMetaV2 v2; case 3: TransactionMetaV3 v3; case 4: TransactionMetaV4 v4; }; ```",
-  "oneOf": [
-    {
-      "type": "object",
-      "required": [
-        "v0"
-      ],
-      "properties": {
-        "v0": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OperationMeta"
-          },
-          "maxItems": 4294967295
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "v1"
-      ],
-      "properties": {
-        "v1": {
-          "$ref": "#/definitions/TransactionMetaV1"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "v2"
-      ],
-      "properties": {
-        "v2": {
-          "$ref": "#/definitions/TransactionMetaV2"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "v3"
-      ],
-      "properties": {
-        "v3": {
-          "$ref": "#/definitions/TransactionMetaV3"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "v4"
-      ],
-      "properties": {
-        "v4": {
-          "$ref": "#/definitions/TransactionMetaV4"
-        }
-      },
-      "additionalProperties": false
-    }
+  "title": "TransactionMetaV4",
+  "description": "TransactionMetaV4 is an XDR Struct defines as:\n\n```text struct TransactionMetaV4 { ExtensionPoint ext;\n\nLedgerEntryChanges txChangesBefore;  // tx level changes before operations // are applied if any OperationMetaV2 operations<>;        // meta for each operation LedgerEntryChanges txChangesAfter;   // tx level changes after operations are // applied if any SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for // Soroban transactions).\n\nContractEvent events<>; // Used for transaction-level events (like fee payment) DiagnosticEvent diagnosticEvents<>; // Used for all diagnostic information }; ```",
+  "type": "object",
+  "required": [
+    "diagnostic_events",
+    "events",
+    "ext",
+    "operations",
+    "tx_changes_after",
+    "tx_changes_before"
   ],
+  "properties": {
+    "diagnostic_events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DiagnosticEvent"
+      },
+      "maxItems": 4294967295
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ContractEvent"
+      },
+      "maxItems": 4294967295
+    },
+    "ext": {
+      "$ref": "#/definitions/ExtensionPoint"
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/OperationMetaV2"
+      },
+      "maxItems": 4294967295
+    },
+    "soroban_meta": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SorobanTransactionMetaV2"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "tx_changes_after": {
+      "$ref": "#/definitions/LedgerEntryChanges"
+    },
+    "tx_changes_before": {
+      "$ref": "#/definitions/LedgerEntryChanges"
+    }
+  },
   "definitions": {
     "AccountEntry": {
       "description": "AccountEntry is an XDR Struct defines as:\n\n```text struct AccountEntry { AccountID accountID;      // master public key for this account int64 balance;            // in stroops SequenceNumber seqNum;    // last sequence number used for this account uint32 numSubEntries;     // number of sub-entries this account has // drives the reserve AccountID* inflationDest; // Account to vote for during inflation uint32 flags;             // see AccountFlags\n\nstring32 homeDomain; // can be used for reverse federation and memo lookup\n\n// fields used for signatures // thresholds stores unsigned bytes: [weight of master|low|medium|high] Thresholds thresholds;\n\nSigner signers<MAX_SIGNERS>; // possible signers for this account\n\n// reserved for future use union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ext; }; ```",
@@ -656,6 +641,25 @@
         }
       }
     },
+    "ConfigSettingContractLedgerCostExtV0": {
+      "description": "ConfigSettingContractLedgerCostExtV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostExtV0 { // Maximum number of in-memory ledger entry read operations per transaction uint32 txMaxInMemoryReadEntries; // Fee per 1 KB of data written to the ledger. // Unlike the rent fee, this is a flat fee that is charged for any ledger // write, independent of the type of the entry being written. int64 feeWrite1KB; }; ```",
+      "type": "object",
+      "required": [
+        "fee_write1_kb",
+        "tx_max_in_memory_read_entries"
+      ],
+      "properties": {
+        "fee_write1_kb": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "tx_max_in_memory_read_entries": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
     "ConfigSettingContractLedgerCostV0": {
       "description": "ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractLedgerCostV0 { // Maximum number of ledger entry read operations per ledger uint32 ledgerMaxReadLedgerEntries; // Maximum number of bytes that can be read per ledger uint32 ledgerMaxReadBytes; // Maximum number of ledger entry write operations per ledger uint32 ledgerMaxWriteLedgerEntries; // Maximum number of bytes that can be written per ledger uint32 ledgerMaxWriteBytes;\n\n// Maximum number of ledger entry read operations per transaction uint32 txMaxReadLedgerEntries; // Maximum number of bytes that can be read per transaction uint32 txMaxReadBytes; // Maximum number of ledger entry write operations per transaction uint32 txMaxWriteLedgerEntries; // Maximum number of bytes that can be written per transaction uint32 txMaxWriteBytes;\n\nint64 feeReadLedgerEntry;  // Fee per ledger entry read int64 feeWriteLedgerEntry; // Fee per ledger entry write\n\nint64 feeRead1KB;  // Fee for reading 1KB\n\n// The following parameters determine the write fee per 1KB. // Write fee grows linearly until bucket list reaches this size int64 bucketListTargetSizeBytes; // Fee per 1KB write when the bucket list is empty int64 writeFee1KBBucketListLow; // Fee per 1KB write when the bucket list has reached `bucketListTargetSizeBytes` int64 writeFee1KBBucketListHigh; // Write fee multiplier for any additional data past the first `bucketListTargetSizeBytes` uint32 bucketListWriteFeeGrowthFactor; }; ```",
       "type": "object",
@@ -748,8 +752,22 @@
         }
       }
     },
+    "ConfigSettingContractParallelComputeV0": {
+      "description": "ConfigSettingContractParallelComputeV0 is an XDR Struct defines as:\n\n```text struct ConfigSettingContractParallelComputeV0 { // Maximum number of clusters with dependent transactions allowed in a // stage of parallel tx set component. // This effectively sets the lower bound on the number of physical threads // necessary to effectively apply transaction sets in parallel. uint32 ledgerMaxDependentTxClusters; }; ```",
+      "type": "object",
+      "required": [
+        "ledger_max_dependent_tx_clusters"
+      ],
+      "properties": {
+        "ledger_max_dependent_tx_clusters": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
     "ConfigSettingEntry": {
-      "description": "ConfigSettingEntry is an XDR Union defines as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW: uint64 bucketListSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; }; ```",
+      "description": "ConfigSettingEntry is an XDR Union defines as:\n\n```text union ConfigSettingEntry switch (ConfigSettingID configSettingID) { case CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES: uint32 contractMaxSizeBytes; case CONFIG_SETTING_CONTRACT_COMPUTE_V0: ConfigSettingContractComputeV0 contractCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_V0: ConfigSettingContractLedgerCostV0 contractLedgerCost; case CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0: ConfigSettingContractHistoricalDataV0 contractHistoricalData; case CONFIG_SETTING_CONTRACT_EVENTS_V0: ConfigSettingContractEventsV0 contractEvents; case CONFIG_SETTING_CONTRACT_BANDWIDTH_V0: ConfigSettingContractBandwidthV0 contractBandwidth; case CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS: ContractCostParams contractCostParamsCpuInsns; case CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES: ContractCostParams contractCostParamsMemBytes; case CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES: uint32 contractDataKeySizeBytes; case CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES: uint32 contractDataEntrySizeBytes; case CONFIG_SETTING_STATE_ARCHIVAL: StateArchivalSettings stateArchivalSettings; case CONFIG_SETTING_CONTRACT_EXECUTION_LANES: ConfigSettingContractExecutionLanesV0 contractExecutionLanes; case CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW: uint64 bucketListSizeWindow<>; case CONFIG_SETTING_EVICTION_ITERATOR: EvictionIterator evictionIterator; case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0: ConfigSettingContractParallelComputeV0 contractParallelCompute; case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0: ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -930,11 +948,35 @@
             }
           },
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_parallel_compute_v0"
+          ],
+          "properties": {
+            "contract_parallel_compute_v0": {
+              "$ref": "#/definitions/ConfigSettingContractParallelComputeV0"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "contract_ledger_cost_ext_v0"
+          ],
+          "properties": {
+            "contract_ledger_cost_ext_v0": {
+              "$ref": "#/definitions/ConfigSettingContractLedgerCostExtV0"
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },
     "ConfigSettingId": {
-      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13 }; ```",
+      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15 }; ```",
       "type": "string",
       "enum": [
         "contract_max_size_bytes",
@@ -950,7 +992,9 @@
         "state_archival",
         "contract_execution_lanes",
         "bucketlist_size_window",
-        "eviction_iterator"
+        "eviction_iterator",
+        "contract_parallel_compute_v0",
+        "contract_ledger_cost_ext_v0"
       ]
     },
     "ContractCodeCostInputs": {
@@ -1423,7 +1467,7 @@
       }
     },
     "LedgerEntryChange": {
-      "description": "LedgerEntryChange is an XDR Union defines as:\n\n```text union LedgerEntryChange switch (LedgerEntryChangeType type) { case LEDGER_ENTRY_CREATED: LedgerEntry created; case LEDGER_ENTRY_UPDATED: LedgerEntry updated; case LEDGER_ENTRY_REMOVED: LedgerKey removed; case LEDGER_ENTRY_STATE: LedgerEntry state; }; ```",
+      "description": "LedgerEntryChange is an XDR Union defines as:\n\n```text union LedgerEntryChange switch (LedgerEntryChangeType type) { case LEDGER_ENTRY_CREATED: LedgerEntry created; case LEDGER_ENTRY_UPDATED: LedgerEntry updated; case LEDGER_ENTRY_REMOVED: LedgerKey removed; case LEDGER_ENTRY_STATE: LedgerEntry state; case LEDGER_ENTRY_RESTORED: LedgerEntry restored; }; ```",
       "oneOf": [
         {
           "type": "object",
@@ -1468,6 +1512,18 @@
           ],
           "properties": {
             "state": {
+              "$ref": "#/definitions/LedgerEntry"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "restored"
+          ],
+          "properties": {
+            "restored": {
               "$ref": "#/definitions/LedgerEntry"
             }
           },
@@ -2083,18 +2139,6 @@
         "v0"
       ]
     },
-    "OperationMeta": {
-      "description": "OperationMeta is an XDR Struct defines as:\n\n```text struct OperationMeta { LedgerEntryChanges changes; }; ```",
-      "type": "object",
-      "required": [
-        "changes"
-      ],
-      "properties": {
-        "changes": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        }
-      }
-    },
     "OperationMetaV2": {
       "description": "OperationMetaV2 is an XDR Struct defines as:\n\n```text struct OperationMetaV2 { ExtensionPoint ext;\n\nLedgerEntryChanges changes;\n\nContractEvent events<>; }; ```",
       "type": "object",
@@ -2665,38 +2709,6 @@
     "SignerKey": {
       "type": "string"
     },
-    "SorobanTransactionMeta": {
-      "description": "SorobanTransactionMeta is an XDR Struct defines as:\n\n```text struct SorobanTransactionMeta { SorobanTransactionMetaExt ext;\n\nContractEvent events<>;             // custom events populated by the // contracts themselves. SCVal returnValue;                  // return value of the host fn invocation\n\n// Diagnostics events that are not hashed. // This will contain all contract and diagnostic events. Even ones // that were emitted in a failed contract call. DiagnosticEvent diagnosticEvents<>; }; ```",
-      "type": "object",
-      "required": [
-        "diagnostic_events",
-        "events",
-        "ext",
-        "return_value"
-      ],
-      "properties": {
-        "diagnostic_events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DiagnosticEvent"
-          },
-          "maxItems": 4294967295
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ContractEvent"
-          },
-          "maxItems": 4294967295
-        },
-        "ext": {
-          "$ref": "#/definitions/SorobanTransactionMetaExt"
-        },
-        "return_value": {
-          "$ref": "#/definitions/ScVal"
-        }
-      }
-    },
     "SorobanTransactionMetaExt": {
       "description": "SorobanTransactionMetaExt is an XDR Union defines as:\n\n```text union SorobanTransactionMetaExt switch (int v) { case 0: void; case 1: SorobanTransactionMetaExtV1 v1; }; ```",
       "oneOf": [
@@ -2865,142 +2877,6 @@
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
-    },
-    "TransactionMetaV1": {
-      "description": "TransactionMetaV1 is an XDR Struct defines as:\n\n```text struct TransactionMetaV1 { LedgerEntryChanges txChanges; // tx level changes if any OperationMeta operations<>;   // meta for each operation }; ```",
-      "type": "object",
-      "required": [
-        "operations",
-        "tx_changes"
-      ],
-      "properties": {
-        "operations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OperationMeta"
-          },
-          "maxItems": 4294967295
-        },
-        "tx_changes": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        }
-      }
-    },
-    "TransactionMetaV2": {
-      "description": "TransactionMetaV2 is an XDR Struct defines as:\n\n```text struct TransactionMetaV2 { LedgerEntryChanges txChangesBefore; // tx level changes before operations // are applied if any OperationMeta operations<>;         // meta for each operation LedgerEntryChanges txChangesAfter;  // tx level changes after operations are // applied if any }; ```",
-      "type": "object",
-      "required": [
-        "operations",
-        "tx_changes_after",
-        "tx_changes_before"
-      ],
-      "properties": {
-        "operations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OperationMeta"
-          },
-          "maxItems": 4294967295
-        },
-        "tx_changes_after": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        },
-        "tx_changes_before": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        }
-      }
-    },
-    "TransactionMetaV3": {
-      "description": "TransactionMetaV3 is an XDR Struct defines as:\n\n```text struct TransactionMetaV3 { ExtensionPoint ext;\n\nLedgerEntryChanges txChangesBefore;  // tx level changes before operations // are applied if any OperationMeta operations<>;          // meta for each operation LedgerEntryChanges txChangesAfter;   // tx level changes after operations are // applied if any SorobanTransactionMeta* sorobanMeta; // Soroban-specific meta (only for // Soroban transactions). }; ```",
-      "type": "object",
-      "required": [
-        "ext",
-        "operations",
-        "tx_changes_after",
-        "tx_changes_before"
-      ],
-      "properties": {
-        "ext": {
-          "$ref": "#/definitions/ExtensionPoint"
-        },
-        "operations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OperationMeta"
-          },
-          "maxItems": 4294967295
-        },
-        "soroban_meta": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/SorobanTransactionMeta"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "tx_changes_after": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        },
-        "tx_changes_before": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        }
-      }
-    },
-    "TransactionMetaV4": {
-      "description": "TransactionMetaV4 is an XDR Struct defines as:\n\n```text struct TransactionMetaV4 { ExtensionPoint ext;\n\nLedgerEntryChanges txChangesBefore;  // tx level changes before operations // are applied if any OperationMetaV2 operations<>;        // meta for each operation LedgerEntryChanges txChangesAfter;   // tx level changes after operations are // applied if any SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for // Soroban transactions).\n\nContractEvent events<>; // Used for transaction-level events (like fee payment) DiagnosticEvent diagnosticEvents<>; // Used for all diagnostic information }; ```",
-      "type": "object",
-      "required": [
-        "diagnostic_events",
-        "events",
-        "ext",
-        "operations",
-        "tx_changes_after",
-        "tx_changes_before"
-      ],
-      "properties": {
-        "diagnostic_events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DiagnosticEvent"
-          },
-          "maxItems": 4294967295
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ContractEvent"
-          },
-          "maxItems": 4294967295
-        },
-        "ext": {
-          "$ref": "#/definitions/ExtensionPoint"
-        },
-        "operations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OperationMetaV2"
-          },
-          "maxItems": 4294967295
-        },
-        "soroban_meta": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/SorobanTransactionMetaV2"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "tx_changes_after": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        },
-        "tx_changes_before": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        }
-      }
     },
     "TrustLineAsset": {
       "description": "TrustLineAsset is an XDR Union defines as:\n\n```text union TrustLineAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: PoolID liquidityPoolID;\n\n// add other asset types here in the future }; ```",

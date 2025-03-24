@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "976e066f61bb5f52d595f1f0ed261d83ea049f0787e3918a297e92a2ee75bcb0",
+        "57e143f908d972577fcb2137fa88874591c54e19341b21d45c9f85bd9cce48e9",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -23025,7 +23025,6 @@ impl WriteXdr for TransactionMetaV3 {
 ///     LedgerEntryChanges changes;
 ///
 ///     ContractEvent events<>;
-///     DiagnosticEvent diagnosticEvents<>;
 /// };
 /// ```
 ///
@@ -23041,7 +23040,6 @@ pub struct OperationMetaV2 {
     pub ext: ExtensionPoint,
     pub changes: LedgerEntryChanges,
     pub events: VecM<ContractEvent>,
-    pub diagnostic_events: VecM<DiagnosticEvent>,
 }
 
 impl ReadXdr for OperationMetaV2 {
@@ -23052,7 +23050,6 @@ impl ReadXdr for OperationMetaV2 {
                 ext: ExtensionPoint::read_xdr(r)?,
                 changes: LedgerEntryChanges::read_xdr(r)?,
                 events: VecM::<ContractEvent>::read_xdr(r)?,
-                diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
             })
         })
     }
@@ -23065,7 +23062,6 @@ impl WriteXdr for OperationMetaV2 {
             self.ext.write_xdr(w)?;
             self.changes.write_xdr(w)?;
             self.events.write_xdr(w)?;
-            self.diagnostic_events.write_xdr(w)?;
             Ok(())
         })
     }
@@ -23134,8 +23130,7 @@ impl WriteXdr for SorobanTransactionMetaV2 {
 ///                                            // Soroban transactions).
 ///
 ///     ContractEvent events<>; // Used for transaction-level events (like fee payment)
-///     DiagnosticEvent txDiagnosticEvents<>; // Used for transaction-level diagnostic
-///                                           //  information
+///     DiagnosticEvent diagnosticEvents<>; // Used for all diagnostic information
 /// };
 /// ```
 ///
@@ -23154,7 +23149,7 @@ pub struct TransactionMetaV4 {
     pub tx_changes_after: LedgerEntryChanges,
     pub soroban_meta: Option<SorobanTransactionMetaV2>,
     pub events: VecM<ContractEvent>,
-    pub tx_diagnostic_events: VecM<DiagnosticEvent>,
+    pub diagnostic_events: VecM<DiagnosticEvent>,
 }
 
 impl ReadXdr for TransactionMetaV4 {
@@ -23168,7 +23163,7 @@ impl ReadXdr for TransactionMetaV4 {
                 tx_changes_after: LedgerEntryChanges::read_xdr(r)?,
                 soroban_meta: Option::<SorobanTransactionMetaV2>::read_xdr(r)?,
                 events: VecM::<ContractEvent>::read_xdr(r)?,
-                tx_diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
+                diagnostic_events: VecM::<DiagnosticEvent>::read_xdr(r)?,
             })
         })
     }
@@ -23184,7 +23179,7 @@ impl WriteXdr for TransactionMetaV4 {
             self.tx_changes_after.write_xdr(w)?;
             self.soroban_meta.write_xdr(w)?;
             self.events.write_xdr(w)?;
-            self.tx_diagnostic_events.write_xdr(w)?;
+            self.diagnostic_events.write_xdr(w)?;
             Ok(())
         })
     }

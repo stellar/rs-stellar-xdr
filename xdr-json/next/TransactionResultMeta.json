@@ -2768,24 +2768,16 @@
       }
     },
     "OperationMetaV2": {
-      "description": "OperationMetaV2 is an XDR Struct defines as:\n\n```text struct OperationMetaV2 { ExtensionPoint ext;\n\nLedgerEntryChanges changes;\n\nContractEvent events<>; DiagnosticEvent diagnosticEvents<>; }; ```",
+      "description": "OperationMetaV2 is an XDR Struct defines as:\n\n```text struct OperationMetaV2 { ExtensionPoint ext;\n\nLedgerEntryChanges changes;\n\nContractEvent events<>; }; ```",
       "type": "object",
       "required": [
         "changes",
-        "diagnostic_events",
         "events",
         "ext"
       ],
       "properties": {
         "changes": {
           "$ref": "#/definitions/LedgerEntryChanges"
-        },
-        "diagnostic_events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DiagnosticEvent"
-          },
-          "maxItems": 4294967295
         },
         "events": {
           "type": "array",
@@ -4273,17 +4265,24 @@
       }
     },
     "TransactionMetaV4": {
-      "description": "TransactionMetaV4 is an XDR Struct defines as:\n\n```text struct TransactionMetaV4 { ExtensionPoint ext;\n\nLedgerEntryChanges txChangesBefore;  // tx level changes before operations // are applied if any OperationMetaV2 operations<>;        // meta for each operation LedgerEntryChanges txChangesAfter;   // tx level changes after operations are // applied if any SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for // Soroban transactions).\n\nContractEvent events<>; // Used for transaction-level events (like fee payment) DiagnosticEvent txDiagnosticEvents<>; // Used for transaction-level diagnostic //  information }; ```",
+      "description": "TransactionMetaV4 is an XDR Struct defines as:\n\n```text struct TransactionMetaV4 { ExtensionPoint ext;\n\nLedgerEntryChanges txChangesBefore;  // tx level changes before operations // are applied if any OperationMetaV2 operations<>;        // meta for each operation LedgerEntryChanges txChangesAfter;   // tx level changes after operations are // applied if any SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for // Soroban transactions).\n\nContractEvent events<>; // Used for transaction-level events (like fee payment) DiagnosticEvent diagnosticEvents<>; // Used for all diagnostic information }; ```",
       "type": "object",
       "required": [
+        "diagnostic_events",
         "events",
         "ext",
         "operations",
         "tx_changes_after",
-        "tx_changes_before",
-        "tx_diagnostic_events"
+        "tx_changes_before"
       ],
       "properties": {
+        "diagnostic_events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiagnosticEvent"
+          },
+          "maxItems": 4294967295
+        },
         "events": {
           "type": "array",
           "items": {
@@ -4316,13 +4315,6 @@
         },
         "tx_changes_before": {
           "$ref": "#/definitions/LedgerEntryChanges"
-        },
-        "tx_diagnostic_events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DiagnosticEvent"
-          },
-          "maxItems": 4294967295
         }
       }
     },

@@ -1,73 +1,22 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
-  "title": "TransactionMeta",
-  "description": "TransactionMeta is an XDR Union defines as:\n\n```text union TransactionMeta switch (int v) { case 0: OperationMeta operations<>; case 1: TransactionMetaV1 v1; case 2: TransactionMetaV2 v2; case 3: TransactionMetaV3 v3; case 4: TransactionMetaV4 v4; }; ```",
-  "oneOf": [
-    {
-      "type": "object",
-      "required": [
-        "v0"
-      ],
-      "properties": {
-        "v0": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OperationMeta"
-          },
-          "maxItems": 4294967295
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "v1"
-      ],
-      "properties": {
-        "v1": {
-          "$ref": "#/definitions/TransactionMetaV1"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "v2"
-      ],
-      "properties": {
-        "v2": {
-          "$ref": "#/definitions/TransactionMetaV2"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "v3"
-      ],
-      "properties": {
-        "v3": {
-          "$ref": "#/definitions/TransactionMetaV3"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "v4"
-      ],
-      "properties": {
-        "v4": {
-          "$ref": "#/definitions/TransactionMetaV4"
-        }
-      },
-      "additionalProperties": false
-    }
+  "title": "ArchivalProof",
+  "description": "ArchivalProof is an XDR Struct defines as:\n\n```text struct ArchivalProof { uint32 epoch; // AST Subtree for this proof\n\nunion switch (ArchivalProofType t) { case EXISTENCE: NonexistenceProofBody nonexistenceProof; case NONEXISTENCE: ExistenceProofBody existenceProof; } body; }; ```",
+  "type": "object",
+  "required": [
+    "body",
+    "epoch"
   ],
+  "properties": {
+    "body": {
+      "$ref": "#/definitions/ArchivalProofBody"
+    },
+    "epoch": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  },
   "definitions": {
     "AccountEntry": {
       "description": "AccountEntry is an XDR Struct defines as:\n\n```text struct AccountEntry { AccountID accountID;      // master public key for this account int64 balance;            // in stroops SequenceNumber seqNum;    // last sequence number used for this account uint32 numSubEntries;     // number of sub-entries this account has // drives the reserve AccountID* inflationDest; // Account to vote for during inflation uint32 flags;             // see AccountFlags\n\nstring32 homeDomain; // can be used for reverse federation and memo lookup\n\n// fields used for signatures // thresholds stores unsigned bytes: [weight of master|low|medium|high] Thresholds thresholds;\n\nSigner signers<MAX_SIGNERS>; // possible signers for this account\n\n// reserved for future use union switch (int v) { case 0: void; case 1: AccountEntryExtensionV1 v1; } ext; }; ```",
@@ -310,6 +259,57 @@
         }
       }
     },
+    "ArchivalProofBody": {
+      "description": "ArchivalProofBody is an XDR NestedUnion defines as:\n\n```text union switch (ArchivalProofType t) { case EXISTENCE: NonexistenceProofBody nonexistenceProof; case NONEXISTENCE: ExistenceProofBody existenceProof; } ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "existence"
+          ],
+          "properties": {
+            "existence": {
+              "$ref": "#/definitions/NonexistenceProofBody"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "nonexistence"
+          ],
+          "properties": {
+            "nonexistence": {
+              "$ref": "#/definitions/ExistenceProofBody"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ArchivalProofNode": {
+      "description": "ArchivalProofNode is an XDR Struct defines as:\n\n```text struct ArchivalProofNode { uint32 index; Hash hash; }; ```",
+      "type": "object",
+      "required": [
+        "hash",
+        "index"
+      ],
+      "properties": {
+        "hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
     "Asset": {
       "description": "Asset is an XDR Union defines as:\n\n```text union Asset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\n// add other asset types here in the future }; ```",
       "oneOf": [
@@ -350,6 +350,56 @@
     },
     "AssetCode4": {
       "type": "string"
+    },
+    "BucketListType": {
+      "description": "BucketListType is an XDR Enum defines as:\n\n```text enum BucketListType { LIVE = 0, HOT_ARCHIVE = 1, COLD_ARCHIVE = 2 }; ```",
+      "type": "string",
+      "enum": [
+        "live",
+        "hot_archive",
+        "cold_archive"
+      ]
+    },
+    "BucketMetadata": {
+      "description": "BucketMetadata is an XDR Struct defines as:\n\n```text struct BucketMetadata { // Indicates the protocol version used to create / merge this bucket. uint32 ledgerVersion;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: BucketListType bucketListType; } ext; }; ```",
+      "type": "object",
+      "required": [
+        "ext",
+        "ledger_version"
+      ],
+      "properties": {
+        "ext": {
+          "$ref": "#/definitions/BucketMetadataExt"
+        },
+        "ledger_version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "BucketMetadataExt": {
+      "description": "BucketMetadataExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: BucketListType bucketListType; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/BucketListType"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     },
     "ClaimPredicate": {
       "description": "ClaimPredicate is an XDR Union defines as:\n\n```text union ClaimPredicate switch (ClaimPredicateType type) { case CLAIM_PREDICATE_UNCONDITIONAL: void; case CLAIM_PREDICATE_AND: ClaimPredicate andPredicates<2>; case CLAIM_PREDICATE_OR: ClaimPredicate orPredicates<2>; case CLAIM_PREDICATE_NOT: ClaimPredicate* notPredicate; case CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME: int64 absBefore; // Predicate will be true if closeTime < absBefore case CLAIM_PREDICATE_BEFORE_RELATIVE_TIME: int64 relBefore; // Seconds since closeTime of the ledger in which the // ClaimableBalanceEntry was created }; ```",
@@ -553,6 +603,153 @@
         },
         "predicate": {
           "$ref": "#/definitions/ClaimPredicate"
+        }
+      }
+    },
+    "ColdArchiveArchivedLeaf": {
+      "description": "ColdArchiveArchivedLeaf is an XDR Struct defines as:\n\n```text struct ColdArchiveArchivedLeaf { uint32 index; LedgerEntry archivedEntry; }; ```",
+      "type": "object",
+      "required": [
+        "archived_entry",
+        "index"
+      ],
+      "properties": {
+        "archived_entry": {
+          "$ref": "#/definitions/LedgerEntry"
+        },
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ColdArchiveBoundaryLeaf": {
+      "description": "ColdArchiveBoundaryLeaf is an XDR Struct defines as:\n\n```text struct ColdArchiveBoundaryLeaf { uint32 index; bool isLowerBound; }; ```",
+      "type": "object",
+      "required": [
+        "index",
+        "is_lower_bound"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "is_lower_bound": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ColdArchiveBucketEntry": {
+      "description": "ColdArchiveBucketEntry is an XDR Union defines as:\n\n```text union ColdArchiveBucketEntry switch (ColdArchiveBucketEntryType type) { case COLD_ARCHIVE_METAENTRY: BucketMetadata metaEntry; case COLD_ARCHIVE_ARCHIVED_LEAF: ColdArchiveArchivedLeaf archivedLeaf; case COLD_ARCHIVE_DELETED_LEAF: ColdArchiveDeletedLeaf deletedLeaf; case COLD_ARCHIVE_BOUNDARY_LEAF: ColdArchiveBoundaryLeaf boundaryLeaf; case COLD_ARCHIVE_HASH: ColdArchiveHashEntry hashEntry; }; ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "metaentry"
+          ],
+          "properties": {
+            "metaentry": {
+              "$ref": "#/definitions/BucketMetadata"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "archived_leaf"
+          ],
+          "properties": {
+            "archived_leaf": {
+              "$ref": "#/definitions/ColdArchiveArchivedLeaf"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "deleted_leaf"
+          ],
+          "properties": {
+            "deleted_leaf": {
+              "$ref": "#/definitions/ColdArchiveDeletedLeaf"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "boundary_leaf"
+          ],
+          "properties": {
+            "boundary_leaf": {
+              "$ref": "#/definitions/ColdArchiveBoundaryLeaf"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "hash"
+          ],
+          "properties": {
+            "hash": {
+              "$ref": "#/definitions/ColdArchiveHashEntry"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ColdArchiveDeletedLeaf": {
+      "description": "ColdArchiveDeletedLeaf is an XDR Struct defines as:\n\n```text struct ColdArchiveDeletedLeaf { uint32 index; LedgerKey deletedKey; }; ```",
+      "type": "object",
+      "required": [
+        "deleted_key",
+        "index"
+      ],
+      "properties": {
+        "deleted_key": {
+          "$ref": "#/definitions/LedgerKey"
+        },
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "ColdArchiveHashEntry": {
+      "description": "ColdArchiveHashEntry is an XDR Struct defines as:\n\n```text struct ColdArchiveHashEntry { uint32 index; uint32 level; Hash hash; }; ```",
+      "type": "object",
+      "required": [
+        "hash",
+        "index",
+        "level"
+      ],
+      "properties": {
+        "hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "level": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
         }
       }
     },
@@ -1156,82 +1353,6 @@
         }
       }
     },
-    "ContractEvent": {
-      "description": "ContractEvent is an XDR Struct defines as:\n\n```text struct ContractEvent { // We can use this to add more fields, or because it // is first, to change ContractEvent into a union. ExtensionPoint ext;\n\nHash* contractID; ContractEventType type;\n\nunion switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } body; }; ```",
-      "type": "object",
-      "required": [
-        "body",
-        "ext",
-        "type_"
-      ],
-      "properties": {
-        "body": {
-          "$ref": "#/definitions/ContractEventBody"
-        },
-        "contract_id": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "maxLength": 64,
-          "minLength": 64,
-          "contentEncoding": "hex",
-          "contentMediaType": "application/binary"
-        },
-        "ext": {
-          "$ref": "#/definitions/ExtensionPoint"
-        },
-        "type_": {
-          "$ref": "#/definitions/ContractEventType"
-        }
-      }
-    },
-    "ContractEventBody": {
-      "description": "ContractEventBody is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } ```",
-      "oneOf": [
-        {
-          "type": "object",
-          "required": [
-            "v0"
-          ],
-          "properties": {
-            "v0": {
-              "$ref": "#/definitions/ContractEventV0"
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "ContractEventType": {
-      "description": "ContractEventType is an XDR Enum defines as:\n\n```text enum ContractEventType { SYSTEM = 0, CONTRACT = 1, DIAGNOSTIC = 2 }; ```",
-      "type": "string",
-      "enum": [
-        "system",
-        "contract",
-        "diagnostic"
-      ]
-    },
-    "ContractEventV0": {
-      "description": "ContractEventV0 is an XDR NestedStruct defines as:\n\n```text struct { SCVal topics<>; SCVal data; } ```",
-      "type": "object",
-      "required": [
-        "data",
-        "topics"
-      ],
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/ScVal"
-        },
-        "topics": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ScVal"
-          },
-          "maxItems": 4294967295
-        }
-      }
-    },
     "ContractExecutable": {
       "description": "ContractExecutable is an XDR Union defines as:\n\n```text union ContractExecutable switch (ContractExecutableType type) { case CONTRACT_EXECUTABLE_WASM: Hash wasm_hash; case CONTRACT_EXECUTABLE_STELLAR_ASSET: void; }; ```",
       "oneOf": [
@@ -1297,22 +1418,6 @@
       "contentEncoding": "hex",
       "contentMediaType": "application/binary"
     },
-    "DiagnosticEvent": {
-      "description": "DiagnosticEvent is an XDR Struct defines as:\n\n```text struct DiagnosticEvent { bool inSuccessfulContractCall; ContractEvent event; }; ```",
-      "type": "object",
-      "required": [
-        "event",
-        "in_successful_contract_call"
-      ],
-      "properties": {
-        "event": {
-          "$ref": "#/definitions/ContractEvent"
-        },
-        "in_successful_contract_call": {
-          "type": "boolean"
-        }
-      }
-    },
     "Duration": {
       "description": "Duration is an XDR Typedef defines as:\n\n```text typedef uint64 Duration; ```",
       "type": "integer",
@@ -1340,6 +1445,46 @@
         },
         "is_curr_bucket": {
           "type": "boolean"
+        }
+      }
+    },
+    "ExistenceProofBody": {
+      "description": "ExistenceProofBody is an XDR Struct defines as:\n\n```text struct ExistenceProofBody { LedgerKey keysToProve<>;\n\n// Bounds for each key being proved, where bound[n] // corresponds to keysToProve[n] ColdArchiveBucketEntry lowBoundEntries<>; ColdArchiveBucketEntry highBoundEntries<>;\n\n// Vector of vectors, where proofLevels[level] // contains all HashNodes that correspond with that level ProofLevel proofLevels<>; }; ```",
+      "type": "object",
+      "required": [
+        "high_bound_entries",
+        "keys_to_prove",
+        "low_bound_entries",
+        "proof_levels"
+      ],
+      "properties": {
+        "high_bound_entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ColdArchiveBucketEntry"
+          },
+          "maxItems": 4294967295
+        },
+        "keys_to_prove": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LedgerKey"
+          },
+          "maxItems": 4294967295
+        },
+        "low_bound_entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ColdArchiveBucketEntry"
+          },
+          "maxItems": 4294967295
+        },
+        "proof_levels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProofLevel"
+          },
+          "maxItems": 4294967295
         }
       }
     },
@@ -1421,67 +1566,6 @@
           "minimum": 0.0
         }
       }
-    },
-    "LedgerEntryChange": {
-      "description": "LedgerEntryChange is an XDR Union defines as:\n\n```text union LedgerEntryChange switch (LedgerEntryChangeType type) { case LEDGER_ENTRY_CREATED: LedgerEntry created; case LEDGER_ENTRY_UPDATED: LedgerEntry updated; case LEDGER_ENTRY_REMOVED: LedgerKey removed; case LEDGER_ENTRY_STATE: LedgerEntry state; }; ```",
-      "oneOf": [
-        {
-          "type": "object",
-          "required": [
-            "created"
-          ],
-          "properties": {
-            "created": {
-              "$ref": "#/definitions/LedgerEntry"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "updated"
-          ],
-          "properties": {
-            "updated": {
-              "$ref": "#/definitions/LedgerEntry"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "removed"
-          ],
-          "properties": {
-            "removed": {
-              "$ref": "#/definitions/LedgerKey"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "state"
-          ],
-          "properties": {
-            "state": {
-              "$ref": "#/definitions/LedgerEntry"
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "LedgerEntryChanges": {
-      "description": "LedgerEntryChanges is an XDR Typedef defines as:\n\n```text typedef LedgerEntryChange LedgerEntryChanges<>; ```",
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/LedgerEntryChange"
-      },
-      "maxItems": 4294967295
     },
     "LedgerEntryData": {
       "description": "LedgerEntryData is an XDR NestedUnion defines as:\n\n```text union switch (LedgerEntryType type) { case ACCOUNT: AccountEntry account; case TRUSTLINE: TrustLineEntry trustLine; case OFFER: OfferEntry offer; case DATA: DataEntry data; case CLAIMABLE_BALANCE: ClaimableBalanceEntry claimableBalance; case LIQUIDITY_POOL: LiquidityPoolEntry liquidityPool; case CONTRACT_DATA: ContractDataEntry contractData; case CONTRACT_CODE: ContractCodeEntry contractCode; case CONFIG_SETTING: ConfigSettingEntry configSetting; case TTL: TTLEntry ttl; } ```",
@@ -2032,6 +2116,30 @@
         }
       }
     },
+    "NonexistenceProofBody": {
+      "description": "NonexistenceProofBody is an XDR Struct defines as:\n\n```text struct NonexistenceProofBody { ColdArchiveBucketEntry entriesToProve<>;\n\n// Vector of vectors, where proofLevels[level] // contains all HashNodes that correspond with that level ProofLevel proofLevels<>; }; ```",
+      "type": "object",
+      "required": [
+        "entries_to_prove",
+        "proof_levels"
+      ],
+      "properties": {
+        "entries_to_prove": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ColdArchiveBucketEntry"
+          },
+          "maxItems": 4294967295
+        },
+        "proof_levels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProofLevel"
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
     "OfferEntry": {
       "description": "OfferEntry is an XDR Struct defines as:\n\n```text struct OfferEntry { AccountID sellerID; int64 offerID; Asset selling; // A Asset buying;  // B int64 amount;  // amount of A\n\n/* price for this offer: price of A in terms of B price=AmountB/AmountA=priceNumerator/priceDenominator price is after fees */ Price price; uint32 flags; // see OfferEntryFlags\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",
       "type": "object",
@@ -2083,42 +2191,6 @@
         "v0"
       ]
     },
-    "OperationMeta": {
-      "description": "OperationMeta is an XDR Struct defines as:\n\n```text struct OperationMeta { LedgerEntryChanges changes; }; ```",
-      "type": "object",
-      "required": [
-        "changes"
-      ],
-      "properties": {
-        "changes": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        }
-      }
-    },
-    "OperationMetaV2": {
-      "description": "OperationMetaV2 is an XDR Struct defines as:\n\n```text struct OperationMetaV2 { ExtensionPoint ext;\n\nLedgerEntryChanges changes;\n\nContractEvent events<>; }; ```",
-      "type": "object",
-      "required": [
-        "changes",
-        "events",
-        "ext"
-      ],
-      "properties": {
-        "changes": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ContractEvent"
-          },
-          "maxItems": 4294967295
-        },
-        "ext": {
-          "$ref": "#/definitions/ExtensionPoint"
-        }
-      }
-    },
     "PoolId": {
       "type": "string"
     },
@@ -2139,6 +2211,14 @@
           "format": "int32"
         }
       }
+    },
+    "ProofLevel": {
+      "description": "ProofLevel is an XDR Typedef defines as:\n\n```text typedef ArchivalProofNode ProofLevel<>; ```",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ArchivalProofNode"
+      },
+      "maxItems": 4294967295
     },
     "ScAddress": {
       "type": "string"
@@ -2665,104 +2745,6 @@
     "SignerKey": {
       "type": "string"
     },
-    "SorobanTransactionMeta": {
-      "description": "SorobanTransactionMeta is an XDR Struct defines as:\n\n```text struct SorobanTransactionMeta { SorobanTransactionMetaExt ext;\n\nContractEvent events<>;             // custom events populated by the // contracts themselves. SCVal returnValue;                  // return value of the host fn invocation\n\n// Diagnostics events that are not hashed. // This will contain all contract and diagnostic events. Even ones // that were emitted in a failed contract call. DiagnosticEvent diagnosticEvents<>; }; ```",
-      "type": "object",
-      "required": [
-        "diagnostic_events",
-        "events",
-        "ext",
-        "return_value"
-      ],
-      "properties": {
-        "diagnostic_events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DiagnosticEvent"
-          },
-          "maxItems": 4294967295
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ContractEvent"
-          },
-          "maxItems": 4294967295
-        },
-        "ext": {
-          "$ref": "#/definitions/SorobanTransactionMetaExt"
-        },
-        "return_value": {
-          "$ref": "#/definitions/ScVal"
-        }
-      }
-    },
-    "SorobanTransactionMetaExt": {
-      "description": "SorobanTransactionMetaExt is an XDR Union defines as:\n\n```text union SorobanTransactionMetaExt switch (int v) { case 0: void; case 1: SorobanTransactionMetaExtV1 v1; }; ```",
-      "oneOf": [
-        {
-          "type": "string",
-          "enum": [
-            "v0"
-          ]
-        },
-        {
-          "type": "object",
-          "required": [
-            "v1"
-          ],
-          "properties": {
-            "v1": {
-              "$ref": "#/definitions/SorobanTransactionMetaExtV1"
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "SorobanTransactionMetaExtV1": {
-      "description": "SorobanTransactionMetaExtV1 is an XDR Struct defines as:\n\n```text struct SorobanTransactionMetaExtV1 { ExtensionPoint ext;\n\n// The following are the components of the overall Soroban resource fee // charged for the transaction. // The following relation holds: // `resourceFeeCharged = totalNonRefundableResourceFeeCharged + totalRefundableResourceFeeCharged` // where `resourceFeeCharged` is the overall fee charged for the // transaction. Also, `resourceFeeCharged` <= `sorobanData.resourceFee` // i.e.we never charge more than the declared resource fee. // The inclusion fee for charged the Soroban transaction can be found using // the following equation: // `result.feeCharged = resourceFeeCharged + inclusionFeeCharged`.\n\n// Total amount (in stroops) that has been charged for non-refundable // Soroban resources. // Non-refundable resources are charged based on the usage declared in // the transaction envelope (such as `instructions`, `readBytes` etc.) and // is charged regardless of the success of the transaction. int64 totalNonRefundableResourceFeeCharged; // Total amount (in stroops) that has been charged for refundable // Soroban resource fees. // Currently this comprises the rent fee (`rentFeeCharged`) and the // fee for the events and return value. // Refundable resources are charged based on the actual resources usage. // Since currently refundable resources are only used for the successful // transactions, this will be `0` for failed transactions. int64 totalRefundableResourceFeeCharged; // Amount (in stroops) that has been charged for rent. // This is a part of `totalNonRefundableResourceFeeCharged`. int64 rentFeeCharged; }; ```",
-      "type": "object",
-      "required": [
-        "ext",
-        "rent_fee_charged",
-        "total_non_refundable_resource_fee_charged",
-        "total_refundable_resource_fee_charged"
-      ],
-      "properties": {
-        "ext": {
-          "$ref": "#/definitions/ExtensionPoint"
-        },
-        "rent_fee_charged": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "total_non_refundable_resource_fee_charged": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "total_refundable_resource_fee_charged": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "SorobanTransactionMetaV2": {
-      "description": "SorobanTransactionMetaV2 is an XDR Struct defines as:\n\n```text struct SorobanTransactionMetaV2 { SorobanTransactionMetaExt ext;\n\nSCVal returnValue; }; ```",
-      "type": "object",
-      "required": [
-        "ext",
-        "return_value"
-      ],
-      "properties": {
-        "ext": {
-          "$ref": "#/definitions/SorobanTransactionMetaExt"
-        },
-        "return_value": {
-          "$ref": "#/definitions/ScVal"
-        }
-      }
-    },
     "SponsorshipDescriptor": {
       "description": "SponsorshipDescriptor is an XDR Typedef defines as:\n\n```text typedef AccountID* SponsorshipDescriptor; ```",
       "anyOf": [
@@ -2865,142 +2847,6 @@
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
-    },
-    "TransactionMetaV1": {
-      "description": "TransactionMetaV1 is an XDR Struct defines as:\n\n```text struct TransactionMetaV1 { LedgerEntryChanges txChanges; // tx level changes if any OperationMeta operations<>;   // meta for each operation }; ```",
-      "type": "object",
-      "required": [
-        "operations",
-        "tx_changes"
-      ],
-      "properties": {
-        "operations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OperationMeta"
-          },
-          "maxItems": 4294967295
-        },
-        "tx_changes": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        }
-      }
-    },
-    "TransactionMetaV2": {
-      "description": "TransactionMetaV2 is an XDR Struct defines as:\n\n```text struct TransactionMetaV2 { LedgerEntryChanges txChangesBefore; // tx level changes before operations // are applied if any OperationMeta operations<>;         // meta for each operation LedgerEntryChanges txChangesAfter;  // tx level changes after operations are // applied if any }; ```",
-      "type": "object",
-      "required": [
-        "operations",
-        "tx_changes_after",
-        "tx_changes_before"
-      ],
-      "properties": {
-        "operations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OperationMeta"
-          },
-          "maxItems": 4294967295
-        },
-        "tx_changes_after": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        },
-        "tx_changes_before": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        }
-      }
-    },
-    "TransactionMetaV3": {
-      "description": "TransactionMetaV3 is an XDR Struct defines as:\n\n```text struct TransactionMetaV3 { ExtensionPoint ext;\n\nLedgerEntryChanges txChangesBefore;  // tx level changes before operations // are applied if any OperationMeta operations<>;          // meta for each operation LedgerEntryChanges txChangesAfter;   // tx level changes after operations are // applied if any SorobanTransactionMeta* sorobanMeta; // Soroban-specific meta (only for // Soroban transactions). }; ```",
-      "type": "object",
-      "required": [
-        "ext",
-        "operations",
-        "tx_changes_after",
-        "tx_changes_before"
-      ],
-      "properties": {
-        "ext": {
-          "$ref": "#/definitions/ExtensionPoint"
-        },
-        "operations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OperationMeta"
-          },
-          "maxItems": 4294967295
-        },
-        "soroban_meta": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/SorobanTransactionMeta"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "tx_changes_after": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        },
-        "tx_changes_before": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        }
-      }
-    },
-    "TransactionMetaV4": {
-      "description": "TransactionMetaV4 is an XDR Struct defines as:\n\n```text struct TransactionMetaV4 { ExtensionPoint ext;\n\nLedgerEntryChanges txChangesBefore;  // tx level changes before operations // are applied if any OperationMetaV2 operations<>;        // meta for each operation LedgerEntryChanges txChangesAfter;   // tx level changes after operations are // applied if any SorobanTransactionMetaV2* sorobanMeta; // Soroban-specific meta (only for // Soroban transactions).\n\nContractEvent events<>; // Used for transaction-level events (like fee payment) DiagnosticEvent diagnosticEvents<>; // Used for all diagnostic information }; ```",
-      "type": "object",
-      "required": [
-        "diagnostic_events",
-        "events",
-        "ext",
-        "operations",
-        "tx_changes_after",
-        "tx_changes_before"
-      ],
-      "properties": {
-        "diagnostic_events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DiagnosticEvent"
-          },
-          "maxItems": 4294967295
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ContractEvent"
-          },
-          "maxItems": 4294967295
-        },
-        "ext": {
-          "$ref": "#/definitions/ExtensionPoint"
-        },
-        "operations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OperationMetaV2"
-          },
-          "maxItems": 4294967295
-        },
-        "soroban_meta": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/SorobanTransactionMetaV2"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "tx_changes_after": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        },
-        "tx_changes_before": {
-          "$ref": "#/definitions/LedgerEntryChanges"
-        }
-      }
     },
     "TrustLineAsset": {
       "description": "TrustLineAsset is an XDR Union defines as:\n\n```text union TrustLineAsset switch (AssetType type) { case ASSET_TYPE_NATIVE: // Not credit void;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM4: AlphaNum4 alphaNum4;\n\ncase ASSET_TYPE_CREDIT_ALPHANUM12: AlphaNum12 alphaNum12;\n\ncase ASSET_TYPE_POOL_SHARE: PoolID liquidityPoolID;\n\n// add other asset types here in the future }; ```",

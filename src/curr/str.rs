@@ -74,7 +74,7 @@ impl core::str::FromStr for AccountId {
 
 impl core::fmt::Display for ContractId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let k = stellar_strkey::Contract(self.0.0);
+        let k = stellar_strkey::Contract(self.0 .0);
         let s = k.to_string();
         f.write_str(&s)?;
         Ok(())
@@ -84,8 +84,7 @@ impl core::fmt::Display for ContractId {
 impl core::str::FromStr for ContractId {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        let stellar_strkey::Contract(h) =
-            stellar_strkey::Contract::from_str(s)?;
+        let stellar_strkey::Contract(h) = stellar_strkey::Contract::from_str(s)?;
         Ok(ContractId(Hash(h)))
     }
 }

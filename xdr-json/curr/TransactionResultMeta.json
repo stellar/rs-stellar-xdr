@@ -1362,7 +1362,7 @@
       }
     },
     "ContractEvent": {
-      "description": "ContractEvent is an XDR Struct defines as:\n\n```text struct ContractEvent { // We can use this to add more fields, or because it // is first, to change ContractEvent into a union. ExtensionPoint ext;\n\nHash* contractID; ContractEventType type;\n\nunion switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } body; }; ```",
+      "description": "ContractEvent is an XDR Struct defines as:\n\n```text struct ContractEvent { // We can use this to add more fields, or because it // is first, to change ContractEvent into a union. ExtensionPoint ext;\n\nContractID* contractID; ContractEventType type;\n\nunion switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } body; }; ```",
       "type": "object",
       "required": [
         "body",
@@ -1374,14 +1374,14 @@
           "$ref": "#/definitions/ContractEventBody"
         },
         "contract_id": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "maxLength": 64,
-          "minLength": 64,
-          "contentEncoding": "hex",
-          "contentMediaType": "application/binary"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ContractId"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "ext": {
           "$ref": "#/definitions/ExtensionPoint"
@@ -1463,6 +1463,9 @@
           "additionalProperties": false
         }
       ]
+    },
+    "ContractId": {
+      "type": "string"
     },
     "CreateAccountResult": {
       "description": "CreateAccountResult is an XDR Union defines as:\n\n```text union CreateAccountResult switch (CreateAccountResultCode code) { case CREATE_ACCOUNT_SUCCESS: void; case CREATE_ACCOUNT_MALFORMED: case CREATE_ACCOUNT_UNDERFUNDED: case CREATE_ACCOUNT_LOW_RESERVE: case CREATE_ACCOUNT_ALREADY_EXIST: void; }; ```",

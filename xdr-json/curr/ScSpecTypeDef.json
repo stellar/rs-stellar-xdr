@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScSpecTypeDef",
-  "description": "ScSpecTypeDef is an XDR Union defines as:\n\n```text union SCSpecTypeDef switch (SCSpecType type) { case SC_SPEC_TYPE_VAL: case SC_SPEC_TYPE_BOOL: case SC_SPEC_TYPE_VOID: case SC_SPEC_TYPE_ERROR: case SC_SPEC_TYPE_U32: case SC_SPEC_TYPE_I32: case SC_SPEC_TYPE_U64: case SC_SPEC_TYPE_I64: case SC_SPEC_TYPE_TIMEPOINT: case SC_SPEC_TYPE_DURATION: case SC_SPEC_TYPE_U128: case SC_SPEC_TYPE_I128: case SC_SPEC_TYPE_U256: case SC_SPEC_TYPE_I256: case SC_SPEC_TYPE_BYTES: case SC_SPEC_TYPE_STRING: case SC_SPEC_TYPE_SYMBOL: case SC_SPEC_TYPE_ADDRESS: void; case SC_SPEC_TYPE_OPTION: SCSpecTypeOption option; case SC_SPEC_TYPE_RESULT: SCSpecTypeResult result; case SC_SPEC_TYPE_VEC: SCSpecTypeVec vec; case SC_SPEC_TYPE_MAP: SCSpecTypeMap map; case SC_SPEC_TYPE_TUPLE: SCSpecTypeTuple tuple; case SC_SPEC_TYPE_BYTES_N: SCSpecTypeBytesN bytesN; case SC_SPEC_TYPE_UDT: SCSpecTypeUDT udt; }; ```",
+  "description": "ScSpecTypeDef is an XDR Union defines as:\n\n```text union SCSpecTypeDef switch (SCSpecType type) { case SC_SPEC_TYPE_VAL: case SC_SPEC_TYPE_BOOL: case SC_SPEC_TYPE_VOID: case SC_SPEC_TYPE_ERROR: case SC_SPEC_TYPE_U32: case SC_SPEC_TYPE_I32: case SC_SPEC_TYPE_U64: case SC_SPEC_TYPE_I64: case SC_SPEC_TYPE_TIMEPOINT: case SC_SPEC_TYPE_DURATION: case SC_SPEC_TYPE_U128: case SC_SPEC_TYPE_I128: case SC_SPEC_TYPE_U256: case SC_SPEC_TYPE_I256: case SC_SPEC_TYPE_BYTES: case SC_SPEC_TYPE_STRING: case SC_SPEC_TYPE_SYMBOL: case SC_SPEC_TYPE_ADDRESS: case SC_SPEC_TYPE_MUXED_ADDRESS: void; case SC_SPEC_TYPE_OPTION: SCSpecTypeOption option; case SC_SPEC_TYPE_RESULT: SCSpecTypeResult result; case SC_SPEC_TYPE_VEC: SCSpecTypeVec vec; case SC_SPEC_TYPE_MAP: SCSpecTypeMap map; case SC_SPEC_TYPE_TUPLE: SCSpecTypeTuple tuple; case SC_SPEC_TYPE_BYTES_N: SCSpecTypeBytesN bytesN; case SC_SPEC_TYPE_UDT: SCSpecTypeUDT udt; }; ```",
   "oneOf": [
     {
       "type": "string",
@@ -23,7 +23,8 @@
         "bytes",
         "string",
         "symbol",
-        "address"
+        "address",
+        "muxed_address"
       ]
     },
     {
@@ -127,7 +128,7 @@
       }
     },
     "ScSpecTypeDef": {
-      "description": "ScSpecTypeDef is an XDR Union defines as:\n\n```text union SCSpecTypeDef switch (SCSpecType type) { case SC_SPEC_TYPE_VAL: case SC_SPEC_TYPE_BOOL: case SC_SPEC_TYPE_VOID: case SC_SPEC_TYPE_ERROR: case SC_SPEC_TYPE_U32: case SC_SPEC_TYPE_I32: case SC_SPEC_TYPE_U64: case SC_SPEC_TYPE_I64: case SC_SPEC_TYPE_TIMEPOINT: case SC_SPEC_TYPE_DURATION: case SC_SPEC_TYPE_U128: case SC_SPEC_TYPE_I128: case SC_SPEC_TYPE_U256: case SC_SPEC_TYPE_I256: case SC_SPEC_TYPE_BYTES: case SC_SPEC_TYPE_STRING: case SC_SPEC_TYPE_SYMBOL: case SC_SPEC_TYPE_ADDRESS: void; case SC_SPEC_TYPE_OPTION: SCSpecTypeOption option; case SC_SPEC_TYPE_RESULT: SCSpecTypeResult result; case SC_SPEC_TYPE_VEC: SCSpecTypeVec vec; case SC_SPEC_TYPE_MAP: SCSpecTypeMap map; case SC_SPEC_TYPE_TUPLE: SCSpecTypeTuple tuple; case SC_SPEC_TYPE_BYTES_N: SCSpecTypeBytesN bytesN; case SC_SPEC_TYPE_UDT: SCSpecTypeUDT udt; }; ```",
+      "description": "ScSpecTypeDef is an XDR Union defines as:\n\n```text union SCSpecTypeDef switch (SCSpecType type) { case SC_SPEC_TYPE_VAL: case SC_SPEC_TYPE_BOOL: case SC_SPEC_TYPE_VOID: case SC_SPEC_TYPE_ERROR: case SC_SPEC_TYPE_U32: case SC_SPEC_TYPE_I32: case SC_SPEC_TYPE_U64: case SC_SPEC_TYPE_I64: case SC_SPEC_TYPE_TIMEPOINT: case SC_SPEC_TYPE_DURATION: case SC_SPEC_TYPE_U128: case SC_SPEC_TYPE_I128: case SC_SPEC_TYPE_U256: case SC_SPEC_TYPE_I256: case SC_SPEC_TYPE_BYTES: case SC_SPEC_TYPE_STRING: case SC_SPEC_TYPE_SYMBOL: case SC_SPEC_TYPE_ADDRESS: case SC_SPEC_TYPE_MUXED_ADDRESS: void; case SC_SPEC_TYPE_OPTION: SCSpecTypeOption option; case SC_SPEC_TYPE_RESULT: SCSpecTypeResult result; case SC_SPEC_TYPE_VEC: SCSpecTypeVec vec; case SC_SPEC_TYPE_MAP: SCSpecTypeMap map; case SC_SPEC_TYPE_TUPLE: SCSpecTypeTuple tuple; case SC_SPEC_TYPE_BYTES_N: SCSpecTypeBytesN bytesN; case SC_SPEC_TYPE_UDT: SCSpecTypeUDT udt; }; ```",
       "oneOf": [
         {
           "type": "string",
@@ -149,7 +150,8 @@
             "bytes",
             "string",
             "symbol",
-            "address"
+            "address",
+            "muxed_address"
           ]
         },
         {

@@ -34,7 +34,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-spec.x",
-        "c7ffa21d2e91afb8e666b33524d307955426ff553a486d670c29217ed9888d49",
+        "2e240e191f0b5ecedeecab75e7e936b3dc3dbe159aa2a9547efb15871d683c7c",
     ),
     (
         "xdr/curr/Stellar-contract.x",
@@ -5893,6 +5893,7 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 ///     SC_SPEC_TYPE_STRING = 16,
 ///     SC_SPEC_TYPE_SYMBOL = 17,
 ///     SC_SPEC_TYPE_ADDRESS = 19,
+///     SC_SPEC_TYPE_MUXED_ADDRESS = 20,
 ///
 ///     // Types with parameters.
 ///     SC_SPEC_TYPE_OPTION = 1000,
@@ -5936,6 +5937,7 @@ pub enum ScSpecType {
     String = 16,
     Symbol = 17,
     Address = 19,
+    MuxedAddress = 20,
     Option = 1000,
     Result = 1001,
     Vec = 1002,
@@ -5946,7 +5948,7 @@ pub enum ScSpecType {
 }
 
 impl ScSpecType {
-    pub const VARIANTS: [ScSpecType; 25] = [
+    pub const VARIANTS: [ScSpecType; 26] = [
         ScSpecType::Val,
         ScSpecType::Bool,
         ScSpecType::Void,
@@ -5965,6 +5967,7 @@ impl ScSpecType {
         ScSpecType::String,
         ScSpecType::Symbol,
         ScSpecType::Address,
+        ScSpecType::MuxedAddress,
         ScSpecType::Option,
         ScSpecType::Result,
         ScSpecType::Vec,
@@ -5973,7 +5976,7 @@ impl ScSpecType {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 25] = [
+    pub const VARIANTS_STR: [&'static str; 26] = [
         "Val",
         "Bool",
         "Void",
@@ -5992,6 +5995,7 @@ impl ScSpecType {
         "String",
         "Symbol",
         "Address",
+        "MuxedAddress",
         "Option",
         "Result",
         "Vec",
@@ -6022,6 +6026,7 @@ impl ScSpecType {
             Self::String => "String",
             Self::Symbol => "Symbol",
             Self::Address => "Address",
+            Self::MuxedAddress => "MuxedAddress",
             Self::Option => "Option",
             Self::Result => "Result",
             Self::Vec => "Vec",
@@ -6033,7 +6038,7 @@ impl ScSpecType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 25] {
+    pub const fn variants() -> [ScSpecType; 26] {
         Self::VARIANTS
     }
 }
@@ -6082,6 +6087,7 @@ impl TryFrom<i32> for ScSpecType {
             16 => ScSpecType::String,
             17 => ScSpecType::Symbol,
             19 => ScSpecType::Address,
+            20 => ScSpecType::MuxedAddress,
             1000 => ScSpecType::Option,
             1001 => ScSpecType::Result,
             1002 => ScSpecType::Vec,
@@ -6449,6 +6455,7 @@ impl WriteXdr for ScSpecTypeUdt {
 /// case SC_SPEC_TYPE_STRING:
 /// case SC_SPEC_TYPE_SYMBOL:
 /// case SC_SPEC_TYPE_ADDRESS:
+/// case SC_SPEC_TYPE_MUXED_ADDRESS:
 ///     void;
 /// case SC_SPEC_TYPE_OPTION:
 ///     SCSpecTypeOption option;
@@ -6496,6 +6503,7 @@ pub enum ScSpecTypeDef {
     String,
     Symbol,
     Address,
+    MuxedAddress,
     Option(Box<ScSpecTypeOption>),
     Result(Box<ScSpecTypeResult>),
     Vec(Box<ScSpecTypeVec>),
@@ -6506,7 +6514,7 @@ pub enum ScSpecTypeDef {
 }
 
 impl ScSpecTypeDef {
-    pub const VARIANTS: [ScSpecType; 25] = [
+    pub const VARIANTS: [ScSpecType; 26] = [
         ScSpecType::Val,
         ScSpecType::Bool,
         ScSpecType::Void,
@@ -6525,6 +6533,7 @@ impl ScSpecTypeDef {
         ScSpecType::String,
         ScSpecType::Symbol,
         ScSpecType::Address,
+        ScSpecType::MuxedAddress,
         ScSpecType::Option,
         ScSpecType::Result,
         ScSpecType::Vec,
@@ -6533,7 +6542,7 @@ impl ScSpecTypeDef {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 25] = [
+    pub const VARIANTS_STR: [&'static str; 26] = [
         "Val",
         "Bool",
         "Void",
@@ -6552,6 +6561,7 @@ impl ScSpecTypeDef {
         "String",
         "Symbol",
         "Address",
+        "MuxedAddress",
         "Option",
         "Result",
         "Vec",
@@ -6582,6 +6592,7 @@ impl ScSpecTypeDef {
             Self::String => "String",
             Self::Symbol => "Symbol",
             Self::Address => "Address",
+            Self::MuxedAddress => "MuxedAddress",
             Self::Option(_) => "Option",
             Self::Result(_) => "Result",
             Self::Vec(_) => "Vec",
@@ -6614,6 +6625,7 @@ impl ScSpecTypeDef {
             Self::String => ScSpecType::String,
             Self::Symbol => ScSpecType::Symbol,
             Self::Address => ScSpecType::Address,
+            Self::MuxedAddress => ScSpecType::MuxedAddress,
             Self::Option(_) => ScSpecType::Option,
             Self::Result(_) => ScSpecType::Result,
             Self::Vec(_) => ScSpecType::Vec,
@@ -6625,7 +6637,7 @@ impl ScSpecTypeDef {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 25] {
+    pub const fn variants() -> [ScSpecType; 26] {
         Self::VARIANTS
     }
 }
@@ -6677,6 +6689,7 @@ impl ReadXdr for ScSpecTypeDef {
                 ScSpecType::String => Self::String,
                 ScSpecType::Symbol => Self::Symbol,
                 ScSpecType::Address => Self::Address,
+                ScSpecType::MuxedAddress => Self::MuxedAddress,
                 ScSpecType::Option => Self::Option(Box::<ScSpecTypeOption>::read_xdr(r)?),
                 ScSpecType::Result => Self::Result(Box::<ScSpecTypeResult>::read_xdr(r)?),
                 ScSpecType::Vec => Self::Vec(Box::<ScSpecTypeVec>::read_xdr(r)?),
@@ -6717,6 +6730,7 @@ impl WriteXdr for ScSpecTypeDef {
                 Self::String => ().write_xdr(w)?,
                 Self::Symbol => ().write_xdr(w)?,
                 Self::Address => ().write_xdr(w)?,
+                Self::MuxedAddress => ().write_xdr(w)?,
                 Self::Option(v) => v.write_xdr(w)?,
                 Self::Result(v) => v.write_xdr(w)?,
                 Self::Vec(v) => v.write_xdr(w)?,

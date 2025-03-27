@@ -17,6 +17,7 @@ macro_rules! impl_json_schema_string {
 
 impl_json_schema_string!(PublicKey);
 impl_json_schema_string!(AccountId);
+impl_json_schema_string!(ContractId);
 impl_json_schema_string!(MuxedAccount);
 impl_json_schema_string!(MuxedAccountMed25519);
 impl_json_schema_string!(MuxedEd25519Account);

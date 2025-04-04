@@ -34,11 +34,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-contract-spec.x",
-        "c7ffa21d2e91afb8e666b33524d307955426ff553a486d670c29217ed9888d49",
+        "2e240e191f0b5ecedeecab75e7e936b3dc3dbe159aa2a9547efb15871d683c7c",
     ),
     (
         "xdr/next/Stellar-contract.x",
-        "0511d486382c966a0006fc3e05ad1315c7a4f900421150fa4a40a331302473df",
+        "f7cefcd1d38c3b2d56769bd0489221d31cc27101834e93d802f1fa6bb01ae653",
     ),
     (
         "xdr/next/Stellar-internal.x",
@@ -50,7 +50,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-ledger.x",
-        "57e143f908d972577fcb2137fa88874591c54e19341b21d45c9f85bd9cce48e9",
+        "d117a2ee99031127b3de30b91ce6207d678fde9a24c1d9ed862bede34bbae608",
     ),
     (
         "xdr/next/Stellar-overlay.x",
@@ -62,7 +62,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/next/Stellar-types.x",
-        "04b9ba7076e895930c6900b10adb635baefc93a68380f46ba1830deac6dace5c",
+        "d37a4b8683d2ddb9f13f6d8a4e5111dfe7de4176516db52bc0517ec46a82c3d4",
     ),
 ];
 
@@ -6023,6 +6023,7 @@ pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
 ///     SC_SPEC_TYPE_STRING = 16,
 ///     SC_SPEC_TYPE_SYMBOL = 17,
 ///     SC_SPEC_TYPE_ADDRESS = 19,
+///     SC_SPEC_TYPE_MUXED_ADDRESS = 20,
 ///
 ///     // Types with parameters.
 ///     SC_SPEC_TYPE_OPTION = 1000,
@@ -6066,6 +6067,7 @@ pub enum ScSpecType {
     String = 16,
     Symbol = 17,
     Address = 19,
+    MuxedAddress = 20,
     Option = 1000,
     Result = 1001,
     Vec = 1002,
@@ -6076,7 +6078,7 @@ pub enum ScSpecType {
 }
 
 impl ScSpecType {
-    pub const VARIANTS: [ScSpecType; 25] = [
+    pub const VARIANTS: [ScSpecType; 26] = [
         ScSpecType::Val,
         ScSpecType::Bool,
         ScSpecType::Void,
@@ -6095,6 +6097,7 @@ impl ScSpecType {
         ScSpecType::String,
         ScSpecType::Symbol,
         ScSpecType::Address,
+        ScSpecType::MuxedAddress,
         ScSpecType::Option,
         ScSpecType::Result,
         ScSpecType::Vec,
@@ -6103,7 +6106,7 @@ impl ScSpecType {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 25] = [
+    pub const VARIANTS_STR: [&'static str; 26] = [
         "Val",
         "Bool",
         "Void",
@@ -6122,6 +6125,7 @@ impl ScSpecType {
         "String",
         "Symbol",
         "Address",
+        "MuxedAddress",
         "Option",
         "Result",
         "Vec",
@@ -6152,6 +6156,7 @@ impl ScSpecType {
             Self::String => "String",
             Self::Symbol => "Symbol",
             Self::Address => "Address",
+            Self::MuxedAddress => "MuxedAddress",
             Self::Option => "Option",
             Self::Result => "Result",
             Self::Vec => "Vec",
@@ -6163,7 +6168,7 @@ impl ScSpecType {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 25] {
+    pub const fn variants() -> [ScSpecType; 26] {
         Self::VARIANTS
     }
 }
@@ -6212,6 +6217,7 @@ impl TryFrom<i32> for ScSpecType {
             16 => ScSpecType::String,
             17 => ScSpecType::Symbol,
             19 => ScSpecType::Address,
+            20 => ScSpecType::MuxedAddress,
             1000 => ScSpecType::Option,
             1001 => ScSpecType::Result,
             1002 => ScSpecType::Vec,
@@ -6579,6 +6585,7 @@ impl WriteXdr for ScSpecTypeUdt {
 /// case SC_SPEC_TYPE_STRING:
 /// case SC_SPEC_TYPE_SYMBOL:
 /// case SC_SPEC_TYPE_ADDRESS:
+/// case SC_SPEC_TYPE_MUXED_ADDRESS:
 ///     void;
 /// case SC_SPEC_TYPE_OPTION:
 ///     SCSpecTypeOption option;
@@ -6626,6 +6633,7 @@ pub enum ScSpecTypeDef {
     String,
     Symbol,
     Address,
+    MuxedAddress,
     Option(Box<ScSpecTypeOption>),
     Result(Box<ScSpecTypeResult>),
     Vec(Box<ScSpecTypeVec>),
@@ -6636,7 +6644,7 @@ pub enum ScSpecTypeDef {
 }
 
 impl ScSpecTypeDef {
-    pub const VARIANTS: [ScSpecType; 25] = [
+    pub const VARIANTS: [ScSpecType; 26] = [
         ScSpecType::Val,
         ScSpecType::Bool,
         ScSpecType::Void,
@@ -6655,6 +6663,7 @@ impl ScSpecTypeDef {
         ScSpecType::String,
         ScSpecType::Symbol,
         ScSpecType::Address,
+        ScSpecType::MuxedAddress,
         ScSpecType::Option,
         ScSpecType::Result,
         ScSpecType::Vec,
@@ -6663,7 +6672,7 @@ impl ScSpecTypeDef {
         ScSpecType::BytesN,
         ScSpecType::Udt,
     ];
-    pub const VARIANTS_STR: [&'static str; 25] = [
+    pub const VARIANTS_STR: [&'static str; 26] = [
         "Val",
         "Bool",
         "Void",
@@ -6682,6 +6691,7 @@ impl ScSpecTypeDef {
         "String",
         "Symbol",
         "Address",
+        "MuxedAddress",
         "Option",
         "Result",
         "Vec",
@@ -6712,6 +6722,7 @@ impl ScSpecTypeDef {
             Self::String => "String",
             Self::Symbol => "Symbol",
             Self::Address => "Address",
+            Self::MuxedAddress => "MuxedAddress",
             Self::Option(_) => "Option",
             Self::Result(_) => "Result",
             Self::Vec(_) => "Vec",
@@ -6744,6 +6755,7 @@ impl ScSpecTypeDef {
             Self::String => ScSpecType::String,
             Self::Symbol => ScSpecType::Symbol,
             Self::Address => ScSpecType::Address,
+            Self::MuxedAddress => ScSpecType::MuxedAddress,
             Self::Option(_) => ScSpecType::Option,
             Self::Result(_) => ScSpecType::Result,
             Self::Vec(_) => ScSpecType::Vec,
@@ -6755,7 +6767,7 @@ impl ScSpecTypeDef {
     }
 
     #[must_use]
-    pub const fn variants() -> [ScSpecType; 25] {
+    pub const fn variants() -> [ScSpecType; 26] {
         Self::VARIANTS
     }
 }
@@ -6807,6 +6819,7 @@ impl ReadXdr for ScSpecTypeDef {
                 ScSpecType::String => Self::String,
                 ScSpecType::Symbol => Self::Symbol,
                 ScSpecType::Address => Self::Address,
+                ScSpecType::MuxedAddress => Self::MuxedAddress,
                 ScSpecType::Option => Self::Option(Box::<ScSpecTypeOption>::read_xdr(r)?),
                 ScSpecType::Result => Self::Result(Box::<ScSpecTypeResult>::read_xdr(r)?),
                 ScSpecType::Vec => Self::Vec(Box::<ScSpecTypeVec>::read_xdr(r)?),
@@ -6847,6 +6860,7 @@ impl WriteXdr for ScSpecTypeDef {
                 Self::String => ().write_xdr(w)?,
                 Self::Symbol => ().write_xdr(w)?,
                 Self::Address => ().write_xdr(w)?,
+                Self::MuxedAddress => ().write_xdr(w)?,
                 Self::Option(v) => v.write_xdr(w)?,
                 Self::Result(v) => v.write_xdr(w)?,
                 Self::Vec(v) => v.write_xdr(w)?,
@@ -9264,7 +9278,7 @@ impl WriteXdr for MuxedEd25519Account {
 /// case SC_ADDRESS_TYPE_ACCOUNT:
 ///     AccountID accountId;
 /// case SC_ADDRESS_TYPE_CONTRACT:
-///     Hash contractId;
+///     ContractID contractId;
 /// case SC_ADDRESS_TYPE_MUXED_ACCOUNT:
 ///     MuxedEd25519Account muxedAccount;
 /// case SC_ADDRESS_TYPE_CLAIMABLE_BALANCE:
@@ -9284,7 +9298,7 @@ impl WriteXdr for MuxedEd25519Account {
 #[allow(clippy::large_enum_variant)]
 pub enum ScAddress {
     Account(AccountId),
-    Contract(Hash),
+    Contract(ContractId),
     MuxedAccount(MuxedEd25519Account),
     ClaimableBalance(ClaimableBalanceId),
     LiquidityPool(PoolId),
@@ -9365,7 +9379,7 @@ impl ReadXdr for ScAddress {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 ScAddressType::Account => Self::Account(AccountId::read_xdr(r)?),
-                ScAddressType::Contract => Self::Contract(Hash::read_xdr(r)?),
+                ScAddressType::Contract => Self::Contract(ContractId::read_xdr(r)?),
                 ScAddressType::MuxedAccount => {
                     Self::MuxedAccount(MuxedEd25519Account::read_xdr(r)?)
                 }
@@ -19983,7 +19997,7 @@ impl WriteXdr for LedgerUpgradeType {
 ///
 /// ```text
 /// struct ConfigUpgradeSetKey {
-///     Hash contractID;
+///     ContractID contractID;
 ///     Hash contentHash;
 /// };
 /// ```
@@ -19997,7 +20011,7 @@ impl WriteXdr for LedgerUpgradeType {
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigUpgradeSetKey {
-    pub contract_id: Hash,
+    pub contract_id: ContractId,
     pub content_hash: Hash,
 }
 
@@ -20006,7 +20020,7 @@ impl ReadXdr for ConfigUpgradeSetKey {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                contract_id: Hash::read_xdr(r)?,
+                contract_id: ContractId::read_xdr(r)?,
                 content_hash: Hash::read_xdr(r)?,
             })
         })
@@ -22600,7 +22614,7 @@ impl WriteXdr for ContractEventBody {
 ///     // is first, to change ContractEvent into a union.
 ///     ExtensionPoint ext;
 ///
-///     Hash* contractID;
+///     ContractID* contractID;
 ///     ContractEventType type;
 ///
 ///     union switch (int v)
@@ -22626,7 +22640,7 @@ impl WriteXdr for ContractEventBody {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ContractEvent {
     pub ext: ExtensionPoint,
-    pub contract_id: Option<Hash>,
+    pub contract_id: Option<ContractId>,
     pub type_: ContractEventType,
     pub body: ContractEventBody,
 }
@@ -22637,7 +22651,7 @@ impl ReadXdr for ContractEvent {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ext: ExtensionPoint::read_xdr(r)?,
-                contract_id: Option::<Hash>::read_xdr(r)?,
+                contract_id: Option::<ContractId>::read_xdr(r)?,
                 type_: ContractEventType::read_xdr(r)?,
                 body: ContractEventBody::read_xdr(r)?,
             })
@@ -45457,6 +45471,60 @@ impl WriteXdr for AccountId {
     }
 }
 
+/// ContractId is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef Hash ContractID;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+#[derive(Debug)]
+pub struct ContractId(pub Hash);
+
+impl From<ContractId> for Hash {
+    #[must_use]
+    fn from(x: ContractId) -> Self {
+        x.0
+    }
+}
+
+impl From<Hash> for ContractId {
+    #[must_use]
+    fn from(x: Hash) -> Self {
+        ContractId(x)
+    }
+}
+
+impl AsRef<Hash> for ContractId {
+    #[must_use]
+    fn as_ref(&self) -> &Hash {
+        &self.0
+    }
+}
+
+impl ReadXdr for ContractId {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = Hash::read_xdr(r)?;
+            let v = ContractId(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ContractId {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
 /// Curve25519Secret is an XDR Struct defines as:
 ///
 /// ```text
@@ -46575,6 +46643,7 @@ pub enum TypeVariant {
     SignatureHint,
     NodeId,
     AccountId,
+    ContractId,
     Curve25519Secret,
     Curve25519Public,
     HmacSha256Key,
@@ -46588,7 +46657,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 457] = [
+    pub const VARIANTS: [TypeVariant; 458] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -47036,6 +47105,7 @@ impl TypeVariant {
         TypeVariant::SignatureHint,
         TypeVariant::NodeId,
         TypeVariant::AccountId,
+        TypeVariant::ContractId,
         TypeVariant::Curve25519Secret,
         TypeVariant::Curve25519Public,
         TypeVariant::HmacSha256Key,
@@ -47047,7 +47117,7 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 457] = [
+    pub const VARIANTS_STR: [&'static str; 458] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47495,6 +47565,7 @@ impl TypeVariant {
         "SignatureHint",
         "NodeId",
         "AccountId",
+        "ContractId",
         "Curve25519Secret",
         "Curve25519Public",
         "HmacSha256Key",
@@ -47972,6 +48043,7 @@ impl TypeVariant {
             Self::SignatureHint => "SignatureHint",
             Self::NodeId => "NodeId",
             Self::AccountId => "AccountId",
+            Self::ContractId => "ContractId",
             Self::Curve25519Secret => "Curve25519Secret",
             Self::Curve25519Public => "Curve25519Public",
             Self::HmacSha256Key => "HmacSha256Key",
@@ -47987,7 +48059,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 457] {
+    pub const fn variants() -> [TypeVariant; 458] {
         Self::VARIANTS
     }
 
@@ -48655,6 +48727,7 @@ impl TypeVariant {
             Self::SignatureHint => gen.into_root_schema_for::<SignatureHint>(),
             Self::NodeId => gen.into_root_schema_for::<NodeId>(),
             Self::AccountId => gen.into_root_schema_for::<AccountId>(),
+            Self::ContractId => gen.into_root_schema_for::<ContractId>(),
             Self::Curve25519Secret => gen.into_root_schema_for::<Curve25519Secret>(),
             Self::Curve25519Public => gen.into_root_schema_for::<Curve25519Public>(),
             Self::HmacSha256Key => gen.into_root_schema_for::<HmacSha256Key>(),
@@ -49166,6 +49239,7 @@ impl core::str::FromStr for TypeVariant {
             "SignatureHint" => Ok(Self::SignatureHint),
             "NodeId" => Ok(Self::NodeId),
             "AccountId" => Ok(Self::AccountId),
+            "ContractId" => Ok(Self::ContractId),
             "Curve25519Secret" => Ok(Self::Curve25519Secret),
             "Curve25519Public" => Ok(Self::Curve25519Public),
             "HmacSha256Key" => Ok(Self::HmacSha256Key),
@@ -49637,6 +49711,7 @@ pub enum Type {
     SignatureHint(Box<SignatureHint>),
     NodeId(Box<NodeId>),
     AccountId(Box<AccountId>),
+    ContractId(Box<ContractId>),
     Curve25519Secret(Box<Curve25519Secret>),
     Curve25519Public(Box<Curve25519Public>),
     HmacSha256Key(Box<HmacSha256Key>),
@@ -49650,7 +49725,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 457] = [
+    pub const VARIANTS: [TypeVariant; 458] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -50098,6 +50173,7 @@ impl Type {
         TypeVariant::SignatureHint,
         TypeVariant::NodeId,
         TypeVariant::AccountId,
+        TypeVariant::ContractId,
         TypeVariant::Curve25519Secret,
         TypeVariant::Curve25519Public,
         TypeVariant::HmacSha256Key,
@@ -50109,7 +50185,7 @@ impl Type {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 457] = [
+    pub const VARIANTS_STR: [&'static str; 458] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50557,6 +50633,7 @@ impl Type {
         "SignatureHint",
         "NodeId",
         "AccountId",
+        "ContractId",
         "Curve25519Secret",
         "Curve25519Public",
         "HmacSha256Key",
@@ -52523,6 +52600,9 @@ impl Type {
             }
             TypeVariant::AccountId => {
                 r.with_limited_depth(|r| Ok(Self::AccountId(Box::new(AccountId::read_xdr(r)?))))
+            }
+            TypeVariant::ContractId => {
+                r.with_limited_depth(|r| Ok(Self::ContractId(Box::new(ContractId::read_xdr(r)?))))
             }
             TypeVariant::Curve25519Secret => r.with_limited_depth(|r| {
                 Ok(Self::Curve25519Secret(Box::new(
@@ -54540,6 +54620,10 @@ impl Type {
             TypeVariant::AccountId => Box::new(
                 ReadXdrIter::<_, AccountId>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
+            ),
+            TypeVariant::ContractId => Box::new(
+                ReadXdrIter::<_, ContractId>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractId(Box::new(t)))),
             ),
             TypeVariant::Curve25519Secret => Box::new(
                 ReadXdrIter::<_, Curve25519Secret>::new(&mut r.inner, r.limits.clone())
@@ -56823,6 +56907,10 @@ impl Type {
                 ReadXdrIter::<_, Frame<AccountId>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountId(Box::new(t.0)))),
             ),
+            TypeVariant::ContractId => Box::new(
+                ReadXdrIter::<_, Frame<ContractId>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractId(Box::new(t.0)))),
+            ),
             TypeVariant::Curve25519Secret => Box::new(
                 ReadXdrIter::<_, Frame<Curve25519Secret>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t.0)))),
@@ -58693,6 +58781,10 @@ impl Type {
                 ReadXdrIter::<_, AccountId>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::AccountId(Box::new(t)))),
             ),
+            TypeVariant::ContractId => Box::new(
+                ReadXdrIter::<_, ContractId>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractId(Box::new(t)))),
+            ),
             TypeVariant::Curve25519Secret => Box::new(
                 ReadXdrIter::<_, Curve25519Secret>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Curve25519Secret(Box::new(t)))),
@@ -59987,6 +60079,7 @@ impl Type {
             }
             TypeVariant::NodeId => Ok(Self::NodeId(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::AccountId => Ok(Self::AccountId(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ContractId => Ok(Self::ContractId(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::Curve25519Secret => Ok(Self::Curve25519Secret(Box::new(
                 serde_json::from_reader(r)?,
             ))),
@@ -61448,6 +61541,9 @@ impl Type {
             TypeVariant::AccountId => Ok(Self::AccountId(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::ContractId => Ok(Self::ContractId(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::Curve25519Secret => Ok(Self::Curve25519Secret(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61934,6 +62030,7 @@ impl Type {
             Self::SignatureHint(ref v) => v.as_ref(),
             Self::NodeId(ref v) => v.as_ref(),
             Self::AccountId(ref v) => v.as_ref(),
+            Self::ContractId(ref v) => v.as_ref(),
             Self::Curve25519Secret(ref v) => v.as_ref(),
             Self::Curve25519Public(ref v) => v.as_ref(),
             Self::HmacSha256Key(ref v) => v.as_ref(),
@@ -62424,6 +62521,7 @@ impl Type {
             Self::SignatureHint(_) => "SignatureHint",
             Self::NodeId(_) => "NodeId",
             Self::AccountId(_) => "AccountId",
+            Self::ContractId(_) => "ContractId",
             Self::Curve25519Secret(_) => "Curve25519Secret",
             Self::Curve25519Public(_) => "Curve25519Public",
             Self::HmacSha256Key(_) => "HmacSha256Key",
@@ -62439,7 +62537,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 457] {
+    pub const fn variants() -> [TypeVariant; 458] {
         Self::VARIANTS
     }
 
@@ -62964,6 +63062,7 @@ impl Type {
             Self::SignatureHint(_) => TypeVariant::SignatureHint,
             Self::NodeId(_) => TypeVariant::NodeId,
             Self::AccountId(_) => TypeVariant::AccountId,
+            Self::ContractId(_) => TypeVariant::ContractId,
             Self::Curve25519Secret(_) => TypeVariant::Curve25519Secret,
             Self::Curve25519Public(_) => TypeVariant::Curve25519Public,
             Self::HmacSha256Key(_) => TypeVariant::HmacSha256Key,
@@ -63443,6 +63542,7 @@ impl WriteXdr for Type {
             Self::SignatureHint(v) => v.write_xdr(w),
             Self::NodeId(v) => v.write_xdr(w),
             Self::AccountId(v) => v.write_xdr(w),
+            Self::ContractId(v) => v.write_xdr(w),
             Self::Curve25519Secret(v) => v.write_xdr(w),
             Self::Curve25519Public(v) => v.write_xdr(w),
             Self::HmacSha256Key(v) => v.write_xdr(w),

@@ -960,7 +960,7 @@
       ]
     },
     "ConfigUpgradeSetKey": {
-      "description": "ConfigUpgradeSetKey is an XDR Struct defines as:\n\n```text struct ConfigUpgradeSetKey { Hash contractID; Hash contentHash; }; ```",
+      "description": "ConfigUpgradeSetKey is an XDR Struct defines as:\n\n```text struct ConfigUpgradeSetKey { ContractID contractID; Hash contentHash; }; ```",
       "type": "object",
       "required": [
         "content_hash",
@@ -975,11 +975,7 @@
           "contentMediaType": "application/binary"
         },
         "contract_id": {
-          "type": "string",
-          "maxLength": 64,
-          "minLength": 64,
-          "contentEncoding": "hex",
-          "contentMediaType": "application/binary"
+          "$ref": "#/definitions/ContractId"
         }
       }
     },
@@ -1212,6 +1208,9 @@
           "additionalProperties": false
         }
       ]
+    },
+    "ContractId": {
+      "type": "string"
     },
     "DataEntry": {
       "description": "DataEntry is an XDR Struct defines as:\n\n```text struct DataEntry { AccountID accountID; // account this data belongs to string64 dataName; DataValue dataValue;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",

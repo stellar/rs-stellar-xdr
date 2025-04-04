@@ -18,7 +18,7 @@ test:
 
 build: generate
 	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets
-	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets --release --target wasm32-unknown-unknown
+	cargo clippy --no-default-features --features curr,next --release --target wasm32v1-none
 
 doc:
 	cargo test --doc --all-features

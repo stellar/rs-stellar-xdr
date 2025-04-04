@@ -25,9 +25,9 @@
 #![cfg(feature = "alloc")]
 
 use super::{
-    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, Error, Hash, MuxedAccount,
-    MuxedAccountMed25519, MuxedEd25519Account, NodeId, PoolId, PublicKey, ScAddress, SignerKey,
-    SignerKeyEd25519SignedPayload, Uint256,
+    AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, ContractId, Error, Hash,
+    MuxedAccount, MuxedAccountMed25519, MuxedEd25519Account, NodeId, PoolId, PublicKey, ScAddress,
+    SignerKey, SignerKeyEd25519SignedPayload, Uint256,
 };
 
 impl From<stellar_strkey::DecodeError> for Error {
@@ -69,6 +69,23 @@ impl core::str::FromStr for AccountId {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         Ok(AccountId(PublicKey::from_str(s)?))
+    }
+}
+
+impl core::fmt::Display for ContractId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let k = stellar_strkey::Contract(self.0 .0);
+        let s = k.to_string();
+        f.write_str(&s)?;
+        Ok(())
+    }
+}
+
+impl core::str::FromStr for ContractId {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let stellar_strkey::Contract(h) = stellar_strkey::Contract::from_str(s)?;
+        Ok(ContractId(Hash(h)))
     }
 }
 
@@ -286,7 +303,7 @@ impl core::str::FromStr for ScAddress {
                 ScAddress::Account(AccountId(PublicKey::PublicKeyTypeEd25519(Uint256(k)))),
             ),
             stellar_strkey::Strkey::Contract(stellar_strkey::Contract(h)) => {
-                Ok(ScAddress::Contract(Hash(h)))
+                Ok(ScAddress::Contract(ContractId(Hash(h))))
             }
             stellar_strkey::Strkey::MuxedAccountEd25519(muxed_ed25519) => {
                 Ok(ScAddress::MuxedAccount(MuxedEd25519Account {
@@ -314,7 +331,7 @@ impl core::fmt::Display for ScAddress {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             ScAddress::Account(a) => a.fmt(f),
-            ScAddress::Contract(Hash(h)) => {
+            ScAddress::Contract(ContractId(Hash(h))) => {
                 let k = stellar_strkey::Contract(*h);
                 let s = k.to_string();
                 f.write_str(&s)

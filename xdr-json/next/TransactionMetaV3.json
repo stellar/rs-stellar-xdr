@@ -1185,7 +1185,7 @@
       }
     },
     "ContractEvent": {
-      "description": "ContractEvent is an XDR Struct defines as:\n\n```text struct ContractEvent { // We can use this to add more fields, or because it // is first, to change ContractEvent into a union. ExtensionPoint ext;\n\nHash* contractID; ContractEventType type;\n\nunion switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } body; }; ```",
+      "description": "ContractEvent is an XDR Struct defines as:\n\n```text struct ContractEvent { // We can use this to add more fields, or because it // is first, to change ContractEvent into a union. ExtensionPoint ext;\n\nContractID* contractID; ContractEventType type;\n\nunion switch (int v) { case 0: struct { SCVal topics<>; SCVal data; } v0; } body; }; ```",
       "type": "object",
       "required": [
         "body",
@@ -1197,14 +1197,14 @@
           "$ref": "#/definitions/ContractEventBody"
         },
         "contract_id": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "maxLength": 64,
-          "minLength": 64,
-          "contentEncoding": "hex",
-          "contentMediaType": "application/binary"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ContractId"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "ext": {
           "$ref": "#/definitions/ExtensionPoint"
@@ -1286,6 +1286,9 @@
           "additionalProperties": false
         }
       ]
+    },
+    "ContractId": {
+      "type": "string"
     },
     "DataEntry": {
       "description": "DataEntry is an XDR Struct defines as:\n\n```text struct DataEntry { AccountID accountID; // account this data belongs to string64 dataName; DataValue dataValue;\n\n// reserved for future use union switch (int v) { case 0: void; } ext; }; ```",

@@ -388,7 +388,7 @@
       }
     },
     "ConfigSettingId": {
-      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13 }; ```",
+      "description": "ConfigSettingId is an XDR Enum defines as:\n\n```text enum ConfigSettingID { CONFIG_SETTING_CONTRACT_MAX_SIZE_BYTES = 0, CONFIG_SETTING_CONTRACT_COMPUTE_V0 = 1, CONFIG_SETTING_CONTRACT_LEDGER_COST_V0 = 2, CONFIG_SETTING_CONTRACT_HISTORICAL_DATA_V0 = 3, CONFIG_SETTING_CONTRACT_EVENTS_V0 = 4, CONFIG_SETTING_CONTRACT_BANDWIDTH_V0 = 5, CONFIG_SETTING_CONTRACT_COST_PARAMS_CPU_INSTRUCTIONS = 6, CONFIG_SETTING_CONTRACT_COST_PARAMS_MEMORY_BYTES = 7, CONFIG_SETTING_CONTRACT_DATA_KEY_SIZE_BYTES = 8, CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9, CONFIG_SETTING_STATE_ARCHIVAL = 10, CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11, CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12, CONFIG_SETTING_EVICTION_ITERATOR = 13, CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14, CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15 }; ```",
       "type": "string",
       "enum": [
         "contract_max_size_bytes",
@@ -403,8 +403,10 @@
         "contract_data_entry_size_bytes",
         "state_archival",
         "contract_execution_lanes",
-        "bucketlist_size_window",
-        "eviction_iterator"
+        "live_soroban_state_size_window",
+        "eviction_iterator",
+        "contract_parallel_compute_v0",
+        "contract_ledger_cost_ext_v0"
       ]
     },
     "ContractDataDurability": {
@@ -2793,24 +2795,24 @@
       ]
     },
     "SorobanResources": {
-      "description": "SorobanResources is an XDR Struct defines as:\n\n```text struct SorobanResources { // The ledger footprint of the transaction. LedgerFootprint footprint; // The maximum number of instructions this transaction can use uint32 instructions;\n\n// The maximum number of bytes this transaction can read from ledger uint32 readBytes; // The maximum number of bytes this transaction can write to ledger uint32 writeBytes; }; ```",
+      "description": "SorobanResources is an XDR Struct defines as:\n\n```text struct SorobanResources { // The ledger footprint of the transaction. LedgerFootprint footprint; // The maximum number of instructions this transaction can use uint32 instructions;\n\n// The maximum number of bytes this transaction can read from disk backed entries uint32 diskReadBytes; // The maximum number of bytes this transaction can write to ledger uint32 writeBytes; }; ```",
       "type": "object",
       "required": [
+        "disk_read_bytes",
         "footprint",
         "instructions",
-        "read_bytes",
         "write_bytes"
       ],
       "properties": {
-        "footprint": {
-          "$ref": "#/definitions/LedgerFootprint"
-        },
-        "instructions": {
+        "disk_read_bytes": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
         },
-        "read_bytes": {
+        "footprint": {
+          "$ref": "#/definitions/LedgerFootprint"
+        },
+        "instructions": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
@@ -2822,8 +2824,26 @@
         }
       }
     },
+    "SorobanResourcesExtV0": {
+      "description": "SorobanResourcesExtV0 is an XDR Struct defines as:\n\n```text struct SorobanResourcesExtV0 { // Vector of indices representing what Soroban // entries in the footprint are archived, based on the // order of keys provided in the readWrite footprint. uint32 archivedSorobanEntries<>; }; ```",
+      "type": "object",
+      "required": [
+        "archived_soroban_entries"
+      ],
+      "properties": {
+        "archived_soroban_entries": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "maxItems": 4294967295
+        }
+      }
+    },
     "SorobanTransactionData": {
-      "description": "SorobanTransactionData is an XDR Struct defines as:\n\n```text struct SorobanTransactionData { ExtensionPoint ext; SorobanResources resources; // Amount of the transaction `fee` allocated to the Soroban resource fees. // The fraction of `resourceFee` corresponding to `resources` specified // above is *not* refundable (i.e. fees for instructions, ledger I/O), as // well as fees for the transaction size. // The remaining part of the fee is refundable and the charged value is // based on the actual consumption of refundable resources (events, ledger // rent bumps). // The `inclusionFee` used for prioritization of the transaction is defined // as `tx.fee - resourceFee`. int64 resourceFee; }; ```",
+      "description": "SorobanTransactionData is an XDR Struct defines as:\n\n```text struct SorobanTransactionData { union switch (int v) { case 0: void; case 1: SorobanResourcesExtV0 resourceExt; } ext; SorobanResources resources; // Amount of the transaction `fee` allocated to the Soroban resource fees. // The fraction of `resourceFee` corresponding to `resources` specified // above is *not* refundable (i.e. fees for instructions, ledger I/O), as // well as fees for the transaction size. // The remaining part of the fee is refundable and the charged value is // based on the actual consumption of refundable resources (events, ledger // rent bumps). // The `inclusionFee` used for prioritization of the transaction is defined // as `tx.fee - resourceFee`. int64 resourceFee; }; ```",
       "type": "object",
       "required": [
         "ext",
@@ -2832,7 +2852,7 @@
       ],
       "properties": {
         "ext": {
-          "$ref": "#/definitions/ExtensionPoint"
+          "$ref": "#/definitions/SorobanTransactionDataExt"
         },
         "resource_fee": {
           "type": "integer",
@@ -2842,6 +2862,29 @@
           "$ref": "#/definitions/SorobanResources"
         }
       }
+    },
+    "SorobanTransactionDataExt": {
+      "description": "SorobanTransactionDataExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: SorobanResourcesExtV0 resourceExt; } ```",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "v0"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "v1"
+          ],
+          "properties": {
+            "v1": {
+              "$ref": "#/definitions/SorobanResourcesExtV0"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     },
     "String32": {
       "description": "String32 is an XDR Typedef defines as:\n\n```text typedef string string32<32>; ```",
@@ -2890,7 +2933,7 @@
       "minimum": 0.0
     },
     "Transaction": {
-      "description": "Transaction is an XDR Struct defines as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\n// reserved for future use union switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
+      "description": "Transaction is an XDR Struct defines as:\n\n```text struct Transaction { // account used to run the transaction MuxedAccount sourceAccount;\n\n// the fee the sourceAccount will pay uint32 fee;\n\n// sequence number to consume in the account SequenceNumber seqNum;\n\n// validity conditions Preconditions cond;\n\nMemo memo;\n\nOperation operations<MAX_OPS_PER_TX>;\n\nunion switch (int v) { case 0: void; case 1: SorobanTransactionData sorobanData; } ext; }; ```",
       "type": "object",
       "required": [
         "cond",

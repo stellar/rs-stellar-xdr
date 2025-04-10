@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "SorobanTransactionDataExt",
+  "description": "SorobanTransactionDataExt is an XDR NestedUnion defines as:\n\n```text union switch (int v) { case 0: void; case 1: SorobanResourcesExtV0 resourceExt; } ```",
+  "oneOf": [
+    {
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "v1"
+      ],
+      "properties": {
+        "v1": {
+          "$ref": "#/definitions/SorobanResourcesExtV0"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "SorobanResourcesExtV0": {
+      "description": "SorobanResourcesExtV0 is an XDR Struct defines as:\n\n```text struct SorobanResourcesExtV0 { // Vector of indices representing what Soroban // entries in the footprint are archived, based on the // order of keys provided in the readWrite footprint. uint32 archivedSorobanEntries<>; }; ```",
+      "type": "object",
+      "required": [
+        "archived_soroban_entries"
+      ],
+      "properties": {
+        "archived_soroban_entries": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "maxItems": 4294967295
+        }
+      }
+    }
+  }
+}

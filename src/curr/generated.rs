@@ -22,7 +22,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-contract-config-setting.x",
-        "f5487397dda4c27135f0f9e930042a186d1abdc9698163ca6a30efe1a03ee495",
+        "70f69edb53cfa7c388c0f91b1b6b6b3889cbe1f5765326d618e1ea64d253069f",
     ),
     (
         "xdr/curr/Stellar-contract-env-meta.x",
@@ -46,11 +46,11 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-ledger-entries.x",
-        "201b736d88f35a58c7a3071fe50d951fbdad2c8fb0f0a2e40e86304247f33f85",
+        "5157cad76b008b3606fe5bc2cfe87596827d8e02d16cbec3cedc297bb571aa54",
     ),
     (
         "xdr/curr/Stellar-ledger.x",
-        "7db940e2ca7ca8f98d39d5449a61d483e5bbf37d4ee1f265238508d567d3a276",
+        "7b7d3cf8798b3fa23d9cf04f28470366712463e845923adfc43e9fa5fdde47fb",
     ),
     (
         "xdr/curr/Stellar-overlay.x",
@@ -58,7 +58,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 12] = [
     ),
     (
         "xdr/curr/Stellar-transaction.x",
-        "fdd854ea6ce450500c331a6613d714d9b2f00d2adc86210a8f709e8a9ef4c641",
+        "e42172ff33faaa7ca0f67de826c516890cc0f7fce1f9f79e6ae79134528d2a92",
     ),
     (
         "xdr/curr/Stellar-types.x",
@@ -3757,43 +3757,89 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
     }
 }
 
+/// ConfigSettingContractParallelComputeV0 is an XDR Struct defines as:
+///
+/// ```text
+/// struct ConfigSettingContractParallelComputeV0
+/// {
+///     // Maximum number of clusters with dependent transactions allowed in a
+///     // stage of parallel tx set component.
+///     // This effectively sets the lower bound on the number of physical threads
+///     // necessary to effectively apply transaction sets in parallel.
+///     uint32 ledgerMaxDependentTxClusters;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ConfigSettingContractParallelComputeV0 {
+    pub ledger_max_dependent_tx_clusters: u32,
+}
+
+impl ReadXdr for ConfigSettingContractParallelComputeV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                ledger_max_dependent_tx_clusters: u32::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractParallelComputeV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.ledger_max_dependent_tx_clusters.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// ConfigSettingContractLedgerCostV0 is an XDR Struct defines as:
 ///
 /// ```text
 /// struct ConfigSettingContractLedgerCostV0
 /// {
-///     // Maximum number of ledger entry read operations per ledger
-///     uint32 ledgerMaxReadLedgerEntries;
-///     // Maximum number of bytes that can be read per ledger
-///     uint32 ledgerMaxReadBytes;
+///     // Maximum number of disk entry read operations per ledger
+///     uint32 ledgerMaxDiskReadEntries;
+///     // Maximum number of bytes of disk reads that can be performed per ledger
+///     uint32 ledgerMaxDiskReadBytes;
 ///     // Maximum number of ledger entry write operations per ledger
 ///     uint32 ledgerMaxWriteLedgerEntries;
 ///     // Maximum number of bytes that can be written per ledger
 ///     uint32 ledgerMaxWriteBytes;
 ///
-///     // Maximum number of ledger entry read operations per transaction
-///     uint32 txMaxReadLedgerEntries;
-///     // Maximum number of bytes that can be read per transaction
-///     uint32 txMaxReadBytes;
+///     // Maximum number of disk entry read operations per transaction
+///     uint32 txMaxDiskReadEntries;
+///     // Maximum number of bytes of disk reads that can be performed per transaction
+///     uint32 txMaxDiskReadBytes;
 ///     // Maximum number of ledger entry write operations per transaction
 ///     uint32 txMaxWriteLedgerEntries;
 ///     // Maximum number of bytes that can be written per transaction
 ///     uint32 txMaxWriteBytes;
 ///
-///     int64 feeReadLedgerEntry;  // Fee per ledger entry read
-///     int64 feeWriteLedgerEntry; // Fee per ledger entry write
+///     int64 feeDiskReadLedgerEntry;  // Fee per disk ledger entry read
+///     int64 feeWriteLedgerEntry;     // Fee per ledger entry write
 ///
-///     int64 feeRead1KB;  // Fee for reading 1KB
+///     int64 feeDiskRead1KB;          // Fee for reading 1KB disk
 ///
 ///     // The following parameters determine the write fee per 1KB.
-///     // Write fee grows linearly until bucket list reaches this size
-///     int64 bucketListTargetSizeBytes;
-///     // Fee per 1KB write when the bucket list is empty
-///     int64 writeFee1KBBucketListLow;
-///     // Fee per 1KB write when the bucket list has reached `bucketListTargetSizeBytes`
-///     int64 writeFee1KBBucketListHigh;
-///     // Write fee multiplier for any additional data past the first `bucketListTargetSizeBytes`
-///     uint32 bucketListWriteFeeGrowthFactor;
+///     // Rent fee grows linearly until soroban state reaches this size
+///     int64 sorobanStateTargetSizeBytes;
+///     // Fee per 1KB rent when the soroban state is empty
+///     int64 rentFee1KBSorobanStateSizeLow;
+///     // Fee per 1KB rent when the soroban state has reached `sorobanStateTargetSizeBytes`
+///     int64 rentFee1KBSorobanStateSizeHigh;
+///     // Rent fee multiplier for any additional data past the first `sorobanStateTargetSizeBytes`
+///     uint32 sorobanStateRentFeeGrowthFactor;
 /// };
 /// ```
 ///
@@ -3806,21 +3852,21 @@ impl WriteXdr for ConfigSettingContractComputeV0 {
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ConfigSettingContractLedgerCostV0 {
-    pub ledger_max_read_ledger_entries: u32,
-    pub ledger_max_read_bytes: u32,
+    pub ledger_max_disk_read_entries: u32,
+    pub ledger_max_disk_read_bytes: u32,
     pub ledger_max_write_ledger_entries: u32,
     pub ledger_max_write_bytes: u32,
-    pub tx_max_read_ledger_entries: u32,
-    pub tx_max_read_bytes: u32,
+    pub tx_max_disk_read_entries: u32,
+    pub tx_max_disk_read_bytes: u32,
     pub tx_max_write_ledger_entries: u32,
     pub tx_max_write_bytes: u32,
-    pub fee_read_ledger_entry: i64,
+    pub fee_disk_read_ledger_entry: i64,
     pub fee_write_ledger_entry: i64,
-    pub fee_read1_kb: i64,
-    pub bucket_list_target_size_bytes: i64,
-    pub write_fee1_kb_bucket_list_low: i64,
-    pub write_fee1_kb_bucket_list_high: i64,
-    pub bucket_list_write_fee_growth_factor: u32,
+    pub fee_disk_read1_kb: i64,
+    pub soroban_state_target_size_bytes: i64,
+    pub rent_fee1_kb_soroban_state_size_low: i64,
+    pub rent_fee1_kb_soroban_state_size_high: i64,
+    pub soroban_state_rent_fee_growth_factor: u32,
 }
 
 impl ReadXdr for ConfigSettingContractLedgerCostV0 {
@@ -3828,21 +3874,21 @@ impl ReadXdr for ConfigSettingContractLedgerCostV0 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                ledger_max_read_ledger_entries: u32::read_xdr(r)?,
-                ledger_max_read_bytes: u32::read_xdr(r)?,
+                ledger_max_disk_read_entries: u32::read_xdr(r)?,
+                ledger_max_disk_read_bytes: u32::read_xdr(r)?,
                 ledger_max_write_ledger_entries: u32::read_xdr(r)?,
                 ledger_max_write_bytes: u32::read_xdr(r)?,
-                tx_max_read_ledger_entries: u32::read_xdr(r)?,
-                tx_max_read_bytes: u32::read_xdr(r)?,
+                tx_max_disk_read_entries: u32::read_xdr(r)?,
+                tx_max_disk_read_bytes: u32::read_xdr(r)?,
                 tx_max_write_ledger_entries: u32::read_xdr(r)?,
                 tx_max_write_bytes: u32::read_xdr(r)?,
-                fee_read_ledger_entry: i64::read_xdr(r)?,
+                fee_disk_read_ledger_entry: i64::read_xdr(r)?,
                 fee_write_ledger_entry: i64::read_xdr(r)?,
-                fee_read1_kb: i64::read_xdr(r)?,
-                bucket_list_target_size_bytes: i64::read_xdr(r)?,
-                write_fee1_kb_bucket_list_low: i64::read_xdr(r)?,
-                write_fee1_kb_bucket_list_high: i64::read_xdr(r)?,
-                bucket_list_write_fee_growth_factor: u32::read_xdr(r)?,
+                fee_disk_read1_kb: i64::read_xdr(r)?,
+                soroban_state_target_size_bytes: i64::read_xdr(r)?,
+                rent_fee1_kb_soroban_state_size_low: i64::read_xdr(r)?,
+                rent_fee1_kb_soroban_state_size_high: i64::read_xdr(r)?,
+                soroban_state_rent_fee_growth_factor: u32::read_xdr(r)?,
             })
         })
     }
@@ -3852,21 +3898,71 @@ impl WriteXdr for ConfigSettingContractLedgerCostV0 {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
-            self.ledger_max_read_ledger_entries.write_xdr(w)?;
-            self.ledger_max_read_bytes.write_xdr(w)?;
+            self.ledger_max_disk_read_entries.write_xdr(w)?;
+            self.ledger_max_disk_read_bytes.write_xdr(w)?;
             self.ledger_max_write_ledger_entries.write_xdr(w)?;
             self.ledger_max_write_bytes.write_xdr(w)?;
-            self.tx_max_read_ledger_entries.write_xdr(w)?;
-            self.tx_max_read_bytes.write_xdr(w)?;
+            self.tx_max_disk_read_entries.write_xdr(w)?;
+            self.tx_max_disk_read_bytes.write_xdr(w)?;
             self.tx_max_write_ledger_entries.write_xdr(w)?;
             self.tx_max_write_bytes.write_xdr(w)?;
-            self.fee_read_ledger_entry.write_xdr(w)?;
+            self.fee_disk_read_ledger_entry.write_xdr(w)?;
             self.fee_write_ledger_entry.write_xdr(w)?;
-            self.fee_read1_kb.write_xdr(w)?;
-            self.bucket_list_target_size_bytes.write_xdr(w)?;
-            self.write_fee1_kb_bucket_list_low.write_xdr(w)?;
-            self.write_fee1_kb_bucket_list_high.write_xdr(w)?;
-            self.bucket_list_write_fee_growth_factor.write_xdr(w)?;
+            self.fee_disk_read1_kb.write_xdr(w)?;
+            self.soroban_state_target_size_bytes.write_xdr(w)?;
+            self.rent_fee1_kb_soroban_state_size_low.write_xdr(w)?;
+            self.rent_fee1_kb_soroban_state_size_high.write_xdr(w)?;
+            self.soroban_state_rent_fee_growth_factor.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// ConfigSettingContractLedgerCostExtV0 is an XDR Struct defines as:
+///
+/// ```text
+/// struct ConfigSettingContractLedgerCostExtV0
+/// {
+///     // Maximum number of in-memory ledger entry read operations per transaction
+///     uint32 txMaxInMemoryReadEntries;
+///     // Fee per 1 KB of data written to the ledger.
+///     // Unlike the rent fee, this is a flat fee that is charged for any ledger
+///     // write, independent of the type of the entry being written.
+///     int64 feeWrite1KB;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ConfigSettingContractLedgerCostExtV0 {
+    pub tx_max_in_memory_read_entries: u32,
+    pub fee_write1_kb: i64,
+}
+
+impl ReadXdr for ConfigSettingContractLedgerCostExtV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                tx_max_in_memory_read_entries: u32::read_xdr(r)?,
+                fee_write1_kb: i64::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ConfigSettingContractLedgerCostExtV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.tx_max_in_memory_read_entries.write_xdr(w)?;
+            self.fee_write1_kb.write_xdr(w)?;
             Ok(())
         })
     }
@@ -4681,11 +4777,11 @@ impl WriteXdr for ContractCostParamEntry {
 ///     // max number of entries that emit archival meta in a single ledger
 ///     uint32 maxEntriesToArchive;
 ///
-///     // Number of snapshots to use when calculating average BucketList size
-///     uint32 bucketListSizeWindowSampleSize;
+///     // Number of snapshots to use when calculating average live Soroban State size
+///     uint32 liveSorobanStateSizeWindowSampleSize;
 ///
-///     // How often to sample the BucketList size for the average, in ledgers
-///     uint32 bucketListWindowSamplePeriod;
+///     // How often to sample the live Soroban State size for the average, in ledgers
+///     uint32 liveSorobanStateSizeWindowSamplePeriod;
 ///
 ///     // Maximum number of bytes that we scan for eviction per ledger
 ///     uint32 evictionScanSize;
@@ -4710,8 +4806,8 @@ pub struct StateArchivalSettings {
     pub persistent_rent_rate_denominator: i64,
     pub temp_rent_rate_denominator: i64,
     pub max_entries_to_archive: u32,
-    pub bucket_list_size_window_sample_size: u32,
-    pub bucket_list_window_sample_period: u32,
+    pub live_soroban_state_size_window_sample_size: u32,
+    pub live_soroban_state_size_window_sample_period: u32,
     pub eviction_scan_size: u32,
     pub starting_eviction_scan_level: u32,
 }
@@ -4727,8 +4823,8 @@ impl ReadXdr for StateArchivalSettings {
                 persistent_rent_rate_denominator: i64::read_xdr(r)?,
                 temp_rent_rate_denominator: i64::read_xdr(r)?,
                 max_entries_to_archive: u32::read_xdr(r)?,
-                bucket_list_size_window_sample_size: u32::read_xdr(r)?,
-                bucket_list_window_sample_period: u32::read_xdr(r)?,
+                live_soroban_state_size_window_sample_size: u32::read_xdr(r)?,
+                live_soroban_state_size_window_sample_period: u32::read_xdr(r)?,
                 eviction_scan_size: u32::read_xdr(r)?,
                 starting_eviction_scan_level: u32::read_xdr(r)?,
             })
@@ -4746,8 +4842,10 @@ impl WriteXdr for StateArchivalSettings {
             self.persistent_rent_rate_denominator.write_xdr(w)?;
             self.temp_rent_rate_denominator.write_xdr(w)?;
             self.max_entries_to_archive.write_xdr(w)?;
-            self.bucket_list_size_window_sample_size.write_xdr(w)?;
-            self.bucket_list_window_sample_period.write_xdr(w)?;
+            self.live_soroban_state_size_window_sample_size
+                .write_xdr(w)?;
+            self.live_soroban_state_size_window_sample_period
+                .write_xdr(w)?;
             self.eviction_scan_size.write_xdr(w)?;
             self.starting_eviction_scan_level.write_xdr(w)?;
             Ok(())
@@ -4935,8 +5033,10 @@ impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
 ///     CONFIG_SETTING_CONTRACT_DATA_ENTRY_SIZE_BYTES = 9,
 ///     CONFIG_SETTING_STATE_ARCHIVAL = 10,
 ///     CONFIG_SETTING_CONTRACT_EXECUTION_LANES = 11,
-///     CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW = 12,
-///     CONFIG_SETTING_EVICTION_ITERATOR = 13
+///     CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW = 12,
+///     CONFIG_SETTING_EVICTION_ITERATOR = 13,
+///     CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0 = 14,
+///     CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0 = 15
 /// };
 /// ```
 ///
@@ -4963,12 +5063,14 @@ pub enum ConfigSettingId {
     ContractDataEntrySizeBytes = 9,
     StateArchival = 10,
     ContractExecutionLanes = 11,
-    BucketlistSizeWindow = 12,
+    LiveSorobanStateSizeWindow = 12,
     EvictionIterator = 13,
+    ContractParallelComputeV0 = 14,
+    ContractLedgerCostExtV0 = 15,
 }
 
 impl ConfigSettingId {
-    pub const VARIANTS: [ConfigSettingId; 14] = [
+    pub const VARIANTS: [ConfigSettingId; 16] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -4981,10 +5083,12 @@ impl ConfigSettingId {
         ConfigSettingId::ContractDataEntrySizeBytes,
         ConfigSettingId::StateArchival,
         ConfigSettingId::ContractExecutionLanes,
-        ConfigSettingId::BucketlistSizeWindow,
+        ConfigSettingId::LiveSorobanStateSizeWindow,
         ConfigSettingId::EvictionIterator,
+        ConfigSettingId::ContractParallelComputeV0,
+        ConfigSettingId::ContractLedgerCostExtV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 14] = [
+    pub const VARIANTS_STR: [&'static str; 16] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -4997,8 +5101,10 @@ impl ConfigSettingId {
         "ContractDataEntrySizeBytes",
         "StateArchival",
         "ContractExecutionLanes",
-        "BucketlistSizeWindow",
+        "LiveSorobanStateSizeWindow",
         "EvictionIterator",
+        "ContractParallelComputeV0",
+        "ContractLedgerCostExtV0",
     ];
 
     #[must_use]
@@ -5016,13 +5122,15 @@ impl ConfigSettingId {
             Self::ContractDataEntrySizeBytes => "ContractDataEntrySizeBytes",
             Self::StateArchival => "StateArchival",
             Self::ContractExecutionLanes => "ContractExecutionLanes",
-            Self::BucketlistSizeWindow => "BucketlistSizeWindow",
+            Self::LiveSorobanStateSizeWindow => "LiveSorobanStateSizeWindow",
             Self::EvictionIterator => "EvictionIterator",
+            Self::ContractParallelComputeV0 => "ContractParallelComputeV0",
+            Self::ContractLedgerCostExtV0 => "ContractLedgerCostExtV0",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 14] {
+    pub const fn variants() -> [ConfigSettingId; 16] {
         Self::VARIANTS
     }
 }
@@ -5065,8 +5173,10 @@ impl TryFrom<i32> for ConfigSettingId {
             9 => ConfigSettingId::ContractDataEntrySizeBytes,
             10 => ConfigSettingId::StateArchival,
             11 => ConfigSettingId::ContractExecutionLanes,
-            12 => ConfigSettingId::BucketlistSizeWindow,
+            12 => ConfigSettingId::LiveSorobanStateSizeWindow,
             13 => ConfigSettingId::EvictionIterator,
+            14 => ConfigSettingId::ContractParallelComputeV0,
+            15 => ConfigSettingId::ContractLedgerCostExtV0,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -5131,10 +5241,14 @@ impl WriteXdr for ConfigSettingId {
 ///     StateArchivalSettings stateArchivalSettings;
 /// case CONFIG_SETTING_CONTRACT_EXECUTION_LANES:
 ///     ConfigSettingContractExecutionLanesV0 contractExecutionLanes;
-/// case CONFIG_SETTING_BUCKETLIST_SIZE_WINDOW:
-///     uint64 bucketListSizeWindow<>;
+/// case CONFIG_SETTING_LIVE_SOROBAN_STATE_SIZE_WINDOW:
+///     uint64 liveSorobanStateSizeWindow<>;
 /// case CONFIG_SETTING_EVICTION_ITERATOR:
 ///     EvictionIterator evictionIterator;
+/// case CONFIG_SETTING_CONTRACT_PARALLEL_COMPUTE_V0:
+///     ConfigSettingContractParallelComputeV0 contractParallelCompute;
+/// case CONFIG_SETTING_CONTRACT_LEDGER_COST_EXT_V0:
+///     ConfigSettingContractLedgerCostExtV0 contractLedgerCostExt;
 /// };
 /// ```
 ///
@@ -5161,12 +5275,14 @@ pub enum ConfigSettingEntry {
     ContractDataEntrySizeBytes(u32),
     StateArchival(StateArchivalSettings),
     ContractExecutionLanes(ConfigSettingContractExecutionLanesV0),
-    BucketlistSizeWindow(VecM<u64>),
+    LiveSorobanStateSizeWindow(VecM<u64>),
     EvictionIterator(EvictionIterator),
+    ContractParallelComputeV0(ConfigSettingContractParallelComputeV0),
+    ContractLedgerCostExtV0(ConfigSettingContractLedgerCostExtV0),
 }
 
 impl ConfigSettingEntry {
-    pub const VARIANTS: [ConfigSettingId; 14] = [
+    pub const VARIANTS: [ConfigSettingId; 16] = [
         ConfigSettingId::ContractMaxSizeBytes,
         ConfigSettingId::ContractComputeV0,
         ConfigSettingId::ContractLedgerCostV0,
@@ -5179,10 +5295,12 @@ impl ConfigSettingEntry {
         ConfigSettingId::ContractDataEntrySizeBytes,
         ConfigSettingId::StateArchival,
         ConfigSettingId::ContractExecutionLanes,
-        ConfigSettingId::BucketlistSizeWindow,
+        ConfigSettingId::LiveSorobanStateSizeWindow,
         ConfigSettingId::EvictionIterator,
+        ConfigSettingId::ContractParallelComputeV0,
+        ConfigSettingId::ContractLedgerCostExtV0,
     ];
-    pub const VARIANTS_STR: [&'static str; 14] = [
+    pub const VARIANTS_STR: [&'static str; 16] = [
         "ContractMaxSizeBytes",
         "ContractComputeV0",
         "ContractLedgerCostV0",
@@ -5195,8 +5313,10 @@ impl ConfigSettingEntry {
         "ContractDataEntrySizeBytes",
         "StateArchival",
         "ContractExecutionLanes",
-        "BucketlistSizeWindow",
+        "LiveSorobanStateSizeWindow",
         "EvictionIterator",
+        "ContractParallelComputeV0",
+        "ContractLedgerCostExtV0",
     ];
 
     #[must_use]
@@ -5214,8 +5334,10 @@ impl ConfigSettingEntry {
             Self::ContractDataEntrySizeBytes(_) => "ContractDataEntrySizeBytes",
             Self::StateArchival(_) => "StateArchival",
             Self::ContractExecutionLanes(_) => "ContractExecutionLanes",
-            Self::BucketlistSizeWindow(_) => "BucketlistSizeWindow",
+            Self::LiveSorobanStateSizeWindow(_) => "LiveSorobanStateSizeWindow",
             Self::EvictionIterator(_) => "EvictionIterator",
+            Self::ContractParallelComputeV0(_) => "ContractParallelComputeV0",
+            Self::ContractLedgerCostExtV0(_) => "ContractLedgerCostExtV0",
         }
     }
 
@@ -5239,13 +5361,15 @@ impl ConfigSettingEntry {
             Self::ContractDataEntrySizeBytes(_) => ConfigSettingId::ContractDataEntrySizeBytes,
             Self::StateArchival(_) => ConfigSettingId::StateArchival,
             Self::ContractExecutionLanes(_) => ConfigSettingId::ContractExecutionLanes,
-            Self::BucketlistSizeWindow(_) => ConfigSettingId::BucketlistSizeWindow,
+            Self::LiveSorobanStateSizeWindow(_) => ConfigSettingId::LiveSorobanStateSizeWindow,
             Self::EvictionIterator(_) => ConfigSettingId::EvictionIterator,
+            Self::ContractParallelComputeV0(_) => ConfigSettingId::ContractParallelComputeV0,
+            Self::ContractLedgerCostExtV0(_) => ConfigSettingId::ContractLedgerCostExtV0,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [ConfigSettingId; 14] {
+    pub const fn variants() -> [ConfigSettingId; 16] {
         Self::VARIANTS
     }
 }
@@ -5315,12 +5439,18 @@ impl ReadXdr for ConfigSettingEntry {
                 ConfigSettingId::ContractExecutionLanes => Self::ContractExecutionLanes(
                     ConfigSettingContractExecutionLanesV0::read_xdr(r)?,
                 ),
-                ConfigSettingId::BucketlistSizeWindow => {
-                    Self::BucketlistSizeWindow(VecM::<u64>::read_xdr(r)?)
+                ConfigSettingId::LiveSorobanStateSizeWindow => {
+                    Self::LiveSorobanStateSizeWindow(VecM::<u64>::read_xdr(r)?)
                 }
                 ConfigSettingId::EvictionIterator => {
                     Self::EvictionIterator(EvictionIterator::read_xdr(r)?)
                 }
+                ConfigSettingId::ContractParallelComputeV0 => Self::ContractParallelComputeV0(
+                    ConfigSettingContractParallelComputeV0::read_xdr(r)?,
+                ),
+                ConfigSettingId::ContractLedgerCostExtV0 => Self::ContractLedgerCostExtV0(
+                    ConfigSettingContractLedgerCostExtV0::read_xdr(r)?,
+                ),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -5348,8 +5478,10 @@ impl WriteXdr for ConfigSettingEntry {
                 Self::ContractDataEntrySizeBytes(v) => v.write_xdr(w)?,
                 Self::StateArchival(v) => v.write_xdr(w)?,
                 Self::ContractExecutionLanes(v) => v.write_xdr(w)?,
-                Self::BucketlistSizeWindow(v) => v.write_xdr(w)?,
+                Self::LiveSorobanStateSizeWindow(v) => v.write_xdr(w)?,
                 Self::EvictionIterator(v) => v.write_xdr(w)?,
+                Self::ContractParallelComputeV0(v) => v.write_xdr(w)?,
+                Self::ContractLedgerCostExtV0(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -17551,8 +17683,7 @@ impl WriteXdr for EnvelopeType {
 /// enum BucketListType
 /// {
 ///     LIVE = 0,
-///     HOT_ARCHIVE = 1,
-///     COLD_ARCHIVE = 2
+///     HOT_ARCHIVE = 1
 /// };
 /// ```
 ///
@@ -17569,28 +17700,22 @@ impl WriteXdr for EnvelopeType {
 pub enum BucketListType {
     Live = 0,
     HotArchive = 1,
-    ColdArchive = 2,
 }
 
 impl BucketListType {
-    pub const VARIANTS: [BucketListType; 3] = [
-        BucketListType::Live,
-        BucketListType::HotArchive,
-        BucketListType::ColdArchive,
-    ];
-    pub const VARIANTS_STR: [&'static str; 3] = ["Live", "HotArchive", "ColdArchive"];
+    pub const VARIANTS: [BucketListType; 2] = [BucketListType::Live, BucketListType::HotArchive];
+    pub const VARIANTS_STR: [&'static str; 2] = ["Live", "HotArchive"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Live => "Live",
             Self::HotArchive => "HotArchive",
-            Self::ColdArchive => "ColdArchive",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [BucketListType; 3] {
+    pub const fn variants() -> [BucketListType; 2] {
         Self::VARIANTS
     }
 }
@@ -17623,7 +17748,6 @@ impl TryFrom<i32> for BucketListType {
         let e = match i {
             0 => BucketListType::Live,
             1 => BucketListType::HotArchive,
-            2 => BucketListType::ColdArchive,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17788,10 +17912,9 @@ impl WriteXdr for BucketEntryType {
 /// {
 ///     HOT_ARCHIVE_METAENTRY = -1, // Bucket metadata, should come first.
 ///     HOT_ARCHIVE_ARCHIVED = 0,   // Entry is Archived
-///     HOT_ARCHIVE_LIVE = 1,       // Entry was previously HOT_ARCHIVE_ARCHIVED, or HOT_ARCHIVE_DELETED, but
+///     HOT_ARCHIVE_LIVE = 1        // Entry was previously HOT_ARCHIVE_ARCHIVED, but
 ///                                 // has been added back to the live BucketList.
 ///                                 // Does not need to be persisted.
-///     HOT_ARCHIVE_DELETED = 2     // Entry deleted (Note: must be persisted in archive)
 /// };
 /// ```
 ///
@@ -17809,17 +17932,15 @@ pub enum HotArchiveBucketEntryType {
     Metaentry = -1,
     Archived = 0,
     Live = 1,
-    Deleted = 2,
 }
 
 impl HotArchiveBucketEntryType {
-    pub const VARIANTS: [HotArchiveBucketEntryType; 4] = [
+    pub const VARIANTS: [HotArchiveBucketEntryType; 3] = [
         HotArchiveBucketEntryType::Metaentry,
         HotArchiveBucketEntryType::Archived,
         HotArchiveBucketEntryType::Live,
-        HotArchiveBucketEntryType::Deleted,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["Metaentry", "Archived", "Live", "Deleted"];
+    pub const VARIANTS_STR: [&'static str; 3] = ["Metaentry", "Archived", "Live"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -17827,12 +17948,11 @@ impl HotArchiveBucketEntryType {
             Self::Metaentry => "Metaentry",
             Self::Archived => "Archived",
             Self::Live => "Live",
-            Self::Deleted => "Deleted",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [HotArchiveBucketEntryType; 4] {
+    pub const fn variants() -> [HotArchiveBucketEntryType; 3] {
         Self::VARIANTS
     }
 }
@@ -17866,7 +17986,6 @@ impl TryFrom<i32> for HotArchiveBucketEntryType {
             -1 => HotArchiveBucketEntryType::Metaentry,
             0 => HotArchiveBucketEntryType::Archived,
             1 => HotArchiveBucketEntryType::Live,
-            2 => HotArchiveBucketEntryType::Deleted,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -17893,136 +18012,6 @@ impl ReadXdr for HotArchiveBucketEntryType {
 }
 
 impl WriteXdr for HotArchiveBucketEntryType {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            let i: i32 = (*self).into();
-            i.write_xdr(w)
-        })
-    }
-}
-
-/// ColdArchiveBucketEntryType is an XDR Enum defines as:
-///
-/// ```text
-/// enum ColdArchiveBucketEntryType
-/// {
-///     COLD_ARCHIVE_METAENTRY     = -1,  // Bucket metadata, should come first.
-///     COLD_ARCHIVE_ARCHIVED_LEAF = 0,   // Full LedgerEntry that was archived during the epoch
-///     COLD_ARCHIVE_DELETED_LEAF  = 1,   // LedgerKey that was deleted during the epoch
-///     COLD_ARCHIVE_BOUNDARY_LEAF = 2,   // Dummy leaf representing low/high bound
-///     COLD_ARCHIVE_HASH          = 3    // Intermediary Merkle hash entry
-/// };
-/// ```
-///
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[repr(i32)]
-pub enum ColdArchiveBucketEntryType {
-    Metaentry = -1,
-    ArchivedLeaf = 0,
-    DeletedLeaf = 1,
-    BoundaryLeaf = 2,
-    Hash = 3,
-}
-
-impl ColdArchiveBucketEntryType {
-    pub const VARIANTS: [ColdArchiveBucketEntryType; 5] = [
-        ColdArchiveBucketEntryType::Metaentry,
-        ColdArchiveBucketEntryType::ArchivedLeaf,
-        ColdArchiveBucketEntryType::DeletedLeaf,
-        ColdArchiveBucketEntryType::BoundaryLeaf,
-        ColdArchiveBucketEntryType::Hash,
-    ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
-        "Metaentry",
-        "ArchivedLeaf",
-        "DeletedLeaf",
-        "BoundaryLeaf",
-        "Hash",
-    ];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Metaentry => "Metaentry",
-            Self::ArchivedLeaf => "ArchivedLeaf",
-            Self::DeletedLeaf => "DeletedLeaf",
-            Self::BoundaryLeaf => "BoundaryLeaf",
-            Self::Hash => "Hash",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ColdArchiveBucketEntryType; 5] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ColdArchiveBucketEntryType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ColdArchiveBucketEntryType> for ColdArchiveBucketEntryType {
-    fn variants() -> slice::Iter<'static, ColdArchiveBucketEntryType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ColdArchiveBucketEntryType {}
-
-impl fmt::Display for ColdArchiveBucketEntryType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ColdArchiveBucketEntryType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            -1 => ColdArchiveBucketEntryType::Metaentry,
-            0 => ColdArchiveBucketEntryType::ArchivedLeaf,
-            1 => ColdArchiveBucketEntryType::DeletedLeaf,
-            2 => ColdArchiveBucketEntryType::BoundaryLeaf,
-            3 => ColdArchiveBucketEntryType::Hash,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ColdArchiveBucketEntryType> for i32 {
-    #[must_use]
-    fn from(e: ColdArchiveBucketEntryType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ColdArchiveBucketEntryType {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let e = i32::read_xdr(r)?;
-            let v: Self = e.try_into()?;
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveBucketEntryType {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
         w.with_limited_depth(|w| {
@@ -18333,7 +18322,6 @@ impl WriteXdr for BucketEntry {
 ///     LedgerEntry archivedEntry;
 ///
 /// case HOT_ARCHIVE_LIVE:
-/// case HOT_ARCHIVE_DELETED:
 ///     LedgerKey key;
 /// case HOT_ARCHIVE_METAENTRY:
 ///     BucketMetadata metaEntry;
@@ -18353,25 +18341,22 @@ impl WriteXdr for BucketEntry {
 pub enum HotArchiveBucketEntry {
     Archived(LedgerEntry),
     Live(LedgerKey),
-    Deleted(LedgerKey),
     Metaentry(BucketMetadata),
 }
 
 impl HotArchiveBucketEntry {
-    pub const VARIANTS: [HotArchiveBucketEntryType; 4] = [
+    pub const VARIANTS: [HotArchiveBucketEntryType; 3] = [
         HotArchiveBucketEntryType::Archived,
         HotArchiveBucketEntryType::Live,
-        HotArchiveBucketEntryType::Deleted,
         HotArchiveBucketEntryType::Metaentry,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["Archived", "Live", "Deleted", "Metaentry"];
+    pub const VARIANTS_STR: [&'static str; 3] = ["Archived", "Live", "Metaentry"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Archived(_) => "Archived",
             Self::Live(_) => "Live",
-            Self::Deleted(_) => "Deleted",
             Self::Metaentry(_) => "Metaentry",
         }
     }
@@ -18382,13 +18367,12 @@ impl HotArchiveBucketEntry {
         match self {
             Self::Archived(_) => HotArchiveBucketEntryType::Archived,
             Self::Live(_) => HotArchiveBucketEntryType::Live,
-            Self::Deleted(_) => HotArchiveBucketEntryType::Deleted,
             Self::Metaentry(_) => HotArchiveBucketEntryType::Metaentry,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [HotArchiveBucketEntryType; 4] {
+    pub const fn variants() -> [HotArchiveBucketEntryType; 3] {
         Self::VARIANTS
     }
 }
@@ -18425,7 +18409,6 @@ impl ReadXdr for HotArchiveBucketEntry {
             let v = match dv {
                 HotArchiveBucketEntryType::Archived => Self::Archived(LedgerEntry::read_xdr(r)?),
                 HotArchiveBucketEntryType::Live => Self::Live(LedgerKey::read_xdr(r)?),
-                HotArchiveBucketEntryType::Deleted => Self::Deleted(LedgerKey::read_xdr(r)?),
                 HotArchiveBucketEntryType::Metaentry => {
                     Self::Metaentry(BucketMetadata::read_xdr(r)?)
                 }
@@ -18446,346 +18429,7 @@ impl WriteXdr for HotArchiveBucketEntry {
             match self {
                 Self::Archived(v) => v.write_xdr(w)?,
                 Self::Live(v) => v.write_xdr(w)?,
-                Self::Deleted(v) => v.write_xdr(w)?,
                 Self::Metaentry(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
-/// ColdArchiveArchivedLeaf is an XDR Struct defines as:
-///
-/// ```text
-/// struct ColdArchiveArchivedLeaf
-/// {
-///     uint32 index;
-///     LedgerEntry archivedEntry;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ColdArchiveArchivedLeaf {
-    pub index: u32,
-    pub archived_entry: LedgerEntry,
-}
-
-impl ReadXdr for ColdArchiveArchivedLeaf {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                index: u32::read_xdr(r)?,
-                archived_entry: LedgerEntry::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveArchivedLeaf {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.index.write_xdr(w)?;
-            self.archived_entry.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ColdArchiveDeletedLeaf is an XDR Struct defines as:
-///
-/// ```text
-/// struct ColdArchiveDeletedLeaf
-/// {
-///     uint32 index;
-///     LedgerKey deletedKey;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ColdArchiveDeletedLeaf {
-    pub index: u32,
-    pub deleted_key: LedgerKey,
-}
-
-impl ReadXdr for ColdArchiveDeletedLeaf {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                index: u32::read_xdr(r)?,
-                deleted_key: LedgerKey::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveDeletedLeaf {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.index.write_xdr(w)?;
-            self.deleted_key.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ColdArchiveBoundaryLeaf is an XDR Struct defines as:
-///
-/// ```text
-/// struct ColdArchiveBoundaryLeaf
-/// {
-///     uint32 index;
-///     bool isLowerBound;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ColdArchiveBoundaryLeaf {
-    pub index: u32,
-    pub is_lower_bound: bool,
-}
-
-impl ReadXdr for ColdArchiveBoundaryLeaf {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                index: u32::read_xdr(r)?,
-                is_lower_bound: bool::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveBoundaryLeaf {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.index.write_xdr(w)?;
-            self.is_lower_bound.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ColdArchiveHashEntry is an XDR Struct defines as:
-///
-/// ```text
-/// struct ColdArchiveHashEntry
-/// {
-///     uint32 index;
-///     uint32 level;
-///     Hash hash;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ColdArchiveHashEntry {
-    pub index: u32,
-    pub level: u32,
-    pub hash: Hash,
-}
-
-impl ReadXdr for ColdArchiveHashEntry {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                index: u32::read_xdr(r)?,
-                level: u32::read_xdr(r)?,
-                hash: Hash::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveHashEntry {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.index.write_xdr(w)?;
-            self.level.write_xdr(w)?;
-            self.hash.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ColdArchiveBucketEntry is an XDR Union defines as:
-///
-/// ```text
-/// union ColdArchiveBucketEntry switch (ColdArchiveBucketEntryType type)
-/// {
-/// case COLD_ARCHIVE_METAENTRY:
-///     BucketMetadata metaEntry;
-/// case COLD_ARCHIVE_ARCHIVED_LEAF:
-///     ColdArchiveArchivedLeaf archivedLeaf;
-/// case COLD_ARCHIVE_DELETED_LEAF:
-///     ColdArchiveDeletedLeaf deletedLeaf;
-/// case COLD_ARCHIVE_BOUNDARY_LEAF:
-///     ColdArchiveBoundaryLeaf boundaryLeaf;
-/// case COLD_ARCHIVE_HASH:
-///     ColdArchiveHashEntry hashEntry;
-/// };
-/// ```
-///
-// union with discriminant ColdArchiveBucketEntryType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[allow(clippy::large_enum_variant)]
-pub enum ColdArchiveBucketEntry {
-    Metaentry(BucketMetadata),
-    ArchivedLeaf(ColdArchiveArchivedLeaf),
-    DeletedLeaf(ColdArchiveDeletedLeaf),
-    BoundaryLeaf(ColdArchiveBoundaryLeaf),
-    Hash(ColdArchiveHashEntry),
-}
-
-impl ColdArchiveBucketEntry {
-    pub const VARIANTS: [ColdArchiveBucketEntryType; 5] = [
-        ColdArchiveBucketEntryType::Metaentry,
-        ColdArchiveBucketEntryType::ArchivedLeaf,
-        ColdArchiveBucketEntryType::DeletedLeaf,
-        ColdArchiveBucketEntryType::BoundaryLeaf,
-        ColdArchiveBucketEntryType::Hash,
-    ];
-    pub const VARIANTS_STR: [&'static str; 5] = [
-        "Metaentry",
-        "ArchivedLeaf",
-        "DeletedLeaf",
-        "BoundaryLeaf",
-        "Hash",
-    ];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Metaentry(_) => "Metaentry",
-            Self::ArchivedLeaf(_) => "ArchivedLeaf",
-            Self::DeletedLeaf(_) => "DeletedLeaf",
-            Self::BoundaryLeaf(_) => "BoundaryLeaf",
-            Self::Hash(_) => "Hash",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ColdArchiveBucketEntryType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Metaentry(_) => ColdArchiveBucketEntryType::Metaentry,
-            Self::ArchivedLeaf(_) => ColdArchiveBucketEntryType::ArchivedLeaf,
-            Self::DeletedLeaf(_) => ColdArchiveBucketEntryType::DeletedLeaf,
-            Self::BoundaryLeaf(_) => ColdArchiveBucketEntryType::BoundaryLeaf,
-            Self::Hash(_) => ColdArchiveBucketEntryType::Hash,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ColdArchiveBucketEntryType; 5] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ColdArchiveBucketEntry {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ColdArchiveBucketEntryType> for ColdArchiveBucketEntry {
-    #[must_use]
-    fn discriminant(&self) -> ColdArchiveBucketEntryType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ColdArchiveBucketEntryType> for ColdArchiveBucketEntry {
-    fn variants() -> slice::Iter<'static, ColdArchiveBucketEntryType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ColdArchiveBucketEntryType> for ColdArchiveBucketEntry {}
-
-impl ReadXdr for ColdArchiveBucketEntry {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let dv: ColdArchiveBucketEntryType =
-                <ColdArchiveBucketEntryType as ReadXdr>::read_xdr(r)?;
-            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-            let v = match dv {
-                ColdArchiveBucketEntryType::Metaentry => {
-                    Self::Metaentry(BucketMetadata::read_xdr(r)?)
-                }
-                ColdArchiveBucketEntryType::ArchivedLeaf => {
-                    Self::ArchivedLeaf(ColdArchiveArchivedLeaf::read_xdr(r)?)
-                }
-                ColdArchiveBucketEntryType::DeletedLeaf => {
-                    Self::DeletedLeaf(ColdArchiveDeletedLeaf::read_xdr(r)?)
-                }
-                ColdArchiveBucketEntryType::BoundaryLeaf => {
-                    Self::BoundaryLeaf(ColdArchiveBoundaryLeaf::read_xdr(r)?)
-                }
-                ColdArchiveBucketEntryType::Hash => Self::Hash(ColdArchiveHashEntry::read_xdr(r)?),
-                #[allow(unreachable_patterns)]
-                _ => return Err(Error::Invalid),
-            };
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ColdArchiveBucketEntry {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Metaentry(v) => v.write_xdr(w)?,
-                Self::ArchivedLeaf(v) => v.write_xdr(w)?,
-                Self::DeletedLeaf(v) => v.write_xdr(w)?,
-                Self::BoundaryLeaf(v) => v.write_xdr(w)?,
-                Self::Hash(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -20226,6 +19870,267 @@ impl WriteXdr for TxSetComponentType {
     }
 }
 
+/// DependentTxCluster is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef TransactionEnvelope DependentTxCluster<>;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Debug)]
+pub struct DependentTxCluster(pub VecM<TransactionEnvelope>);
+
+impl From<DependentTxCluster> for VecM<TransactionEnvelope> {
+    #[must_use]
+    fn from(x: DependentTxCluster) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<TransactionEnvelope>> for DependentTxCluster {
+    #[must_use]
+    fn from(x: VecM<TransactionEnvelope>) -> Self {
+        DependentTxCluster(x)
+    }
+}
+
+impl AsRef<VecM<TransactionEnvelope>> for DependentTxCluster {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<TransactionEnvelope> {
+        &self.0
+    }
+}
+
+impl ReadXdr for DependentTxCluster {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<TransactionEnvelope>::read_xdr(r)?;
+            let v = DependentTxCluster(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for DependentTxCluster {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for DependentTxCluster {
+    type Target = VecM<TransactionEnvelope>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<DependentTxCluster> for Vec<TransactionEnvelope> {
+    #[must_use]
+    fn from(x: DependentTxCluster) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<TransactionEnvelope>> for DependentTxCluster {
+    type Error = Error;
+    fn try_from(x: Vec<TransactionEnvelope>) -> Result<Self> {
+        Ok(DependentTxCluster(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<TransactionEnvelope>> for DependentTxCluster {
+    type Error = Error;
+    fn try_from(x: &Vec<TransactionEnvelope>) -> Result<Self> {
+        Ok(DependentTxCluster(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<TransactionEnvelope>> for DependentTxCluster {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<TransactionEnvelope> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[TransactionEnvelope] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[TransactionEnvelope] {
+        self.0 .0
+    }
+}
+
+/// ParallelTxExecutionStage is an XDR Typedef defines as:
+///
+/// ```text
+/// typedef DependentTxCluster ParallelTxExecutionStage<>;
+/// ```
+///
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[derive(Default)]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Debug)]
+pub struct ParallelTxExecutionStage(pub VecM<DependentTxCluster>);
+
+impl From<ParallelTxExecutionStage> for VecM<DependentTxCluster> {
+    #[must_use]
+    fn from(x: ParallelTxExecutionStage) -> Self {
+        x.0
+    }
+}
+
+impl From<VecM<DependentTxCluster>> for ParallelTxExecutionStage {
+    #[must_use]
+    fn from(x: VecM<DependentTxCluster>) -> Self {
+        ParallelTxExecutionStage(x)
+    }
+}
+
+impl AsRef<VecM<DependentTxCluster>> for ParallelTxExecutionStage {
+    #[must_use]
+    fn as_ref(&self) -> &VecM<DependentTxCluster> {
+        &self.0
+    }
+}
+
+impl ReadXdr for ParallelTxExecutionStage {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let i = VecM::<DependentTxCluster>::read_xdr(r)?;
+            let v = ParallelTxExecutionStage(i);
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for ParallelTxExecutionStage {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| self.0.write_xdr(w))
+    }
+}
+
+impl Deref for ParallelTxExecutionStage {
+    type Target = VecM<DependentTxCluster>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ParallelTxExecutionStage> for Vec<DependentTxCluster> {
+    #[must_use]
+    fn from(x: ParallelTxExecutionStage) -> Self {
+        x.0 .0
+    }
+}
+
+impl TryFrom<Vec<DependentTxCluster>> for ParallelTxExecutionStage {
+    type Error = Error;
+    fn try_from(x: Vec<DependentTxCluster>) -> Result<Self> {
+        Ok(ParallelTxExecutionStage(x.try_into()?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl TryFrom<&Vec<DependentTxCluster>> for ParallelTxExecutionStage {
+    type Error = Error;
+    fn try_from(x: &Vec<DependentTxCluster>) -> Result<Self> {
+        Ok(ParallelTxExecutionStage(x.try_into()?))
+    }
+}
+
+impl AsRef<Vec<DependentTxCluster>> for ParallelTxExecutionStage {
+    #[must_use]
+    fn as_ref(&self) -> &Vec<DependentTxCluster> {
+        &self.0 .0
+    }
+}
+
+impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
+    #[cfg(feature = "alloc")]
+    #[must_use]
+    fn as_ref(&self) -> &[DependentTxCluster] {
+        &self.0 .0
+    }
+    #[cfg(not(feature = "alloc"))]
+    #[must_use]
+    fn as_ref(&self) -> &[DependentTxCluster] {
+        self.0 .0
+    }
+}
+
+/// ParallelTxsComponent is an XDR Struct defines as:
+///
+/// ```text
+/// struct ParallelTxsComponent
+/// {
+///   int64* baseFee;
+///   // A sequence of stages that *may* have arbitrary data dependencies between
+///   // each other, i.e. in a general case the stage execution order may not be
+///   // arbitrarily shuffled without affecting the end result.
+///   ParallelTxExecutionStage executionStages<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ParallelTxsComponent {
+    pub base_fee: Option<i64>,
+    pub execution_stages: VecM<ParallelTxExecutionStage>,
+}
+
+impl ReadXdr for ParallelTxsComponent {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                base_fee: Option::<i64>::read_xdr(r)?,
+                execution_stages: VecM::<ParallelTxExecutionStage>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for ParallelTxsComponent {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.base_fee.write_xdr(w)?;
+            self.execution_stages.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
 /// TxSetComponentTxsMaybeDiscountedFee is an XDR NestedStruct defines as:
 ///
 /// ```text
@@ -20391,6 +20296,8 @@ impl WriteXdr for TxSetComponent {
 /// {
 /// case 0:
 ///     TxSetComponent v0Components<>;
+/// case 1:
+///     ParallelTxsComponent parallelTxsComponent;
 /// };
 /// ```
 ///
@@ -20406,16 +20313,18 @@ impl WriteXdr for TxSetComponent {
 #[allow(clippy::large_enum_variant)]
 pub enum TransactionPhase {
     V0(VecM<TxSetComponent>),
+    V1(ParallelTxsComponent),
 }
 
 impl TransactionPhase {
-    pub const VARIANTS: [i32; 1] = [0];
-    pub const VARIANTS_STR: [&'static str; 1] = ["V0"];
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::V0(_) => "V0",
+            Self::V1(_) => "V1",
         }
     }
 
@@ -20424,11 +20333,12 @@ impl TransactionPhase {
         #[allow(clippy::match_same_arms)]
         match self {
             Self::V0(_) => 0,
+            Self::V1(_) => 1,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [i32; 1] {
+    pub const fn variants() -> [i32; 2] {
         Self::VARIANTS
     }
 }
@@ -20463,6 +20373,7 @@ impl ReadXdr for TransactionPhase {
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
                 0 => Self::V0(VecM::<TxSetComponent>::read_xdr(r)?),
+                1 => Self::V1(ParallelTxsComponent::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -20479,6 +20390,7 @@ impl WriteXdr for TransactionPhase {
             #[allow(clippy::match_same_arms)]
             match self {
                 Self::V0(v) => v.write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -21451,7 +21363,8 @@ impl WriteXdr for ScpHistoryEntry {
 ///     LEDGER_ENTRY_CREATED = 0, // entry was added to the ledger
 ///     LEDGER_ENTRY_UPDATED = 1, // entry was modified in the ledger
 ///     LEDGER_ENTRY_REMOVED = 2, // entry was removed from the ledger
-///     LEDGER_ENTRY_STATE = 3    // value of the entry
+///     LEDGER_ENTRY_STATE    = 3, // value of the entry
+///     LEDGER_ENTRY_RESTORED = 4  // archived entry was restored in the ledger
 /// };
 /// ```
 ///
@@ -21470,16 +21383,19 @@ pub enum LedgerEntryChangeType {
     Updated = 1,
     Removed = 2,
     State = 3,
+    Restored = 4,
 }
 
 impl LedgerEntryChangeType {
-    pub const VARIANTS: [LedgerEntryChangeType; 4] = [
+    pub const VARIANTS: [LedgerEntryChangeType; 5] = [
         LedgerEntryChangeType::Created,
         LedgerEntryChangeType::Updated,
         LedgerEntryChangeType::Removed,
         LedgerEntryChangeType::State,
+        LedgerEntryChangeType::Restored,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["Created", "Updated", "Removed", "State"];
+    pub const VARIANTS_STR: [&'static str; 5] =
+        ["Created", "Updated", "Removed", "State", "Restored"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -21488,11 +21404,12 @@ impl LedgerEntryChangeType {
             Self::Updated => "Updated",
             Self::Removed => "Removed",
             Self::State => "State",
+            Self::Restored => "Restored",
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryChangeType; 4] {
+    pub const fn variants() -> [LedgerEntryChangeType; 5] {
         Self::VARIANTS
     }
 }
@@ -21527,6 +21444,7 @@ impl TryFrom<i32> for LedgerEntryChangeType {
             1 => LedgerEntryChangeType::Updated,
             2 => LedgerEntryChangeType::Removed,
             3 => LedgerEntryChangeType::State,
+            4 => LedgerEntryChangeType::Restored,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };
@@ -21575,6 +21493,8 @@ impl WriteXdr for LedgerEntryChangeType {
 ///     LedgerKey removed;
 /// case LEDGER_ENTRY_STATE:
 ///     LedgerEntry state;
+/// case LEDGER_ENTRY_RESTORED:
+///     LedgerEntry restored;
 /// };
 /// ```
 ///
@@ -21593,16 +21513,19 @@ pub enum LedgerEntryChange {
     Updated(LedgerEntry),
     Removed(LedgerKey),
     State(LedgerEntry),
+    Restored(LedgerEntry),
 }
 
 impl LedgerEntryChange {
-    pub const VARIANTS: [LedgerEntryChangeType; 4] = [
+    pub const VARIANTS: [LedgerEntryChangeType; 5] = [
         LedgerEntryChangeType::Created,
         LedgerEntryChangeType::Updated,
         LedgerEntryChangeType::Removed,
         LedgerEntryChangeType::State,
+        LedgerEntryChangeType::Restored,
     ];
-    pub const VARIANTS_STR: [&'static str; 4] = ["Created", "Updated", "Removed", "State"];
+    pub const VARIANTS_STR: [&'static str; 5] =
+        ["Created", "Updated", "Removed", "State", "Restored"];
 
     #[must_use]
     pub const fn name(&self) -> &'static str {
@@ -21611,6 +21534,7 @@ impl LedgerEntryChange {
             Self::Updated(_) => "Updated",
             Self::Removed(_) => "Removed",
             Self::State(_) => "State",
+            Self::Restored(_) => "Restored",
         }
     }
 
@@ -21622,11 +21546,12 @@ impl LedgerEntryChange {
             Self::Updated(_) => LedgerEntryChangeType::Updated,
             Self::Removed(_) => LedgerEntryChangeType::Removed,
             Self::State(_) => LedgerEntryChangeType::State,
+            Self::Restored(_) => LedgerEntryChangeType::Restored,
         }
     }
 
     #[must_use]
-    pub const fn variants() -> [LedgerEntryChangeType; 4] {
+    pub const fn variants() -> [LedgerEntryChangeType; 5] {
         Self::VARIANTS
     }
 }
@@ -21664,6 +21589,7 @@ impl ReadXdr for LedgerEntryChange {
                 LedgerEntryChangeType::Updated => Self::Updated(LedgerEntry::read_xdr(r)?),
                 LedgerEntryChangeType::Removed => Self::Removed(LedgerKey::read_xdr(r)?),
                 LedgerEntryChangeType::State => Self::State(LedgerEntry::read_xdr(r)?),
+                LedgerEntryChangeType::Restored => Self::Restored(LedgerEntry::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -21683,6 +21609,7 @@ impl WriteXdr for LedgerEntryChange {
                 Self::Updated(v) => v.write_xdr(w)?,
                 Self::Removed(v) => v.write_xdr(w)?,
                 Self::State(v) => v.write_xdr(w)?,
+                Self::Restored(v) => v.write_xdr(w)?,
             };
             Ok(())
         })
@@ -22310,112 +22237,6 @@ impl WriteXdr for DiagnosticEvent {
             self.event.write_xdr(w)?;
             Ok(())
         })
-    }
-}
-
-/// DiagnosticEvents is an XDR Typedef defines as:
-///
-/// ```text
-/// typedef DiagnosticEvent DiagnosticEvents<>;
-/// ```
-///
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[derive(Debug)]
-pub struct DiagnosticEvents(pub VecM<DiagnosticEvent>);
-
-impl From<DiagnosticEvents> for VecM<DiagnosticEvent> {
-    #[must_use]
-    fn from(x: DiagnosticEvents) -> Self {
-        x.0
-    }
-}
-
-impl From<VecM<DiagnosticEvent>> for DiagnosticEvents {
-    #[must_use]
-    fn from(x: VecM<DiagnosticEvent>) -> Self {
-        DiagnosticEvents(x)
-    }
-}
-
-impl AsRef<VecM<DiagnosticEvent>> for DiagnosticEvents {
-    #[must_use]
-    fn as_ref(&self) -> &VecM<DiagnosticEvent> {
-        &self.0
-    }
-}
-
-impl ReadXdr for DiagnosticEvents {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let i = VecM::<DiagnosticEvent>::read_xdr(r)?;
-            let v = DiagnosticEvents(i);
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for DiagnosticEvents {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
-
-impl Deref for DiagnosticEvents {
-    type Target = VecM<DiagnosticEvent>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<DiagnosticEvents> for Vec<DiagnosticEvent> {
-    #[must_use]
-    fn from(x: DiagnosticEvents) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<DiagnosticEvent>> for DiagnosticEvents {
-    type Error = Error;
-    fn try_from(x: Vec<DiagnosticEvent>) -> Result<Self> {
-        Ok(DiagnosticEvents(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<DiagnosticEvent>> for DiagnosticEvents {
-    type Error = Error;
-    fn try_from(x: &Vec<DiagnosticEvent>) -> Result<Self> {
-        Ok(DiagnosticEvents(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<DiagnosticEvent>> for DiagnosticEvents {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<DiagnosticEvent> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[DiagnosticEvent]> for DiagnosticEvents {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[DiagnosticEvent] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[DiagnosticEvent] {
-        self.0 .0
     }
 }
 
@@ -23414,16 +23235,15 @@ impl WriteXdr for LedgerCloseMetaExt {
 ///     // other misc information attached to the ledger close
 ///     SCPHistoryEntry scpInfo<>;
 ///
-///     // Size in bytes of BucketList, to support downstream
+///     // Size in bytes of live Soroban state, to support downstream
 ///     // systems calculating storage fees correctly.
-///     uint64 totalByteSizeOfBucketList;
+///     uint64 totalByteSizeOfLiveSorobanState;
 ///
-///     // Temp keys that are being evicted at this ledger.
-///     LedgerKey evictedTemporaryLedgerKeys<>;
+///     // TTL and data/code keys that have been evicted at this ledger.
+///     LedgerKey evictedKeys<>;
 ///
-///     // Archived restorable ledger entries that are being
-///     // evicted at this ledger.
-///     LedgerEntry evictedPersistentLedgerEntries<>;
+///     // Maintained for backwards compatibility, should never be populated.
+///     LedgerEntry unused<>;
 /// };
 /// ```
 ///
@@ -23442,9 +23262,9 @@ pub struct LedgerCloseMetaV1 {
     pub tx_processing: VecM<TransactionResultMeta>,
     pub upgrades_processing: VecM<UpgradeEntryMeta>,
     pub scp_info: VecM<ScpHistoryEntry>,
-    pub total_byte_size_of_bucket_list: u64,
-    pub evicted_temporary_ledger_keys: VecM<LedgerKey>,
-    pub evicted_persistent_ledger_entries: VecM<LedgerEntry>,
+    pub total_byte_size_of_live_soroban_state: u64,
+    pub evicted_keys: VecM<LedgerKey>,
+    pub unused: VecM<LedgerEntry>,
 }
 
 impl ReadXdr for LedgerCloseMetaV1 {
@@ -23458,9 +23278,9 @@ impl ReadXdr for LedgerCloseMetaV1 {
                 tx_processing: VecM::<TransactionResultMeta>::read_xdr(r)?,
                 upgrades_processing: VecM::<UpgradeEntryMeta>::read_xdr(r)?,
                 scp_info: VecM::<ScpHistoryEntry>::read_xdr(r)?,
-                total_byte_size_of_bucket_list: u64::read_xdr(r)?,
-                evicted_temporary_ledger_keys: VecM::<LedgerKey>::read_xdr(r)?,
-                evicted_persistent_ledger_entries: VecM::<LedgerEntry>::read_xdr(r)?,
+                total_byte_size_of_live_soroban_state: u64::read_xdr(r)?,
+                evicted_keys: VecM::<LedgerKey>::read_xdr(r)?,
+                unused: VecM::<LedgerEntry>::read_xdr(r)?,
             })
         })
     }
@@ -23476,9 +23296,9 @@ impl WriteXdr for LedgerCloseMetaV1 {
             self.tx_processing.write_xdr(w)?;
             self.upgrades_processing.write_xdr(w)?;
             self.scp_info.write_xdr(w)?;
-            self.total_byte_size_of_bucket_list.write_xdr(w)?;
-            self.evicted_temporary_ledger_keys.write_xdr(w)?;
-            self.evicted_persistent_ledger_entries.write_xdr(w)?;
+            self.total_byte_size_of_live_soroban_state.write_xdr(w)?;
+            self.evicted_keys.write_xdr(w)?;
+            self.unused.write_xdr(w)?;
             Ok(())
         })
     }
@@ -31732,544 +31552,6 @@ impl WriteXdr for LedgerFootprint {
     }
 }
 
-/// ArchivalProofType is an XDR Enum defines as:
-///
-/// ```text
-/// enum ArchivalProofType
-/// {
-///     EXISTENCE = 0,
-///     NONEXISTENCE = 1
-/// };
-/// ```
-///
-// enum
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[repr(i32)]
-pub enum ArchivalProofType {
-    Existence = 0,
-    Nonexistence = 1,
-}
-
-impl ArchivalProofType {
-    pub const VARIANTS: [ArchivalProofType; 2] = [
-        ArchivalProofType::Existence,
-        ArchivalProofType::Nonexistence,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Existence", "Nonexistence"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Existence => "Existence",
-            Self::Nonexistence => "Nonexistence",
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ArchivalProofType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ArchivalProofType {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Variants<ArchivalProofType> for ArchivalProofType {
-    fn variants() -> slice::Iter<'static, ArchivalProofType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Enum for ArchivalProofType {}
-
-impl fmt::Display for ArchivalProofType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl TryFrom<i32> for ArchivalProofType {
-    type Error = Error;
-
-    fn try_from(i: i32) -> Result<Self> {
-        let e = match i {
-            0 => ArchivalProofType::Existence,
-            1 => ArchivalProofType::Nonexistence,
-            #[allow(unreachable_patterns)]
-            _ => return Err(Error::Invalid),
-        };
-        Ok(e)
-    }
-}
-
-impl From<ArchivalProofType> for i32 {
-    #[must_use]
-    fn from(e: ArchivalProofType) -> Self {
-        e as Self
-    }
-}
-
-impl ReadXdr for ArchivalProofType {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let e = i32::read_xdr(r)?;
-            let v: Self = e.try_into()?;
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ArchivalProofType {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            let i: i32 = (*self).into();
-            i.write_xdr(w)
-        })
-    }
-}
-
-/// ArchivalProofNode is an XDR Struct defines as:
-///
-/// ```text
-/// struct ArchivalProofNode
-/// {
-///     uint32 index;
-///     Hash hash;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ArchivalProofNode {
-    pub index: u32,
-    pub hash: Hash,
-}
-
-impl ReadXdr for ArchivalProofNode {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                index: u32::read_xdr(r)?,
-                hash: Hash::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ArchivalProofNode {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.index.write_xdr(w)?;
-            self.hash.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ProofLevel is an XDR Typedef defines as:
-///
-/// ```text
-/// typedef ArchivalProofNode ProofLevel<>;
-/// ```
-///
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[derive(Default)]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[derive(Debug)]
-pub struct ProofLevel(pub VecM<ArchivalProofNode>);
-
-impl From<ProofLevel> for VecM<ArchivalProofNode> {
-    #[must_use]
-    fn from(x: ProofLevel) -> Self {
-        x.0
-    }
-}
-
-impl From<VecM<ArchivalProofNode>> for ProofLevel {
-    #[must_use]
-    fn from(x: VecM<ArchivalProofNode>) -> Self {
-        ProofLevel(x)
-    }
-}
-
-impl AsRef<VecM<ArchivalProofNode>> for ProofLevel {
-    #[must_use]
-    fn as_ref(&self) -> &VecM<ArchivalProofNode> {
-        &self.0
-    }
-}
-
-impl ReadXdr for ProofLevel {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let i = VecM::<ArchivalProofNode>::read_xdr(r)?;
-            let v = ProofLevel(i);
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ProofLevel {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| self.0.write_xdr(w))
-    }
-}
-
-impl Deref for ProofLevel {
-    type Target = VecM<ArchivalProofNode>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<ProofLevel> for Vec<ArchivalProofNode> {
-    #[must_use]
-    fn from(x: ProofLevel) -> Self {
-        x.0 .0
-    }
-}
-
-impl TryFrom<Vec<ArchivalProofNode>> for ProofLevel {
-    type Error = Error;
-    fn try_from(x: Vec<ArchivalProofNode>) -> Result<Self> {
-        Ok(ProofLevel(x.try_into()?))
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl TryFrom<&Vec<ArchivalProofNode>> for ProofLevel {
-    type Error = Error;
-    fn try_from(x: &Vec<ArchivalProofNode>) -> Result<Self> {
-        Ok(ProofLevel(x.try_into()?))
-    }
-}
-
-impl AsRef<Vec<ArchivalProofNode>> for ProofLevel {
-    #[must_use]
-    fn as_ref(&self) -> &Vec<ArchivalProofNode> {
-        &self.0 .0
-    }
-}
-
-impl AsRef<[ArchivalProofNode]> for ProofLevel {
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    fn as_ref(&self) -> &[ArchivalProofNode] {
-        &self.0 .0
-    }
-    #[cfg(not(feature = "alloc"))]
-    #[must_use]
-    fn as_ref(&self) -> &[ArchivalProofNode] {
-        self.0 .0
-    }
-}
-
-/// NonexistenceProofBody is an XDR Struct defines as:
-///
-/// ```text
-/// struct NonexistenceProofBody
-/// {
-///     ColdArchiveBucketEntry entriesToProve<>;
-///
-///     // Vector of vectors, where proofLevels[level]
-///     // contains all HashNodes that correspond with that level
-///     ProofLevel proofLevels<>;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct NonexistenceProofBody {
-    pub entries_to_prove: VecM<ColdArchiveBucketEntry>,
-    pub proof_levels: VecM<ProofLevel>,
-}
-
-impl ReadXdr for NonexistenceProofBody {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                entries_to_prove: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
-                proof_levels: VecM::<ProofLevel>::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for NonexistenceProofBody {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.entries_to_prove.write_xdr(w)?;
-            self.proof_levels.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ExistenceProofBody is an XDR Struct defines as:
-///
-/// ```text
-/// struct ExistenceProofBody
-/// {
-///     LedgerKey keysToProve<>;
-///
-///     // Bounds for each key being proved, where bound[n]
-///     // corresponds to keysToProve[n]
-///     ColdArchiveBucketEntry lowBoundEntries<>;
-///     ColdArchiveBucketEntry highBoundEntries<>;
-///
-///     // Vector of vectors, where proofLevels[level]
-///     // contains all HashNodes that correspond with that level
-///     ProofLevel proofLevels<>;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ExistenceProofBody {
-    pub keys_to_prove: VecM<LedgerKey>,
-    pub low_bound_entries: VecM<ColdArchiveBucketEntry>,
-    pub high_bound_entries: VecM<ColdArchiveBucketEntry>,
-    pub proof_levels: VecM<ProofLevel>,
-}
-
-impl ReadXdr for ExistenceProofBody {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                keys_to_prove: VecM::<LedgerKey>::read_xdr(r)?,
-                low_bound_entries: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
-                high_bound_entries: VecM::<ColdArchiveBucketEntry>::read_xdr(r)?,
-                proof_levels: VecM::<ProofLevel>::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ExistenceProofBody {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.keys_to_prove.write_xdr(w)?;
-            self.low_bound_entries.write_xdr(w)?;
-            self.high_bound_entries.write_xdr(w)?;
-            self.proof_levels.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
-/// ArchivalProofBody is an XDR NestedUnion defines as:
-///
-/// ```text
-/// union switch (ArchivalProofType t)
-///     {
-///     case EXISTENCE:
-///         NonexistenceProofBody nonexistenceProof;
-///     case NONEXISTENCE:
-///         ExistenceProofBody existenceProof;
-///     }
-/// ```
-///
-// union with discriminant ArchivalProofType
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[allow(clippy::large_enum_variant)]
-pub enum ArchivalProofBody {
-    Existence(NonexistenceProofBody),
-    Nonexistence(ExistenceProofBody),
-}
-
-impl ArchivalProofBody {
-    pub const VARIANTS: [ArchivalProofType; 2] = [
-        ArchivalProofType::Existence,
-        ArchivalProofType::Nonexistence,
-    ];
-    pub const VARIANTS_STR: [&'static str; 2] = ["Existence", "Nonexistence"];
-
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
-        match self {
-            Self::Existence(_) => "Existence",
-            Self::Nonexistence(_) => "Nonexistence",
-        }
-    }
-
-    #[must_use]
-    pub const fn discriminant(&self) -> ArchivalProofType {
-        #[allow(clippy::match_same_arms)]
-        match self {
-            Self::Existence(_) => ArchivalProofType::Existence,
-            Self::Nonexistence(_) => ArchivalProofType::Nonexistence,
-        }
-    }
-
-    #[must_use]
-    pub const fn variants() -> [ArchivalProofType; 2] {
-        Self::VARIANTS
-    }
-}
-
-impl Name for ArchivalProofBody {
-    #[must_use]
-    fn name(&self) -> &'static str {
-        Self::name(self)
-    }
-}
-
-impl Discriminant<ArchivalProofType> for ArchivalProofBody {
-    #[must_use]
-    fn discriminant(&self) -> ArchivalProofType {
-        Self::discriminant(self)
-    }
-}
-
-impl Variants<ArchivalProofType> for ArchivalProofBody {
-    fn variants() -> slice::Iter<'static, ArchivalProofType> {
-        Self::VARIANTS.iter()
-    }
-}
-
-impl Union<ArchivalProofType> for ArchivalProofBody {}
-
-impl ReadXdr for ArchivalProofBody {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            let dv: ArchivalProofType = <ArchivalProofType as ReadXdr>::read_xdr(r)?;
-            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
-            let v = match dv {
-                ArchivalProofType::Existence => {
-                    Self::Existence(NonexistenceProofBody::read_xdr(r)?)
-                }
-                ArchivalProofType::Nonexistence => {
-                    Self::Nonexistence(ExistenceProofBody::read_xdr(r)?)
-                }
-                #[allow(unreachable_patterns)]
-                _ => return Err(Error::Invalid),
-            };
-            Ok(v)
-        })
-    }
-}
-
-impl WriteXdr for ArchivalProofBody {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.discriminant().write_xdr(w)?;
-            #[allow(clippy::match_same_arms)]
-            match self {
-                Self::Existence(v) => v.write_xdr(w)?,
-                Self::Nonexistence(v) => v.write_xdr(w)?,
-            };
-            Ok(())
-        })
-    }
-}
-
-/// ArchivalProof is an XDR Struct defines as:
-///
-/// ```text
-/// struct ArchivalProof
-/// {
-///     uint32 epoch; // AST Subtree for this proof
-///
-///     union switch (ArchivalProofType t)
-///     {
-///     case EXISTENCE:
-///         NonexistenceProofBody nonexistenceProof;
-///     case NONEXISTENCE:
-///         ExistenceProofBody existenceProof;
-///     } body;
-/// };
-/// ```
-///
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
-#[cfg_attr(
-    all(feature = "serde", feature = "alloc"),
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct ArchivalProof {
-    pub epoch: u32,
-    pub body: ArchivalProofBody,
-}
-
-impl ReadXdr for ArchivalProof {
-    #[cfg(feature = "std")]
-    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
-        r.with_limited_depth(|r| {
-            Ok(Self {
-                epoch: u32::read_xdr(r)?,
-                body: ArchivalProofBody::read_xdr(r)?,
-            })
-        })
-    }
-}
-
-impl WriteXdr for ArchivalProof {
-    #[cfg(feature = "std")]
-    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
-        w.with_limited_depth(|w| {
-            self.epoch.write_xdr(w)?;
-            self.body.write_xdr(w)?;
-            Ok(())
-        })
-    }
-}
-
 /// SorobanResources is an XDR Struct defines as:
 ///
 /// ```text
@@ -32280,8 +31562,8 @@ impl WriteXdr for ArchivalProof {
 ///     // The maximum number of instructions this transaction can use
 ///     uint32 instructions;
 ///
-///     // The maximum number of bytes this transaction can read from ledger
-///     uint32 readBytes;
+///     // The maximum number of bytes this transaction can read from disk backed entries
+///     uint32 diskReadBytes;
 ///     // The maximum number of bytes this transaction can write to ledger
 ///     uint32 writeBytes;
 /// };
@@ -32298,7 +31580,7 @@ impl WriteXdr for ArchivalProof {
 pub struct SorobanResources {
     pub footprint: LedgerFootprint,
     pub instructions: u32,
-    pub read_bytes: u32,
+    pub disk_read_bytes: u32,
     pub write_bytes: u32,
 }
 
@@ -32309,7 +31591,7 @@ impl ReadXdr for SorobanResources {
             Ok(Self {
                 footprint: LedgerFootprint::read_xdr(r)?,
                 instructions: u32::read_xdr(r)?,
-                read_bytes: u32::read_xdr(r)?,
+                disk_read_bytes: u32::read_xdr(r)?,
                 write_bytes: u32::read_xdr(r)?,
             })
         })
@@ -32322,8 +31604,161 @@ impl WriteXdr for SorobanResources {
         w.with_limited_depth(|w| {
             self.footprint.write_xdr(w)?;
             self.instructions.write_xdr(w)?;
-            self.read_bytes.write_xdr(w)?;
+            self.disk_read_bytes.write_xdr(w)?;
             self.write_bytes.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// SorobanResourcesExtV0 is an XDR Struct defines as:
+///
+/// ```text
+/// struct SorobanResourcesExtV0
+/// {
+///     // Vector of indices representing what Soroban
+///     // entries in the footprint are archived, based on the
+///     // order of keys provided in the readWrite footprint.
+///     uint32 archivedSorobanEntries<>;
+/// };
+/// ```
+///
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct SorobanResourcesExtV0 {
+    pub archived_soroban_entries: VecM<u32>,
+}
+
+impl ReadXdr for SorobanResourcesExtV0 {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            Ok(Self {
+                archived_soroban_entries: VecM::<u32>::read_xdr(r)?,
+            })
+        })
+    }
+}
+
+impl WriteXdr for SorobanResourcesExtV0 {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.archived_soroban_entries.write_xdr(w)?;
+            Ok(())
+        })
+    }
+}
+
+/// SorobanTransactionDataExt is an XDR NestedUnion defines as:
+///
+/// ```text
+/// union switch (int v)
+///     {
+///     case 0:
+///         void;
+///     case 1:
+///         SorobanResourcesExtV0 resourceExt;
+///     }
+/// ```
+///
+// union with discriminant i32
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(
+    all(feature = "serde", feature = "alloc"),
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[allow(clippy::large_enum_variant)]
+pub enum SorobanTransactionDataExt {
+    V0,
+    V1(SorobanResourcesExtV0),
+}
+
+impl SorobanTransactionDataExt {
+    pub const VARIANTS: [i32; 2] = [0, 1];
+    pub const VARIANTS_STR: [&'static str; 2] = ["V0", "V1"];
+
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::V0 => "V0",
+            Self::V1(_) => "V1",
+        }
+    }
+
+    #[must_use]
+    pub const fn discriminant(&self) -> i32 {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::V0 => 0,
+            Self::V1(_) => 1,
+        }
+    }
+
+    #[must_use]
+    pub const fn variants() -> [i32; 2] {
+        Self::VARIANTS
+    }
+}
+
+impl Name for SorobanTransactionDataExt {
+    #[must_use]
+    fn name(&self) -> &'static str {
+        Self::name(self)
+    }
+}
+
+impl Discriminant<i32> for SorobanTransactionDataExt {
+    #[must_use]
+    fn discriminant(&self) -> i32 {
+        Self::discriminant(self)
+    }
+}
+
+impl Variants<i32> for SorobanTransactionDataExt {
+    fn variants() -> slice::Iter<'static, i32> {
+        Self::VARIANTS.iter()
+    }
+}
+
+impl Union<i32> for SorobanTransactionDataExt {}
+
+impl ReadXdr for SorobanTransactionDataExt {
+    #[cfg(feature = "std")]
+    fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
+        r.with_limited_depth(|r| {
+            let dv: i32 = <i32 as ReadXdr>::read_xdr(r)?;
+            #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
+            let v = match dv {
+                0 => Self::V0,
+                1 => Self::V1(SorobanResourcesExtV0::read_xdr(r)?),
+                #[allow(unreachable_patterns)]
+                _ => return Err(Error::Invalid),
+            };
+            Ok(v)
+        })
+    }
+}
+
+impl WriteXdr for SorobanTransactionDataExt {
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<()> {
+        w.with_limited_depth(|w| {
+            self.discriminant().write_xdr(w)?;
+            #[allow(clippy::match_same_arms)]
+            match self {
+                Self::V0 => ().write_xdr(w)?,
+                Self::V1(v) => v.write_xdr(w)?,
+            };
             Ok(())
         })
     }
@@ -32334,7 +31769,13 @@ impl WriteXdr for SorobanResources {
 /// ```text
 /// struct SorobanTransactionData
 /// {
-///     ExtensionPoint ext;
+///     union switch (int v)
+///     {
+///     case 0:
+///         void;
+///     case 1:
+///         SorobanResourcesExtV0 resourceExt;
+///     } ext;
 ///     SorobanResources resources;
 ///     // Amount of the transaction `fee` allocated to the Soroban resource fees.
 ///     // The fraction of `resourceFee` corresponding to `resources` specified
@@ -32358,7 +31799,7 @@ impl WriteXdr for SorobanResources {
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SorobanTransactionData {
-    pub ext: ExtensionPoint,
+    pub ext: SorobanTransactionDataExt,
     pub resources: SorobanResources,
     pub resource_fee: i64,
 }
@@ -32368,7 +31809,7 @@ impl ReadXdr for SorobanTransactionData {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                ext: ExtensionPoint::read_xdr(r)?,
+                ext: SorobanTransactionDataExt::read_xdr(r)?,
                 resources: SorobanResources::read_xdr(r)?,
                 resource_fee: i64::read_xdr(r)?,
             })
@@ -32737,7 +32178,6 @@ impl WriteXdr for TransactionExt {
 ///
 ///     Operation operations<MAX_OPS_PER_TX>;
 ///
-///     // reserved for future use
 ///     union switch (int v)
 ///     {
 ///     case 0:
@@ -46276,7 +45716,9 @@ pub enum TypeVariant {
     ScpQuorumSet,
     ConfigSettingContractExecutionLanesV0,
     ConfigSettingContractComputeV0,
+    ConfigSettingContractParallelComputeV0,
     ConfigSettingContractLedgerCostV0,
+    ConfigSettingContractLedgerCostExtV0,
     ConfigSettingContractHistoricalDataV0,
     ConfigSettingContractEventsV0,
     ConfigSettingContractBandwidthV0,
@@ -46425,16 +45867,10 @@ pub enum TypeVariant {
     BucketListType,
     BucketEntryType,
     HotArchiveBucketEntryType,
-    ColdArchiveBucketEntryType,
     BucketMetadata,
     BucketMetadataExt,
     BucketEntry,
     HotArchiveBucketEntry,
-    ColdArchiveArchivedLeaf,
-    ColdArchiveDeletedLeaf,
-    ColdArchiveBoundaryLeaf,
-    ColdArchiveHashEntry,
-    ColdArchiveBucketEntry,
     UpgradeType,
     StellarValueType,
     LedgerCloseValueSignature,
@@ -46450,6 +45886,9 @@ pub enum TypeVariant {
     LedgerUpgrade,
     ConfigUpgradeSet,
     TxSetComponentType,
+    DependentTxCluster,
+    ParallelTxExecutionStage,
+    ParallelTxsComponent,
     TxSetComponent,
     TxSetComponentTxsMaybeDiscountedFee,
     TransactionPhase,
@@ -46478,7 +45917,6 @@ pub enum TypeVariant {
     ContractEventBody,
     ContractEventV0,
     DiagnosticEvent,
-    DiagnosticEvents,
     SorobanTransactionMetaExtV1,
     SorobanTransactionMetaExt,
     SorobanTransactionMeta,
@@ -46595,15 +46033,10 @@ pub enum TypeVariant {
     PreconditionType,
     Preconditions,
     LedgerFootprint,
-    ArchivalProofType,
-    ArchivalProofNode,
-    ProofLevel,
-    NonexistenceProofBody,
-    ExistenceProofBody,
-    ArchivalProof,
-    ArchivalProofBody,
     SorobanResources,
+    SorobanResourcesExtV0,
     SorobanTransactionData,
+    SorobanTransactionDataExt,
     TransactionV0,
     TransactionV0Ext,
     TransactionV0Envelope,
@@ -46725,7 +46158,7 @@ pub enum TypeVariant {
 }
 
 impl TypeVariant {
-    pub const VARIANTS: [TypeVariant; 459] = [
+    pub const VARIANTS: [TypeVariant; 452] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -46739,7 +46172,9 @@ impl TypeVariant {
         TypeVariant::ScpQuorumSet,
         TypeVariant::ConfigSettingContractExecutionLanesV0,
         TypeVariant::ConfigSettingContractComputeV0,
+        TypeVariant::ConfigSettingContractParallelComputeV0,
         TypeVariant::ConfigSettingContractLedgerCostV0,
+        TypeVariant::ConfigSettingContractLedgerCostExtV0,
         TypeVariant::ConfigSettingContractHistoricalDataV0,
         TypeVariant::ConfigSettingContractEventsV0,
         TypeVariant::ConfigSettingContractBandwidthV0,
@@ -46888,16 +46323,10 @@ impl TypeVariant {
         TypeVariant::BucketListType,
         TypeVariant::BucketEntryType,
         TypeVariant::HotArchiveBucketEntryType,
-        TypeVariant::ColdArchiveBucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
         TypeVariant::BucketEntry,
         TypeVariant::HotArchiveBucketEntry,
-        TypeVariant::ColdArchiveArchivedLeaf,
-        TypeVariant::ColdArchiveDeletedLeaf,
-        TypeVariant::ColdArchiveBoundaryLeaf,
-        TypeVariant::ColdArchiveHashEntry,
-        TypeVariant::ColdArchiveBucketEntry,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
         TypeVariant::LedgerCloseValueSignature,
@@ -46913,6 +46342,9 @@ impl TypeVariant {
         TypeVariant::LedgerUpgrade,
         TypeVariant::ConfigUpgradeSet,
         TypeVariant::TxSetComponentType,
+        TypeVariant::DependentTxCluster,
+        TypeVariant::ParallelTxExecutionStage,
+        TypeVariant::ParallelTxsComponent,
         TypeVariant::TxSetComponent,
         TypeVariant::TxSetComponentTxsMaybeDiscountedFee,
         TypeVariant::TransactionPhase,
@@ -46941,7 +46373,6 @@ impl TypeVariant {
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
         TypeVariant::DiagnosticEvent,
-        TypeVariant::DiagnosticEvents,
         TypeVariant::SorobanTransactionMetaExtV1,
         TypeVariant::SorobanTransactionMetaExt,
         TypeVariant::SorobanTransactionMeta,
@@ -47058,15 +46489,10 @@ impl TypeVariant {
         TypeVariant::PreconditionType,
         TypeVariant::Preconditions,
         TypeVariant::LedgerFootprint,
-        TypeVariant::ArchivalProofType,
-        TypeVariant::ArchivalProofNode,
-        TypeVariant::ProofLevel,
-        TypeVariant::NonexistenceProofBody,
-        TypeVariant::ExistenceProofBody,
-        TypeVariant::ArchivalProof,
-        TypeVariant::ArchivalProofBody,
         TypeVariant::SorobanResources,
+        TypeVariant::SorobanResourcesExtV0,
         TypeVariant::SorobanTransactionData,
+        TypeVariant::SorobanTransactionDataExt,
         TypeVariant::TransactionV0,
         TypeVariant::TransactionV0Ext,
         TypeVariant::TransactionV0Envelope,
@@ -47186,7 +46612,7 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 459] = [
+    pub const VARIANTS_STR: [&'static str; 452] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -47200,7 +46626,9 @@ impl TypeVariant {
         "ScpQuorumSet",
         "ConfigSettingContractExecutionLanesV0",
         "ConfigSettingContractComputeV0",
+        "ConfigSettingContractParallelComputeV0",
         "ConfigSettingContractLedgerCostV0",
+        "ConfigSettingContractLedgerCostExtV0",
         "ConfigSettingContractHistoricalDataV0",
         "ConfigSettingContractEventsV0",
         "ConfigSettingContractBandwidthV0",
@@ -47349,16 +46777,10 @@ impl TypeVariant {
         "BucketListType",
         "BucketEntryType",
         "HotArchiveBucketEntryType",
-        "ColdArchiveBucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
         "BucketEntry",
         "HotArchiveBucketEntry",
-        "ColdArchiveArchivedLeaf",
-        "ColdArchiveDeletedLeaf",
-        "ColdArchiveBoundaryLeaf",
-        "ColdArchiveHashEntry",
-        "ColdArchiveBucketEntry",
         "UpgradeType",
         "StellarValueType",
         "LedgerCloseValueSignature",
@@ -47374,6 +46796,9 @@ impl TypeVariant {
         "LedgerUpgrade",
         "ConfigUpgradeSet",
         "TxSetComponentType",
+        "DependentTxCluster",
+        "ParallelTxExecutionStage",
+        "ParallelTxsComponent",
         "TxSetComponent",
         "TxSetComponentTxsMaybeDiscountedFee",
         "TransactionPhase",
@@ -47402,7 +46827,6 @@ impl TypeVariant {
         "ContractEventBody",
         "ContractEventV0",
         "DiagnosticEvent",
-        "DiagnosticEvents",
         "SorobanTransactionMetaExtV1",
         "SorobanTransactionMetaExt",
         "SorobanTransactionMeta",
@@ -47519,15 +46943,10 @@ impl TypeVariant {
         "PreconditionType",
         "Preconditions",
         "LedgerFootprint",
-        "ArchivalProofType",
-        "ArchivalProofNode",
-        "ProofLevel",
-        "NonexistenceProofBody",
-        "ExistenceProofBody",
-        "ArchivalProof",
-        "ArchivalProofBody",
         "SorobanResources",
+        "SorobanResourcesExtV0",
         "SorobanTransactionData",
+        "SorobanTransactionDataExt",
         "TransactionV0",
         "TransactionV0Ext",
         "TransactionV0Envelope",
@@ -47665,7 +47084,11 @@ impl TypeVariant {
             Self::ScpQuorumSet => "ScpQuorumSet",
             Self::ConfigSettingContractExecutionLanesV0 => "ConfigSettingContractExecutionLanesV0",
             Self::ConfigSettingContractComputeV0 => "ConfigSettingContractComputeV0",
+            Self::ConfigSettingContractParallelComputeV0 => {
+                "ConfigSettingContractParallelComputeV0"
+            }
             Self::ConfigSettingContractLedgerCostV0 => "ConfigSettingContractLedgerCostV0",
+            Self::ConfigSettingContractLedgerCostExtV0 => "ConfigSettingContractLedgerCostExtV0",
             Self::ConfigSettingContractHistoricalDataV0 => "ConfigSettingContractHistoricalDataV0",
             Self::ConfigSettingContractEventsV0 => "ConfigSettingContractEventsV0",
             Self::ConfigSettingContractBandwidthV0 => "ConfigSettingContractBandwidthV0",
@@ -47816,16 +47239,10 @@ impl TypeVariant {
             Self::BucketListType => "BucketListType",
             Self::BucketEntryType => "BucketEntryType",
             Self::HotArchiveBucketEntryType => "HotArchiveBucketEntryType",
-            Self::ColdArchiveBucketEntryType => "ColdArchiveBucketEntryType",
             Self::BucketMetadata => "BucketMetadata",
             Self::BucketMetadataExt => "BucketMetadataExt",
             Self::BucketEntry => "BucketEntry",
             Self::HotArchiveBucketEntry => "HotArchiveBucketEntry",
-            Self::ColdArchiveArchivedLeaf => "ColdArchiveArchivedLeaf",
-            Self::ColdArchiveDeletedLeaf => "ColdArchiveDeletedLeaf",
-            Self::ColdArchiveBoundaryLeaf => "ColdArchiveBoundaryLeaf",
-            Self::ColdArchiveHashEntry => "ColdArchiveHashEntry",
-            Self::ColdArchiveBucketEntry => "ColdArchiveBucketEntry",
             Self::UpgradeType => "UpgradeType",
             Self::StellarValueType => "StellarValueType",
             Self::LedgerCloseValueSignature => "LedgerCloseValueSignature",
@@ -47841,6 +47258,9 @@ impl TypeVariant {
             Self::LedgerUpgrade => "LedgerUpgrade",
             Self::ConfigUpgradeSet => "ConfigUpgradeSet",
             Self::TxSetComponentType => "TxSetComponentType",
+            Self::DependentTxCluster => "DependentTxCluster",
+            Self::ParallelTxExecutionStage => "ParallelTxExecutionStage",
+            Self::ParallelTxsComponent => "ParallelTxsComponent",
             Self::TxSetComponent => "TxSetComponent",
             Self::TxSetComponentTxsMaybeDiscountedFee => "TxSetComponentTxsMaybeDiscountedFee",
             Self::TransactionPhase => "TransactionPhase",
@@ -47869,7 +47289,6 @@ impl TypeVariant {
             Self::ContractEventBody => "ContractEventBody",
             Self::ContractEventV0 => "ContractEventV0",
             Self::DiagnosticEvent => "DiagnosticEvent",
-            Self::DiagnosticEvents => "DiagnosticEvents",
             Self::SorobanTransactionMetaExtV1 => "SorobanTransactionMetaExtV1",
             Self::SorobanTransactionMetaExt => "SorobanTransactionMetaExt",
             Self::SorobanTransactionMeta => "SorobanTransactionMeta",
@@ -47992,15 +47411,10 @@ impl TypeVariant {
             Self::PreconditionType => "PreconditionType",
             Self::Preconditions => "Preconditions",
             Self::LedgerFootprint => "LedgerFootprint",
-            Self::ArchivalProofType => "ArchivalProofType",
-            Self::ArchivalProofNode => "ArchivalProofNode",
-            Self::ProofLevel => "ProofLevel",
-            Self::NonexistenceProofBody => "NonexistenceProofBody",
-            Self::ExistenceProofBody => "ExistenceProofBody",
-            Self::ArchivalProof => "ArchivalProof",
-            Self::ArchivalProofBody => "ArchivalProofBody",
             Self::SorobanResources => "SorobanResources",
+            Self::SorobanResourcesExtV0 => "SorobanResourcesExtV0",
             Self::SorobanTransactionData => "SorobanTransactionData",
+            Self::SorobanTransactionDataExt => "SorobanTransactionDataExt",
             Self::TransactionV0 => "TransactionV0",
             Self::TransactionV0Ext => "TransactionV0Ext",
             Self::TransactionV0Envelope => "TransactionV0Envelope",
@@ -48128,7 +47542,7 @@ impl TypeVariant {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 459] {
+    pub const fn variants() -> [TypeVariant; 452] {
         Self::VARIANTS
     }
 
@@ -48154,8 +47568,14 @@ impl TypeVariant {
             Self::ConfigSettingContractComputeV0 => {
                 gen.into_root_schema_for::<ConfigSettingContractComputeV0>()
             }
+            Self::ConfigSettingContractParallelComputeV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractParallelComputeV0>()
+            }
             Self::ConfigSettingContractLedgerCostV0 => {
                 gen.into_root_schema_for::<ConfigSettingContractLedgerCostV0>()
+            }
+            Self::ConfigSettingContractLedgerCostExtV0 => {
+                gen.into_root_schema_for::<ConfigSettingContractLedgerCostExtV0>()
             }
             Self::ConfigSettingContractHistoricalDataV0 => {
                 gen.into_root_schema_for::<ConfigSettingContractHistoricalDataV0>()
@@ -48347,18 +47767,10 @@ impl TypeVariant {
             Self::HotArchiveBucketEntryType => {
                 gen.into_root_schema_for::<HotArchiveBucketEntryType>()
             }
-            Self::ColdArchiveBucketEntryType => {
-                gen.into_root_schema_for::<ColdArchiveBucketEntryType>()
-            }
             Self::BucketMetadata => gen.into_root_schema_for::<BucketMetadata>(),
             Self::BucketMetadataExt => gen.into_root_schema_for::<BucketMetadataExt>(),
             Self::BucketEntry => gen.into_root_schema_for::<BucketEntry>(),
             Self::HotArchiveBucketEntry => gen.into_root_schema_for::<HotArchiveBucketEntry>(),
-            Self::ColdArchiveArchivedLeaf => gen.into_root_schema_for::<ColdArchiveArchivedLeaf>(),
-            Self::ColdArchiveDeletedLeaf => gen.into_root_schema_for::<ColdArchiveDeletedLeaf>(),
-            Self::ColdArchiveBoundaryLeaf => gen.into_root_schema_for::<ColdArchiveBoundaryLeaf>(),
-            Self::ColdArchiveHashEntry => gen.into_root_schema_for::<ColdArchiveHashEntry>(),
-            Self::ColdArchiveBucketEntry => gen.into_root_schema_for::<ColdArchiveBucketEntry>(),
             Self::UpgradeType => gen.into_root_schema_for::<UpgradeType>(),
             Self::StellarValueType => gen.into_root_schema_for::<StellarValueType>(),
             Self::LedgerCloseValueSignature => {
@@ -48378,6 +47790,11 @@ impl TypeVariant {
             Self::LedgerUpgrade => gen.into_root_schema_for::<LedgerUpgrade>(),
             Self::ConfigUpgradeSet => gen.into_root_schema_for::<ConfigUpgradeSet>(),
             Self::TxSetComponentType => gen.into_root_schema_for::<TxSetComponentType>(),
+            Self::DependentTxCluster => gen.into_root_schema_for::<DependentTxCluster>(),
+            Self::ParallelTxExecutionStage => {
+                gen.into_root_schema_for::<ParallelTxExecutionStage>()
+            }
+            Self::ParallelTxsComponent => gen.into_root_schema_for::<ParallelTxsComponent>(),
             Self::TxSetComponent => gen.into_root_schema_for::<TxSetComponent>(),
             Self::TxSetComponentTxsMaybeDiscountedFee => {
                 gen.into_root_schema_for::<TxSetComponentTxsMaybeDiscountedFee>()
@@ -48420,7 +47837,6 @@ impl TypeVariant {
             Self::ContractEventBody => gen.into_root_schema_for::<ContractEventBody>(),
             Self::ContractEventV0 => gen.into_root_schema_for::<ContractEventV0>(),
             Self::DiagnosticEvent => gen.into_root_schema_for::<DiagnosticEvent>(),
-            Self::DiagnosticEvents => gen.into_root_schema_for::<DiagnosticEvents>(),
             Self::SorobanTransactionMetaExtV1 => {
                 gen.into_root_schema_for::<SorobanTransactionMetaExtV1>()
             }
@@ -48595,15 +48011,12 @@ impl TypeVariant {
             Self::PreconditionType => gen.into_root_schema_for::<PreconditionType>(),
             Self::Preconditions => gen.into_root_schema_for::<Preconditions>(),
             Self::LedgerFootprint => gen.into_root_schema_for::<LedgerFootprint>(),
-            Self::ArchivalProofType => gen.into_root_schema_for::<ArchivalProofType>(),
-            Self::ArchivalProofNode => gen.into_root_schema_for::<ArchivalProofNode>(),
-            Self::ProofLevel => gen.into_root_schema_for::<ProofLevel>(),
-            Self::NonexistenceProofBody => gen.into_root_schema_for::<NonexistenceProofBody>(),
-            Self::ExistenceProofBody => gen.into_root_schema_for::<ExistenceProofBody>(),
-            Self::ArchivalProof => gen.into_root_schema_for::<ArchivalProof>(),
-            Self::ArchivalProofBody => gen.into_root_schema_for::<ArchivalProofBody>(),
             Self::SorobanResources => gen.into_root_schema_for::<SorobanResources>(),
+            Self::SorobanResourcesExtV0 => gen.into_root_schema_for::<SorobanResourcesExtV0>(),
             Self::SorobanTransactionData => gen.into_root_schema_for::<SorobanTransactionData>(),
+            Self::SorobanTransactionDataExt => {
+                gen.into_root_schema_for::<SorobanTransactionDataExt>()
+            }
             Self::TransactionV0 => gen.into_root_schema_for::<TransactionV0>(),
             Self::TransactionV0Ext => gen.into_root_schema_for::<TransactionV0Ext>(),
             Self::TransactionV0Envelope => gen.into_root_schema_for::<TransactionV0Envelope>(),
@@ -48839,7 +48252,13 @@ impl core::str::FromStr for TypeVariant {
                 Ok(Self::ConfigSettingContractExecutionLanesV0)
             }
             "ConfigSettingContractComputeV0" => Ok(Self::ConfigSettingContractComputeV0),
+            "ConfigSettingContractParallelComputeV0" => {
+                Ok(Self::ConfigSettingContractParallelComputeV0)
+            }
             "ConfigSettingContractLedgerCostV0" => Ok(Self::ConfigSettingContractLedgerCostV0),
+            "ConfigSettingContractLedgerCostExtV0" => {
+                Ok(Self::ConfigSettingContractLedgerCostExtV0)
+            }
             "ConfigSettingContractHistoricalDataV0" => {
                 Ok(Self::ConfigSettingContractHistoricalDataV0)
             }
@@ -48992,16 +48411,10 @@ impl core::str::FromStr for TypeVariant {
             "BucketListType" => Ok(Self::BucketListType),
             "BucketEntryType" => Ok(Self::BucketEntryType),
             "HotArchiveBucketEntryType" => Ok(Self::HotArchiveBucketEntryType),
-            "ColdArchiveBucketEntryType" => Ok(Self::ColdArchiveBucketEntryType),
             "BucketMetadata" => Ok(Self::BucketMetadata),
             "BucketMetadataExt" => Ok(Self::BucketMetadataExt),
             "BucketEntry" => Ok(Self::BucketEntry),
             "HotArchiveBucketEntry" => Ok(Self::HotArchiveBucketEntry),
-            "ColdArchiveArchivedLeaf" => Ok(Self::ColdArchiveArchivedLeaf),
-            "ColdArchiveDeletedLeaf" => Ok(Self::ColdArchiveDeletedLeaf),
-            "ColdArchiveBoundaryLeaf" => Ok(Self::ColdArchiveBoundaryLeaf),
-            "ColdArchiveHashEntry" => Ok(Self::ColdArchiveHashEntry),
-            "ColdArchiveBucketEntry" => Ok(Self::ColdArchiveBucketEntry),
             "UpgradeType" => Ok(Self::UpgradeType),
             "StellarValueType" => Ok(Self::StellarValueType),
             "LedgerCloseValueSignature" => Ok(Self::LedgerCloseValueSignature),
@@ -49017,6 +48430,9 @@ impl core::str::FromStr for TypeVariant {
             "LedgerUpgrade" => Ok(Self::LedgerUpgrade),
             "ConfigUpgradeSet" => Ok(Self::ConfigUpgradeSet),
             "TxSetComponentType" => Ok(Self::TxSetComponentType),
+            "DependentTxCluster" => Ok(Self::DependentTxCluster),
+            "ParallelTxExecutionStage" => Ok(Self::ParallelTxExecutionStage),
+            "ParallelTxsComponent" => Ok(Self::ParallelTxsComponent),
             "TxSetComponent" => Ok(Self::TxSetComponent),
             "TxSetComponentTxsMaybeDiscountedFee" => Ok(Self::TxSetComponentTxsMaybeDiscountedFee),
             "TransactionPhase" => Ok(Self::TransactionPhase),
@@ -49045,7 +48461,6 @@ impl core::str::FromStr for TypeVariant {
             "ContractEventBody" => Ok(Self::ContractEventBody),
             "ContractEventV0" => Ok(Self::ContractEventV0),
             "DiagnosticEvent" => Ok(Self::DiagnosticEvent),
-            "DiagnosticEvents" => Ok(Self::DiagnosticEvents),
             "SorobanTransactionMetaExtV1" => Ok(Self::SorobanTransactionMetaExtV1),
             "SorobanTransactionMetaExt" => Ok(Self::SorobanTransactionMetaExt),
             "SorobanTransactionMeta" => Ok(Self::SorobanTransactionMeta),
@@ -49174,15 +48589,10 @@ impl core::str::FromStr for TypeVariant {
             "PreconditionType" => Ok(Self::PreconditionType),
             "Preconditions" => Ok(Self::Preconditions),
             "LedgerFootprint" => Ok(Self::LedgerFootprint),
-            "ArchivalProofType" => Ok(Self::ArchivalProofType),
-            "ArchivalProofNode" => Ok(Self::ArchivalProofNode),
-            "ProofLevel" => Ok(Self::ProofLevel),
-            "NonexistenceProofBody" => Ok(Self::NonexistenceProofBody),
-            "ExistenceProofBody" => Ok(Self::ExistenceProofBody),
-            "ArchivalProof" => Ok(Self::ArchivalProof),
-            "ArchivalProofBody" => Ok(Self::ArchivalProofBody),
             "SorobanResources" => Ok(Self::SorobanResources),
+            "SorobanResourcesExtV0" => Ok(Self::SorobanResourcesExtV0),
             "SorobanTransactionData" => Ok(Self::SorobanTransactionData),
+            "SorobanTransactionDataExt" => Ok(Self::SorobanTransactionDataExt),
             "TransactionV0" => Ok(Self::TransactionV0),
             "TransactionV0Ext" => Ok(Self::TransactionV0Ext),
             "TransactionV0Envelope" => Ok(Self::TransactionV0Envelope),
@@ -49336,7 +48746,9 @@ pub enum Type {
     ScpQuorumSet(Box<ScpQuorumSet>),
     ConfigSettingContractExecutionLanesV0(Box<ConfigSettingContractExecutionLanesV0>),
     ConfigSettingContractComputeV0(Box<ConfigSettingContractComputeV0>),
+    ConfigSettingContractParallelComputeV0(Box<ConfigSettingContractParallelComputeV0>),
     ConfigSettingContractLedgerCostV0(Box<ConfigSettingContractLedgerCostV0>),
+    ConfigSettingContractLedgerCostExtV0(Box<ConfigSettingContractLedgerCostExtV0>),
     ConfigSettingContractHistoricalDataV0(Box<ConfigSettingContractHistoricalDataV0>),
     ConfigSettingContractEventsV0(Box<ConfigSettingContractEventsV0>),
     ConfigSettingContractBandwidthV0(Box<ConfigSettingContractBandwidthV0>),
@@ -49485,16 +48897,10 @@ pub enum Type {
     BucketListType(Box<BucketListType>),
     BucketEntryType(Box<BucketEntryType>),
     HotArchiveBucketEntryType(Box<HotArchiveBucketEntryType>),
-    ColdArchiveBucketEntryType(Box<ColdArchiveBucketEntryType>),
     BucketMetadata(Box<BucketMetadata>),
     BucketMetadataExt(Box<BucketMetadataExt>),
     BucketEntry(Box<BucketEntry>),
     HotArchiveBucketEntry(Box<HotArchiveBucketEntry>),
-    ColdArchiveArchivedLeaf(Box<ColdArchiveArchivedLeaf>),
-    ColdArchiveDeletedLeaf(Box<ColdArchiveDeletedLeaf>),
-    ColdArchiveBoundaryLeaf(Box<ColdArchiveBoundaryLeaf>),
-    ColdArchiveHashEntry(Box<ColdArchiveHashEntry>),
-    ColdArchiveBucketEntry(Box<ColdArchiveBucketEntry>),
     UpgradeType(Box<UpgradeType>),
     StellarValueType(Box<StellarValueType>),
     LedgerCloseValueSignature(Box<LedgerCloseValueSignature>),
@@ -49510,6 +48916,9 @@ pub enum Type {
     LedgerUpgrade(Box<LedgerUpgrade>),
     ConfigUpgradeSet(Box<ConfigUpgradeSet>),
     TxSetComponentType(Box<TxSetComponentType>),
+    DependentTxCluster(Box<DependentTxCluster>),
+    ParallelTxExecutionStage(Box<ParallelTxExecutionStage>),
+    ParallelTxsComponent(Box<ParallelTxsComponent>),
     TxSetComponent(Box<TxSetComponent>),
     TxSetComponentTxsMaybeDiscountedFee(Box<TxSetComponentTxsMaybeDiscountedFee>),
     TransactionPhase(Box<TransactionPhase>),
@@ -49538,7 +48947,6 @@ pub enum Type {
     ContractEventBody(Box<ContractEventBody>),
     ContractEventV0(Box<ContractEventV0>),
     DiagnosticEvent(Box<DiagnosticEvent>),
-    DiagnosticEvents(Box<DiagnosticEvents>),
     SorobanTransactionMetaExtV1(Box<SorobanTransactionMetaExtV1>),
     SorobanTransactionMetaExt(Box<SorobanTransactionMetaExt>),
     SorobanTransactionMeta(Box<SorobanTransactionMeta>),
@@ -49655,15 +49063,10 @@ pub enum Type {
     PreconditionType(Box<PreconditionType>),
     Preconditions(Box<Preconditions>),
     LedgerFootprint(Box<LedgerFootprint>),
-    ArchivalProofType(Box<ArchivalProofType>),
-    ArchivalProofNode(Box<ArchivalProofNode>),
-    ProofLevel(Box<ProofLevel>),
-    NonexistenceProofBody(Box<NonexistenceProofBody>),
-    ExistenceProofBody(Box<ExistenceProofBody>),
-    ArchivalProof(Box<ArchivalProof>),
-    ArchivalProofBody(Box<ArchivalProofBody>),
     SorobanResources(Box<SorobanResources>),
+    SorobanResourcesExtV0(Box<SorobanResourcesExtV0>),
     SorobanTransactionData(Box<SorobanTransactionData>),
+    SorobanTransactionDataExt(Box<SorobanTransactionDataExt>),
     TransactionV0(Box<TransactionV0>),
     TransactionV0Ext(Box<TransactionV0Ext>),
     TransactionV0Envelope(Box<TransactionV0Envelope>),
@@ -49785,7 +49188,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub const VARIANTS: [TypeVariant; 459] = [
+    pub const VARIANTS: [TypeVariant; 452] = [
         TypeVariant::Value,
         TypeVariant::ScpBallot,
         TypeVariant::ScpStatementType,
@@ -49799,7 +49202,9 @@ impl Type {
         TypeVariant::ScpQuorumSet,
         TypeVariant::ConfigSettingContractExecutionLanesV0,
         TypeVariant::ConfigSettingContractComputeV0,
+        TypeVariant::ConfigSettingContractParallelComputeV0,
         TypeVariant::ConfigSettingContractLedgerCostV0,
+        TypeVariant::ConfigSettingContractLedgerCostExtV0,
         TypeVariant::ConfigSettingContractHistoricalDataV0,
         TypeVariant::ConfigSettingContractEventsV0,
         TypeVariant::ConfigSettingContractBandwidthV0,
@@ -49948,16 +49353,10 @@ impl Type {
         TypeVariant::BucketListType,
         TypeVariant::BucketEntryType,
         TypeVariant::HotArchiveBucketEntryType,
-        TypeVariant::ColdArchiveBucketEntryType,
         TypeVariant::BucketMetadata,
         TypeVariant::BucketMetadataExt,
         TypeVariant::BucketEntry,
         TypeVariant::HotArchiveBucketEntry,
-        TypeVariant::ColdArchiveArchivedLeaf,
-        TypeVariant::ColdArchiveDeletedLeaf,
-        TypeVariant::ColdArchiveBoundaryLeaf,
-        TypeVariant::ColdArchiveHashEntry,
-        TypeVariant::ColdArchiveBucketEntry,
         TypeVariant::UpgradeType,
         TypeVariant::StellarValueType,
         TypeVariant::LedgerCloseValueSignature,
@@ -49973,6 +49372,9 @@ impl Type {
         TypeVariant::LedgerUpgrade,
         TypeVariant::ConfigUpgradeSet,
         TypeVariant::TxSetComponentType,
+        TypeVariant::DependentTxCluster,
+        TypeVariant::ParallelTxExecutionStage,
+        TypeVariant::ParallelTxsComponent,
         TypeVariant::TxSetComponent,
         TypeVariant::TxSetComponentTxsMaybeDiscountedFee,
         TypeVariant::TransactionPhase,
@@ -50001,7 +49403,6 @@ impl Type {
         TypeVariant::ContractEventBody,
         TypeVariant::ContractEventV0,
         TypeVariant::DiagnosticEvent,
-        TypeVariant::DiagnosticEvents,
         TypeVariant::SorobanTransactionMetaExtV1,
         TypeVariant::SorobanTransactionMetaExt,
         TypeVariant::SorobanTransactionMeta,
@@ -50118,15 +49519,10 @@ impl Type {
         TypeVariant::PreconditionType,
         TypeVariant::Preconditions,
         TypeVariant::LedgerFootprint,
-        TypeVariant::ArchivalProofType,
-        TypeVariant::ArchivalProofNode,
-        TypeVariant::ProofLevel,
-        TypeVariant::NonexistenceProofBody,
-        TypeVariant::ExistenceProofBody,
-        TypeVariant::ArchivalProof,
-        TypeVariant::ArchivalProofBody,
         TypeVariant::SorobanResources,
+        TypeVariant::SorobanResourcesExtV0,
         TypeVariant::SorobanTransactionData,
+        TypeVariant::SorobanTransactionDataExt,
         TypeVariant::TransactionV0,
         TypeVariant::TransactionV0Ext,
         TypeVariant::TransactionV0Envelope,
@@ -50246,7 +49642,7 @@ impl Type {
         TypeVariant::ClaimableBalanceIdType,
         TypeVariant::ClaimableBalanceId,
     ];
-    pub const VARIANTS_STR: [&'static str; 459] = [
+    pub const VARIANTS_STR: [&'static str; 452] = [
         "Value",
         "ScpBallot",
         "ScpStatementType",
@@ -50260,7 +49656,9 @@ impl Type {
         "ScpQuorumSet",
         "ConfigSettingContractExecutionLanesV0",
         "ConfigSettingContractComputeV0",
+        "ConfigSettingContractParallelComputeV0",
         "ConfigSettingContractLedgerCostV0",
+        "ConfigSettingContractLedgerCostExtV0",
         "ConfigSettingContractHistoricalDataV0",
         "ConfigSettingContractEventsV0",
         "ConfigSettingContractBandwidthV0",
@@ -50409,16 +49807,10 @@ impl Type {
         "BucketListType",
         "BucketEntryType",
         "HotArchiveBucketEntryType",
-        "ColdArchiveBucketEntryType",
         "BucketMetadata",
         "BucketMetadataExt",
         "BucketEntry",
         "HotArchiveBucketEntry",
-        "ColdArchiveArchivedLeaf",
-        "ColdArchiveDeletedLeaf",
-        "ColdArchiveBoundaryLeaf",
-        "ColdArchiveHashEntry",
-        "ColdArchiveBucketEntry",
         "UpgradeType",
         "StellarValueType",
         "LedgerCloseValueSignature",
@@ -50434,6 +49826,9 @@ impl Type {
         "LedgerUpgrade",
         "ConfigUpgradeSet",
         "TxSetComponentType",
+        "DependentTxCluster",
+        "ParallelTxExecutionStage",
+        "ParallelTxsComponent",
         "TxSetComponent",
         "TxSetComponentTxsMaybeDiscountedFee",
         "TransactionPhase",
@@ -50462,7 +49857,6 @@ impl Type {
         "ContractEventBody",
         "ContractEventV0",
         "DiagnosticEvent",
-        "DiagnosticEvents",
         "SorobanTransactionMetaExtV1",
         "SorobanTransactionMetaExt",
         "SorobanTransactionMeta",
@@ -50579,15 +49973,10 @@ impl Type {
         "PreconditionType",
         "Preconditions",
         "LedgerFootprint",
-        "ArchivalProofType",
-        "ArchivalProofNode",
-        "ProofLevel",
-        "NonexistenceProofBody",
-        "ExistenceProofBody",
-        "ArchivalProof",
-        "ArchivalProofBody",
         "SorobanResources",
+        "SorobanResourcesExtV0",
         "SorobanTransactionData",
+        "SorobanTransactionDataExt",
         "TransactionV0",
         "TransactionV0Ext",
         "TransactionV0Envelope",
@@ -50765,9 +50154,19 @@ impl Type {
                     ConfigSettingContractComputeV0::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingContractParallelComputeV0(Box::new(
+                    ConfigSettingContractParallelComputeV0::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::ConfigSettingContractLedgerCostV0 => r.with_limited_depth(|r| {
                 Ok(Self::ConfigSettingContractLedgerCostV0(Box::new(
                     ConfigSettingContractLedgerCostV0::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ConfigSettingContractLedgerCostExtV0 => r.with_limited_depth(|r| {
+                Ok(Self::ConfigSettingContractLedgerCostExtV0(Box::new(
+                    ConfigSettingContractLedgerCostExtV0::read_xdr(r)?,
                 )))
             }),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => r.with_limited_depth(|r| {
@@ -51378,11 +50777,6 @@ impl Type {
                     HotArchiveBucketEntryType::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ColdArchiveBucketEntryType => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveBucketEntryType(Box::new(
-                    ColdArchiveBucketEntryType::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::BucketMetadata => r.with_limited_depth(|r| {
                 Ok(Self::BucketMetadata(Box::new(BucketMetadata::read_xdr(r)?)))
             }),
@@ -51397,31 +50791,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntry => r.with_limited_depth(|r| {
                 Ok(Self::HotArchiveBucketEntry(Box::new(
                     HotArchiveBucketEntry::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ColdArchiveArchivedLeaf => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveArchivedLeaf(Box::new(
-                    ColdArchiveArchivedLeaf::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ColdArchiveDeletedLeaf => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveDeletedLeaf(Box::new(
-                    ColdArchiveDeletedLeaf::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ColdArchiveBoundaryLeaf => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveBoundaryLeaf(Box::new(
-                    ColdArchiveBoundaryLeaf::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ColdArchiveHashEntry => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveHashEntry(Box::new(
-                    ColdArchiveHashEntry::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ColdArchiveBucketEntry => r.with_limited_depth(|r| {
-                Ok(Self::ColdArchiveBucketEntry(Box::new(
-                    ColdArchiveBucketEntry::read_xdr(r)?,
                 )))
             }),
             TypeVariant::UpgradeType => {
@@ -51489,6 +50858,21 @@ impl Type {
             TypeVariant::TxSetComponentType => r.with_limited_depth(|r| {
                 Ok(Self::TxSetComponentType(Box::new(
                     TxSetComponentType::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::DependentTxCluster => r.with_limited_depth(|r| {
+                Ok(Self::DependentTxCluster(Box::new(
+                    DependentTxCluster::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ParallelTxExecutionStage => r.with_limited_depth(|r| {
+                Ok(Self::ParallelTxExecutionStage(Box::new(
+                    ParallelTxExecutionStage::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ParallelTxsComponent => r.with_limited_depth(|r| {
+                Ok(Self::ParallelTxsComponent(Box::new(
+                    ParallelTxsComponent::read_xdr(r)?,
                 )))
             }),
             TypeVariant::TxSetComponent => r.with_limited_depth(|r| {
@@ -51622,11 +51006,6 @@ impl Type {
                 Ok(Self::DiagnosticEvent(Box::new(DiagnosticEvent::read_xdr(
                     r,
                 )?)))
-            }),
-            TypeVariant::DiagnosticEvents => r.with_limited_depth(|r| {
-                Ok(Self::DiagnosticEvents(Box::new(
-                    DiagnosticEvents::read_xdr(r)?,
-                )))
             }),
             TypeVariant::SorobanTransactionMetaExtV1 => r.with_limited_depth(|r| {
                 Ok(Self::SorobanTransactionMetaExtV1(Box::new(
@@ -52138,45 +51517,24 @@ impl Type {
                     r,
                 )?)))
             }),
-            TypeVariant::ArchivalProofType => r.with_limited_depth(|r| {
-                Ok(Self::ArchivalProofType(Box::new(
-                    ArchivalProofType::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ArchivalProofNode => r.with_limited_depth(|r| {
-                Ok(Self::ArchivalProofNode(Box::new(
-                    ArchivalProofNode::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ProofLevel => {
-                r.with_limited_depth(|r| Ok(Self::ProofLevel(Box::new(ProofLevel::read_xdr(r)?))))
-            }
-            TypeVariant::NonexistenceProofBody => r.with_limited_depth(|r| {
-                Ok(Self::NonexistenceProofBody(Box::new(
-                    NonexistenceProofBody::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ExistenceProofBody => r.with_limited_depth(|r| {
-                Ok(Self::ExistenceProofBody(Box::new(
-                    ExistenceProofBody::read_xdr(r)?,
-                )))
-            }),
-            TypeVariant::ArchivalProof => r.with_limited_depth(|r| {
-                Ok(Self::ArchivalProof(Box::new(ArchivalProof::read_xdr(r)?)))
-            }),
-            TypeVariant::ArchivalProofBody => r.with_limited_depth(|r| {
-                Ok(Self::ArchivalProofBody(Box::new(
-                    ArchivalProofBody::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::SorobanResources => r.with_limited_depth(|r| {
                 Ok(Self::SorobanResources(Box::new(
                     SorobanResources::read_xdr(r)?,
                 )))
             }),
+            TypeVariant::SorobanResourcesExtV0 => r.with_limited_depth(|r| {
+                Ok(Self::SorobanResourcesExtV0(Box::new(
+                    SorobanResourcesExtV0::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::SorobanTransactionData => r.with_limited_depth(|r| {
                 Ok(Self::SorobanTransactionData(Box::new(
                     SorobanTransactionData::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::SorobanTransactionDataExt => r.with_limited_depth(|r| {
+                Ok(Self::SorobanTransactionDataExt(Box::new(
+                    SorobanTransactionDataExt::read_xdr(r)?,
                 )))
             }),
             TypeVariant::TransactionV0 => r.with_limited_depth(|r| {
@@ -52809,12 +52167,26 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
             ),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractParallelComputeV0>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractParallelComputeV0(Box::new(t)))),
+            ),
             TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(
                     &mut r.inner,
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostExtV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractLedgerCostExtV0>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostExtV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(
@@ -53432,10 +52804,6 @@ impl Type {
                 ReadXdrIter::<_, HotArchiveBucketEntryType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HotArchiveBucketEntryType(Box::new(t)))),
             ),
-            TypeVariant::ColdArchiveBucketEntryType => Box::new(
-                ReadXdrIter::<_, ColdArchiveBucketEntryType>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBucketEntryType(Box::new(t)))),
-            ),
             TypeVariant::BucketMetadata => Box::new(
                 ReadXdrIter::<_, BucketMetadata>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t)))),
@@ -53451,26 +52819,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntry => Box::new(
                 ReadXdrIter::<_, HotArchiveBucketEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HotArchiveBucketEntry(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveArchivedLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveArchivedLeaf>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveArchivedLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveDeletedLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveDeletedLeaf>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveDeletedLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveBoundaryLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveBoundaryLeaf>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBoundaryLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveHashEntry => Box::new(
-                ReadXdrIter::<_, ColdArchiveHashEntry>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveHashEntry(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveBucketEntry => Box::new(
-                ReadXdrIter::<_, ColdArchiveBucketEntry>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBucketEntry(Box::new(t)))),
             ),
             TypeVariant::UpgradeType => Box::new(
                 ReadXdrIter::<_, UpgradeType>::new(&mut r.inner, r.limits.clone())
@@ -53531,6 +52879,18 @@ impl Type {
             TypeVariant::TxSetComponentType => Box::new(
                 ReadXdrIter::<_, TxSetComponentType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
+            ),
+            TypeVariant::DependentTxCluster => Box::new(
+                ReadXdrIter::<_, DependentTxCluster>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::DependentTxCluster(Box::new(t)))),
+            ),
+            TypeVariant::ParallelTxExecutionStage => Box::new(
+                ReadXdrIter::<_, ParallelTxExecutionStage>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ParallelTxExecutionStage(Box::new(t)))),
+            ),
+            TypeVariant::ParallelTxsComponent => Box::new(
+                ReadXdrIter::<_, ParallelTxsComponent>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ParallelTxsComponent(Box::new(t)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
                 ReadXdrIter::<_, TxSetComponent>::new(&mut r.inner, r.limits.clone())
@@ -53652,10 +53012,6 @@ impl Type {
             TypeVariant::DiagnosticEvent => Box::new(
                 ReadXdrIter::<_, DiagnosticEvent>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
-            ),
-            TypeVariant::DiagnosticEvents => Box::new(
-                ReadXdrIter::<_, DiagnosticEvents>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::DiagnosticEvents(Box::new(t)))),
             ),
             TypeVariant::SorobanTransactionMetaExtV1 => Box::new(
                 ReadXdrIter::<_, SorobanTransactionMetaExtV1>::new(&mut r.inner, r.limits.clone())
@@ -54162,41 +53518,21 @@ impl Type {
                 ReadXdrIter::<_, LedgerFootprint>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
             ),
-            TypeVariant::ArchivalProofType => Box::new(
-                ReadXdrIter::<_, ArchivalProofType>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProofNode => Box::new(
-                ReadXdrIter::<_, ArchivalProofNode>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t)))),
-            ),
-            TypeVariant::ProofLevel => Box::new(
-                ReadXdrIter::<_, ProofLevel>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t)))),
-            ),
-            TypeVariant::NonexistenceProofBody => Box::new(
-                ReadXdrIter::<_, NonexistenceProofBody>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
-            ),
-            TypeVariant::ExistenceProofBody => Box::new(
-                ReadXdrIter::<_, ExistenceProofBody>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProof => Box::new(
-                ReadXdrIter::<_, ArchivalProof>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProofBody => Box::new(
-                ReadXdrIter::<_, ArchivalProofBody>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t)))),
-            ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, SorobanResources>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanResources(Box::new(t)))),
             ),
+            TypeVariant::SorobanResourcesExtV0 => Box::new(
+                ReadXdrIter::<_, SorobanResourcesExtV0>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanResourcesExtV0(Box::new(t)))),
+            ),
             TypeVariant::SorobanTransactionData => Box::new(
                 ReadXdrIter::<_, SorobanTransactionData>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionDataExt => Box::new(
+                ReadXdrIter::<_, SorobanTransactionDataExt>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanTransactionDataExt(Box::new(t)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
                 ReadXdrIter::<_, TransactionV0>::new(&mut r.inner, r.limits.clone())
@@ -54797,12 +54133,26 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t.0)))),
             ),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractParallelComputeV0>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractParallelComputeV0(Box::new(t.0)))),
+            ),
             TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractLedgerCostV0>>::new(
                     &mut r.inner,
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t.0)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostExtV0 => Box::new(
+                ReadXdrIter::<_, Frame<ConfigSettingContractLedgerCostExtV0>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostExtV0(Box::new(t.0)))),
             ),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
                 ReadXdrIter::<_, Frame<ConfigSettingContractHistoricalDataV0>>::new(
@@ -55495,13 +54845,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::HotArchiveBucketEntryType(Box::new(t.0)))),
             ),
-            TypeVariant::ColdArchiveBucketEntryType => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveBucketEntryType>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ColdArchiveBucketEntryType(Box::new(t.0)))),
-            ),
             TypeVariant::BucketMetadata => Box::new(
                 ReadXdrIter::<_, Frame<BucketMetadata>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t.0)))),
@@ -55517,38 +54860,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntry => Box::new(
                 ReadXdrIter::<_, Frame<HotArchiveBucketEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::HotArchiveBucketEntry(Box::new(t.0)))),
-            ),
-            TypeVariant::ColdArchiveArchivedLeaf => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveArchivedLeaf>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ColdArchiveArchivedLeaf(Box::new(t.0)))),
-            ),
-            TypeVariant::ColdArchiveDeletedLeaf => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveDeletedLeaf>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ColdArchiveDeletedLeaf(Box::new(t.0)))),
-            ),
-            TypeVariant::ColdArchiveBoundaryLeaf => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveBoundaryLeaf>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ColdArchiveBoundaryLeaf(Box::new(t.0)))),
-            ),
-            TypeVariant::ColdArchiveHashEntry => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveHashEntry>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveHashEntry(Box::new(t.0)))),
-            ),
-            TypeVariant::ColdArchiveBucketEntry => Box::new(
-                ReadXdrIter::<_, Frame<ColdArchiveBucketEntry>>::new(
-                    &mut r.inner,
-                    r.limits.clone(),
-                )
-                .map(|r| r.map(|t| Self::ColdArchiveBucketEntry(Box::new(t.0)))),
             ),
             TypeVariant::UpgradeType => Box::new(
                 ReadXdrIter::<_, Frame<UpgradeType>>::new(&mut r.inner, r.limits.clone())
@@ -55618,6 +54929,21 @@ impl Type {
             TypeVariant::TxSetComponentType => Box::new(
                 ReadXdrIter::<_, Frame<TxSetComponentType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t.0)))),
+            ),
+            TypeVariant::DependentTxCluster => Box::new(
+                ReadXdrIter::<_, Frame<DependentTxCluster>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::DependentTxCluster(Box::new(t.0)))),
+            ),
+            TypeVariant::ParallelTxExecutionStage => Box::new(
+                ReadXdrIter::<_, Frame<ParallelTxExecutionStage>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ParallelTxExecutionStage(Box::new(t.0)))),
+            ),
+            TypeVariant::ParallelTxsComponent => Box::new(
+                ReadXdrIter::<_, Frame<ParallelTxsComponent>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ParallelTxsComponent(Box::new(t.0)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
                 ReadXdrIter::<_, Frame<TxSetComponent>>::new(&mut r.inner, r.limits.clone())
@@ -55754,10 +55080,6 @@ impl Type {
             TypeVariant::DiagnosticEvent => Box::new(
                 ReadXdrIter::<_, Frame<DiagnosticEvent>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t.0)))),
-            ),
-            TypeVariant::DiagnosticEvents => Box::new(
-                ReadXdrIter::<_, Frame<DiagnosticEvents>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::DiagnosticEvents(Box::new(t.0)))),
             ),
             TypeVariant::SorobanTransactionMetaExtV1 => Box::new(
                 ReadXdrIter::<_, Frame<SorobanTransactionMetaExtV1>>::new(
@@ -56350,37 +55672,13 @@ impl Type {
                 ReadXdrIter::<_, Frame<LedgerFootprint>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t.0)))),
             ),
-            TypeVariant::ArchivalProofType => Box::new(
-                ReadXdrIter::<_, Frame<ArchivalProofType>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t.0)))),
-            ),
-            TypeVariant::ArchivalProofNode => Box::new(
-                ReadXdrIter::<_, Frame<ArchivalProofNode>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t.0)))),
-            ),
-            TypeVariant::ProofLevel => Box::new(
-                ReadXdrIter::<_, Frame<ProofLevel>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t.0)))),
-            ),
-            TypeVariant::NonexistenceProofBody => Box::new(
-                ReadXdrIter::<_, Frame<NonexistenceProofBody>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t.0)))),
-            ),
-            TypeVariant::ExistenceProofBody => Box::new(
-                ReadXdrIter::<_, Frame<ExistenceProofBody>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t.0)))),
-            ),
-            TypeVariant::ArchivalProof => Box::new(
-                ReadXdrIter::<_, Frame<ArchivalProof>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t.0)))),
-            ),
-            TypeVariant::ArchivalProofBody => Box::new(
-                ReadXdrIter::<_, Frame<ArchivalProofBody>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t.0)))),
-            ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, Frame<SorobanResources>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanResources(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanResourcesExtV0 => Box::new(
+                ReadXdrIter::<_, Frame<SorobanResourcesExtV0>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanResourcesExtV0(Box::new(t.0)))),
             ),
             TypeVariant::SorobanTransactionData => Box::new(
                 ReadXdrIter::<_, Frame<SorobanTransactionData>>::new(
@@ -56388,6 +55686,13 @@ impl Type {
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t.0)))),
+            ),
+            TypeVariant::SorobanTransactionDataExt => Box::new(
+                ReadXdrIter::<_, Frame<SorobanTransactionDataExt>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::SorobanTransactionDataExt(Box::new(t.0)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
                 ReadXdrIter::<_, Frame<TransactionV0>>::new(&mut r.inner, r.limits.clone())
@@ -57073,9 +56378,20 @@ impl Type {
                 ReadXdrIter::<_, ConfigSettingContractComputeV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))),
             ),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractParallelComputeV0>::new(
+                    dec,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ConfigSettingContractParallelComputeV0(Box::new(t)))),
+            ),
             TypeVariant::ConfigSettingContractLedgerCostV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractLedgerCostV0>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostExtV0 => Box::new(
+                ReadXdrIter::<_, ConfigSettingContractLedgerCostExtV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ConfigSettingContractLedgerCostExtV0(Box::new(t)))),
             ),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => Box::new(
                 ReadXdrIter::<_, ConfigSettingContractHistoricalDataV0>::new(dec, r.limits.clone())
@@ -57672,10 +56988,6 @@ impl Type {
                 ReadXdrIter::<_, HotArchiveBucketEntryType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HotArchiveBucketEntryType(Box::new(t)))),
             ),
-            TypeVariant::ColdArchiveBucketEntryType => Box::new(
-                ReadXdrIter::<_, ColdArchiveBucketEntryType>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBucketEntryType(Box::new(t)))),
-            ),
             TypeVariant::BucketMetadata => Box::new(
                 ReadXdrIter::<_, BucketMetadata>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::BucketMetadata(Box::new(t)))),
@@ -57691,26 +57003,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntry => Box::new(
                 ReadXdrIter::<_, HotArchiveBucketEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::HotArchiveBucketEntry(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveArchivedLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveArchivedLeaf>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveArchivedLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveDeletedLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveDeletedLeaf>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveDeletedLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveBoundaryLeaf => Box::new(
-                ReadXdrIter::<_, ColdArchiveBoundaryLeaf>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBoundaryLeaf(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveHashEntry => Box::new(
-                ReadXdrIter::<_, ColdArchiveHashEntry>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveHashEntry(Box::new(t)))),
-            ),
-            TypeVariant::ColdArchiveBucketEntry => Box::new(
-                ReadXdrIter::<_, ColdArchiveBucketEntry>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ColdArchiveBucketEntry(Box::new(t)))),
             ),
             TypeVariant::UpgradeType => Box::new(
                 ReadXdrIter::<_, UpgradeType>::new(dec, r.limits.clone())
@@ -57771,6 +57063,18 @@ impl Type {
             TypeVariant::TxSetComponentType => Box::new(
                 ReadXdrIter::<_, TxSetComponentType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TxSetComponentType(Box::new(t)))),
+            ),
+            TypeVariant::DependentTxCluster => Box::new(
+                ReadXdrIter::<_, DependentTxCluster>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::DependentTxCluster(Box::new(t)))),
+            ),
+            TypeVariant::ParallelTxExecutionStage => Box::new(
+                ReadXdrIter::<_, ParallelTxExecutionStage>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ParallelTxExecutionStage(Box::new(t)))),
+            ),
+            TypeVariant::ParallelTxsComponent => Box::new(
+                ReadXdrIter::<_, ParallelTxsComponent>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ParallelTxsComponent(Box::new(t)))),
             ),
             TypeVariant::TxSetComponent => Box::new(
                 ReadXdrIter::<_, TxSetComponent>::new(dec, r.limits.clone())
@@ -57883,10 +57187,6 @@ impl Type {
             TypeVariant::DiagnosticEvent => Box::new(
                 ReadXdrIter::<_, DiagnosticEvent>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::DiagnosticEvent(Box::new(t)))),
-            ),
-            TypeVariant::DiagnosticEvents => Box::new(
-                ReadXdrIter::<_, DiagnosticEvents>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::DiagnosticEvents(Box::new(t)))),
             ),
             TypeVariant::SorobanTransactionMetaExtV1 => Box::new(
                 ReadXdrIter::<_, SorobanTransactionMetaExtV1>::new(dec, r.limits.clone())
@@ -58363,41 +57663,21 @@ impl Type {
                 ReadXdrIter::<_, LedgerFootprint>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::LedgerFootprint(Box::new(t)))),
             ),
-            TypeVariant::ArchivalProofType => Box::new(
-                ReadXdrIter::<_, ArchivalProofType>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofType(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProofNode => Box::new(
-                ReadXdrIter::<_, ArchivalProofNode>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofNode(Box::new(t)))),
-            ),
-            TypeVariant::ProofLevel => Box::new(
-                ReadXdrIter::<_, ProofLevel>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ProofLevel(Box::new(t)))),
-            ),
-            TypeVariant::NonexistenceProofBody => Box::new(
-                ReadXdrIter::<_, NonexistenceProofBody>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::NonexistenceProofBody(Box::new(t)))),
-            ),
-            TypeVariant::ExistenceProofBody => Box::new(
-                ReadXdrIter::<_, ExistenceProofBody>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ExistenceProofBody(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProof => Box::new(
-                ReadXdrIter::<_, ArchivalProof>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProof(Box::new(t)))),
-            ),
-            TypeVariant::ArchivalProofBody => Box::new(
-                ReadXdrIter::<_, ArchivalProofBody>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ArchivalProofBody(Box::new(t)))),
-            ),
             TypeVariant::SorobanResources => Box::new(
                 ReadXdrIter::<_, SorobanResources>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanResources(Box::new(t)))),
             ),
+            TypeVariant::SorobanResourcesExtV0 => Box::new(
+                ReadXdrIter::<_, SorobanResourcesExtV0>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanResourcesExtV0(Box::new(t)))),
+            ),
             TypeVariant::SorobanTransactionData => Box::new(
                 ReadXdrIter::<_, SorobanTransactionData>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::SorobanTransactionData(Box::new(t)))),
+            ),
+            TypeVariant::SorobanTransactionDataExt => Box::new(
+                ReadXdrIter::<_, SorobanTransactionDataExt>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::SorobanTransactionDataExt(Box::new(t)))),
             ),
             TypeVariant::TransactionV0 => Box::new(
                 ReadXdrIter::<_, TransactionV0>::new(dec, r.limits.clone())
@@ -58945,8 +58225,14 @@ impl Type {
             TypeVariant::ConfigSettingContractComputeV0 => Ok(
                 Self::ConfigSettingContractComputeV0(Box::new(serde_json::from_reader(r)?)),
             ),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => Ok(
+                Self::ConfigSettingContractParallelComputeV0(Box::new(serde_json::from_reader(r)?)),
+            ),
             TypeVariant::ConfigSettingContractLedgerCostV0 => Ok(
                 Self::ConfigSettingContractLedgerCostV0(Box::new(serde_json::from_reader(r)?)),
+            ),
+            TypeVariant::ConfigSettingContractLedgerCostExtV0 => Ok(
+                Self::ConfigSettingContractLedgerCostExtV0(Box::new(serde_json::from_reader(r)?)),
             ),
             TypeVariant::ConfigSettingContractHistoricalDataV0 => Ok(
                 Self::ConfigSettingContractHistoricalDataV0(Box::new(serde_json::from_reader(r)?)),
@@ -59328,9 +58614,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntryType => Ok(Self::HotArchiveBucketEntryType(
                 Box::new(serde_json::from_reader(r)?),
             )),
-            TypeVariant::ColdArchiveBucketEntryType => Ok(Self::ColdArchiveBucketEntryType(
-                Box::new(serde_json::from_reader(r)?),
-            )),
             TypeVariant::BucketMetadata => {
                 Ok(Self::BucketMetadata(Box::new(serde_json::from_reader(r)?)))
             }
@@ -59341,21 +58624,6 @@ impl Type {
                 Ok(Self::BucketEntry(Box::new(serde_json::from_reader(r)?)))
             }
             TypeVariant::HotArchiveBucketEntry => Ok(Self::HotArchiveBucketEntry(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ColdArchiveArchivedLeaf => Ok(Self::ColdArchiveArchivedLeaf(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ColdArchiveDeletedLeaf => Ok(Self::ColdArchiveDeletedLeaf(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ColdArchiveBoundaryLeaf => Ok(Self::ColdArchiveBoundaryLeaf(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ColdArchiveHashEntry => Ok(Self::ColdArchiveHashEntry(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ColdArchiveBucketEntry => Ok(Self::ColdArchiveBucketEntry(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::UpgradeType => {
@@ -59401,6 +58669,15 @@ impl Type {
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::TxSetComponentType => Ok(Self::TxSetComponentType(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::DependentTxCluster => Ok(Self::DependentTxCluster(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ParallelTxExecutionStage => Ok(Self::ParallelTxExecutionStage(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::ParallelTxsComponent => Ok(Self::ParallelTxsComponent(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::TxSetComponent => {
@@ -59487,9 +58764,6 @@ impl Type {
             TypeVariant::DiagnosticEvent => {
                 Ok(Self::DiagnosticEvent(Box::new(serde_json::from_reader(r)?)))
             }
-            TypeVariant::DiagnosticEvents => Ok(Self::DiagnosticEvents(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
             TypeVariant::SorobanTransactionMetaExtV1 => Ok(Self::SorobanTransactionMetaExtV1(
                 Box::new(serde_json::from_reader(r)?),
             )),
@@ -59812,31 +59086,18 @@ impl Type {
             TypeVariant::LedgerFootprint => {
                 Ok(Self::LedgerFootprint(Box::new(serde_json::from_reader(r)?)))
             }
-            TypeVariant::ArchivalProofType => Ok(Self::ArchivalProofType(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ArchivalProofNode => Ok(Self::ArchivalProofNode(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ProofLevel => Ok(Self::ProofLevel(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
-            TypeVariant::ArchivalProof => {
-                Ok(Self::ArchivalProof(Box::new(serde_json::from_reader(r)?)))
-            }
-            TypeVariant::ArchivalProofBody => Ok(Self::ArchivalProofBody(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
             TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
+            TypeVariant::SorobanResourcesExtV0 => Ok(Self::SorobanResourcesExtV0(Box::new(
                 serde_json::from_reader(r)?,
             ))),
             TypeVariant::SorobanTransactionData => Ok(Self::SorobanTransactionData(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            TypeVariant::SorobanTransactionDataExt => Ok(Self::SorobanTransactionDataExt(
+                Box::new(serde_json::from_reader(r)?),
+            )),
             TypeVariant::TransactionV0 => {
                 Ok(Self::TransactionV0(Box::new(serde_json::from_reader(r)?)))
             }
@@ -60216,8 +59477,18 @@ impl Type {
                     serde::de::Deserialize::deserialize(r)?,
                 )))
             }
+            TypeVariant::ConfigSettingContractParallelComputeV0 => {
+                Ok(Self::ConfigSettingContractParallelComputeV0(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )))
+            }
             TypeVariant::ConfigSettingContractLedgerCostV0 => {
                 Ok(Self::ConfigSettingContractLedgerCostV0(Box::new(
+                    serde::de::Deserialize::deserialize(r)?,
+                )))
+            }
+            TypeVariant::ConfigSettingContractLedgerCostExtV0 => {
+                Ok(Self::ConfigSettingContractLedgerCostExtV0(Box::new(
                     serde::de::Deserialize::deserialize(r)?,
                 )))
             }
@@ -60679,9 +59950,6 @@ impl Type {
             TypeVariant::HotArchiveBucketEntryType => Ok(Self::HotArchiveBucketEntryType(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
-            TypeVariant::ColdArchiveBucketEntryType => Ok(Self::ColdArchiveBucketEntryType(
-                Box::new(serde::de::Deserialize::deserialize(r)?),
-            )),
             TypeVariant::BucketMetadata => Ok(Self::BucketMetadata(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -60692,21 +59960,6 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::HotArchiveBucketEntry => Ok(Self::HotArchiveBucketEntry(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ColdArchiveArchivedLeaf => Ok(Self::ColdArchiveArchivedLeaf(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ColdArchiveDeletedLeaf => Ok(Self::ColdArchiveDeletedLeaf(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ColdArchiveBoundaryLeaf => Ok(Self::ColdArchiveBoundaryLeaf(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ColdArchiveHashEntry => Ok(Self::ColdArchiveHashEntry(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ColdArchiveBucketEntry => Ok(Self::ColdArchiveBucketEntry(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::UpgradeType => Ok(Self::UpgradeType(Box::new(
@@ -60752,6 +60005,15 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::TxSetComponentType => Ok(Self::TxSetComponentType(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::DependentTxCluster => Ok(Self::DependentTxCluster(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ParallelTxExecutionStage => Ok(Self::ParallelTxExecutionStage(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ParallelTxsComponent => Ok(Self::ParallelTxsComponent(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::TxSetComponent => Ok(Self::TxSetComponent(Box::new(
@@ -60840,9 +60102,6 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::DiagnosticEvent => Ok(Self::DiagnosticEvent(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::DiagnosticEvents => Ok(Self::DiagnosticEvents(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::SorobanTransactionMetaExtV1 => Ok(Self::SorobanTransactionMetaExtV1(
@@ -61215,33 +60474,18 @@ impl Type {
             TypeVariant::LedgerFootprint => Ok(Self::LedgerFootprint(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::ArchivalProofType => Ok(Self::ArchivalProofType(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ArchivalProofNode => Ok(Self::ArchivalProofNode(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ProofLevel => Ok(Self::ProofLevel(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::NonexistenceProofBody => Ok(Self::NonexistenceProofBody(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ExistenceProofBody => Ok(Self::ExistenceProofBody(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ArchivalProof => Ok(Self::ArchivalProof(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ArchivalProofBody => Ok(Self::ArchivalProofBody(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
             TypeVariant::SorobanResources => Ok(Self::SorobanResources(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::SorobanResourcesExtV0 => Ok(Self::SorobanResourcesExtV0(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::SorobanTransactionData => Ok(Self::SorobanTransactionData(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::SorobanTransactionDataExt => Ok(Self::SorobanTransactionDataExt(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
             TypeVariant::TransactionV0 => Ok(Self::TransactionV0(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -61650,7 +60894,9 @@ impl Type {
             Self::ScpQuorumSet(ref v) => v.as_ref(),
             Self::ConfigSettingContractExecutionLanesV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractComputeV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractParallelComputeV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractLedgerCostV0(ref v) => v.as_ref(),
+            Self::ConfigSettingContractLedgerCostExtV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractHistoricalDataV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractEventsV0(ref v) => v.as_ref(),
             Self::ConfigSettingContractBandwidthV0(ref v) => v.as_ref(),
@@ -61799,16 +61045,10 @@ impl Type {
             Self::BucketListType(ref v) => v.as_ref(),
             Self::BucketEntryType(ref v) => v.as_ref(),
             Self::HotArchiveBucketEntryType(ref v) => v.as_ref(),
-            Self::ColdArchiveBucketEntryType(ref v) => v.as_ref(),
             Self::BucketMetadata(ref v) => v.as_ref(),
             Self::BucketMetadataExt(ref v) => v.as_ref(),
             Self::BucketEntry(ref v) => v.as_ref(),
             Self::HotArchiveBucketEntry(ref v) => v.as_ref(),
-            Self::ColdArchiveArchivedLeaf(ref v) => v.as_ref(),
-            Self::ColdArchiveDeletedLeaf(ref v) => v.as_ref(),
-            Self::ColdArchiveBoundaryLeaf(ref v) => v.as_ref(),
-            Self::ColdArchiveHashEntry(ref v) => v.as_ref(),
-            Self::ColdArchiveBucketEntry(ref v) => v.as_ref(),
             Self::UpgradeType(ref v) => v.as_ref(),
             Self::StellarValueType(ref v) => v.as_ref(),
             Self::LedgerCloseValueSignature(ref v) => v.as_ref(),
@@ -61824,6 +61064,9 @@ impl Type {
             Self::LedgerUpgrade(ref v) => v.as_ref(),
             Self::ConfigUpgradeSet(ref v) => v.as_ref(),
             Self::TxSetComponentType(ref v) => v.as_ref(),
+            Self::DependentTxCluster(ref v) => v.as_ref(),
+            Self::ParallelTxExecutionStage(ref v) => v.as_ref(),
+            Self::ParallelTxsComponent(ref v) => v.as_ref(),
             Self::TxSetComponent(ref v) => v.as_ref(),
             Self::TxSetComponentTxsMaybeDiscountedFee(ref v) => v.as_ref(),
             Self::TransactionPhase(ref v) => v.as_ref(),
@@ -61852,7 +61095,6 @@ impl Type {
             Self::ContractEventBody(ref v) => v.as_ref(),
             Self::ContractEventV0(ref v) => v.as_ref(),
             Self::DiagnosticEvent(ref v) => v.as_ref(),
-            Self::DiagnosticEvents(ref v) => v.as_ref(),
             Self::SorobanTransactionMetaExtV1(ref v) => v.as_ref(),
             Self::SorobanTransactionMetaExt(ref v) => v.as_ref(),
             Self::SorobanTransactionMeta(ref v) => v.as_ref(),
@@ -61969,15 +61211,10 @@ impl Type {
             Self::PreconditionType(ref v) => v.as_ref(),
             Self::Preconditions(ref v) => v.as_ref(),
             Self::LedgerFootprint(ref v) => v.as_ref(),
-            Self::ArchivalProofType(ref v) => v.as_ref(),
-            Self::ArchivalProofNode(ref v) => v.as_ref(),
-            Self::ProofLevel(ref v) => v.as_ref(),
-            Self::NonexistenceProofBody(ref v) => v.as_ref(),
-            Self::ExistenceProofBody(ref v) => v.as_ref(),
-            Self::ArchivalProof(ref v) => v.as_ref(),
-            Self::ArchivalProofBody(ref v) => v.as_ref(),
             Self::SorobanResources(ref v) => v.as_ref(),
+            Self::SorobanResourcesExtV0(ref v) => v.as_ref(),
             Self::SorobanTransactionData(ref v) => v.as_ref(),
+            Self::SorobanTransactionDataExt(ref v) => v.as_ref(),
             Self::TransactionV0(ref v) => v.as_ref(),
             Self::TransactionV0Ext(ref v) => v.as_ref(),
             Self::TransactionV0Envelope(ref v) => v.as_ref(),
@@ -62118,7 +61355,11 @@ impl Type {
                 "ConfigSettingContractExecutionLanesV0"
             }
             Self::ConfigSettingContractComputeV0(_) => "ConfigSettingContractComputeV0",
+            Self::ConfigSettingContractParallelComputeV0(_) => {
+                "ConfigSettingContractParallelComputeV0"
+            }
             Self::ConfigSettingContractLedgerCostV0(_) => "ConfigSettingContractLedgerCostV0",
+            Self::ConfigSettingContractLedgerCostExtV0(_) => "ConfigSettingContractLedgerCostExtV0",
             Self::ConfigSettingContractHistoricalDataV0(_) => {
                 "ConfigSettingContractHistoricalDataV0"
             }
@@ -62271,16 +61512,10 @@ impl Type {
             Self::BucketListType(_) => "BucketListType",
             Self::BucketEntryType(_) => "BucketEntryType",
             Self::HotArchiveBucketEntryType(_) => "HotArchiveBucketEntryType",
-            Self::ColdArchiveBucketEntryType(_) => "ColdArchiveBucketEntryType",
             Self::BucketMetadata(_) => "BucketMetadata",
             Self::BucketMetadataExt(_) => "BucketMetadataExt",
             Self::BucketEntry(_) => "BucketEntry",
             Self::HotArchiveBucketEntry(_) => "HotArchiveBucketEntry",
-            Self::ColdArchiveArchivedLeaf(_) => "ColdArchiveArchivedLeaf",
-            Self::ColdArchiveDeletedLeaf(_) => "ColdArchiveDeletedLeaf",
-            Self::ColdArchiveBoundaryLeaf(_) => "ColdArchiveBoundaryLeaf",
-            Self::ColdArchiveHashEntry(_) => "ColdArchiveHashEntry",
-            Self::ColdArchiveBucketEntry(_) => "ColdArchiveBucketEntry",
             Self::UpgradeType(_) => "UpgradeType",
             Self::StellarValueType(_) => "StellarValueType",
             Self::LedgerCloseValueSignature(_) => "LedgerCloseValueSignature",
@@ -62296,6 +61531,9 @@ impl Type {
             Self::LedgerUpgrade(_) => "LedgerUpgrade",
             Self::ConfigUpgradeSet(_) => "ConfigUpgradeSet",
             Self::TxSetComponentType(_) => "TxSetComponentType",
+            Self::DependentTxCluster(_) => "DependentTxCluster",
+            Self::ParallelTxExecutionStage(_) => "ParallelTxExecutionStage",
+            Self::ParallelTxsComponent(_) => "ParallelTxsComponent",
             Self::TxSetComponent(_) => "TxSetComponent",
             Self::TxSetComponentTxsMaybeDiscountedFee(_) => "TxSetComponentTxsMaybeDiscountedFee",
             Self::TransactionPhase(_) => "TransactionPhase",
@@ -62324,7 +61562,6 @@ impl Type {
             Self::ContractEventBody(_) => "ContractEventBody",
             Self::ContractEventV0(_) => "ContractEventV0",
             Self::DiagnosticEvent(_) => "DiagnosticEvent",
-            Self::DiagnosticEvents(_) => "DiagnosticEvents",
             Self::SorobanTransactionMetaExtV1(_) => "SorobanTransactionMetaExtV1",
             Self::SorobanTransactionMetaExt(_) => "SorobanTransactionMetaExt",
             Self::SorobanTransactionMeta(_) => "SorobanTransactionMeta",
@@ -62451,15 +61688,10 @@ impl Type {
             Self::PreconditionType(_) => "PreconditionType",
             Self::Preconditions(_) => "Preconditions",
             Self::LedgerFootprint(_) => "LedgerFootprint",
-            Self::ArchivalProofType(_) => "ArchivalProofType",
-            Self::ArchivalProofNode(_) => "ArchivalProofNode",
-            Self::ProofLevel(_) => "ProofLevel",
-            Self::NonexistenceProofBody(_) => "NonexistenceProofBody",
-            Self::ExistenceProofBody(_) => "ExistenceProofBody",
-            Self::ArchivalProof(_) => "ArchivalProof",
-            Self::ArchivalProofBody(_) => "ArchivalProofBody",
             Self::SorobanResources(_) => "SorobanResources",
+            Self::SorobanResourcesExtV0(_) => "SorobanResourcesExtV0",
             Self::SorobanTransactionData(_) => "SorobanTransactionData",
+            Self::SorobanTransactionDataExt(_) => "SorobanTransactionDataExt",
             Self::TransactionV0(_) => "TransactionV0",
             Self::TransactionV0Ext(_) => "TransactionV0Ext",
             Self::TransactionV0Envelope(_) => "TransactionV0Envelope",
@@ -62591,7 +61823,7 @@ impl Type {
 
     #[must_use]
     #[allow(clippy::too_many_lines)]
-    pub const fn variants() -> [TypeVariant; 459] {
+    pub const fn variants() -> [TypeVariant; 452] {
         Self::VARIANTS
     }
 
@@ -62614,8 +61846,14 @@ impl Type {
                 TypeVariant::ConfigSettingContractExecutionLanesV0
             }
             Self::ConfigSettingContractComputeV0(_) => TypeVariant::ConfigSettingContractComputeV0,
+            Self::ConfigSettingContractParallelComputeV0(_) => {
+                TypeVariant::ConfigSettingContractParallelComputeV0
+            }
             Self::ConfigSettingContractLedgerCostV0(_) => {
                 TypeVariant::ConfigSettingContractLedgerCostV0
+            }
+            Self::ConfigSettingContractLedgerCostExtV0(_) => {
+                TypeVariant::ConfigSettingContractLedgerCostExtV0
             }
             Self::ConfigSettingContractHistoricalDataV0(_) => {
                 TypeVariant::ConfigSettingContractHistoricalDataV0
@@ -62777,16 +62015,10 @@ impl Type {
             Self::BucketListType(_) => TypeVariant::BucketListType,
             Self::BucketEntryType(_) => TypeVariant::BucketEntryType,
             Self::HotArchiveBucketEntryType(_) => TypeVariant::HotArchiveBucketEntryType,
-            Self::ColdArchiveBucketEntryType(_) => TypeVariant::ColdArchiveBucketEntryType,
             Self::BucketMetadata(_) => TypeVariant::BucketMetadata,
             Self::BucketMetadataExt(_) => TypeVariant::BucketMetadataExt,
             Self::BucketEntry(_) => TypeVariant::BucketEntry,
             Self::HotArchiveBucketEntry(_) => TypeVariant::HotArchiveBucketEntry,
-            Self::ColdArchiveArchivedLeaf(_) => TypeVariant::ColdArchiveArchivedLeaf,
-            Self::ColdArchiveDeletedLeaf(_) => TypeVariant::ColdArchiveDeletedLeaf,
-            Self::ColdArchiveBoundaryLeaf(_) => TypeVariant::ColdArchiveBoundaryLeaf,
-            Self::ColdArchiveHashEntry(_) => TypeVariant::ColdArchiveHashEntry,
-            Self::ColdArchiveBucketEntry(_) => TypeVariant::ColdArchiveBucketEntry,
             Self::UpgradeType(_) => TypeVariant::UpgradeType,
             Self::StellarValueType(_) => TypeVariant::StellarValueType,
             Self::LedgerCloseValueSignature(_) => TypeVariant::LedgerCloseValueSignature,
@@ -62802,6 +62034,9 @@ impl Type {
             Self::LedgerUpgrade(_) => TypeVariant::LedgerUpgrade,
             Self::ConfigUpgradeSet(_) => TypeVariant::ConfigUpgradeSet,
             Self::TxSetComponentType(_) => TypeVariant::TxSetComponentType,
+            Self::DependentTxCluster(_) => TypeVariant::DependentTxCluster,
+            Self::ParallelTxExecutionStage(_) => TypeVariant::ParallelTxExecutionStage,
+            Self::ParallelTxsComponent(_) => TypeVariant::ParallelTxsComponent,
             Self::TxSetComponent(_) => TypeVariant::TxSetComponent,
             Self::TxSetComponentTxsMaybeDiscountedFee(_) => {
                 TypeVariant::TxSetComponentTxsMaybeDiscountedFee
@@ -62834,7 +62069,6 @@ impl Type {
             Self::ContractEventBody(_) => TypeVariant::ContractEventBody,
             Self::ContractEventV0(_) => TypeVariant::ContractEventV0,
             Self::DiagnosticEvent(_) => TypeVariant::DiagnosticEvent,
-            Self::DiagnosticEvents(_) => TypeVariant::DiagnosticEvents,
             Self::SorobanTransactionMetaExtV1(_) => TypeVariant::SorobanTransactionMetaExtV1,
             Self::SorobanTransactionMetaExt(_) => TypeVariant::SorobanTransactionMetaExt,
             Self::SorobanTransactionMeta(_) => TypeVariant::SorobanTransactionMeta,
@@ -62971,15 +62205,10 @@ impl Type {
             Self::PreconditionType(_) => TypeVariant::PreconditionType,
             Self::Preconditions(_) => TypeVariant::Preconditions,
             Self::LedgerFootprint(_) => TypeVariant::LedgerFootprint,
-            Self::ArchivalProofType(_) => TypeVariant::ArchivalProofType,
-            Self::ArchivalProofNode(_) => TypeVariant::ArchivalProofNode,
-            Self::ProofLevel(_) => TypeVariant::ProofLevel,
-            Self::NonexistenceProofBody(_) => TypeVariant::NonexistenceProofBody,
-            Self::ExistenceProofBody(_) => TypeVariant::ExistenceProofBody,
-            Self::ArchivalProof(_) => TypeVariant::ArchivalProof,
-            Self::ArchivalProofBody(_) => TypeVariant::ArchivalProofBody,
             Self::SorobanResources(_) => TypeVariant::SorobanResources,
+            Self::SorobanResourcesExtV0(_) => TypeVariant::SorobanResourcesExtV0,
             Self::SorobanTransactionData(_) => TypeVariant::SorobanTransactionData,
+            Self::SorobanTransactionDataExt(_) => TypeVariant::SorobanTransactionDataExt,
             Self::TransactionV0(_) => TypeVariant::TransactionV0,
             Self::TransactionV0Ext(_) => TypeVariant::TransactionV0Ext,
             Self::TransactionV0Envelope(_) => TypeVariant::TransactionV0Envelope,
@@ -63159,7 +62388,9 @@ impl WriteXdr for Type {
             Self::ScpQuorumSet(v) => v.write_xdr(w),
             Self::ConfigSettingContractExecutionLanesV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractComputeV0(v) => v.write_xdr(w),
+            Self::ConfigSettingContractParallelComputeV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractLedgerCostV0(v) => v.write_xdr(w),
+            Self::ConfigSettingContractLedgerCostExtV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractHistoricalDataV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractEventsV0(v) => v.write_xdr(w),
             Self::ConfigSettingContractBandwidthV0(v) => v.write_xdr(w),
@@ -63308,16 +62539,10 @@ impl WriteXdr for Type {
             Self::BucketListType(v) => v.write_xdr(w),
             Self::BucketEntryType(v) => v.write_xdr(w),
             Self::HotArchiveBucketEntryType(v) => v.write_xdr(w),
-            Self::ColdArchiveBucketEntryType(v) => v.write_xdr(w),
             Self::BucketMetadata(v) => v.write_xdr(w),
             Self::BucketMetadataExt(v) => v.write_xdr(w),
             Self::BucketEntry(v) => v.write_xdr(w),
             Self::HotArchiveBucketEntry(v) => v.write_xdr(w),
-            Self::ColdArchiveArchivedLeaf(v) => v.write_xdr(w),
-            Self::ColdArchiveDeletedLeaf(v) => v.write_xdr(w),
-            Self::ColdArchiveBoundaryLeaf(v) => v.write_xdr(w),
-            Self::ColdArchiveHashEntry(v) => v.write_xdr(w),
-            Self::ColdArchiveBucketEntry(v) => v.write_xdr(w),
             Self::UpgradeType(v) => v.write_xdr(w),
             Self::StellarValueType(v) => v.write_xdr(w),
             Self::LedgerCloseValueSignature(v) => v.write_xdr(w),
@@ -63333,6 +62558,9 @@ impl WriteXdr for Type {
             Self::LedgerUpgrade(v) => v.write_xdr(w),
             Self::ConfigUpgradeSet(v) => v.write_xdr(w),
             Self::TxSetComponentType(v) => v.write_xdr(w),
+            Self::DependentTxCluster(v) => v.write_xdr(w),
+            Self::ParallelTxExecutionStage(v) => v.write_xdr(w),
+            Self::ParallelTxsComponent(v) => v.write_xdr(w),
             Self::TxSetComponent(v) => v.write_xdr(w),
             Self::TxSetComponentTxsMaybeDiscountedFee(v) => v.write_xdr(w),
             Self::TransactionPhase(v) => v.write_xdr(w),
@@ -63361,7 +62589,6 @@ impl WriteXdr for Type {
             Self::ContractEventBody(v) => v.write_xdr(w),
             Self::ContractEventV0(v) => v.write_xdr(w),
             Self::DiagnosticEvent(v) => v.write_xdr(w),
-            Self::DiagnosticEvents(v) => v.write_xdr(w),
             Self::SorobanTransactionMetaExtV1(v) => v.write_xdr(w),
             Self::SorobanTransactionMetaExt(v) => v.write_xdr(w),
             Self::SorobanTransactionMeta(v) => v.write_xdr(w),
@@ -63478,15 +62705,10 @@ impl WriteXdr for Type {
             Self::PreconditionType(v) => v.write_xdr(w),
             Self::Preconditions(v) => v.write_xdr(w),
             Self::LedgerFootprint(v) => v.write_xdr(w),
-            Self::ArchivalProofType(v) => v.write_xdr(w),
-            Self::ArchivalProofNode(v) => v.write_xdr(w),
-            Self::ProofLevel(v) => v.write_xdr(w),
-            Self::NonexistenceProofBody(v) => v.write_xdr(w),
-            Self::ExistenceProofBody(v) => v.write_xdr(w),
-            Self::ArchivalProof(v) => v.write_xdr(w),
-            Self::ArchivalProofBody(v) => v.write_xdr(w),
             Self::SorobanResources(v) => v.write_xdr(w),
+            Self::SorobanResourcesExtV0(v) => v.write_xdr(w),
             Self::SorobanTransactionData(v) => v.write_xdr(w),
+            Self::SorobanTransactionDataExt(v) => v.write_xdr(w),
             Self::TransactionV0(v) => v.write_xdr(w),
             Self::TransactionV0Ext(v) => v.write_xdr(w),
             Self::TransactionV0Envelope(v) => v.write_xdr(w),
